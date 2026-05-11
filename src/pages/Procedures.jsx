@@ -5,6 +5,15 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import ProcedureModal from '../components/procedures/ProcedureModal';
 
+const categoryImages = {
+  dental: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/20b7781ca_generated_image.png',
+  cosmetic: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/5a3d222e7_generated_image.png',
+  bariatric: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/134d71025_generated_image.png',
+  fertility: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b369d015b_generated_image.png',
+  oncology: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/bd0392986_generated_image.png',
+  orthopedic: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8f298c052_generated_image.png',
+};
+
 const categories = [
   {
     id: 'dental',
@@ -511,19 +520,32 @@ export default function Procedures() {
                 <motion.button
                   key={proc.title}
                   onClick={() => setSelected(proc)}
-                  className="text-left bg-card border border-border rounded-xl p-5 hover:shadow-md hover:border-primary/30 transition-all group"
+                  className="text-left bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/30 transition-all group"
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.04 }}
                 >
-                  <div className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-3 ${cat.color}`}>
-                    {proc.tag}
+                  {/* Image strip */}
+                  <div className="w-full h-32 overflow-hidden relative">
+                    <img
+                      src={categoryImages[cat.id]}
+                      alt={proc.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" />
+                    <div className={`absolute top-2.5 left-2.5 inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full backdrop-blur-sm ${cat.color} bg-card/70`}>
+                      {proc.tag}
+                    </div>
                   </div>
-                  <h3 className="font-display text-lg text-foreground mb-1.5 leading-tight">{proc.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">{proc.desc}</p>
-                  <div className="flex items-center text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform">
-                    Learn More <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-display text-lg text-foreground mb-1.5 leading-tight">{proc.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">{proc.desc}</p>
+                    <div className="flex items-center text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform">
+                      Learn More <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                    </div>
                   </div>
                 </motion.button>
               ))}
