@@ -1,0 +1,78 @@
+{
+  "name": "Consultation",
+  "type": "object",
+  "properties": {
+    "patient_name": {
+      "type": "string",
+      "description": "Full name of the patient"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "procedure_interest": {
+      "type": "string",
+      "enum": [
+        "dental_implants",
+        "smile_makeover",
+        "all_on_4",
+        "porcelain_veneers",
+        "bone_regeneration",
+        "cosmetic_dentistry",
+        "other"
+      ]
+    },
+    "preferred_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "provider_id": {
+      "type": "string",
+      "description": "ID of preferred provider"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "journey_stage": {
+      "type": "string",
+      "enum": [
+        "consultation",
+        "planning",
+        "booking",
+        "travel",
+        "procedure",
+        "recovery",
+        "aftercare"
+      ],
+      "default": "consultation"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low"
+    }
+  },
+  "required": [
+    "patient_name",
+    "email",
+    "procedure_interest"
+  ]
+}

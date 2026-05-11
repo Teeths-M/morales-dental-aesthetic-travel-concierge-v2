@@ -5,43 +5,62 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+
+import AppLayout from './components/layout/AppLayout';
+import Home from './pages/Home';
+import Providers from './pages/Providers';
+import ProviderDetail from './pages/ProviderDetail';
+import SafeT from './pages/SafeT';
+import Booking from './pages/Booking';
+import Dashboard from './pages/Dashboard';
+import HowItWorksPage from './pages/HowItWorksPage';
+import About from './pages/About';
+import Procedures from './pages/Procedures';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-serif text-lg font-bold">M</span>
+          </div>
+          <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
   }
 
-  // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/providers" element={<Providers />} />
+        <Route path="/providers/:id" element={<ProviderDetail />} />
+        <Route path="/safe-t" element={<SafeT />} />
+        <Route path="/booking" element={<Booking />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/procedures" element={<Procedures />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
