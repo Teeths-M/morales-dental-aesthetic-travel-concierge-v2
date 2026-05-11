@@ -5,14 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import ProcedureModal from '../components/procedures/ProcedureModal';
 
-const categoryImages = {
-  dental: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/20b7781ca_generated_image.png',
-  cosmetic: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/5a3d222e7_generated_image.png',
-  bariatric: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/134d71025_generated_image.png',
-  fertility: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b369d015b_generated_image.png',
-  oncology: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/bd0392986_generated_image.png',
-  orthopedic: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8f298c052_generated_image.png',
-};
+
 
 const categories = [
   {
@@ -21,6 +14,7 @@ const categories = [
     color: 'bg-primary/10 text-primary',
     procedures: [
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/207e353da_generated_image.png',
         title: 'Dental Implants',
         tag: 'Most Popular',
         desc: 'Permanent tooth replacement with titanium implants that look, feel, and function like natural teeth.',
@@ -35,6 +29,7 @@ const categories = [
         benefits: ['Permanent, lifelong solution', 'Preserves jawbone density', 'No impact on adjacent teeth', 'Natural look and feel'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f4d1773c4_generated_image.png',
         title: 'All-on-4 / All-on-6',
         tag: 'Full Arch',
         desc: 'Full arch restoration with just 4–6 implants. Leave with a brand-new fixed smile in a single trip.',
@@ -49,6 +44,7 @@ const categories = [
         benefits: ['Full mouth in one visit', 'No removable dentures', 'Bone preservation', 'Immediate function and aesthetics'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/d398d8f5d_generated_image.png',
         title: 'Porcelain Veneers',
         tag: 'Aesthetic',
         desc: 'Ultra-thin porcelain shells custom-crafted and bonded to the front of teeth for a flawless smile.',
@@ -63,6 +59,7 @@ const categories = [
         benefits: ['Hollywood-quality smile', 'Stain-resistant porcelain', 'Minimal tooth removal', 'Lasts 10–20 years'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/207e353da_generated_image.png',
         title: 'Smile Makeover',
         tag: 'Premium',
         desc: 'A comprehensive smile transformation combining veneers, whitening, contouring, and alignment for stunning results.',
@@ -77,6 +74,7 @@ const categories = [
         benefits: ['Total aesthetic transformation', 'Customized for your face shape', 'Long-lasting results', 'Confidence-boosting'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f4d1773c4_generated_image.png',
         title: 'Bone Regeneration',
         tag: 'Surgical',
         desc: 'Advanced grafting techniques to rebuild jawbone density—essential preparation for successful implant placement.',
@@ -90,6 +88,7 @@ const categories = [
         benefits: ['Enables implants where bone was lost', 'Uses biocompatible materials', 'Long-term jaw health'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/d398d8f5d_generated_image.png',
         title: 'Teeth Whitening & Cosmetic Dentistry',
         tag: 'Non-Invasive',
         desc: 'From professional whitening to composite bonding—enhance your smile without surgery.',
@@ -110,6 +109,7 @@ const categories = [
     color: 'bg-accent/10 text-accent',
     procedures: [
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/2e808397e_generated_image.png',
         title: 'Rhinoplasty (Nose Reshaping)',
         tag: 'Facial',
         desc: 'Surgical reshaping of the nose for aesthetic harmony or improved breathing—one of the most refined cosmetic surgeries.',
@@ -124,6 +124,7 @@ const categories = [
         benefits: ['Permanent reshaping', 'Can improve breathing (septoplasty combined)', 'Tailored to facial proportions'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7a6e85bac_generated_image.png',
         title: 'Breast Augmentation / Reduction / Lift',
         tag: 'Body',
         desc: 'Enhance, reduce, or lift the breasts for improved shape, symmetry, and confidence using the latest techniques.',
@@ -138,6 +139,7 @@ const categories = [
         benefits: ['Improved proportion and symmetry', 'Long-lasting results', 'Multiple technique options', 'High satisfaction rates'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/a9ef6f086_generated_image.png',
         title: 'Liposuction',
         tag: 'Body Contouring',
         desc: 'Targeted fat removal from stubborn areas including abdomen, flanks, thighs, arms, and more.',
@@ -152,6 +154,7 @@ const categories = [
         benefits: ['Permanent fat cell removal', 'Sculpted, defined contours', 'Minimal scarring', 'Can be combined with other procedures'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/a61b9e225_generated_image.png',
         title: 'Abdominoplasty (Tummy Tuck)',
         tag: 'Body',
         desc: 'Removes excess skin and tightens abdominal muscles for a flat, toned midsection—especially after weight loss or pregnancy.',
@@ -166,6 +169,7 @@ const categories = [
         benefits: ['Flat and toned abdomen', 'Repairs muscle separation (diastasis)', 'Long-lasting with stable weight'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/2b41a5cba_generated_image.png',
         title: 'Facelift',
         tag: 'Facial',
         desc: 'Lifts and firms sagging facial and neck tissue for a naturally youthful, refreshed appearance.',
@@ -180,6 +184,7 @@ const categories = [
         benefits: ['10–15 years of rejuvenation', 'Natural-looking results', 'Long-lasting — 7–10 years', 'Can be combined with eyelid or brow lift'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/542e1ddbb_generated_image.png',
         title: 'Brow Lift',
         tag: 'Facial',
         desc: 'Elevates a heavy or drooping brow to restore a more alert, youthful, and energetic appearance.',
@@ -193,6 +198,7 @@ const categories = [
         benefits: ['Opens up the eye area', 'Reduces forehead lines', 'Often paired with facelift or eyelid surgery'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/542e1ddbb_generated_image.png',
         title: 'Eyelid Surgery (Blepharoplasty)',
         tag: 'Facial',
         desc: 'Removes excess skin and fat from upper and/or lower eyelids to restore a rested, youthful look.',
@@ -207,6 +213,7 @@ const categories = [
         benefits: ['Brighter, more open eyes', 'Removes under-eye bags', 'Minimal scarring', 'Can improve peripheral vision'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/60dc819ce_generated_image.png',
         title: 'Otoplasty (Ear Reshaping)',
         tag: 'Facial',
         desc: 'Reshapes and repositions prominent or asymmetrical ears for improved facial harmony.',
@@ -220,6 +227,7 @@ const categories = [
         benefits: ['Permanent ear reshaping', 'Suitable for children and adults', 'High patient satisfaction'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e76cc304f_generated_image.png',
         title: 'Thigh Lift / Arm Lift',
         tag: 'Body',
         desc: 'Removes excess skin from inner thighs or upper arms—ideal after significant weight loss or aging-related skin laxity.',
@@ -233,6 +241,7 @@ const categories = [
         benefits: ['Smoother, tighter contour', 'Improves comfort and mobility', 'Often combined with liposuction'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8d759847c_generated_image.png',
         title: 'Skin Rejuvenation (Laser Resurfacing)',
         tag: 'Non-Invasive',
         desc: 'Laser treatments to reduce wrinkles, sun damage, acne scars, and uneven tone for radiant, renewed skin.',
@@ -254,6 +263,7 @@ const categories = [
     color: 'bg-primary/15 text-primary',
     procedures: [
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9ce244573_generated_image.png',
         title: 'Gastric Sleeve (Sleeve Gastrectomy)',
         tag: 'Bariatric',
         desc: 'Removal of approximately 80% of the stomach to limit food intake and reduce hunger hormones for lasting weight loss.',
@@ -268,6 +278,7 @@ const categories = [
         benefits: ['60–70% excess weight loss', 'Reduces hunger hormone (ghrelin)', 'No foreign body implanted', 'Improves type 2 diabetes, sleep apnea'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9ce244573_generated_image.png',
         title: 'Gastric Bypass (Roux-en-Y)',
         tag: 'Bariatric',
         desc: 'Creates a small stomach pouch and reroutes the small intestine for powerful weight loss and metabolic improvement.',
@@ -282,6 +293,7 @@ const categories = [
         benefits: ['70–80% excess weight loss', 'Highly effective for type 2 diabetes remission', 'Long-term results with lifestyle adherence'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9ce244573_generated_image.png',
         title: 'Gastric Band Removal / Revision',
         tag: 'Revision',
         desc: 'Removal or revision of a previously placed gastric band and conversion to sleeve or bypass for better outcomes.',
@@ -302,6 +314,7 @@ const categories = [
     color: 'bg-accent/15 text-accent',
     procedures: [
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/eacda8441_generated_image.png',
         title: 'Gynecological Diagnostic Exams',
         tag: 'Diagnostics',
         desc: 'Comprehensive gynecological evaluations including pelvic ultrasound, colposcopy, hysteroscopy, and fertility panel bloodwork.',
@@ -316,6 +329,7 @@ const categories = [
         benefits: ['Clear baseline for fertility planning', 'Early detection of conditions', 'Guided treatment planning'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/eacda8441_generated_image.png',
         title: 'IVF (In Vitro Fertilization)',
         tag: 'Fertility',
         desc: 'Egg retrieval and laboratory fertilization followed by embryo transfer — the gold standard for assisted reproduction.',
@@ -330,6 +344,7 @@ const categories = [
         benefits: ['Highest IVF success rates in partner clinics', 'Embryo freezing available', 'Genetic testing (PGT) option', 'Personalized protocol'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/eacda8441_generated_image.png',
         title: 'Fertility Preservation (Egg Freezing)',
         tag: 'Preservation',
         desc: 'Vitrification of eggs for future use — ideal for those not yet ready for pregnancy but wanting to preserve options.',
@@ -351,6 +366,7 @@ const categories = [
     color: 'bg-primary/10 text-primary',
     procedures: [
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e759e46df_generated_image.png',
         title: 'Oncological Surgical Procedures',
         tag: 'Surgery',
         desc: 'Tumor removal surgeries performed by board-certified oncological surgeons with access to multidisciplinary care teams.',
@@ -365,6 +381,7 @@ const categories = [
         benefits: ['Access to elite oncological surgeons', 'Multidisciplinary team approach', 'Integrated aftercare coordination'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e759e46df_generated_image.png',
         title: 'Tumor Marker & Blood Panel Testing',
         tag: 'Diagnostics',
         desc: 'Comprehensive cancer blood panels including tumor markers (CEA, AFP, PSA, CA-125, CA 19-9) and full hematology workup.',
@@ -386,6 +403,7 @@ const categories = [
     color: 'bg-accent/10 text-accent',
     procedures: [
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
         title: 'Joint Replacement (Hip & Knee)',
         tag: 'Orthopedic',
         desc: 'Total or partial replacement of worn joints with precision implants to restore pain-free mobility.',
@@ -400,6 +418,7 @@ const categories = [
         benefits: ['Eliminates chronic joint pain', 'Restores mobility and quality of life', 'Implants last 15–25 years'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
         title: 'Spine Surgery',
         tag: 'Orthopedic',
         desc: 'Minimally invasive procedures for herniated discs, spinal stenosis, and vertebral instability.',
@@ -414,6 +433,7 @@ const categories = [
         benefits: ['Relief from chronic back/neck pain', 'Minimally invasive options available', 'Expert traumatology teams'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
         title: 'Sports Injuries & Arthroscopy',
         tag: 'Traumatology',
         desc: 'Arthroscopic repair of ligaments, tendons, and cartilage—ACL reconstruction, rotator cuff repair, meniscus surgery.',
@@ -427,6 +447,7 @@ const categories = [
         benefits: ['Faster recovery vs open surgery', 'Minimal scarring', 'Return to sport at full capacity'],
       },
       {
+        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
         title: 'Fracture Management & Trauma Surgery',
         tag: 'Traumatology',
         desc: 'Surgical fixation and management of complex fractures using plates, screws, and nails by expert traumatologists.',
@@ -529,7 +550,7 @@ export default function Procedures() {
                   {/* Image strip */}
                   <div className="w-full h-32 overflow-hidden relative">
                     <img
-                      src={categoryImages[cat.id]}
+                      src={proc.image}
                       alt={proc.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
