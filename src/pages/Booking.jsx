@@ -16,6 +16,7 @@ import Section8Emotional from '../components/booking/Section8Emotional';
 import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
+import ClientAcknowledgement from '../components/booking/ClientAcknowledgement';
 
 const steps = [
   { label: 'Personal Info', emoji: '👤' },
@@ -29,11 +30,13 @@ const steps = [
   { label: 'Pregnancy', emoji: '🤰' },
   { label: 'Documents', emoji: '📎' },
   { label: 'Procedure', emoji: '🏥' },
+  { label: 'Acknowledgement', emoji: '📋' },
 ];
 
 export default function Booking() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(new Set());
   const [form, setForm] = useState({
     patient_name: '',
     email: '',
@@ -90,6 +93,7 @@ export default function Booking() {
   const canNext = () => {
     if (step === 0) return form.patient_name && form.email;
     if (step === 10) return form.procedure_interest && form.preferred_date;
+    if (step === 11) return acknowledged.size === 4;
     return true;
   };
 
@@ -172,6 +176,7 @@ export default function Booking() {
               {step === 8 && <Section9Pregnancy form={form} update={update} />}
               {step === 9 && <Section10Documents form={form} update={update} />}
               {step === 10 && <SectionProcedure form={form} update={update} />}
+              {step === 11 && <ClientAcknowledgement acknowledged={acknowledged} onChange={setAcknowledged} />}
             </motion.div>
           </AnimatePresence>
 
