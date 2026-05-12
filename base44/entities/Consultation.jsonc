@@ -3,8 +3,7 @@
   "type": "object",
   "properties": {
     "patient_name": {
-      "type": "string",
-      "description": "Full name of the patient"
+      "type": "string"
     },
     "email": {
       "type": "string",
@@ -28,10 +27,6 @@
     "preferred_date": {
       "type": "string",
       "format": "date"
-    },
-    "provider_id": {
-      "type": "string",
-      "description": "ID of preferred provider"
     },
     "status": {
       "type": "string",
@@ -68,6 +63,150 @@
         "high"
       ],
       "default": "low"
+    },
+    "age": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string"
+    },
+    "height": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "string"
+    },
+    "nationality": {
+      "type": "string"
+    },
+    "occupation": {
+      "type": "string"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_number": {
+      "type": "string"
+    },
+    "has_companion": {
+      "type": "boolean"
+    },
+    "companion_relationship": {
+      "type": "string"
+    },
+    "travel_buddy_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "has_cultural_preferences": {
+      "type": "boolean"
+    },
+    "cultural_preferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cultural_notes": {
+      "type": "string"
+    },
+    "medical_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medical_conditions_other": {
+      "type": "string"
+    },
+    "had_surgery": {
+      "type": "boolean"
+    },
+    "previous_procedures": {
+      "type": "string"
+    },
+    "last_surgery_date": {
+      "type": "string"
+    },
+    "had_complications": {
+      "type": "boolean"
+    },
+    "surgery_complications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "anesthesia_complications": {
+      "type": "boolean"
+    },
+    "anesthesia_complication_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allergy_details": {
+      "type": "string"
+    },
+    "takes_medications": {
+      "type": "boolean"
+    },
+    "medication_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medication_notes": {
+      "type": "string"
+    },
+    "lifestyle_habits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exercises_regularly": {
+      "type": "boolean"
+    },
+    "activity_level": {
+      "type": "string"
+    },
+    "emotional_concerns": {
+      "type": "boolean"
+    },
+    "emotional_concern_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emotional_notes": {
+      "type": "string"
+    },
+    "pregnancy_status": {
+      "type": "string"
+    },
+    "document_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "uploaded_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [

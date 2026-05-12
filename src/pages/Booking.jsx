@@ -2,22 +2,33 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, CalendarDays } from 'lucide-react';
-import BookingSteps from '../components/booking/BookingSteps';
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 
-const procedures = [
-  { value: 'dental_implants', label: 'Dental Implants' },
-  { value: 'smile_makeover', label: 'Smile Makeover' },
-  { value: 'all_on_4', label: 'All-on-4 / All-on-6' },
-  { value: 'porcelain_veneers', label: 'Porcelain Veneers' },
-  { value: 'bone_regeneration', label: 'Bone Regeneration' },
-  { value: 'cosmetic_dentistry', label: 'Cosmetic Dentistry' },
-  { value: 'other', label: 'Other / Not Sure' },
+import Section1PersonalInfo from '../components/booking/Section1PersonalInfo';
+import Section2Travel from '../components/booking/Section2Travel';
+import Section3Cultural from '../components/booking/Section3Cultural';
+import Section4MedicalHistory from '../components/booking/Section4MedicalHistory';
+import Section5Anesthesia from '../components/booking/Section5Anesthesia';
+import Section6Medications from '../components/booking/Section6Medications';
+import Section7Lifestyle from '../components/booking/Section7Lifestyle';
+import Section8Emotional from '../components/booking/Section8Emotional';
+import Section9Pregnancy from '../components/booking/Section9Pregnancy';
+import Section10Documents from '../components/booking/Section10Documents';
+import SectionProcedure from '../components/booking/SectionProcedure';
+
+const steps = [
+  { label: 'Personal Info', emoji: '👤' },
+  { label: 'Travel', emoji: '✈️' },
+  { label: 'Cultural', emoji: '🕌' },
+  { label: 'Medical History', emoji: '🩺' },
+  { label: 'Anesthesia', emoji: '💉' },
+  { label: 'Medications', emoji: '💊' },
+  { label: 'Lifestyle', emoji: '🚬' },
+  { label: 'Emotional', emoji: '🧠' },
+  { label: 'Pregnancy', emoji: '🤰' },
+  { label: 'Documents', emoji: '📎' },
+  { label: 'Procedure', emoji: '🏥' },
 ];
 
 export default function Booking() {
@@ -27,6 +38,43 @@ export default function Booking() {
     patient_name: '',
     email: '',
     phone: '',
+    age: '',
+    gender: '',
+    height: '',
+    weight: '',
+    nationality: '',
+    occupation: '',
+    emergency_contact_name: '',
+    emergency_contact_number: '',
+    has_companion: null,
+    companion_relationship: '',
+    travel_buddy_services: [],
+    has_cultural_preferences: null,
+    cultural_preferences: [],
+    cultural_notes: '',
+    medical_conditions: [],
+    medical_conditions_other: '',
+    had_surgery: null,
+    previous_procedures: '',
+    last_surgery_date: '',
+    had_complications: null,
+    surgery_complications: [],
+    anesthesia_complications: null,
+    anesthesia_complication_types: [],
+    allergies: [],
+    allergy_details: '',
+    takes_medications: null,
+    medication_types: [],
+    medication_notes: '',
+    lifestyle_habits: [],
+    exercises_regularly: null,
+    activity_level: '',
+    emotional_concerns: null,
+    emotional_concern_types: [],
+    emotional_notes: '',
+    pregnancy_status: '',
+    document_types: [],
+    uploaded_files: [],
     procedure_interest: '',
     preferred_date: '',
     notes: '',
@@ -41,8 +89,7 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) return form.patient_name && form.email;
-    if (step === 1) return form.procedure_interest;
-    if (step === 2) return form.preferred_date;
+    if (step === 10) return form.procedure_interest && form.preferred_date;
     return true;
   };
 
@@ -75,15 +122,37 @@ export default function Booking() {
 
   return (
     <div className="py-12 lg:py-20">
-      <div className="max-w-xl mx-auto px-4 sm:px-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-8">
           <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Book Your Visit</p>
           <h1 className="font-display text-2xl lg:text-3xl text-foreground">Start Your Consultation</h1>
+          <p className="text-sm text-muted-foreground mt-2">Step {step + 1} of {steps.length}</p>
+        </div>
+
+        {/* Step indicator */}
+        <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-2">
+          {steps.map((s, i) => (
+            <div key={i} className="flex items-center gap-1 flex-shrink-0">
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  i < step
+                    ? 'bg-primary text-primary-foreground'
+                    : i === step
+                    ? 'bg-accent text-accent-foreground ring-2 ring-accent/30'
+                    : 'bg-secondary text-muted-foreground'
+                }`}
+                title={s.label}
+              >
+                {i < step ? '✓' : s.emoji}
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`w-4 h-0.5 flex-shrink-0 ${i < step ? 'bg-primary' : 'bg-border'}`} />
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 lg:p-8">
-          <BookingSteps currentStep={step} />
-
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -92,93 +161,22 @@ export default function Booking() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              {step === 0 && (
-                <div className="space-y-4">
-                  <div>
-                    <Label>Full Name</Label>
-                    <Input value={form.patient_name} onChange={e => update('patient_name', e.target.value)} placeholder="Your full name" className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="your@email.com" className="mt-1.5" />
-                  </div>
-                  <div>
-                    <Label>Phone (optional)</Label>
-                    <Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5" />
-                  </div>
-                </div>
-              )}
-
-              {step === 1 && (
-                <div className="space-y-4">
-                  <div>
-                    <Label>Procedure of Interest</Label>
-                    <Select value={form.procedure_interest} onValueChange={v => update('procedure_interest', v)}>
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Select a procedure" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {procedures.map(p => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Additional Notes (optional)</Label>
-                    <Textarea value={form.notes} onChange={e => update('notes', e.target.value)} placeholder="Tell us about your goals..." className="mt-1.5 h-24" />
-                  </div>
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="space-y-4">
-                  <div>
-                    <Label>Preferred Consultation Date</Label>
-                    <div className="relative mt-1.5">
-                      <Input type="date" value={form.preferred_date} onChange={e => update('preferred_date', e.target.value)} />
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Our team will confirm availability and may suggest alternative dates if needed.
-                  </p>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-foreground">Review Your Details</h3>
-                  <div className="bg-secondary/50 rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Name</span>
-                      <span className="font-medium">{form.patient_name}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Email</span>
-                      <span className="font-medium">{form.email}</span>
-                    </div>
-                    {form.phone && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Phone</span>
-                        <span className="font-medium">{form.phone}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Procedure</span>
-                      <span className="font-medium">{procedures.find(p => p.value === form.procedure_interest)?.label}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Preferred Date</span>
-                      <span className="font-medium">{form.preferred_date}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {step === 0 && <Section1PersonalInfo form={form} update={update} />}
+              {step === 1 && <Section2Travel form={form} update={update} />}
+              {step === 2 && <Section3Cultural form={form} update={update} />}
+              {step === 3 && <Section4MedicalHistory form={form} update={update} />}
+              {step === 4 && <Section5Anesthesia form={form} update={update} />}
+              {step === 5 && <Section6Medications form={form} update={update} />}
+              {step === 6 && <Section7Lifestyle form={form} update={update} />}
+              {step === 7 && <Section8Emotional form={form} update={update} />}
+              {step === 8 && <Section9Pregnancy form={form} update={update} />}
+              {step === 9 && <Section10Documents form={form} update={update} />}
+              {step === 10 && <SectionProcedure form={form} update={update} />}
             </motion.div>
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="flex justify-between mt-8">
+          <div className="flex justify-between mt-8 pt-6 border-t border-border">
             <Button
               variant="outline"
               onClick={() => setStep(s => s - 1)}
@@ -186,7 +184,7 @@ export default function Booking() {
             >
               <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
-            {step < 3 ? (
+            {step < steps.length - 1 ? (
               <Button
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canNext()}
@@ -197,10 +195,10 @@ export default function Booking() {
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || !canNext()}
                 className="bg-accent hover:bg-accent/90 text-accent-foreground"
               >
-                {createMutation.isPending ? 'Submitting...' : 'Confirm Booking'}
+                {createMutation.isPending ? 'Submitting...' : 'Submit Consultation'}
               </Button>
             )}
           </div>
