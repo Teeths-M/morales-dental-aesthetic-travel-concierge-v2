@@ -16,6 +16,19 @@ export default function HowItWorks() {
   return (
     <section className="py-16 lg:py-24 bg-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="mb-10 rounded-2xl overflow-hidden shadow-md"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <img
+            src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/c33a8af2d_Addhome2.png"
+            alt="Your Journey. Perfectly Planned."
+            className="w-full h-auto object-cover"
+          />
+        </motion.div>
+
         <motion.div 
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
