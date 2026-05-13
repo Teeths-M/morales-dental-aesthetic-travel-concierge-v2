@@ -4,6 +4,7 @@ import StatsBar from '../components/home/StatsBar';
 import WhyChooseUs from '../components/home/WhyChooseUs';
 import HowItWorks from '../components/home/HowItWorks';
 import HeroSlideshow from '../components/home/HeroSlideshow';
+import BrandSlideshow from '../components/home/BrandSlideshow';
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <StatsBar />
       <HeroSlideshow />
       <WhyChooseUs />
+      <BrandSlideshow />
       <HowItWorks />
     </div>
   );
