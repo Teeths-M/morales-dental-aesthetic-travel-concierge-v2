@@ -23,8 +23,8 @@ export default function WhyChooseUs() {
             viewport={{ once: true }}
           >
             <img
-              src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/123761835_generated_1ef10662.png"
-              alt="Modern luxury clinic interior"
+              src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/deb22db2c_addhome5.png"
+              alt="Patient care collage"
               className="w-full h-full object-cover"
             />
           </motion.div>
