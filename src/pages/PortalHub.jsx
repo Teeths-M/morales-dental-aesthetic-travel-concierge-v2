@@ -4,10 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck, ShieldX, Stethoscope, Plane, Hotel, Car,
-  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp
+  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PartnersManager from '@/components/portal/PartnersManager';
 
 const stagePipeline = [
   { key: 'risk_check', label: 'SAFE-T Risk Check', icon: ShieldCheck },
@@ -176,7 +178,7 @@ export default function PortalHub() {
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <ShieldCheck className="w-5 h-5 text-primary-foreground" />
@@ -187,6 +189,19 @@ export default function PortalHub() {
             </div>
           </div>
         </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="workflows" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="workflows" className="gap-1.5"><ShieldCheck className="w-4 h-4" /> Workflows</TabsTrigger>
+          <TabsTrigger value="partners" className="gap-1.5"><Users className="w-4 h-4" /> Partners</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="partners">
+          <PartnersManager />
+        </TabsContent>
+
+        <TabsContent value="workflows">
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -263,6 +278,9 @@ export default function PortalHub() {
             </div>
           )}
         </div>
+
+        </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

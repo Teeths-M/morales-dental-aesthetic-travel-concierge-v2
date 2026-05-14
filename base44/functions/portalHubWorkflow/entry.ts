@@ -133,7 +133,22 @@ The Morales Dental & Aesthetics Concierge Team
     });
   }
 
-  // 6. APPROVED — notify partners
+  // 6. APPROVED — fetch active partners from DB
+  const allPartners = await base44.asServiceRole.entities.Partner.filter({ is_active: true });
+  const getPartnerEmails = (type) => allPartners.filter(p => p.type === type).map(p => p.email);
+
+  const doctorEmails = getPartnerEmails('doctor');
+  const travelEmails = getPartnerEmails('travel');
+  const hotelEmails = getPartnerEmails('hotel');
+  const cabEmails = getPartnerEmails('cab');
+
+  // notify partners — notify all emails per type
+  const sendToPartners = async (emails, subject, body) => {
+    for (const email of emails) {
+      await base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body });
+    }
+  };
+
   const partnerNotifications = [
     {
       partner: 'doctor',
@@ -212,14 +227,21 @@ Please confirm availability via the portal.
     },
   ];
 
+  // Send emails to each partner type
+  const [doctorNotif, travelNotif, hotelNotif, cabNotif] = partnerNotifications;
+  if (doctorEmails.length > 0) await sendToPartners(doctorEmails, doctorNotif.email_subject, doctorNotif.email_body);
+  if (travelEmails.length > 0) await sendToPartners(travelEmails, travelNotif.email_subject, travelNotif.email_body);
+  if (hotelEmails.length > 0) await sendToPartners(hotelEmails, hotelNotif.email_subject, hotelNotif.email_body);
+  if (cabEmails.length > 0) await sendToPartners(cabEmails, cabNotif.email_subject, cabNotif.email_body);
+
   // Update partners status to "notified"
   const partnerUpdates = {
-    doctor_status: 'notified',
-    travel_status: 'notified',
-    hotel_status: 'notified',
-    cab_status: 'notified',
+    doctor_status: doctorEmails.length > 0 ? 'notified' : 'pending',
+    travel_status: travelEmails.length > 0 ? 'notified' : 'pending',
+    hotel_status: hotelEmails.length > 0 ? 'notified' : 'pending',
+    cab_status: cabEmails.length > 0 ? 'notified' : 'pending',
     stage: 'doctor',
-    last_update_summary: `SAFE-T approved (${riskAssessment.risk_level} risk). All 4 partners notified and awaiting confirmation.`,
+    last_update_summary: `SAFE-T approved (${riskAssessment.risk_level} risk). Partners notified.`,
   };
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, partnerUpdates);
