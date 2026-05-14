@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PartnersManager from '@/components/portal/PartnersManager';
+import CapacityDashboard from '@/components/portal/CapacityDashboard';
 
 const stagePipeline = [
   { key: 'risk_check', label: 'SAFE-T Risk Check', icon: ShieldCheck },
@@ -195,10 +196,15 @@ export default function PortalHub() {
         <TabsList className="mb-6">
           <TabsTrigger value="workflows" className="gap-1.5"><ShieldCheck className="w-4 h-4" /> Workflows</TabsTrigger>
           <TabsTrigger value="partners" className="gap-1.5"><Users className="w-4 h-4" /> Partners</TabsTrigger>
+          <TabsTrigger value="capacity" className="gap-1.5"><Clock className="w-4 h-4" /> Capacity</TabsTrigger>
         </TabsList>
 
         <TabsContent value="partners">
           <PartnersManager />
+        </TabsContent>
+
+        <TabsContent value="capacity">
+          <CapacityDashboard />
         </TabsContent>
 
         <TabsContent value="workflows">

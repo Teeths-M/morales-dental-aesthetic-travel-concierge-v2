@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import CapacityGate from './CapacityGate';
 
 const procedures = [
   // Dental
@@ -45,6 +46,10 @@ const procedures = [
 ];
 
 export default function SectionProcedure({ form, update }) {
+  const handleMonthChange = (newDate) => {
+    update('preferred_date', newDate);
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2 mb-1">
@@ -77,6 +82,11 @@ export default function SectionProcedure({ form, update }) {
         <Input type="date" value={form.preferred_date} onChange={e => update('preferred_date', e.target.value)} className="mt-1.5" />
         <p className="text-xs text-muted-foreground mt-1">Our team will confirm availability and may suggest alternatives.</p>
       </div>
+
+      {/* Capacity gate — shown once both procedure and date are selected */}
+      {form.preferred_date && (
+        <CapacityGate form={form} onMonthChange={handleMonthChange} />
+      )}
 
       <div>
         <Label>Additional Notes (optional)</Label>

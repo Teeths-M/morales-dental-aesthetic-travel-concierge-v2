@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Star, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
+import SlotCounter from './SlotCounter';
 
 const testimonials = [
   { name: 'Sandra T.', country: 'Trinidad & Tobago', quote: 'I felt cared for every single step. They handled everything.', rating: 5 },
@@ -66,6 +67,8 @@ export default function Hero() {
             <p className="text-sm font-medium text-accent italic mb-8">
               "More than a clinic visit — it's a life-changing journey we take together."
             </p>
+
+            <SlotCounter className="mb-4" />
 
             <div className="flex flex-wrap gap-3 mb-10">
               <Link to="/booking">

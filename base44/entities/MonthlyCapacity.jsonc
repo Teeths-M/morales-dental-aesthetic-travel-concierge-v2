@@ -1,0 +1,39 @@
+{
+  "name": "MonthlyCapacity",
+  "type": "object",
+  "properties": {
+    "year_month": {
+      "type": "string",
+      "description": "Format: YYYY-MM (e.g. 2026-05)"
+    },
+    "capacity_limit": {
+      "type": "number",
+      "default": 40,
+      "description": "Max confirmed bookings for this month"
+    },
+    "confirmed_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of confirmed (deposit paid) bookings"
+    },
+    "scarcity_markup_threshold": {
+      "type": "number",
+      "default": 10,
+      "description": "When remaining slots < this, apply higher markup"
+    },
+    "base_markup_pct": {
+      "type": "number",
+      "default": 25
+    },
+    "scarcity_markup_pct": {
+      "type": "number",
+      "default": 35
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "year_month"
+  ]
+}

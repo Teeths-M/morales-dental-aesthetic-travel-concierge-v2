@@ -1,0 +1,53 @@
+{
+  "name": "WaitingList",
+  "type": "object",
+  "properties": {
+    "patient_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "desired_month": {
+      "type": "string",
+      "description": "Format: YYYY-MM"
+    },
+    "procedure_interest": {
+      "type": "string"
+    },
+    "consultation_id": {
+      "type": "string",
+      "description": "Link to existing consultation if applicable"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "waiting",
+        "notified",
+        "converted",
+        "expired"
+      ],
+      "default": "waiting"
+    },
+    "notified_at": {
+      "type": "string",
+      "description": "ISO timestamp when slot offer was sent"
+    },
+    "offer_expires_at": {
+      "type": "string",
+      "description": "ISO timestamp \u2014 48h after notified_at"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_name",
+    "email",
+    "desired_month"
+  ]
+}
