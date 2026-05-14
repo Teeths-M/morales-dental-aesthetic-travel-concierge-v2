@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import HowItWorksPage from './pages/HowItWorksPage';
 import About from './pages/About';
 import Procedures from './pages/Procedures';
+import PortalHub from './pages/PortalHub';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
+        <Route path="/portal-hub" element={<PortalHub />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
