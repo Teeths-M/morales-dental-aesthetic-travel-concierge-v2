@@ -58,7 +58,7 @@ export default function Hero() {
               <span className="text-primary">Your Safety.</span>
             </h1>
 
-            <p className="text-base lg:text-lg max-w-md mb-4 leading-relaxed text-[hsl(var(--sidebar-accent-foreground))]">Premium dental, aesthetic & wellness care with door-to-door concierge service. Save 30–40% versus US & Canadian pricing — without compromising on quality.
+            <p className="lg:text-lg max-w-md mb-4 leading-relaxed text-[hsl(var(--sidebar-accent-foreground))] text-xl">Premium dental, aesthetic & wellness care with door-to-door concierge service. Save 30–40% versus US & Canadian pricing — without compromising on quality.
 
 
             </p>
