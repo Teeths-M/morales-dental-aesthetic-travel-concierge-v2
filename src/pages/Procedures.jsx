@@ -1,631 +1,269 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronRight } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
-import { toast } from 'sonner';
-import ProcedureModal from '../components/procedures/ProcedureModal';
-import ConsultationMedicalCart from '../components/cart/ConsultationMedicalCart';
+import { procedureCategories } from '@/components/procedures/ProcedureData';
+import ProcedureSearch from '@/components/procedures/ProcedureSearch';
+import MyProceduresList from '@/components/procedures/MyProceduresList';
+import VoiceMode from '@/components/procedures/VoiceMode';
 
-
-
-const categories = [
-  {
-    id: 'dental',
-    label: 'Dental',
-    color: 'bg-primary/10 text-primary',
-    procedures: [
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/207e353da_generated_image.png',
-        title: 'Dental Implants',
-        tag: 'Most Popular',
-        desc: 'Permanent tooth replacement with titanium implants that look, feel, and function like natural teeth.',
-        duration: '1–2 hours per implant',
-        recovery: '3–6 months (osseointegration)',
-        whatToExpect: [
-          'CT scan and treatment planning session',
-          'Implant placement under local anesthesia',
-          'Healing period for the implant to fuse with bone',
-          'Crown placement for a seamless final result',
-        ],
-        benefits: ['Permanent, lifelong solution', 'Preserves jawbone density', 'No impact on adjacent teeth', 'Natural look and feel'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f4d1773c4_generated_image.png',
-        title: 'All-on-4 / All-on-6',
-        tag: 'Full Arch',
-        desc: 'Full arch restoration with just 4–6 implants. Leave with a brand-new fixed smile in a single trip.',
-        duration: '4–6 hours',
-        recovery: '3–5 days before light activity',
-        whatToExpect: [
-          'Pre-surgical digital smile design',
-          'All extractions and implants in one session',
-          'Immediate temporary teeth placed same day',
-          'Final permanent bridge after healing',
-        ],
-        benefits: ['Full mouth in one visit', 'No removable dentures', 'Bone preservation', 'Immediate function and aesthetics'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/d398d8f5d_generated_image.png',
-        title: 'Porcelain Veneers',
-        tag: 'Aesthetic',
-        desc: 'Ultra-thin porcelain shells custom-crafted and bonded to the front of teeth for a flawless smile.',
-        duration: '2 appointments',
-        recovery: 'Minimal — 1–2 days sensitivity',
-        whatToExpect: [
-          'Smile design and shade selection',
-          'Minimal tooth preparation',
-          'Temporary veneers while permanent ones are made',
-          'Final bonding with precision fit',
-        ],
-        benefits: ['Hollywood-quality smile', 'Stain-resistant porcelain', 'Minimal tooth removal', 'Lasts 10–20 years'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/207e353da_generated_image.png',
-        title: 'Smile Makeover',
-        tag: 'Premium',
-        desc: 'A comprehensive smile transformation combining veneers, whitening, contouring, and alignment for stunning results.',
-        duration: '2–5 days',
-        recovery: '1–3 days',
-        whatToExpect: [
-          'Full dental and aesthetic assessment',
-          'Digital mock-up so you see the result beforehand',
-          'Combination of cosmetic treatments in sequence',
-          'Final polishing and bite check',
-        ],
-        benefits: ['Total aesthetic transformation', 'Customized for your face shape', 'Long-lasting results', 'Confidence-boosting'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f4d1773c4_generated_image.png',
-        title: 'Bone Regeneration',
-        tag: 'Surgical',
-        desc: 'Advanced grafting techniques to rebuild jawbone density—essential preparation for successful implant placement.',
-        duration: '1–2 hours',
-        recovery: '2–4 weeks',
-        whatToExpect: [
-          'Cone beam CT scan analysis',
-          'Guided bone regeneration with membrane',
-          'Healing phase before implant placement',
-        ],
-        benefits: ['Enables implants where bone was lost', 'Uses biocompatible materials', 'Long-term jaw health'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/d398d8f5d_generated_image.png',
-        title: 'Teeth Whitening & Cosmetic Dentistry',
-        tag: 'Non-Invasive',
-        desc: 'From professional whitening to composite bonding—enhance your smile without surgery.',
-        duration: '1–2 hours',
-        recovery: 'None',
-        whatToExpect: [
-          'Shade analysis and whitening plan',
-          'In-office laser or tray whitening',
-          'Optional composite bonding or contouring',
-        ],
-        benefits: ['Immediate results', 'No downtime', 'Affordable entry-level cosmetic option'],
-      },
-    ],
-  },
-  {
-    id: 'cosmetic',
-    label: 'Cosmetic Surgery',
-    color: 'bg-accent/10 text-accent',
-    procedures: [
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/2e808397e_generated_image.png',
-        title: 'Rhinoplasty (Nose Reshaping)',
-        tag: 'Facial',
-        desc: 'Surgical reshaping of the nose for aesthetic harmony or improved breathing—one of the most refined cosmetic surgeries.',
-        duration: '2–4 hours',
-        recovery: '1–2 weeks visible swelling, full results in 12 months',
-        whatToExpect: [
-          '3D imaging consultation to preview results',
-          'General anesthesia — open or closed technique',
-          'Nasal splint worn for 1 week',
-          'Gradual swelling reduction over months',
-        ],
-        benefits: ['Permanent reshaping', 'Can improve breathing (septoplasty combined)', 'Tailored to facial proportions'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7a6e85bac_generated_image.png',
-        title: 'Breast Augmentation / Reduction / Lift',
-        tag: 'Body',
-        desc: 'Enhance, reduce, or lift the breasts for improved shape, symmetry, and confidence using the latest techniques.',
-        duration: '1–3 hours',
-        recovery: '1–2 weeks rest, 4–6 weeks full recovery',
-        whatToExpect: [
-          'Pre-surgical measurements and implant sizing',
-          'General anesthesia',
-          'Implant placement (augmentation) or tissue reshaping (reduction/lift)',
-          'Compression garment worn post-op',
-        ],
-        benefits: ['Improved proportion and symmetry', 'Long-lasting results', 'Multiple technique options', 'High satisfaction rates'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/a9ef6f086_generated_image.png',
-        title: 'Liposuction',
-        tag: 'Body Contouring',
-        desc: 'Targeted fat removal from stubborn areas including abdomen, flanks, thighs, arms, and more.',
-        duration: '1–4 hours',
-        recovery: '1–2 weeks, compression garment 4–6 weeks',
-        whatToExpect: [
-          'Pre-op body marking and analysis',
-          'Tumescent technique for minimal bleeding',
-          'Small incisions, cannula fat removal',
-          'Compression garment immediately post-op',
-        ],
-        benefits: ['Permanent fat cell removal', 'Sculpted, defined contours', 'Minimal scarring', 'Can be combined with other procedures'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/a61b9e225_generated_image.png',
-        title: 'Abdominoplasty (Tummy Tuck)',
-        tag: 'Body',
-        desc: 'Removes excess skin and tightens abdominal muscles for a flat, toned midsection—especially after weight loss or pregnancy.',
-        duration: '2–4 hours',
-        recovery: '2–4 weeks rest, full recovery 6–8 weeks',
-        whatToExpect: [
-          'Full or mini tummy tuck planning',
-          'Muscle repair and excess skin removal',
-          'Repositioning of the navel',
-          'Drainage tubes in place for a few days',
-        ],
-        benefits: ['Flat and toned abdomen', 'Repairs muscle separation (diastasis)', 'Long-lasting with stable weight'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/2b41a5cba_generated_image.png',
-        title: 'Facelift',
-        tag: 'Facial',
-        desc: 'Lifts and firms sagging facial and neck tissue for a naturally youthful, refreshed appearance.',
-        duration: '3–5 hours',
-        recovery: '2 weeks before returning to normal activities',
-        whatToExpect: [
-          'Deep plane or SMAS technique planning',
-          'General or twilight anesthesia',
-          'Incisions concealed within hairline and ears',
-          'Results visible as swelling resolves over weeks',
-        ],
-        benefits: ['10–15 years of rejuvenation', 'Natural-looking results', 'Long-lasting — 7–10 years', 'Can be combined with eyelid or brow lift'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/542e1ddbb_generated_image.png',
-        title: 'Brow Lift',
-        tag: 'Facial',
-        desc: 'Elevates a heavy or drooping brow to restore a more alert, youthful, and energetic appearance.',
-        duration: '1–2 hours',
-        recovery: '1–2 weeks',
-        whatToExpect: [
-          'Endoscopic or open technique based on anatomy',
-          'Small incisions within the hairline',
-          'Brow repositioned and secured',
-        ],
-        benefits: ['Opens up the eye area', 'Reduces forehead lines', 'Often paired with facelift or eyelid surgery'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/542e1ddbb_generated_image.png',
-        title: 'Eyelid Surgery (Blepharoplasty)',
-        tag: 'Facial',
-        desc: 'Removes excess skin and fat from upper and/or lower eyelids to restore a rested, youthful look.',
-        duration: '1–2 hours',
-        recovery: '1–2 weeks visible bruising',
-        whatToExpect: [
-          'Upper, lower, or both eyelids assessed',
-          'Local anesthesia with sedation',
-          'Fine incisions hidden in natural creases',
-          'Sutures removed in 5–7 days',
-        ],
-        benefits: ['Brighter, more open eyes', 'Removes under-eye bags', 'Minimal scarring', 'Can improve peripheral vision'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/60dc819ce_generated_image.png',
-        title: 'Otoplasty (Ear Reshaping)',
-        tag: 'Facial',
-        desc: 'Reshapes and repositions prominent or asymmetrical ears for improved facial harmony.',
-        duration: '1–2 hours',
-        recovery: '1 week with head bandage',
-        whatToExpect: [
-          'Cartilage reshaping and repositioning',
-          'Sutures to hold new ear shape',
-          'Protective bandage for 1 week',
-        ],
-        benefits: ['Permanent ear reshaping', 'Suitable for children and adults', 'High patient satisfaction'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e76cc304f_generated_image.png',
-        title: 'Thigh Lift / Arm Lift',
-        tag: 'Body',
-        desc: 'Removes excess skin from inner thighs or upper arms—ideal after significant weight loss or aging-related skin laxity.',
-        duration: '1–3 hours',
-        recovery: '2–3 weeks',
-        whatToExpect: [
-          'Skin excision and contouring plan',
-          'Incisions placed in discreet locations',
-          'Compression garments worn post-op',
-        ],
-        benefits: ['Smoother, tighter contour', 'Improves comfort and mobility', 'Often combined with liposuction'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8d759847c_generated_image.png',
-        title: 'Skin Rejuvenation (Laser Resurfacing)',
-        tag: 'Non-Invasive',
-        desc: 'Laser treatments to reduce wrinkles, sun damage, acne scars, and uneven tone for radiant, renewed skin.',
-        duration: '30–90 minutes',
-        recovery: '3–10 days depending on intensity',
-        whatToExpect: [
-          'Skin assessment and laser type selection',
-          'Topical or light anesthesia applied',
-          'Laser passes over target areas',
-          'Redness and peeling as skin renews',
-        ],
-        benefits: ['Significant texture and tone improvement', 'Stimulates collagen production', 'Minimal downtime (non-ablative)', 'Natural-looking rejuvenation'],
-      },
-    ],
-  },
-  {
-    id: 'bariatric',
-    label: 'Weight Loss & Bariatric',
-    color: 'bg-primary/15 text-primary',
-    procedures: [
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9ce244573_generated_image.png',
-        title: 'Gastric Sleeve (Sleeve Gastrectomy)',
-        tag: 'Bariatric',
-        desc: 'Removal of approximately 80% of the stomach to limit food intake and reduce hunger hormones for lasting weight loss.',
-        duration: '1–1.5 hours',
-        recovery: '2–4 weeks',
-        whatToExpect: [
-          'Pre-op nutritional and psychological evaluation',
-          'Laparoscopic (minimally invasive) approach',
-          'Hospital stay of 2–3 days',
-          'Liquid diet progressing to solid foods over weeks',
-        ],
-        benefits: ['60–70% excess weight loss', 'Reduces hunger hormone (ghrelin)', 'No foreign body implanted', 'Improves type 2 diabetes, sleep apnea'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9ce244573_generated_image.png',
-        title: 'Gastric Bypass (Roux-en-Y)',
-        tag: 'Bariatric',
-        desc: 'Creates a small stomach pouch and reroutes the small intestine for powerful weight loss and metabolic improvement.',
-        duration: '2–3 hours',
-        recovery: '3–5 weeks',
-        whatToExpect: [
-          'Comprehensive pre-surgical health screening',
-          'Laparoscopic technique',
-          'Hospital stay 3–4 days',
-          'Strict dietary progression over 8 weeks',
-        ],
-        benefits: ['70–80% excess weight loss', 'Highly effective for type 2 diabetes remission', 'Long-term results with lifestyle adherence'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9ce244573_generated_image.png',
-        title: 'Gastric Band Removal / Revision',
-        tag: 'Revision',
-        desc: 'Removal or revision of a previously placed gastric band and conversion to sleeve or bypass for better outcomes.',
-        duration: '1–2 hours',
-        recovery: '2–3 weeks',
-        whatToExpect: [
-          'Pre-op imaging to assess band position',
-          'Laparoscopic removal',
-          'Optional conversion to sleeve gastrectomy',
-        ],
-        benefits: ['Resolves band complications', 'Opportunity for renewed weight loss approach'],
-      },
-    ],
-  },
-  {
-    id: 'fertility',
-    label: 'Fertility & Gynecology',
-    color: 'bg-accent/15 text-accent',
-    procedures: [
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/eacda8441_generated_image.png',
-        title: 'Gynecological Diagnostic Exams',
-        tag: 'Diagnostics',
-        desc: 'Comprehensive gynecological evaluations including pelvic ultrasound, colposcopy, hysteroscopy, and fertility panel bloodwork.',
-        duration: '1–2 hours',
-        recovery: 'None to minimal',
-        whatToExpect: [
-          'Full pelvic and transvaginal ultrasound',
-          'Hormone and fertility blood panel',
-          'Endometrial assessment if indicated',
-          'Detailed fertility report with specialist recommendations',
-        ],
-        benefits: ['Clear baseline for fertility planning', 'Early detection of conditions', 'Guided treatment planning'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/eacda8441_generated_image.png',
-        title: 'IVF (In Vitro Fertilization)',
-        tag: 'Fertility',
-        desc: 'Egg retrieval and laboratory fertilization followed by embryo transfer — the gold standard for assisted reproduction.',
-        duration: '2–6 week cycle',
-        recovery: '1–2 days post retrieval',
-        whatToExpect: [
-          'Ovarian stimulation with monitoring',
-          'Egg retrieval under sedation',
-          'Fertilization and embryo culture',
-          'Embryo transfer — a simple office procedure',
-        ],
-        benefits: ['Highest IVF success rates in partner clinics', 'Embryo freezing available', 'Genetic testing (PGT) option', 'Personalized protocol'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/eacda8441_generated_image.png',
-        title: 'Fertility Preservation (Egg Freezing)',
-        tag: 'Preservation',
-        desc: 'Vitrification of eggs for future use — ideal for those not yet ready for pregnancy but wanting to preserve options.',
-        duration: '10–14 day stimulation cycle',
-        recovery: '1–2 days',
-        whatToExpect: [
-          'Hormonal stimulation and monitoring',
-          'Egg retrieval under sedation',
-          'Rapid flash-freezing (vitrification)',
-          'Long-term secure storage',
-        ],
-        benefits: ['Preserves fertility at current age', 'No compromise on future options', 'Safe, proven technology'],
-      },
-    ],
-  },
-  {
-    id: 'oncology',
-    label: 'Cancer Care',
-    color: 'bg-primary/10 text-primary',
-    procedures: [
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e759e46df_generated_image.png',
-        title: 'Oncological Surgical Procedures',
-        tag: 'Surgery',
-        desc: 'Tumor removal surgeries performed by board-certified oncological surgeons with access to multidisciplinary care teams.',
-        duration: 'Varies by case',
-        recovery: 'Case-dependent',
-        whatToExpect: [
-          'Comprehensive oncology consultation',
-          'Pre-surgical imaging and staging',
-          'Coordinated surgical and oncology team',
-          'Post-operative monitoring and pathology',
-        ],
-        benefits: ['Access to elite oncological surgeons', 'Multidisciplinary team approach', 'Integrated aftercare coordination'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e759e46df_generated_image.png',
-        title: 'Tumor Marker & Blood Panel Testing',
-        tag: 'Diagnostics',
-        desc: 'Comprehensive cancer blood panels including tumor markers (CEA, AFP, PSA, CA-125, CA 19-9) and full hematology workup.',
-        duration: '1–2 hours',
-        recovery: 'None',
-        whatToExpect: [
-          'Full blood draw at certified laboratory',
-          'Panel includes standard tumor markers',
-          'Results reviewed by oncology specialist',
-          'Report with clinical interpretation',
-        ],
-        benefits: ['Early detection support', 'Fast results (24–48 hrs)', 'Specialist-reviewed report included'],
-      },
-    ],
-  },
-  {
-    id: 'orthopedic',
-    label: 'Orthopedic Surgery',
-    color: 'bg-accent/10 text-accent',
-    procedures: [
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
-        title: 'Joint Replacement (Hip & Knee)',
-        tag: 'Orthopedic',
-        desc: 'Total or partial replacement of worn joints with precision implants to restore pain-free mobility.',
-        duration: '1.5–3 hours',
-        recovery: '6–12 weeks',
-        whatToExpect: [
-          'Pre-surgical X-ray and joint assessment',
-          'Implant selection and sizing',
-          'Physical therapy begins within 24 hours',
-          'Gradual return to full activity',
-        ],
-        benefits: ['Eliminates chronic joint pain', 'Restores mobility and quality of life', 'Implants last 15–25 years'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
-        title: 'Spine Surgery',
-        tag: 'Orthopedic',
-        desc: 'Minimally invasive procedures for herniated discs, spinal stenosis, and vertebral instability.',
-        duration: '1–4 hours',
-        recovery: '2–6 weeks depending on procedure',
-        whatToExpect: [
-          'MRI and CT scan analysis',
-          'Minimally invasive approach where possible',
-          'Pain management protocol',
-          'Physiotherapy-guided rehabilitation',
-        ],
-        benefits: ['Relief from chronic back/neck pain', 'Minimally invasive options available', 'Expert traumatology teams'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
-        title: 'Sports Injuries & Arthroscopy',
-        tag: 'Traumatology',
-        desc: 'Arthroscopic repair of ligaments, tendons, and cartilage—ACL reconstruction, rotator cuff repair, meniscus surgery.',
-        duration: '1–2 hours',
-        recovery: '4–12 weeks with physiotherapy',
-        whatToExpect: [
-          'Sports medicine evaluation and imaging',
-          'Minimally invasive arthroscopic surgery',
-          'Rehabilitation plan from day one',
-        ],
-        benefits: ['Faster recovery vs open surgery', 'Minimal scarring', 'Return to sport at full capacity'],
-      },
-      {
-        image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/65dd92402_generated_image.png',
-        title: 'Fracture Management & Trauma Surgery',
-        tag: 'Traumatology',
-        desc: 'Surgical fixation and management of complex fractures using plates, screws, and nails by expert traumatologists.',
-        duration: 'Varies by fracture',
-        recovery: '6–12 weeks',
-        whatToExpect: [
-          'Emergency or planned fracture assessment',
-          'Open reduction and internal fixation (ORIF)',
-          'Cast or brace support post-op',
-        ],
-        benefits: ['Precise alignment for optimal healing', 'Reduced risk of malunion', 'Expert traumatology care'],
-      },
-    ],
-  },
+const parentFilters = [
+  { id: 'all', label: 'All', emoji: '🏥' },
+  { id: 'dental', label: 'Dental', emoji: '🦷' },
+  { id: 'aesthetic', label: 'Aesthetic', emoji: '✨' },
+  { id: 'wellness', label: 'Wellness', emoji: '🌿' },
 ];
 
+function ProcedureCard({ proc, isSelected, onAdd, onRemove }) {
+  const c = proc.categoryColor;
+  return (
+    <motion.div
+      className={`relative bg-white rounded-2xl border transition-all cursor-pointer group ${isSelected ? 'border-emerald-400 shadow-md shadow-emerald-100' : 'border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200'}`}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+    >
+      {isSelected && (
+        <div className="absolute top-3 right-3 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center z-10">
+          <Check className="w-3.5 h-3.5 text-white" />
+        </div>
+      )}
+      <div className="p-4">
+        <div className="flex items-start gap-3 mb-3">
+          <div className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center flex-shrink-0`}>
+            <span className="text-lg">{proc.categoryId?.includes('dental-cosmetic') ? '✨' : proc.categoryId?.includes('dental-implant') ? '🔩' : proc.categoryId?.includes('dental-ortho') ? '😁' : proc.categoryId?.includes('dental') ? '🦷' : proc.categoryId?.includes('breast') ? '🌸' : proc.categoryId?.includes('body') ? '💪' : proc.categoryId?.includes('face') ? '💆' : proc.categoryId?.includes('wellness') ? '🌿' : '⚕️'}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}>{proc.tag}</span>
+            <h3 className="font-semibold text-slate-800 text-sm mt-1.5 leading-tight">{proc.title}</h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+            <Clock className="w-3 h-3" />{proc.duration}
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+            <Calendar className="w-3 h-3" />{proc.recovery}
+          </div>
+        </div>
+
+        <button
+          onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
+          className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${
+            isSelected
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+              : `${c.bg} ${c.text} border ${c.border} hover:opacity-80`
+          }`}
+        >
+          {isSelected ? '✓ Added — Remove' : '+ Add to My List'}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Procedures() {
-  const [selected, setSelected] = useState(null);
-  const [activeCategory, setActiveCategory] = useState('all');
-  const { addItem } = useCart();
+  const [activeParent, setActiveParent] = useState('all');
+  const [selectedProcs, setSelectedProcs] = useState([]);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [tooltip, setTooltip] = useState(null);
 
-  const [ProcedureModal, setProcedureModal] = useState(null);
-
-  const handleAddToCart = (procedure) => {
-    addItem({
-      name: procedure.title,
-      preparation_notes: procedure.whatToExpect?.[0] || '',
-    });
-    toast.success(`${procedure.title} added to cart`);
+  const addProc = (proc) => {
+    if (!selectedProcs.find(p => p.title === proc.title)) {
+      setSelectedProcs(prev => [...prev, proc]);
+    }
   };
 
-  React.useEffect(() => {
-    import('../components/procedures/ProcedureModal').then(m => setProcedureModal(() => m.default));
-  }, []);
+  const removeProc = (proc) => {
+    setSelectedProcs(prev => prev.filter(p => p.title !== proc.title));
+  };
 
-  const displayedCategories = activeCategory === 'all'
-    ? categories
-    : categories.filter(c => c.id === activeCategory);
+  const handleVoiceDetected = (procs) => {
+    procs.forEach(p => addProc(p));
+  };
+
+  const filteredCategories = activeParent === 'all'
+    ? procedureCategories
+    : procedureCategories.filter(c => c.parent === activeParent);
 
   return (
-    <div className="py-12 lg:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Cart sidebar */}
-        <div className="mb-10">
-          <ConsultationMedicalCart />
-        </div>
-
-        {/* Header */}
-        <motion.div
-          className="text-center mb-10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Our Services</p>
-          <h1 className="font-display text-3xl lg:text-5xl text-foreground mb-4">Procedures & Treatments</h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            World-class medical, dental, and aesthetic care delivered by verified specialists — click any procedure to learn more.
-          </p>
-        </motion.div>
-
-        {/* Category Filter */}
-        <div className="flex flex-wrap gap-2 justify-center mb-10">
-          <button
-            onClick={() => setActiveCategory('all')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
-              activeCategory === 'all'
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card text-muted-foreground border-border hover:border-primary/50'
-            }`}
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+          <motion.div
+            className="text-center max-w-3xl mx-auto mb-8"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            All
-          </button>
-          {categories.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setActiveCategory(c.id)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                activeCategory === c.id
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card text-muted-foreground border-border hover:border-primary/50'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Our Services</p>
+            <h1 className="font-display text-3xl lg:text-5xl text-slate-900 mb-4">Procedures & Treatments</h1>
+            <p className="text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
+              World-class dental, aesthetic, and wellness care. Browse below, search, or simply <span className="font-semibold text-emerald-700">speak your goals</span> using Voice Mode.
+            </p>
+          </motion.div>
 
-        {/* Categories */}
-        {displayedCategories.map((cat, catIdx) => (
-          <div key={cat.id} className="mb-14">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-3 mb-6"
-            >
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${cat.color}`}>
-                {cat.label}
-              </span>
-              <div className="flex-1 h-px bg-border" />
-            </motion.div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cat.procedures.map((proc, i) => (
-                <motion.button
-                  key={proc.title}
-                  onClick={() => setSelected(proc)}
-                  className="text-left bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/30 transition-all group"
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.04 }}
-                >
-                  {/* Image strip */}
-                  <div className="w-full h-32 overflow-hidden relative">
-                    <img
-                      src={proc.image}
-                      alt={proc.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent" />
-                    <div className={`absolute top-2.5 left-2.5 inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full backdrop-blur-sm ${cat.color} bg-card/70`}>
-                      {proc.tag}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-display text-lg text-foreground mb-1.5 leading-tight">{proc.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">{proc.desc}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform">
-                        Learn More <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(proc);
-                        }}
-                      >
-                        Select
-                      </Button>
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
+          {/* Search + Voice */}
+          <div className="max-w-2xl mx-auto flex gap-3">
+            <div className="flex-1">
+              <ProcedureSearch onSelect={addProc} />
             </div>
+            <button
+              onClick={() => setVoiceOpen(true)}
+              className="flex-shrink-0 flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-5 py-3.5 rounded-2xl shadow-md text-sm transition-all"
+            >
+              <Mic className="w-4 h-4" />
+              <span className="hidden sm:inline">Voice Mode</span>
+            </button>
           </div>
-        ))}
 
-        {/* Bottom CTA */}
-        <motion.div
-          className="text-center bg-card border border-border rounded-2xl p-8 lg:p-12 mt-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Not Sure Where to Start?</p>
-          <h2 className="font-display text-2xl lg:text-3xl text-foreground mb-3">Talk to Our Concierge Team</h2>
-          <p className="text-muted-foreground text-sm mb-6 max-w-md mx-auto">
-            Our specialists will guide you to the right treatment based on your goals, health profile, and budget.
+          {/* Voice hint */}
+          <p className="text-center text-xs text-slate-400 mt-3">
+            💡 Try Voice Mode: <em>"I want veneers, whitening, and implants on the upper jaw"</em>
           </p>
-          <Link to="/booking">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-10">
-              Book a Free Consultation <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Modal */}
-      {ProcedureModal && <ProcedureModal procedure={selected} onClose={() => setSelected(null)} />}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8 items-start">
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Category filter */}
+            <div className="flex gap-2 flex-wrap mb-8">
+              {parentFilters.map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveParent(f.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                    activeParent === f.id
+                      ? 'bg-gradient-to-r from-emerald-700 to-blue-800 text-white border-transparent shadow-md'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{f.emoji}</span>{f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Procedure categories */}
+            <div className="space-y-10">
+              {filteredCategories.map((cat) => (
+                <div key={cat.id}>
+                  <div className="flex items-center gap-3 mb-5">
+                    <span className="text-xl">{cat.icon}</span>
+                    <h2 className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border ${cat.color.bg} ${cat.color.text} ${cat.color.border}`}>
+                      {cat.label}
+                    </h2>
+                    <div className="flex-1 h-px bg-slate-100" />
+                    <span className="text-xs text-slate-400 font-medium">{cat.procedures.length} treatments</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {cat.procedures.map(proc => {
+                      const enriched = { ...proc, category: cat.label, categoryId: cat.id, categoryColor: cat.color };
+                      return (
+                        <ProcedureCard
+                          key={proc.title}
+                          proc={enriched}
+                          isSelected={!!selectedProcs.find(p => p.title === proc.title)}
+                          onAdd={addProc}
+                          onRemove={removeProc}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <motion.div
+              className="text-center bg-white border border-slate-100 rounded-2xl p-8 lg:p-12 mt-12 shadow-sm"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">Not Sure Where to Start?</p>
+              <h2 className="font-display text-2xl lg:text-3xl text-slate-900 mb-3">Talk to Our Concierge Team</h2>
+              <p className="text-slate-500 text-sm mb-6 max-w-md mx-auto">
+                Our specialists will guide you to the right treatment based on your goals, health profile, and budget.
+              </p>
+              <Link to="/booking">
+                <Button size="lg" className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-10 shadow-md">
+                  Book a Free Consultation <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Sticky sidebar — My Procedures */}
+          <div className="hidden lg:block w-72 flex-shrink-0 sticky top-24">
+            {selectedProcs.length > 0 ? (
+              <MyProceduresList
+                items={selectedProcs}
+                onRemove={removeProc}
+                onClear={() => setSelectedProcs([])}
+              />
+            ) : (
+              <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <span className="text-2xl">🗒️</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-700 mb-1">My Procedures</p>
+                <p className="text-xs text-slate-400 leading-relaxed">Select procedures from the list or use Voice Mode to build your treatment plan.</p>
+              </div>
+            )}
+
+            {/* Voice mode promo */}
+            <button
+              onClick={() => setVoiceOpen(true)}
+              className="mt-4 w-full flex items-center gap-3 bg-gradient-to-r from-emerald-800 to-blue-900 rounded-2xl px-4 py-4 hover:opacity-90 transition-all"
+            >
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Mic className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-bold text-xs">Voice Mode</p>
+                <p className="text-white/70 text-[10px]">Speak your treatments</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile My List sticky bar */}
+      <AnimatePresence>
+        {selectedProcs.length > 0 && (
+          <motion.div
+            className="lg:hidden fixed bottom-6 left-4 right-4 z-40"
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+          >
+            <Link to="/booking">
+              <div className="bg-gradient-to-r from-emerald-700 to-blue-800 rounded-2xl px-5 py-4 shadow-2xl flex items-center justify-between">
+                <div>
+                  <p className="text-white font-bold text-sm">{selectedProcs.length} Treatment{selectedProcs.length !== 1 ? 's' : ''} Selected</p>
+                  <p className="text-white/70 text-xs">Tap to continue to consultation</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-white" />
+              </div>
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Voice Modal */}
+      <AnimatePresence>
+        {voiceOpen && (
+          <VoiceMode
+            onProceduresDetected={handleVoiceDetected}
+            onClose={() => setVoiceOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
