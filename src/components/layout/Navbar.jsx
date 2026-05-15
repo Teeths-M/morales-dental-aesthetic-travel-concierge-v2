@@ -11,6 +11,7 @@ const navLinks = [
   { label: 'Our Experts', path: '/providers' },
   { label: 'SAFE-T 4LIFE™', path: '/safe-t' },
   { label: 'About Us', path: '/about' },
+  { label: 'Dashboard', path: '/dashboard' },
 ];
 
 export default function Navbar() {
