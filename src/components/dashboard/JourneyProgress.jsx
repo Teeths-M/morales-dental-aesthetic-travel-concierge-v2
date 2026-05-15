@@ -1,37 +1,48 @@
 import React from 'react';
-import { CheckCircle, Circle } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 const stages = [
-  'Consultation', 'Planning', 'Booking', 'Travel', 'Procedure', 'Recovery', 'Aftercare'
+  { key: 'consultation', label: 'Consultation' },
+  { key: 'planning', label: 'Doctor Review' },
+  { key: 'booking', label: 'Booking' },
+  { key: 'travel', label: 'Travel' },
+  { key: 'procedure', label: 'Procedure' },
+  { key: 'recovery', label: 'Recovery' },
+  { key: 'aftercare', label: 'Aftercare' },
 ];
 
 export default function JourneyProgress({ currentStage = 'consultation' }) {
-  const currentIndex = stages.findIndex(s => s.toLowerCase() === currentStage);
+  const currentIndex = stages.findIndex(s => s.key === currentStage);
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-4">Your Journey Progress</h3>
-      <div className="flex items-center gap-1 overflow-x-auto pb-2">
+    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-slate-800">Healthcare Journey</h3>
+        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full capitalize">
+          {stages[currentIndex]?.label || 'Consultation'}
+        </span>
+      </div>
+      <div className="flex items-center overflow-x-auto pb-1 gap-0">
         {stages.map((stage, i) => {
           const isComplete = i < currentIndex;
           const isCurrent = i === currentIndex;
-
           return (
-            <React.Fragment key={stage}>
-              <div className="flex flex-col items-center min-w-[70px]">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
-                  isComplete ? 'bg-accent text-accent-foreground' :
-                  isCurrent ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' :
-                  'bg-secondary text-muted-foreground'
-                }`}>
-                  {isComplete ? <CheckCircle className="w-4 h-4" /> : i + 1}
+            <React.Fragment key={stage.key}>
+              <div className="flex flex-col items-center min-w-[64px]">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all
+                  ${isComplete ? 'bg-emerald-600 border-emerald-600 text-white' :
+                    isCurrent ? 'bg-white border-blue-600 text-blue-700 ring-4 ring-blue-50' :
+                    'bg-slate-50 border-slate-200 text-slate-400'}`}>
+                  {isComplete ? <CheckCircle2 className="w-4 h-4" /> : <span>{i + 1}</span>}
                 </div>
-                <span className={`text-[10px] mt-1.5 text-center ${isCurrent ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
-                  {stage}
+                <span className={`text-[10px] mt-1.5 text-center font-medium leading-tight
+                  ${isCurrent ? 'text-blue-700' : isComplete ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  {stage.label}
                 </span>
               </div>
               {i < stages.length - 1 && (
-                <div className={`flex-1 h-0.5 min-w-[12px] ${isComplete ? 'bg-accent' : 'bg-border'}`} />
+                <div className={`flex-1 h-0.5 min-w-[8px] mb-4 mx-0.5 rounded-full
+                  ${isComplete ? 'bg-emerald-500' : 'bg-slate-200'}`} />
               )}
             </React.Fragment>
           );

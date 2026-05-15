@@ -54,6 +54,14 @@ const AuthenticatedApp = () => {
         <Route path="/safe-t" element={<SafeT />} />
         <Route path="/booking" element={<Booking />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/consultations" element={<Dashboard />} />
+        <Route path="/dashboard/profile" element={<Dashboard />} />
+        <Route path="/dashboard/documents" element={<Dashboard />} />
+        <Route path="/dashboard/bookings" element={<Dashboard />} />
+        <Route path="/dashboard/messages" element={<Dashboard />} />
+        <Route path="/dashboard/journey" element={<Dashboard />} />
+        <Route path="/dashboard/support" element={<Dashboard />} />
+        <Route path="/dashboard/settings" element={<Dashboard />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
