@@ -3,7 +3,10 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronRight } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import { toast } from 'sonner';
 import ProcedureModal from '../components/procedures/ProcedureModal';
+import ConsultationMedicalCart from '../components/cart/ConsultationMedicalCart';
 
 
 
@@ -467,8 +470,17 @@ const categories = [
 export default function Procedures() {
   const [selected, setSelected] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
+  const { addItem } = useCart();
 
   const [ProcedureModal, setProcedureModal] = useState(null);
+
+  const handleAddToCart = (procedure) => {
+    addItem({
+      name: procedure.title,
+      preparation_notes: procedure.whatToExpect?.[0] || '',
+    });
+    toast.success(`${procedure.title} added to cart`);
+  };
 
   React.useEffect(() => {
     import('../components/procedures/ProcedureModal').then(m => setProcedureModal(() => m.default));
@@ -481,6 +493,11 @@ export default function Procedures() {
   return (
     <div className="py-12 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Cart sidebar */}
+        <div className="mb-10">
+          <ConsultationMedicalCart />
+        </div>
+
         {/* Header */}
         <motion.div
           className="text-center mb-10"
@@ -564,8 +581,21 @@ export default function Procedures() {
                   <div className="p-4">
                     <h3 className="font-display text-lg text-foreground mb-1.5 leading-tight">{proc.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">{proc.desc}</p>
-                    <div className="flex items-center text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform">
-                      Learn More <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-xs font-semibold text-accent group-hover:translate-x-1 transition-transform">
+                        Learn More <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(proc);
+                        }}
+                      >
+                        Select
+                      </Button>
                     </div>
                   </div>
                 </motion.button>

@@ -4,6 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import PreviewSummary from '@/components/booking/PreviewSummary';
+import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
 
 import Section1PersonalInfo from '../components/booking/Section1PersonalInfo';
 import Section2Travel from '../components/booking/Section2Travel';
@@ -37,6 +40,8 @@ export default function Booking() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [acknowledged, setAcknowledged] = useState(new Set());
+  const [showPreview, setShowPreview] = useState(false);
+  const { items, clearCart } = useCart();
   const [form, setForm] = useState({
     patient_name: '',
     email: '',
@@ -86,19 +91,33 @@ export default function Booking() {
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Consultation.create(data),
-    onSuccess: () => setSubmitted(true),
+    mutationFn: (data) => {
+      const procedureNames = items.map(item => item.name).join(', ') || 'other';
+      return base44.entities.Consultation.create({
+        ...data,
+        procedure_interest: procedureNames,
+      });
+    },
+    onSuccess: () => {
+      clearCart();
+      setSubmitted(true);
+    },
   });
 
   const canNext = () => {
     if (step === 0) return form.patient_name && form.email;
-    if (step === 10) return form.procedure_interest && form.preferred_date;
+    if (step === 10) return form.preferred_date && items.length > 0;
     if (step === 11) return acknowledged.size === 4;
     return true;
   };
 
   const handleSubmit = () => {
+    setShowPreview(true);
+  };
+
+  const handleConfirmSubmit = () => {
     createMutation.mutate(form);
+    setShowPreview(false);
   };
 
   if (submitted) {
@@ -129,7 +148,7 @@ export default function Booking() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-8">
           <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Book Your Visit</p>
-          <h1 className="font-display text-2xl lg:text-3xl text-foreground">Start Your Consultation</h1>
+          <h1 className="font-display text-2xl lg:text-3xl text-foreground">Your Consultation</h1>
           <p className="text-sm text-muted-foreground mt-2">Step {step + 1} of {steps.length}</p>
         </div>
 
@@ -154,6 +173,11 @@ export default function Booking() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Consultation Medical Cart */}
+        <div className="mb-6">
+          <ConsultationMedicalCart />
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 lg:p-8">
@@ -209,6 +233,15 @@ export default function Booking() {
           </div>
         </div>
       </div>
+
+      {/* Preview Summary Modal */}
+      <PreviewSummary
+        isOpen={showPreview}
+        form={form}
+        onEdit={() => setShowPreview(false)}
+        onSubmit={handleConfirmSubmit}
+        isSubmitting={createMutation.isPending}
+      />
     </div>
   );
 }

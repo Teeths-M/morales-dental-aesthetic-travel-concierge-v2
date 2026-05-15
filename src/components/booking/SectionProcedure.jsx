@@ -58,26 +58,6 @@ export default function SectionProcedure({ form, update }) {
       </div>
 
       <div>
-        <Label>Procedure of Interest <span className="text-destructive">*</span></Label>
-        <Select value={form.procedure_interest} onValueChange={v => update('procedure_interest', v)}>
-          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select a procedure" /></SelectTrigger>
-          <SelectContent className="max-h-72">
-            {(() => {
-              const groups = [...new Set(procedures.map(p => p.group))];
-              return groups.map(group => (
-                <React.Fragment key={group}>
-                  {group && <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider border-t border-border first:border-0 mt-1 pt-2">{group}</div>}
-                  {procedures.filter(p => p.group === group).map(p => (
-                    <SelectItem key={p.value} value={p.value} className="pl-4">{p.label}</SelectItem>
-                  ))}
-                </React.Fragment>
-              ));
-            })()}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
         <Label>Preferred Consultation Date <span className="text-destructive">*</span></Label>
         <Input type="date" value={form.preferred_date} onChange={e => update('preferred_date', e.target.value)} className="mt-1.5" />
         <p className="text-xs text-muted-foreground mt-1">Our team will confirm availability and may suggest alternatives.</p>
