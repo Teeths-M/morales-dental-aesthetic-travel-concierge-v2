@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock, Upload } from 'lucide-react';
+import { Star, Clock, Upload, Trash2 } from 'lucide-react';
 
 export default function DoctorDashboard() {
   const [doctors, setDoctors] = useState([]);
@@ -45,6 +45,13 @@ export default function DoctorDashboard() {
     await base44.entities.Doctor.update(editingId, formData);
     setEditingId(null);
     setDoctors(doctors.map(d => d.id === editingId ? { ...d, ...formData } : d));
+  };
+
+  const handleDelete = async (doctorId) => {
+    if (confirm('Are you sure you want to remove this profile?')) {
+      await base44.entities.Doctor.delete(doctorId);
+      setDoctors(doctors.filter(d => d.id !== doctorId));
+    }
   };
 
   if (loading) {
@@ -169,12 +176,21 @@ export default function DoctorDashboard() {
                                   <p className="text-muted-foreground mt-1">{doctorSpecs[0].category || 'Specialist'}</p>
                                 )}
                               </div>
-                              <button
-                                onClick={() => handleEditStart(doctor)}
-                                className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary/20"
-                              >
-                                Edit Profile
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditStart(doctor)}
+                                  className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary/20"
+                                >
+                                  Edit Profile
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(doctor.id)}
+                                  className="px-3 py-2 border border-destructive/50 text-destructive rounded-lg hover:bg-destructive/10"
+                                  title="Delete profile"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
                           </div>
 
