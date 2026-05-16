@@ -173,6 +173,19 @@ export default function PricingCatalogManager() {
     }
   });
 
+  const deleteDoctorMutation = useMutation({
+    mutationFn: id => base44.entities.Doctor.delete(id),
+    onSuccess: () => {
+      console.log('Doctor deleted successfully');
+      qc.invalidateQueries({ queryKey: ['doctors_for_pricing'] });
+      qc.invalidateQueries({ queryKey: ['doctor_prices'] });
+    },
+    onError: (error) => {
+      console.error('Failed to delete doctor:', error);
+      alert(`Failed to delete: ${error.message}`);
+    }
+  });
+
   // Group prices by doctor
   const groupedByDoctor = doctors.map(doc => ({
     ...doc,
@@ -196,18 +209,32 @@ export default function PricingCatalogManager() {
             {groupedByDoctor.map(doc => (
               <Card
                 key={doc.id}
-                className="p-4 cursor-pointer hover:bg-secondary/50 transition-all border-2 hover:border-primary"
-                onClick={() => setSelectedDoctor(doc)}
+                className="p-4 hover:bg-secondary/50 transition-all border-2 hover:border-primary"
               >
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 cursor-pointer" onClick={() => setSelectedDoctor(doc)}>
                     <p className="font-semibold text-foreground">{doc.full_name}</p>
                     <p className="text-xs text-muted-foreground">{doc.clinic_name || doc.clinic_country}</p>
                     <p className="text-xs text-emerald-600 font-medium mt-1">{doc.prices.length} prices set</p>
                   </div>
-                  <Badge variant={doc.status === 'active' ? 'default' : 'outline'}>
-                    {doc.status}
-                  </Badge>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge variant={doc.status === 'active' ? 'default' : 'outline'}>
+                      {doc.status}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete ${doc.full_name}? This will remove the doctor and all their pricing data.`)) {
+                          deleteDoctorMutation.mutate(doc.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
