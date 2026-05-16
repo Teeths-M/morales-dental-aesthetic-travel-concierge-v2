@@ -56,11 +56,28 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
     await saveToDatabase(updated);
   };
 
+  const handleSaveAll = async () => {
+    await saveToDatabase(portfolioItems);
+  };
+
   return (
     <div className="space-y-6">
       {/* Upload Section */}
       <div className="bg-card border border-border rounded-xl p-6">
-        <h3 className="text-lg font-bold text-foreground mb-4">Showcase Your Work</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Showcase Your Work</h3>
+          </div>
+          {portfolioItems.length > 0 && (
+            <button
+              onClick={handleSaveAll}
+              disabled={uploading}
+              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50"
+            >
+              Save Portfolio
+            </button>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground mb-4">Upload before/after photos, procedure videos, and testimonials to build client trust.</p>
         
         <label className="block w-full">
