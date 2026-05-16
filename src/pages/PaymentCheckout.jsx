@@ -159,6 +159,13 @@ export default function PaymentCheckout() {
                    <span>Total Package</span>
                    <span>${(paymentPlan.final_cost - 49).toLocaleString()}</span>
                  </div>
+
+                 {/* Fee Refund Reminder */}
+                 <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                   <p className="text-xs text-emerald-800 leading-relaxed">
+                     <span className="font-semibold">✓ Good news!</span> Your $49 consultation fee has been applied as a credit above. You've already paid it—no additional charges here.
+                   </p>
+                 </div>
               </div>
             </Card>
 

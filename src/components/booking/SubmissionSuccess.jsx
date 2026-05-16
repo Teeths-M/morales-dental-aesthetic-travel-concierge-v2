@@ -111,6 +111,26 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           </div>
         </motion.div>
 
+        {/* Consultation Fee Reminder */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="bg-emerald-50 rounded-2xl border border-emerald-200 shadow-sm p-5"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold text-emerald-900 text-sm">Your $49 Consultation Fee is Refundable</p>
+              <p className="text-xs text-emerald-800 mt-1.5 leading-relaxed">When you book your full procedure package, the $49 consultation fee will be fully credited back to you. No fees are lost — only your commitment secured.</p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Emotional Reassurance */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
