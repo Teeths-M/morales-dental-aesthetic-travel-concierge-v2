@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar } from 'lucide-react';
 import ProcedureModal from '@/components/procedures/ProcedureModal';
+import SelectDoctorModal from '@/components/procedures/SelectDoctorModal';
 import { Button } from '@/components/ui/button';
 import { procedureCategories } from '@/components/procedures/ProcedureData';
 import ProcedureSearch from '@/components/procedures/ProcedureSearch';
@@ -85,6 +86,7 @@ export default function Procedures() {
   const [activeParent, setActiveParent] = useState('all');
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState(null);
+  const [selectDoctorProc, setSelectDoctorProc] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [language, setLanguage] = useState('en');
   const { items, addItem, removeItem, clearCart } = useCart();
@@ -105,7 +107,19 @@ export default function Procedures() {
   const selectedProcs = items; // cart IS the selected list
 
   const addProc = (proc) => {
-    addItem({ name: proc.title, category: proc.category, ...proc });
+    // If proc has doctor info, add directly; otherwise show doctor selector
+    if (proc.doctor_id) {
+      addItem({ 
+        name: proc.title, 
+        category: proc.category,
+        doctor_name: proc.doctor_name,
+        doctor_price_usd: proc.doctor_price_usd,
+        clinic_country: proc.clinic_country,
+        ...proc 
+      });
+    } else {
+      setSelectDoctorProc(proc);
+    }
   };
 
   const removeProc = (proc) => {
@@ -300,6 +314,14 @@ export default function Procedures() {
 
       {/* Learn More Modal */}
       <ProcedureModal procedure={selectedModal} onClose={() => setSelectedModal(null)} />
+
+      {/* Select Doctor Modal */}
+      <SelectDoctorModal
+        procedure={selectDoctorProc}
+        isOpen={!!selectDoctorProc}
+        onClose={() => setSelectDoctorProc(null)}
+        onSelect={addProc}
+      />
     </div>
   );
 }
