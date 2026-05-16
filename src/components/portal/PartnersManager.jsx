@@ -76,7 +76,41 @@ export default function PartnersManager() {
 
   const { data: partners = [], isLoading } = useQuery({
     queryKey: ['partners'],
-    queryFn: () => base44.entities.Partner.list('-created_date', 100),
+    queryFn: async () => {
+      const partnerList = await base44.entities.Partner.list('-created_date', 100);
+      const travelAgencies = await base44.entities.TravelAgency.list('-created_date', 100);
+      const taxiServices = await base44.entities.TaxiService.list('-created_date', 100);
+      
+      // Convert TravelAgency to Partner format
+      const travelPartners = travelAgencies.map(ta => ({
+        id: ta.id,
+        name: ta.agency_name,
+        type: 'travel',
+        email: ta.email,
+        phone: ta.phone,
+        contact_person: '',
+        notes: `Regions: ${ta.service_regions?.join(', ')} | Services: ${ta.services_offered?.join(', ')}`,
+        is_active: ta.status === 'active',
+        created_date: ta.created_date,
+        source: 'TravelAgency'
+      }));
+      
+      // Convert TaxiService to Partner format
+      const taxiPartners = taxiServices.map(ts => ({
+        id: ts.id,
+        name: ts.driver_name || ts.company_name,
+        type: 'cab',
+        email: ts.email,
+        phone: ts.phone,
+        contact_person: ts.driver_name ? ts.company_name : '',
+        notes: `City: ${ts.operating_city} | Vehicles: ${ts.vehicle_types?.join(', ')}`,
+        is_active: ts.status === 'active',
+        created_date: ts.created_date,
+        source: 'TaxiService'
+      }));
+      
+      return [...partnerList, ...travelPartners, ...taxiPartners].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    },
   });
 
   const createMutation = useMutation({
