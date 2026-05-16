@@ -122,49 +122,86 @@ export default function DoctorDashboard() {
                     <div className="flex-1">
                       {isEditing ? (
                         <div className="space-y-4">
-                          <input
-                            type="text"
-                            value={data.full_name || ''}
-                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-lg font-bold"
-                            placeholder="Full Name"
-                          />
-                          <input
-                            type="number"
-                            value={data.years_experience || ''}
-                            onChange={(e) => setFormData({ ...formData, years_experience: parseInt(e.target.value) })}
-                            className="w-full px-3 py-2 border border-border rounded-lg"
-                            placeholder="Years of Experience"
-                          />
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={data.rating || ''}
-                            onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
-                            className="w-full px-3 py-2 border border-border rounded-lg"
-                            placeholder="Rating (0-5)"
-                          />
-                          <textarea
-                            value={data.bio || ''}
-                            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
-                            rows="3"
-                            placeholder="Bio (1-2 sentences)"
-                          />
-                          <div className="flex gap-3 pt-4">
-                            <button
-                              onClick={handleSave}
-                              className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90"
-                            >
-                              Save Changes
-                            </button>
-                            <button
-                              onClick={() => setEditingId(null)}
-                              className="flex-1 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary/20"
-                            >
-                              Cancel
-                            </button>
-                          </div>
+                        <input
+                          type="text"
+                          value={data.full_name || ''}
+                          onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg text-lg font-bold"
+                          placeholder="Full Name"
+                        />
+                        <input
+                          type="email"
+                          value={data.email || ''}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Email"
+                        />
+                        <input
+                          type="tel"
+                          value={data.phone || ''}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Phone Number"
+                        />
+                        <input
+                          type="text"
+                          value={data.clinic_name || ''}
+                          onChange={(e) => setFormData({ ...formData, clinic_name: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Clinic Name"
+                        />
+                        <input
+                          type="text"
+                          value={data.clinic_country || ''}
+                          onChange={(e) => setFormData({ ...formData, clinic_country: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Clinic Country"
+                        />
+                        <input
+                          type="number"
+                          value={data.years_experience || ''}
+                          onChange={(e) => setFormData({ ...formData, years_experience: parseInt(e.target.value) })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Years of Experience"
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          value={data.rating || ''}
+                          onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Rating (0-5)"
+                        />
+                        <input
+                          type="number"
+                          value={data.review_count || ''}
+                          onChange={(e) => setFormData({ ...formData, review_count: parseInt(e.target.value) })}
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          placeholder="Number of Reviews"
+                        />
+                        <textarea
+                          value={data.bio || ''}
+                          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                          rows="3"
+                          placeholder="Bio (1-2 sentences)"
+                        />
+                        <div className="flex gap-3 pt-4">
+                          <button
+                            onClick={handleSave}
+                            className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90"
+                          >
+                            Save Changes
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="flex-1 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary/20"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                         </div>
                       ) : (
                         <>
