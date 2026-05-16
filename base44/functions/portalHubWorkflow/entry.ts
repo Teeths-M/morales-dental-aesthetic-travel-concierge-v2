@@ -250,21 +250,21 @@ Please confirm availability via the portal.
   // 7. Notify the customer of approval
   await base44.asServiceRole.integrations.Core.SendEmail({
     to: consultation.email,
-    subject: '🎉 Your Journey Is Being Planned — Morales Dental & Aesthetics',
+    subject: '✓ Your Consultation Is Approved — Morales Dental & Aesthetics',
     body: `
+M
+─────────────────────
+
 Dear ${consultation.patient_name},
 
-Great news! Your consultation request has been reviewed and approved by our SAFE-T 4LIFE™ system.
+Great news! Your consultation has been approved. We're coordinating with our partners to build your personalized package.
 
-We are now coordinating with our network of trusted partners:
-✅ Your specialist clinic — confirming availability
-✅ Travel agency — arranging your flights & itinerary
-✅ Recovery hotel — securing your comfortable lodging
-✅ Local transport — coordinating your transfers
+✓ Specialist clinic — confirming availability
+✓ Travel arrangements — flights & itinerary  
+✓ Recovery accommodation — comfortable lodging
+✓ Local transfers — seamless transport
 
-You will receive a detailed update as soon as all arrangements are confirmed, typically within 24-48 hours.
-
-In the meantime, if you have any questions, please don't hesitate to reach out to your personal concierge.
+You'll receive complete details within 24-48 hours. Any questions? Contact your concierge anytime.
 
 Warm regards,
 The Morales Dental & Aesthetics Concierge Team
