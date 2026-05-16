@@ -125,7 +125,7 @@ export default function Booking() {
       return form.document_types.length > 0 && form.uploaded_files.length > 0;
     }
     if (step === 10) {
-      return items.length > 0 && form.preferred_date;
+      return form.preferred_date;
     }
     if (step === 11) {
       return form.acknowledged_statements.size === 4;
