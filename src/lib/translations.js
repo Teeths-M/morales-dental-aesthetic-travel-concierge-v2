@@ -460,37 +460,37 @@ export const countries = {
   en: [
     'United States', 'Canada', 'Mexico', 'United Kingdom', 'Ireland',
     'Spain', 'France', 'Germany', 'Italy', 'Portugal', 'Brazil', 'Colombia',
-    'Costa Rica', 'Trinidad & Tobago', 'Jamaica', 'Dominican Republic',
+    'Costa Rica', 'Trinidad & Tobago', 'Jamaica', 'Dominican Republic', 'Venezuela',
     'Thailand', 'Turkey', 'India', 'South Korea', 'Australia',
   ],
   es: [
     'Estados Unidos', 'Canadá', 'México', 'Reino Unido', 'Irlanda',
     'España', 'Francia', 'Alemania', 'Italia', 'Portugal', 'Brasil', 'Colombia',
-    'Costa Rica', 'Trinidad y Tobago', 'Jamaica', 'República Dominicana',
+    'Costa Rica', 'Trinidad y Tobago', 'Jamaica', 'República Dominicana', 'Venezuela',
     'Tailandia', 'Turquía', 'India', 'Corea del Sur', 'Australia',
   ],
   fr: [
     'États-Unis', 'Canada', 'Mexique', 'Royaume-Uni', 'Irlande',
     'Espagne', 'France', 'Allemagne', 'Italie', 'Portugal', 'Brésil', 'Colombie',
-    'Costa Rica', 'Trinité-et-Tobago', 'Jamaïque', 'République dominicaine',
+    'Costa Rica', 'Trinité-et-Tobago', 'Jamaïque', 'République dominicaine', 'Venezuela',
     'Thaïlande', 'Turquie', 'Inde', 'Corée du Sud', 'Australie',
   ],
   pt: [
     'Estados Unidos', 'Canadá', 'México', 'Reino Unido', 'Irlanda',
     'Espanha', 'França', 'Alemanha', 'Itália', 'Portugal', 'Brasil', 'Colômbia',
-    'Costa Rica', 'Trinidad e Tobago', 'Jamaica', 'República Dominicana',
+    'Costa Rica', 'Trinidad e Tobago', 'Jamaica', 'República Dominicana', 'Venezuela',
     'Tailândia', 'Turquia', 'Índia', 'Coreia do Sul', 'Austrália',
   ],
   de: [
     'Vereinigte Staaten', 'Kanada', 'Mexiko', 'Vereinigtes Königreich', 'Irland',
     'Spanien', 'Frankreich', 'Deutschland', 'Italien', 'Portugal', 'Brasilien', 'Kolumbien',
-    'Costa Rica', 'Trinidad und Tobago', 'Jamaika', 'Dominikanische Republik',
+    'Costa Rica', 'Trinidad und Tobago', 'Jamaika', 'Dominikanische Republik', 'Venezuela',
     'Thailand', 'Türkei', 'Indien', 'Südkorea', 'Australien',
   ],
   it: [
     'Stati Uniti', 'Canada', 'Messico', 'Regno Unito', 'Irlanda',
     'Spagna', 'Francia', 'Germania', 'Italia', 'Portogallo', 'Brasile', 'Colombia',
-    'Costa Rica', 'Trinidad e Tobago', 'Giamaica', 'Repubblica Dominicana',
+    'Costa Rica', 'Trinidad e Tobago', 'Giamaica', 'Repubblica Dominicana', 'Venezuela',
     'Tailandia', 'Turchia', 'India', 'Corea del Sud', 'Australia',
   ],
 };
