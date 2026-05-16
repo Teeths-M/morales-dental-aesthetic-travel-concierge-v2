@@ -24,13 +24,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-           <Link to="/" className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-             <img 
-               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e5441c35a_logo.jpg"
-               alt="Morales Dental & Aesthetic Travel Concierge"
-               className="h-12 lg:h-14 w-auto object-contain"
-             />
-           </Link>
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-display text-lg font-bold">M</span>
+            </div>
+            <div className="hidden sm:block">
+              <p className="font-display text-lg leading-tight text-foreground">MORALES</p>
+              <p className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">Dental & Aesthetic</p>
+            </div>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
