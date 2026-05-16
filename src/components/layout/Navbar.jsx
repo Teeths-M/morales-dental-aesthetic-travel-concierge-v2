@@ -26,8 +26,8 @@ export default function Navbar() {
           {/* Logo */}
            <Link to="/" className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
              <img 
-               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/3a3decfa7_generated_image.png"
-               alt="Morales Logo"
+               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e5441c35a_logo.jpg"
+               alt="Morales Dental & Aesthetic Travel Concierge"
                className="h-12 lg:h-14 w-auto object-contain"
              />
            </Link>
