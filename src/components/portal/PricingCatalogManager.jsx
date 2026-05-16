@@ -22,7 +22,7 @@ function PricingForm({ doctor, procedures, initial, onSave, onCancel }) {
   const [category, setCategory] = useState('dental');
 
   const selectedProc = procedures.find(p => p.id === form.procedure_id);
-  const filteredProcs = procedures.filter(p => p.category === category);
+  const filteredProcs = procedures.filter(p => p.category?.toLowerCase() === category);
 
   const handleSave = () => {
     if (!form.procedure_id || !form.doctor_price_usd) {
@@ -56,11 +56,15 @@ function PricingForm({ doctor, procedures, initial, onSave, onCancel }) {
         <div className="space-y-1">
           <Label className="text-xs">Procedure *</Label>
           <Select value={form.procedure_id} onValueChange={v => setForm(f => ({ ...f, procedure_id: v }))}>
-            <SelectTrigger><SelectValue placeholder="Select procedure" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={filteredProcs.length === 0 ? `No procedures in ${category}` : 'Select procedure'} /></SelectTrigger>
             <SelectContent>
-              {filteredProcs.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.procedure_name}</SelectItem>
-              ))}
+              {filteredProcs.length === 0 ? (
+                <div className="p-2 text-xs text-muted-foreground">No procedures found in {category}</div>
+              ) : (
+                filteredProcs.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.procedure_name}</SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
