@@ -21,7 +21,6 @@ import Section8Emotional from '../components/booking/Section8Emotional';
 import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
-import SmartProcedureDateSelector from '../components/booking/SmartProcedureDateSelector';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -39,18 +38,17 @@ const SLIDE_FACTS = [
 ];
 
 const steps = [
-  { label: 'Personal Info',    emoji: '👤', short: 'Personal'  },
-  { label: 'Travel',           emoji: '✈️', short: 'Travel'    },
-  { label: 'Cultural',         emoji: '🕌', short: 'Cultural'  },
-  { label: 'Medical History',  emoji: '🩺', short: 'Medical'   },
-  { label: 'Anesthesia',       emoji: '💉', short: 'Anesthesia'},
-  { label: 'Medications',      emoji: '💊', short: 'Meds'      },
-  { label: 'Lifestyle',        emoji: '🚬', short: 'Lifestyle' },
-  { label: 'Emotional',        emoji: '🧠', short: 'Emotional' },
-  { label: 'Pregnancy',        emoji: '🤰', short: 'Health'    },
-  { label: 'Documents',        emoji: '📎', short: 'Docs'      },
-  { label: 'Procedure',        emoji: '🏥', short: 'Procedure' },
-  { label: 'Procedure Date',   emoji: '📅', short: 'Date'      },
+   { label: 'Personal Info',    emoji: '👤', short: 'Personal'  },
+   { label: 'Travel',           emoji: '✈️', short: 'Travel'    },
+   { label: 'Cultural',         emoji: '🕌', short: 'Cultural'  },
+   { label: 'Medical History',  emoji: '🩺', short: 'Medical'   },
+   { label: 'Anesthesia',       emoji: '💉', short: 'Anesthesia'},
+   { label: 'Medications',      emoji: '💊', short: 'Meds'      },
+   { label: 'Lifestyle',        emoji: '🚬', short: 'Lifestyle' },
+   { label: 'Emotional',        emoji: '🧠', short: 'Emotional' },
+   { label: 'Pregnancy',        emoji: '🤰', short: 'Health'    },
+   { label: 'Documents',        emoji: '📎', short: 'Docs'      },
+   { label: 'Procedure & Date', emoji: '🏥', short: 'Procedure' },
 ];
 
 export default function Booking() {
@@ -89,11 +87,10 @@ export default function Booking() {
   });
 
   const canNext = () => {
-    if (step === 0) return form.patient_name && form.email && form.phone && form.emergency_contact_name && form.emergency_contact_number;
-    if (step === 10) return items.length > 0;
-    if (step === 11) return form.preferred_date;
-    return true;
-  };
+     if (step === 0) return form.patient_name && form.email && form.phone && form.emergency_contact_name && form.emergency_contact_number;
+     if (step === 10) return items.length > 0 && form.preferred_date;
+     return true;
+   };
 
   const handleConfirmSubmit = () => {
     createMutation.mutate(form);
@@ -185,25 +182,16 @@ export default function Booking() {
                 transition={{ duration: 0.18 }}
               >
                 {step === 0  && <Section1PersonalInfo form={form} update={update} />}
-                {step === 1  && <Section2Travel form={form} update={update} />}
-                {step === 2  && <Section3Cultural form={form} update={update} />}
-                {step === 3  && <Section4MedicalHistory form={form} update={update} />}
-                {step === 4  && <Section5Anesthesia form={form} update={update} />}
-                {step === 5  && <Section6Medications form={form} update={update} />}
-                {step === 6  && <Section7Lifestyle form={form} update={update} />}
-                {step === 7  && <Section8Emotional form={form} update={update} />}
-                {step === 8  && <Section9Pregnancy form={form} update={update} />}
-                {step === 9  && <Section10Documents form={form} update={update} />}
-                {step === 10 && <SectionProcedure form={form} update={update} />}
-                {step === 11 && consultationId && (
-                  <SmartProcedureDateSelector
-                    consultationId={consultationId}
-                    onDateConfirmed={(dates) => {
-                      update('preferred_date', dates.procedure_date);
-                      setStep(s => s + 1);
-                    }}
-                  />
-                )}
+                 {step === 1  && <Section2Travel form={form} update={update} />}
+                 {step === 2  && <Section3Cultural form={form} update={update} />}
+                 {step === 3  && <Section4MedicalHistory form={form} update={update} />}
+                 {step === 4  && <Section5Anesthesia form={form} update={update} />}
+                 {step === 5  && <Section6Medications form={form} update={update} />}
+                 {step === 6  && <Section7Lifestyle form={form} update={update} />}
+                 {step === 7  && <Section8Emotional form={form} update={update} />}
+                 {step === 8  && <Section9Pregnancy form={form} update={update} />}
+                 {step === 9  && <Section10Documents form={form} update={update} />}
+                 {step === 10 && <SectionProcedure form={form} update={update} />}
               </motion.div>
             </AnimatePresence>
           </div>
