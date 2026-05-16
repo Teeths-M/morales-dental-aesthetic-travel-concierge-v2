@@ -22,6 +22,7 @@ import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
 import ClientAcknowledgement from '../components/booking/ClientAcknowledgement';
+import SmartProcedureDateSelector from '../components/booking/SmartProcedureDateSelector';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -50,6 +51,7 @@ const steps = [
   { label: 'Pregnancy',        emoji: '🤰', short: 'Health'    },
   { label: 'Documents',        emoji: '📎', short: 'Docs'      },
   { label: 'Procedure',        emoji: '🏥', short: 'Procedure' },
+  { label: 'Procedure Date',   emoji: '📅', short: 'Date'      },
   { label: 'Acknowledgement',  emoji: '📋', short: 'Confirm'   },
 ];
 
@@ -58,6 +60,7 @@ export default function Booking() {
   const [submitted, setSubmitted] = useState(false);
   const [acknowledged, setAcknowledged] = useState(new Set());
   const [showPreview, setShowPreview] = useState(false);
+  const [consultationId, setConsultationId] = useState(null);
   const { items, clearCart } = useCart();
 
   const [form, setForm] = useState({
@@ -90,8 +93,9 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) return form.patient_name && form.email;
-    if (step === 10) return form.preferred_date && items.length > 0;
-    if (step === 11) return acknowledged.size === 4;
+    if (step === 10) return items.length > 0;
+    if (step === 11) return form.preferred_date;
+    if (step === 12) return acknowledged.size === 4;
     return true;
   };
 
@@ -195,7 +199,16 @@ export default function Booking() {
                 {step === 8  && <Section9Pregnancy form={form} update={update} />}
                 {step === 9  && <Section10Documents form={form} update={update} />}
                 {step === 10 && <SectionProcedure form={form} update={update} />}
-                {step === 11 && <ClientAcknowledgement acknowledged={acknowledged} onChange={setAcknowledged} />}
+                {step === 11 && consultationId && (
+                  <SmartProcedureDateSelector
+                    consultationId={consultationId}
+                    onDateConfirmed={(dates) => {
+                      update('preferred_date', dates.procedure_date);
+                      setStep(s => s + 1);
+                    }}
+                  />
+                )}
+                {step === 12 && <ClientAcknowledgement acknowledged={acknowledged} onChange={setAcknowledged} />}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -213,7 +226,20 @@ export default function Booking() {
 
             {step < steps.length - 1 ? (
               <Button
-                onClick={() => setStep(s => s + 1)}
+                onClick={async () => {
+                  if (step === 9 && !consultationId) {
+                    // Create consultation first before moving to date selector
+                    try {
+                      const result = await base44.entities.Consultation.create(form);
+                      setConsultationId(result.id);
+                      setStep(s => s + 1);
+                    } catch (error) {
+                      console.error('Error creating consultation:', error);
+                    }
+                  } else {
+                    setStep(s => s + 1);
+                  }
+                }}
                 disabled={!canNext()}
                 className="gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
               >

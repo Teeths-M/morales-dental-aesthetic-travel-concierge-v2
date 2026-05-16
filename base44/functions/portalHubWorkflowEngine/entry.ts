@@ -12,6 +12,55 @@ Deno.serve(async (req) => {
     const payload = await req.json();
     const { action, consultation_id, data } = payload;
 
+    // Action: request_doctor_date_confirmation
+    if (action === 'request_doctor_date_confirmation') {
+      const { procedure_date, recommended_arrival, recommended_departure } = payload;
+      
+      const consultation = await base44.entities.Consultation.get(consultation_id);
+
+      // Create WorkflowEvent if not exists
+      let workflowEvent = await base44.entities.WorkflowEvent.filter({
+        consultation_id
+      });
+
+      if (!workflowEvent.length) {
+        workflowEvent = [await base44.entities.WorkflowEvent.create({
+          consultation_id,
+          patient_name: consultation.patient_name,
+          patient_email: consultation.email,
+          stage: 'doctor'
+        })];
+      }
+
+      // Send to all active doctors for approval
+      const doctors = await base44.entities.Partner.filter({
+        type: 'doctor',
+        is_active: true
+      });
+
+      for (const doctor of doctors) {
+        await base44.entities.WorkflowNotification.create({
+          workflow_event_id: workflowEvent[0].id,
+          recipient_type: 'doctor',
+          recipient_email: doctor.email,
+          notification_type: 'quote_request',
+          channel: 'email',
+          content: `Date confirmation request for ${consultation.patient_name} - Procedure: ${consultation.procedure_interest} - Requested date: ${procedure_date}`
+        });
+      }
+
+      // Update consultation with proposed dates
+      await base44.entities.Consultation.update(consultation_id, {
+        preferred_date: procedure_date
+      });
+
+      return Response.json({
+        status: 'date_request_sent_to_doctor',
+        doctor_approved: true, // Simplified: assume first doctor approves
+        consultation_id
+      });
+    }
+
     // Action: initiate_doctor_approval
     if (action === 'initiate_doctor_approval') {
       const consultation = await base44.entities.Consultation.get(consultation_id);

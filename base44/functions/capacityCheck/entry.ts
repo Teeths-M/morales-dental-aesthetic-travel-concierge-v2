@@ -61,12 +61,28 @@ Deno.serve(async (req) => {
       capacity_limit: cap.capacity_limit,
       confirmed_count: cap.confirmed_count,
       remaining,
+      available_slots: remaining,
       is_full: isFull,
       is_near_full: isNearFull,
       waiting_list_count: waiters.length,
       active_markup_pct: activeMarkup,
       next_available_month: nextAvailable?.year_month || null,
       capacity_record_id: cap.id,
+    });
+  }
+
+  // ── action: get_capacity (for date selector UI) ─────────────────────────────
+  if (action === 'get_capacity') {
+    if (!year_month) return Response.json({ error: 'year_month required' }, { status: 400 });
+    const cap = await getCapacity(year_month);
+    const remaining = cap.capacity_limit - cap.confirmed_count;
+    return Response.json({
+      year_month,
+      capacity_limit: cap.capacity_limit,
+      confirmed_count: cap.confirmed_count,
+      available_slots: remaining,
+      is_full: remaining <= 0,
+      is_near_full: remaining <= cap.scarcity_markup_threshold
     });
   }
 
