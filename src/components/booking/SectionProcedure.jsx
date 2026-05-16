@@ -96,7 +96,7 @@ export default function SectionProcedure({ form, update }) {
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="absolute top-full left-0 mt-2 bg-white border border-border rounded-xl shadow-xl z-50 p-5 w-full min-w-96"
+                className="absolute top-full left-0 mt-2 bg-white border border-border rounded-xl shadow-xl z-50 p-5 w-screen sm:w-96 md:min-w-[28rem]"
               >
                 {/* Month Header */}
                 <div className="flex items-center justify-between mb-5">
