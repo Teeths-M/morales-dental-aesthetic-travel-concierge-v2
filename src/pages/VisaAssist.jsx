@@ -20,11 +20,11 @@ export default function VisaAssist() {
   const [activeSection, setActiveSection] = useState('wizard');
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       <VisaHero />
 
       {/* Premium Tab Navigation */}
-      <div className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
+      <div className="sticky top-0 z-30 bg-card/50 backdrop-blur-sm border-b border-border/30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="flex overflow-x-auto scrollbar-hide">
             {sections.map(s => {

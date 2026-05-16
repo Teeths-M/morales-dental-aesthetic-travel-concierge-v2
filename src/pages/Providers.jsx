@@ -12,8 +12,8 @@ export default function Providers() {
   });
 
   return (
-    <div className="py-12 lg:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}

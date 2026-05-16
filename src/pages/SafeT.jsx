@@ -25,9 +25,9 @@ export default function SafeT() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Hero Header */}
-      <div className="bg-white border-b border-slate-100 shadow-sm">
+      <div className="bg-card/50 backdrop-blur-sm border-b border-border/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             className="flex items-start gap-4"
