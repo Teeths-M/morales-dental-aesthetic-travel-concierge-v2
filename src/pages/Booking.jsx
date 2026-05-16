@@ -92,7 +92,7 @@ export default function Booking() {
   });
 
   const canNext = () => {
-    if (step === 0) return form.patient_name && form.email;
+    if (step === 0) return form.patient_name && form.email && form.phone && form.emergency_contact_name && form.emergency_contact_number;
     if (step === 10) return items.length > 0;
     if (step === 11) return form.preferred_date;
     if (step === 12) return acknowledged.size === 4;

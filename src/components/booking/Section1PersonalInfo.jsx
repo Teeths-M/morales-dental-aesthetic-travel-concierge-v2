@@ -110,17 +110,12 @@ export default function Section1PersonalInfo({ form, update }) {
         </div>
 
         <div>
-          <Label>Occupation</Label>
-          <Input value={form.occupation} onChange={e => update('occupation', e.target.value)} placeholder="Your occupation" className="mt-1.5" />
-        </div>
-
-        <div>
-          <Label>Emergency Contact Name</Label>
+          <Label>Emergency Contact Name <span className="text-destructive">*</span></Label>
           <Input value={form.emergency_contact_name} onChange={e => update('emergency_contact_name', e.target.value)} placeholder="Contact name" className="mt-1.5" />
         </div>
 
         <div>
-          <Label>Emergency Contact Number</Label>
+          <Label>Emergency Contact Number <span className="text-destructive">*</span></Label>
           <Input value={form.emergency_contact_number} onChange={e => update('emergency_contact_number', e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5" />
         </div>
 
@@ -130,7 +125,7 @@ export default function Section1PersonalInfo({ form, update }) {
         </div>
 
         <div className="sm:col-span-2">
-          <Label>Phone (optional)</Label>
+          <Label>Phone <span className="text-destructive">*</span></Label>
           <Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5" />
         </div>
       </div>
