@@ -122,7 +122,7 @@ export default function PartnerSignup() {
           >
             <div className="h-56 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
               <img 
-                src="https://images.unsplash.com/photo-1464207687429-7505649dae38?w=600&h=400&fit=crop"
+                src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=400&fit=crop"
                 alt="Black car taxi service"
                 className="w-full h-full object-cover"
               />
