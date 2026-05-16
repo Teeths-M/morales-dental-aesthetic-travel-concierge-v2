@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
+import SafeTCompanion from '@/components/safet/SafeTCompanion';
 
 export default function AppLayout() {
   return (
@@ -13,6 +14,7 @@ export default function AppLayout() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <SafeTCompanion />
     </div>
   );
 }

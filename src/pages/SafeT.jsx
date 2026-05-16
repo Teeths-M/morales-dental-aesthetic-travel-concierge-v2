@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Activity, ClipboardCheck, Pill, HeartPulse } from 'lucide-react';
+import { Shield, Activity, ClipboardCheck, Pill, HeartPulse, MapPin, Heart, LifeBuoy } from 'lucide-react';
 import OverviewTab from '@/components/safet/OverviewTab';
 import RiskAssessmentTab from '@/components/safet/RiskAssessmentTab';
 import ProcedureSafetyTab from '@/components/safet/ProcedureSafetyTab';
 import PreparationTab from '@/components/safet/PreparationTab';
 import RecoveryTab from '@/components/safet/RecoveryTab';
+import JourneyTimelineTab from '@/components/safet/JourneyTimelineTab';
+import WellnessMonitorTab from '@/components/safet/WellnessMonitorTab';
+import SupportTab from '@/components/safet/SupportTab';
 
 const tabs = [
   { value: 'overview', label: 'Overview', icon: Shield },
-  { value: 'risk', label: 'Risk Assessment', icon: Activity },
-  { value: 'procedure', label: 'Procedure Safety', icon: ClipboardCheck },
-  { value: 'preparation', label: 'Preparation', icon: Pill },
+  { value: 'journey', label: 'Journey', icon: MapPin },
+  { value: 'risk', label: 'Risk', icon: Activity },
+  { value: 'procedure', label: 'Safety', icon: ClipboardCheck },
+  { value: 'preparation', label: 'Prepare', icon: Pill },
   { value: 'recovery', label: 'Recovery', icon: HeartPulse },
+  { value: 'wellness', label: 'Wellness', icon: Heart },
+  { value: 'support', label: 'Support', icon: LifeBuoy },
 ];
 
 export default function SafeT() {
@@ -84,10 +90,13 @@ export default function SafeT() {
             transition={{ duration: 0.2 }}
           >
             {activeTab === 'overview' && <OverviewTab />}
+            {activeTab === 'journey' && <JourneyTimelineTab />}
             {activeTab === 'risk' && <RiskAssessmentTab />}
             {activeTab === 'procedure' && <ProcedureSafetyTab />}
             {activeTab === 'preparation' && <PreparationTab />}
             {activeTab === 'recovery' && <RecoveryTab />}
+            {activeTab === 'wellness' && <WellnessMonitorTab />}
+            {activeTab === 'support' && <SupportTab />}
           </motion.div>
         </AnimatePresence>
       </div>
