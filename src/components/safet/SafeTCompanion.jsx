@@ -52,6 +52,7 @@ const STAGE_MESSAGES = {
 export default function SafeTCompanion() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const closeTimeoutRef = useRef(null);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -179,7 +180,14 @@ export default function SafeTCompanion() {
         </AnimatePresence>
 
         <motion.button
-          onClick={() => { setIsOpen(!isOpen); setHasUnread(false); }}
+          onMouseEnter={() => {
+            if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+            setIsOpen(true);
+            setHasUnread(false);
+          }}
+          onMouseLeave={() => {
+            closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 1000);
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 shadow-2xl shadow-emerald-900/30 flex items-center justify-center"
@@ -202,6 +210,12 @@ export default function SafeTCompanion() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            onMouseEnter={() => {
+              if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+            }}
+            onMouseLeave={() => {
+              closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 1000);
+            }}
             initial={{ opacity: 0, scale: 0.92, y: 20, transformOrigin: 'bottom right' }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
