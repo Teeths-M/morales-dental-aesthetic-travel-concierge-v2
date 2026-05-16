@@ -24,11 +24,13 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-display text-lg font-bold">M</span>
-            </div>
-            <div className="hidden sm:block">
+          <Link to="/" className="flex items-center gap-3">
+            <img 
+              src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg" 
+              alt="Morales Logo" 
+              className="h-10 w-auto object-contain"
+            />
+            <div className="hidden sm:block border-l border-border/30 pl-3">
               <p className="font-display text-lg leading-tight text-foreground">MORALES</p>
               <p className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">Dental & Aesthetic</p>
             </div>
