@@ -111,7 +111,14 @@ export default function SectionProcedure({ form, update }) {
   };
 
   const calendarDays = buildCalendarDays();
-  const displayDate = form.preferred_date ? format(new Date(form.preferred_date), 'MMM d, yyyy') : '';
+  
+  // Parse date string without timezone conversion
+  const getParsedDate = (dateStr) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+  
+  const displayDate = form.preferred_date ? format(getParsedDate(form.preferred_date), 'MMM d, yyyy') : '';
 
   return (
     <div className="space-y-5">
@@ -173,7 +180,8 @@ export default function SectionProcedure({ form, update }) {
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-1 mb-6">
                   {calendarDays.map((cell, idx) => {
-                    const isSelected = form.preferred_date && format(cell.date, 'yyyy-MM-dd') === form.preferred_date;
+                    const isSelected = form.preferred_date && 
+                      `${cell.date.getFullYear()}-${String(cell.date.getMonth() + 1).padStart(2, '0')}-${String(cell.date.getDate()).padStart(2, '0')}` === form.preferred_date;
                     const canSelect = cell.isCurrentMonth && !cell.isPast && !cell.isDisabled;
 
                     const handleClick = () => {
