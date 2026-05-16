@@ -85,21 +85,14 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <div className="h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-emerald-50">
+            <div className="h-56 overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600">
               <img 
-                src="https://images.unsplash.com/photo-1569269190210-d68a5e3a1469?w=800&q=80"
+                src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&h=400&fit=crop"
                 alt="Commercial airplane"
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="p-8 text-center">
-              <div className="flex justify-center mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1605559424843-9e4c3ca4628c?w=120&h=120&fit=crop"
-                  alt="Travel agency icon"
-                  className="w-16 h-16 rounded-lg object-cover"
-                />
-              </div>
               <h2 className="text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyages' : 'Travel Agency'}
               </h2>
@@ -127,21 +120,14 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-slate-50">
+            <div className="h-56 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
               <img 
-                src="https://images.unsplash.com/photo-1617469000893-9d6d9b6e4ff9?w=800&q=80"
+                src="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop"
                 alt="Premium black car"
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="p-8 text-center">
-              <div className="flex justify-center mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1464207687429-7505649dae38?w=120&h=120&fit=crop"
-                  alt="Luxury car icon"
-                  className="w-16 h-16 rounded-lg object-cover"
-                />
-              </div>
               <h2 className="text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
               </h2>
