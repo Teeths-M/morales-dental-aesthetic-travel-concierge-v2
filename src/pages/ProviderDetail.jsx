@@ -131,12 +131,7 @@ export default function ProviderDetail() {
                         {item.type === 'image' ? (
                           <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
-                          <>
-                            <video src={item.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                              <Play className="w-8 h-8 text-white fill-white" />
-                            </div>
-                          </>
+                          <video src={item.url} controls className="w-full h-full object-cover" />
                         )}
                         <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-full flex items-center gap-1">
                           {item.type === 'image' ? <ImageIcon className="w-3 h-3" /> : <Play className="w-3 h-3" />}
