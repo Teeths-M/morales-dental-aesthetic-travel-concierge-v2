@@ -85,12 +85,13 @@ export default function DoctorDashboard() {
                           />
                         </div>
                       ) : (
-                        <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold">
-                          {data.photo_url ? (
-                            <img src={data.photo_url} alt={data.full_name} className="w-full h-full rounded-full object-cover" />
-                          ) : (
+                        <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold overflow-hidden flex-shrink-0">
+                          {data.photo_url && data.photo_url.trim() ? (
+                            <img src={data.photo_url} alt={data.full_name} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+                          ) : null}
+                          {!data.photo_url || !data.photo_url.trim() ? (
                             data.full_name?.charAt(0) || 'D'
-                          )}
+                          ) : null}
                         </div>
                       )}
                     </div>
