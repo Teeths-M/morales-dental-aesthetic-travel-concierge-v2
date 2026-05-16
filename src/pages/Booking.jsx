@@ -10,6 +10,7 @@ import { useCart } from '@/context/CartContext';
 import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
 import SubmissionSuccess from '@/components/booking/SubmissionSuccess';
+import ConsultationFeeModal from '@/components/booking/ConsultationFeeModal';
 
 import Section1PersonalInfo from '../components/booking/Section1PersonalInfo';
 import Section2Travel from '../components/booking/Section2Travel';
@@ -58,6 +59,7 @@ export default function Booking() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showFeeModal, setShowFeeModal] = useState(false);
   const [consultationId, setConsultationId] = useState(null);
   const [headerHovered, setHeaderHovered] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
@@ -94,9 +96,10 @@ export default function Booking() {
       const procedureNames = items.map(item => item.name).join(', ') || 'other';
       return base44.entities.Consultation.create({ ...data, procedure_interest: procedureNames });
     },
-    onSuccess: () => {
+    onSuccess: (consultation) => {
+      setConsultationId(consultation.id);
+      setShowFeeModal(true);
       clearCart();
-      setSubmitted(true);
     },
   });
 
@@ -348,6 +351,16 @@ export default function Booking() {
         onEdit={() => setShowPreview(false)}
         onSubmit={handleConfirmSubmit}
         isSubmitting={createMutation.isPending}
+      />
+
+      <ConsultationFeeModal
+        form={form}
+        isOpen={showFeeModal}
+        onSuccess={(feeData) => {
+          setShowFeeModal(false);
+          setSubmitted(true);
+        }}
+        onCancel={() => setShowFeeModal(false)}
       />
     </div>
   );

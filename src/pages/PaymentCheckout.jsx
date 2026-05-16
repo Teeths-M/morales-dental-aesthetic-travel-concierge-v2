@@ -140,21 +140,25 @@ export default function PaymentCheckout() {
                   <span className="font-semibold">$400</span>
                 </div>
                 <div className="flex justify-between pb-4 border-b border-border">
-                  <span className="text-muted-foreground">Recovery Services</span>
-                  <span className="font-semibold">$300</span>
-                </div>
-                <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-semibold">${(paymentPlan.total_package_cost).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Platform Fee (35%)</span>
-                  <span className="font-semibold">${(paymentPlan.final_cost - paymentPlan.total_package_cost).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-base font-bold text-foreground pt-2">
-                  <span>Total Package</span>
-                  <span>${paymentPlan.final_cost.toLocaleString()}</span>
-                </div>
+                   <span className="text-muted-foreground">Recovery Services</span>
+                   <span className="font-semibold">$300</span>
+                 </div>
+                 <div className="flex justify-between pb-2 border-b border-border">
+                   <span className="text-muted-foreground">Subtotal</span>
+                   <span className="font-semibold">${(paymentPlan.total_package_cost).toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between pb-2 border-b border-border">
+                   <span className="text-muted-foreground">Platform Fee (35%)</span>
+                   <span className="font-semibold">${(paymentPlan.final_cost - paymentPlan.total_package_cost).toLocaleString()}</span>
+                 </div>
+                 <div className="flex justify-between pb-2 border-b border-border">
+                   <span className="text-green-600 font-medium">Consultation Fee Credit</span>
+                   <span className="font-semibold text-green-600">-$49</span>
+                 </div>
+                 <div className="flex justify-between text-base font-bold text-foreground pt-2">
+                   <span>Total Package</span>
+                   <span>${(paymentPlan.final_cost - 49).toLocaleString()}</span>
+                 </div>
               </div>
             </Card>
 
