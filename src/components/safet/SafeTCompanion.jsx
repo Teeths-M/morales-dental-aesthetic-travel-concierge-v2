@@ -7,6 +7,14 @@ import {
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
+const getCompanionLabels = (lang) => ({
+  prompt: lang === 'es' ? '¿Cómo puede SAFE-T 4LIFE™ ayudarte hoy?' : lang === 'fr' ? 'Comment SAFE-T 4LIFE™ peut-il vous aider aujourd\'hui ?' : lang === 'pt' ? 'Como o SAFE-T 4LIFE™ pode ajudá-lo hoje?' : 'How can SAFE-T 4LIFE™ help you today?',
+  welcome: lang === 'es' ? 'Bienvenido de nuevo. **SAFE-T 4LIFE™** está aquí para apoyar tu viaje de salud. 💚\n\nSoy tu asistente personal de viajes de salud — aquí para guiarte, tranquilizarte y mantenerte organizado en cada paso.\n\n¿Cómo te sientes sobre tu viaje hoy?' : lang === 'fr' ? 'Bienvenue à nouveau. **SAFE-T 4LIFE™** est là pour soutenir votre parcours de santé. 💚\n\nJe suis votre compagnon personnel de voyage médical — ici pour vous guider, vous rassurer et vous garder organisé à chaque étape.\n\nComment vous sentez-vous par rapport à votre voyage aujourd\'hui ?' : lang === 'pt' ? 'Bem-vindo de volta. **SAFE-T 4LIFE™** está aqui para apoiar sua jornada de saúde. 💚\n\nSou seu companheiro pessoal de viagem médica — aqui para orientá-lo, tranquilizá-lo e mantê-lo organizado em cada etapa.\n\nComo você se sente em relação à sua jornada hoje?' : 'Welcome back. **SAFE-T 4LIFE™** is here to support your healthcare journey. 💚\n\nI\'m your personal healthcare travel companion — here to guide, reassure, and keep you organized every step of the way.\n\nHow are you feeling about your journey today?',
+  disclaimer: lang === 'es' ? 'Apoyo educativo y de coordinación solamente — no es un sustituto del consejo médico profesional.' : lang === 'fr' ? 'Support pédagogique et de coordination uniquement — pas un substitut aux conseils médicaux professionnels.' : lang === 'pt' ? 'Suporte educacional e de coordenação apenas — não é um substituto ao conselho médico profissional.' : 'Educational & coordination support only — not a replacement for professional medical advice.',
+  online: lang === 'es' ? 'Healthcare Companion · En línea' : lang === 'fr' ? 'Compagnon de Santé · En ligne' : lang === 'pt' ? 'Companheiro de Saúde · Online' : 'Healthcare Companion · Online',
+  isHere: lang === 'es' ? 'SAFE-T 4LIFE™ está aquí para ti' : lang === 'fr' ? 'SAFE-T 4LIFE™ est là pour vous' : lang === 'pt' ? 'SAFE-T 4LIFE™ está aqui para você' : 'SAFE-T 4LIFE™ is here for you',
+});
+
 const SYSTEM_PROMPT = `You are SAFE-T 4LIFE™, the premium AI healthcare travel companion for Morales Dental & Aesthetic Travel Concierge. 
 
 Your role is to:
@@ -50,13 +58,15 @@ const STAGE_MESSAGES = {
 };
 
 export default function SafeTCompanion() {
+  const [appLanguage, setAppLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const closeTimeoutRef = useRef(null);
+  const labels = getCompanionLabels(appLanguage);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Welcome back. **SAFE-T 4LIFE™** is here to support your healthcare journey. 💚\n\nI'm your personal healthcare travel companion — here to guide, reassure, and keep you organized every step of the way.\n\nHow are you feeling about your journey today?",
+      content: labels.welcome,
       id: Date.now(),
     }
   ]);
@@ -68,6 +78,14 @@ export default function SafeTCompanion() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setAppLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -174,7 +192,7 @@ export default function SafeTCompanion() {
               onClick={() => { setIsOpen(true); setShowPulse(false); }}
             >
               <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 animate-pulse" />
-              <p className="text-xs font-semibold text-slate-700 leading-tight">SAFE-T 4LIFE™ is here for you</p>
+              <p className="text-xs font-semibold text-slate-700 leading-tight">{labels.isHere}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -237,7 +255,7 @@ export default function SafeTCompanion() {
                     <p className="text-white font-bold text-sm tracking-wide">SAFE-T 4LIFE™</p>
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
-                  <p className="text-white/60 text-[10px] tracking-wider uppercase">Healthcare Companion · Online</p>
+                  <p className="text-white/60 text-[10px] tracking-wider uppercase">{labels.online}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -301,7 +319,7 @@ export default function SafeTCompanion() {
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                      placeholder="How can SAFE-T 4LIFE™ help you today?"
+                      placeholder={labels.prompt}
                       rows={1}
                       className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 resize-none outline-none leading-relaxed max-h-24"
                       style={{ minHeight: '22px' }}
@@ -326,7 +344,7 @@ export default function SafeTCompanion() {
                   </div>
                   {/* Disclaimer */}
                   <p className="text-[9px] text-slate-400 text-center mt-1.5 leading-relaxed px-1">
-                    Educational & coordination support only — not a replacement for professional medical advice.
+                    {labels.disclaimer}
                   </p>
                 </div>
               </>
