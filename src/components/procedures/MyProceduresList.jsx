@@ -40,19 +40,30 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
 
   // Calculate total price
   useEffect(() => {
-    if (!pricingEngine || items.length === 0) {
+    if (items.length === 0) {
       setTotalPrice(null);
       return;
     }
 
-    const procedures = items.map(item => ({
-      procedure_name: item.title || item.name,
-      quantity: 1,
-      complexity: 'moderate',
-    }));
+    // Use doctor prices if available, otherwise calculate from pricing engine
+    const totalFromDoctor = items.reduce((sum, item) => {
+      if (item.doctor_price_usd) {
+        return sum + item.doctor_price_usd;
+      }
+      return sum;
+    }, 0);
 
-    const quote = pricingEngine.calculateFullQuote(procedures);
-    setTotalPrice(quote.estimatedTotalLow);
+    if (totalFromDoctor > 0) {
+      setTotalPrice(totalFromDoctor);
+    } else if (pricingEngine) {
+      const procedures = items.map(item => ({
+        procedure_name: item.title || item.name,
+        quantity: 1,
+        complexity: 'moderate',
+      }));
+      const quote = pricingEngine.calculateFullQuote(procedures);
+      setTotalPrice(quote.estimatedTotalLow);
+    }
   }, [pricingEngine, items]);
 
   if (items.length === 0) return null;
