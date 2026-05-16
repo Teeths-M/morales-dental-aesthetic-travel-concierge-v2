@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, RotateCcw, ArrowRight, Clock, Info, Shield, Check } from 'lucide-react';
+import { FileText, RotateCcw, ArrowRight, Clock, Info, Shield, Check, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+// YouTube tutorial videos for each destination's visa/entry application
+const VISA_VIDEOS = {
+  VE: { id: 'Fst0_WcjMZo', title: 'How to Apply for Venezuela e-Visa 2026 — Step by Step' },
+  TR: { id: 'zM_QYSbxttQ', title: 'Turkey eVisa 2026 — Step-by-Step Application Guide' },
+  TH: { id: 'vzLLtJPWpzQ', title: 'How to Apply for Thailand e-Visa Online 2026' },
+  CU: { id: '288H1NeGhcM', title: 'How to Apply for Cuba e-Visa 2026 — Full Guide' },
+  DO: { id: 'J09K5IsLfMw', title: 'How to Fill the Dominican Republic e-Ticket 2026' },
+  BR: { id: 'jGc_dCEutJw', title: 'Brazil e-Visa 2026 — How to Apply Step by Step' },
+};
 
 const STATUS_CONFIG = {
   visa_free: {
@@ -57,6 +67,8 @@ export default function VisaResult({ result, onReset }) {
   const { passport, destination, purpose, travelDate, stayDuration, hasCompanion, rule, aiSummary } = result;
   const cfg = STATUS_CONFIG[rule.status] || STATUS_CONFIG.visa_required;
   const [checkedDocs, setCheckedDocs] = useState({});
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const video = VISA_VIDEOS[destination?.code];
 
   const allDocs = [
     ...rule.requirements,
@@ -144,6 +156,73 @@ export default function VisaResult({ result, onReset }) {
           <p className="text-xs text-white/50 leading-relaxed">{rule.notes}</p>
         </div>
       </motion.div>
+
+      {/* Video Tutorial */}
+      {video && (rule.status === 'evisa' || rule.status === 'arrival_card' || rule.status === 'visa_required') && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-slate-900 rounded-2xl overflow-hidden shadow-xl"
+        >
+          <div className="px-5 py-4 flex items-center gap-3 border-b border-white/10">
+            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <PlayCircle className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold tracking-widest uppercase text-white/40">Step-by-Step Tutorial</p>
+              <p className="text-sm font-semibold text-white leading-tight">{video.title}</p>
+            </div>
+          </div>
+          <div className="relative" style={{ paddingBottom: '56.25%' }}>
+            {!videoPlaying ? (
+              <div
+                className="absolute inset-0 cursor-pointer group"
+                onClick={() => setVideoPlaying(true)}
+              >
+                <img
+                  src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`}
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                  onError={e => { e.target.src = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`; }}
+                />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-all flex items-center justify-center">
+                  <div className="w-16 h-16 bg-red-600 group-hover:bg-red-500 rounded-full flex items-center justify-center shadow-2xl transition-all group-hover:scale-105">
+                    <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="absolute bottom-3 left-3 right-3">
+                  <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2">
+                    <span className="text-xs text-white/80">▶ Watch how to apply — stress-free, step by step</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`}
+                title={video.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
+          <div className="px-5 py-3 flex items-center justify-between">
+            <p className="text-xs text-white/40">🎬 Free video guide — no account needed</p>
+            <a
+              href={`https://www.youtube.com/watch?v=${video.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/50 hover:text-white/80 underline transition-colors"
+            >
+              Open on YouTube ↗
+            </a>
+          </div>
+        </motion.div>
+      )}
 
       {/* Document Checklist */}
       <motion.div
