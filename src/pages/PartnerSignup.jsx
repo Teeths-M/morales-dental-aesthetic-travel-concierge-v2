@@ -87,7 +87,7 @@ export default function PartnerSignup() {
           >
             <div className="h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-emerald-50">
               <img 
-                src="https://images.unsplash.com/photo-1556388158-15996fe1e941?w=500&h=300&fit=crop"
+                src="https://images.unsplash.com/photo-1569269190210-d68a5e3a1469?w=800&q=80"
                 alt="Commercial airplane"
                 className="w-full h-full object-cover"
               />
@@ -127,7 +127,7 @@ export default function PartnerSignup() {
           >
             <div className="h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-slate-50">
               <img 
-                src="https://images.unsplash.com/photo-1552820728-8ac41f1ce891?w=500&h=300&fit=crop"
+                src="https://images.unsplash.com/photo-1617469000893-9d6d9b6e4ff9?w=800&q=80"
                 alt="Premium black car"
                 className="w-full h-full object-cover"
               />
