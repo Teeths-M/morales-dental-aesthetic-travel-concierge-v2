@@ -9,20 +9,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No doctor_id provided' }, { status: 400 });
     }
 
-    // Remove all DoctorSpecialty records for this doctor
+    // When a DoctorPricing is deleted, remove the associated DoctorSpecialty
     const specialties = await base44.asServiceRole.entities.DoctorSpecialty.filter({ 
-      doctor_id: data.doctor_id 
+      doctor_id: data.doctor_id
     });
 
+    let deletedCount = 0;
     if (specialties.length > 0) {
       for (const specialty of specialties) {
         await base44.asServiceRole.entities.DoctorSpecialty.delete(specialty.id);
+        deletedCount++;
       }
     }
 
     return Response.json({ 
       success: true,
-      message: `Removed ${specialties.length} procedures for doctor ${data.doctor_id}`
+      message: `Removed ${deletedCount} procedure(s) for doctor ${data.doctor_id}`
     });
   } catch (error) {
     console.error('Error removing doctor from procedures:', error);
