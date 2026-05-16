@@ -10,6 +10,7 @@ const navLinks = [
   { label: 'How It Works', path: '/how-it-works' },
   { label: 'Our Experts', path: '/providers' },
   { label: 'SAFE-T 4LIFE™', path: '/safe-t' },
+  { label: '🌍 Visa Assist', path: '/visa-assist' },
   { label: 'About Us', path: '/about' },
   { label: 'Dashboard', path: '/dashboard' },
 ];

@@ -18,6 +18,7 @@ import HowItWorksPage from './pages/HowItWorksPage';
 import About from './pages/About';
 import Procedures from './pages/Procedures';
 import PortalHub from './pages/PortalHub';
+import VisaAssist from './pages/VisaAssist';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
         <Route path="/portal-hub" element={<PortalHub />} />
+        <Route path="/visa-assist" element={<VisaAssist />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
