@@ -42,8 +42,16 @@ export default function Providers() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-fixed relative"
+      style={{
+        backgroundImage: 'url(https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80)',
+      }}
+    >
+      {/* Sophisticated premium overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/80 to-background/75"></div>
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
