@@ -99,15 +99,15 @@ export default function SectionProcedure({ form, update }) {
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-border rounded-xl shadow-xl z-50 p-6 w-11/12 max-w-sm max-h-96 overflow-y-auto"
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-border rounded-2xl shadow-xl z-50 p-6 w-11/12 max-w-sm max-h-96 overflow-y-auto"
               >
                 {/* Month Header */}
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
-                    className="h-8 w-8"
+                    className="h-8 w-8 rounded-full"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
@@ -116,29 +116,28 @@ export default function SectionProcedure({ form, update }) {
                     variant="ghost"
                     size="icon"
                     onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                    className="h-8 w-8"
+                    className="h-8 w-8 rounded-full"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
 
                 {/* Day labels */}
-                <div className="grid grid-cols-7 gap-2 mb-3">
+                <div className="grid grid-cols-7 gap-2 mb-3 text-center">
                   {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                    <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-2">
+                    <div key={day} className="text-xs font-semibold text-muted-foreground py-2">
                       {day}
                     </div>
                   ))}
                 </div>
 
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-3 auto-rows-max">
+                <div className="grid grid-cols-7 gap-1 mb-6">
                   {days.map(day => {
                     const isPast = isBefore(day, new Date());
                     const dayOfWeek = day.getDay();
                     const isDisabledDay = dayOfWeek === 0 || dayOfWeek === 4; // Sunday or Thursday
                     const isSelected = form.preferred_date && format(day, 'yyyy-MM-dd') === form.preferred_date;
-                    const isCurrent = isToday(day);
                     const isCurrentMonth = isSameMonth(day, currentMonth);
 
                     return (
@@ -146,17 +145,15 @@ export default function SectionProcedure({ form, update }) {
                         key={format(day, 'yyyy-MM-dd')}
                         onClick={() => handleDateSelect(day)}
                         disabled={isPast || isDisabledDay}
-                        whileHover={!isPast && !isDisabledDay ? { scale: 1.08 } : {}}
-                        className={`h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
+                        whileHover={!isPast && !isDisabledDay ? { scale: 1.05 } : {}}
+                        className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
                           !isCurrentMonth
                             ? 'text-muted-foreground/20 bg-transparent'
                             : isSelected
-                            ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg'
-                            : isCurrent && !isDisabledDay
-                            ? 'bg-accent/20 text-accent border border-accent/30'
+                            ? 'bg-foreground text-primary-foreground shadow-md font-semibold'
                             : isPast || isDisabledDay
-                            ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed'
-                            : 'bg-white border border-border hover:border-primary hover:shadow-sm cursor-pointer'
+                            ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed line-through opacity-60'
+                            : 'bg-white border border-border hover:bg-sky-50 hover:border-sky-400 cursor-pointer'
                         }`}
                       >
                         {format(day, 'd')}
@@ -165,36 +162,43 @@ export default function SectionProcedure({ form, update }) {
                   })}
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between gap-3 mt-5 pt-5 border-t border-border">
+                {/* Selected date display */}
+                <div className="bg-muted/30 rounded-lg p-2.5 text-center text-sm font-medium text-foreground mb-4 min-h-10 flex items-center justify-center">
+                  {displayDate ? `✅ ${displayDate}` : 'No date selected'}
+                </div>
+
+                {/* Info message */}
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4 text-xs text-yellow-800">
+                  ✈️ <strong>Flying days:</strong> Sundays & Thursdays are disabled and cannot be selected.
+                </div>
+
+                {/* Footer buttons */}
+                <div className="flex items-center justify-between gap-3">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => {
                       setShowCalendar(false);
                       update('preferred_date', '');
                     }}
+                    className="flex-1"
                   >
                     Clear
                   </Button>
                   <Button
-                    variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      const today = format(new Date(), 'yyyy-MM-dd');
-                      update('preferred_date', today);
-                      setCurrentMonth(new Date());
-                      setShowCalendar(false);
-                    }}
+                    onClick={() => setShowCalendar(false)}
+                    disabled={!displayDate}
+                    className="flex-1"
                   >
-                    Today
+                    Confirm
                   </Button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Our team will confirm availability and may suggest alternatives.</p>
+        <p className="text-xs text-muted-foreground mt-2">Sundays & Thursdays are unavailable for procedure scheduling.</p>
       </div>
 
       {/* Capacity gate — shown once both procedure and date are selected */}
