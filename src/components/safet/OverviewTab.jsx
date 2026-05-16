@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   User, MapPin, Calendar, Stethoscope, Upload, MessageCircle,
   CheckCircle2, Clock, AlertTriangle, FileText, Plane, ArrowRight,
-  Star, Shield, TrendingUp, ClipboardList, HeartHandshake
+  Star, Shield, TrendingUp, ClipboardList, HeartHandshake, Heart, Pill
 } from 'lucide-react';
 
 const timelineSteps = [
@@ -55,10 +55,99 @@ function ScoreRing({ score, label, color }) {
 }
 
 export default function OverviewTab() {
-  return (
-    <div className="space-y-6">
-      {/* Patient Card + Safety Scores */}
-      <div className="grid lg:grid-cols-3 gap-5">
+   return (
+     <div className="space-y-6">
+       {/* Hero Section with Image and Assistant Card */}
+       <div className="grid lg:grid-cols-2 gap-5 items-center">
+         {/* Left: Assistant Image */}
+         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-amber-900 to-amber-950 h-96 lg:h-full min-h-[500px]">
+           <img 
+             src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/06f0b367f_ChatGPTImageMay16202607_55_07AM.png"
+             alt="SAFE-T 4LIFE Assistant"
+             className="w-full h-full object-cover"
+           />
+         </div>
+
+         {/* Right: Welcome Card */}
+         <div className="bg-white rounded-2xl border border-slate-100 shadow-lg p-6 lg:p-8">
+           <div className="mb-6">
+             <h2 className="font-display text-3xl lg:text-4xl text-slate-800 mb-2">Welcome back, <span className="text-emerald-700">Sarah!</span> 👋</h2>
+             <p className="text-slate-600">We're here to make your experience safe, smooth, and stress-free.</p>
+           </div>
+
+           {/* Journey Status */}
+           <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6">
+             <div className="flex items-center gap-3 mb-3">
+               <div className="w-12 h-12 rounded-lg bg-emerald-700 flex items-center justify-center">
+                 <CheckCircle2 className="w-6 h-6 text-white" />
+               </div>
+               <div>
+                 <h3 className="font-semibold text-slate-800">Your Journey Status</h3>
+                 <p className="text-emerald-700 font-bold text-lg">On Track</p>
+               </div>
+             </div>
+             <p className="text-sm text-slate-700">You're doing great! Keep following your plan and don't hesitate to reach out.</p>
+           </div>
+
+           {/* Next Step */}
+           <div className="border border-slate-200 rounded-xl p-4 mb-6">
+             <div className="flex items-start justify-between mb-3">
+               <div>
+                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Next Step</p>
+                 <h4 className="font-bold text-slate-800">Pre-Op Consultation</h4>
+               </div>
+               <ArrowRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+             </div>
+             <p className="text-sm text-slate-600">May 24, 2025 | 10:00 AM</p>
+           </div>
+
+           {/* Quick Access Grid */}
+           <div className="grid grid-cols-3 gap-3 mb-6">
+             <button className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+               <Calendar className="w-5 h-5 text-slate-700" />
+               <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">My Timeline</span>
+             </button>
+             <button className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+               <Pill className="w-5 h-5 text-slate-700" />
+               <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">Medications</span>
+             </button>
+             <button className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+               <FileText className="w-5 h-5 text-slate-700" />
+               <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">Documents</span>
+             </button>
+           </div>
+
+           {/* Support Section */}
+           <div className="grid grid-cols-3 gap-3">
+             <button className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+               <MessageCircle className="w-5 h-5 text-slate-700" />
+               <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">Messages</span>
+             </button>
+             <button className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+               <HeartHandshake className="w-5 h-5 text-slate-700" />
+               <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">Support</span>
+             </button>
+             <button className="flex flex-col items-center gap-2 p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 transition-colors">
+               <AlertTriangle className="w-5 h-5 text-slate-700" />
+               <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">Emergency</span>
+             </button>
+           </div>
+
+           {/* Not Alone Message */}
+           <div className="mt-6 bg-slate-50 border border-slate-100 rounded-xl p-4">
+             <div className="flex items-start gap-3">
+               <Heart className="w-5 h-5 text-emerald-700 flex-shrink-0 mt-0.5" />
+               <div>
+                 <p className="font-semibold text-slate-800 text-sm mb-1">You're not alone.</p>
+                 <p className="text-xs text-slate-600">Our team and your Patient Coordinator are always here for you.</p>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       {/* Patient Card + Safety Scores */}
+       <div className="grid lg:grid-cols-3 gap-5">
         {/* Patient Overview */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-5">
