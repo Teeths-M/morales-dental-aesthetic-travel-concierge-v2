@@ -41,7 +41,7 @@ export default function TravelAgencySignup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Language Selector */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/95 backdrop-blur rounded-full shadow-md px-2 py-2 border border-border/50">
+      <div className="fixed top-20 right-4 z-50 flex items-center gap-2 bg-white/95 backdrop-blur rounded-full shadow-md px-2 py-2 border border-border/50">
         <Globe className="w-4 h-4 text-muted-foreground ml-2" />
         <div className="flex gap-1">
           {allLanguages.map((lang) => (
