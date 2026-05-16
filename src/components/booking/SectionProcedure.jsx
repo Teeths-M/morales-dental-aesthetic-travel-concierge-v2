@@ -178,7 +178,10 @@ export default function SectionProcedure({ form, update }) {
 
                     const handleClick = () => {
                       if (canSelect) {
-                        const dateStr = format(cell.date, 'yyyy-MM-dd');
+                        const year = cell.date.getFullYear();
+                        const month = String(cell.date.getMonth() + 1).padStart(2, '0');
+                        const day = String(cell.date.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
                         update('preferred_date', dateStr);
                         setShowCalendar(false);
                       }
