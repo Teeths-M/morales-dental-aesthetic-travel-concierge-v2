@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { ClipboardList, Video, DollarSign, AlertTriangle, CheckCircle2, Clock, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ClipboardList, DollarSign, AlertTriangle, CheckCircle2, Clock, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,15 +67,11 @@ function ConsultationRow({ c, onDelete }) {
                 </p>
               </div>
             </div>
-            <div className="mt-3 flex gap-2">
-              <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5">
-                <Video className="w-3.5 h-3.5" /> Join Video
-              </Button>
-              <Button size="sm" variant="outline" className="text-xs h-8">View Documents</Button>
+            <div className="mt-4 flex justify-end">
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-xs h-8 gap-1.5 text-red-600 hover:bg-red-50 ml-auto"
+                className="text-xs h-8 gap-1.5 text-red-600 hover:bg-red-50"
                 onClick={() => setDeleteOpen(true)}
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete
