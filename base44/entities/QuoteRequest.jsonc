@@ -1,0 +1,90 @@
+{
+  "name": "QuoteRequest",
+  "type": "object",
+  "properties": {
+    "consultation_id": {
+      "type": "string",
+      "description": "Link to the consultation"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "procedure_name": {
+      "type": "string"
+    },
+    "procedure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "recovery_days": {
+      "type": "number"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "patient_country": {
+      "type": "string"
+    },
+    "provider_type": {
+      "type": "string",
+      "enum": [
+        "flight",
+        "hotel",
+        "taxi_origin",
+        "taxi_destination",
+        "recovery_accommodation"
+      ],
+      "description": "Type of service being quoted"
+    },
+    "partner_id": {
+      "type": "string",
+      "description": "Link to Partner entity"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "responded",
+        "declined",
+        "escalated"
+      ],
+      "default": "pending"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "ISO timestamp when request was sent"
+    },
+    "due_at": {
+      "type": "string",
+      "description": "ISO timestamp when response is due"
+    },
+    "responded_at": {
+      "type": "string",
+      "description": "ISO timestamp when provider responded"
+    },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "email",
+        "sms",
+        "whatsapp",
+        "in_app"
+      ],
+      "default": "email"
+    },
+    "reminder_count": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "consultation_id",
+    "procedure_date",
+    "provider_type",
+    "partner_id"
+  ]
+}
