@@ -78,14 +78,14 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
         const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
         
         const specialtyData = formData.specialties.map(spec => {
-          const matched = masterProcs.find(mp => mp.en_name === spec || mp.procedure_id === spec);
+          const matched = masterProcs.find(mp => mp.en_name === spec);
           return {
             doctor_id: doctor.id,
-            procedure_id: matched?.id || '',
+            procedure_id: matched?.procedure_id || spec, // Use procedure_id from master, or fall back to spec name
             procedure_name: spec,
-            category: matched?.category || formData.selectedCategory
+            category: matched?.category || 'General'
           };
-        }).filter(s => s.procedure_id); // Only save if we found a matching procedure
+        });
         
         if (specialtyData.length > 0) {
           await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
