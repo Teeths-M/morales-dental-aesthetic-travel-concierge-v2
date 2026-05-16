@@ -96,7 +96,7 @@ export default function SectionProcedure({ form, update }) {
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="absolute top-full -left-10 mt-2 bg-white border border-border rounded-xl shadow-xl z-50 p-6 w-screen max-w-md"
+                className="absolute top-full -left-10 mt-2 bg-white border border-border rounded-xl shadow-xl z-50 p-6 w-screen max-w-md max-h-max overflow-visible"
               >
                 {/* Month Header */}
                 <div className="flex items-center justify-between mb-5">
@@ -129,7 +129,7 @@ export default function SectionProcedure({ form, update }) {
                 </div>
 
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-3">
+                <div className="grid grid-cols-7 gap-3 auto-rows-max">
                   {days.map(day => {
                     const isPast = isBefore(day, new Date());
                     const isSelected = form.preferred_date && format(day, 'yyyy-MM-dd') === form.preferred_date;
