@@ -98,9 +98,15 @@ export default function Navbar() {
             ))}
 
             {/* Partner Dropdown */}
-            <div className="relative" onMouseLeave={handleDropdownMouseLeave} onMouseEnter={handleDropdownMouseEnter}>
+            <div 
+              className="relative" 
+              onMouseLeave={handleDropdownMouseLeave} 
+              onMouseEnter={() => {
+                handleDropdownMouseEnter();
+                setDropdownOpen(true);
+              }}
+            >
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
               >
                 {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
@@ -145,9 +151,15 @@ export default function Navbar() {
           {/* Right Actions */}
           <div className="flex items-center gap-3">
             {/* Language Dropdown */}
-              <div className="relative hidden sm:block" onMouseLeave={handleLanguageMouseLeave} onMouseEnter={handleLanguageMouseEnter}>
+              <div 
+                className="relative hidden sm:block" 
+                onMouseLeave={handleLanguageMouseLeave} 
+                onMouseEnter={() => {
+                  handleLanguageMouseEnter();
+                  setLanguageDropdownOpen(true);
+                }}
+              >
                 <button
-                  onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
                   className="p-2 hover:bg-secondary rounded-md transition-colors"
                   title="Select Language"
                 >
