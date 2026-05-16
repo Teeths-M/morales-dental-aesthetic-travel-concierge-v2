@@ -91,8 +91,7 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) {
-      return form.patient_name && form.email && form.phone && form.age && form.gender && 
-             form.height && form.weight && form.nationality && form.occupation && 
+      return form.patient_name && form.email && form.phone && 
              form.emergency_contact_name && form.emergency_contact_number;
     }
     if (step === 1) {
