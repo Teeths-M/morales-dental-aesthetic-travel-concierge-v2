@@ -3,7 +3,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const anesthesiaTypes = ['Allergic reactions','Breathing difficulties','Nausea/Vomiting','Excessive bleeding','Other'];
 const allergyTypes = ['Medications','Latex','Food Allergies','Anesthesia Reactions','None','Other'];
@@ -28,20 +27,20 @@ export default function Section5Anesthesia({ form, update }) {
 
       {form.anesthesia_complications === true && (
         <div className="pl-4 border-l-2 border-primary/20">
-          <CheckboxGroup
-            options={anesthesiaTypes}
-            selected={form.anesthesia_complication_types || []}
-            onChange={v => update('anesthesia_complication_types', v)}
+          <RadioGroup
+            value={form.anesthesia_complication_types?.[0] || ''}
+            onChange={v => update('anesthesia_complication_types', v ? [v] : [])}
+            options={anesthesiaTypes.map(a => ({ label: a, value: a }))}
           />
         </div>
       )}
 
       <div>
         <Label className="text-sm font-medium mb-2 block">Do you have any allergies?</Label>
-        <CheckboxGroup
-          options={allergyTypes}
-          selected={form.allergies || []}
-          onChange={v => update('allergies', v)}
+        <RadioGroup
+          value={form.allergies?.[0] || ''}
+          onChange={v => update('allergies', v ? [v] : [])}
+          options={allergyTypes.map(a => ({ label: a, value: a }))}
         />
       </div>
 

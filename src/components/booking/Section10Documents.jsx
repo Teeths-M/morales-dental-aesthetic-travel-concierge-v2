@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import CheckboxGroup from './FormCheckboxGroup';
+import RadioGroup from './FormRadioGroup';
 
 const docTypes = ['X-rays','Blood Work','MRI / CT Scans','Prescriptions','Photos for Review','Previous Procedure Reports','None'];
 
@@ -34,10 +34,10 @@ export default function Section10Documents({ form, update }) {
 
       <div>
         <Label className="text-sm font-medium mb-2 block">Upload Supporting Documents</Label>
-        <CheckboxGroup
-          options={docTypes}
-          selected={form.document_types || []}
-          onChange={v => update('document_types', v)}
+        <RadioGroup
+          value={form.document_types?.[0] || ''}
+          onChange={v => update('document_types', v ? [v] : [])}
+          options={docTypes.map(d => ({ label: d, value: d }))}
         />
       </div>
 

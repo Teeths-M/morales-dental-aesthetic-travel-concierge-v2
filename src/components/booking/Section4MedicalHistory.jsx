@@ -2,7 +2,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const conditions = ['Diabetes','Hypertension','Asthma','Heart Disease','Thyroid Conditions','Autoimmune Disorders','Epilepsy','Blood Disorders','None','Other'];
 const complications = ['Infection','Excessive bleeding','Poor healing','Anesthesia complications','Other'];
@@ -17,10 +16,10 @@ export default function Section4MedicalHistory({ form, update }) {
 
       <div>
         <Label className="text-sm font-medium mb-2 block">Do you currently have any medical conditions?</Label>
-        <CheckboxGroup
-          options={conditions}
-          selected={form.medical_conditions || []}
-          onChange={v => update('medical_conditions', v)}
+        <RadioGroup
+          value={form.medical_conditions?.[0] || ''}
+          onChange={v => update('medical_conditions', v ? [v] : [])}
+          options={conditions.map(c => ({ label: c, value: c }))}
         />
         {(form.medical_conditions || []).includes('Other') && (
           <Input
@@ -62,10 +61,10 @@ export default function Section4MedicalHistory({ form, update }) {
             />
           </div>
           {form.had_complications === true && (
-            <CheckboxGroup
-              options={complications}
-              selected={form.surgery_complications || []}
-              onChange={v => update('surgery_complications', v)}
+            <RadioGroup
+              value={form.surgery_complications?.[0] || ''}
+              onChange={v => update('surgery_complications', v ? [v] : [])}
+              options={complications.map(c => ({ label: c, value: c }))}
             />
           )}
         </div>

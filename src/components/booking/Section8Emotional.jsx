@@ -2,7 +2,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const concerns = ['Anxiety','Depression','Body Image Concerns','Fear of Surgery','Emotional Stress','Other'];
 
@@ -26,10 +25,10 @@ export default function Section8Emotional({ form, update }) {
 
       {form.emotional_concerns === true && (
         <div className="space-y-4 pl-4 border-l-2 border-primary/20">
-          <CheckboxGroup
-            options={concerns}
-            selected={form.emotional_concern_types || []}
-            onChange={v => update('emotional_concern_types', v)}
+          <RadioGroup
+            value={form.emotional_concern_types?.[0] || ''}
+            onChange={v => update('emotional_concern_types', v ? [v] : [])}
+            options={concerns.map(c => ({ label: c, value: c }))}
           />
           <div>
             <Label>Optional Notes</Label>

@@ -2,7 +2,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const habits = ['Smoking','Vaping','Alcohol','Recreational Substances','None'];
 
@@ -16,10 +15,10 @@ export default function Section7Lifestyle({ form, update }) {
 
       <div>
         <Label className="text-sm font-medium mb-2 block">Do you smoke, vape, drink alcohol, or use recreational substances?</Label>
-        <CheckboxGroup
-          options={habits}
-          selected={form.lifestyle_habits || []}
-          onChange={v => update('lifestyle_habits', v)}
+        <RadioGroup
+          value={form.lifestyle_habits?.[0] || ''}
+          onChange={v => update('lifestyle_habits', v ? [v] : [])}
+          options={habits.map(h => ({ label: h, value: h }))}
         />
       </div>
 

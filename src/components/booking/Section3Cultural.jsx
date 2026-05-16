@@ -2,7 +2,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const preferences = [
   'Female healthcare provider preference',
@@ -33,10 +32,10 @@ export default function Section3Cultural({ form, update }) {
 
       {form.has_cultural_preferences === true && (
         <div className="space-y-4 pl-4 border-l-2 border-primary/20">
-          <CheckboxGroup
-            options={preferences}
-            selected={form.cultural_preferences || []}
-            onChange={v => update('cultural_preferences', v)}
+          <RadioGroup
+            value={form.cultural_preferences?.[0] || ''}
+            onChange={v => update('cultural_preferences', v ? [v] : [])}
+            options={preferences.map(p => ({ label: p, value: p }))}
           />
           <div>
             <Label>Optional Notes</Label>

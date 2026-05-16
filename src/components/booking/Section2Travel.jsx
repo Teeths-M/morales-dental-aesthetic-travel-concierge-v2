@@ -2,7 +2,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const travelServices = [
   'Airport assistance',
@@ -47,10 +46,10 @@ export default function Section2Travel({ form, update }) {
 
           <div>
             <Label className="text-sm font-medium mb-2 block">Would you like assistance arranging a Travel Buddy Support Package?</Label>
-            <CheckboxGroup
-              options={travelServices}
-              selected={form.travel_buddy_services || []}
-              onChange={v => update('travel_buddy_services', v)}
+            <RadioGroup
+              value={form.travel_buddy_services?.[0] || ''}
+              onChange={v => update('travel_buddy_services', v ? [v] : [])}
+              options={travelServices.map(s => ({ label: s, value: s }))}
             />
           </div>
         </div>

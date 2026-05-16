@@ -2,7 +2,6 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import RadioGroup from './FormRadioGroup';
-import CheckboxGroup from './FormCheckboxGroup';
 
 const medicationTypes = ['Blood Thinners','Hormones','Diabetes Medication','Vitamins','Herbal Supplements','Other'];
 
@@ -26,10 +25,10 @@ export default function Section6Medications({ form, update }) {
 
       {form.takes_medications === true && (
         <div className="space-y-4 pl-4 border-l-2 border-primary/20">
-          <CheckboxGroup
-            options={medicationTypes}
-            selected={form.medication_types || []}
-            onChange={v => update('medication_types', v)}
+          <RadioGroup
+            value={form.medication_types?.[0] || ''}
+            onChange={v => update('medication_types', v ? [v] : [])}
+            options={medicationTypes.map(m => ({ label: m, value: m }))}
           />
           <div>
             <Label>Optional Medication Notes</Label>
