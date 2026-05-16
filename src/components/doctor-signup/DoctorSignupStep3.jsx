@@ -6,8 +6,8 @@ import { translations } from '@/lib/translations';
 import { ArrowRight, ChevronLeft, Upload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function DoctorSignupStep3({ formData, setFormData, language, onNext, onBack, onComplete }) {
-  const t = translations[language];
+export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
+  const t = translations[language] || translations['en'];
   const [payoutMethod, setPayoutMethod] = useState(null);
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);

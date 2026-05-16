@@ -15,9 +15,9 @@ const categoryMap = {
   'wellness': { emoji: '🌿', label: 'Wellness & Regenerative' },
 };
 
-export default function DoctorSignupStep2({ formData, setFormData, language, onNext, onBack }) {
-  const t = translations[language];
-  const categories = procedureCategories[language];
+export default function DoctorSignupStep2({ formData, setFormData, language = 'en', onNext, onBack }) {
+  const t = translations[language] || translations['en'];
+  const categories = procedureCategories[language] || procedureCategories['en'];
   const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [selectedProcedures, setSelectedProcedures] = useState(new Set());
 

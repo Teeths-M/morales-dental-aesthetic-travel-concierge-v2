@@ -5,9 +5,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { translations, countries } from '@/lib/translations';
 import { ArrowRight } from 'lucide-react';
 
-export default function DoctorSignupStep1({ formData, setFormData, language, onNext }) {
-  const t = translations[language];
-  const countryList = countries[language];
+export default function DoctorSignupStep1({ formData, setFormData, language = 'en', onNext }) {
+  const t = translations[language] || translations['en'];
+  const countryList = countries[language] || countries['en'];
 
   const handleChange = (field, value) => {
     setFormData(prev => ({

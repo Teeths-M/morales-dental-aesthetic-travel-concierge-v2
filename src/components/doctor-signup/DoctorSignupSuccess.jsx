@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { translations } from '@/lib/translations';
 import { CheckCircle2, Mail } from 'lucide-react';
 
-export default function DoctorSignupSuccess({ doctor, specialties, language, onDashboard }) {
-  const t = translations[language];
+export default function DoctorSignupSuccess({ doctor, specialties, language = 'en', onDashboard }) {
+  const t = translations[language] || translations['en'];
 
   return (
     <div className="space-y-8">
