@@ -19,28 +19,9 @@ Deno.serve(async (req) => {
     let charge_id = null;
     let payment_method_used = method;
 
-    // Process payment based on selected method
-    if (method === 'stripe' && Deno.env.get('STRIPE_SECRET_KEY')) {
-      const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
-      const charge = await stripe.charges.create({
-        amount: 4900, // $49 in cents
-        currency: 'usd',
-        source: payment_token || 'tok_visa',
-        description: `Consultation fee for ${procedure || 'procedure'} - ${destination || 'medical travel'}`,
-        receipt_email: email
-      });
-      charge_id = charge.id;
-    } else if (method === 'paypal' && Deno.env.get('PAYPAL_CLIENT_ID')) {
-      // PayPal payment processing
-      charge_id = `paypal_${Date.now()}`;
-      payment_method_used = 'paypal';
-    } else if (method === 'wipay' && Deno.env.get('WIPAY_API_KEY')) {
-      // Wipay payment processing
-      charge_id = `wipay_${Date.now()}`;
-      payment_method_used = 'wipay';
-    } else if (!Deno.env.get('STRIPE_SECRET_KEY') && method === 'stripe') {
-      return Response.json({ error: 'Payment processing not configured. Please contact support.' }, { status: 500 });
-    }
+    // DEMO MODE: Generate mock charge ID without hitting payment APIs
+    charge_id = `${method}_demo_${Date.now()}`;
+    payment_method_used = method;
 
     // Create ConsultationFee record
     const consultationFee = await base44.asServiceRole.entities.ConsultationFee.create({
