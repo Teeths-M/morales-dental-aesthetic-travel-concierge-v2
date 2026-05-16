@@ -213,7 +213,7 @@ export default function Procedures() {
               </p>
               <Link to="/booking">
                 <Button size="lg" className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-10 shadow-md">
-                  Book a Free Consultation <ArrowRight className="w-4 h-4 ml-2" />
+                  Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
             </motion.div>
