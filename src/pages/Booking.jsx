@@ -213,7 +213,7 @@ export default function Booking() {
                     consultationId={consultationId}
                     onDateConfirmed={(dates) => {
                       update('preferred_date', dates.procedure_date);
-                      setStep(s => s + 1);
+                      setTimeout(() => setStep(s => s + 1), 500);
                     }}
                   />
                 )}
