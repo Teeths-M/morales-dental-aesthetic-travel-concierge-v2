@@ -1,11 +1,34 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Clock, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 export default function ProcedureModal({ procedure, onClose }) {
+  const [doctorPrices, setDoctorPrices] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!procedure?.title) return;
+    
+    setLoading(true);
+    Promise.all([
+      base44.entities.DoctorPricing.filter({ procedure_name: procedure.title }),
+      base44.entities.Doctor.list()
+    ])
+      .then(([prices, doctors]) => {
+        const enrichedPrices = (prices || []).map(p => {
+          const doc = doctors.find(d => d.id === p.doctor_id);
+          return { ...p, clinic_country: doc?.clinic_country };
+        });
+        setDoctorPrices(enrichedPrices);
+      })
+      .finally(() => setLoading(false));
+  }, [procedure?.title]);
+
   if (!procedure) return null;
 
   return (
@@ -76,14 +99,41 @@ export default function ProcedureModal({ procedure, onClose }) {
             </div>
           )}
 
-          {/* CTA */}
-          <div className="pt-2">
-            <Link to="/booking" onClick={onClose}>
-              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
-                Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
+          {/* Doctor Pricing */}
+          {loading ? (
+            <div className="text-sm text-muted-foreground text-center py-3">Loading prices...</div>
+          ) : doctorPrices.length > 0 ? (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-2">Available Doctors & Pricing</h4>
+              <div className="space-y-2">
+                {doctorPrices.map(price => (
+                  <div key={price.id} className="p-3 bg-secondary/40 rounded-lg border border-border/50">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground text-sm">{price.doctor_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {price.clinic_country || 'Location TBD'}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-primary">${price.doctor_price_usd}</p>
+                        <p className="text-xs text-muted-foreground">{price.specialty_expertise_level}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+           {/* CTA */}
+           <div className="pt-2">
+             <Link to="/booking" onClick={onClose}>
+               <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+                 Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
+               </Button>
+             </Link>
+           </div>
         </div>
       </DialogContent>
     </Dialog>
