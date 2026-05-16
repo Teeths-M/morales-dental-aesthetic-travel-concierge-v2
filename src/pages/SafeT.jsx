@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Activity, ClipboardCheck, Pill, HeartPulse, MapPin, Heart, LifeBuoy } from 'lucide-react';
+import { Shield, Activity, ClipboardCheck, Pill, HeartPulse, MapPin, Heart, LifeBuoy, Syringe } from 'lucide-react';
 import OverviewTab from '@/components/safet/OverviewTab';
 import RiskAssessmentTab from '@/components/safet/RiskAssessmentTab';
 import ProcedureSafetyTab from '@/components/safet/ProcedureSafetyTab';
@@ -8,6 +8,7 @@ import PreparationTab from '@/components/safet/PreparationTab';
 import RecoveryTab from '@/components/safet/RecoveryTab';
 import JourneyTimelineTab from '@/components/safet/JourneyTimelineTab';
 import WellnessMonitorTab from '@/components/safet/WellnessMonitorTab';
+import VaccinationTrackerTab from '@/components/safet/VaccinationTrackerTab';
 import SupportTab from '@/components/safet/SupportTab';
 
 const getTabs = (language) => [
@@ -17,6 +18,7 @@ const getTabs = (language) => [
   { value: 'procedure', label: language === 'es' ? 'Seguridad' : language === 'fr' ? 'Sécurité' : 'Safety', icon: ClipboardCheck },
   { value: 'preparation', label: language === 'es' ? 'Preparar' : language === 'fr' ? 'Préparer' : 'Prepare', icon: Pill },
   { value: 'recovery', label: language === 'es' ? 'Recuperación' : language === 'fr' ? 'Récupération' : 'Recovery', icon: HeartPulse },
+  { value: 'vaccination', label: language === 'es' ? 'Vacunaciones' : language === 'fr' ? 'Vaccinations' : 'Vaccinations', icon: Syringe },
   { value: 'wellness', label: language === 'es' ? 'Bienestar' : language === 'fr' ? 'Bien-être' : 'Wellness', icon: Heart },
   { value: 'support', label: language === 'es' ? 'Soporte' : language === 'fr' ? 'Support' : 'Support', icon: LifeBuoy },
 ];
@@ -115,6 +117,7 @@ export default function SafeT() {
             {activeTab === 'procedure' && <ProcedureSafetyTab />}
             {activeTab === 'preparation' && <PreparationTab />}
             {activeTab === 'recovery' && <RecoveryTab />}
+            {activeTab === 'vaccination' && <VaccinationTrackerTab />}
             {activeTab === 'wellness' && <WellnessMonitorTab />}
             {activeTab === 'support' && <SupportTab />}
           </motion.div>
