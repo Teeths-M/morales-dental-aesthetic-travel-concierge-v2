@@ -52,65 +52,55 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
   };
 
   const handleSubmit = async () => {
-    if (!formData.license_url || !payoutMethod || !formData.payout_account || !confirmed) {
-      return;
-    }
+     if (!formData.license_url || !payoutMethod || !formData.payout_account || !confirmed) {
+       return;
+     }
 
-    setIsSubmitting(true);
-    try {
-      const doctorData = {
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        clinic_country: formData.clinic_country,
-        clinic_name: formData.clinic_name,
-        license_url: formData.license_url,
-        payout_method: formData.payout_method,
-        payout_account: formData.payout_account,
-        language_preference: language,
-        status: 'pending_verification',
-        sign_up_completed_at: new Date().toISOString()
-      };
+     setIsSubmitting(true);
+     try {
+       const doctorData = {
+         full_name: formData.full_name,
+         email: formData.email,
+         phone: formData.phone,
+         clinic_country: formData.clinic_country,
+         clinic_name: formData.clinic_name,
+         license_url: formData.license_url,
+         payout_method: formData.payout_method,
+         payout_account: formData.payout_account,
+         language_preference: language,
+         status: 'pending_verification',
+         sign_up_completed_at: new Date().toISOString()
+       };
 
-      const doctor = await base44.entities.Doctor.create(doctorData);
+       const doctor = await base44.entities.Doctor.create(doctorData);
 
-      // Auto-assign specialties
-      if (formData.specialties && formData.specialties.length > 0) {
-        // Fetch all MasterProcedures to match procedure names to IDs
-        const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
-        
-        const specialtyData = formData.specialties.map(spec => {
-          const matched = masterProcs.find(mp => mp.en_name === spec);
-          return {
-            doctor_id: doctor.id,
-            procedure_id: matched?.procedure_id || spec, // Use procedure_id from master, or fall back to spec name
-            procedure_name: spec,
-            category: matched?.category || 'General'
-          };
-        });
-        
-        if (specialtyData.length > 0) {
-          await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
-        }
-      }
+       // Auto-assign specialties
+       if (formData.specialties && formData.specialties.length > 0) {
+         const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
 
-      // Auto-create Partner entry
-      const partnerData = {
-        name: formData.full_name,
-        title: 'Medical Professional',
-        specialty: formData.specialties?.length > 0 ? formData.specialties[0] : 'General',
-        bio: `Doctor from ${formData.clinic_country}${formData.clinic_name ? ` - ${formData.clinic_name}` : ''}`,
-        is_featured: false
-      };
-      await base44.entities.Partner.create(partnerData);
+         const specialtyData = formData.specialties.map(spec => {
+           const matched = masterProcs.find(mp => mp.en_name === spec);
+           return {
+             doctor_id: doctor.id,
+             procedure_id: matched?.procedure_id || spec,
+             procedure_name: spec,
+             category: matched?.category || 'General'
+           };
+         });
 
-      onComplete(doctor);
-      } catch (error) {
-      console.error('Submit failed:', error);
-      } finally {
-      setIsSubmitting(false);
-      }
-      };
+         if (specialtyData.length > 0) {
+           await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
+         }
+       }
+
+       onComplete(doctor);
+     } catch (error) {
+       console.error('Submit failed:', error);
+       setSyncMessage({ type: 'error', text: 'Submission failed: ' + error.message });
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
       const handleSyncToPortalHub = async () => {
       if (!formData.full_name || !formData.email) {
