@@ -4,11 +4,12 @@ import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
-function StripePaymentForm({ form, onSuccess, onCancel, isProcessing }) {
+function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
   const [error, setError] = useState(null);
 
   const handleStripePayment = async (e) => {
     e.preventDefault();
+    setIsProcessing(true);
     try {
       const response = await base44.functions.invoke('chargeConsultationFee', {
         consultation_id: form.consultation_id,
@@ -23,6 +24,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing }) {
       }
     } catch (err) {
       setError(err.message);
+      setIsProcessing(false);
     }
   };
 
@@ -49,11 +51,12 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing }) {
   );
 }
 
-function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing }) {
+function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
   const [error, setError] = useState(null);
 
   const handlePayPalPayment = async (e) => {
     e.preventDefault();
+    setIsProcessing(true);
     try {
       const response = await base44.functions.invoke('chargeConsultationFee', {
         consultation_id: form.consultation_id,
@@ -68,15 +71,14 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing }) {
       }
     } catch (err) {
       setError(err.message);
+      setIsProcessing(false);
     }
   };
 
   return (
     <form onSubmit={handlePayPalPayment} className="space-y-4">
       <div className="p-4 border border-blue-200 rounded-xl bg-blue-50 flex items-center justify-center">
-        <svg className="w-16 h-10" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
-          <path d="M9.012 0C6.659 0 4.819 1.636 4.819 3.856v16.288C4.819 22.364 6.659 24 9.012 24h6.976c2.353 0 4.193-1.636 4.193-3.856V3.856C20.181 1.636 18.341 0 15.988 0H9.012z"/>
-        </svg>
+        <span className="text-3xl font-bold text-blue-600">P</span>
       </div>
       {error && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -96,11 +98,12 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing }) {
   );
 }
 
-function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing }) {
+function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
   const [error, setError] = useState(null);
 
   const handleWipayPayment = async (e) => {
     e.preventDefault();
+    setIsProcessing(true);
     try {
       const response = await base44.functions.invoke('chargeConsultationFee', {
         consultation_id: form.consultation_id,
@@ -115,6 +118,7 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing }) {
       }
     } catch (err) {
       setError(err.message);
+      setIsProcessing(false);
     }
   };
 
@@ -223,36 +227,30 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
         {paymentMethod === 'stripe' && (
           <StripePaymentForm
             form={form}
-            onSuccess={(data) => {
-              setIsProcessing(false);
-              onSuccess(data);
-            }}
+            onSuccess={onSuccess}
             onCancel={onCancel}
             isProcessing={isProcessing}
+            setIsProcessing={setIsProcessing}
           />
         )}
 
         {paymentMethod === 'paypal' && (
           <PayPalPaymentForm
             form={form}
-            onSuccess={(data) => {
-              setIsProcessing(false);
-              onSuccess(data);
-            }}
+            onSuccess={onSuccess}
             onCancel={onCancel}
             isProcessing={isProcessing}
+            setIsProcessing={setIsProcessing}
           />
         )}
 
         {paymentMethod === 'wipay' && (
           <WipayPaymentForm
             form={form}
-            onSuccess={(data) => {
-              setIsProcessing(false);
-              onSuccess(data);
-            }}
+            onSuccess={onSuccess}
             onCancel={onCancel}
             isProcessing={isProcessing}
+            setIsProcessing={setIsProcessing}
           />
         )}
 
