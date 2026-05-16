@@ -345,7 +345,7 @@ export const VISA_RULES = {
     VE: VF(90, 'Visa-free for Australian passport holders — up to 90 days', ['Return ticket', 'Proof of funds'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days'),
     DO: AC(30, 'Free e-Ticket form required online before arrival', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
-    CU: EV(30, 'Cuba e-Visa required — apply online', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
+    CU: EV(90, 'Cuba e-Visa required as of 2026 — old tourist card replaced. Apply at evisacuba.cu', ['Cuba e-Visa', 'Travel insurance (mandatory)', 'D\'Viajeros form'], 'https://evisacuba.cu/en/inicio'),
     TH: VF(60, 'Visa-free for 60 days', [], 'https://www.thaievisa.go.th/'),
     TR: EV(90, 'e-Visa required — apply at official Turkish e-Visa portal', [], 'https://www.evisa.gov.tr/en/'),
     MX: VF(180, 'No visa required — up to 180 days'),
@@ -472,7 +472,7 @@ export const VISA_RULES = {
   },
   // ── China ──
   CN: {
-    VE: VR(null, 'Visa required — apply at Venezuelan embassy', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
+    VE: VF(30, 'Visa-free for Chinese passport holders — up to 30 days under bilateral agreement', ['Return ticket', 'Proof of accommodation']),
     CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: VF(90, 'Visa-free for Chinese passport holders — up to 90 days under bilateral agreement', ['Return ticket', 'Travel insurance (mandatory)', 'D\'Viajeros form']),
@@ -576,9 +576,9 @@ export const VISA_RULES = {
   },
   // ── Philippines ──
   PH: {
-    VE: VR(null, 'Visa required', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
-    CO: VR(null, 'Visa required', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
-    DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
+    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online e-Visa', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
+    CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
+    DO: AC(30, 'Visa-free up to 30 days — e-Ticket form required online before arrival', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(90, 'Cuba e-Visa required as of 2026 — old tourist card replaced. Apply at evisacuba.cu', ['Cuba e-Visa', 'Travel insurance (mandatory)', 'D\'Viajeros form'], 'https://evisacuba.cu/en/inicio'),
     TH: VF(60, 'Visa-free for 60 days'),
     TR: EV(30, 'e-Visa required', [], 'https://www.evisa.gov.tr/en/'),
