@@ -145,8 +145,8 @@ export default function Booking() {
   return (
     <div className="min-h-screen bg-transparent">
       <MedicalSlideshowBackground step={step} />
-      {/* Premium Header — full glass over the background */}
-      <div className="bg-black/10 backdrop-blur-md border-b border-white/5 sticky top-16 lg:top-20 z-20">
+      {/* Premium Header — full glass over the background - Ghost effect */}
+      <div className="bg-black/10 backdrop-blur-md border-b border-white/5 sticky top-16 lg:top-20 z-20 opacity-30 hover:opacity-100 transition-opacity duration-300">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
