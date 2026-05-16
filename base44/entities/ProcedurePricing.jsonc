@@ -1,0 +1,93 @@
+{
+  "name": "ProcedurePricing",
+  "type": "object",
+  "properties": {
+    "procedure_name": {
+      "type": "string",
+      "description": "Procedure title (e.g., Dental Crown, Rhinoplasty)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category (dental, aesthetic, wellness, etc.)"
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "Subcategory (general, cosmetic, implants, etc.)"
+    },
+    "base_price_usd": {
+      "type": "number",
+      "description": "Standard base price in USD"
+    },
+    "min_price_usd": {
+      "type": "number",
+      "description": "Minimum price (discounted scenario)"
+    },
+    "max_price_usd": {
+      "type": "number",
+      "description": "Maximum price (premium/complex scenario)"
+    },
+    "complexity_level": {
+      "type": "string",
+      "enum": [
+        "simple",
+        "moderate",
+        "complex",
+        "advanced"
+      ],
+      "default": "moderate"
+    },
+    "estimated_time_minutes": {
+      "type": "number",
+      "description": "Procedure duration"
+    },
+    "recovery_days": {
+      "type": "number",
+      "description": "Recovery period"
+    },
+    "material_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cost_modifier": {
+            "type": "number",
+            "description": "Price multiplier (1.0 = no change)"
+          }
+        }
+      },
+      "description": "Material upgrade costs (e.g., zirconia vs porcelain)"
+    },
+    "recommended_add_ons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Complementary procedures to suggest"
+    },
+    "doctor_specialty_required": {
+      "type": "string",
+      "description": "Required specialty (cosmetic-surgeon, implant-specialist, etc.)"
+    },
+    "ai_risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "high"
+      ],
+      "default": "moderate"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "procedure_name",
+    "category",
+    "base_price_usd"
+  ]
+}

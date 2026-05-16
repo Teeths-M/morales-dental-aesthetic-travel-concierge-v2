@@ -1,0 +1,55 @@
+{
+  "name": "DoctorPricing",
+  "type": "object",
+  "properties": {
+    "doctor_id": {
+      "type": "string",
+      "description": "Link to Doctor entity"
+    },
+    "doctor_name": {
+      "type": "string"
+    },
+    "procedure_id": {
+      "type": "string",
+      "description": "Link to ProcedurePricing"
+    },
+    "procedure_name": {
+      "type": "string"
+    },
+    "doctor_price_usd": {
+      "type": "number",
+      "description": "Doctor's specific price for this procedure"
+    },
+    "price_markup_pct": {
+      "type": "number",
+      "description": "Markup % from base price (e.g., 30 for 30% premium)"
+    },
+    "specialty_expertise_level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "expert"
+      ],
+      "default": "intermediate"
+    },
+    "promotional_discount_pct": {
+      "type": "number",
+      "description": "Active promotion discount (e.g., 10)"
+    },
+    "approved_by_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "doctor_id",
+    "doctor_name",
+    "procedure_id",
+    "procedure_name",
+    "doctor_price_usd"
+  ]
+}

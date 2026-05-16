@@ -1,0 +1,45 @@
+{
+  "name": "ProcedureBundle",
+  "type": "object",
+  "properties": {
+    "bundle_name": {
+      "type": "string",
+      "description": "E.g., Smile Makeover, Mommy Makeover, Hollywood Smile"
+    },
+    "bundle_description": {
+      "type": "string"
+    },
+    "procedures_included": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of procedure names in bundle"
+    },
+    "individual_total_usd": {
+      "type": "number",
+      "description": "Sum of individual prices"
+    },
+    "bundle_price_usd": {
+      "type": "number",
+      "description": "Bundle discounted price"
+    },
+    "bundle_discount_pct": {
+      "type": "number",
+      "description": "Discount % (e.g., 10 for 10% off)"
+    },
+    "savings_message": {
+      "type": "string",
+      "description": "E.g., 'Save $500 with this bundle'"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "bundle_name",
+    "procedures_included",
+    "bundle_price_usd"
+  ]
+}
