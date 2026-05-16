@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ClipboardList, DollarSign, AlertTriangle, CheckCircle2, Clock, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -117,7 +118,12 @@ export default function ConsultationsModule({ consultations = [] }) {
   const deleteConsultation = useMutation({
     mutationFn: (id) => base44.entities.Consultation.delete(id),
     onSuccess: () => {
+      toast.success('Consultation deleted');
       queryClient.invalidateQueries({ queryKey: ['my-consultations'] });
+    },
+    onError: (error) => {
+      toast.error('Failed to delete consultation');
+      console.error('Delete error:', error);
     },
   });
 
