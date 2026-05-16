@@ -48,6 +48,7 @@ export default function VaccinationTrackerTab() {
     { id: 'sint_maarten', label: 'Sint Maarten' },
     { id: 'trinidad_and_tobago', label: 'Trinidad and Tobago' },
     { id: 'turks_caicos', label: 'Turks and Caicos Islands' },
+    { id: 'venezuela', label: 'Venezuela' },
     { id: 'virgin_islands_us', label: 'Virgin Islands, U.S.' },
     { id: 'virgin_islands_british', label: 'Virgin Islands, British' },
   ];

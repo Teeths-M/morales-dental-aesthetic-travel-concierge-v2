@@ -227,6 +227,20 @@ Deno.serve(async (req) => {
         ],
         routine: ['MMR', 'Tdap', 'Influenza']
       },
+      venezuela: {
+        country: 'Venezuela',
+        required: [
+          { name: 'Yellow Fever', reason: 'HIGH RISK - Get vaccinated at least 10 days before travel' }
+        ],
+        recommended: [
+          { name: 'Hepatitis A', reason: 'Food and water safety' },
+          { name: 'Hepatitis B', reason: 'Blood exposure risk (especially for younger travelers)' },
+          { name: 'Typhoid', reason: 'Foodborne illness risk - especially in rural areas' },
+          { name: 'Malaria Prophylaxis', reason: 'Prescription medication for areas below 1,700m elevation' },
+          { name: 'Rabies', reason: 'If hiking/outdoor activities with wildlife exposure' }
+        ],
+        routine: ['MMR', 'Tdap', 'Influenza', 'COVID-19']
+      },
       turks_caicos: {
         country: 'Turks and Caicos Islands',
         required: [],
