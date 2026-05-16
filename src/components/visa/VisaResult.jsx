@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 // YouTube tutorial videos for each destination's visa/entry application
 const VISA_VIDEOS = {
-  VE: { id: 'Fst0_WcjMZo', title: 'How to Apply for Venezuela e-Visa 2026 — Step by Step', applyUrl: 'https://cancilleriadigital.mppre.gob.ve/login', officialVideoUrl: 'https://mppre.gob.ve/gestor2/archivos/cancilleria_digital/video/1774461338_Request-Process-(2).mp4' },
+  VE: { id: 'Fst0_WcjMZo', title: 'How to Apply for Venezuela e-Visa 2026 — Step by Step', applyUrl: 'https://cancilleriadigital.mppre.gob.ve/login', officialVideoUrl: 'https://mppre.gob.ve/gestor2/archivos/cancilleria_digital/video/1774461338_Request-Process-(2).mp4', registerVideoUrl: 'https://mppre.gob.ve/gestor2/archivos/cancilleria_digital/video/1774461302_Registration-Process-(2).mp4' },
   TR: { id: 'zM_QYSbxttQ', title: 'Turkey eVisa 2026 — Step-by-Step Application Guide' },
   TH: { id: 'vzLLtJPWpzQ', title: 'How to Apply for Thailand e-Visa Online 2026' },
   CU: { id: '288H1NeGhcM', title: 'How to Apply for Cuba e-Visa 2026 — Full Guide' },
@@ -223,6 +223,16 @@ export default function VisaResult({ result, onReset }) {
                   Apply Now ↗
                 </a>
               )}
+              {video.registerVideoUrl && (
+                <a
+                  href={video.registerVideoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-purple-400 hover:text-purple-300 underline transition-colors font-semibold"
+                >
+                  How to Register ↗
+                </a>
+              )}
               {video.officialVideoUrl && (
                 <a
                   href={video.officialVideoUrl}
@@ -230,7 +240,7 @@ export default function VisaResult({ result, onReset }) {
                   rel="noopener noreferrer"
                   className="text-xs text-blue-400 hover:text-blue-300 underline transition-colors font-semibold"
                 >
-                  Official Tutorial ↗
+                  How to Request ↗
                 </a>
               )}
               <a
