@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { translations } from '@/lib/translations';
 import TravelAgencySignupStep1 from '@/components/partner-signup/TravelAgencySignupStep1';
 import TravelAgencySignupStep2 from '@/components/partner-signup/TravelAgencySignupStep2';
@@ -43,25 +44,23 @@ export default function TravelAgencySignup() {
       <div className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground flex items-center gap-1">
-              <Globe className="w-4 h-4" /> {t.selectLanguage}:
-            </span>
+            <Globe className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">{t.selectLanguage}</span>
           </div>
-          <div className="flex gap-2">
-            {allLanguages.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setLanguage(lang.code)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  language === lang.code
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {lang.flag} {lang.name}
-              </button>
-            ))}
-          </div>
+          <Select value={language} onValueChange={setLanguage}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {allLanguages.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  <span className="flex items-center gap-2">
+                    {lang.flag} {lang.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
