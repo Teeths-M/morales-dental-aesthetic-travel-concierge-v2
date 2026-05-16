@@ -17,7 +17,9 @@ export default function CapacityGate({ form, onProceed, onMonthChange }) {
   const [joined, setJoined] = useState(false);
 
   const yearMonth = form.preferred_date
-    ? form.preferred_date.slice(0, 7)
+    ? typeof form.preferred_date === 'string'
+      ? form.preferred_date.slice(0, 7)
+      : new Date(form.preferred_date).toISOString().slice(0, 7)
     : null;
 
   useEffect(() => {
