@@ -22,28 +22,23 @@ export default function PartnerSignup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Language Selector */}
-      <div className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground flex items-center gap-1">
-              <Globe className="w-4 h-4" /> {t.selectLanguage}:
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {allLanguages.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setLanguage(lang.code)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  language === lang.code
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {lang.flag} {lang.name}
-              </button>
-            ))}
-          </div>
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/95 backdrop-blur rounded-full shadow-md px-2 py-2 border border-border/50">
+        <Globe className="w-4 h-4 text-muted-foreground ml-2" />
+        <div className="flex gap-1">
+          {allLanguages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => setLanguage(lang.code)}
+              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                language === lang.code
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-transparent text-foreground hover:bg-secondary/50'
+              }`}
+              title={lang.name}
+            >
+              {lang.flag} {lang.name}
+            </button>
+          ))}
         </div>
       </div>
 
