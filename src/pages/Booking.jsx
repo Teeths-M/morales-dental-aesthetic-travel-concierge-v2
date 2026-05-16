@@ -122,7 +122,7 @@ export default function Booking() {
       return form.pregnancy_status;
     }
     if (step === 9) {
-      return form.document_types.length > 0 && form.uploaded_files.length > 0;
+      return form.document_types.length > 0 && (form.document_types.includes('none') || form.uploaded_files.length > 0);
     }
     if (step === 10) {
       return form.preferred_date;
