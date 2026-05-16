@@ -117,7 +117,7 @@ export default function ConsultationsModule({ consultations = [] }) {
   const deleteConsultation = useMutation({
     mutationFn: (id) => base44.entities.Consultation.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      queryClient.invalidateQueries({ queryKey: ['my-consultations'] });
     },
   });
 
