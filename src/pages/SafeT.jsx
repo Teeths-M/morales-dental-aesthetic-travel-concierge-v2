@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Activity, ClipboardCheck, Pill, HeartPulse, MapPin, Heart, LifeBuoy } from 'lucide-react';
 import OverviewTab from '@/components/safet/OverviewTab';
@@ -10,19 +10,33 @@ import JourneyTimelineTab from '@/components/safet/JourneyTimelineTab';
 import WellnessMonitorTab from '@/components/safet/WellnessMonitorTab';
 import SupportTab from '@/components/safet/SupportTab';
 
-const tabs = [
-  { value: 'overview', label: 'Overview', icon: Shield },
-  { value: 'journey', label: 'Journey', icon: MapPin },
-  { value: 'risk', label: 'Risk', icon: Activity },
-  { value: 'procedure', label: 'Safety', icon: ClipboardCheck },
-  { value: 'preparation', label: 'Prepare', icon: Pill },
-  { value: 'recovery', label: 'Recovery', icon: HeartPulse },
-  { value: 'wellness', label: 'Wellness', icon: Heart },
-  { value: 'support', label: 'Support', icon: LifeBuoy },
+const getTabs = (language) => [
+  { value: 'overview', label: language === 'es' ? 'Descripción' : language === 'fr' ? 'Aperçu' : 'Overview', icon: Shield },
+  { value: 'journey', label: language === 'es' ? 'Viaje' : language === 'fr' ? 'Voyage' : 'Journey', icon: MapPin },
+  { value: 'risk', label: language === 'es' ? 'Riesgo' : language === 'fr' ? 'Risque' : 'Risk', icon: Activity },
+  { value: 'procedure', label: language === 'es' ? 'Seguridad' : language === 'fr' ? 'Sécurité' : 'Safety', icon: ClipboardCheck },
+  { value: 'preparation', label: language === 'es' ? 'Preparar' : language === 'fr' ? 'Préparer' : 'Prepare', icon: Pill },
+  { value: 'recovery', label: language === 'es' ? 'Recuperación' : language === 'fr' ? 'Récupération' : 'Recovery', icon: HeartPulse },
+  { value: 'wellness', label: language === 'es' ? 'Bienestar' : language === 'fr' ? 'Bien-être' : 'Wellness', icon: Heart },
+  { value: 'support', label: language === 'es' ? 'Soporte' : language === 'fr' ? 'Support' : 'Support', icon: LifeBuoy },
 ];
 
 export default function SafeT() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [language, setLanguage] = useState('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  const tabs = getTabs(language);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
@@ -41,11 +55,11 @@ export default function SafeT() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl lg:text-3xl text-slate-900">SAFE-T 4LIFE™</h1>
                 <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-widest">
-                  AI Health Safety System
+                  {language === 'es' ? 'Sistema de Seguridad de Salud IA' : language === 'fr' ? 'Système de Sécurité Sanitaire IA' : 'AI Health Safety System'}
                 </span>
               </div>
               <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-                Your premium intelligent healthcare coordination companion — guiding you safely from consultation through full recovery.
+                {language === 'es' ? 'Tu compañero de coordinación de cuidado de salud inteligente premium — guiándote de forma segura desde la consulta hasta la recuperación completa.' : language === 'fr' ? 'Votre compagnon de coordination des soins de santé intelligent premium — vous guidant en toute sécurité de la consultation à la récupération complète.' : 'Your premium intelligent healthcare coordination companion — guiding you safely from consultation through full recovery.'}
               </p>
             </div>
           </motion.div>

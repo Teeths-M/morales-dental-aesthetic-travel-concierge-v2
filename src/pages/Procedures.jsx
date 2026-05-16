@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar } from 'lucide-react';
@@ -11,11 +11,11 @@ import VoiceMode from '@/components/procedures/VoiceMode';
 
 import { useCart } from '@/context/CartContext';
 
-const parentFilters = [
-  { id: 'all', label: 'All', emoji: '🏥' },
-  { id: 'dental', label: 'Dental', emoji: '🦷' },
-  { id: 'aesthetic', label: 'Aesthetic', emoji: '✨' },
-  { id: 'wellness', label: 'Wellness', emoji: '🌿' },
+const getParentFilters = (language) => [
+  { id: 'all', label: language === 'es' ? 'Todos' : language === 'fr' ? 'Tous' : 'All', emoji: '🏥' },
+  { id: 'dental', label: language === 'es' ? 'Dental' : language === 'fr' ? 'Dentaire' : 'Dental', emoji: '🦷' },
+  { id: 'aesthetic', label: language === 'es' ? 'Estético' : language === 'fr' ? 'Esthétique' : 'Aesthetic', emoji: '✨' },
+  { id: 'wellness', label: language === 'es' ? 'Bienestar' : language === 'fr' ? 'Bien-être' : 'Wellness', emoji: '🌿' },
 ];
 
 function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
@@ -63,7 +63,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
             onClick={() => onLearnMore(proc)}
             className="flex-1 py-2 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-1"
           >
-            Learn More <ChevronRight className="w-3 h-3" />
+            {proc.language === 'es' ? 'Más Información' : proc.language === 'fr' ? 'En Savoir Plus' : 'Learn More'} <ChevronRight className="w-3 h-3" />
           </button>
           <button
             onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
@@ -73,7 +73,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
                 : `${c.bg} ${c.text} border ${c.border} hover:opacity-80`
             }`}
           >
-            {isSelected ? '✓ Added' : '+ Select'}
+            {isSelected ? (proc.language === 'es' ? '✓ Añadido' : proc.language === 'fr' ? '✓ Ajouté' : '✓ Added') : (proc.language === 'es' ? '+ Seleccionar' : proc.language === 'fr' ? '+ Sélectionner' : '+ Select')}
           </button>
         </div>
       </div>
@@ -86,7 +86,21 @@ export default function Procedures() {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [language, setLanguage] = useState('en');
   const { items, addItem, removeItem, clearCart } = useCart();
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  const parentFilters = getParentFilters(language);
 
   const selectedProcs = items; // cart IS the selected list
 
@@ -116,10 +130,14 @@ export default function Procedures() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">Our Services</p>
-            <h1 className="font-display text-3xl lg:text-5xl text-slate-900 mb-4">Procedures & Treatments</h1>
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">
+              {language === 'es' ? 'Nuestros Servicios' : language === 'fr' ? 'Nos Services' : 'Our Services'}
+            </p>
+            <h1 className="font-display text-3xl lg:text-5xl text-slate-900 mb-4">
+              {language === 'es' ? 'Procedimientos y Tratamientos' : language === 'fr' ? 'Procédures et Traitements' : 'Procedures & Treatments'}
+            </h1>
             <p className="text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
-              World-class dental, aesthetic, and wellness care. Browse below, search, or simply <span className="font-semibold text-emerald-700">speak your goals</span> using Voice Mode.
+              {language === 'es' ? 'Cuidado dental, estético y de bienestar de clase mundial. Busca abajo, o simplemente ' : language === 'fr' ? 'Soins dentaires, esthétiques et de bien-être de classe mondiale. Parcourez ci-dessous, ou simplement ' : 'World-class dental, aesthetic, and wellness care. Browse below, search, or simply '}<span className="font-semibold text-emerald-700">{language === 'es' ? 'habla tus objetivos' : language === 'fr' ? 'parlez vos objectifs' : 'speak your goals'}</span> {language === 'es' ? 'usando el modo de voz.' : language === 'fr' ? 'en utilisant le mode voix.' : 'using Voice Mode.'}
             </p>
           </motion.div>
 
@@ -133,13 +151,13 @@ export default function Procedures() {
               className="flex-shrink-0 flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-5 py-3.5 rounded-2xl shadow-md text-sm transition-all"
             >
               <Mic className="w-4 h-4" />
-              <span className="hidden sm:inline">Voice Mode</span>
+              <span className="hidden sm:inline">{language === 'es' ? 'Modo de Voz' : language === 'fr' ? 'Mode Voix' : 'Voice Mode'}</span>
             </button>
           </div>
 
           {/* Voice hint */}
           <p className="text-center text-xs text-slate-400 mt-3">
-            💡 Try Voice Mode: <em>"I want veneers, whitening, and implants on the upper jaw"</em>
+            💡 {language === 'es' ? 'Prueba el Modo de Voz: ' : language === 'fr' ? 'Essayez le Mode Voix: ' : 'Try Voice Mode: '}<em>{language === 'es' ? '"Quiero carillas, blanqueamiento e implantes en la mandíbula superior"' : language === 'fr' ? '"Je veux des facettes, un blanchiment et des implants à la mâchoire supérieure"' : '"I want veneers, whitening, and implants on the upper jaw"'}</em>
           </p>
         </div>
       </div>
@@ -177,7 +195,7 @@ export default function Procedures() {
                       {cat.label}
                     </h2>
                     <div className="flex-1 h-px bg-slate-100" />
-                    <span className="text-xs text-slate-400 font-medium">{cat.procedures.length} treatments</span>
+                    <span className="text-xs text-slate-400 font-medium">{cat.procedures.length} {language === 'es' ? 'tratamientos' : language === 'fr' ? 'traitements' : 'treatments'}</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -206,14 +224,18 @@ export default function Procedures() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">Not Sure Where to Start?</p>
-              <h2 className="font-display text-2xl lg:text-3xl text-slate-900 mb-3">Talk to Our Concierge Team</h2>
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">
+                {language === 'es' ? '¿No Estás Seguro Por Dónde Empezar?' : language === 'fr' ? 'Vous Ne Savez Pas Où Commencer?' : 'Not Sure Where to Start?'}
+              </p>
+              <h2 className="font-display text-2xl lg:text-3xl text-slate-900 mb-3">
+                {language === 'es' ? 'Habla Con Nuestro Equipo de Conserjería' : language === 'fr' ? 'Parlez à Notre Équipe de Conciergerie' : 'Talk to Our Concierge Team'}
+              </h2>
               <p className="text-slate-500 text-sm mb-6 max-w-md mx-auto">
-                Our specialists will guide you to the right treatment based on your goals, health profile, and budget.
+                {language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.'}
               </p>
               <Link to="/booking">
                 <Button size="lg" className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-10 shadow-md">
-                  Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
+                {language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation'} <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
             </motion.div>
@@ -234,8 +256,12 @@ export default function Procedures() {
                 <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mx-auto mb-3">
                   <span className="text-2xl">🗒️</span>
                 </div>
-                <p className="text-sm font-semibold text-slate-700 mb-1">My Procedures</p>
-                <p className="text-xs text-slate-400 leading-relaxed">Select procedures from the list or use Voice Mode to build your treatment plan.</p>
+                <p className="text-sm font-semibold text-slate-700 mb-1">
+                  {language === 'es' ? 'Mis Procedimientos' : language === 'fr' ? 'Mes Procédures' : 'My Procedures'}
+                </p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {language === 'es' ? 'Selecciona procedimientos de la lista o usa el Modo de Voz para construir tu plan de tratamiento.' : language === 'fr' ? 'Sélectionnez des procédures dans la liste ou utilisez le Mode Voix pour construire votre plan de traitement.' : 'Select procedures from the list or use Voice Mode to build your treatment plan.'}
+                </p>
               </div>
             )}
 
@@ -248,8 +274,12 @@ export default function Procedures() {
                 <Mic className="w-5 h-5 text-white" />
               </div>
               <div className="text-left">
-                <p className="text-white font-bold text-xs">Voice Mode</p>
-                <p className="text-white/70 text-[10px]">Speak your treatments</p>
+                <p className="text-white font-bold text-xs">
+                  {language === 'es' ? 'Modo de Voz' : language === 'fr' ? 'Mode Voix' : 'Voice Mode'}
+                </p>
+                <p className="text-white/70 text-[10px]">
+                  {language === 'es' ? 'Habla tus tratamientos' : language === 'fr' ? 'Parlez vos traitements' : 'Speak your treatments'}
+                </p>
               </div>
             </button>
           </div>

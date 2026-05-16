@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VisaHero from '@/components/visa/VisaHero';
 import VisaWizard from '@/components/visa/VisaWizard';
@@ -8,16 +8,30 @@ import EmbassyDirectory from '@/components/visa/EmbassyDirectory';
 import VisaAIChat from '@/components/visa/VisaAIChat';
 import { Globe2, ClipboardList, Building2, Bot } from 'lucide-react';
 
-const sections = [
-  { id: 'wizard', label: 'Visa Check', icon: Globe2 },
-  { id: 'readiness', label: 'Travel Readiness', icon: ClipboardList },
-  { id: 'embassy', label: 'Embassy Finder', icon: Building2 },
-  { id: 'assistant', label: 'AI Assistant', icon: Bot },
+const getSections = (language) => [
+  { id: 'wizard', label: language === 'es' ? 'Verificación de Visa' : language === 'fr' ? 'Vérification de Visa' : 'Visa Check', icon: Globe2 },
+  { id: 'readiness', label: language === 'es' ? 'Preparación de Viaje' : language === 'fr' ? 'Préparation du Voyage' : 'Travel Readiness', icon: ClipboardList },
+  { id: 'embassy', label: language === 'es' ? 'Buscador de Embajadas' : language === 'fr' ? 'Recherche d\'Ambassade' : 'Embassy Finder', icon: Building2 },
+  { id: 'assistant', label: language === 'es' ? 'Asistente IA' : language === 'fr' ? 'Assistante IA' : 'AI Assistant', icon: Bot },
 ];
 
 export default function VisaAssist() {
   const [wizardResult, setWizardResult] = useState(null);
   const [activeSection, setActiveSection] = useState('wizard');
+  const [language, setLanguage] = useState('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  const sections = getSections(language);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
@@ -85,7 +99,7 @@ export default function VisaAssist() {
         <div className="mt-16 flex items-center justify-center gap-3 text-center">
           <div className="h-px flex-1 bg-slate-200 max-w-24" />
           <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
-            <strong className="text-slate-500">SAFE-T VISA ASSIST™</strong> provides travel guidance and coordination support only and does not guarantee visa approval or replace official embassy or immigration requirements. Always verify with official government sources.
+            <strong className="text-slate-500">SAFE-T VISA ASSIST™</strong> {language === 'es' ? 'proporciona orientación de viaje y soporte de coordinación solamente y no garantiza la aprobación de visa ni reemplaza los requisitos oficiales de embajada o inmigración. Siempre verifica con fuentes oficiales del gobierno.' : language === 'fr' ? 'fournit uniquement des conseils de voyage et un support de coordination et ne garantit pas l\'approbation de visa ou ne remplace pas les exigences officielles d\'ambassade ou d\'immigration. Toujours vérifier auprès des sources gouvernementales officielles.' : 'provides travel guidance and coordination support only and does not guarantee visa approval or replace official embassy or immigration requirements. Always verify with official government sources.'}
           </p>
           <div className="h-px flex-1 bg-slate-200 max-w-24" />
         </div>
