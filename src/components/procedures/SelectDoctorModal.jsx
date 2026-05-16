@@ -27,19 +27,16 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
       base44.entities.DoctorSpecialty.list('-created_date', 1000)
     ])
       .then(([prices, doctors, specialties]) => {
-        console.log('Fetched:', { priceCount: prices?.length, doctorCount: doctors?.length, specialtyCount: specialties?.length });
-        console.log('Specialty doctor IDs:', specialties.map(s => s.doctor_id));
-        
-        // Only include doctors that still have DoctorSpecialty records
+        // Filter: only show doctors that still exist in Doctor entity AND have DoctorSpecialty records
+        const existingDoctorIds = new Set(doctors.map(d => d.id));
         const validDoctorIds = new Set(specialties.map(s => s.doctor_id));
 
         const enriched = (prices || [])
-          .filter(p => validDoctorIds.has(p.doctor_id))
+          .filter(p => existingDoctorIds.has(p.doctor_id) && validDoctorIds.has(p.doctor_id))
           .map(p => {
             const doc = doctors.find(d => d.id === p.doctor_id);
             return { ...p, clinic_country: doc?.clinic_country };
           });
-        console.log('Enriched doctors for procedure:', enriched.map(e => ({ name: e.doctor_name, id: e.doctor_id })));
         setDoctorPrices(enriched);
         if (enriched.length > 0) setSelected(enriched[0].id);
       })
