@@ -18,7 +18,7 @@ const categoryMap = {
 export default function DoctorSignupStep2({ formData, setFormData, language, onNext, onBack }) {
   const t = translations[language];
   const categories = procedureCategories[language];
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [selectedProcedures, setSelectedProcedures] = useState(new Set());
 
   const proceduresByCategory = {
@@ -56,15 +56,23 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
   };
 
   const handleSelectCategory = (categoryId) => {
-    if (selectedCategory === categoryId) {
-      setSelectedCategory(null);
-      setSelectedProcedures(new Set());
+    const newCategories = new Set(selectedCategories);
+    if (newCategories.has(categoryId)) {
+      newCategories.delete(categoryId);
+      // Remove procedures from this category
+      const procs = proceduresByCategory[categoryId] || [];
+      const newProcs = new Set(selectedProcedures);
+      procs.forEach(p => newProcs.delete(p));
+      setSelectedProcedures(newProcs);
     } else {
-      setSelectedCategory(categoryId);
+      newCategories.add(categoryId);
       // Auto-select all procedures in this category
       const procs = proceduresByCategory[categoryId] || [];
-      setSelectedProcedures(new Set(procs));
+      const newProcs = new Set(selectedProcedures);
+      procs.forEach(p => newProcs.add(p));
+      setSelectedProcedures(newProcs);
     }
+    setSelectedCategories(newCategories);
   };
 
   const handleToggleProcedure = (proc) => {
@@ -82,7 +90,7 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
       setFormData(prev => ({
         ...prev,
         specialties: Array.from(selectedProcedures),
-        selectedCategory: selectedCategory
+        selectedCategories: Array.from(selectedCategories)
       }));
       onNext();
     }
@@ -103,7 +111,7 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
               key={id}
               onClick={() => handleSelectCategory(id)}
               className={`p-4 rounded-lg border-2 transition-all text-center space-y-2 ${
-                selectedCategory === id
+                selectedCategories.has(id)
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/50 bg-card'
               }`}
@@ -116,23 +124,30 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
       </div>
 
       {/* Procedure Chips */}
-      {selectedCategory && (
+      {selectedCategories.size > 0 && (
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium text-foreground mb-3">{t.selectSpecificProcedures}</p>
             <div className="flex flex-wrap gap-2">
-              {(proceduresByCategory[selectedCategory] || []).map((proc) => (
-                <Badge
-                  key={proc}
-                  onClick={() => handleToggleProcedure(proc)}
-                  className={`cursor-pointer px-3 py-2 text-sm transition-all ${
-                    selectedProcedures.has(proc)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
-                >
-                  {categoryMap[selectedCategory]?.emoji} {proc}
-                </Badge>
+              {Array.from(selectedCategories).map(catId => (
+                <div key={catId} className="w-full">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">{categoryMap[catId]?.label}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(proceduresByCategory[catId] || []).map((proc) => (
+                      <Badge
+                        key={proc}
+                        onClick={() => handleToggleProcedure(proc)}
+                        className={`cursor-pointer px-3 py-2 text-sm transition-all ${
+                          selectedProcedures.has(proc)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {categoryMap[catId]?.emoji} {proc}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -168,7 +183,7 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
           disabled={selectedProcedures.size === 0}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
         >
-          {t.next} <ArrowRight className="w-4 h-4" />
+          {t.next} <ArrowRight className="w-4 h-4" /> ({selectedCategories.size} selected)
         </Button>
       </div>
     </div>
