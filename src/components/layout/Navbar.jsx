@@ -80,7 +80,7 @@ export default function Navbar() {
             ))}
 
             {/* Partner Dropdown */}
-            <div className="relative">
+            <div className="relative" onMouseLeave={() => setDropdownOpen(false)}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
@@ -127,7 +127,7 @@ export default function Navbar() {
           {/* Right Actions */}
           <div className="flex items-center gap-3">
             {/* Language Dropdown */}
-              <div className="relative hidden sm:block">
+              <div className="relative hidden sm:block" onMouseLeave={() => setLanguageDropdownOpen(false)}>
                 <button
                   onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
                   className="p-2 hover:bg-secondary rounded-md transition-colors"
