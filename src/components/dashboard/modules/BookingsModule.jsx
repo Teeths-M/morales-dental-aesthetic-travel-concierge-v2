@@ -7,28 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
-const bookingItems = [
-  {
-    type: 'flight', icon: Plane, color: 'blue',
-    label: 'Return Flight', detail: 'Miami → Margarita Island → Miami',
-    date: 'Jun 12 – Jun 19, 2026', status: 'confirmed',
-  },
-  {
-    type: 'hotel', icon: Hotel, color: 'violet',
-    label: 'Recovery Hotel', detail: 'Margarita Luxury Suites — Deluxe Suite (5 nights)',
-    date: 'Jun 12 – Jun 17, 2026', status: 'confirmed',
-  },
-  {
-    type: 'transfer', icon: Car, color: 'emerald',
-    label: 'Airport Transfer', detail: 'Private car — Arrival & Departure',
-    date: 'Jun 12 & Jun 19', status: 'pending',
-  },
-  {
-    type: 'procedure', icon: Calendar, color: 'sky',
-    label: 'Procedure Appointment', detail: 'Porcelain Veneers — Dr. Ramirez',
-    date: 'Jun 14, 2026 — 9:00 AM', status: 'pending',
-  },
-];
+const bookingItems = [];
 
 const statusCfg = {
   confirmed: { label: 'Confirmed', cls: 'bg-emerald-100 text-emerald-700' },
@@ -43,12 +22,7 @@ const colorCfg = {
   sky: { bg: 'bg-sky-50', icon: 'text-sky-600' },
 };
 
-const payments = [
-  { label: 'Consultation Deposit', amount: '$150', status: 'paid', date: 'Apr 20, 2026' },
-  { label: 'Hotel Pre-Authorization', amount: '$500', status: 'paid', date: 'Apr 22, 2026' },
-  { label: 'Procedure Balance', amount: '$2,800', status: 'due', date: 'Jun 1, 2026' },
-  { label: 'Companion Package', amount: '$650', status: 'optional', date: '—' },
-];
+const payments = [];
 
 export default function BookingsModule() {
   const [companion, setCompanion] = useState(false);
@@ -68,6 +42,18 @@ export default function BookingsModule() {
       </div>
 
       {/* Booking cards */}
+      {bookingItems.length === 0 ? (
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-12 text-center">
+          <Plane className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-600 font-medium mb-1">No bookings yet</p>
+          <p className="text-sm text-slate-400 mb-4">Your travel and procedure bookings will appear here once confirmed.</p>
+          <Link to="/booking">
+            <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs">
+              Start Booking
+            </Button>
+          </Link>
+        </div>
+      ) : (
       <div className="grid sm:grid-cols-2 gap-4">
         {bookingItems.map((item) => {
           const Icon = item.icon;
@@ -100,6 +86,7 @@ export default function BookingsModule() {
           );
         })}
       </div>
+      )}
 
       {/* Companion package */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
@@ -138,6 +125,7 @@ export default function BookingsModule() {
       </div>
 
       {/* Payments */}
+      {payments.length > 0 && (
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
@@ -173,6 +161,7 @@ export default function BookingsModule() {
           </p>
         </div>
       </div>
+      )}
     </div>
   );
 }
