@@ -21,6 +21,7 @@ import Section8Emotional from '../components/booking/Section8Emotional';
 import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
+import ClientAcknowledgement from '../components/booking/ClientAcknowledgement';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -49,6 +50,7 @@ const steps = [
    { label: 'Pregnancy',        emoji: '🤰', short: 'Health'    },
    { label: 'Documents',        emoji: '📎', short: 'Docs'      },
    { label: 'Procedure & Date', emoji: '🏥', short: 'Procedure' },
+   { label: 'Acknowledgement',   emoji: '📋', short: 'Acknowledge' },
 ];
 
 export default function Booking() {
@@ -71,6 +73,7 @@ export default function Booking() {
     emotional_concerns: null, emotional_concern_types: [], emotional_notes: '',
     pregnancy_status: '', document_types: [], uploaded_files: [],
     procedure_interest: '', preferred_date: '', notes: '',
+    acknowledged_statements: new Set(),
   });
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -89,6 +92,7 @@ export default function Booking() {
   const canNext = () => {
      if (step === 0) return form.patient_name && form.email && form.phone && form.emergency_contact_name && form.emergency_contact_number;
      if (step === 10) return items.length > 0 && form.preferred_date;
+     if (step === 11) return form.acknowledged_statements.size === 4;
      return true;
    };
 
@@ -192,6 +196,7 @@ export default function Booking() {
                  {step === 8  && <Section9Pregnancy form={form} update={update} />}
                  {step === 9  && <Section10Documents form={form} update={update} />}
                  {step === 10 && <SectionProcedure form={form} update={update} />}
+                 {step === 11 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} />}
               </motion.div>
             </AnimatePresence>
           </div>
