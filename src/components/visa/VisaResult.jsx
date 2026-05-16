@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, RotateCcw, ArrowRight, Clock, Info, Shield, Check, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import VenezuelaGuide from './VenezuelaGuide';
+import VisaGuide from './VisaGuide';
 
 // YouTube tutorial videos for each destination's visa/entry application
 const VISA_VIDEOS = {
@@ -158,8 +158,8 @@ export default function VisaResult({ result, onReset }) {
         </div>
       </motion.div>
 
-      {/* Venezuela Step-by-Step Guide */}
-      {destination?.code === 'VE' && <VenezuelaGuide />}
+      {/* Step-by-Step Visa Guide — shown for all destinations requiring a visa or e-visa */}
+      <VisaGuide destination={destination} rule={rule} />
 
       {/* Video Tutorial */}
       {video && (rule.status === 'evisa' || rule.status === 'arrival_card' || rule.status === 'visa_required') && (
