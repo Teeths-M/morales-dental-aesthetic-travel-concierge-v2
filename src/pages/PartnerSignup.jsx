@@ -7,11 +7,12 @@ import { translations } from '@/lib/translations';
 
 export default function PartnerSignup() {
   const navigate = useNavigate();
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('appLanguage') || 'en';
-  });
+  const [language, setLanguage] = useState('en');
   
   useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
     const handleLanguageChange = (event) => {
       setLanguage(event.detail.language);
     };

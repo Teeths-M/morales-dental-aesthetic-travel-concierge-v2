@@ -11,9 +11,7 @@ import { useLocation } from 'react-router-dom';
 
 export default function TaxiServiceSignup() {
   const location = useLocation();
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('appLanguage') || 'en';
-  });
+  const [language, setLanguage] = useState('en');
   const [step, setStep] = useState(0);
   const [successTaxi, setSuccessTaxi] = useState(null);
   const [formData, setFormData] = useState({
@@ -31,6 +29,9 @@ export default function TaxiServiceSignup() {
   });
 
   useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
     const handleLanguageChange = (event) => {
       setLanguage(event.detail.language);
     };

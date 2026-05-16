@@ -9,9 +9,7 @@ import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess'
 import { Globe } from 'lucide-react';
 
 export default function DoctorSignup() {
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('appLanguage') || 'en';
-  });
+  const [language, setLanguage] = useState('en');
   const [step, setStep] = useState(0);
   const [successDoctor, setSuccessDoctor] = useState(null);
   const [formData, setFormData] = useState({
@@ -29,6 +27,9 @@ export default function DoctorSignup() {
   });
 
   useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
     const handleLanguageChange = (event) => {
       setLanguage(event.detail.language);
     };
