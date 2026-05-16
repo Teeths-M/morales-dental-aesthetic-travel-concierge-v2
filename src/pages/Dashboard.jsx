@@ -29,7 +29,6 @@ const notifications = [
 const quickActions = [
   { icon: Upload, label: 'Upload Documents', to: '/dashboard/documents', color: 'emerald' },
   { icon: MessageCircle, label: 'Message Coordinator', to: '/dashboard/messages', color: 'blue' },
-  { icon: Calendar, label: 'Schedule Consultation', to: '/booking', color: 'violet' },
   { icon: HeartPulse, label: 'View Recovery Plan', to: '/safe-t', color: 'sky' },
   { icon: Users, label: 'Companion Package', to: '/dashboard/bookings', color: 'pink' },
 ];
