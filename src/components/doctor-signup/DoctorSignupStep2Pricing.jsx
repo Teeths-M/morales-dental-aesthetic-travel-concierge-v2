@@ -52,7 +52,7 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
     .flatMap(catId => PROCEDURES_BY_CATEGORY[catId] || [])
     .filter(proc => selectedProcedures.has(proc));
 
-  const allPricesSet = allSelectedProcedures.every(proc => prices[proc] && prices[proc] > 0);
+  const allPricesSet = allSelectedProcedures.length === 0 || allSelectedProcedures.every(proc => prices[proc] && prices[proc] > 0);
 
   return (
     <div className="space-y-8">
