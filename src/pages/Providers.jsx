@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProviderCard from '../components/providers/ProviderCard';
 
 export default function Providers() {
+  const navigate = useNavigate();
   const [language, setLanguage] = useState('en');
 
   useEffect(() => {
@@ -167,10 +169,16 @@ export default function Providers() {
 
                       {/* Buttons */}
                       <div className="flex gap-3">
-                        <button className="flex-1 px-4 py-2.5 border border-border rounded-full font-semibold hover:bg-secondary/20 transition-colors text-sm">
+                        <button 
+                          onClick={() => navigate(`/providers/${doctor.id}`)}
+                          className="flex-1 px-4 py-2.5 border border-border rounded-full font-semibold hover:bg-secondary/20 transition-colors text-sm"
+                        >
                           View Profile
                         </button>
-                        <button className="flex-1 px-4 py-2.5 bg-accent text-accent-foreground rounded-full font-semibold hover:bg-accent/90 transition-colors text-sm">
+                        <button 
+                          onClick={() => navigate('/booking')}
+                          className="flex-1 px-4 py-2.5 bg-accent text-accent-foreground rounded-full font-semibold hover:bg-accent/90 transition-colors text-sm"
+                        >
                           Book Consultation
                         </button>
                       </div>
