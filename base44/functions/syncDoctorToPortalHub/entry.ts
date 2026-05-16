@@ -13,22 +13,18 @@ Deno.serve(async (req) => {
 
     // Check if doctor already has a partner record in Portal Hub
     const existingPartners = await base44.asServiceRole.entities.Partner.filter({ 
-      partner_type: 'doctor',
-      reference_id: doctor.id 
+      type: 'doctor',
+      name: doctor.full_name
     });
 
     if (existingPartners.length === 0) {
       // Create a Partner record for this doctor in Portal Hub
       await base44.asServiceRole.entities.Partner.create({
-        partner_type: 'doctor',
-        reference_id: doctor.id,
+        type: 'doctor',
         name: doctor.full_name,
         email: doctor.email,
         phone: doctor.phone,
-        country: doctor.clinic_country,
-        clinic_name: doctor.clinic_name,
-        status: 'active',
-        notes: `Synced from Doctor signup — ${doctor.clinic_name || 'Clinic'}`,
+        notes: `${doctor.clinic_name || 'Clinic'} - ${doctor.clinic_country}`,
       });
     }
 
