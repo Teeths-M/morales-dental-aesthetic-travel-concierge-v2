@@ -96,7 +96,10 @@ function ConsultationRow({ c, onDelete }) {
           <div className="flex gap-2 justify-end">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => onDelete(c.id)}
+              onClick={() => {
+                onDelete(c.id);
+                setDeleteOpen(false);
+              }}
               className="bg-red-600 hover:bg-red-700"
             >
               Delete
