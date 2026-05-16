@@ -6,11 +6,7 @@ import { motion } from 'framer-motion';
 import SlotCounter from './SlotCounter';
 import { translations } from '@/lib/translations';
 
-const getTestimonials = (language) => [
-  { name: 'Sandra T.', country: 'Trinidad & Tobago', quote: language === 'es' ? 'Me sentí cuidada en cada paso. Ellos manejaron todo.' : language === 'fr' ? 'Je me suis sentie soignée à chaque étape. Ils ont tout géré.' : 'I felt cared for every single step. They handled everything.', rating: 5 },
-  { name: 'James R.', country: 'Canada', quote: language === 'es' ? 'Trabajo dental de clase mundial a una fracción del costo. Que cambia la vida.' : language === 'fr' ? 'Travail dentaire de classe mondiale à une fraction du coût. Qui change la vie.' : 'World-class dental work at a fraction of the cost. Life-changing.', rating: 5 },
-  { name: 'Maria L.', country: 'USA', quote: language === 'es' ? 'De reserva a recuperación — sin problemas, cálido y profesional.' : language === 'fr' ? 'De la réservation à la récupération — transparent, chaleureux et professionnel.' : 'From booking to recovery — seamless, warm, and professional.', rating: 5 }
-];
+const getTestimonials = (language) => [];
 
 const getBadges = (language) => [
   { icon: Shield, label: 'SAFE-T 4LIFE™', sub: language === 'es' ? 'Seguridad Impulsada por IA' : language === 'fr' ? 'Sécurité Alimentée par IA' : 'AI-Powered Safety' },
@@ -111,7 +107,8 @@ export default function Hero() {
               )}
             </div>
 
-            {/* Live testimonial strip */}
+            {/* Live testimonial strip - hidden until real testimonials exist */}
+            {testimonials.length > 0 && (
             <div className="border-t border-border pt-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{language === 'es' ? 'Qué Dicen Nuestros Clientes' : language === 'fr' ? 'Ce Que Disent Nos Clients' : 'What Our Clients Say'}</p>
               <div className="flex flex-col gap-3">
@@ -138,6 +135,7 @@ export default function Hero() {
                 )}
               </div>
             </div>
+            )}
           </motion.div>
 
           {/* Right Image */}
@@ -155,8 +153,8 @@ export default function Hero() {
               
               {/* Floating service badge */}
               <div className="absolute top-5 left-5 bg-card/95 backdrop-blur-md rounded-xl px-4 py-2.5 border border-border/50 shadow-lg">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-0.5">Morales Dental & Aesthetics</p>
-                <p className="text-sm font-bold text-foreground">Travel Concierge Service</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-0.5">SAFE-T 4LIFE™ Healthcare</p>
+                <p className="text-sm font-bold text-foreground">Integrated Care Platform</p>
               </div>
 
               {/* Overlay Card */}

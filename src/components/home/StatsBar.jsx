@@ -1,20 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-
-const stats = [
-  { value: '500+', label: 'Happy Patients' },
-  { value: '40+', label: 'Top Specialists' },
-  { value: '98%', label: 'Satisfaction Rate' },
-  { value: '24/7', label: 'Concierge Support' },
-  { value: '5★', label: 'Patient Rated' },
-];
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 export default function StatsBar() {
+  const { data: consultations = [] } = useQuery({
+    queryKey: ['consultationsStats'],
+    queryFn: () => base44.entities.Consultation.list('-created_date', 100),
+  });
+
+  const { data: doctors = [] } = useQuery({
+    queryKey: ['doctorsStats'],
+    queryFn: () => base44.entities.Doctor.filter({ status: 'active' }, '-created_date', 100),
+  });
+
+  const patientCount = consultations.length;
+  const activeDocCount = doctors.length;
+
+  const stats = [
+    { value: patientCount.toString(), label: 'Active Consultations' },
+    { value: activeDocCount.toString(), label: 'Verified Doctors' },
+    { value: '24/7', label: 'Concierge Support' },
+  ];
+
   return (
     <section className="border-y border-border bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
