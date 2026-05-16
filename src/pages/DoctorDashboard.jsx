@@ -206,7 +206,11 @@ export default function DoctorDashboard() {
                               <div className="flex items-center gap-2 text-sm">
                                 <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                                 <span className="font-bold">{data.rating.toFixed(1)}</span>
-                                <span className="text-muted-foreground">({data.review_count || 0})</span>
+                              </div>
+                            )}
+                            {data.review_count !== undefined && (
+                              <div className="px-3 py-1 bg-secondary rounded-full text-sm font-medium text-foreground">
+                                {data.review_count} Review{data.review_count !== 1 ? 's' : ''}
                               </div>
                             )}
                           </div>
