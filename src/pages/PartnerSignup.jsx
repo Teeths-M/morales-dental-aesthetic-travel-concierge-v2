@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plane, Car, Globe } from 'lucide-react';
@@ -7,7 +7,18 @@ import { translations } from '@/lib/translations';
 
 export default function PartnerSignup() {
   const navigate = useNavigate();
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'en';
+  });
+  
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
   const t = translations[language];
 
   const allLanguages = [

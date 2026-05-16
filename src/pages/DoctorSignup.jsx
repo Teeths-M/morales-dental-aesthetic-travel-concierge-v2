@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { translations } from '@/lib/translations';
@@ -9,7 +9,9 @@ import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess'
 import { Globe } from 'lucide-react';
 
 export default function DoctorSignup() {
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'en';
+  });
   const [step, setStep] = useState(0);
   const [successDoctor, setSuccessDoctor] = useState(null);
   const [formData, setFormData] = useState({
@@ -25,6 +27,14 @@ export default function DoctorSignup() {
     payout_method: '',
     payout_account: ''
   });
+
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   const t = translations[language];
 

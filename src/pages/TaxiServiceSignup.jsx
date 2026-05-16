@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { translations } from '@/lib/translations';
@@ -11,7 +11,9 @@ import { useLocation } from 'react-router-dom';
 
 export default function TaxiServiceSignup() {
   const location = useLocation();
-  const [language, setLanguage] = useState(location.state?.language || 'en');
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'en';
+  });
   const [step, setStep] = useState(0);
   const [successTaxi, setSuccessTaxi] = useState(null);
   const [formData, setFormData] = useState({
@@ -27,6 +29,14 @@ export default function TaxiServiceSignup() {
     payout_method: '',
     payout_account: ''
   });
+
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   const t = translations[language];
 
