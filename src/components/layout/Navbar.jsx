@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Globe, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const navLinks = [
-  { label: 'Home', path: '/' },
-  { label: 'Procedures', path: '/procedures' },
-  { label: 'How It Works', path: '/how-it-works' },
-  { label: 'Our Experts', path: '/providers' },
+const getNavLinks = (language) => [
+  { label: language === 'es' ? 'Inicio' : language === 'fr' ? 'Accueil' : 'Home', path: '/' },
+  { label: language === 'es' ? 'Procedimientos' : language === 'fr' ? 'Procédures' : 'Procedures', path: '/procedures' },
+  { label: language === 'es' ? 'Cómo Funciona' : language === 'fr' ? 'Comment Ça Marche' : 'How It Works', path: '/how-it-works' },
+  { label: language === 'es' ? 'Nuestros Expertos' : language === 'fr' ? 'Nos Experts' : 'Our Experts', path: '/providers' },
   { label: 'SAFE-T 4LIFE™', path: '/safe-t' },
-  { label: '🌍 Visa Assist', path: '/visa-assist' },
-  { label: 'About Us', path: '/about' },
-  { label: 'Dashboard', path: '/dashboard' },
+  { label: language === 'es' ? '🌍 Asistencia de Visa' : language === 'fr' ? '🌍 Assistance Visa' : '🌍 Visa Assist', path: '/visa-assist' },
+  { label: language === 'es' ? 'Acerca de Nosotros' : language === 'fr' ? 'À Propos de Nous' : 'About Us', path: '/about' },
+  { label: language === 'es' ? 'Panel de Control' : language === 'fr' ? 'Tableau de Bord' : 'Dashboard', path: '/dashboard' },
 ];
 
 export default function Navbar() {
@@ -22,7 +22,12 @@ export default function Navbar() {
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem('appLanguage') || 'en';
   });
+  const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
+
+  useEffect(() => {
+    setNavLinks(getNavLinks(language));
+  }, [language]);
 
   const allLanguages = [
     { code: 'en', flag: '🇬🇧', name: 'English' },
@@ -80,7 +85,7 @@ export default function Navbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
               >
-                Join as Partner
+                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
                 <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -97,21 +102,21 @@ export default function Navbar() {
                       onClick={() => setDropdownOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
                     >
-                      Doctor Sign-up
+                      {language === 'es' ? 'Registro de Doctor' : language === 'fr' ? 'Enregistrement Docteur' : 'Doctor Sign-up'}
                     </Link>
                     <Link
                       to="/partner-signup"
                       onClick={() => setDropdownOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
                     >
-                      Travel Agency
+                      {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyage' : 'Travel Agency'}
                     </Link>
                     <Link
                       to="/partner-signup/taxi-service"
                       onClick={() => setDropdownOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
                     >
-                      Taxi Service
+                      {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
                     </Link>
                   </motion.div>
                 )}
@@ -160,7 +165,7 @@ export default function Navbar() {
               </div>
             <Link to="/booking">
               <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
-                Book Consultation
+                {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
               </Button>
             </Link>
             <button
@@ -203,7 +208,7 @@ export default function Navbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
               >
-                Join as Partner
+                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
                 <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -220,21 +225,21 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
                     >
-                      Doctor Sign-up
+                      {language === 'es' ? 'Registro de Doctor' : language === 'fr' ? 'Enregistrement Docteur' : 'Doctor Sign-up'}
                     </Link>
                     <Link
                       to="/partner-signup"
                       onClick={() => setMobileOpen(false)}
                       className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
                     >
-                      Travel Agency
+                      {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyage' : 'Travel Agency'}
                     </Link>
                     <Link
                       to="/partner-signup/taxi-service"
                       onClick={() => setMobileOpen(false)}
                       className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
                     >
-                      Taxi Service
+                      {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
                     </Link>
                   </motion.div>
                 )}

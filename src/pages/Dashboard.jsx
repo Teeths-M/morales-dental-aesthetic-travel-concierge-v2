@@ -41,7 +41,7 @@ const colorMap = {
   pink: { bg: 'bg-pink-50', icon: 'text-pink-600', hover: 'hover:bg-pink-100' },
 };
 
-function DashboardHome({ user, consultations }) {
+function DashboardHome({ user, consultations, language }) {
   const displayName = user?.full_name?.split(' ')[0] || 'there';
   const latestConsultation = consultations[0];
 
@@ -60,14 +60,20 @@ function DashboardHome({ user, consultations }) {
       >
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">Welcome back</p>
-            <h1 className="font-display text-2xl lg:text-3xl">Hello, {displayName} 👋</h1>
+            <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">
+              {language === 'es' ? 'Bienvenido de vuelta' : language === 'fr' ? 'Bienvenue' : 'Welcome back'}
+            </p>
+            <h1 className="font-display text-2xl lg:text-3xl">
+              {language === 'es' ? 'Hola, ' : language === 'fr' ? 'Bonjour, ' : 'Hello, '}{displayName} 👋
+            </h1>
             <p className="text-white/70 text-sm mt-1.5">
-              Journey Stage: <span className="text-white font-semibold capitalize">{latestConsultation?.journey_stage || 'Consultation'}</span>
+              {language === 'es' ? 'Etapa del Viaje: ' : language === 'fr' ? 'Stade du Voyage: ' : 'Journey Stage: '}<span className="text-white font-semibold capitalize">{latestConsultation?.journey_stage || (language === 'es' ? 'Consulta' : language === 'fr' ? 'Consultation' : 'Consultation')}</span>
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-4 text-center">
-            <p className="text-white/70 text-[11px] uppercase tracking-widest mb-1">Days Until Procedure</p>
+            <p className="text-white/70 text-[11px] uppercase tracking-widest mb-1">
+              {language === 'es' ? 'Días Hasta el Procedimiento' : language === 'fr' ? 'Jours Jusqu\'à la Procédure' : 'Days Until Procedure'}
+            </p>
             <p className="font-display text-4xl text-white">{daysUntil > 0 ? daysUntil : '—'}</p>
             <p className="text-white/60 text-[11px] mt-0.5">Jun 14, 2026</p>
           </div>
@@ -80,16 +86,20 @@ function DashboardHome({ user, consultations }) {
           <span className="text-white font-bold text-lg">A</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Your Assigned Coordinator</p>
-          <p className="text-sm font-bold text-slate-800">Ana Morales — Patient Care Specialist</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+            {language === 'es' ? 'Tu Coordinador Asignado' : language === 'fr' ? 'Votre Coordinateur Assigné' : 'Your Assigned Coordinator'}
+          </p>
+          <p className="text-sm font-bold text-slate-800">Ana Morales — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            <span className="text-[11px] text-emerald-600 font-medium">Online now</span>
+            <span className="text-[11px] text-emerald-600 font-medium">
+              {language === 'es' ? 'En línea ahora' : language === 'fr' ? 'En ligne maintenant' : 'Online now'}
+            </span>
           </div>
         </div>
         <Link to="/dashboard/messages">
           <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-9 gap-1.5">
-            <MessageCircle className="w-3.5 h-3.5" /> Message
+            <MessageCircle className="w-3.5 h-3.5" /> {language === 'es' ? 'Mensaje' : language === 'fr' ? 'Message' : 'Message'}
           </Button>
         </Link>
       </div>
@@ -101,14 +111,16 @@ function DashboardHome({ user, consultations }) {
             <Shield className="w-4 h-4 text-emerald-700" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800">SAFE-T 4LIFE™ Status</p>
-            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Low Risk</span>
+            <p className="text-xs font-bold text-slate-800">SAFE-T 4LIFE™ {language === 'es' ? 'Estado' : language === 'fr' ? 'Statut' : 'Status'}</p>
+            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+              {language === 'es' ? 'Riesgo Bajo' : language === 'fr' ? 'Risque Faible' : 'Low Risk'}
+            </span>
           </div>
         </div>
         <div className="space-y-2 mb-4">
           {[
-            { label: 'Safety Score', val: 82, color: '#047857' },
-            { label: 'Prep Progress', val: 60, color: '#1d4ed8' },
+            { label: language === 'es' ? 'Puntuación de Seguridad' : language === 'fr' ? 'Score de Sécurité' : 'Safety Score', val: 82, color: '#047857' },
+            { label: language === 'es' ? 'Progreso de Preparación' : language === 'fr' ? 'Progrès de Préparation' : 'Prep Progress', val: 60, color: '#1d4ed8' },
           ].map(s => (
             <div key={s.label}>
               <div className="flex justify-between text-[11px] mb-1">
@@ -122,7 +134,9 @@ function DashboardHome({ user, consultations }) {
           ))}
         </div>
         <Link to="/safe-t">
-          <Button size="sm" variant="outline" className="w-full text-xs h-8">Full Assessment <ArrowRight className="w-3 h-3 ml-1" /></Button>
+          <Button size="sm" variant="outline" className="w-full text-xs h-8">
+            {language === 'es' ? 'Evaluación Completa' : language === 'fr' ? 'Évaluation Complète' : 'Full Assessment'} <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
         </Link>
       </div>
 
@@ -131,7 +145,9 @@ function DashboardHome({ user, consultations }) {
 
       {/* Quick Actions */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Quick Actions</p>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
+          {language === 'es' ? 'Acciones Rápidas' : language === 'fr' ? 'Actions Rapides' : 'Quick Actions'}
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {quickActions.map(({ icon: Icon, label, to, color }) => {
             const c = colorMap[color];
@@ -151,7 +167,9 @@ function DashboardHome({ user, consultations }) {
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
         <div className="flex items-center gap-3 mb-4">
           <Bell className="w-4 h-4 text-slate-500" />
-          <p className="text-sm font-semibold text-slate-800">Notifications</p>
+          <p className="text-sm font-semibold text-slate-800">
+            {language === 'es' ? 'Notificaciones' : language === 'fr' ? 'Notifications' : 'Notifications'}
+          </p>
           <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{notifications.length}</span>
         </div>
         <div className="space-y-2">
@@ -176,10 +194,19 @@ function DashboardHome({ user, consultations }) {
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
+  const [language, setLanguage] = useState('en');
   const location = useLocation();
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
   const { data: consultations = [] } = useQuery({
@@ -201,7 +228,7 @@ export default function Dashboard() {
     if (p === '/dashboard/journey') return <JourneyModule />;
     if (p === '/dashboard/support') return <SupportModule />;
     if (p === '/dashboard/settings') return <SettingsModule />;
-    return <DashboardHome user={user} consultations={consultations} />;
+    return <DashboardHome user={user} consultations={consultations} language={language} />;
   };
 
   return (
