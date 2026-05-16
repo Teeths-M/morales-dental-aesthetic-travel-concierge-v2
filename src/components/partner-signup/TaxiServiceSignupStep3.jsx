@@ -77,17 +77,6 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
       };
 
       const taxi = await base44.entities.TaxiService.create(taxiData);
-
-      // Auto-create Partner entry
-      const partnerData = {
-        name: formData.driver_name || formData.company_name,
-        title: 'Taxi / Transport Service',
-        specialty: formData.vehicle_types?.join(', ') || 'Patient Transport',
-        bio: `Transport service based in ${formData.operating_city}, specializing in patient transfers`,
-        is_featured: false
-      };
-      await base44.entities.Partner.create(partnerData);
-
       onComplete(taxi);
     } catch (error) {
       console.error('Submit failed:', error);

@@ -73,17 +73,6 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
       };
 
       const agency = await base44.entities.TravelAgency.create(agencyData);
-
-      // Auto-create Partner entry
-      const partnerData = {
-        name: formData.agency_name,
-        title: 'Travel Agency',
-        specialty: formData.services_offered?.join(', ') || 'Travel Services',
-        bio: `Travel agency based in ${formData.headquarters_country}, serving ${formData.service_regions?.join(', ')}`,
-        is_featured: false
-      };
-      await base44.entities.Partner.create(partnerData);
-
       onComplete(agency);
     } catch (error) {
       console.error('Submit failed:', error);
