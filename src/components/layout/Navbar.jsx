@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Globe } from 'lucide-react';
+import { Menu, X, Globe, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
@@ -17,6 +17,7 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
 
   return (
@@ -51,6 +52,50 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+
+            {/* Partner Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
+              >
+                Join as Partner
+                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50"
+                  >
+                    <Link
+                      to="/doctor-signup"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
+                    >
+                      Doctor Sign-up
+                    </Link>
+                    <Link
+                      to="/partner-signup"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
+                    >
+                      Travel Agency
+                    </Link>
+                    <Link
+                      to="/partner-signup/taxi-service"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
+                    >
+                      Taxi Service
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
 
           {/* Right Actions */}
@@ -97,6 +142,48 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+
+              {/* Mobile Partner Dropdown */}
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
+              >
+                Join as Partner
+                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-1 pl-4"
+                  >
+                    <Link
+                      to="/doctor-signup"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      Doctor Sign-up
+                    </Link>
+                    <Link
+                      to="/partner-signup"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      Travel Agency
+                    </Link>
+                    <Link
+                      to="/partner-signup/taxi-service"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      Taxi Service
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </nav>
           </motion.div>
         )}
