@@ -162,7 +162,7 @@ export default function Booking() {
       </div>
 
       {/* Content Layout - Form Left, Sidebar Right */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 pt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 pt-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Form Area */}
           <div className="lg:col-span-3">
