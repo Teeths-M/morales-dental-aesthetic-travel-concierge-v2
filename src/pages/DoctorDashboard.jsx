@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock } from 'lucide-react';
+import { Star, Clock, Upload } from 'lucide-react';
 
 export default function DoctorDashboard() {
   const [doctors, setDoctors] = useState([]);
@@ -31,6 +31,14 @@ export default function DoctorDashboard() {
   const handleEditStart = (doctor) => {
     setEditingId(doctor.id);
     setFormData(doctor);
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, photo_url: file_url });
+    }
   };
 
   const handleSave = async () => {
@@ -75,15 +83,22 @@ export default function DoctorDashboard() {
                     {/* Photo */}
                     <div className="flex-shrink-0">
                       {isEditing ? (
-                        <div className="w-32 h-32 rounded-full bg-secondary/50 flex items-center justify-center">
+                        <label className="w-32 h-32 rounded-full bg-secondary/50 flex items-center justify-center cursor-pointer hover:bg-secondary/70 transition-colors group relative">
+                          {data.photo_url && data.photo_url.trim() ? (
+                            <img src={data.photo_url} alt={data.full_name} className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            <div className="text-center">
+                              <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
+                              <p className="text-xs text-muted-foreground font-medium">Upload Photo</p>
+                            </div>
+                          )}
                           <input
-                            type="url"
-                            placeholder="Photo URL"
-                            value={data.photo_url || ''}
-                            onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-                            className="w-full h-full rounded-full p-2 text-xs text-center bg-transparent border border-border"
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
                           />
-                        </div>
+                        </label>
                       ) : (
                         <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold overflow-hidden flex-shrink-0">
                           {data.photo_url && data.photo_url.trim() ? (
