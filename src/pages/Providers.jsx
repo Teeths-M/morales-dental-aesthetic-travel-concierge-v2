@@ -177,36 +177,6 @@ export default function Providers() {
                         </div>
                       )}
 
-                      {/* Portfolio Showcase */}
-                      {doctor.portfolio && doctor.portfolio.length > 0 && (
-                        <div className="mb-6">
-                          <h4 className="font-bold text-foreground text-sm mb-3">Portfolio</h4>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {doctor.portfolio.slice(0, 3).map(item => (
-                              <div key={item.id} className="relative w-full aspect-square rounded-lg overflow-hidden bg-secondary/50 group cursor-pointer">
-                                {item.type === 'image' ? (
-                                  <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                ) : (
-                                  <>
-                                    <video src={item.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                                      <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
-                                        <div className="w-0 h-0 border-l-4 border-l-transparent border-r-0 border-t-2.5 border-t-transparent border-b-2.5 border-b-transparent ml-1" style={{borderLeft: '6px solid transparent', borderRight: '0', borderTop: '4px solid transparent', borderBottom: '4px solid transparent'}} />
-                                      </div>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ))}
-                            {doctor.portfolio.length > 3 && (
-                              <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                                +{doctor.portfolio.length - 3} more
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
                       {/* Buttons */}
                       <div className="flex gap-3">
                         <button 
