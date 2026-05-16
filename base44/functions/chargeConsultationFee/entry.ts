@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
     const { consultation_id, email, procedure, destination, method = 'stripe', payment_token } = await req.json();
 
-    if (!consultation_id || !email || !method) {
+    if (!email || !method) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
