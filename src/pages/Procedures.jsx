@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar } from 'lucide-react';
+import ProcedureModal from '@/components/procedures/ProcedureModal';
 import { Button } from '@/components/ui/button';
 import { procedureCategories } from '@/components/procedures/ProcedureData';
 import ProcedureSearch from '@/components/procedures/ProcedureSearch';
@@ -15,50 +16,64 @@ const parentFilters = [
   { id: 'wellness', label: 'Wellness', emoji: '🌿' },
 ];
 
-function ProcedureCard({ proc, isSelected, onAdd, onRemove }) {
+function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
   const c = proc.categoryColor;
   return (
     <motion.div
-      className={`relative bg-white rounded-2xl border transition-all cursor-pointer group ${isSelected ? 'border-emerald-400 shadow-md shadow-emerald-100' : 'border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200'}`}
+      className={`relative bg-white rounded-2xl border overflow-hidden transition-all group ${isSelected ? 'border-emerald-400 shadow-md shadow-emerald-100' : 'border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200'}`}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
     >
-      {isSelected && (
-        <div className="absolute top-3 right-3 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center z-10">
-          <Check className="w-3.5 h-3.5 text-white" />
+      {/* Image */}
+      {proc.image && (
+        <div className="w-full h-36 overflow-hidden relative">
+          <img
+            src={proc.image}
+            alt={proc.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent" />
+          <span className={`absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm bg-white/70 ${c.text}`}>{proc.tag}</span>
+          {isSelected && (
+            <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
+              <Check className="w-3.5 h-3.5 text-white" />
+            </div>
+          )}
         </div>
       )}
+
       <div className="p-4">
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center flex-shrink-0`}>
-            <span className="text-lg">{proc.categoryId?.includes('dental-cosmetic') ? '✨' : proc.categoryId?.includes('dental-implant') ? '🔩' : proc.categoryId?.includes('dental-ortho') ? '😁' : proc.categoryId?.includes('dental') ? '🦷' : proc.categoryId?.includes('breast') ? '🌸' : proc.categoryId?.includes('body') ? '💪' : proc.categoryId?.includes('face') ? '💆' : proc.categoryId?.includes('wellness') ? '🌿' : '⚕️'}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}>{proc.tag}</span>
-            <h3 className="font-semibold text-slate-800 text-sm mt-1.5 leading-tight">{proc.title}</h3>
-          </div>
-        </div>
+        <h3 className="font-semibold text-slate-800 text-sm mb-1 leading-tight">{proc.title}</h3>
+        {proc.desc && <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 mb-3">{proc.desc}</p>}
 
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1 text-[10px] text-slate-400">
             <Clock className="w-3 h-3" />{proc.duration}
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1 text-[10px] text-slate-400">
             <Calendar className="w-3 h-3" />{proc.recovery}
           </div>
         </div>
 
-        <button
-          onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
-          className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${
-            isSelected
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
-              : `${c.bg} ${c.text} border ${c.border} hover:opacity-80`
-          }`}
-        >
-          {isSelected ? '✓ Added — Remove' : '+ Add to My List'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onLearnMore(proc)}
+            className="flex-1 py-2 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-1"
+          >
+            Learn More <ChevronRight className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              isSelected
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                : `${c.bg} ${c.text} border ${c.border} hover:opacity-80`
+            }`}
+          >
+            {isSelected ? '✓ Added' : '+ Select'}
+          </button>
+        </div>
       </div>
     </motion.div>
   );
@@ -68,7 +83,7 @@ export default function Procedures() {
   const [activeParent, setActiveParent] = useState('all');
   const [selectedProcs, setSelectedProcs] = useState([]);
   const [voiceOpen, setVoiceOpen] = useState(false);
-  const [tooltip, setTooltip] = useState(null);
+  const [selectedModal, setSelectedModal] = useState(null);
 
   const addProc = (proc) => {
     if (!selectedProcs.find(p => p.title === proc.title)) {
@@ -170,6 +185,7 @@ export default function Procedures() {
                           isSelected={!!selectedProcs.find(p => p.title === proc.title)}
                           onAdd={addProc}
                           onRemove={removeProc}
+                          onLearnMore={setSelectedModal}
                         />
                       );
                     })}
@@ -264,6 +280,9 @@ export default function Procedures() {
           />
         )}
       </AnimatePresence>
+
+      {/* Learn More Modal */}
+      <ProcedureModal procedure={selectedModal} onClose={() => setSelectedModal(null)} />
     </div>
   );
 }
