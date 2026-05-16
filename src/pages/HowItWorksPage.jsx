@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare, ClipboardList, CreditCard, Plane, Stethoscope, HeartPulse, CalendarCheck, ArrowRight } from 'lucide-react';
 
 const steps = [
-  { icon: MessageSquare, num: 1, title: 'Free Consultation', desc: 'Tell us about your goals and medical history. Our team will review your case and connect you with the right specialist.', color: 'bg-primary/10 text-primary' },
+  { icon: MessageSquare, num: 1, title: 'Consultation', desc: 'Tell us about your goals and medical history. Our team will review your case and connect you with the right specialist.', color: 'bg-primary/10 text-primary' },
   { icon: ClipboardList, num: 2, title: 'Personalized Plan & Quote', desc: 'Receive a detailed treatment plan with transparent pricing. Our SAFE-T 4LIFE™ system ensures the safest approach for you.', color: 'bg-accent/10 text-accent' },
   { icon: CreditCard, num: 3, title: 'Book & Secure Your Date', desc: 'Choose your preferred dates and secure your booking. We handle all the logistics so you can focus on preparing.', color: 'bg-primary/10 text-primary' },
   { icon: Plane, num: 4, title: 'Travel & Accommodation', desc: 'Airport transfers, hotel arrangements, and a personal concierge—everything is taken care of from door to door.', color: 'bg-accent/10 text-accent' },
