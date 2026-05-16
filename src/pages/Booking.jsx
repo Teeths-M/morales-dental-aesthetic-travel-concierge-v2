@@ -159,9 +159,9 @@ export default function Booking() {
 
       {/* Content Layout - Form Left, Sidebar Right */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Form Area */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Form Header */}
           <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-slate-50">
@@ -233,7 +233,7 @@ export default function Booking() {
           </div>
 
           {/* Right Sidebar - Step Info + Cart */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-24 lg:h-fit">
           {/* Step Info Card */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-6 sticky top-24">
           <div className="flex items-center gap-3 mb-4">
