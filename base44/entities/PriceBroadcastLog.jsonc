@@ -1,0 +1,75 @@
+{
+  "name": "PriceBroadcastLog",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "description": "ISO timestamp when logged"
+    },
+    "anonymized_ref": {
+      "type": "string",
+      "description": "Hashed user ID (e.g. user_a7f3e)"
+    },
+    "procedure": {
+      "type": "string",
+      "description": "Procedure name (e.g. Knee Replacement)"
+    },
+    "destination": {
+      "type": "string",
+      "description": "Destination city/country"
+    },
+    "package_cost_usd": {
+      "type": "number",
+      "description": "Total package cost"
+    },
+    "inclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "What's included (e.g. flights, hotel, surgery)"
+    },
+    "recovery_days": {
+      "type": "number"
+    },
+    "booking_type": {
+      "type": "string",
+      "enum": [
+        "estimated",
+        "confirmed",
+        "manual_example"
+      ],
+      "description": "Is this an estimate or confirmed booking?"
+    },
+    "lead_status": {
+      "type": "string",
+      "enum": [
+        "price_lookup_only",
+        "consultation_booked",
+        "converted_to_booking"
+      ],
+      "default": "price_lookup_only"
+    },
+    "clicked_to_consult": {
+      "type": "boolean",
+      "default": false
+    },
+    "consultation_fee_paid": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show on carousel?"
+    }
+  },
+  "required": [
+    "timestamp",
+    "anonymized_ref",
+    "procedure",
+    "destination",
+    "package_cost_usd",
+    "booking_type"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "name": "PriceEstimate",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_phone": {
+      "type": "string"
+    },
+    "procedure": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "preferred_month": {
+      "type": "string",
+      "description": "YYYY-MM format"
+    },
+    "health_conditions": {
+      "type": "string",
+      "description": "User-entered medical context"
+    },
+    "estimated_surgery_cost": {
+      "type": "number"
+    },
+    "estimated_hospital_stay_cost": {
+      "type": "number"
+    },
+    "estimated_hotel_cost": {
+      "type": "number"
+    },
+    "estimated_flight_cost": {
+      "type": "number"
+    },
+    "estimated_transfer_cost": {
+      "type": "number"
+    },
+    "estimated_recovery_cost": {
+      "type": "number"
+    },
+    "estimated_total_low": {
+      "type": "number",
+      "description": "Low estimate"
+    },
+    "estimated_total_high": {
+      "type": "number",
+      "description": "High estimate (seasonal adjustment)"
+    },
+    "recovery_days": {
+      "type": "number"
+    },
+    "suggested_travel_dates": {
+      "type": "string"
+    },
+    "estimate_status": {
+      "type": "string",
+      "enum": [
+        "generated",
+        "viewed",
+        "consultation_booked",
+        "package_booked"
+      ],
+      "default": "generated"
+    },
+    "consultation_fee_id": {
+      "type": "string",
+      "description": "Link to ConsultationFee if paid"
+    }
+  },
+  "required": [
+    "user_email",
+    "procedure",
+    "destination"
+  ]
+}

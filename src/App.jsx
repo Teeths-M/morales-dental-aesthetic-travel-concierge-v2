@@ -21,6 +21,7 @@ import PortalHub from './pages/PortalHub';
 import VisaAssist from './pages/VisaAssist';
 import PortalHubAdmin from './pages/PortalHubAdmin';
 import PaymentCheckout from './pages/PaymentCheckout';
+import EstimateDashboard from './pages/EstimateDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -71,6 +72,7 @@ const AuthenticatedApp = () => {
         <Route path="/portal-hub" element={<PortalHub />} />
         <Route path="/portal-hub/admin" element={<PortalHubAdmin />} />
         <Route path="/portal-hub/checkout/:consultation_id" element={<PaymentCheckout />} />
+        <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
         <Route path="/visa-assist" element={<VisaAssist />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

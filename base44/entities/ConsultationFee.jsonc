@@ -1,0 +1,66 @@
+{
+  "name": "ConsultationFee",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "procedure": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "consultation_fee_amount": {
+      "type": "number",
+      "default": 49
+    },
+    "fee_paid": {
+      "type": "boolean",
+      "default": false
+    },
+    "fee_paid_at": {
+      "type": "string",
+      "description": "ISO timestamp"
+    },
+    "fee_refunded": {
+      "type": "boolean",
+      "default": false
+    },
+    "refund_method": {
+      "type": "string",
+      "enum": [
+        "deducted_from_package",
+        "stripe_refund",
+        "none"
+      ],
+      "description": "How was the $49 refunded?"
+    },
+    "package_booking_id": {
+      "type": "string",
+      "description": "Link to actual procedure booking if made"
+    },
+    "stripe_charge_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "refunded",
+        "forfeited"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "email",
+    "procedure",
+    "destination"
+  ]
+}
