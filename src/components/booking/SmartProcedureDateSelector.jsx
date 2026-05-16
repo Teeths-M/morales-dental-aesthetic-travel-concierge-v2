@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Plane, Check } from 'lucide-react';
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isBefore, isAfter } from 'date-fns';
 
-const AIRLINE_DAYS = [0, 1, 4]; // Sunday, Monday, Thursday (0-6 indexing)
+const AIRLINE_DAYS = [1, 2, 3, 5, 6]; // Monday through Saturday (exclude Sunday 0 and Thursday 4)
 const MIN_RECOVERY_DAYS = 5;
 
 export default function SmartProcedureDateSelector({ consultationId, onDateConfirmed }) {
