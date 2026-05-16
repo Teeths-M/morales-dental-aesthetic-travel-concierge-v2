@@ -126,10 +126,10 @@ export default function PricingCatalogManager() {
   const { data: procedures = [] } = useQuery({
     queryKey: ['procedures_for_pricing'],
     queryFn: async () => {
-      const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
-      return masterProcs.map(p => ({
+      const procPricing = await base44.entities.ProcedurePricing.list('-created_date', 500);
+      return procPricing.map(p => ({
         id: p.id,
-        procedure_name: p.en_name,
+        procedure_name: p.procedure_name,
         category: p.category,
       }));
     },
@@ -137,18 +137,28 @@ export default function PricingCatalogManager() {
 
   const createMutation = useMutation({
     mutationFn: data => base44.entities.DoctorPricing.create(data),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Price saved successfully:', result);
       qc.invalidateQueries({ queryKey: ['doctor_prices'] });
       setAdding(false);
     },
+    onError: (error) => {
+      console.error('Failed to save price:', error);
+      alert(`Failed to save: ${error.message}`);
+    }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.DoctorPricing.update(id, data),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Price updated successfully:', result);
       qc.invalidateQueries({ queryKey: ['doctor_prices'] });
       setEditingId(null);
     },
+    onError: (error) => {
+      console.error('Failed to update price:', error);
+      alert(`Failed to update: ${error.message}`);
+    }
   });
 
   const deleteMutation = useMutation({
