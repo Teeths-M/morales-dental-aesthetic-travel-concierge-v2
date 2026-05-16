@@ -277,7 +277,7 @@ const AC = (days, notes, reqs=[], applyUrl=null) => ({ status: 'arrival_card', d
 export const VISA_RULES = {
   // ── United States ──
   US: {
-    VE: EV(90, 'e-Visa required as of April 6, 2026 — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos (2x2, white background)', 'Proof of accommodation', 'Proof of funds'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: EV(90, 'e-Visa required as of April 6, 2026 — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos (2x2, white background)', 'Proof of accommodation', 'Proof of funds'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days. Return ticket required', ['Proof of accommodation', 'Proof of funds']),
     DO: AC(30, 'Free e-Ticket form required online before arrival (replaces old tourist card)', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required — apply online before travel. No longer issued on arrival for US citizens', ['Cuba e-Visa', 'Travel insurance (mandatory)', 'Hotel booking'], 'https://evisacuba.cu/en/inicio'),
@@ -290,7 +290,7 @@ export const VISA_RULES = {
   },
   // ── Canada ──
   CA: {
-    VE: EV(90, 'e-Visa required — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation', 'Proof of funds'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: EV(90, 'e-Visa required — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation', 'Proof of funds'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days. Note: reciprocity fee (~CA$85) payable at border', ['Reciprocity fee (payable at entry)', 'Return ticket']),
     DO: AC(30, 'Free e-Ticket form required online before arrival', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required — apply online', ['Cuba e-Visa', 'Travel insurance (mandatory)', 'Hotel booking'], 'https://evisacuba.cu/en/inicio'),
@@ -303,7 +303,7 @@ export const VISA_RULES = {
   },
   // ── United Kingdom ──
   GB: {
-    VE: EV(90, 'e-Visa required — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: EV(90, 'e-Visa required — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days', ['Return ticket']),
     DO: AC(30, 'Free e-Ticket form required online before arrival', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required — apply online', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -316,7 +316,7 @@ export const VISA_RULES = {
   },
   // ── Germany / EU Schengen ──
   DE: {
-    VE: VF(90, 'Visa-free for Schengen passport holders — short stays', [], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VF(90, 'Visa-free for Schengen passport holders — short stays', [], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days'),
     DO: AC(30, 'Free e-Ticket form required online before arrival', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required — apply online', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -327,22 +327,22 @@ export const VISA_RULES = {
     BR: VF(90, 'No visa required for EU citizens — up to 90 days'),
     PA: VF(180, 'No visa required — up to 180 days'),
   },
-  FR: { VE: VF(90,'Visa-free for Schengen passports',[],  'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[],  'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[],  'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required for France'), PA: VF(180,'No visa required') },
-  ES: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required for Spain'), PA: VF(180,'No visa required') },
-  IT: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required for Italy'), PA: VF(180,'No visa required') },
-  PT: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  NL: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  BE: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  CH: { VE: VF(90,'Visa-free — Schengen-equivalent',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  AT: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  SE: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  NO: { VE: VF(90,'Visa-free — Schengen-equivalent',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  DK: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  FI: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
-  PL: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://mppre.gob.ve/cancilleria-digital'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  FR: { VE: VF(90,'Visa-free for Schengen passports',[],  'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[],  'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[],  'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required for France'), PA: VF(180,'No visa required') },
+  ES: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required for Spain'), PA: VF(180,'No visa required') },
+  IT: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required for Italy'), PA: VF(180,'No visa required') },
+  PT: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  NL: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  BE: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  CH: { VE: VF(90,'Visa-free — Schengen-equivalent',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  AT: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  SE: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  NO: { VE: VF(90,'Visa-free — Schengen-equivalent',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  DK: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  FI: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
+  PL: { VE: VF(90,'Visa-free for Schengen passports',[], 'https://cancilleriadigital.mppre.gob.ve/login'), CO: VF(90,'No visa required'), DO: AC(30,'e-Ticket required online',[], 'https://viajerodigital.mitur.gob.do/english/'), CU: EV(30,'Cuba e-Visa required',['Cuba e-Visa','Travel insurance'], 'https://evisacuba.cu/en/inicio'), TH: VF(60,'60-day visa-free',[], 'https://www.thaievisa.go.th/'), TR: VF(90,'Visa-free for EU'), MX: VF(180,'No visa required'), CR: VF(180,'No visa required'), BR: VF(90,'No visa required'), PA: VF(180,'No visa required') },
   // ── Australia ──
   AU: {
-    VE: EV(90, 'e-Visa required — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: EV(90, 'e-Visa required — apply online at Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days'),
     DO: AC(30, 'Free e-Ticket form required online before arrival', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required — apply online', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -355,7 +355,7 @@ export const VISA_RULES = {
   },
   // ── New Zealand ──
   NZ: {
-    VE: EV(null, 'e-Visa required — apply online', ['Two passport photos'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: EV(null, 'e-Visa required — apply online', ['Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'No visa required — up to 90 days'),
     DO: AC(30, 'Free e-Ticket form required online', ['e-Ticket completed online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -407,7 +407,7 @@ export const VISA_RULES = {
   },
   // ── Trinidad & Tobago ──
   TT: {
-    VE: VF(90, 'Visa-free — CARICOM/Venezuela bilateral agreement', ['Proof of funds'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VF(90, 'Visa-free — CARICOM/Venezuela bilateral agreement', ['Proof of funds'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required — apply at Colombian consulate in Port of Spain', ['Medical invitation letter', 'Bank statements'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VF(90, 'Visa-free for CARICOM members', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -420,7 +420,7 @@ export const VISA_RULES = {
   },
   // ── Jamaica ──
   JM: {
-    VE: VF(90, 'Visa-free — CARICOM agreement', [], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VF(90, 'Visa-free — CARICOM agreement', [], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VF(90, 'Visa-free for CARICOM members', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -459,7 +459,7 @@ export const VISA_RULES = {
   },
   // ── India ──
   IN: {
-    VE: VR(null, 'Visa required — apply at Venezuelan embassy', ['Medical invitation letter', 'Two passport photos'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VR(null, 'Visa required — apply at Venezuelan embassy', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter', 'Bank statements'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -472,7 +472,7 @@ export const VISA_RULES = {
   },
   // ── China ──
   CN: {
-    VE: VR(null, 'Visa required — apply at Venezuelan embassy', ['Medical invitation letter', 'Two passport photos'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VR(null, 'Visa required — apply at Venezuelan embassy', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: VF(30, 'Visa-free for Chinese passport holders — up to 30 days'),
@@ -485,7 +485,7 @@ export const VISA_RULES = {
   },
   // ── Nigeria ──
   NG: {
-    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online e-Visa', ['Medical invitation letter', 'Two passport photos'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online e-Visa', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter', 'Bank statements'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -550,7 +550,7 @@ export const VISA_RULES = {
   },
   // ── UAE ──
   AE: {
-    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online', ['Medical invitation letter'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online', ['Medical invitation letter'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VF(90, 'Visa-free for UAE passport holders'),
     DO: VF(30, 'Visa-free', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -563,7 +563,7 @@ export const VISA_RULES = {
   },
   // ── South Africa ──
   ZA: {
-    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online', ['Medical invitation letter', 'Two passport photos'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VR(null, 'Visa required — apply at Venezuelan embassy or online', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
@@ -576,7 +576,7 @@ export const VISA_RULES = {
   },
   // ── Philippines ──
   PH: {
-    VE: VR(null, 'Visa required', ['Medical invitation letter', 'Two passport photos'], 'https://mppre.gob.ve/cancilleria-digital'),
+    VE: VR(null, 'Visa required', ['Medical invitation letter', 'Two passport photos'], 'https://cancilleriadigital.mppre.gob.ve/login'),
     CO: VR(null, 'Visa required', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
     DO: VR(null, 'Visa required unless holding valid US/UK/Schengen/Canada visa', ['Medical invitation letter'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),

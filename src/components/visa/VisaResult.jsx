@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 // YouTube tutorial videos for each destination's visa/entry application
 const VISA_VIDEOS = {
-  VE: { id: 'Fst0_WcjMZo', title: 'How to Apply for Venezuela e-Visa 2026 — Step by Step' },
+  VE: { id: 'Fst0_WcjMZo', title: 'How to Apply for Venezuela e-Visa 2026 — Step by Step', applyUrl: 'https://cancilleriadigital.mppre.gob.ve/login' },
   TR: { id: 'zM_QYSbxttQ', title: 'Turkey eVisa 2026 — Step-by-Step Application Guide' },
   TH: { id: 'vzLLtJPWpzQ', title: 'How to Apply for Thailand e-Visa Online 2026' },
   CU: { id: '288H1NeGhcM', title: 'How to Apply for Cuba e-Visa 2026 — Full Guide' },
@@ -210,16 +210,28 @@ export default function VisaResult({ result, onReset }) {
               />
             )}
           </div>
-          <div className="px-5 py-3 flex items-center justify-between">
+          <div className="px-5 py-3 flex items-center justify-between gap-3">
             <p className="text-xs text-white/40">🎬 Free video guide — no account needed</p>
-            <a
-              href={`https://www.youtube.com/watch?v=${video.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-white/50 hover:text-white/80 underline transition-colors"
-            >
-              Open on YouTube ↗
-            </a>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {video.applyUrl && (
+                <a
+                  href={video.applyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 underline transition-colors font-semibold"
+                >
+                  Apply Now ↗
+                </a>
+              )}
+              <a
+                href={`https://www.youtube.com/watch?v=${video.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-white/50 hover:text-white/80 underline transition-colors"
+              >
+                YouTube ↗
+              </a>
+            </div>
           </div>
         </motion.div>
       )}
