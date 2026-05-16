@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { translations } from '@/lib/translations';
 
 const ages = Array.from({ length: 83 }, (_, i) => String(i + 18));
 const heights = ['Under 140cm','140–150cm','151–160cm','161–170cm','171–180cm','181–190cm','191cm+'];
@@ -20,7 +21,7 @@ function kgToLbs(kg) {
   return `${lbs}lbs`;
 }
 
-export default function Section1PersonalInfo({ form, update }) {
+export default function Section1PersonalInfo({ form, update, language = 'en' }) {
   const [weightUnit, setWeightUnit] = useState('kg');
   const [nationalitySearch, setNationalitySearch] = useState('');
 
@@ -28,47 +29,47 @@ export default function Section1PersonalInfo({ form, update }) {
     <div className="space-y-5">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-lg">👤</span>
-        <h3 className="font-display text-lg text-foreground">Personal Information</h3>
+        <h3 className="font-display text-lg text-foreground">{translations[language].personalInformation}</h3>
       </div>
-      <p className="text-xs text-muted-foreground -mt-3">Basic Information</p>
+      <p className="text-xs text-muted-foreground -mt-3">{translations[language].basicInformation}</p>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <Label>Full Name <span className="text-destructive">*</span></Label>
-          <Input value={form.patient_name} onChange={e => update('patient_name', e.target.value)} placeholder="Your full name" className="mt-1.5" />
+          <Label>{translations[language].fullName} <span className="text-destructive">*</span></Label>
+          <Input value={form.patient_name} onChange={e => update('patient_name', e.target.value)} placeholder={translations[language].yourFullName} className="mt-1.5" />
         </div>
 
         <div>
-          <Label>Age</Label>
+          <Label>{translations[language].age}</Label>
           <Select value={form.age} onValueChange={v => update('age', v)}>
-            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select age" /></SelectTrigger>
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder={translations[language].selectAge} /></SelectTrigger>
             <SelectContent>{ages.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label>Gender</Label>
+          <Label>{translations[language].gender}</Label>
           <Select value={form.gender} onValueChange={v => update('gender', v)}>
-            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select gender" /></SelectTrigger>
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder={translations[language].selectGender} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="prefer_not">Prefer not to say</SelectItem>
+              <SelectItem value="male">{translations[language].male}</SelectItem>
+              <SelectItem value="female">{translations[language].female}</SelectItem>
+              <SelectItem value="prefer_not">{translations[language].preferNotToSay}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label>Height</Label>
+          <Label>{translations[language].height}</Label>
           <Select value={form.height} onValueChange={v => update('height', v)}>
-            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select height" /></SelectTrigger>
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder={translations[language].selectHeight} /></SelectTrigger>
             <SelectContent>{heights.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
           </Select>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <Label>Weight</Label>
+            <Label>{translations[language].weight}</Label>
             <div className="flex gap-1 bg-secondary rounded-md p-0.5">
               <Button
                 size="sm"
@@ -90,7 +91,7 @@ export default function Section1PersonalInfo({ form, update }) {
           </div>
           <Select value={form.weight} onValueChange={v => update('weight', v)}>
             <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select weight" />
+              <SelectValue placeholder={translations[language].selectWeight} />
             </SelectTrigger>
             <SelectContent>
               {weights.map(w => (
@@ -103,10 +104,10 @@ export default function Section1PersonalInfo({ form, update }) {
         </div>
 
         <div>
-          <Label>Nationality</Label>
+          <Label>{translations[language].nationality}</Label>
           <Select value={form.nationality} onValueChange={v => { update('nationality', v); setNationalitySearch(''); }}>
             <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select or type nationality" />
+              <SelectValue placeholder={translations[language].selectNationality} />
             </SelectTrigger>
             <SelectContent>
               <div className="p-2">
@@ -123,23 +124,23 @@ export default function Section1PersonalInfo({ form, update }) {
         </div>
 
         <div>
-          <Label>Emergency Contact Name <span className="text-destructive">*</span></Label>
-          <Input value={form.emergency_contact_name} onChange={e => update('emergency_contact_name', e.target.value)} placeholder="Contact name" className="mt-1.5" />
+          <Label>{translations[language].emergencyContactName} <span className="text-destructive">*</span></Label>
+          <Input value={form.emergency_contact_name} onChange={e => update('emergency_contact_name', e.target.value)} placeholder={translations[language].contactName} className="mt-1.5" />
         </div>
 
         <div>
-          <Label>Emergency Contact Number <span className="text-destructive">*</span></Label>
-          <Input value={form.emergency_contact_number} onChange={e => update('emergency_contact_number', e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5" />
+          <Label>{translations[language].emergencyContactNumber} <span className="text-destructive">*</span></Label>
+          <Input value={form.emergency_contact_number} onChange={e => update('emergency_contact_number', e.target.value)} placeholder={translations[language].phoneNumber} className="mt-1.5" />
         </div>
 
         <div className="sm:col-span-2">
-          <Label>Email <span className="text-destructive">*</span></Label>
-          <Input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="your@email.com" className="mt-1.5" />
+          <Label>{translations[language].email} <span className="text-destructive">*</span></Label>
+          <Input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder={translations[language].yourEmail} className="mt-1.5" />
         </div>
 
         <div className="sm:col-span-2">
-          <Label>Phone <span className="text-destructive">*</span></Label>
-          <Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="+1 (555) 000-0000" className="mt-1.5" />
+          <Label>{translations[language].phone} <span className="text-destructive">*</span></Label>
+          <Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder={translations[language].phoneNumber} className="mt-1.5" />
         </div>
       </div>
     </div>

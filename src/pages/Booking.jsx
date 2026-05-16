@@ -237,18 +237,18 @@ export default function Booking() {
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.18 }}
               >
-                {step === 0  && <Section1PersonalInfo form={form} update={update} />}
-                 {step === 1  && <Section2Travel form={form} update={update} />}
-                 {step === 2  && <Section3Cultural form={form} update={update} />}
-                 {step === 3  && <Section4MedicalHistory form={form} update={update} />}
-                 {step === 4  && <Section5Anesthesia form={form} update={update} />}
-                 {step === 5  && <Section6Medications form={form} update={update} />}
-                 {step === 6  && <Section7Lifestyle form={form} update={update} />}
-                 {step === 7  && <Section8Emotional form={form} update={update} />}
-                 {step === 8  && <Section9Pregnancy form={form} update={update} />}
-                 {step === 9  && <Section10Documents form={form} update={update} />}
-                 {step === 10 && <SectionProcedure form={form} update={update} />}
-                 {step === 11 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} />}
+                {step === 0  && <Section1PersonalInfo form={form} update={update} language={language} />}
+                 {step === 1  && <Section2Travel form={form} update={update} language={language} />}
+                 {step === 2  && <Section3Cultural form={form} update={update} language={language} />}
+                 {step === 3  && <Section4MedicalHistory form={form} update={update} language={language} />}
+                 {step === 4  && <Section5Anesthesia form={form} update={update} language={language} />}
+                 {step === 5  && <Section6Medications form={form} update={update} language={language} />}
+                 {step === 6  && <Section7Lifestyle form={form} update={update} language={language} />}
+                 {step === 7  && <Section8Emotional form={form} update={update} language={language} />}
+                 {step === 8  && <Section9Pregnancy form={form} update={update} language={language} />}
+                 {step === 9  && <Section10Documents form={form} update={update} language={language} />}
+                 {step === 10 && <SectionProcedure form={form} update={update} language={language} />}
+                 {step === 11 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} />}
               </motion.div>
             </AnimatePresence>
           </div>
