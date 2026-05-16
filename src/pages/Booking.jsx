@@ -165,14 +165,14 @@ export default function Booking() {
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-emerald-400 to-blue-400 rounded-full"
-              animate={{ width: `${progressPct}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          </div>
+          {/* Progress bar - Ghost effect */}
+           <div className="h-1 bg-white/10 rounded-full overflow-hidden opacity-30 hover:opacity-100 transition-opacity duration-300">
+             <motion.div
+               className="h-full bg-gradient-to-r from-emerald-400 to-blue-400 rounded-full"
+               animate={{ width: `${progressPct}%` }}
+               transition={{ duration: 0.4, ease: 'easeOut' }}
+             />
+           </div>
 
           {/* Step pills — scrollable */}
           <div className="flex gap-1 mt-3 overflow-x-auto pb-0.5 scrollbar-hide">
