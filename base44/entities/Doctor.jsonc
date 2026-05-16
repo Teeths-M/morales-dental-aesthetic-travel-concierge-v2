@@ -67,72 +67,18 @@
       "type": "string"
     },
     "photo_url": {
-      "type": "string",
-      "description": "Professional photo URL"
-    },
-    "professional_photo_url": {
-      "type": "string",
-      "description": "AI-generated professional suit photo URL"
+      "type": "string"
     },
     "years_experience": {
-      "type": "number",
-      "description": "Years of experience in medical field"
-    },
-    "self_rating": {
-      "type": "number",
-      "minimum": 1,
-      "maximum": 5,
-      "description": "Doctor's honest self-rating"
+      "type": "number"
     },
     "rating": {
       "type": "number",
-      "default": 5.0,
-      "description": "Average rating from reviews"
+      "default": 5.0
     },
     "review_count": {
       "type": "number",
       "default": 0
-    },
-    "reviews": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "client_name": {
-            "type": "string"
-          },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5
-          },
-          "comment": {
-            "type": "string"
-          },
-          "procedure": {
-            "type": "string"
-          },
-          "date": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      },
-      "description": "Client reviews and testimonials"
-    },
-    "areas_of_expertise": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Key specializations and procedures"
-    },
-    "certifications": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Professional certifications and memberships"
     },
     "sign_up_completed_at": {
       "type": "string",

@@ -85,17 +85,17 @@ export default function DoctorSignup() {
         </div>
 
         {/* Progress Indicator */}
-        {step < 3 && (
+        {step < 4 && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-medium text-muted-foreground">
-                {step === 0 ? '1 of 3' : step === 1 ? '2 of 3' : '3 of 3'}
+                {step === 0 ? '1 of 4' : step === 1 ? '2 of 4' : step === 2 ? '3 of 4' : '4 of 4'}
               </span>
             </div>
             <div className="h-1 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 transition-all duration-300"
-                style={{ width: `${((step + 1) / 3) * 100}%` }}
+                style={{ width: `${((step + 1) / 4) * 100}%` }}
               ></div>
             </div>
           </div>
@@ -123,31 +123,33 @@ export default function DoctorSignup() {
           )}
 
           {step === 2 && (
-            <DoctorSignupStep3
-              formData={formData}
-              setFormData={setFormData}
-              language={language}
-              onBack={() => setStep(1)}
-              onComplete={(doctor) => {
-                setSuccessDoctor({
-                  ...doctor,
-                  specialties: formData.specialties
-                });
-                setStep(3);
-              }}
-            />
-           )}
+           <DoctorSignupStep3
+             formData={formData}
+             setFormData={setFormData}
+             language={language}
+             onNext={() => setStep(3)}
+             onBack={() => setStep(1)}
+             onComplete={(doctor) => {
+               setSuccessDoctor({
+                 ...doctor,
+                 specialties: formData.specialties
+               });
+               setStep(3);
+             }}
+           />
+          )}
 
-           {step === 3 && successDoctor && (
-            <DoctorSignupSuccess
-              doctor={successDoctor}
-              specialties={successDoctor.specialties}
-              language={language}
-              onDashboard={() => {
-                window.location.href = '/doctor-dashboard';
-              }}
-            />
-           )}
+          {step === 3 && successDoctor && (
+           <DoctorSignupSuccess
+             doctor={successDoctor}
+             specialties={successDoctor.specialties}
+             language={language}
+             onDashboard={() => {
+               // Redirect to doctor dashboard
+               window.location.href = '/doctor-dashboard';
+             }}
+           />
+          )}
         </div>
 
         {/* Footer */}
