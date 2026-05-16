@@ -220,7 +220,7 @@ export default function DoctorDashboard() {
                             <div>
                               <h4 className="font-bold text-foreground mb-3">Areas of Expertise</h4>
                               <div className="flex flex-wrap gap-2">
-                                {doctorSpecs.map(spec => (
+                                {doctorSpecs.slice(0, 5).map(spec => (
                                   <span
                                     key={spec.id}
                                     className="px-3 py-1.5 bg-secondary text-foreground text-sm font-medium rounded-full"
@@ -228,6 +228,11 @@ export default function DoctorDashboard() {
                                     {spec.procedure_name}
                                   </span>
                                 ))}
+                                {doctorSpecs.length > 5 && (
+                                  <span className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full">
+                                    +{doctorSpecs.length - 5} more
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )}

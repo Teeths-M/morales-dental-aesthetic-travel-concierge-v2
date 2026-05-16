@@ -143,11 +143,16 @@ export default function Providers() {
                         <div>
                           <h4 className="font-bold text-foreground text-sm mb-3">Areas of Expertise</h4>
                           <div className="flex flex-wrap gap-2 mb-6">
-                            {doctorSpecs.map(spec => (
+                            {doctorSpecs.slice(0, 5).map(spec => (
                               <span key={spec.id} className="px-3 py-1.5 bg-secondary text-foreground text-xs font-medium rounded-full">
                                 {spec.procedure_name}
                               </span>
                             ))}
+                            {doctorSpecs.length > 5 && (
+                              <span className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                                +{doctorSpecs.length - 5} more
+                              </span>
+                            )}
                           </div>
                         </div>
                       )}
