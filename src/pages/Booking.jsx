@@ -99,12 +99,11 @@ export default function Booking() {
       return form.has_companion !== null && (form.has_companion ? form.companion_relationship && form.travel_buddy_services.length > 0 : true);
     }
     if (step === 2) {
-      return form.has_cultural_preferences !== null && (form.has_cultural_preferences ? form.cultural_preferences.length > 0 || form.cultural_notes : true);
+      return form.has_cultural_preferences !== null && (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);
     }
     if (step === 3) {
       return form.medical_conditions.length > 0 && form.had_surgery !== null && 
-             (form.had_surgery ? form.previous_procedures && form.last_surgery_date : true) &&
-             form.had_complications !== null;
+             (form.had_surgery ? form.previous_procedures && form.last_surgery_date && form.had_complications !== null : true);
     }
     if (step === 4) {
       return form.anesthesia_complications !== null && (form.anesthesia_complications ? form.anesthesia_complication_types.length > 0 : true) &&
