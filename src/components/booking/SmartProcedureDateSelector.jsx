@@ -168,40 +168,44 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
         )}
       </AnimatePresence>
 
-      <Card className="p-6">
-        <h3 className="font-display text-xl text-foreground mb-4">Select Your Procedure Date</h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Our airline partner flies on Sundays, Mondays, and Thursdays only. The system will recommend optimal arrival and departure dates to maximize your recovery time.
-        </p>
+      <Card className="p-8 bg-gradient-to-br from-card via-card to-secondary/5 border-0 shadow-lg">
+        <div className="mb-8">
+          <h3 className="font-display text-3xl font-light text-foreground mb-2">Select Your Procedure Date</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Our airline partner operates flights on Sundays, Mondays, and Thursdays. We'll recommend your optimal arrival and departure to maximize recovery time.
+          </p>
+        </div>
 
         {/* Month Navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
           <Button
             variant="outline"
             onClick={() => setCurrentMonth(addDays(currentMonth, -30))}
+            className="text-sm"
           >
             ← Previous
           </Button>
-          <h4 className="font-semibold text-lg">{format(currentMonth, 'MMMM yyyy')}</h4>
+          <h4 className="font-display text-2xl text-foreground">{format(currentMonth, 'MMMM yyyy')}</h4>
           <Button
             variant="outline"
             onClick={() => setCurrentMonth(addDays(currentMonth, 30))}
+            className="text-sm"
           >
             Next →
           </Button>
         </div>
 
         {/* Day Labels */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-2">
-              {day}
+        <div className="grid grid-cols-7 gap-3 mb-6">
+          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+            <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-3 tracking-wide">
+              {day.slice(0, 3).toUpperCase()}
             </div>
           ))}
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2 mb-6">
+        <div className="grid grid-cols-7 gap-3 mb-8">
           {days.map(day => {
             const isSelectableAirlineDay = isAirlineDay(day) && !isBefore(day, new Date());
             const isSelected = selectedDate && format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
@@ -213,37 +217,40 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
                 key={format(day, 'yyyy-MM-dd')}
                 onClick={() => handleDateSelect(day)}
                 disabled={!isSelectableAirlineDay}
-                whileHover={isSelectableAirlineDay ? { scale: 1.05 } : {}}
-                className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                whileHover={isSelectableAirlineDay ? { scale: 1.08, y: -2 } : {}}
+                whileTap={isSelectableAirlineDay ? { scale: 0.95 } : {}}
+                className={`aspect-square rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 ${
                   !isCurrentMonth
-                    ? 'text-muted-foreground/30 bg-transparent'
+                    ? 'text-muted-foreground/20 bg-transparent'
                     : isSelected
-                    ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+                    ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg ring-2 ring-primary/30'
                     : isSelectableAirlineDay
-                    ? 'bg-secondary/60 text-foreground hover:bg-primary/20 cursor-pointer'
-                    : 'text-muted-foreground bg-muted/30 cursor-not-allowed'
+                    ? 'bg-white border border-border hover:border-primary hover:shadow-md cursor-pointer'
+                    : 'text-muted-foreground/40 bg-muted/20 cursor-not-allowed'
                 }`}
               >
-                <div className="flex flex-col items-center gap-0.5">
-                  <span>{format(day, 'd')}</span>
-                  {isAirlineAvailable && isCurrentMonth && (
-                    <Plane className="w-3 h-3 text-accent" />
-                  )}
-                </div>
+                <span className="text-lg font-semibold">{format(day, 'd')}</span>
+                {isAirlineAvailable && isCurrentMonth && (
+                  <Plane className="w-3.5 h-3.5 text-accent" />
+                )}
               </motion.button>
             );
           })}
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-6 text-xs text-muted-foreground mb-6">
-          <div className="flex items-center gap-2">
-            <Plane className="w-3 h-3 text-accent" />
-            <span>Airline flight day</span>
+        <div className="flex flex-wrap items-center gap-8 text-xs text-muted-foreground pt-6 border-t border-border">
+          <div className="flex items-center gap-2.5">
+            <Plane className="w-4 h-4 text-accent" />
+            <span className="font-medium">Airline flight day</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-secondary/60"></div>
-            <span>Available procedure date</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-lg border border-border"></div>
+            <span className="font-medium">Available procedure date</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-lg bg-muted/40"></div>
+            <span className="font-medium">Unavailable date</span>
           </div>
         </div>
       </Card>
@@ -257,62 +264,77 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-              <div className="flex items-start gap-4 mb-6">
-                <Heart className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-display text-lg text-blue-900">AI Wellness Recommendation</h4>
-                  <p className="text-sm text-blue-800 mt-1">
-                    Based on flight constraints and recovery science, here's your optimal itinerary:
+            <Card className="p-8 bg-gradient-to-br from-primary/5 via-card to-accent/5 border-0 shadow-lg">
+              <div className="flex items-start gap-4 mb-8">
+                <div className="bg-gradient-to-br from-primary to-primary/70 p-3 rounded-xl">
+                  <Heart className="w-6 h-6 text-primary-foreground flex-shrink-0" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-display text-2xl text-foreground">Your Wellness Timeline</h4>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Optimized for flight availability and full recovery. We've calculated the perfect itinerary based on medical best practices.
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Arrival */}
-                <div className="flex items-start gap-4 p-3 bg-white rounded-lg border border-blue-100">
-                  <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-4 p-5 bg-white/60 rounded-xl border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all">
+                  <div className="bg-primary/10 p-2.5 rounded-lg flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-primary" />
+                  </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">
-                      Fly In: {format(flightRecommendation.arrival, 'EEEE, MMMM d')}
+                    <p className="font-semibold text-foreground text-lg">
+                      Arrival: {format(flightRecommendation.arrival, 'EEEE, MMMM d')}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {flightRecommendation.arrivalDaysBeforeProcedure} day{flightRecommendation.arrivalDaysBeforeProcedure !== 1 ? 's' : ''} to rest and prepare
+                    <p className="text-sm text-muted-foreground mt-1.5">
+                      {flightRecommendation.arrivalDaysBeforeProcedure} day{flightRecommendation.arrivalDaysBeforeProcedure !== 1 ? 's' : ''} of pre-treatment rest and acclimatization
                     </p>
                   </div>
                 </div>
 
                 {/* Procedure */}
-                <div className="flex items-start gap-4 p-3 bg-white rounded-lg border border-blue-100">
-                  <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-accent/10 to-accent/5 rounded-xl border border-accent/20 hover:border-accent/40 transition-all">
+                  <div className="bg-accent/20 p-2.5 rounded-lg flex-shrink-0">
+                    <Heart className="w-5 h-5 text-accent" />
+                  </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">
+                    <p className="font-semibold text-foreground text-lg">
                       Procedure: {format(flightRecommendation.procedure, 'EEEE, MMMM d')}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {getDayName(flightRecommendation.procedure.getDay())} – Optimal timing
+                    <p className="text-sm text-muted-foreground mt-1.5">
+                      {getDayName(flightRecommendation.procedure.getDay())} – Optimal timing for your procedure
                     </p>
                   </div>
                 </div>
 
                 {/* Departure */}
-                <div className="flex items-start gap-4 p-3 bg-white rounded-lg border border-blue-100">
-                  <Plane className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-4 p-5 bg-white/60 rounded-xl border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all">
+                  <div className="bg-primary/10 p-2.5 rounded-lg flex-shrink-0">
+                    <Plane className="w-5 h-5 text-primary" />
+                  </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">
-                      Fly Home: {format(flightRecommendation.departure, 'EEEE, MMMM d')}
+                    <p className="font-semibold text-foreground text-lg">
+                      Departure: {format(flightRecommendation.departure, 'EEEE, MMMM d')}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {flightRecommendation.recoveryDays} days of recovery – Rest is essential for best outcomes
+                    <p className="text-sm text-muted-foreground mt-1.5">
+                      {flightRecommendation.recoveryDays} days post-treatment recovery – Optimal healing timeline
                     </p>
                   </div>
                 </div>
 
                 {/* Summary */}
-                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-                  <p className="text-sm text-blue-900">
-                    <strong>Total stay:</strong> {flightRecommendation.totalStayDays} days | <strong>Recovery window:</strong> {flightRecommendation.recoveryDays} days
-                  </p>
+                <div className="mt-6 p-5 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Stay</p>
+                      <p className="text-2xl font-semibold text-foreground mt-1">{flightRecommendation.totalStayDays} days</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recovery Window</p>
+                      <p className="text-2xl font-semibold text-foreground mt-1">{flightRecommendation.recoveryDays} days</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
