@@ -85,6 +85,13 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
+            <div className="h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-emerald-50">
+              <img 
+                src="https://images.unsplash.com/photo-1556388158-15996fe1e941?w=500&h=300&fit=crop"
+                alt="Commercial airplane"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div className="p-8 text-center">
               <div className="flex justify-center mb-4">
                 <svg className="w-16 h-16 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
@@ -118,6 +125,13 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
+            <div className="h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-slate-50">
+              <img 
+                src="https://images.unsplash.com/photo-1552820728-8ac41f1ce891?w=500&h=300&fit=crop"
+                alt="Premium black car"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div className="p-8 text-center">
               <div className="flex justify-center mb-4">
                 <svg className="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
