@@ -226,20 +226,7 @@ export default function Booking() {
 
             {step < steps.length - 1 ? (
               <Button
-                onClick={async () => {
-                  if (step === 9 && !consultationId) {
-                    // Create consultation first before moving to date selector
-                    try {
-                      const result = await base44.entities.Consultation.create(form);
-                      setConsultationId(result.id);
-                      setStep(s => s + 1);
-                    } catch (error) {
-                      console.error('Error creating consultation:', error);
-                    }
-                  } else {
-                    setStep(s => s + 1);
-                  }
-                }}
+                onClick={() => setStep(s => s + 1)}
                 disabled={!canNext()}
                 className="gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
               >
