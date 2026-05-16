@@ -4,20 +4,20 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, BadgeCheck, Clock, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Star, BadgeCheck, Clock, ArrowLeft, MessageCircle, Play, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProviderDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const providerId = window.location.pathname.split('/providers/')[1];
 
-  const { data: providers = [], isLoading } = useQuery({
+  const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['provider', providerId],
-    queryFn: () => base44.entities.Provider.filter({ id: providerId }),
+    queryFn: () => base44.entities.Doctor.filter({ id: providerId }),
     enabled: !!providerId,
   });
 
-  const provider = providers[0];
+  const provider = doctors[0];
 
   if (isLoading) {
     return (
@@ -59,31 +59,35 @@ export default function ProviderDetail() {
               {/* Photo */}
               <div className="w-32 h-32 rounded-xl overflow-hidden bg-secondary flex-shrink-0">
                 {provider.photo_url ? (
-                  <img src={provider.photo_url} alt={provider.name} className="w-full h-full object-cover" />
+                  <img src={provider.photo_url} alt={provider.full_name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-display text-4xl text-muted-foreground">{provider.name?.[0]}</span>
+                    <span className="font-display text-4xl text-muted-foreground">{provider.full_name?.[0]}</span>
                   </div>
                 )}
               </div>
 
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="font-display text-2xl lg:text-3xl text-foreground">{provider.name}</h1>
+                  <h1 className="font-display text-2xl lg:text-3xl text-foreground">{provider.full_name}</h1>
                   <BadgeCheck className="w-5 h-5 text-accent" />
                 </div>
-                <p className="text-muted-foreground">{provider.title}</p>
+                <p className="text-muted-foreground">{provider.clinic_name}</p>
 
                 <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{provider.years_experience || 15}+ Years Experience</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Star className="w-4 h-4 text-accent fill-accent" />
-                    <span className="text-sm font-semibold">{provider.rating || 4.9}</span>
-                    <span className="text-sm text-muted-foreground">({provider.review_count || 128} reviews)</span>
-                  </div>
+                  {provider.years_experience && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{provider.years_experience}+ Years Experience</span>
+                    </div>
+                  )}
+                  {provider.rating && (
+                    <div className="flex items-center gap-1.5">
+                      <Star className="w-4 h-4 text-accent fill-accent" />
+                      <span className="text-sm font-semibold">{provider.rating.toFixed(1)}</span>
+                      <span className="text-sm text-muted-foreground">({provider.review_count || 0} reviews)</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-3 mt-5">
@@ -108,27 +112,45 @@ export default function ProviderDetail() {
             )}
 
             {/* Credentials */}
-            {provider.credentials?.length > 0 && (
+            {provider.professional_background && (
               <div className="mb-8">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Credentials</h3>
-                <div className="space-y-2">
-                  {provider.credentials.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                      <span className="text-sm text-muted-foreground">{c}</span>
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Professional Background</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{provider.professional_background}</p>
               </div>
             )}
 
-            {/* Expertise */}
-            {provider.expertise_areas?.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Areas of Expertise</h3>
-                <div className="flex flex-wrap gap-2">
-                  {provider.expertise_areas.map(area => (
-                    <Badge key={area} variant="secondary" className="text-sm">{area}</Badge>
+            {/* Portfolio */}
+            {provider.portfolio && provider.portfolio.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-semibold text-foreground mb-4">Portfolio</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {provider.portfolio.map(item => (
+                    <div key={item.id} className="bg-secondary/50 border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+                      {/* Thumbnail */}
+                      <div className="relative w-full h-48 bg-secondary/50 flex items-center justify-center overflow-hidden">
+                        {item.type === 'image' ? (
+                          <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <>
+                            <video src={item.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                              <Play className="w-8 h-8 text-white fill-white" />
+                            </div>
+                          </>
+                        )}
+                        <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-full flex items-center gap-1">
+                          {item.type === 'image' ? <ImageIcon className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                          {item.type === 'image' ? 'Photo' : 'Video'}
+                        </div>
+                      </div>
+                      {/* Title */}
+                      <div className="p-3">
+                        <p className="text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(item.uploadedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
