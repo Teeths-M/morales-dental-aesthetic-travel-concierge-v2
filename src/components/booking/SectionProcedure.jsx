@@ -129,7 +129,7 @@ export default function SectionProcedure({ form, update }) {
                 </div>
 
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-3">
                   {days.map(day => {
                     const isPast = isBefore(day, new Date());
                     const isSelected = form.preferred_date && format(day, 'yyyy-MM-dd') === form.preferred_date;
@@ -142,7 +142,7 @@ export default function SectionProcedure({ form, update }) {
                         onClick={() => handleDateSelect(day)}
                         disabled={isPast}
                         whileHover={!isPast ? { scale: 1.08 } : {}}
-                        className={`aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
+                        className={`h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
                           !isCurrentMonth
                             ? 'text-muted-foreground/20 bg-transparent'
                             : isSelected
