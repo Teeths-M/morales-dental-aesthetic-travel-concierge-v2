@@ -149,12 +149,14 @@ export default function PricingCatalogManager() {
   const createMutation = useMutation({
     mutationFn: data => base44.entities.DoctorPricing.create(data),
     onSuccess: (result) => {
-      console.log('Price saved successfully:', result);
       qc.invalidateQueries({ queryKey: ['doctor_prices'] });
       setAdding(false);
+      setSelectedDoctor(prev => ({
+        ...prev,
+        prices: [...(prev?.prices || []), result]
+      }));
     },
     onError: (error) => {
-      console.error('Failed to save price:', error);
       alert(`Failed to save: ${error.message}`);
     }
   });
@@ -162,12 +164,14 @@ export default function PricingCatalogManager() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.DoctorPricing.update(id, data),
     onSuccess: (result) => {
-      console.log('Price updated successfully:', result);
       qc.invalidateQueries({ queryKey: ['doctor_prices'] });
       setEditingId(null);
+      setSelectedDoctor(prev => ({
+        ...prev,
+        prices: prev?.prices?.map(p => p.id === result.id ? result : p) || []
+      }));
     },
     onError: (error) => {
-      console.error('Failed to update price:', error);
       alert(`Failed to update: ${error.message}`);
     }
   });
