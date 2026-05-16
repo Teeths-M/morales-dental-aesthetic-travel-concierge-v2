@@ -10,6 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, Check, X, DollarSign, TrendingUp } from 'lucide-react';
+import DoctorSpecialtiesPreview from './DoctorSpecialtiesPreview';
 
 const CATEGORIES = [
   { id: 'Dental', label: 'Dental', emoji: '🦷' },
@@ -274,15 +275,23 @@ export default function PricingCatalogManager() {
             )}
           </div>
 
+          {/* Specialties from Signup */}
+          <DoctorSpecialtiesPreview
+            doctor={selectedDoctor}
+            specialties={doctorSpecialties}
+            procedures={procedures}
+            onSave={d => createMutation.mutate(d)}
+          />
+
           {adding && (
-            <PricingForm
-              doctor={selectedDoctor}
-              procedures={procedures}
-              allowedProcedureNames={doctorSpecialties.map(ds => ds.procedure_name)}
-              onSave={d => createMutation.mutate(d)}
-              onCancel={() => setAdding(false)}
-            />
-          )}
+             <PricingForm
+               doctor={selectedDoctor}
+               procedures={procedures}
+               allowedProcedureNames={doctorSpecialties.map(ds => ds.procedure_name)}
+               onSave={d => createMutation.mutate(d)}
+               onCancel={() => setAdding(false)}
+             />
+           )}
 
           {/* Prices list */}
           {isLoading ? (
