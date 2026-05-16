@@ -277,7 +277,7 @@ const AC = (days, notes, reqs=[]) => ({ status: 'arrival_card', days, notes, req
 export const VISA_RULES = {
   // ── United States ──
   US: {
-    VE: VF(90, 'Tourist card issued on arrival', ['Proof of funds', 'Hotel booking']),
+    VE: EV(90, 'e-Visa required as of April 6, 2026 — apply online through Venezuelan Ministry of Foreign Affairs', ['Two passport photos', 'Proof of accommodation', 'Proof of funds']),
     CO: VF(90, 'No visa required'),
     DO: AC(30, 'Tourist card required on arrival (~$10 USD)'),
     CU: VR(30, 'Tourist card (Pink card) required', ['Tourist card', 'Travel insurance']),
