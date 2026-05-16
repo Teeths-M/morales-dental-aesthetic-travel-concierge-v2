@@ -82,6 +82,16 @@ export default function DoctorSignupStep3({ formData, setFormData, language, onN
         await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
       }
 
+      // Auto-create Partner entry
+      const partnerData = {
+        name: formData.full_name,
+        title: 'Medical Professional',
+        specialty: formData.specialties?.length > 0 ? formData.specialties[0] : 'General',
+        bio: `Doctor from ${formData.clinic_country}${formData.clinic_name ? ` - ${formData.clinic_name}` : ''}`,
+        is_featured: false
+      };
+      await base44.entities.Partner.create(partnerData);
+
       onComplete(doctor);
     } catch (error) {
       console.error('Submit failed:', error);
