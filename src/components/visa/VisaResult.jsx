@@ -1,53 +1,48 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, AlertCircle, Globe, FileText, Upload, RotateCcw, ArrowRight, Clock, Info, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FileText, RotateCcw, ArrowRight, Clock, Info, Shield, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const STATUS_CONFIG = {
   visa_free: {
-    color: 'from-emerald-500 to-teal-500',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-    badge: 'bg-emerald-100 text-emerald-700',
-    icon: '✅',
+    gradient: 'from-[#064e3b] to-[#065f46]',
+    accent: 'bg-emerald-500',
+    accentText: 'text-emerald-400',
+    badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     label: 'Visa Free',
-    headline: 'Great news — you do not require a visa!',
-    sub: 'Your passport has visa-free access to this destination.',
-    statusColor: 'text-emerald-700',
+    headline: 'Great news — no visa required.',
+    sub: 'Your passport grants visa-free access to this destination.',
+    dot: 'bg-emerald-400',
   },
   evisa: {
-    color: 'from-blue-500 to-indigo-500',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    badge: 'bg-blue-100 text-blue-700',
-    icon: '💻',
+    gradient: 'from-[#1e3a5f] to-[#1e40af]',
+    accent: 'bg-blue-500',
+    accentText: 'text-blue-400',
+    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     label: 'e-Visa Available',
-    headline: 'You are eligible for an online e-Visa!',
-    sub: 'Apply online before your trip — quick and convenient.',
-    statusColor: 'text-blue-700',
+    headline: 'You can apply online for an e-Visa.',
+    sub: 'Apply from home before your trip — fast and convenient.',
+    dot: 'bg-blue-400',
   },
   arrival_card: {
-    color: 'from-amber-500 to-orange-500',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-    badge: 'bg-amber-100 text-amber-700',
-    icon: '📄',
+    gradient: 'from-[#78350f] to-[#92400e]',
+    accent: 'bg-amber-500',
+    accentText: 'text-amber-400',
+    badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     label: 'Arrival Card Required',
-    headline: 'You need a travel card upon arrival.',
-    sub: 'A tourist card or arrival form is required at the border.',
-    statusColor: 'text-amber-700',
+    headline: 'A tourist card is required on arrival.',
+    sub: 'Typically available at the border — small fee may apply.',
+    dot: 'bg-amber-400',
   },
   visa_required: {
-    color: 'from-red-500 to-rose-500',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    badge: 'bg-red-100 text-red-700',
-    icon: '🛂',
+    gradient: 'from-[#7f1d1d] to-[#991b1b]',
+    accent: 'bg-red-500',
+    accentText: 'text-red-400',
+    badge: 'bg-red-500/20 text-red-300 border-red-500/30',
     label: 'Visa Required',
-    headline: 'A visa application is required before travel.',
-    sub: 'Please apply at your nearest embassy in advance.',
-    statusColor: 'text-red-700',
+    headline: 'A visa must be obtained before travel.',
+    sub: 'Apply through your nearest embassy in advance.',
+    dot: 'bg-red-400',
   },
 };
 
@@ -68,143 +63,160 @@ export default function VisaResult({ result, onReset }) {
     ...MEDICAL_DOCS,
     ...(hasCompanion ? ['Companion passport copy', 'Companion return ticket'] : []),
   ];
-
   const checkedCount = Object.values(checkedDocs).filter(Boolean).length;
   const readiness = Math.round((checkedCount / allDocs.length) * 100);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
-      {/* Main result card */}
+    <div className="max-w-2xl mx-auto space-y-4">
+
+      {/* Status card — dark premium */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`rounded-3xl border-2 ${cfg.border} ${cfg.bg} overflow-hidden`}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className={`rounded-2xl bg-gradient-to-br ${cfg.gradient} text-white overflow-hidden shadow-xl`}
       >
-        {/* Header gradient */}
-        <div className={`bg-gradient-to-r ${cfg.color} p-6 text-white`}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">{cfg.icon}</span>
-                <span className="text-sm font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">{cfg.label}</span>
-              </div>
-              <h2 className="font-display text-2xl font-bold leading-tight">{cfg.headline}</h2>
-              <p className="text-white/80 text-sm mt-1">{cfg.sub}</p>
+        <div className="p-6 lg:p-7">
+          {/* Status badge */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold tracking-widest uppercase ${cfg.badge}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+              {cfg.label}
             </div>
           </div>
-          <div className="flex flex-wrap gap-3 mt-4">
-            <div className="bg-white/15 rounded-xl px-3 py-2 text-sm">
-              <span className="opacity-70">From</span> <strong>{passport?.flag} {passport?.name}</strong>
+
+          <h2 className="font-display text-2xl lg:text-3xl font-bold leading-tight mb-2">{cfg.headline}</h2>
+          <p className="text-white/60 text-sm mb-6">{cfg.sub}</p>
+
+          {/* Journey pills */}
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2 text-sm">
+              <span>{passport?.flag}</span>
+              <span className="text-white/60 text-xs">From</span>
+              <span className="font-semibold">{passport?.name}</span>
             </div>
-            <div className="bg-white/15 rounded-xl px-3 py-2 text-sm">
-              <span className="opacity-70">To</span> <strong>{destination?.flag} {destination?.name}</strong>
+            <div className="flex items-center justify-center w-7 h-7 self-center">
+              <ArrowRight className="w-4 h-4 text-white/30" />
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2 text-sm">
+              <span>{destination?.flag}</span>
+              <span className="text-white/60 text-xs">To</span>
+              <span className="font-semibold">{destination?.name}</span>
             </div>
             {rule.days && (
-              <div className="bg-white/15 rounded-xl px-3 py-2 text-sm">
-                <Clock className="w-3 h-3 inline mr-1 opacity-70" />
-                <strong>Up to {rule.days} days</strong>
+              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2 text-sm">
+                <Clock className="w-3 h-3 text-white/50" />
+                <span className="font-semibold">Up to {rule.days} days</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* AI Summary */}
-        <div className="p-5 border-b border-dashed border-slate-200">
+        {/* AI advisor strip */}
+        <div className="bg-black/20 border-t border-white/10 p-5">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-bold">AI</span>
+            <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-[10px] font-bold tracking-wide">AI</span>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">AI Visa Advisor</p>
-              <p className="text-sm text-slate-700 leading-relaxed">{aiSummary}</p>
+              <p className="text-[11px] font-bold tracking-widest uppercase text-white/40 mb-1.5">AI Visa Advisor</p>
+              <p className="text-sm text-white/80 leading-relaxed">{aiSummary}</p>
             </div>
           </div>
         </div>
 
-        {/* Notes */}
-        <div className="p-5">
-          <div className="flex items-start gap-2 text-sm text-slate-600">
-            <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-            <p>{rule.notes}</p>
-          </div>
+        {/* Entry notes */}
+        <div className="bg-black/10 px-5 py-3 flex items-start gap-2">
+          <Info className="w-3.5 h-3.5 text-white/40 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-white/50 leading-relaxed">{rule.notes}</p>
         </div>
       </motion.div>
 
       {/* Document Checklist */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6"
+        transition={{ delay: 0.15 }}
+        className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
       >
-        <div className="flex items-center justify-between mb-5">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
-              <FileText className="w-4 h-4 text-blue-600" />
-            </div>
+            <FileText className="w-4 h-4 text-slate-500" />
             <div>
-              <h3 className="font-bold text-slate-800">Document Checklist</h3>
+              <h3 className="font-bold text-slate-800 text-sm">Document Checklist</h3>
               <p className="text-xs text-slate-400">{checkedCount} of {allDocs.length} completed</p>
             </div>
           </div>
-          <div className="text-right">
-            <div className={`text-lg font-bold ${readiness >= 80 ? 'text-emerald-600' : readiness >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{readiness}%</div>
-            <div className="text-xs text-slate-400">Ready</div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className={`text-lg font-bold ${readiness >= 80 ? 'text-emerald-600' : readiness >= 50 ? 'text-amber-600' : 'text-slate-500'}`}>{readiness}%</div>
+            </div>
+            {/* Mini arc */}
+            <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" strokeWidth="3" />
+              <circle cx="18" cy="18" r="14" fill="none"
+                stroke={readiness >= 80 ? '#10b981' : readiness >= 50 ? '#f59e0b' : '#94a3b8'}
+                strokeWidth="3" strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 14}`}
+                strokeDashoffset={2 * Math.PI * 14 * (1 - readiness / 100)}
+              />
+            </svg>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-2 bg-slate-100 rounded-full mb-5 overflow-hidden">
+        {/* Thin progress */}
+        <div className="h-1 bg-slate-100">
           <motion.div
-            className={`h-full rounded-full ${readiness >= 80 ? 'bg-emerald-500' : readiness >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+            className={`h-full ${readiness >= 80 ? 'bg-emerald-500' : readiness >= 50 ? 'bg-amber-500' : 'bg-slate-400'}`}
             animate={{ width: `${readiness}%` }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6 }}
           />
         </div>
 
-        <div className="space-y-2">
-          {/* Standard visa docs */}
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Travel Documents</p>
+        <div className="p-5 space-y-1">
+          {/* Travel docs */}
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Travel Documents</p>
           {rule.requirements.map((doc, i) => (
-            <label key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
-              <input
-                type="checkbox"
-                checked={!!checkedDocs[`req_${i}`]}
-                onChange={e => setCheckedDocs(prev => ({ ...prev, [`req_${i}`]: e.target.checked }))}
-                className="w-4 h-4 rounded accent-emerald-600"
-              />
+            <label key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                checkedDocs[`req_${i}`] ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 group-hover:border-slate-400'
+              }`}>
+                {checkedDocs[`req_${i}`] && <Check className="w-2.5 h-2.5 text-white" />}
+              </div>
+              <input type="checkbox" className="sr-only" checked={!!checkedDocs[`req_${i}`]}
+                onChange={e => setCheckedDocs(prev => ({ ...prev, [`req_${i}`]: e.target.checked }))} />
               <span className={`text-sm ${checkedDocs[`req_${i}`] ? 'line-through text-slate-400' : 'text-slate-700'}`}>{doc}</span>
             </label>
           ))}
 
           {/* Medical docs */}
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-4 mb-2">Medical Travel Documents</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2 px-1">Medical Travel Documents</p>
           {MEDICAL_DOCS.map((doc, i) => (
-            <label key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 bg-blue-50/50 cursor-pointer transition-colors">
-              <input
-                type="checkbox"
-                checked={!!checkedDocs[`med_${i}`]}
-                onChange={e => setCheckedDocs(prev => ({ ...prev, [`med_${i}`]: e.target.checked }))}
-                className="w-4 h-4 rounded accent-blue-600"
-              />
-              <span className={`text-sm ${checkedDocs[`med_${i}`] ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                {doc}
-              </span>
-              <span className="ml-auto text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-medium">Clinic provides</span>
+            <label key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                checkedDocs[`med_${i}`] ? 'bg-blue-500 border-blue-500' : 'border-slate-300 group-hover:border-slate-400'
+              }`}>
+                {checkedDocs[`med_${i}`] && <Check className="w-2.5 h-2.5 text-white" />}
+              </div>
+              <input type="checkbox" className="sr-only" checked={!!checkedDocs[`med_${i}`]}
+                onChange={e => setCheckedDocs(prev => ({ ...prev, [`med_${i}`]: e.target.checked }))} />
+              <span className={`flex-1 text-sm ${checkedDocs[`med_${i}`] ? 'line-through text-slate-400' : 'text-slate-700'}`}>{doc}</span>
+              <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full font-semibold flex-shrink-0">Clinic provides</span>
             </label>
           ))}
 
           {hasCompanion && (
             <>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-4 mb-2">Companion Documents</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2 px-1">Companion Documents</p>
               {['Companion passport copy', 'Companion return ticket'].map((doc, i) => (
-                <label key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!checkedDocs[`comp_${i}`]}
-                    onChange={e => setCheckedDocs(prev => ({ ...prev, [`comp_${i}`]: e.target.checked }))}
-                    className="w-4 h-4 rounded accent-emerald-600"
-                  />
+                <label key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                    checkedDocs[`comp_${i}`] ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 group-hover:border-slate-400'
+                  }`}>
+                    {checkedDocs[`comp_${i}`] && <Check className="w-2.5 h-2.5 text-white" />}
+                  </div>
+                  <input type="checkbox" className="sr-only" checked={!!checkedDocs[`comp_${i}`]}
+                    onChange={e => setCheckedDocs(prev => ({ ...prev, [`comp_${i}`]: e.target.checked }))} />
                   <span className={`text-sm ${checkedDocs[`comp_${i}`] ? 'line-through text-slate-400' : 'text-slate-700'}`}>{doc}</span>
                 </label>
               ))}
@@ -217,22 +229,22 @@ export default function VisaResult({ result, onReset }) {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onReset}
-          className="flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+          className="flex items-center justify-center gap-2 py-3.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all"
         >
-          <RotateCcw className="w-4 h-4" /> New Check
+          <RotateCcw className="w-3.5 h-3.5" /> New Check
         </button>
         <Link to="/booking">
-          <Button className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 hover:opacity-90 text-white font-bold py-4 rounded-2xl text-sm shadow-md">
-            Book Consultation <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+          <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all">
+            Book Consultation <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </Link>
       </div>
 
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-        <Shield className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+      <div className="flex items-center gap-2 text-center justify-center">
+        <Shield className="w-3 h-3 text-slate-300 flex-shrink-0" />
         <p className="text-xs text-slate-400 leading-relaxed">
-          This result is for guidance only. Visa rules change frequently. Always verify with the official embassy or consulate before travel.
+          Guidance only — always verify with the official embassy before travel.
         </p>
       </div>
     </div>
