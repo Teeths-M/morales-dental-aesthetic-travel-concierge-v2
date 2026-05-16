@@ -13,12 +13,16 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
     if (!isOpen || !procedure?.title) return;
 
     setLoading(true);
+    setSelected(null);
     Promise.all([
       base44.entities.DoctorPricing.filter({ procedure_name: procedure.title }),
       base44.entities.Doctor.list(),
       base44.entities.DoctorSpecialty.list('-created_date', 1000)
     ])
       .then(([prices, doctors, specialties]) => {
+        console.log('Fetched:', { priceCount: prices?.length, doctorCount: doctors?.length, specialtyCount: specialties?.length });
+        console.log('Specialty doctor IDs:', specialties.map(s => s.doctor_id));
+        
         // Only include doctors that still have DoctorSpecialty records
         const validDoctorIds = new Set(specialties.map(s => s.doctor_id));
 
@@ -28,9 +32,11 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
             const doc = doctors.find(d => d.id === p.doctor_id);
             return { ...p, clinic_country: doc?.clinic_country };
           });
+        console.log('Enriched doctors for procedure:', enriched.map(e => ({ name: e.doctor_name, id: e.doctor_id })));
         setDoctorPrices(enriched);
         if (enriched.length > 0) setSelected(enriched[0].id);
       })
+      .catch(err => console.error('Error loading doctors:', err))
       .finally(() => setLoading(false));
   }, [isOpen, procedure?.title]);
 
