@@ -18,7 +18,17 @@ const navLinks = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const location = useLocation();
+
+  const allLanguages = [
+    { code: 'en', flag: '🇬🇧', name: 'English' },
+    { code: 'es', flag: '🇪🇸', name: 'Español' },
+    { code: 'fr', flag: '🇫🇷', name: 'Français' },
+    { code: 'pt', flag: '🇵🇹', name: 'Português' },
+    { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+    { code: 'it', flag: '🇮🇹', name: 'Italiano' },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
@@ -100,9 +110,39 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
-              <Globe className="w-4 h-4" />
-            </Button>
+            {/* Language Dropdown */}
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
+                className="p-2 hover:bg-secondary rounded-md transition-colors"
+                title="Select Language"
+              >
+                <Globe className="w-4 h-4" />
+              </button>
+              <AnimatePresence>
+                {languageDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50"
+                  >
+                    {allLanguages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguageDropdownOpen(false);
+                          // Language selection logic can be added here
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0"
+                      >
+                        {lang.flag} {lang.name}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <Link to="/booking">
               <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
                 Book Consultation
