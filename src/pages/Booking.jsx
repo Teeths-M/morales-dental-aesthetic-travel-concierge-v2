@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock } from 'lucide-react';
+import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
 import PreviewSummary from '@/components/booking/PreviewSummary';
@@ -59,7 +60,16 @@ export default function Booking() {
   const [showPreview, setShowPreview] = useState(false);
   const [consultationId, setConsultationId] = useState(null);
   const [headerHovered, setHeaderHovered] = useState(false);
+  const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const { items, clearCart } = useCart();
+
+  useEffect(() => {
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
   const [form, setForm] = useState({
     patient_name: '', email: '', phone: '', age: '', gender: '', height: '', weight: '',
@@ -155,7 +165,7 @@ export default function Booking() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-0.5">Medical Consultation</p>
+              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-0.5">{translations[language].medicalConsultation}</p>
               <h1 className="font-display text-lg lg:text-xl text-white leading-tight drop-shadow-lg">{steps[step].label}</h1>
             </div>
             <div className="flex items-center gap-2">
@@ -164,8 +174,8 @@ export default function Booking() {
                 <span className="text-[10px] font-bold text-white uppercase tracking-wide">SAFE-T 4LIFE™</span>
               </div>
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/60 font-normal">of {steps.length}</span></p>
-                <p className="text-[10px] text-emerald-300">{progressPct}% complete</p>
+                <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/60 font-normal">{translations[language].stepOf} {steps.length}</span></p>
+                <p className="text-[10px] text-emerald-300">{progressPct}% {translations[language].percentComplete}</p>
               </div>
             </div>
           </div>
@@ -212,7 +222,7 @@ export default function Booking() {
               {steps[step].emoji}
             </div>
             <div>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Step {step + 1} {translations[language].stepOf} {steps.length}</p>
               <h2 className="font-bold text-slate-800 text-base">{steps[step].label}</h2>
             </div>
           </div>
@@ -251,7 +261,7 @@ export default function Booking() {
               disabled={step === 0}
               className="gap-2 text-sm"
             >
-              <ArrowLeft className="w-4 h-4" /> Back
+              <ArrowLeft className="w-4 h-4" /> {translations[language].backBtn}
             </Button>
 
             {step < steps.length - 1 ? (
@@ -260,7 +270,7 @@ export default function Booking() {
                 disabled={!canNext()}
                 className="gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
               >
-                Continue <ArrowRight className="w-4 h-4" />
+                {translations[language].continueBtn} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : (
               <Button
@@ -268,7 +278,7 @@ export default function Booking() {
                 disabled={createMutation.isPending || !canNext()}
                 className="gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
               >
-                <CheckCircle className="w-4 h-4" /> Review & Submit
+                <CheckCircle className="w-4 h-4" /> {translations[language].reviewSubmit}
               </Button>
             )}
           </div>

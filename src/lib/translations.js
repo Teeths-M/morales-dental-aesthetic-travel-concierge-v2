@@ -46,6 +46,13 @@ export const translations = {
     patientWillSee: 'Patients needing these will see you.',
     emailNotification: 'We\'ll email you when a patient matches.',
     completenessLabel: 'Profile completeness',
+    medicalConsultation: 'Medical Consultation',
+    stepOf: 'of',
+    continueBtn: 'Continue',
+    reviewSubmit: 'Review & Submit',
+    backBtn: 'Back',
+    progress: 'Progress',
+    percentComplete: 'complete',
   },
   
   es: {
@@ -89,6 +96,13 @@ export const translations = {
     patientWillSee: 'Los pacientes que necesiten estos procedimientos te verán.',
     emailNotification: 'Te enviaremos un correo cuando un paciente coincida.',
     completenessLabel: 'Completitud del perfil',
+    medicalConsultation: 'Consulta Médica',
+    stepOf: 'de',
+    continueBtn: 'Continuar',
+    reviewSubmit: 'Revisar y Enviar',
+    backBtn: 'Atrás',
+    progress: 'Progreso',
+    percentComplete: 'completo',
   },
   
   fr: {
@@ -132,6 +146,13 @@ export const translations = {
     patientWillSee: 'Les patients qui en ont besoin vous verront.',
     emailNotification: 'Nous vous enverrons un e-mail quand un patient correspond.',
     completenessLabel: 'Complétude du profil',
+    medicalConsultation: 'Consultation Médicale',
+    stepOf: 'de',
+    continueBtn: 'Continuer',
+    reviewSubmit: 'Vérifier et Soumettre',
+    backBtn: 'Retour',
+    progress: 'Progrès',
+    percentComplete: 'terminé',
   },
 
   pt: {
@@ -175,6 +196,13 @@ export const translations = {
     patientWillSee: 'Pacientes que precisam destes o verão.',
     emailNotification: 'Vamos enviar um email quando um paciente corresponder.',
     completenessLabel: 'Completude do perfil',
+    medicalConsultation: 'Consulta Médica',
+    stepOf: 'de',
+    continueBtn: 'Continuar',
+    reviewSubmit: 'Revisar e Enviar',
+    backBtn: 'Voltar',
+    progress: 'Progresso',
+    percentComplete: 'completo',
   },
 
   de: {
@@ -218,6 +246,13 @@ export const translations = {
     patientWillSee: 'Patienten, die diese benötigen, werden Sie sehen.',
     emailNotification: 'Wir senden Ihnen eine E-Mail, wenn ein Patient übereinstimmt.',
     completenessLabel: 'Profilvollständigkeit',
+    medicalConsultation: 'Medizinische Beratung',
+    stepOf: 'von',
+    continueBtn: 'Weiter',
+    reviewSubmit: 'Überprüfen und Absenden',
+    backBtn: 'Zurück',
+    progress: 'Fortschritt',
+    percentComplete: 'abgeschlossen',
   },
 
   it: {
@@ -261,6 +296,13 @@ export const translations = {
     patientWillSee: 'I pazienti che ne hanno bisogno ti vedranno.',
     emailNotification: 'Ti invieremo un\'email quando un paziente corrisponde.',
     completenessLabel: 'Completezza del profilo',
+    medicalConsultation: 'Consultazione Medica',
+    stepOf: 'di',
+    continueBtn: 'Continua',
+    reviewSubmit: 'Rivedi e Invia',
+    backBtn: 'Indietro',
+    progress: 'Progresso',
+    percentComplete: 'completato',
   },
 };
 
