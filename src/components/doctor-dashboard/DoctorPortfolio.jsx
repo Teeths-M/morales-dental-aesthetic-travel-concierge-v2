@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, Trash2, Play, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2, Play, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 
 export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
   const [portfolioItems, setPortfolioItems] = useState(portfolio || []);
   const [uploading, setUploading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
 
   const saveToDatabase = async (items) => {
     try {
@@ -57,7 +58,10 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
   };
 
   const handleSaveAll = async () => {
+    setSaveStatus(null);
     await saveToDatabase(portfolioItems);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus(null), 3000);
   };
 
   return (
@@ -69,13 +73,21 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
             <h3 className="text-lg font-bold text-foreground">Showcase Your Work</h3>
           </div>
           {portfolioItems.length > 0 && (
-            <button
-              onClick={handleSaveAll}
-              disabled={uploading}
-              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50"
-            >
-              Save Portfolio
-            </button>
+            <div className="flex items-center gap-2">
+              {saveStatus === 'saved' && (
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Saved
+                </div>
+              )}
+              <button
+                onClick={handleSaveAll}
+                disabled={uploading || saveStatus === 'saved'}
+                className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50"
+              >
+                Save Portfolio
+              </button>
+            </div>
           )}
         </div>
         <p className="text-sm text-muted-foreground mb-4">Upload before/after photos, procedure videos, and testimonials to build client trust.</p>
