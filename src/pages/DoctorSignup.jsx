@@ -77,17 +77,17 @@ export default function DoctorSignup() {
         </div>
 
         {/* Progress Indicator */}
-        {step < 4 && (
+        {step < 5 && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-medium text-muted-foreground">
-                {step === 0 ? '1 of 4' : step === 1 ? '2 of 4' : step === 2 ? '3 of 4' : '4 of 4'}
+                {step === 0 ? '1 of 5' : step === 1 ? '2 of 5' : step === 2 ? '3 of 5' : step === 3 ? '4 of 5' : '5 of 5'}
               </span>
             </div>
             <div className="h-1 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 transition-all duration-300"
-                style={{ width: `${((step + 1) / 4) * 100}%` }}
+                style={{ width: `${((step + 1) / 5) * 100}%` }}
               ></div>
             </div>
           </div>
