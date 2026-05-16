@@ -90,11 +90,50 @@ export default function Booking() {
   });
 
   const canNext = () => {
-     if (step === 0) return form.patient_name && form.email && form.phone && form.emergency_contact_name && form.emergency_contact_number;
-     if (step === 10) return items.length > 0 && form.preferred_date;
-     if (step === 11) return form.acknowledged_statements.size === 4;
-     return true;
-   };
+    if (step === 0) {
+      return form.patient_name && form.email && form.phone && form.age && form.gender && 
+             form.height && form.weight && form.nationality && form.occupation && 
+             form.emergency_contact_name && form.emergency_contact_number;
+    }
+    if (step === 1) {
+      return form.has_companion !== null && (form.has_companion ? form.companion_relationship && form.travel_buddy_services.length > 0 : true);
+    }
+    if (step === 2) {
+      return form.has_cultural_preferences !== null && (form.has_cultural_preferences ? form.cultural_preferences.length > 0 || form.cultural_notes : true);
+    }
+    if (step === 3) {
+      return form.medical_conditions.length > 0 && form.had_surgery !== null && 
+             (form.had_surgery ? form.previous_procedures && form.last_surgery_date : true) &&
+             form.had_complications !== null;
+    }
+    if (step === 4) {
+      return form.anesthesia_complications !== null && (form.anesthesia_complications ? form.anesthesia_complication_types.length > 0 : true) &&
+             form.allergies.length > 0;
+    }
+    if (step === 5) {
+      return form.takes_medications !== null && (form.takes_medications ? form.medication_types.length > 0 && form.medication_notes : true);
+    }
+    if (step === 6) {
+      return form.lifestyle_habits.length > 0 && form.exercises_regularly !== null && 
+             (form.exercises_regularly ? form.activity_level : true);
+    }
+    if (step === 7) {
+      return form.emotional_concerns !== null && (form.emotional_concerns ? form.emotional_concern_types.length > 0 && form.emotional_notes : true);
+    }
+    if (step === 8) {
+      return form.pregnancy_status;
+    }
+    if (step === 9) {
+      return form.document_types.length > 0 && form.uploaded_files.length > 0;
+    }
+    if (step === 10) {
+      return items.length > 0 && form.preferred_date;
+    }
+    if (step === 11) {
+      return form.acknowledged_statements.size === 4;
+    }
+    return true;
+  };
 
   const handleConfirmSubmit = () => {
     createMutation.mutate(form);
