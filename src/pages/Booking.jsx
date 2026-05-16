@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock } from 'lucide-react';
+import MedicalSlideshow from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
 import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
@@ -141,7 +142,36 @@ export default function Booking() {
       </div>
 
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex gap-6 items-start">
+
+          {/* LEFT — Slideshow (sticky, desktop only) */}
+          <div className="hidden lg:block w-80 xl:w-96 flex-shrink-0 sticky top-36">
+            <MedicalSlideshow step={step} />
+
+            {/* Ambient trust stats below slideshow */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {[
+                { num: '98.7%', label: 'Satisfaction Rate', icon: '⭐' },
+                { num: '14K+', label: 'Patients Served', icon: '🌍' },
+                { num: '50+', label: 'Specialists', icon: '🩺' },
+                { num: '24/7', label: 'Coordinator Support', icon: '🛡️' },
+              ].map(s => (
+                <div key={s.label} className="bg-white border border-slate-100 rounded-xl px-3 py-2.5 text-center shadow-sm">
+                  <p className="text-base font-bold text-slate-800">{s.icon} {s.num}</p>
+                  <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT — Form */}
+          <div className="flex-1 min-w-0 space-y-5">
+
+        {/* Mobile slideshow banner */}
+        <div className="lg:hidden">
+          <MedicalSlideshow step={step} />
+        </div>
 
         {/* Cart */}
         <ConsultationMedicalCart />
@@ -235,6 +265,9 @@ export default function Booking() {
             </div>
           ))}
         </div>
+
+          </div>{/* end right column */}
+        </div>{/* end flex row */}
       </div>
 
       <PreviewSummary
