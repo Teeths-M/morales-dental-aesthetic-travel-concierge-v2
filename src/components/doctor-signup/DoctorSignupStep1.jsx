@@ -17,19 +17,11 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
   };
 
   const handlePhoneChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 0) {
-      if (value.length <= 3) {
-        value = value;
-      } else if (value.length <= 6) {
-        value = `${value.slice(0, 3)} ${value.slice(3)}`;
-      } else if (value.length <= 10) {
-        value = `+1 ${value.slice(0, 3)} ${value.slice(3, 6)} ${value.slice(6)}`;
-      } else {
-        value = `+${value.slice(0, 1)} ${value.slice(1, 4)} ${value.slice(4, 7)} ${value.slice(7, 11)}`;
-      }
+    const value = e.target.value;
+    // Allow any phone format (digits, +, spaces, hyphens, parentheses)
+    if (/^[\d+\s\-()]*$/.test(value)) {
+      handleChange('phone', value);
     }
-    handleChange('phone', value);
   };
 
   const canProceed = formData.full_name && formData.email && formData.phone && formData.clinic_country;
