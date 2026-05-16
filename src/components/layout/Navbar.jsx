@@ -19,6 +19,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'en';
+  });
   const location = useLocation();
 
   const allLanguages = [
@@ -29,6 +32,14 @@ export default function Navbar() {
     { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
     { code: 'it', flag: '🇮🇹', name: 'Italiano' },
   ];
+
+  const handleLanguageChange = (langCode) => {
+    setLanguage(langCode);
+    localStorage.setItem('appLanguage', langCode);
+    setLanguageDropdownOpen(false);
+    // Dispatch event so other components can listen for language changes
+    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
@@ -133,11 +144,12 @@ export default function Navbar() {
                       {allLanguages.map((lang) => (
                         <button
                           key={lang.code}
-                          onClick={() => {
-                            setLanguageDropdownOpen(false);
-                            // Language selection logic can be added here
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0"
+                          onClick={() => handleLanguageChange(lang.code)}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0 ${
+                            language === lang.code
+                              ? 'bg-secondary text-foreground'
+                              : 'text-foreground hover:bg-secondary/50'
+                          }`}
                         >
                           {lang.flag} {lang.name}
                         </button>
