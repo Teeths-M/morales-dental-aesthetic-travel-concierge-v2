@@ -157,69 +157,12 @@ export default function Booking() {
         </div>
       </div>
 
-      {/* Cinematic Headline + Cart + Step Indicator */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-white/15 backdrop-blur-xl border border-white/25 rounded-3xl shadow-2xl overflow-hidden"
-          >
-            {/* Headline Section */}
-            <div className="text-center py-8 px-6 border-b border-white/20">
-              <p className="text-5xl mb-3">{steps[step].emoji}</p>
-              <h2 className="font-display text-3xl lg:text-4xl text-white drop-shadow-lg mb-2">{steps[step].label}</h2>
-              <p className="text-white/80 text-sm max-w-md mx-auto font-medium">{SLIDE_FACTS[step]}</p>
-            </div>
-
-            {/* Cart + Step Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-5">
-              {/* Selected Procedures (takes 2 cols) */}
-              <div className="lg:col-span-2">
-                <ConsultationMedicalCart />
-              </div>
-
-              {/* Step Progress Card */}
-              <div className="bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-center backdrop-blur">
-                <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
-                <div className="flex items-baseline gap-1 mb-3">
-                  <span className="font-display text-4xl text-white drop-shadow">{step + 1}</span>
-                  <span className="text-white/70 text-sm">of {steps.length}</span>
-                </div>
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-emerald-400 to-blue-400"
-                    initial={{ width: '0%' }}
-                    animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                  />
-                </div>
-                <p className="text-emerald-300 text-xs mt-2 font-medium">{Math.round(((step + 1) / steps.length) * 100)}% complete</p>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-12">
-       <div className="space-y-5">
-       {/* Step Card */}
-       <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl shadow-xl overflow-hidden">
-          {/* Step header bar */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10 bg-white/5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-lg shadow-lg">
-            {steps[step].emoji}
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
-            <h2 className="font-bold text-white text-base drop-shadow">{steps[step].label}</h2>
-          </div>
-          </div>
-
+      {/* Content Layout - Form Left, Sidebar Right */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Form Area */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl shadow-xl overflow-hidden">
           {/* Form content */}
           <div className="p-6 lg:p-8">
             <AnimatePresence mode="wait">
@@ -257,12 +200,6 @@ export default function Booking() {
               <ArrowLeft className="w-4 h-4" /> Back
             </Button>
 
-            <div className="flex items-center gap-1">
-              {steps.map((_, i) => (
-                <div key={i} className={`rounded-full transition-all ${i === step ? 'w-4 h-1.5 bg-emerald-400' : i < step ? 'w-1.5 h-1.5 bg-emerald-300/60' : 'w-1.5 h-1.5 bg-white/20'}`} />
-              ))}
-            </div>
-
             {step < steps.length - 1 ? (
               <Button
                 onClick={() => setStep(s => s + 1)}
@@ -281,24 +218,65 @@ export default function Booking() {
               </Button>
             )}
           </div>
-        </div>
+          </div>
+          </div>
 
-        {/* Trust bar */}
-        <div className="flex flex-wrap items-center justify-center gap-4 py-2 px-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
-          {[
-            { icon: '🔒', text: 'Encrypted & Private' },
-            { icon: '🩺', text: 'Doctor-Reviewed' },
-            { icon: '🛡️', text: 'SAFE-T 4LIFE™ Protected' },
-            { icon: '🌍', text: 'International Standards' },
-          ].map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-1.5 text-[11px] text-white font-medium">
-              <span>{icon}</span> {text}
+          {/* Right Sidebar - Step Info + Cart */}
+          <div className="lg:col-span-1 space-y-4">
+          {/* Step Info Card */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-6 sticky top-24">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-lg shadow-lg">
+              {steps[step].emoji}
             </div>
-          ))}
-        </div>
+            <div>
+              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Step {step + 1}/{steps.length}</p>
+              <h3 className="font-bold text-white text-sm drop-shadow">{steps[step].label}</h3>
+            </div>
+          </div>
 
-        </div>{/* end space-y-5 */}
-      </div>{/* end content */}
+          {/* Progress */}
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-2">Progress</p>
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-emerald-400 to-blue-400"
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                />
+              </div>
+              <p className="text-emerald-300 text-[10px] mt-1.5 font-medium">{Math.round(((step + 1) / steps.length) * 100)}% complete</p>
+            </div>
+
+            {/* Step pills */}
+            <div className="flex flex-wrap gap-1">
+              {steps.map((s, i) => (
+                <div
+                  key={i}
+                  className={`text-[9px] font-bold px-2 py-1 rounded-lg whitespace-nowrap transition-all ${
+                    i < step
+                      ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
+                      : i === step
+                      ? 'bg-white/25 text-white border border-white/30'
+                      : 'bg-white/5 text-white/30 border border-white/10'
+                  }`}
+                >
+                  {i < step ? '✓' : i === step ? '●' : i + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+          </div>
+
+          {/* Selected Procedures Card */}
+          <div>
+          <ConsultationMedicalCart />
+          </div>
+          </div>
+          </div>
+          </div>
 
       <PreviewSummary
         isOpen={showPreview}
