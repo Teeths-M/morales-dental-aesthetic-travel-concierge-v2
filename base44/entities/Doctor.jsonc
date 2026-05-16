@@ -84,6 +84,35 @@
       "type": "number",
       "default": 0
     },
+    "portfolio": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to uploaded image or video"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Portfolio items (images and videos)"
+    },
     "sign_up_completed_at": {
       "type": "string",
       "description": "ISO timestamp"
