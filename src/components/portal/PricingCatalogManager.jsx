@@ -12,17 +12,19 @@ import {
 import { Plus, Pencil, Trash2, Check, X, DollarSign, TrendingUp } from 'lucide-react';
 
 const CATEGORIES = [
-  { id: 'dental', label: 'Dental', emoji: '🦷' },
-  { id: 'aesthetic', label: 'Aesthetic', emoji: '✨' },
-  { id: 'wellness', label: 'Wellness', emoji: '🌿' },
+  { id: 'Dental', label: 'Dental', emoji: '🦷' },
+  { id: 'Aesthetic', label: 'Aesthetic', emoji: '✨' },
+  { id: 'Wellness', label: 'Wellness', emoji: '🌿' },
+  { id: 'Cardiology', label: 'Cardiology', emoji: '❤️' },
+  { id: 'Orthopedics', label: 'Orthopedics', emoji: '🦴' },
 ];
 
 function PricingForm({ doctor, procedures, initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || { procedure_id: '', doctor_price_usd: '', specialty_expertise_level: 'intermediate' });
-  const [category, setCategory] = useState('dental');
+  const [category, setCategory] = useState('Dental');
 
   const selectedProc = procedures.find(p => p.id === form.procedure_id);
-  const filteredProcs = procedures.filter(p => p.category?.toLowerCase() === category);
+  const filteredProcs = procedures.filter(p => p.category === category);
 
   const handleSave = () => {
     if (!form.procedure_id || !form.doctor_price_usd) {
