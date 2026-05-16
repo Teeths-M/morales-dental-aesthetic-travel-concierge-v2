@@ -4,22 +4,55 @@ import { Badge } from '@/components/ui/badge';
 import { translations, procedureCategories } from '@/lib/translations';
 import { ArrowRight, ChevronLeft } from 'lucide-react';
 
+const categoryMap = {
+  'dental-general': { emoji: '🦷', label: 'General Dentistry' },
+  'dental-cosmetic': { emoji: '✨', label: 'Cosmetic Dentistry' },
+  'dental-implants': { emoji: '🔩', label: 'Implant Dentistry' },
+  'dental-orthodontics': { emoji: '😁', label: 'Orthodontics' },
+  'aesthetic-face': { emoji: '💆', label: 'Facial Aesthetics' },
+  'aesthetic-body': { emoji: '💪', label: 'Body Contouring' },
+  'aesthetic-breast': { emoji: '🌸', label: 'Breast Surgery' },
+  'wellness': { emoji: '🌿', label: 'Wellness & Regenerative' },
+};
+
 export default function DoctorSignupStep2({ formData, setFormData, language, onNext, onBack }) {
   const t = translations[language];
   const categories = procedureCategories[language];
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProcedures, setSelectedProcedures] = useState(new Set());
 
-  // Mock procedure list - in real app, fetch from MasterProcedure entity
   const proceduresByCategory = {
-    dental: ['Implants', 'Root canal', 'Crowns', 'Whitening', 'Extractions'],
-    cardiology: ['Bypass', 'Angioplasty', 'Valve replacement', 'Stent placement'],
-    orthopedics: ['Knee replacement', 'Hip replacement', 'Arthroscopy', 'Fracture repair'],
-    ophthalmology: ['LASIK', 'Cataract', 'Corneal transplant', 'Glaucoma surgery'],
-    neurology: ['Spine surgery', 'Brain tumor', 'Epilepsy surgery', 'Aneurysm repair'],
-    fertility: ['IVF', 'Egg freezing', 'Embryo transfer', 'Sperm extraction'],
-    general: ['Hernia repair', 'Gallbladder removal', 'Appendectomy', 'Tumor removal'],
-    cosmetic: ['BBL', 'Rhinoplasty', 'Facelift', 'Breast augmentation'],
+    'dental-general': [
+      'Dental Cleaning', 'Deep Cleaning', 'Dental Exam', 'Dental X-Rays', 'Fillings',
+      'Tooth Extraction', 'Wisdom Tooth Removal', 'Root Canal Treatment', 'Dental Crowns',
+      'Dental Bridges', 'Dentures', 'Partial Dentures', 'Inlays & Onlays'
+    ],
+    'dental-cosmetic': [
+      'Teeth Whitening', 'Porcelain Veneers', 'Composite Bonding', 'Smile Makeover',
+      'Gum Contouring', 'Hollywood Smile'
+    ],
+    'dental-implants': [
+      'Single Dental Implant', 'Multiple Dental Implants', 'Full Mouth Implants',
+      'All-on-4 Implants', 'All-on-6 Implants', 'Implant-Supported Dentures', 'Bone Grafting', 'Sinus Lift'
+    ],
+    'dental-orthodontics': [
+      'Braces', 'Invisalign', 'Clear Aligners', 'Retainers'
+    ],
+    'aesthetic-face': [
+      'Rhinoplasty', 'Facelift', 'Neck Lift', 'Eyelid Surgery', 'Chin Augmentation',
+      'Buccal Fat Removal', 'Lip Lift', 'Botox', 'Dermal Fillers'
+    ],
+    'aesthetic-body': [
+      'Liposuction', 'Tummy Tuck', 'Mommy Makeover', 'Brazilian Butt Lift', 'Body Contouring',
+      'Arm Lift', 'Thigh Lift'
+    ],
+    'aesthetic-breast': [
+      'Breast Augmentation', 'Breast Lift', 'Breast Reduction', 'Breast Revision'
+    ],
+    'wellness': [
+      'IV Therapy', 'Stem Cell Therapy', 'PRP Therapy', 'Hormone Therapy',
+      'Medical Weight Loss', 'Nutritional Programs', 'Recovery Therapy'
+    ],
   };
 
   const handleSelectCategory = (categoryId) => {
@@ -65,18 +98,18 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
       {/* Category Grid */}
       <div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {categories.map((cat) => (
+          {Object.entries(categoryMap).map(([id, cat]) => (
             <button
-              key={cat.id}
-              onClick={() => handleSelectCategory(cat.id)}
+              key={id}
+              onClick={() => handleSelectCategory(id)}
               className={`p-4 rounded-lg border-2 transition-all text-center space-y-2 ${
-                selectedCategory === cat.id
+                selectedCategory === id
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/50 bg-card'
               }`}
             >
               <div className="text-3xl">{cat.emoji}</div>
-              <div className="text-sm font-medium text-foreground">{cat.name}</div>
+              <div className="text-sm font-medium text-foreground">{cat.label}</div>
             </button>
           ))}
         </div>
@@ -98,7 +131,7 @@ export default function DoctorSignupStep2({ formData, setFormData, language, onN
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                   }`}
                 >
-                  {categories.find(c => c.id === selectedCategory)?.emoji} {proc}
+                  {categoryMap[selectedCategory]?.emoji} {proc}
                 </Badge>
               ))}
             </div>
