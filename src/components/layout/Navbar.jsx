@@ -141,7 +141,10 @@ export default function Navbar() {
                       {allLanguages.map((lang) => (
                         <button
                           key={lang.code}
-                          onClick={() => handleLanguageChange(lang.code)}
+                          onClick={() => {
+                            handleLanguageChange(lang.code);
+                            setLanguageDropdownOpen(false);
+                          }}
                           className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0 ${
                             language === lang.code
                               ? 'bg-secondary text-foreground'
