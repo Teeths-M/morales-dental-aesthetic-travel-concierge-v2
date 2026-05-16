@@ -22,6 +22,7 @@ function kgToLbs(kg) {
 
 export default function Section1PersonalInfo({ form, update }) {
   const [weightUnit, setWeightUnit] = useState('kg');
+  const [nationalitySearch, setNationalitySearch] = useState('');
 
   return (
     <div className="space-y-5">
@@ -103,9 +104,21 @@ export default function Section1PersonalInfo({ form, update }) {
 
         <div>
           <Label>Nationality</Label>
-          <Select value={form.nationality} onValueChange={v => update('nationality', v)}>
-            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select nationality" /></SelectTrigger>
-            <SelectContent>{nationalities.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+          <Select value={form.nationality} onValueChange={v => { update('nationality', v); setNationalitySearch(''); }}>
+            <SelectTrigger className="mt-1.5">
+              <SelectValue placeholder="Select or type nationality" />
+            </SelectTrigger>
+            <SelectContent>
+              <div className="p-2">
+                <Input 
+                  placeholder="Type to search..." 
+                  value={nationalitySearch}
+                  onChange={e => setNationalitySearch(e.target.value.toLowerCase())}
+                  className="h-8 mb-2"
+                />
+              </div>
+              {nationalities.filter(n => n.toLowerCase().includes(nationalitySearch)).map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+            </SelectContent>
           </Select>
         </div>
 
