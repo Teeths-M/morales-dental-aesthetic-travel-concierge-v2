@@ -132,17 +132,11 @@ export default function PricingCatalogManager() {
     queryKey: ['procedures_for_pricing'],
     queryFn: async () => {
       const procPricing = await base44.entities.ProcedurePricing.list('-created_date', 500);
-      const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
-      
-      return procPricing.map(p => {
-        const masterProc = masterProcs.find(mp => mp.en_name === p.procedure_name);
-        return {
-          id: p.id,
-          procedure_name: p.procedure_name,
-          category: p.category,
-          master_procedure_id: masterProc?.id,
-        };
-      });
+      return procPricing.map(p => ({
+        id: p.id,
+        procedure_name: p.procedure_name,
+        category: p.category,
+      }));
     },
   });
 

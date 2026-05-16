@@ -10,18 +10,23 @@ export default function DoctorSpecialtiesPreview({ doctor, specialties, procedur
   const [editingId, setEditingId] = useState(null);
   const [prices, setPrices] = useState({});
 
-  const handleSavePrice = (specialty, procId, price) => {
+  const handleSavePrice = (specialty, price) => {
     if (!price || parseFloat(price) <= 0) {
       alert('Please enter a valid price');
       return;
     }
 
-    const proc = procedures.find(p => p.id === procId);
+    const proc = procedures.find(p => p.procedure_name === specialty.procedure_name);
+    if (!proc) {
+      alert('Procedure not found in catalog');
+      return;
+    }
+
     onSave({
       doctor_id: doctor.id,
       doctor_name: doctor.full_name,
-      procedure_id: procId,
-      procedure_name: proc?.procedure_name,
+      procedure_id: proc.id,
+      procedure_name: specialty.procedure_name,
       doctor_price_usd: parseFloat(price),
       specialty_expertise_level: specialty.expertise_level || 'intermediate'
     });
@@ -76,7 +81,7 @@ export default function DoctorSpecialtiesPreview({ doctor, specialties, procedur
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7"
-                  onClick={() => handleSavePrice(specialty, proc?.id, prices[specialty.id])}
+                  onClick={() => handleSavePrice(specialty, prices[specialty.id])}
                 >
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
                 </Button>
