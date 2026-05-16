@@ -19,7 +19,7 @@ const CATEGORIES = [
   { id: 'Orthopedics', label: 'Orthopedics', emoji: '🦴' },
 ];
 
-function PricingForm({ doctor, procedures, allowedProcedureIds, initial, onSave, onCancel }) {
+function PricingForm({ doctor, procedures, allowedProcedureNames = [], initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || { procedure_id: '', doctor_price_usd: '', specialty_expertise_level: 'intermediate' });
   const [category, setCategory] = useState('Dental');
 
@@ -27,7 +27,7 @@ function PricingForm({ doctor, procedures, allowedProcedureIds, initial, onSave,
   // Filter procedures by category AND by doctor's specialties (if adding new)
   const filteredProcs = procedures.filter(p => 
     p.category === category && 
-    (initial ? true : allowedProcedureIds.includes(p.id))
+    (initial ? true : allowedProcedureNames.includes(p.procedure_name))
   );
 
   const handleSave = () => {
@@ -131,11 +131,17 @@ export default function PricingCatalogManager() {
     queryKey: ['procedures_for_pricing'],
     queryFn: async () => {
       const procPricing = await base44.entities.ProcedurePricing.list('-created_date', 500);
-      return procPricing.map(p => ({
-        id: p.id,
-        procedure_name: p.procedure_name,
-        category: p.category,
-      }));
+      const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
+      
+      return procPricing.map(p => {
+        const masterProc = masterProcs.find(mp => mp.en_name === p.procedure_name);
+        return {
+          id: p.id,
+          procedure_name: p.procedure_name,
+          category: p.category,
+          master_procedure_id: masterProc?.id,
+        };
+      });
     },
   });
 
@@ -272,7 +278,7 @@ export default function PricingCatalogManager() {
             <PricingForm
               doctor={selectedDoctor}
               procedures={procedures}
-              allowedProcedureIds={doctorSpecialties.map(ds => ds.procedure_id)}
+              allowedProcedureNames={doctorSpecialties.map(ds => ds.procedure_name)}
               onSave={d => createMutation.mutate(d)}
               onCancel={() => setAdding(false)}
             />
@@ -294,7 +300,7 @@ export default function PricingCatalogManager() {
                       key={price.id}
                       doctor={selectedDoctor}
                       procedures={procedures}
-                      allowedProcedureIds={doctorSpecialties.map(ds => ds.procedure_id)}
+                      allowedProcedureNames={doctorSpecialties.map(ds => ds.procedure_name)}
                       initial={price}
                       onSave={d => updateMutation.mutate({ id: price.id, data: d })}
                       onCancel={() => setEditingId(null)}
