@@ -159,7 +159,7 @@ export default function Booking() {
 
       {/* Content Layout - Form Left, Sidebar Right */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 -mt-6">
           {/* Main Form Area */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -235,21 +235,21 @@ export default function Booking() {
           {/* Right Sidebar - Step Info + Cart */}
           <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-24 lg:h-fit">
           {/* Step Info Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-6 sticky top-24">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-lg shadow-lg">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-3 sticky top-16">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-sm shadow-lg">
               {steps[step].emoji}
             </div>
             <div>
-              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Step {step + 1}/{steps.length}</p>
-              <h3 className="font-bold text-white text-sm drop-shadow">{steps[step].label}</h3>
+              <p className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest">Step {step + 1}</p>
+              <h3 className="font-bold text-white text-xs drop-shadow">{steps[step].label}</h3>
             </div>
           </div>
 
           {/* Progress */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div>
-              <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-2">Progress</p>
+              <p className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-emerald-400 to-blue-400"
@@ -258,15 +258,15 @@ export default function Booking() {
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                 />
               </div>
-              <p className="text-emerald-300 text-[10px] mt-1.5 font-medium">{Math.round(((step + 1) / steps.length) * 100)}% complete</p>
+              <p className="text-emerald-300 text-[8px] mt-1 font-medium">{Math.round(((step + 1) / steps.length) * 100)}%</p>
             </div>
 
             {/* Step pills */}
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-0.5">
               {steps.map((s, i) => (
                 <div
                   key={i}
-                  className={`text-[9px] font-bold px-2 py-1 rounded-lg whitespace-nowrap transition-all ${
+                  className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap transition-all ${
                     i < step
                       ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
                       : i === step
