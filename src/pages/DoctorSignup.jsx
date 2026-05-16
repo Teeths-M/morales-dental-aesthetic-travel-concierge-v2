@@ -150,6 +150,13 @@ export default function DoctorSignup() {
              language={language}
              onNext={() => setStep(4)}
              onBack={() => setStep(2)}
+             onComplete={(doctor) => {
+               setSuccessDoctor({
+                 ...doctor,
+                 specialties: formData.specialties
+               });
+               setStep(4);
+             }}
            />
           )}
 

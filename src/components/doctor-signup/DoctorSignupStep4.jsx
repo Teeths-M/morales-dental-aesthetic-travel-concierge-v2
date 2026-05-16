@@ -5,7 +5,7 @@ import { translations } from '@/lib/translations';
 import { ChevronLeft, Upload, Wand2, Plus, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function DoctorSignupStep4({ formData, setFormData, language = 'en', onNext, onBack }) {
+export default function DoctorSignupStep4({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
   const [yearsExp, setYearsExp] = useState(formData.years_experience || '');
   const [selfRating, setSelfRating] = useState(formData.self_rating || 5);
@@ -18,6 +18,7 @@ export default function DoctorSignupStep4({ formData, setFormData, language = 'e
   const [newExpertise, setNewExpertise] = useState('');
   const [certifications, setCertifications] = useState(formData.certifications || []);
   const [newCert, setNewCert] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -86,7 +87,7 @@ export default function DoctorSignupStep4({ formData, setFormData, language = 'e
     }
   };
 
-  const handleNext = () => {
+  const handleSubmit = async () => {
     setFormData(prev => ({
       ...prev,
       years_experience: parseInt(yearsExp) || 0,
@@ -95,7 +96,57 @@ export default function DoctorSignupStep4({ formData, setFormData, language = 'e
       areas_of_expertise: expertise,
       certifications
     }));
-    onNext();
+
+    setIsSubmitting(true);
+    try {
+      const doctorData = {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        clinic_country: formData.clinic_country,
+        clinic_name: formData.clinic_name,
+        license_url: formData.license_url,
+        photo_url: formData.photo_url,
+        professional_photo_url: formData.professional_photo_url,
+        payout_method: formData.payout_method,
+        payout_account: formData.payout_account,
+        language_preference: language,
+        status: 'pending_verification',
+        years_experience: parseInt(yearsExp) || 0,
+        self_rating: selfRating,
+        reviews,
+        areas_of_expertise: expertise,
+        certifications,
+        sign_up_completed_at: new Date().toISOString()
+      };
+
+      const doctor = await base44.entities.Doctor.create(doctorData);
+
+      // Auto-assign specialties
+      if (formData.specialties && formData.specialties.length > 0) {
+        const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
+
+        const specialtyData = formData.specialties.map(spec => {
+          const matched = masterProcs.find(mp => mp.en_name === spec);
+          return {
+            doctor_id: doctor.id,
+            procedure_id: matched?.procedure_id || spec,
+            procedure_name: spec,
+            category: matched?.category || 'General'
+          };
+        });
+
+        if (specialtyData.length > 0) {
+          await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
+        }
+      }
+
+      onComplete(doctor);
+    } catch (error) {
+      console.error('Submit failed:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canContinue = yearsExp && expertise.length > 0 && reviews.length > 0;
@@ -290,11 +341,11 @@ export default function DoctorSignupStep4({ formData, setFormData, language = 'e
           <ChevronLeft className="w-4 h-4" /> Back
         </Button>
         <Button
-          onClick={handleNext}
-          disabled={!canContinue}
+          onClick={handleSubmit}
+          disabled={!canContinue || isSubmitting}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white"
         >
-          Continue to Payout
+          {isSubmitting ? 'Creating Account...' : 'Complete Registration'}
         </Button>
       </div>
     </div>

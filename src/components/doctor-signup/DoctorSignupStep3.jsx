@@ -6,7 +6,7 @@ import { translations } from '@/lib/translations';
 import { ArrowRight, ChevronLeft, Upload, CloudUpload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
+export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack }) {
   const t = translations[language] || translations['en'];
   const [payoutMethod, setPayoutMethod] = useState(null);
   const [licenseFile, setLicenseFile] = useState(null);
@@ -51,85 +51,15 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!formData.license_url || !payoutMethod || !formData.payout_account || !confirmed) {
-      return;
+  const handleNext = () => {
+    if (formData.license_url && payoutMethod && formData.payout_account && confirmed) {
+      setFormData(prev => ({
+        ...prev,
+        payout_method: payoutMethod,
+      }));
+      onNext();
     }
-
-    setIsSubmitting(true);
-    try {
-      const doctorData = {
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        clinic_country: formData.clinic_country,
-        clinic_name: formData.clinic_name,
-        license_url: formData.license_url,
-        payout_method: formData.payout_method,
-        payout_account: formData.payout_account,
-        language_preference: language,
-        status: 'pending_verification',
-        sign_up_completed_at: new Date().toISOString()
-      };
-
-      const doctor = await base44.entities.Doctor.create(doctorData);
-
-      // Auto-assign specialties
-      if (formData.specialties && formData.specialties.length > 0) {
-        const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
-
-        const specialtyData = formData.specialties.map(spec => {
-          const matched = masterProcs.find(mp => mp.en_name === spec);
-          return {
-            doctor_id: doctor.id,
-            procedure_id: matched?.procedure_id || spec,
-            procedure_name: spec,
-            category: matched?.category || 'General'
-          };
-        });
-
-        if (specialtyData.length > 0) {
-          await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
-        }
-      }
-
-      onComplete(doctor);
-      } catch (error) {
-      console.error('Submit failed:', error);
-      } finally {
-      setIsSubmitting(false);
-      }
-      };
-
-      const handleSyncToPortalHub = async () => {
-      if (!formData.full_name || !formData.email) {
-      setSyncMessage({ type: 'error', text: 'Doctor info required' });
-      return;
-      }
-
-      setIsSyncing(true);
-      setSyncMessage(null);
-      try {
-      const response = await base44.functions.invoke('syncDoctorToPortalHub', {
-        event: { type: 'update', entity_name: 'Doctor' },
-        data: {
-          id: 'manual_sync_' + Date.now(),
-          full_name: formData.full_name,
-          email: formData.email,
-          phone: formData.phone,
-          clinic_country: formData.clinic_country,
-          clinic_name: formData.clinic_name,
-          status: 'active'
-        }
-      });
-      setSyncMessage({ type: 'success', text: 'Synced to Portal Hub!' });
-      } catch (error) {
-      console.error('Sync failed:', error);
-      setSyncMessage({ type: 'error', text: 'Sync failed: ' + error.message });
-      } finally {
-      setIsSyncing(false);
-      }
-      };
+  };
 
   const canSubmit = formData.license_url && payoutMethod && formData.payout_account && confirmed;
 
@@ -228,17 +158,6 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
         </div>
       </div>
 
-      {/* Sync Message */}
-      {syncMessage && (
-        <div className={`p-3 rounded-lg text-sm font-medium text-center ${
-          syncMessage.type === 'success'
-            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
-          {syncMessage.text}
-        </div>
-      )}
-
       {/* Navigation */}
       <div className="flex gap-3">
         <Button
@@ -249,20 +168,11 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
           <ChevronLeft className="w-4 h-4" /> {t.back}
         </Button>
         <Button
-          onClick={handleSyncToPortalHub}
-          disabled={!formData.full_name || isSyncing}
-          variant="outline"
-          className="flex-1 h-12 gap-2"
-        >
-          <CloudUpload className="w-4 h-4" />
-          {isSyncing ? 'Syncing...' : 'Sync to Portal Hub'}
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={!canSubmit || isSubmitting}
+          onClick={handleNext}
+          disabled={!canSubmit}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
         >
-          {isSubmitting ? 'Submitting...' : t.submitJoin}
+          {t.next} <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>
