@@ -5,7 +5,6 @@ import { translations } from '@/lib/translations';
 import DoctorSignupStep1 from '@/components/doctor-signup/DoctorSignupStep1';
 import DoctorSignupStep2 from '@/components/doctor-signup/DoctorSignupStep2';
 import DoctorSignupStep3 from '@/components/doctor-signup/DoctorSignupStep3';
-import DoctorSignupStep4 from '@/components/doctor-signup/DoctorSignupStep4';
 import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess';
 import { Globe } from 'lucide-react';
 
@@ -86,17 +85,17 @@ export default function DoctorSignup() {
         </div>
 
         {/* Progress Indicator */}
-        {step < 5 && (
+        {step < 3 && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-medium text-muted-foreground">
-                {step === 0 ? '1 of 5' : step === 1 ? '2 of 5' : step === 2 ? '3 of 5' : step === 3 ? '4 of 5' : '5 of 5'}
+                {step === 0 ? '1 of 3' : step === 1 ? '2 of 3' : '3 of 3'}
               </span>
             </div>
             <div className="h-1 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 transition-all duration-300"
-                style={{ width: `${((step + 1) / 5) * 100}%` }}
+                style={{ width: `${((step + 1) / 3) * 100}%` }}
               ></div>
             </div>
           </div>
@@ -128,49 +127,27 @@ export default function DoctorSignup() {
               formData={formData}
               setFormData={setFormData}
               language={language}
-              onNext={() => setStep(3)}
               onBack={() => setStep(1)}
+              onComplete={(doctor) => {
+                setSuccessDoctor({
+                  ...doctor,
+                  specialties: formData.specialties
+                });
+                setStep(3);
+              }}
             />
-          )}
+           )}
 
-          {step === 2 && (
-           <DoctorSignupStep3
-             formData={formData}
-             setFormData={setFormData}
-             language={language}
-             onNext={() => setStep(3)}
-             onBack={() => setStep(1)}
-           />
-          )}
-
-          {step === 3 && (
-           <DoctorSignupStep4
-             formData={formData}
-             setFormData={setFormData}
-             language={language}
-             onNext={() => setStep(4)}
-             onBack={() => setStep(2)}
-             onComplete={(doctor) => {
-               setSuccessDoctor({
-                 ...doctor,
-                 specialties: formData.specialties
-               });
-               setStep(4);
-             }}
-           />
-          )}
-
-          {step === 4 && successDoctor && (
-           <DoctorSignupSuccess
-             doctor={successDoctor}
-             specialties={successDoctor.specialties}
-             language={language}
-             onDashboard={() => {
-               // Redirect to doctor dashboard
-               window.location.href = '/doctor-dashboard';
-             }}
-           />
-          )}
+           {step === 3 && successDoctor && (
+            <DoctorSignupSuccess
+              doctor={successDoctor}
+              specialties={successDoctor.specialties}
+              language={language}
+              onDashboard={() => {
+                window.location.href = '/doctor-dashboard';
+              }}
+            />
+           )}
         </div>
 
         {/* Footer */}
