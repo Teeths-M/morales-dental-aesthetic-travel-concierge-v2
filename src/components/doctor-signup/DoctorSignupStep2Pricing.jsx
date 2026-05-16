@@ -29,7 +29,6 @@ const PROCEDURES_BY_CATEGORY = {
 export default function DoctorSignupStep2Pricing({ formData, setFormData, language, onNext, onBack }) {
   const t = translations[language];
   const [prices, setPrices] = useState(formData.procedurePrices || {});
-  const [hoveredProcedure, setHoveredProcedure] = useState(null);
 
   const handlePriceChange = (procedure, value) => {
     const numValue = value ? parseFloat(value) : '';
@@ -84,41 +83,21 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
                 {categoryProcedures.map(procedure => (
                   <div 
                     key={procedure}
-                    className="relative"
-                    onMouseEnter={() => setHoveredProcedure(procedure)}
-                    onMouseLeave={() => setHoveredProcedure(null)}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-all"
                   >
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-secondary/50 transition-all cursor-pointer">
-                      <span className="text-sm font-medium text-foreground">{procedure}</span>
-                      {prices[procedure] && (
-                        <span className="text-sm font-semibold text-primary">${prices[procedure]}</span>
-                      )}
+                    <span className="text-sm font-medium text-foreground">{procedure}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        min="0"
+                        step="100"
+                        value={prices[procedure] || ''}
+                        onChange={(e) => handlePriceChange(procedure, e.target.value)}
+                        className="w-28 text-right text-sm font-semibold"
+                      />
                     </div>
-                    
-                    {/* Hover Popover Box */}
-                    {hoveredProcedure === procedure && (
-                      <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="bg-white border-2 border-primary rounded-lg shadow-lg p-4 min-w-72">
-                          <p className="text-sm font-medium text-foreground mb-3">{procedure}</p>
-                          <div className="space-y-2">
-                            <label className="text-xs text-muted-foreground">Enter price (USD)</label>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-semibold text-muted-foreground">$</span>
-                              <Input
-                                type="number"
-                                autoFocus
-                                placeholder="0"
-                                min="0"
-                                step="100"
-                                value={prices[procedure] || ''}
-                                onChange={(e) => handlePriceChange(procedure, e.target.value)}
-                                className="text-lg font-semibold"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
