@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, isAfter } from 'date-fns';
+import { format, addMonths, startOfMonth, endOfMonth, isBefore } from 'date-fns';
 import CapacityGate from './CapacityGate';
 
 const procedures = [
@@ -53,25 +53,60 @@ export default function SectionProcedure({ form, update }) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(form.preferred_date ? new Date(form.preferred_date) : new Date());
 
-  const handleMonthChange = (newDate) => {
-    update('preferred_date', newDate);
+  const DISABLED_DAYS = [0, 4]; // Sunday (0) and Thursday (4)
+
+  // Helper: check if a date is disabled (Sunday or Thursday)
+  const isDisabledDate = (date) => DISABLED_DAYS.includes(date.getDay());
+
+  // Helper: check if a date is in the past
+  const isPastDate = (date) => isBefore(date, new Date().setHours(0, 0, 0, 0));
+
+  // Build full calendar grid (6 rows × 7 columns = 42 cells)
+  const buildCalendarDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const startWeekday = firstDay.getDay(); // 0=Sun, 6=Sat
+
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      let dayNumber, dateObj, isCurrentMonth;
+
+      if (i < startWeekday) {
+        // Previous month days
+        dayNumber = prevMonthLastDay - (startWeekday - i) + 1;
+        dateObj = new Date(year, month - 1, dayNumber);
+        isCurrentMonth = false;
+      } else if (i >= startWeekday + daysInMonth) {
+        // Next month days
+        dayNumber = i - (startWeekday + daysInMonth) + 1;
+        dateObj = new Date(year, month + 1, dayNumber);
+        isCurrentMonth = false;
+      } else {
+        // Current month days
+        dayNumber = i - startWeekday + 1;
+        dateObj = new Date(year, month, dayNumber);
+        isCurrentMonth = true;
+      }
+
+      cells.push({
+        day: dayNumber,
+        date: dateObj,
+        isCurrentMonth,
+        isDisabled: isDisabledDate(dateObj),
+        isPast: isPastDate(dateObj),
+      });
+    }
+    return cells;
   };
 
-  const handleDateSelect = (day) => {
-    if (isBefore(day, new Date())) return;
-    const dayOfWeek = day.getDay();
-    // Disable Sunday (0) and Thursday (4)
-    if (dayOfWeek === 0 || dayOfWeek === 4) return;
-    const dateStr = format(day, 'yyyy-MM-dd');
-    update('preferred_date', dateStr);
-    setShowCalendar(false);
-  };
-
-  const days = eachDayOfInterval({
-    start: startOfMonth(currentMonth),
-    end: endOfMonth(currentMonth)
-  });
-
+  const calendarDays = buildCalendarDays();
   const displayDate = form.preferred_date ? format(new Date(form.preferred_date), 'MMM d, yyyy') : '';
 
   return (
@@ -133,30 +168,35 @@ export default function SectionProcedure({ form, update }) {
 
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-1 mb-6">
-                  {days.map(day => {
-                    const isPast = isBefore(day, new Date());
-                    const dayOfWeek = day.getDay();
-                    const isDisabledDay = dayOfWeek === 0 || dayOfWeek === 4; // Sunday or Thursday
-                    const isSelected = form.preferred_date && format(day, 'yyyy-MM-dd') === form.preferred_date;
-                    const isCurrentMonth = isSameMonth(day, currentMonth);
+                  {calendarDays.map((cell, idx) => {
+                    const isSelected = form.preferred_date && format(cell.date, 'yyyy-MM-dd') === form.preferred_date;
+                    const canSelect = cell.isCurrentMonth && !cell.isPast && !cell.isDisabled;
+
+                    const handleClick = () => {
+                      if (canSelect) {
+                        const dateStr = format(cell.date, 'yyyy-MM-dd');
+                        update('preferred_date', dateStr);
+                        setShowCalendar(false);
+                      }
+                    };
 
                     return (
                       <motion.button
-                        key={format(day, 'yyyy-MM-dd')}
-                        onClick={() => handleDateSelect(day)}
-                        disabled={isPast || isDisabledDay}
-                        whileHover={!isPast && !isDisabledDay ? { scale: 1.05 } : {}}
+                        key={idx}
+                        onClick={handleClick}
+                        disabled={!canSelect}
+                        whileHover={canSelect ? { scale: 1.05 } : {}}
                         className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
-                          !isCurrentMonth
-                            ? 'text-muted-foreground/20 bg-transparent'
+                          !cell.isCurrentMonth
+                            ? 'text-muted-foreground/20 bg-transparent cursor-default'
                             : isSelected
                             ? 'bg-foreground text-primary-foreground shadow-md font-semibold'
-                            : isPast || isDisabledDay
+                            : cell.isPast || cell.isDisabled
                             ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed line-through opacity-60'
                             : 'bg-white border border-border hover:bg-sky-50 hover:border-sky-400 cursor-pointer'
                         }`}
                       >
-                        {format(day, 'd')}
+                        {cell.day}
                       </motion.button>
                     );
                   })}
@@ -203,7 +243,7 @@ export default function SectionProcedure({ form, update }) {
 
       {/* Capacity gate — shown once both procedure and date are selected */}
       {form.preferred_date && (
-        <CapacityGate form={form} onMonthChange={handleMonthChange} />
+        <CapacityGate form={form} />
       )}
 
       <div>
