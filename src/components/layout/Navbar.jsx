@@ -111,38 +111,41 @@ export default function Navbar() {
           {/* Right Actions */}
           <div className="flex items-center gap-3">
             {/* Language Dropdown */}
-            <div className="relative hidden sm:block">
-              <button
-                onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
-                className="p-2 hover:bg-secondary rounded-md transition-colors"
-                title="Select Language"
+              <div 
+                className="relative hidden sm:block"
+                onMouseEnter={() => setLanguageDropdownOpen(true)}
+                onMouseLeave={() => setLanguageDropdownOpen(false)}
               >
-                <Globe className="w-4 h-4" />
-              </button>
-              <AnimatePresence>
-                {languageDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50"
-                  >
-                    {allLanguages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => {
-                          setLanguageDropdownOpen(false);
-                          // Language selection logic can be added here
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0"
-                      >
-                        {lang.flag} {lang.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                <button
+                  className="p-2 hover:bg-secondary rounded-md transition-colors"
+                  title="Select Language"
+                >
+                  <Globe className="w-4 h-4" />
+                </button>
+                <AnimatePresence>
+                  {languageDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50"
+                    >
+                      {allLanguages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            setLanguageDropdownOpen(false);
+                            // Language selection logic can be added here
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0"
+                        >
+                          {lang.flag} {lang.name}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             <Link to="/booking">
               <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
                 Book Consultation
