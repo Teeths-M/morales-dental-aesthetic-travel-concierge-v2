@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Globe, ChevronDown } from 'lucide-react';
@@ -24,10 +24,28 @@ export default function Navbar() {
   });
   const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
+  const dropdownTimeoutRef = useRef(null);
+  const languageTimeoutRef = useRef(null);
 
   useEffect(() => {
     setNavLinks(getNavLinks(language));
   }, [language]);
+
+  const handleDropdownMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => setDropdownOpen(false), 2000);
+  };
+
+  const handleDropdownMouseEnter = () => {
+    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
+  };
+
+  const handleLanguageMouseLeave = () => {
+    languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 2000);
+  };
+
+  const handleLanguageMouseEnter = () => {
+    if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current);
+  };
 
   const allLanguages = [
     { code: 'en', flag: '🇬🇧', name: 'English' },
@@ -80,7 +98,7 @@ export default function Navbar() {
             ))}
 
             {/* Partner Dropdown */}
-            <div className="relative" onMouseLeave={() => setDropdownOpen(false)}>
+            <div className="relative" onMouseLeave={handleDropdownMouseLeave} onMouseEnter={handleDropdownMouseEnter}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
@@ -127,7 +145,7 @@ export default function Navbar() {
           {/* Right Actions */}
           <div className="flex items-center gap-3">
             {/* Language Dropdown */}
-              <div className="relative hidden sm:block" onMouseLeave={() => setLanguageDropdownOpen(false)}>
+              <div className="relative hidden sm:block" onMouseLeave={handleLanguageMouseLeave} onMouseEnter={handleLanguageMouseEnter}>
                 <button
                   onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
                   className="p-2 hover:bg-secondary rounded-md transition-colors"
