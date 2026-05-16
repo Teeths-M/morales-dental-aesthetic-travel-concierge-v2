@@ -73,29 +73,31 @@ export default function TaxiServiceSignup() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        {/* Taxi Service Hero Image */}
-        <div className="text-center mb-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-200">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-blue-100 mb-4">
-            <svg className="w-12 h-12 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm11 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM5 11l1.5-4.5h11L19 11H5z"/>
-            </svg>
+      {/* Main Content - Split Layout */}
+      <div className="max-w-6xl mx-auto px-4 py-12 grid md:grid-cols-2 gap-8 items-center min-h-screen">
+        {/* Hero Section */}
+        <div className="hidden md:flex flex-col items-center justify-center">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-blue-100 mb-6">
+              <svg className="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm11 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM5 11l1.5-4.5h11L19 11H5z"/>
+              </svg>
+            </div>
+            <h2 className="text-4xl font-display font-bold text-foreground mb-3">
+              {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              {language === 'es' 
+                ? 'Transporta pacientes de puerta a puerta. Gana con cada viaje verificado.'
+                : language === 'fr'
+                ? 'Transportez les patients de porte à porte. Gagnez avec chaque trajet vérifié.'
+                : 'Transport patients door-to-door. Earn with every verified trip.'}
+            </p>
           </div>
-          <h2 className="text-3xl font-display font-bold text-foreground mb-2">
-            {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {language === 'es' 
-              ? 'Transporta pacientes de puerta a puerta. Gana con cada viaje verificado.'
-              : language === 'fr'
-              ? 'Transportez les patients de porte à porte. Gagnez avec chaque trajet vérifié.'
-              : 'Transport patients door-to-door. Earn with every verified trip.'}
-          </p>
         </div>
 
         {/* Form Section */}
-        <div>
+        <div className="space-y-6">
 
         {/* Progress Indicator */}
         {step < 3 && (
