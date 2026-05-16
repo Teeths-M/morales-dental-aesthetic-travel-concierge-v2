@@ -2,24 +2,9 @@ import React, { useState } from 'react';
 import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const contacts = [
-  { id: 1, name: 'Ana Morales', role: 'Care Coordinator', avatar: 'A', online: true, last: 'Your transfer is confirmed for Jun 12.' },
-  { id: 2, name: 'Dr. Ramirez', role: 'Dental Specialist', avatar: 'R', online: false, last: 'Please upload your latest X-rays.' },
-  { id: 3, name: 'Travel Support', role: 'Travel Team', avatar: 'T', online: true, last: 'Flight details have been sent to your email.' },
-];
+const contacts = [];
 
-const initialMessages = {
-  1: [
-    { from: 'them', text: 'Welcome to Morales Dental! I\'m Ana, your dedicated care coordinator. How can I help you today?', time: '9:00 AM' },
-    { from: 'them', text: 'Your transfer is confirmed for Jun 12. A driver will meet you at arrivals.', time: '10:30 AM' },
-  ],
-  2: [
-    { from: 'them', text: 'Hello! I reviewed your intake form. Please upload your latest dental X-rays so I can prepare your treatment plan.', time: 'Yesterday' },
-  ],
-  3: [
-    { from: 'them', text: 'Your flight details have been sent to your email. Let us know if you need any changes.', time: '2 days ago' },
-  ],
-};
+const initialMessages = {};
 
 export default function MessagesModule() {
   const [activeContact, setActiveContact] = useState(1);
@@ -44,6 +29,13 @@ export default function MessagesModule() {
         <p className="text-xs text-slate-400 mt-0.5">Secure communication with your care team</p>
       </div>
 
+      {contacts.length === 0 ? (
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-12 text-center">
+          <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-600 font-medium mb-1">No conversations yet</p>
+          <p className="text-sm text-slate-400">Your care team messages will appear here once your consultation is confirmed.</p>
+        </div>
+      ) : (
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden" style={{ height: '600px' }}>
         <div className="flex h-full">
           {/* Contact list */}
@@ -132,6 +124,7 @@ export default function MessagesModule() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Notification preferences */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
