@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import {
   User, MapPin, Calendar, Stethoscope, Upload, MessageCircle,
   CheckCircle2, Clock, AlertTriangle, FileText, Plane, ArrowRight,
@@ -16,13 +18,6 @@ const timelineSteps = [
   { label: 'Procedure Scheduled', sub: 'Pending review', done: false },
   { label: 'Recovery Planning', sub: 'Not started', done: false },
   { label: 'Post-Care Follow-up', sub: 'Not started', done: false },
-];
-
-const alerts = [
-  { type: 'warning', text: 'Lab work still required before procedure clearance' },
-  { type: 'warning', text: 'Medication review pending with your care team' },
-  { type: 'info', text: 'Smoking cessation strongly recommended 4 weeks prior' },
-  { type: 'info', text: 'Companion support recommended for your procedure type' },
 ];
 
 const actions = [
@@ -55,6 +50,49 @@ function ScoreRing({ score, label, color }) {
 }
 
 export default function OverviewTab() {
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const { data: safeTProfile, isLoading } = useQuery({
+    queryKey: ['safeTProfile', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const profiles = await base44.entities.SafeTProfile.filter({ patient_email: user.email }, '-created_at', 1);
+      return profiles?.[0] || null;
+    },
+    enabled: !!user?.email,
+  });
+
+  const { data: consultation } = useQuery({
+    queryKey: ['consultation', safeTProfile?.consultation_id],
+    queryFn: async () => {
+      if (!safeTProfile?.consultation_id) return null;
+      return await base44.entities.Consultation.get(safeTProfile.consultation_id);
+    },
+    enabled: !!safeTProfile?.consultation_id,
+  });
+
+  const riskScores = {
+    low: 85,
+    medium: 65,
+    high: 40,
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-12">Loading SAFE-T profile...</div>;
+  }
+
+  if (!safeTProfile) {
+    return <div className="text-center py-12 text-slate-500">No SAFE-T profile found. Book a consultation to get started.</div>;
+  }
+
+  const alerts = safeTProfile.risk_factors?.map((factor, i) => ({
+    type: safeTProfile.risk_level === 'high' ? 'warning' : 'info',
+    text: factor,
+  })) || [];
+
   return (
     <div className="space-y-6">
       {/* Patient Card + Safety Scores */}
@@ -72,14 +110,14 @@ export default function OverviewTab() {
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
             {[
-              { icon: User, label: 'Patient', value: 'Maria Lopez' },
-              { icon: Stethoscope, label: 'Procedure Interest', value: 'Porcelain Veneers' },
-              { icon: Star, label: 'Assigned Coordinator', value: 'Ana Morales' },
-              { icon: Stethoscope, label: 'Assigned Doctor', value: 'Dr. Ramirez, DDS' },
-              { icon: MapPin, label: 'Travel Destination', value: 'Margarita Island, VE' },
-              { icon: Calendar, label: 'Consultation Date', value: 'June 12, 2026' },
-              { icon: Calendar, label: 'Procedure Date', value: 'TBD — Pending Review' },
-              { icon: Clock, label: 'Recovery Estimate', value: '3–5 days post-procedure' },
+              { icon: User, label: 'Patient', value: safeTProfile.patient_name },
+              { icon: Stethoscope, label: 'Procedure Interest', value: safeTProfile.procedure },
+              { icon: Star, label: 'Risk Level', value: safeTProfile.risk_level?.toUpperCase() || 'PENDING' },
+              { icon: Stethoscope, label: 'Age', value: safeTProfile.health_summary?.age || 'N/A' },
+              { icon: MapPin, label: 'Travel Destination', value: safeTProfile.destination || 'TBD' },
+              { icon: Calendar, label: 'Consultation Date', value: consultation?.created_date?.split('T')[0] || 'N/A' },
+              { icon: Calendar, label: 'Preferred Procedure Date', value: consultation?.preferred_date || 'TBD' },
+              { icon: Clock, label: 'Medical Conditions', value: safeTProfile.health_summary?.medical_conditions?.join(', ') || 'None' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-2.5 bg-slate-50 rounded-xl p-3">
                 <Icon className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
@@ -104,14 +142,14 @@ export default function OverviewTab() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <ScoreRing score={82} label="Safety Readiness" color="#047857" />
-            <ScoreRing score={60} label="Prep Progress" color="#1d4ed8" />
+            <ScoreRing score={riskScores[safeTProfile.risk_level] || 50} label="Safety Readiness" color="#047857" />
+            <ScoreRing score={Math.min(safeTProfile.preparation_checklist?.filter(t => t.completed).length / safeTProfile.preparation_checklist?.length * 100 || 0, 100)} label="Prep Progress" color="#1d4ed8" />
             <ScoreRing score={75} label="Recovery Readiness" color="#7c3aed" />
-            <ScoreRing score={40} label="Docs Complete" color="#d97706" />
+            <ScoreRing score={safeTProfile.health_summary?.medical_conditions?.length ? 40 : 85} label="Health Status" color="#d97706" />
           </div>
           <div className="mt-4 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
             <p className="text-[11px] font-semibold text-amber-700 flex items-center gap-1.5">
-              <AlertTriangle className="w-3 h-3" /> 2 items require attention
+              <AlertTriangle className="w-3 h-3" /> {safeTProfile.risk_factors?.length || 0} risk factors identified
             </p>
           </div>
         </div>
@@ -172,13 +210,18 @@ export default function OverviewTab() {
             </div>
           </div>
           <div className="space-y-2.5">
-            {alerts.map((a, i) => (
+            {alerts.length > 0 ? alerts.map((a, i) => (
               <div key={i} className={`flex items-start gap-3 rounded-xl px-3 py-2.5 border
                 ${a.type === 'warning' ? 'bg-amber-50 border-amber-100' : 'bg-blue-50 border-blue-100'}`}>
                 <AlertTriangle className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${a.type === 'warning' ? 'text-amber-600' : 'text-blue-500'}`} />
                 <p className={`text-xs font-medium ${a.type === 'warning' ? 'text-amber-800' : 'text-blue-800'}`}>{a.text}</p>
               </div>
-            ))}
+            )) : (
+              <div className="flex items-start gap-3 rounded-xl px-3 py-2.5 border bg-emerald-50 border-emerald-100">
+                <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-emerald-600" />
+                <p className="text-xs font-medium text-emerald-800">No identified risk factors</p>
+              </div>
+            )}
           </div>
         </div>
 
