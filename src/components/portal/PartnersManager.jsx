@@ -124,7 +124,11 @@ export default function PartnersManager() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: id => base44.entities.Partner.delete(id),
+    mutationFn: ({ id, source }) => {
+      if (source === 'TravelAgency') return base44.entities.TravelAgency.delete(id);
+      if (source === 'TaxiService') return base44.entities.TaxiService.delete(id);
+      return base44.entities.Partner.delete(id);
+    },
     onSuccess: () => qc.invalidateQueries(['partners']),
   });
 
@@ -191,11 +195,11 @@ export default function PartnersManager() {
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
                             <Button
-                              variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={() => { if (confirm(`Remove ${p.name}?`)) deleteMutation.mutate(p.id); }}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                               variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
+                               onClick={() => { if (confirm(`Remove ${p.name}?`)) deleteMutation.mutate({ id: p.id, source: p.source }); }}
+                             >
+                               <Trash2 className="w-3.5 h-3.5" />
+                             </Button>
                           </div>
                         </div>
                       )
