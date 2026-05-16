@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
     }
 
     const consultation = data;
+    const consultation_id = event.entity_id;
 
     // Extract risk factors from medical data
     const riskFactors = [];
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
 
     // Create SAFE-T Profile
     const safeTProfile = await base44.asServiceRole.entities.SafeTProfile.create({
-      consultation_id: consultation.id,
+      consultation_id: consultation_id,
       patient_email: consultation.email,
       patient_name: consultation.patient_name,
       procedure: consultation.procedure_interest,
