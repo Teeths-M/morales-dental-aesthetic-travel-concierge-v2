@@ -120,10 +120,10 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="h-56 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
+            <div className="h-56 overflow-hidden bg-gradient-to-br from-yellow-400 to-orange-500">
               <img 
-                src="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop"
-                alt="Premium black car"
+                src="https://images.unsplash.com/photo-1597404323181-760f32c97f44?w=600&h=400&fit=crop"
+                alt="Taxi service"
                 className="w-full h-full object-cover"
               />
             </div>
