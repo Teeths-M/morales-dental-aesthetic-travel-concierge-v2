@@ -142,7 +142,7 @@ Examples:
 
   const confirmAndAdd = () => {
     onProceduresDetected(detected);
-    setTimeout(() => onClose(), 2000);
+    onClose();
   };
 
   return (
