@@ -2,18 +2,25 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { useQueryClient } from '@tanstack/react-query';
 import { Check, MapPin, Star } from 'lucide-react';
 
 export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect }) {
   const [doctorPrices, setDoctorPrices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isOpen || !procedure?.title) return;
 
     setLoading(true);
     setSelected(null);
+    
+    // Clear any cached queries to ensure fresh data
+    queryClient.invalidateQueries({ queryKey: ['DoctorPricing'] });
+    queryClient.invalidateQueries({ queryKey: ['DoctorSpecialty'] });
+    
     Promise.all([
       base44.entities.DoctorPricing.filter({ procedure_name: procedure.title }),
       base44.entities.Doctor.list(),
