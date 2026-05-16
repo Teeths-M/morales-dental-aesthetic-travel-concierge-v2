@@ -59,7 +59,11 @@ export default function SectionProcedure({ form, update }) {
   const isDisabledDate = (date) => DISABLED_DAYS.includes(date.getDay());
 
   // Helper: check if a date is in the past
-  const isPastDate = (date) => isBefore(date, new Date().setHours(0, 0, 0, 0));
+  const isPastDate = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return isBefore(date, today);
+  };
 
   // Build full calendar grid (6 rows × 7 columns = 42 cells)
   const buildCalendarDays = () => {
