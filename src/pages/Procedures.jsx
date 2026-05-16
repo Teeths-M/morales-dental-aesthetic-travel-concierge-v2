@@ -63,7 +63,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
             onClick={() => onLearnMore(proc)}
             className="flex-1 py-2 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-1"
           >
-            {proc.language === 'es' ? 'Más Información' : proc.language === 'fr' ? 'En Savoir Plus' : 'Learn More'} <ChevronRight className="w-3 h-3" />
+            {proc.language === 'es' ? 'Estimado y Precios' : proc.language === 'fr' ? 'Devis et Tarifs' : 'Estimate & Pricing'} <ChevronRight className="w-3 h-3" />
           </button>
           <button
             onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
