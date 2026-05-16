@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock } from 'lucide-react';
-import MedicalSlideshow, { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
+import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
 import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
@@ -22,6 +22,21 @@ import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
 import ClientAcknowledgement from '../components/booking/ClientAcknowledgement';
+
+const SLIDE_FACTS = [
+  'Every great transformation starts with a single step.',
+  'We coordinate every detail of your medical journey.',
+  'Personalized care that honours your values and traditions.',
+  'Every detail you share helps our doctors prepare the safest plan.',
+  'Our anesthesiologists review every patient profile personally.',
+  'We cross-check all medications for potential interactions.',
+  'Honest answers lead to better outcomes and faster healing.',
+  'Emotional wellbeing is a core part of surgical success.',
+  "We take a holistic approach to women's care and safety.",
+  'Your documents are encrypted and HIPAA-compliant at all times.',
+  'Our surgeons are internationally trained with thousands of successful procedures.',
+  'Your commitment to your health is an act of courage.',
+];
 
 const steps = [
   { label: 'Personal Info',    emoji: '👤', short: 'Personal'  },
@@ -92,30 +107,30 @@ export default function Booking() {
   return (
     <div className="min-h-screen bg-transparent">
       <MedicalSlideshowBackground step={step} />
-      {/* Premium Header */}
-      <div className="bg-white/80 backdrop-blur-xl border-b border-white/30 shadow-sm sticky top-16 lg:top-20 z-20">
+      {/* Premium Header — full glass over the background */}
+      <div className="bg-black/30 backdrop-blur-xl border-b border-white/10 sticky top-16 lg:top-20 z-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-0.5">Medical Consultation</p>
-              <h1 className="font-display text-lg lg:text-xl text-slate-900 leading-tight">Your Healthcare Journey</h1>
+              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-0.5">Medical Consultation</p>
+              <h1 className="font-display text-lg lg:text-xl text-white leading-tight drop-shadow">{steps[step].label}</h1>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
-                <Shield className="w-3 h-3 text-emerald-600" />
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">SAFE-T 4LIFE™</span>
+              <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5">
+                <Shield className="w-3 h-3 text-emerald-300" />
+                <span className="text-[10px] font-bold text-white/90 uppercase tracking-wide">SAFE-T 4LIFE™</span>
               </div>
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-800">{step + 1} <span className="text-slate-400 font-normal">of {steps.length}</span></p>
-                <p className="text-[10px] text-slate-400">{progressPct}% complete</p>
+                <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/50 font-normal">of {steps.length}</span></p>
+                <p className="text-[10px] text-white/50">{progressPct}% complete</p>
               </div>
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-emerald-500 to-blue-600 rounded-full"
+              className="h-full bg-gradient-to-r from-emerald-400 to-blue-400 rounded-full"
               animate={{ width: `${progressPct}%` }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
             />
@@ -128,10 +143,10 @@ export default function Booking() {
                 key={i}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 transition-all ${
                   i < step
-                    ? 'bg-emerald-100 text-emerald-700'
+                    ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
                     : i === step
-                    ? 'bg-gradient-to-r from-emerald-700 to-blue-800 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-400'
+                    ? 'bg-white/25 text-white border border-white/30 shadow-sm'
+                    : 'bg-white/5 text-white/30 border border-white/10'
                 }`}
               >
                 <span>{i < step ? '✓' : s.emoji}</span>
@@ -142,37 +157,25 @@ export default function Booking() {
         </div>
       </div>
 
+      {/* Cinematic Step Headline */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-center py-10 px-6"
+        >
+          <p className="text-4xl mb-3">{steps[step].emoji}</p>
+          <h2 className="font-display text-3xl lg:text-4xl text-white drop-shadow-lg mb-2">{steps[step].label}</h2>
+          <p className="text-white/60 text-sm max-w-md mx-auto">{SLIDE_FACTS[step]}</p>
+        </motion.div>
+      </AnimatePresence>
+
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex gap-6 items-start">
-
-          {/* LEFT — Slideshow (sticky, desktop only) */}
-          <div className="hidden lg:block w-80 xl:w-96 flex-shrink-0 sticky top-36">
-            <MedicalSlideshow step={step} />
-
-            {/* Ambient trust stats below slideshow */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {[
-                { num: '98.7%', label: 'Satisfaction Rate', icon: '⭐' },
-                { num: '14K+', label: 'Patients Served', icon: '🌍' },
-                { num: '50+', label: 'Specialists', icon: '🩺' },
-                { num: '24/7', label: 'Coordinator Support', icon: '🛡️' },
-              ].map(s => (
-                <div key={s.label} className="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-3 py-2.5 text-center shadow-sm">
-                  <p className="text-base font-bold text-white drop-shadow">{s.icon} {s.num}</p>
-                  <p className="text-[10px] text-white/70 font-medium leading-tight mt-0.5">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* RIGHT — Form */}
-          <div className="flex-1 min-w-0 space-y-5">
-
-        {/* Mobile slideshow banner */}
-        <div className="lg:hidden">
-          <MedicalSlideshow step={step} />
-        </div>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-12">
+        <div className="space-y-5">
 
         {/* Cart */}
         <ConsultationMedicalCart />
@@ -229,7 +232,7 @@ export default function Booking() {
 
             <div className="flex items-center gap-1">
               {steps.map((_, i) => (
-                <div key={i} className={`rounded-full transition-all ${i === step ? 'w-4 h-1.5 bg-emerald-600' : i < step ? 'w-1.5 h-1.5 bg-emerald-300' : 'w-1.5 h-1.5 bg-slate-200'}`} />
+                <div key={i} className={`rounded-full transition-all ${i === step ? 'w-4 h-1.5 bg-emerald-400' : i < step ? 'w-1.5 h-1.5 bg-emerald-300/60' : 'w-1.5 h-1.5 bg-white/20'}`} />
               ))}
             </div>
 
@@ -267,9 +270,8 @@ export default function Booking() {
           ))}
         </div>
 
-          </div>{/* end right column */}
-        </div>{/* end flex row */}
-      </div>
+        </div>{/* end space-y-5 */}
+      </div>{/* end content */}
 
       <PreviewSummary
         isOpen={showPreview}
