@@ -122,12 +122,9 @@ export default function Navbar() {
           {/* Right Actions */}
           <div className="flex items-center gap-3">
             {/* Language Dropdown */}
-              <div 
-                className="relative hidden sm:block"
-                onMouseEnter={() => setLanguageDropdownOpen(true)}
-                onMouseLeave={() => setLanguageDropdownOpen(false)}
-              >
+              <div className="relative hidden sm:block">
                 <button
+                  onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
                   className="p-2 hover:bg-secondary rounded-md transition-colors"
                   title="Select Language"
                 >
