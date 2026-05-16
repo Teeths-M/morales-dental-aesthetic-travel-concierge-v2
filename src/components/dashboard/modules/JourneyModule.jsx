@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 const roadmap = [
-  { phase: 'Pre-Travel', color: 'blue', steps: ['Documents ready', 'Medical clearance obtained', 'Travel insurance active', 'Packing guide reviewed', 'Medications prepared'] },
+  { phase: 'Pre-Travel', color: 'blue', steps: ['Documents ready', 'Medical clearance obtained', 'Packing guide reviewed', 'Medications prepared'] },
   { phase: 'Arrival', color: 'sky', steps: ['Airport transfer arranged', 'Hotel check-in confirmed', 'Coordinator welcome meeting', 'Pre-procedure consultation', 'Rest & hydration'] },
   { phase: 'Procedure', color: 'violet', steps: ['Pre-procedure fasting', 'Clinic arrival (8:30 AM)', 'Procedure with Dr. Ramirez', 'Recovery room (1–2 hours)', 'Hotel transfer & rest'] },
   { phase: 'Recovery', color: 'emerald', steps: ['Day 1–2: Rest & hydrate', 'Day 3: Follow-up check', 'Day 4–5: Light activity', 'Day 5: Discharge evaluation', 'Day 6: Pre-departure check'] },
@@ -23,7 +23,6 @@ const colorMap = {
 
 const travelReadiness = [
   { label: 'Passport & Visa', status: 'ready' },
-  { label: 'Travel Insurance', status: 'missing' },
   { label: 'Flight Confirmed', status: 'ready' },
   { label: 'Hotel Confirmed', status: 'ready' },
   { label: 'Medical Clearance', status: 'pending' },
