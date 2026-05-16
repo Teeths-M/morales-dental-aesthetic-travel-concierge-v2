@@ -46,7 +46,7 @@ export default function DoctorSpecialtiesPreview({ doctor, specialties, procedur
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-semibold text-foreground">Specialties from Signup</h4>
-      {specialties.map(specialty => {
+      {specialties.filter(s => !doctor.prices?.some(p => p.procedure_name === s.procedure_name)).map(specialty => {
         const proc = procedures.find(p => p.procedure_name === specialty.procedure_name);
         const isEditing = editingId === specialty.id;
 
