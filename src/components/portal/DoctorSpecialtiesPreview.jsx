@@ -17,15 +17,11 @@ export default function DoctorSpecialtiesPreview({ doctor, specialties, procedur
     }
 
     const proc = procedures.find(p => p.procedure_name === specialty.procedure_name);
-    if (!proc) {
-      alert('Procedure not found in catalog');
-      return;
-    }
 
     onSave({
       doctor_id: doctor.id,
       doctor_name: doctor.full_name,
-      procedure_id: proc.id,
+      procedure_id: proc?.id || specialty.procedure_name,
       procedure_name: specialty.procedure_name,
       doctor_price_usd: parseFloat(price),
       specialty_expertise_level: specialty.expertise_level || 'intermediate'
