@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Star, Calendar, Award } from 'lucide-react';
+import { Star, Clock } from 'lucide-react';
 
 export default function DoctorDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState({});
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({});
 
   useEffect(() => {
     Promise.all([
@@ -26,6 +28,17 @@ export default function DoctorDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleEditStart = (doctor) => {
+    setEditingId(doctor.id);
+    setFormData(doctor);
+  };
+
+  const handleSave = async () => {
+    await base44.entities.Doctor.update(editingId, formData);
+    setEditingId(null);
+    setDoctors(doctors.map(d => d.id === editingId ? { ...d, ...formData } : d));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -39,92 +52,171 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-background py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-3">✨ Expert Medical Specialists</h1>
-          <p className="text-lg text-muted-foreground">Highly accredited doctors — transparent experience, genuine ratings & clinical excellence</p>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Doctor Dashboard</h1>
+          <p className="text-muted-foreground">Manage your profile information displayed to clients</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="space-y-6">
           {doctors.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-muted-foreground">
-              No doctors available yet.
+            <div className="text-center py-12 text-muted-foreground bg-secondary/20 rounded-lg">
+              No doctor profiles yet.
             </div>
           ) : (
             doctors.map(doctor => {
+              const isEditing = editingId === doctor.id;
               const doctorSpecs = specialties[doctor.id] || [];
+              const data = isEditing ? formData : doctor;
+
               return (
-                <div key={doctor.id} className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col">
-                  <div className="p-7 flex-1 flex flex-col">
-                    {/* Header */}
-                    <div className="mb-4">
-                      <h3 className="text-2xl font-bold text-foreground">{doctor.full_name}</h3>
-                      {doctorSpecs.length > 0 && (
-                        <span className="inline-block text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full mt-2">
-                          {doctorSpecs[0].category || 'Specialist'}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Meta Row */}
-                    <div className="flex flex-wrap gap-3 mb-4 pb-4 border-b border-border">
-                      {doctor.years_experience && (
-                        <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full text-sm font-medium text-green-700">
-                          <Calendar className="w-4 h-4" />
-                          {doctor.years_experience}+ years
+                <div key={doctor.id} className="bg-card border border-border rounded-xl p-8 shadow-sm">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* Photo */}
+                    <div className="flex-shrink-0">
+                      {isEditing ? (
+                        <div className="w-32 h-32 rounded-full bg-secondary/50 flex items-center justify-center">
+                          <input
+                            type="url"
+                            placeholder="Photo URL"
+                            value={data.photo_url || ''}
+                            onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
+                            className="w-full h-full rounded-full p-2 text-xs text-center bg-transparent border border-border"
+                          />
                         </div>
-                      )}
-                      {doctor.rating && (
-                        <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-full text-sm font-medium">
-                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                          <span className="text-amber-700 font-bold">{doctor.rating.toFixed(1)}</span>
-                          <span className="text-amber-700">/ 5</span>
+                      ) : (
+                        <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold">
+                          {data.photo_url ? (
+                            <img src={data.photo_url} alt={data.full_name} className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            data.full_name?.charAt(0) || 'D'
+                          )}
                         </div>
                       )}
                     </div>
 
-                    {/* Bio */}
-                    {doctor.bio && (
-                      <p className="text-sm text-foreground leading-relaxed mb-4 bg-secondary/30 p-3 rounded-lg">
-                        {doctor.bio}
-                      </p>
-                    )}
-
-                    {/* Clinic Info */}
-                    <div className="mb-4">
-                      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
-                        <Award className="w-3 h-3" /> Clinic Details
-                      </div>
-                      <div className="bg-secondary/20 px-3 py-2 rounded-lg text-sm text-foreground border-l-2 border-primary">
-                        <p className="font-medium">{doctor.clinic_name || 'Professional Clinic'}</p>
-                        <p className="text-muted-foreground text-xs mt-1">{doctor.clinic_country}</p>
-                      </div>
-                    </div>
-
-                    {/* Specialties */}
-                    {doctorSpecs.length > 0 && (
-                      <div>
-                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">
-                          📋 Areas of Expertise
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {doctorSpecs.map(spec => (
-                            <span
-                              key={spec.id}
-                              className="text-xs font-medium bg-primary/10 text-primary px-3 py-1 rounded-full"
+                    {/* Content */}
+                    <div className="flex-1">
+                      {isEditing ? (
+                        <div className="space-y-4">
+                          <input
+                            type="text"
+                            value={data.full_name || ''}
+                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                            className="w-full px-3 py-2 border border-border rounded-lg text-lg font-bold"
+                            placeholder="Full Name"
+                          />
+                          <input
+                            type="number"
+                            value={data.years_experience || ''}
+                            onChange={(e) => setFormData({ ...formData, years_experience: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 border border-border rounded-lg"
+                            placeholder="Years of Experience"
+                          />
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={data.rating || ''}
+                            onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
+                            className="w-full px-3 py-2 border border-border rounded-lg"
+                            placeholder="Rating (0-5)"
+                          />
+                          <textarea
+                            value={data.bio || ''}
+                            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            rows="3"
+                            placeholder="Bio (1-2 sentences)"
+                          />
+                          <div className="flex gap-3 pt-4">
+                            <button
+                              onClick={handleSave}
+                              className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90"
                             >
-                              {spec.procedure_name || spec.category}
-                            </span>
-                          ))}
+                              Save Changes
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="flex-1 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary/20"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <>
+                          <div className="mb-4">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h2 className="text-2xl font-bold text-foreground">{data.full_name}</h2>
+                                {doctorSpecs.length > 0 && (
+                                  <p className="text-muted-foreground mt-1">{doctorSpecs[0].category || 'Specialist'}</p>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleEditStart(doctor)}
+                                className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary/20"
+                              >
+                                Edit Profile
+                              </button>
+                            </div>
+                          </div>
 
-                    {/* Footer Button */}
-                    <div className="mt-6 pt-4">
-                      <button className="w-full px-4 py-2.5 border border-primary text-primary font-semibold rounded-full bg-transparent hover:bg-primary/5 transition-colors text-sm">
-                        View full profile & availability
-                      </button>
+                          {/* Meta */}
+                          <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b border-border">
+                            {data.years_experience && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="w-4 h-4 text-muted-foreground" />
+                                <span className="font-medium">{data.years_experience}+ Years</span>
+                              </div>
+                            )}
+                            {data.rating && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                <span className="font-bold">{data.rating.toFixed(1)}</span>
+                                <span className="text-muted-foreground">({data.review_count || 0})</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Bio */}
+                          {data.bio && (
+                            <p className="text-foreground mb-4 leading-relaxed">{data.bio}</p>
+                          )}
+
+                          {/* Credentials */}
+                          <div className="mb-6">
+                            <h4 className="font-bold text-foreground mb-3">Credentials & Certifications</h4>
+                            <ul className="space-y-2 text-sm text-muted-foreground">
+                              <li className="flex items-start gap-3">
+                                <span className="text-primary mt-1">•</span>
+                                <span>{data.clinic_name || 'Professional Clinic'}</span>
+                              </li>
+                              <li className="flex items-start gap-3">
+                                <span className="text-primary mt-1">•</span>
+                                <span>Licensed in {data.clinic_country}</span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          {/* Specialties */}
+                          {doctorSpecs.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-foreground mb-3">Areas of Expertise</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {doctorSpecs.map(spec => (
+                                  <span
+                                    key={spec.id}
+                                    className="px-3 py-1.5 bg-secondary text-foreground text-sm font-medium rounded-full"
+                                  >
+                                    {spec.procedure_name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
