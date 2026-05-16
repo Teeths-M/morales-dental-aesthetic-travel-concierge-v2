@@ -80,21 +80,29 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
                 <h3 className="font-semibold text-foreground">{CATEGORY_MAP[catId]?.label}</h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 {categoryProcedures.map(procedure => (
-                  <div key={procedure} className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground">{procedure}</Label>
+                  <div 
+                    key={procedure}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors group cursor-pointer"
+                    onMouseEnter={(e) => e.currentTarget.querySelector('.price-input').style.display = 'block'}
+                    onMouseLeave={(e) => e.currentTarget.querySelector('.price-input').style.display = 'none'}
+                  >
+                    <span className="text-sm font-medium text-foreground">{procedure}</span>
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
                       <Input
                         type="number"
-                        placeholder="Enter price (USD)"
+                        placeholder="$"
                         min="0"
                         step="100"
                         value={prices[procedure] || ''}
                         onChange={(e) => handlePriceChange(procedure, e.target.value)}
-                        className="flex-1"
+                        className="price-input hidden w-32"
+                        style={{ display: prices[procedure] ? 'block' : 'none' }}
                       />
+                      {prices[procedure] && (
+                        <span className="text-sm font-semibold text-primary">${prices[procedure]}</span>
+                      )}
                     </div>
                   </div>
                 ))}
