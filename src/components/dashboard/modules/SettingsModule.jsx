@@ -1,18 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Bell, Lock, Globe, Shield, User, Eye, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 
 const languages = ['English', 'Español', 'Français', 'Português'];
 
 export default function SettingsModule() {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [language, setLanguage] = useState('English');
   const [notifications, setNotifications] = useState({
     appointments: true, medications: true, travel: true, documents: true, promotions: false,
   });
   const [mfa, setMfa] = useState(false);
+  const [consents, setConsents] = useState({
+    shareData: false,
+    communications: false,
+    terms: false,
+    safeTEducational: false,
+  });
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user) {
+          setFullName(user.full_name || '');
+          setEmail(user.email || '');
+          setPhone(user.phone || '');
+        }
+      } catch (err) {
+        console.error('Failed to load user data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUserData();
+  }, []);
 
   const toggleNotif = (key) => setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleConsent = (key) => setConsents(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleSave = async () => {
+    try {
+      await base44.auth.updateMe({
+        full_name: fullName,
+        phone,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -30,20 +73,38 @@ export default function SettingsModule() {
           <h3 className="font-semibold text-slate-800 text-sm">Account Management</h3>
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
-          {[
-            { label: 'Full Name', value: 'Maria Lopez' },
-            { label: 'Email Address', value: 'maria.lopez@email.com' },
-            { label: 'Phone Number', value: '+1 (555) 000-0000' },
-            { label: 'Account Type', value: 'Patient / Client' },
-          ].map(f => (
-            <div key={f.label}>
-              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">{f.label}</label>
-              <input
-                defaultValue={f.value}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              />
-            </div>
-          ))}
+          <div>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">Full Name</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">Email Address</label>
+            <input
+              value={email}
+              disabled
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-500 bg-slate-50 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">Phone Number</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">Account Type</label>
+            <input
+              value="Patient / Client"
+              disabled
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-500 bg-slate-50 cursor-not-allowed"
+            />
+          </div>
         </div>
       </div>
 
@@ -126,24 +187,50 @@ export default function SettingsModule() {
           <h3 className="font-semibold text-slate-800 text-sm">Privacy & Consent Management</h3>
         </div>
         <div className="space-y-2">
-          {[
-            'I consent to sharing my medical data with assigned providers',
-            'I consent to receiving communications from my care team',
-            'I agree to the Terms of Service and Privacy Policy',
-            'I acknowledge SAFE-T 4LIFE™ is an educational support system only',
-          ].map((consent, i) => (
-            <label key={i} className="flex items-start gap-3 bg-slate-50 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-100">
-              <input type="checkbox" defaultChecked className="mt-0.5 rounded" />
-              <span className="text-xs text-slate-700">{consent}</span>
-            </label>
-          ))}
+          <label className="flex items-start gap-3 bg-slate-50 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-100">
+            <input 
+              type="checkbox" 
+              checked={consents.shareData}
+              onChange={() => toggleConsent('shareData')}
+              className="mt-0.5 rounded" 
+            />
+            <span className="text-xs text-slate-700">I consent to sharing my medical data with assigned providers</span>
+          </label>
+          <label className="flex items-start gap-3 bg-slate-50 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-100">
+            <input 
+              type="checkbox" 
+              checked={consents.communications}
+              onChange={() => toggleConsent('communications')}
+              className="mt-0.5 rounded" 
+            />
+            <span className="text-xs text-slate-700">I consent to receiving communications from my care team</span>
+          </label>
+          <label className="flex items-start gap-3 bg-slate-50 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-100">
+            <input 
+              type="checkbox" 
+              checked={consents.terms}
+              onChange={() => toggleConsent('terms')}
+              className="mt-0.5 rounded" 
+            />
+            <span className="text-xs text-slate-700">I agree to the Terms of Service and Privacy Policy</span>
+          </label>
+          <label className="flex items-start gap-3 bg-slate-50 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-100">
+            <input 
+              type="checkbox" 
+              checked={consents.safeTEducational}
+              onChange={() => toggleConsent('safeTEducational')}
+              className="mt-0.5 rounded" 
+            />
+            <span className="text-xs text-slate-700">I acknowledge SAFE-T 4LIFE™ is an educational support system only</span>
+          </label>
         </div>
       </div>
 
       <div className="flex justify-end">
         <Button
           className="bg-emerald-700 hover:bg-emerald-800 text-white px-8"
-          onClick={() => setSaved(true)}
+          onClick={handleSave}
+          disabled={loading}
         >
           {saved ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Saved!</> : 'Save Settings'}
         </Button>
