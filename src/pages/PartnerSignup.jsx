@@ -94,9 +94,11 @@ export default function PartnerSignup() {
             </div>
             <div className="p-8 text-center">
               <div className="flex justify-center mb-4">
-                <svg className="w-16 h-16 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.91 16.11c.46-.79.74-1.64.74-2.56 0-2.91-2.36-5.27-5.27-5.27-1.73 0-3.26.84-4.23 2.13-1.02-1.89-3.05-3.16-5.35-3.16C3.12 7.25 1 9.37 1 12c0 1.72.71 3.27 1.85 4.38l10.62 8.07c.36.27.88.27 1.24 0l10.25-7.78c1.56-1.18 2.56-3.01 2.56-5.1 0-3.49-2.83-6.32-6.32-6.32-2.16 0-4.07 1.09-5.23 2.75h-2.63z"/>
-                </svg>
+                <img 
+                  src="https://images.unsplash.com/photo-1605559424843-9e4c3ca4628c?w=120&h=120&fit=crop"
+                  alt="Travel agency icon"
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
               </div>
               <h2 className="text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyages' : 'Travel Agency'}
@@ -134,9 +136,11 @@ export default function PartnerSignup() {
             </div>
             <div className="p-8 text-center">
               <div className="flex justify-center mb-4">
-                <svg className="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm11 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM5 11l1.5-4.5h11L19 11H5z"/>
-                </svg>
+                <img 
+                  src="https://images.unsplash.com/photo-1464207687429-7505649dae38?w=120&h=120&fit=crop"
+                  alt="Luxury car icon"
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
               </div>
               <h2 className="text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
