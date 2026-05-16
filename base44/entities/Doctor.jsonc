@@ -1,0 +1,94 @@
+{
+  "name": "Doctor",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Doctor's full name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "clinic_country": {
+      "type": "string",
+      "description": "Country where clinic is located"
+    },
+    "clinic_name": {
+      "type": "string",
+      "description": "Clinic name (optional)"
+    },
+    "license_url": {
+      "type": "string",
+      "description": "URL to uploaded medical license"
+    },
+    "license_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ],
+      "description": "Preferred payout method"
+    },
+    "payout_account": {
+      "type": "string",
+      "description": "Bank account or PayPal email"
+    },
+    "language_preference": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "years_experience": {
+      "type": "number"
+    },
+    "rating": {
+      "type": "number",
+      "default": 5.0
+    },
+    "review_count": {
+      "type": "number",
+      "default": 0
+    },
+    "sign_up_completed_at": {
+      "type": "string",
+      "description": "ISO timestamp"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "phone",
+    "clinic_country"
+  ]
+}
