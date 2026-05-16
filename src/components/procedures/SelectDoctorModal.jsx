@@ -17,17 +17,14 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
     setLoading(true);
     setSelected(null);
     
-    // Clear any cached queries to ensure fresh data
-    queryClient.invalidateQueries({ queryKey: ['DoctorPricing'] });
-    queryClient.invalidateQueries({ queryKey: ['DoctorSpecialty'] });
-    
-    Promise.all([
-      base44.entities.DoctorPricing.filter({ procedure_name: procedure.title }),
-      base44.entities.Doctor.list(),
-      base44.entities.DoctorSpecialty.list('-created_date', 1000)
-    ])
-      .then(([prices, doctors, specialties]) => {
-        // Filter: only show doctors that still exist in Doctor entity AND have DoctorSpecialty records
+    const loadDoctors = async () => {
+      try {
+        const [prices, doctors, specialties] = await Promise.all([
+          base44.entities.DoctorPricing.filter({ procedure_name: procedure.title }),
+          base44.entities.Doctor.list(),
+          base44.entities.DoctorSpecialty.list('-created_date', 1000)
+        ]);
+
         const existingDoctorIds = new Set(doctors.map(d => d.id));
         const validDoctorIds = new Set(specialties.map(s => s.doctor_id));
 
@@ -39,9 +36,25 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
           });
         setDoctorPrices(enriched);
         if (enriched.length > 0) setSelected(enriched[0].id);
-      })
-      .catch(err => console.error('Error loading doctors:', err))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        console.error('Error loading doctors:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDoctors();
+
+    // Subscribe to real-time doctor changes to auto-refresh
+    const unsubscribeDoctors = base44.entities.Doctor.subscribe(() => loadDoctors());
+    const unsubscribePricing = base44.entities.DoctorPricing.subscribe(() => loadDoctors());
+    const unsubscribeSpecialties = base44.entities.DoctorSpecialty.subscribe(() => loadDoctors());
+
+    return () => {
+      unsubscribeDoctors();
+      unsubscribePricing();
+      unsubscribeSpecialties();
+    };
   }, [isOpen, procedure?.title]);
 
   const handleSelect = () => {
