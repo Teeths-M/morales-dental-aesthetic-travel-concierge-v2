@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Upload, MessageCircle, Calendar, HeartPulse, Users,
   Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle,
-  Plane, Video, Star
+  Plane, Star
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import JourneyProgress from '@/components/dashboard/JourneyProgress';
@@ -95,66 +95,36 @@ function DashboardHome({ user, consultations }) {
         </Link>
       </div>
 
-      {/* SAFE-T + Upcoming Appointment */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* SAFE-T Status */}
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-emerald-700" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-800">SAFE-T 4LIFE™ Status</p>
-              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Low Risk</span>
-            </div>
+      {/* SAFE-T Status */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-emerald-700" />
           </div>
-          <div className="space-y-2 mb-4">
-            {[
-              { label: 'Safety Score', val: 82, color: '#047857' },
-              { label: 'Prep Progress', val: 60, color: '#1d4ed8' },
-            ].map(s => (
-              <div key={s.label}>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-slate-500">{s.label}</span>
-                  <span className="font-bold" style={{ color: s.color }}>{s.val}%</span>
-                </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-1.5 rounded-full" style={{ width: `${s.val}%`, backgroundColor: s.color }} />
-                </div>
-              </div>
-            ))}
+          <div>
+            <p className="text-xs font-bold text-slate-800">SAFE-T 4LIFE™ Status</p>
+            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Low Risk</span>
           </div>
-          <Link to="/safe-t">
-            <Button size="sm" variant="outline" className="w-full text-xs h-8">Full Assessment <ArrowRight className="w-3 h-3 ml-1" /></Button>
-          </Link>
         </div>
-
-        {/* Upcoming Appointment */}
-        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Upcoming Appointment</p>
-          {latestConsultation ? (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Video className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-bold text-slate-800">Video Consultation</span>
+        <div className="space-y-2 mb-4">
+          {[
+            { label: 'Safety Score', val: 82, color: '#047857' },
+            { label: 'Prep Progress', val: 60, color: '#1d4ed8' },
+          ].map(s => (
+            <div key={s.label}>
+              <div className="flex justify-between text-[11px] mb-1">
+                <span className="text-slate-500">{s.label}</span>
+                <span className="font-bold" style={{ color: s.color }}>{s.val}%</span>
               </div>
-              <p className="text-xs text-slate-500 mb-1">{latestConsultation.preferred_date || 'Date TBD'}</p>
-              <p className="text-xs text-slate-400 capitalize mb-4">{latestConsultation.procedure_interest?.replace(/_/g, ' ')}</p>
-              <Button size="sm" className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white h-9">
-                <Video className="w-3.5 h-3.5 mr-1.5" /> Join Now
-              </Button>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 rounded-full" style={{ width: `${s.val}%`, backgroundColor: s.color }} />
+              </div>
             </div>
-          ) : (
-            <div>
-              <p className="text-sm text-slate-400 mb-4">No consultations booked yet</p>
-              <Link to="/booking">
-                <Button size="sm" className="w-full text-xs bg-emerald-700 hover:bg-emerald-800 text-white h-9">
-                  Book Consultation
-                </Button>
-              </Link>
-            </div>
-          )}
+          ))}
         </div>
+        <Link to="/safe-t">
+          <Button size="sm" variant="outline" className="w-full text-xs h-8">Full Assessment <ArrowRight className="w-3 h-3 ml-1" /></Button>
+        </Link>
       </div>
 
       {/* Journey Progress */}
