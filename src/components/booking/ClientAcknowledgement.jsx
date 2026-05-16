@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 
 const statements = [
   'I confirm that the information I have provided is accurate, truthful, and complete to the best of my knowledge.',
@@ -23,25 +24,27 @@ export default function ClientAcknowledgement({ acknowledged, onChange }) {
       </div>
       <p className="text-xs text-muted-foreground -mt-3">Please read and confirm each statement before submitting.</p>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {statements.map((text, i) => (
-          <label key={i} className="flex items-start gap-3 cursor-pointer group">
-            <div
-              onClick={() => toggle(i)}
-              className={`mt-0.5 w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer ${
-                acknowledged.has(i)
-                  ? 'border-primary bg-primary'
-                  : 'border-border group-hover:border-primary/50'
-              }`}
-            >
-              {acknowledged.has(i) && (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
+          <button
+            key={i}
+            type="button"
+            onClick={() => toggle(i)}
+            className={`w-full text-left relative px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 border-2 flex items-start gap-3 ${
+              acknowledged.has(i)
+                ? 'border-primary bg-gradient-to-r from-primary/10 to-primary/5 text-foreground'
+                : 'border-border bg-white hover:border-primary/50 hover:bg-primary/5'
+            }`}
+          >
+            <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              acknowledged.has(i)
+                ? 'border-primary bg-gradient-to-r from-primary to-primary/80'
+                : 'border-border'
+            }`}>
+              {acknowledged.has(i) && <Check className="w-3.5 h-3.5 text-white" />}
             </div>
-            <span className="text-sm text-muted-foreground leading-relaxed">{text}</span>
-          </label>
+            <span className="text-sm leading-relaxed">{text}</span>
+          </button>
         ))}
       </div>
 
