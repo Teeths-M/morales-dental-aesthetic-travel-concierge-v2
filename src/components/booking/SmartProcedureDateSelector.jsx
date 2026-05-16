@@ -94,7 +94,7 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Urgency Pop-up */}
       <AnimatePresence>
         {showUrgencyPopup && (
@@ -119,44 +119,44 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
         )}
       </AnimatePresence>
 
-      <Card className="p-8 bg-gradient-to-br from-card via-card to-secondary/5 border-0 shadow-lg">
-        <div className="mb-8">
-          <h3 className="font-display text-3xl font-light text-foreground mb-2">Select Your Procedure Date</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Our airline partner operates flights on Sundays, Mondays, and Thursdays. We'll recommend your optimal arrival and departure to maximize recovery time.
-          </p>
+      <Card className="p-6 bg-white border border-border shadow-md">
+        <div className="mb-6">
+          <h3 className="font-display text-2xl text-foreground mb-1">Select Your Procedure Date</h3>
+          <p className="text-xs text-muted-foreground">Choose from available airline flight days</p>
         </div>
 
         {/* Month Navigation */}
-        <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => setCurrentMonth(addDays(currentMonth, -30))}
-            className="text-sm"
+            className="h-8 px-2"
           >
-            ← Previous
+            ←
           </Button>
-          <h4 className="font-display text-2xl text-foreground">{format(currentMonth, 'MMMM yyyy')}</h4>
+          <h4 className="font-display text-lg text-foreground">{format(currentMonth, 'MMMM yyyy')}</h4>
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={() => setCurrentMonth(addDays(currentMonth, 30))}
-            className="text-sm"
+            className="h-8 px-2"
           >
-            Next →
+            →
           </Button>
         </div>
 
         {/* Day Labels */}
-        <div className="grid grid-cols-7 gap-3 mb-6">
-          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
-            <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-3 tracking-wide">
-              {day.slice(0, 3).toUpperCase()}
+        <div className="grid grid-cols-7 gap-2 mb-3">
+          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+            <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-2">
+              {day}
             </div>
           ))}
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-3 mb-8">
+        <div className="grid grid-cols-7 gap-2 mb-6">
           {days.map(day => {
             const isSelectableAirlineDay = isAirlineDay(day) && !isBefore(day, new Date());
             const isSelected = selectedDate && format(day, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
@@ -168,42 +168,23 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
                 key={format(day, 'yyyy-MM-dd')}
                 onClick={() => handleDateSelect(day)}
                 disabled={!isSelectableAirlineDay}
-                whileHover={isSelectableAirlineDay ? { scale: 1.08, y: -2 } : {}}
-                whileTap={isSelectableAirlineDay ? { scale: 0.95 } : {}}
-                className={`aspect-square rounded-xl font-semibold text-sm transition-all duration-200 flex flex-col items-center justify-center gap-1 ${
+                whileHover={isSelectableAirlineDay ? { scale: 1.05 } : {}}
+                className={`aspect-square rounded-lg font-semibold text-sm transition-all flex items-center justify-center ${
                   !isCurrentMonth
                     ? 'text-muted-foreground/20 bg-transparent'
                     : isSelected
-                    ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg ring-2 ring-primary/30'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : isSelectableAirlineDay
-                    ? 'bg-white border border-border hover:border-primary hover:shadow-md cursor-pointer'
-                    : 'text-muted-foreground/40 bg-muted/20 cursor-not-allowed'
+                    ? 'bg-white border border-border hover:border-primary/50 cursor-pointer'
+                    : 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed'
                 }`}
               >
-                <span className="text-lg font-semibold">{format(day, 'd')}</span>
-                {isAirlineAvailable && isCurrentMonth && (
-                  <Plane className="w-3.5 h-3.5 text-accent" />
-                )}
+                {format(day, 'd')}
               </motion.button>
             );
           })}
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-8 text-xs text-muted-foreground pt-6 border-t border-border">
-          <div className="flex items-center gap-2.5">
-            <Plane className="w-4 h-4 text-accent" />
-            <span className="font-medium">Airline flight day</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-3 h-3 rounded-lg border border-border"></div>
-            <span className="font-medium">Available procedure date</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-3 h-3 rounded-lg bg-muted/40"></div>
-            <span className="font-medium">Unavailable date</span>
-          </div>
-        </div>
       </Card>
 
       {/* Confirm Selection Button */}
