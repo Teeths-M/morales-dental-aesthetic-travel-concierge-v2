@@ -5,7 +5,7 @@ import { Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import RadioGroup from './FormRadioGroup';
 
-const docTypes = ['X-rays','Blood Work','MRI / CT Scans','Prescriptions','Photos for Review','Previous Procedure Reports','None'];
+const docTypes = ['X-rays','Blood Work','MRI / CT Scans','Prescriptions','Photos for Review','Previous Procedure Reports','none'];
 
 export default function Section10Documents({ form, update }) {
   const [uploading, setUploading] = useState(false);
