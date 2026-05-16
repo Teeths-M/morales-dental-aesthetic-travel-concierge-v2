@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
+import SubmissionSuccess from '@/components/booking/SubmissionSuccess';
 
 import Section1PersonalInfo from '../components/booking/Section1PersonalInfo';
 import Section2Travel from '../components/booking/Section2Travel';
@@ -121,26 +122,7 @@ export default function Booking() {
   };
 
   if (submitted) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
-        <motion.div
-          className="text-center max-w-md"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-primary" />
-          </div>
-          <h2 className="font-display text-2xl text-foreground mb-3">Consultation Request Received</h2>
-          <p className="text-muted-foreground mb-6">
-            Thank you, {form.patient_name}! Our concierge team will reach out within 24 hours to discuss your personalized treatment plan.
-          </p>
-          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => window.location.href = '/'}>
-            Return Home
-          </Button>
-        </motion.div>
-      </div>
-    );
+    return <SubmissionSuccess form={form} items={items} />;
   }
 
   return (
