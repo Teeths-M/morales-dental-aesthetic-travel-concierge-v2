@@ -93,6 +93,15 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) return form.patient_name && form.email && form.phone && form.emergency_contact_name && form.emergency_contact_number;
+    if (step === 1) return form.has_companion !== null;
+    if (step === 2) return form.has_cultural_preferences !== null;
+    if (step === 3) return form.medical_conditions && form.medical_conditions.length > 0;
+    if (step === 4) return form.anesthesia_complications !== null && form.allergies && form.allergies.length > 0;
+    if (step === 5) return form.takes_medications !== null;
+    if (step === 6) return form.lifestyle_habits && form.lifestyle_habits.length > 0 && form.exercises_regularly !== null;
+    if (step === 7) return form.emotional_concerns !== null;
+    if (step === 8) return form.pregnancy_status !== '';
+    if (step === 9) return true; // Documents are optional
     if (step === 10) return items.length > 0;
     if (step === 11) return form.preferred_date;
     if (step === 12) return acknowledged.size === 4;
