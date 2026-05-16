@@ -162,7 +162,18 @@ export default function Booking() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Form Area */}
           <div className="lg:col-span-2">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Form Header */}
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-lg shadow-lg">
+              {steps[step].emoji}
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
+              <h2 className="font-bold text-slate-800 text-base">{steps[step].label}</h2>
+            </div>
+          </div>
+
           {/* Form content */}
           <div className="p-6 lg:p-8">
             <AnimatePresence mode="wait">
@@ -190,7 +201,7 @@ export default function Booking() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-white/5">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
             <Button
               variant="outline"
               onClick={() => setStep(s => s - 1)}
