@@ -163,7 +163,14 @@ export default function PricingCatalogManager() {
 
   const deleteMutation = useMutation({
     mutationFn: id => base44.entities.DoctorPricing.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['doctor_prices'] }),
+    onSuccess: () => {
+      console.log('Price deleted successfully');
+      qc.invalidateQueries({ queryKey: ['doctor_prices'] });
+    },
+    onError: (error) => {
+      console.error('Failed to delete price:', error);
+      alert(`Failed to delete: ${error.message}`);
+    }
   });
 
   // Group prices by doctor
