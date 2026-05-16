@@ -8,8 +8,7 @@ import { procedureCategories } from '@/components/procedures/ProcedureData';
 import ProcedureSearch from '@/components/procedures/ProcedureSearch';
 import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
-import PricingSidebar from '@/components/procedures/PricingSidebar';
-import MobileQuoteCard from '@/components/procedures/MobileQuoteCard';
+
 import { useCart } from '@/context/CartContext';
 
 const parentFilters = [
@@ -146,24 +145,7 @@ export default function Procedures() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Country Selector */}
-        {items.length > 0 && (
-          <div className="mb-6 max-w-2xl">
-            <select
-              value={selectedCountry || ''}
-              onChange={(e) => setSelectedCountry(e.target.value || null)}
-              className="border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium bg-white hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            >
-              <option value="">📍 Destination Country (Base Pricing)</option>
-              <option value="Venezuela">Venezuela</option>
-              <option value="Colombia">Colombia</option>
-              <option value="Turkey">Turkey</option>
-              <option value="Thailand">Thailand</option>
-              <option value="Dominican Republic">Dominican Republic</option>
-              <option value="Mexico">Mexico</option>
-            </select>
-          </div>
-        )}
+
 
         <div className="flex gap-8 items-start">
           {/* Main content */}
@@ -237,7 +219,7 @@ export default function Procedures() {
             </motion.div>
           </div>
 
-          {/* Sticky sidebar — My Procedures + Pricing */}
+          {/* Sticky sidebar — My Procedures */}
           <div className="hidden lg:block w-72 flex-shrink-0 sticky top-24 space-y-4">
             {selectedProcs.length > 0 ? (
               <>
@@ -246,7 +228,6 @@ export default function Procedures() {
                   onRemove={removeProc}
                   onClear={() => clearCart()}
                 />
-                <PricingSidebar items={selectedProcs} selectedCountry={selectedCountry} />
               </>
             ) : (
               <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center">
@@ -275,19 +256,7 @@ export default function Procedures() {
         </div>
       </div>
 
-      {/* Mobile My List sticky bar with pricing */}
-      <AnimatePresence>
-        {selectedProcs.length > 0 && (
-          <motion.div
-            className="lg:hidden fixed bottom-6 left-4 right-4 z-40"
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-          >
-            <MobileQuoteCard items={selectedProcs} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Voice Modal */}
       <AnimatePresence>
