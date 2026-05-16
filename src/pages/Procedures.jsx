@@ -8,6 +8,7 @@ import { procedureCategories } from '@/components/procedures/ProcedureData';
 import ProcedureSearch from '@/components/procedures/ProcedureSearch';
 import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
+import { useCart } from '@/context/CartContext';
 
 const parentFilters = [
   { id: 'all', label: 'All', emoji: '🏥' },
@@ -81,18 +82,18 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
 
 export default function Procedures() {
   const [activeParent, setActiveParent] = useState('all');
-  const [selectedProcs, setSelectedProcs] = useState([]);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState(null);
+  const { items, addItem, removeItem, clearCart } = useCart();
+
+  const selectedProcs = items; // cart IS the selected list
 
   const addProc = (proc) => {
-    if (!selectedProcs.find(p => p.title === proc.title)) {
-      setSelectedProcs(prev => [...prev, proc]);
-    }
+    addItem({ name: proc.title, category: proc.category, ...proc });
   };
 
   const removeProc = (proc) => {
-    setSelectedProcs(prev => prev.filter(p => p.title !== proc.title));
+    removeItem(proc.title || proc.name);
   };
 
   const handleVoiceDetected = (procs) => {
@@ -182,7 +183,7 @@ export default function Procedures() {
                         <ProcedureCard
                           key={proc.title}
                           proc={enriched}
-                          isSelected={!!selectedProcs.find(p => p.title === proc.title)}
+                          isSelected={!!selectedProcs.find(p => (p.name || p.title) === proc.title)}
                           onAdd={addProc}
                           onRemove={removeProc}
                           onLearnMore={setSelectedModal}
@@ -220,7 +221,7 @@ export default function Procedures() {
               <MyProceduresList
                 items={selectedProcs}
                 onRemove={removeProc}
-                onClear={() => setSelectedProcs([])}
+                onClear={() => clearCart()}
               />
             ) : (
               <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center">
