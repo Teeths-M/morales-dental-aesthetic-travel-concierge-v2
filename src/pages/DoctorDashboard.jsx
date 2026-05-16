@@ -188,6 +188,13 @@ export default function DoctorDashboard() {
                           rows="3"
                           placeholder="Bio (1-2 sentences)"
                         />
+                        <textarea
+                          value={data.professional_background || ''}
+                          onChange={(e) => setFormData({ ...formData, professional_background: e.target.value })}
+                          className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                          rows="3"
+                          placeholder="Professional Background (education, certifications, credentials)"
+                        />
                         <div className="flex gap-3 pt-4">
                           <button
                             onClick={handleSave}
@@ -269,6 +276,12 @@ export default function DoctorDashboard() {
                                 <span className="text-primary mt-1">•</span>
                                 <span>Licensed in {data.clinic_country}</span>
                               </li>
+                              {data.professional_background && (
+                                <li className="flex items-start gap-3">
+                                  <span className="text-primary mt-1">•</span>
+                                  <span>{data.professional_background}</span>
+                                </li>
+                              )}
                             </ul>
                           </div>
 

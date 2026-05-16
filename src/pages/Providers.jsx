@@ -119,12 +119,14 @@ export default function Providers() {
                       </div>
 
                       {/* Credentials */}
-                      {doctor.bio && (
+                      {(doctor.bio || doctor.professional_background) && (
                         <ul className="space-y-2 mb-4 text-muted-foreground text-sm">
-                          <li className="flex items-start gap-3">
-                            <span className="text-primary">•</span>
-                            <span>{doctor.bio}</span>
-                          </li>
+                          {doctor.bio && (
+                            <li className="flex items-start gap-3">
+                              <span className="text-primary">•</span>
+                              <span>{doctor.bio}</span>
+                            </li>
+                          )}
                           <li className="flex items-start gap-3">
                             <span className="text-primary">•</span>
                             <span>Licensed in {doctor.clinic_country}</span>
@@ -133,6 +135,12 @@ export default function Providers() {
                             <li className="flex items-start gap-3">
                               <span className="text-primary">•</span>
                               <span>{doctor.clinic_name}</span>
+                            </li>
+                          )}
+                          {doctor.professional_background && (
+                            <li className="flex items-start gap-3">
+                              <span className="text-primary">•</span>
+                              <span>{doctor.professional_background}</span>
                             </li>
                           )}
                         </ul>

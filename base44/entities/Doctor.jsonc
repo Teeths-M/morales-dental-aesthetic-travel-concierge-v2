@@ -21,6 +21,10 @@
       "type": "string",
       "description": "Clinic name (optional)"
     },
+    "professional_background": {
+      "type": "string",
+      "description": "Education, certifications, and professional credentials"
+    },
     "license_url": {
       "type": "string",
       "description": "URL to uploaded medical license"
