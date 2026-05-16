@@ -141,11 +141,13 @@ export default function PortalHub() {
   const { data: workflows = [], isLoading, refetch } = useQuery({
     queryKey: ['workflow_events'],
     queryFn: () => base44.entities.WorkflowEvent.list('-created_date', 50),
+    refetchInterval: 5000,
   });
 
   const { data: consultations = [] } = useQuery({
     queryKey: ['consultations_hub'],
     queryFn: () => base44.entities.Consultation.list('-created_date', 50),
+    refetchInterval: 5000,
   });
 
   const rerun = async (consultation_id) => {
