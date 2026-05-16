@@ -126,6 +126,27 @@ export default function ProcedureModal({ procedure, onClose }) {
             </div>
           ) : null}
 
+           {/* Procedure Info Box */}
+           <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 space-y-3">
+             <h4 className="text-sm font-semibold text-teal-900">Procedure Details</h4>
+             <div className="space-y-2 text-xs text-teal-800">
+               <div className="flex justify-between">
+                 <span className="font-medium">Complexity Level:</span>
+                 <span>{procedure.complexity || 'Moderate'}</span>
+               </div>
+               <div className="flex justify-between">
+                 <span className="font-medium">Downtime:</span>
+                 <span>{procedure.downtime || procedure.recovery}</span>
+               </div>
+               {procedure.material_options && (
+                 <div className="flex justify-between">
+                   <span className="font-medium">Material Options:</span>
+                   <span>{procedure.material_options.length} available</span>
+                 </div>
+               )}
+             </div>
+           </div>
+
            {/* CTA */}
            <div className="pt-2">
              <Link to="/booking" onClick={onClose}>
@@ -133,7 +154,7 @@ export default function ProcedureModal({ procedure, onClose }) {
                  Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
                </Button>
              </Link>
-           </div>
+            </div>
         </div>
       </DialogContent>
     </Dialog>
