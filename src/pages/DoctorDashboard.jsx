@@ -94,6 +94,7 @@ export default function DoctorDashboard() {
                       <TabsList className="mb-0">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+                        <TabsTrigger value="procedures">Procedures</TabsTrigger>
                       </TabsList>
                     </div>
 
@@ -326,6 +327,63 @@ export default function DoctorDashboard() {
 
                     <TabsContent value="portfolio" className="p-8">
                       <DoctorPortfolio doctorId={doctor.id} portfolio={doctor.portfolio} />
+                    </TabsContent>
+
+                    <TabsContent value="procedures" className="p-8">
+                      <div className="space-y-6">
+                        <div className="bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-6">
+                          <h3 className="text-lg font-bold text-foreground mb-4">Successful Procedures</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white rounded-lg p-6 border border-border">
+                              <p className="text-sm text-muted-foreground mb-2">Total Successful Procedures</p>
+                              <div className="text-4xl font-bold text-primary mb-4">{data.successful_procedures_count || 0}</div>
+                              {isEditing && editingId === doctor.id ? (
+                                <input
+                                  type="number"
+                                  value={formData.successful_procedures_count || 0}
+                                  onChange={(e) => setFormData({ ...formData, successful_procedures_count: parseInt(e.target.value) || 0 })}
+                                  className="w-full px-3 py-2 border border-border rounded-lg"
+                                  placeholder="Number of successful procedures"
+                                />
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Procedures completed successfully</p>
+                              )}
+                            </div>
+                            <div className="bg-white rounded-lg p-6 border border-border">
+                              <p className="text-sm text-muted-foreground mb-2">Areas of Expertise</p>
+                              <div className="text-3xl font-bold text-accent mb-4">{doctorSpecs.length}</div>
+                              <p className="text-sm text-muted-foreground">Specialties offered</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Save Button */}
+                        {isEditing && editingId === doctor.id && (
+                          <div className="flex gap-3">
+                            <button
+                              onClick={handleSave}
+                              className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90"
+                            >
+                              Save Changes
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="flex-1 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary/20"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+
+                        {!isEditing && (
+                          <button
+                            onClick={() => handleEditStart(doctor)}
+                            className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary/20"
+                          >
+                            Edit Procedures Count
+                          </button>
+                        )}
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </div>
