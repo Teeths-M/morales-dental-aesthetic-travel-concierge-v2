@@ -25,9 +25,16 @@ export default function SafeT() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-blue-900 relative">
+      {/* Sophisticated Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-400 rounded-full mix-blend-multiply filter blur-3xl"></div>
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl"></div>
+      </div>
+
       {/* Hero Header */}
-      <div className="bg-white border-b border-slate-100 shadow-sm">
+      <div className="relative z-10 bg-white/5 backdrop-blur-xl border-b border-white/10 shadow-2xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             className="flex items-start gap-4"
@@ -39,12 +46,12 @@ export default function SafeT() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-2xl lg:text-3xl text-slate-900">SAFE-T 4LIFE™</h1>
-                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-widest">
-                  AI Health Safety System
-                </span>
-              </div>
-              <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+                  <h1 className="font-display text-2xl lg:text-3xl text-white drop-shadow-lg">SAFE-T 4LIFE™</h1>
+                  <span className="text-[10px] font-bold bg-emerald-500/30 text-emerald-100 border border-emerald-400/50 px-2.5 py-1 rounded-full uppercase tracking-widest backdrop-blur-sm">
+                    AI Health Safety System
+                  </span>
+                </div>
+                <p className="text-sm text-white/80 mt-1 max-w-2xl drop-shadow">
                 Your premium intelligent healthcare coordination companion — guiding you safely from consultation through full recovery.
               </p>
             </div>
@@ -57,10 +64,10 @@ export default function SafeT() {
                 <button
                   key={value}
                   onClick={() => setActiveTab(value)}
-                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap
+                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap backdrop-blur-sm
                     ${activeTab === value
-                      ? 'bg-gradient-to-r from-emerald-800 to-blue-900 text-white shadow-md'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+                      ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg shadow-emerald-500/50'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white/90'}`}
                 >
                   <Icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{label}</span>
@@ -80,7 +87,7 @@ export default function SafeT() {
       </div>
 
       {/* Tab Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
