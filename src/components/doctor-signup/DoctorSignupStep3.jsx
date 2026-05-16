@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { translations } from '@/lib/translations';
-import { ArrowRight, ChevronLeft, Upload } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Upload, CloudUpload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
@@ -13,6 +13,8 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
   const [licenseUploading, setLicenseUploading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState(null);
 
   const handleLicenseUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -103,12 +105,42 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       await base44.entities.Partner.create(partnerData);
 
       onComplete(doctor);
-    } catch (error) {
+      } catch (error) {
       console.error('Submit failed:', error);
-    } finally {
+      } finally {
       setIsSubmitting(false);
-    }
-  };
+      }
+      };
+
+      const handleSyncToPortalHub = async () => {
+      if (!formData.full_name || !formData.email) {
+      setSyncMessage({ type: 'error', text: 'Doctor info required' });
+      return;
+      }
+
+      setIsSyncing(true);
+      setSyncMessage(null);
+      try {
+      const response = await base44.functions.invoke('syncDoctorToPortalHub', {
+        event: { type: 'update', entity_name: 'Doctor' },
+        data: {
+          id: 'manual_sync_' + Date.now(),
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          clinic_country: formData.clinic_country,
+          clinic_name: formData.clinic_name,
+          status: 'active'
+        }
+      });
+      setSyncMessage({ type: 'success', text: 'Synced to Portal Hub!' });
+      } catch (error) {
+      console.error('Sync failed:', error);
+      setSyncMessage({ type: 'error', text: 'Sync failed: ' + error.message });
+      } finally {
+      setIsSyncing(false);
+      }
+      };
 
   const canSubmit = formData.license_url && payoutMethod && formData.payout_account && confirmed;
 
@@ -207,6 +239,17 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
         </div>
       </div>
 
+      {/* Sync Message */}
+      {syncMessage && (
+        <div className={`p-3 rounded-lg text-sm font-medium text-center ${
+          syncMessage.type === 'success'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : 'bg-red-50 text-red-700 border border-red-200'
+        }`}>
+          {syncMessage.text}
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="flex gap-3">
         <Button
@@ -215,6 +258,15 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
           className="flex-1 h-12"
         >
           <ChevronLeft className="w-4 h-4" /> {t.back}
+        </Button>
+        <Button
+          onClick={handleSyncToPortalHub}
+          disabled={!formData.full_name || isSyncing}
+          variant="outline"
+          className="flex-1 h-12 gap-2"
+        >
+          <CloudUpload className="w-4 h-4" />
+          {isSyncing ? 'Syncing...' : 'Sync to Portal Hub'}
         </Button>
         <Button
           onClick={handleSubmit}
