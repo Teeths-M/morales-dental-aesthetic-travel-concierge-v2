@@ -1,0 +1,73 @@
+{
+  "name": "TripLog",
+  "type": "object",
+  "properties": {
+    "taxi_service_id": {
+      "type": "string",
+      "description": "Reference to TaxiService"
+    },
+    "consultation_id": {
+      "type": "string",
+      "description": "Reference to Consultation"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "pickup_location": {
+      "type": "string"
+    },
+    "dropoff_location": {
+      "type": "string"
+    },
+    "pickup_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dropoff_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "special_notes": {
+      "type": "string",
+      "description": "Patient mobility needs, care instructions"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "assigned",
+        "arrived",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "assigned"
+    },
+    "fare_amount": {
+      "type": "number"
+    },
+    "tip_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "patient_rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "rating_details": {
+      "type": "object",
+      "description": "Punctuality, friendliness, cleanliness, safety scores"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "taxi_service_id",
+    "consultation_id",
+    "patient_name",
+    "pickup_location",
+    "dropoff_location"
+  ]
+}

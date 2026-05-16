@@ -23,6 +23,9 @@ import PortalHubAdmin from './pages/PortalHubAdmin';
 import PaymentCheckout from './pages/PaymentCheckout';
 import EstimateDashboard from './pages/EstimateDashboard';
 import DoctorSignup from './pages/DoctorSignup';
+import PartnerSignup from './pages/PartnerSignup';
+import TravelAgencySignup from './pages/TravelAgencySignup';
+import TaxiServiceSignup from './pages/TaxiServiceSignup';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -76,6 +79,9 @@ const AuthenticatedApp = () => {
         <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
         <Route path="/visa-assist" element={<VisaAssist />} />
         <Route path="/doctor-signup" element={<DoctorSignup />} />
+        <Route path="/partner-signup" element={<PartnerSignup />} />
+        <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
+        <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

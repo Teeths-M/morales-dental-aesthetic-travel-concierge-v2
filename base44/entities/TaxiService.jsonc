@@ -1,0 +1,112 @@
+{
+  "name": "TaxiService",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "operating_city": {
+      "type": "string",
+      "description": "City or region where driver operates"
+    },
+    "vehicle_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sedan, SUV, Van, Wheelchair van"
+    },
+    "operating_hours": {
+      "type": "object",
+      "description": "Days of week and hours (e.g., {mon: '08:00-22:00', tue: '24h'})"
+    },
+    "pricing_model": {
+      "type": "object",
+      "description": "Pricing info: per_km, per_hour, fixed_airport_clinic"
+    },
+    "vehicle_photo_url": {
+      "type": "string"
+    },
+    "insurance_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "license_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ]
+    },
+    "payout_account": {
+      "type": "string"
+    },
+    "language_preference": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "is_online": {
+      "type": "boolean",
+      "default": false
+    },
+    "sign_up_completed_at": {
+      "type": "string"
+    },
+    "quality_score": {
+      "type": "number",
+      "default": 5.0,
+      "description": "Average rating from passengers"
+    },
+    "total_trips": {
+      "type": "number",
+      "default": 0
+    },
+    "earnings_this_week": {
+      "type": "number",
+      "default": 0
+    },
+    "bonus_progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Trips toward bonus (out of 50)"
+    }
+  },
+  "required": [
+    "email",
+    "phone",
+    "operating_city",
+    "vehicle_types"
+  ]
+}

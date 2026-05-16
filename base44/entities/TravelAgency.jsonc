@@ -1,0 +1,96 @@
+{
+  "name": "TravelAgency",
+  "type": "object",
+  "properties": {
+    "agency_name": {
+      "type": "string",
+      "description": "Name of the travel agency"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "headquarters_country": {
+      "type": "string"
+    },
+    "service_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Geographic regions served (Caribbean, North America, Europe, Asia, etc.)"
+    },
+    "services_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Services: Flights, Hotels, Airport Transfers, Clinic Coordination"
+    },
+    "service_options": {
+      "type": "object",
+      "description": "Detailed options per service (e.g., Flights: [Economy, Business, First])"
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ]
+    },
+    "payout_account": {
+      "type": "string"
+    },
+    "business_license_url": {
+      "type": "string"
+    },
+    "language_preference": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "sign_up_completed_at": {
+      "type": "string",
+      "description": "ISO timestamp"
+    },
+    "approved_by_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "earnings_this_month": {
+      "type": "number",
+      "default": 0
+    },
+    "rating": {
+      "type": "number",
+      "default": 5.0
+    }
+  },
+  "required": [
+    "agency_name",
+    "email",
+    "phone",
+    "headquarters_country",
+    "service_regions"
+  ]
+}
