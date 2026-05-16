@@ -113,16 +113,16 @@ export default function Booking() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-0.5">Medical Consultation</p>
-              <h1 className="font-display text-lg lg:text-xl text-white leading-tight drop-shadow">{steps[step].label}</h1>
+              <h1 className="font-display text-lg lg:text-xl text-white leading-tight drop-shadow-lg">{steps[step].label}</h1>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5">
                 <Shield className="w-3 h-3 text-emerald-300" />
-                <span className="text-[10px] font-bold text-white/90 uppercase tracking-wide">SAFE-T 4LIFE™</span>
+                <span className="text-[10px] font-bold text-white uppercase tracking-wide">SAFE-T 4LIFE™</span>
               </div>
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/50 font-normal">of {steps.length}</span></p>
-                <p className="text-[10px] text-white/50">{progressPct}% complete</p>
+                <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/60 font-normal">of {steps.length}</span></p>
+                <p className="text-[10px] text-emerald-300">{progressPct}% complete</p>
               </div>
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function Booking() {
             <div className="text-center py-8 px-6 border-b border-white/20">
               <p className="text-5xl mb-3">{steps[step].emoji}</p>
               <h2 className="font-display text-3xl lg:text-4xl text-white drop-shadow-lg mb-2">{steps[step].label}</h2>
-              <p className="text-white/70 text-sm max-w-md mx-auto">{SLIDE_FACTS[step]}</p>
+              <p className="text-white/80 text-sm max-w-md mx-auto font-medium">{SLIDE_FACTS[step]}</p>
             </div>
 
             {/* Cart + Step Grid */}
@@ -183,11 +183,11 @@ export default function Booking() {
               </div>
 
               {/* Step Progress Card */}
-              <div className="bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-center">
+              <div className="bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-center backdrop-blur">
                 <p className="text-xs font-bold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
                 <div className="flex items-baseline gap-1 mb-3">
-                  <span className="font-display text-4xl text-white">{step + 1}</span>
-                  <span className="text-white/50 text-sm">of {steps.length}</span>
+                  <span className="font-display text-4xl text-white drop-shadow">{step + 1}</span>
+                  <span className="text-white/70 text-sm">of {steps.length}</span>
                 </div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
@@ -197,7 +197,7 @@ export default function Booking() {
                     transition={{ duration: 0.6, ease: 'easeOut' }}
                   />
                 </div>
-                <p className="text-white/60 text-xs mt-2">{Math.round(((step + 1) / steps.length) * 100)}% complete</p>
+                <p className="text-emerald-300 text-xs mt-2 font-medium">{Math.round(((step + 1) / steps.length) * 100)}% complete</p>
               </div>
             </div>
           </motion.div>
@@ -211,13 +211,13 @@ export default function Booking() {
        <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl shadow-xl overflow-hidden">
           {/* Step header bar */}
           <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10 bg-white/5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0 text-lg">
-              {steps[step].emoji}
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
-              <h2 className="font-bold text-white text-base">{steps[step].label}</h2>
-            </div>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-lg shadow-lg">
+            {steps[step].emoji}
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
+            <h2 className="font-bold text-white text-base drop-shadow">{steps[step].label}</h2>
+          </div>
           </div>
 
           {/* Form content */}
@@ -291,7 +291,7 @@ export default function Booking() {
             { icon: '🛡️', text: 'SAFE-T 4LIFE™ Protected' },
             { icon: '🌍', text: 'International Standards' },
           ].map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-1.5 text-[11px] text-white/70 font-medium">
+            <div key={text} className="flex items-center gap-1.5 text-[11px] text-white font-medium">
               <span>{icon}</span> {text}
             </div>
           ))}
