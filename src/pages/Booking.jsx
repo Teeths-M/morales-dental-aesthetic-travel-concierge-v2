@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -59,13 +59,6 @@ export default function Booking() {
   const [acknowledged, setAcknowledged] = useState(new Set());
   const [showPreview, setShowPreview] = useState(false);
   const { items, clearCart } = useCart();
-  const formRef = useRef(null);
-
-  useEffect(() => {
-    if (formRef.current) {
-      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [step]);
 
   const [form, setForm] = useState({
     patient_name: '', email: '', phone: '', age: '', gender: '', height: '', weight: '',
@@ -168,7 +161,7 @@ export default function Booking() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Form Area */}
-          <div className="lg:col-span-3" ref={formRef}>
+          <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Form Header */}
           <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-slate-50">
