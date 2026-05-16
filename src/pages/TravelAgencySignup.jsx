@@ -51,7 +51,7 @@ export default function TravelAgencySignup() {
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[9999]">
               {allLanguages.map((lang) => (
                 <SelectItem key={lang.code} value={lang.code}>
                   <span className="flex items-center gap-2">
