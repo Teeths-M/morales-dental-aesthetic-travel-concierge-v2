@@ -111,6 +111,20 @@ export default function VisaResult({ result, onReset }) {
           </div>
         </div>
 
+        {/* Apply link */}
+        {rule.applyUrl && (
+          <div className="px-6 pb-4">
+            <a
+              href={rule.applyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl text-sm font-bold text-white transition-all"
+            >
+              <span>🔗</span> Apply / Start Application Online →
+            </a>
+          </div>
+        )}
+
         {/* AI advisor strip */}
         <div className="bg-black/20 border-t border-white/10 p-5">
           <div className="flex items-start gap-3">
