@@ -70,7 +70,9 @@ export default function TravelAgencySignup() {
         {/* Logo & Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-600/20 border border-emerald-600/40 mb-4">
-            <span className="text-2xl">✈️</span>
+            <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.91 16.11c.46-.79.74-1.64.74-2.56 0-2.91-2.36-5.27-5.27-5.27-1.73 0-3.26.84-4.23 2.13-1.02-1.89-3.05-3.16-5.35-3.16C3.12 7.25 1 9.37 1 12c0 1.72.71 3.27 1.85 4.38l10.62 8.07c.36.27.88.27 1.24 0l10.25-7.78c1.56-1.18 2.56-3.01 2.56-5.1 0-3.49-2.83-6.32-6.32-6.32-2.16 0-4.07 1.09-5.23 2.75h-2.63z"/>
+            </svg>
           </div>
           <h1 className="text-4xl font-display font-bold text-foreground mb-2">
             {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyages' : 'Travel Agency'}
