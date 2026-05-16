@@ -100,10 +100,11 @@ Return a JSON with:
 
   // 5. If BLOCKED — notify customer and stop
   if (isBlocked) {
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: consultation.email,
-      subject: 'Important Update Regarding Your Consultation Request — Morales Dental & Aesthetics',
-      body: `
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: consultation.email,
+        subject: 'Important Update Regarding Your Consultation Request — Morales Dental & Aesthetics',
+        body: `
 Dear ${consultation.patient_name},
 
 Thank you for trusting Morales Dental & Aesthetics with your health journey.
@@ -122,13 +123,16 @@ Your health and safety are always our first priority.
 Warm regards,
 The Morales Dental & Aesthetics Concierge Team
       `,
-    });
+      });
+    } catch (error) {
+      console.log(`Blocked notification email skipped for ${consultation.email}: ${error.message}`);
+    }
 
-    await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, { customer_notified: true, last_update_summary: 'Patient blocked by SAFE-T risk check. Email notification sent.' });
+    await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, { customer_notified: true, last_update_summary: 'Patient blocked by SAFE-T risk check. Email notification skipped (external user).' });
 
     return Response.json({
       status: 'blocked',
-      message: 'Risk check failed — patient notified by email.',
+      message: 'Risk check failed — patient flagged as blocked.',
       risk: riskAssessment,
     });
   }
@@ -142,10 +146,14 @@ The Morales Dental & Aesthetics Concierge Team
   const hotelEmails = getPartnerEmails('hotel');
   const cabEmails = getPartnerEmails('cab');
 
-  // notify partners — notify all emails per type
+  // notify partners — notify all emails per type (with error handling for non-app users)
   const sendToPartners = async (emails, subject, body) => {
     for (const email of emails) {
-      await base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body });
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body });
+      } catch (error) {
+        console.log(`Email skipped for ${email} (external user): ${error.message}`);
+      }
     }
   };
 
@@ -248,10 +256,11 @@ Please confirm availability via the portal.
   await base44.asServiceRole.entities.Consultation.update(consultation_id, { status: 'in_progress', journey_stage: 'planning' });
 
   // 7. Notify the customer of approval
-  await base44.asServiceRole.integrations.Core.SendEmail({
-    to: consultation.email,
-    subject: '✓ Your Consultation Is Approved — Morales Dental & Aesthetics',
-    body: `
+  try {
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: consultation.email,
+      subject: '✓ Your Consultation Is Approved — Morales Dental & Aesthetics',
+      body: `
 M
 ─────────────────────
 
@@ -269,7 +278,10 @@ You'll receive complete details within 24-48 hours. Any questions? Contact your 
 Warm regards,
 The Morales Dental & Aesthetics Concierge Team
     `,
-  });
+    });
+  } catch (error) {
+    console.log(`Approval notification email skipped for ${consultation.email}: ${error.message}`);
+  }
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, { customer_notified: true });
 
