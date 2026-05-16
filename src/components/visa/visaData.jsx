@@ -408,7 +408,7 @@ export const VISA_RULES = {
   // ── Trinidad & Tobago ──
   TT: {
     VE: VF(90, 'Visa-free — CARICOM/Venezuela bilateral agreement', ['Proof of funds'], 'https://cancilleriadigital.mppre.gob.ve/login'),
-    CO: VR(null, 'Visa required — apply at Colombian consulate in Port of Spain', ['Medical invitation letter', 'Bank statements'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
+    CO: VF(90, 'Visa-free — Trinidad & Tobago citizens can enter Colombia for up to 90 days without a visa', ['Return ticket', 'Proof of funds']),
     DO: VF(90, 'Visa-free for CARICOM members', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
     TH: EV(60, 'e-Visa required — apply online', [], 'https://www.thaievisa.go.th/'),
@@ -421,7 +421,7 @@ export const VISA_RULES = {
   // ── Jamaica ──
   JM: {
     VE: VF(90, 'Visa-free — CARICOM agreement', [], 'https://cancilleriadigital.mppre.gob.ve/login'),
-    CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
+    CO: VF(90, 'Visa-free — Jamaican citizens can enter Colombia for up to 90 days without a visa', ['Return ticket', 'Proof of funds']),
     DO: VF(90, 'Visa-free for CARICOM members', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
     TH: EV(30, 'e-Visa required', [], 'https://www.thaievisa.go.th/'),
@@ -434,7 +434,7 @@ export const VISA_RULES = {
   // ── Barbados ──
   BB: {
     VE: VF(90, 'Visa-free — CARICOM agreement'),
-    CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
+    CO: VF(90, 'Visa-free — Barbadian citizens can enter Colombia for up to 90 days without a visa', ['Return ticket', 'Proof of funds']),
     DO: VF(90, 'Visa-free for CARICOM members', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
     TH: EV(30, 'e-Visa required', [], 'https://www.thaievisa.go.th/'),
@@ -447,7 +447,7 @@ export const VISA_RULES = {
   // ── Guyana ──
   GY: {
     VE: VF(90, 'Visa-free — CARICOM agreement'),
-    CO: VR(null, 'Visa required — apply at Colombian consulate', ['Medical invitation letter'], 'https://www.cancilleria.gov.co/en/tourist-visa'),
+    CO: VF(90, 'Visa-free — Guyanese citizens can enter Colombia for up to 90 days without a visa', ['Return ticket', 'Proof of funds']),
     DO: VF(90, 'Visa-free for CARICOM members', ['e-Ticket required online'], 'https://viajerodigital.mitur.gob.do/english/'),
     CU: EV(30, 'Cuba e-Visa required', ['Cuba e-Visa', 'Travel insurance (mandatory)'], 'https://evisacuba.cu/en/inicio'),
     TH: EV(30, 'e-Visa required', [], 'https://www.thaievisa.go.th/'),
