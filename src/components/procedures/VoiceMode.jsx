@@ -1,16 +1,42 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, X, Sparkles, Volume2 } from 'lucide-react';
+import { Mic, MicOff, X, Sparkles, Volume2, DollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { extractProceduresFromText } from './ProcedureData';
+import { PricingEngine } from '@/lib/pricingEngine';
 
 export default function VoiceMode({ onProceduresDetected, onClose }) {
   const [phase, setPhase] = useState('ready'); // ready | listening | processing | done
   const [transcript, setTranscript] = useState('');
   const [detected, setDetected] = useState([]);
   const [bars, setBars] = useState([0.3, 0.5, 0.7, 0.4, 0.6, 0.8, 0.5, 0.3, 0.6, 0.4]);
+  const [pricingEngine, setPricingEngine] = useState(null);
+  const [estimatedPrice, setEstimatedPrice] = useState(null);
   const recognitionRef = useRef(null);
   const animFrameRef = useRef(null);
+
+  // Initialize pricing engine
+  useEffect(() => {
+    const initEngine = async () => {
+      try {
+        const [procedures, countryPricing, doctorPricing, bundles, modifiers, rules] = await Promise.all([
+          base44.entities.ProcedurePricing.list(),
+          base44.entities.CountryPricing.list(),
+          base44.entities.DoctorPricing.list(),
+          base44.entities.ProcedureBundle.list(),
+          base44.entities.ComplexityModifier.list(),
+          base44.entities.PricingRule.list(),
+        ]);
+
+        const engine = new PricingEngine(procedures, countryPricing, doctorPricing, bundles, modifiers, rules);
+        setPricingEngine(engine);
+      } catch (error) {
+        console.error('Failed to initialize pricing:', error);
+      }
+    };
+
+    initEngine();
+  }, []);
 
   // Animate waveform bars
   useEffect(() => {
@@ -23,6 +49,23 @@ export default function VoiceMode({ onProceduresDetected, onClose }) {
     }
     return () => clearTimeout(animFrameRef.current);
   }, [phase]);
+
+  // Calculate price when procedures detected
+  useEffect(() => {
+    if (!pricingEngine || detected.length === 0) {
+      setEstimatedPrice(null);
+      return;
+    }
+
+    const procedures = detected.map(item => ({
+      procedure_name: item.title || item.name,
+      quantity: 1,
+      complexity: 'moderate',
+    }));
+
+    const quote = pricingEngine.calculateFullQuote(procedures);
+    setEstimatedPrice(quote.estimatedTotalLow);
+  }, [pricingEngine, detected]);
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -230,17 +273,39 @@ Examples:
                 {detected.length === 0 ? (
                   <p className="text-sm text-slate-500">No procedures detected. Please try again or search manually.</p>
                 ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {detected.map(p => (
-                      <div key={p.title} className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-xs font-semibold text-emerald-800">{p.title}</p>
-                          <p className="text-[10px] text-emerald-600">{p.category}</p>
+                  <>
+                    <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
+                      {detected.map(p => (
+                        <div key={p.title} className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold text-emerald-800">{p.title}</p>
+                            <p className="text-[10px] text-emerald-600">{p.category}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+
+                    {/* Estimated Price Box */}
+                    {estimatedPrice && (
+                      <motion.div
+                        className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-4 py-3 mb-4"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="w-4 h-4 text-emerald-600" />
+                          <p className="text-[10px] font-bold text-emerald-700 uppercase">Estimated Cost</p>
+                        </div>
+                        <p className="text-lg font-bold text-emerald-700">
+                          From ${estimatedPrice.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-emerald-600 mt-1">
+                          Final pricing requires consultation
+                        </p>
+                      </motion.div>
+                    )}
+                  </>
                 )}
               </div>
               <div className="flex gap-2">

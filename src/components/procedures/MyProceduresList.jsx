@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, Shield, AlertTriangle, Clock, Sparkles } from 'lucide-react';
+import { X, ArrowRight, Shield, AlertTriangle, Clock, Sparkles, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import { PricingEngine } from '@/lib/pricingEngine';
 
 const safetWarnings = [
   { condition: (list) => list.length > 4, msg: 'Multiple procedures may require staged treatment plans for optimal healing.' },
@@ -10,6 +12,49 @@ const safetWarnings = [
 ];
 
 export default function MyProceduresList({ items, onRemove, onClear }) {
+  const [pricingEngine, setPricingEngine] = useState(null);
+  const [totalPrice, setTotalPrice] = useState(null);
+
+  // Initialize pricing engine
+  useEffect(() => {
+    const initEngine = async () => {
+      try {
+        const [procedures, countryPricing, doctorPricing, bundles, modifiers, rules] = await Promise.all([
+          base44.entities.ProcedurePricing.list(),
+          base44.entities.CountryPricing.list(),
+          base44.entities.DoctorPricing.list(),
+          base44.entities.ProcedureBundle.list(),
+          base44.entities.ComplexityModifier.list(),
+          base44.entities.PricingRule.list(),
+        ]);
+
+        const engine = new PricingEngine(procedures, countryPricing, doctorPricing, bundles, modifiers, rules);
+        setPricingEngine(engine);
+      } catch (error) {
+        console.error('Failed to initialize pricing:', error);
+      }
+    };
+
+    initEngine();
+  }, []);
+
+  // Calculate total price
+  useEffect(() => {
+    if (!pricingEngine || items.length === 0) {
+      setTotalPrice(null);
+      return;
+    }
+
+    const procedures = items.map(item => ({
+      procedure_name: item.title || item.name,
+      quantity: 1,
+      complexity: 'moderate',
+    }));
+
+    const quote = pricingEngine.calculateFullQuote(procedures);
+    setTotalPrice(quote.estimatedTotalLow);
+  }, [pricingEngine, items]);
+
   if (items.length === 0) return null;
 
   const warnings = safetWarnings.filter(w => w.condition(items));
@@ -29,6 +74,12 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
         <div>
           <p className="text-white font-bold text-sm">My Procedures</p>
           <p className="text-white/70 text-xs mt-0.5">{items.length} treatment{items.length !== 1 ? 's' : ''} selected</p>
+          {totalPrice && (
+            <p className="text-emerald-200 text-xs mt-1.5 font-semibold flex items-center gap-1">
+              <DollarSign className="w-3 h-3" />
+              From ${totalPrice.toLocaleString()}
+            </p>
+          )}
         </div>
         <button onClick={onClear} className="text-white/60 hover:text-white text-xs underline">Clear all</button>
       </div>
