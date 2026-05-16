@@ -59,6 +59,9 @@ export default function SectionProcedure({ form, update }) {
 
   const handleDateSelect = (day) => {
     if (isBefore(day, new Date())) return;
+    const dayOfWeek = day.getDay();
+    // Disable Sunday (0) and Thursday (4)
+    if (dayOfWeek === 0 || dayOfWeek === 4) return;
     const dateStr = format(day, 'yyyy-MM-dd');
     update('preferred_date', dateStr);
     setShowCalendar(false);
@@ -132,6 +135,8 @@ export default function SectionProcedure({ form, update }) {
                 <div className="grid grid-cols-7 gap-3 auto-rows-max">
                   {days.map(day => {
                     const isPast = isBefore(day, new Date());
+                    const dayOfWeek = day.getDay();
+                    const isDisabledDay = dayOfWeek === 0 || dayOfWeek === 4; // Sunday or Thursday
                     const isSelected = form.preferred_date && format(day, 'yyyy-MM-dd') === form.preferred_date;
                     const isCurrent = isToday(day);
                     const isCurrentMonth = isSameMonth(day, currentMonth);
@@ -140,16 +145,16 @@ export default function SectionProcedure({ form, update }) {
                       <motion.button
                         key={format(day, 'yyyy-MM-dd')}
                         onClick={() => handleDateSelect(day)}
-                        disabled={isPast}
-                        whileHover={!isPast ? { scale: 1.08 } : {}}
+                        disabled={isPast || isDisabledDay}
+                        whileHover={!isPast && !isDisabledDay ? { scale: 1.08 } : {}}
                         className={`h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center ${
                           !isCurrentMonth
                             ? 'text-muted-foreground/20 bg-transparent'
                             : isSelected
                             ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg'
-                            : isCurrent
+                            : isCurrent && !isDisabledDay
                             ? 'bg-accent/20 text-accent border border-accent/30'
-                            : isPast
+                            : isPast || isDisabledDay
                             ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed'
                             : 'bg-white border border-border hover:border-primary hover:shadow-sm cursor-pointer'
                         }`}
