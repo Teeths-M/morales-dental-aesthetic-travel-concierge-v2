@@ -39,19 +39,15 @@ export default function SafeT() {
   const tabs = getTabs(language);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
-      {/* Hero with Background Image */}
-      <div 
-        className="relative bg-cover bg-center bg-no-repeat py-12"
-        style={{
-          backgroundImage: 'url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/745794e0c_ChatGPTImageMay16202608_02_59AM.png)',
-        }}
-      >
-        <div className="absolute inset-0 bg-black/40"></div>
-      </div>
-
-      {/* Hero Header */}
-      <div className="bg-card/50 backdrop-blur-sm border-b border-border/30 relative z-10">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{
+        backgroundImage: 'url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/745794e0c_ChatGPTImageMay16202608_02_59AM.png)',
+      }}
+    >
+      <div className="min-h-screen backdrop-blur-sm bg-black/20">
+        {/* Hero Header */}
+        <div className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-16 lg:top-20 z-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             className="flex items-start gap-4"
@@ -101,10 +97,10 @@ export default function SafeT() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Tab Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tab Content */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -123,6 +119,7 @@ export default function SafeT() {
             {activeTab === 'support' && <SupportTab />}
           </motion.div>
         </AnimatePresence>
+        </div>
       </div>
     </div>
   );
