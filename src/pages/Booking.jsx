@@ -108,7 +108,7 @@ export default function Booking() {
     <div className="min-h-screen bg-transparent">
       <MedicalSlideshowBackground step={step} />
       {/* Premium Header — full glass over the background */}
-      <div className="bg-black/30 backdrop-blur-xl border-b border-white/10 sticky top-16 lg:top-20 z-20">
+      <div className="bg-black/10 backdrop-blur-md border-b border-white/5 sticky top-16 lg:top-20 z-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -208,15 +208,15 @@ export default function Booking() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-12">
        <div className="space-y-5">
        {/* Step Card */}
-        <div className="bg-white/85 backdrop-blur-xl border border-white/40 rounded-2xl shadow-xl overflow-hidden">
+       <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl shadow-xl overflow-hidden">
           {/* Step header bar */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-white/30 bg-white/40">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10 bg-white/5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0 text-lg">
               {steps[step].emoji}
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
-              <h2 className="font-bold text-slate-800 text-base">{steps[step].label}</h2>
+              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Step {step + 1} of {steps.length}</p>
+              <h2 className="font-bold text-white text-base">{steps[step].label}</h2>
             </div>
           </div>
 
@@ -247,7 +247,7 @@ export default function Booking() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-white/30 bg-white/40">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-white/5">
             <Button
               variant="outline"
               onClick={() => setStep(s => s - 1)}
@@ -284,7 +284,7 @@ export default function Booking() {
         </div>
 
         {/* Trust bar */}
-        <div className="flex flex-wrap items-center justify-center gap-4 py-2 px-4 bg-white/30 backdrop-blur-md rounded-2xl border border-white/30">
+        <div className="flex flex-wrap items-center justify-center gap-4 py-2 px-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10">
           {[
             { icon: '🔒', text: 'Encrypted & Private' },
             { icon: '🩺', text: 'Doctor-Reviewed' },
