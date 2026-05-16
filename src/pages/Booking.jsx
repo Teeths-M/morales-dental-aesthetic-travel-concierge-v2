@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock } from 'lucide-react';
-import MedicalSlideshow from '@/components/booking/MedicalSlideshow';
+import MedicalSlideshow, { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
 import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
@@ -90,9 +90,10 @@ export default function Booking() {
   const progressPct = Math.round((step / (steps.length - 1)) * 100);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-transparent">
+      <MedicalSlideshowBackground step={step} />
       {/* Premium Header */}
-      <div className="bg-white border-b border-slate-100 shadow-sm sticky top-16 lg:top-20 z-20">
+      <div className="bg-white/80 backdrop-blur-xl border-b border-white/30 shadow-sm sticky top-16 lg:top-20 z-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -157,9 +158,9 @@ export default function Booking() {
                 { num: '50+', label: 'Specialists', icon: '🩺' },
                 { num: '24/7', label: 'Coordinator Support', icon: '🛡️' },
               ].map(s => (
-                <div key={s.label} className="bg-white border border-slate-100 rounded-xl px-3 py-2.5 text-center shadow-sm">
-                  <p className="text-base font-bold text-slate-800">{s.icon} {s.num}</p>
-                  <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">{s.label}</p>
+                <div key={s.label} className="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-3 py-2.5 text-center shadow-sm">
+                  <p className="text-base font-bold text-white drop-shadow">{s.icon} {s.num}</p>
+                  <p className="text-[10px] text-white/70 font-medium leading-tight mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -177,9 +178,9 @@ export default function Booking() {
         <ConsultationMedicalCart />
 
         {/* Step Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white/85 backdrop-blur-xl border border-white/40 rounded-2xl shadow-xl overflow-hidden">
           {/* Step header bar */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-white/30 bg-white/40">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0 text-lg">
               {steps[step].emoji}
             </div>
@@ -216,7 +217,7 @@ export default function Booking() {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-white/30 bg-white/40">
             <Button
               variant="outline"
               onClick={() => setStep(s => s - 1)}
@@ -253,14 +254,14 @@ export default function Booking() {
         </div>
 
         {/* Trust bar */}
-        <div className="flex flex-wrap items-center justify-center gap-4 py-2">
+        <div className="flex flex-wrap items-center justify-center gap-4 py-2 px-4 bg-white/30 backdrop-blur-md rounded-2xl border border-white/30">
           {[
             { icon: '🔒', text: 'Encrypted & Private' },
             { icon: '🩺', text: 'Doctor-Reviewed' },
             { icon: '🛡️', text: 'SAFE-T 4LIFE™ Protected' },
             { icon: '🌍', text: 'International Standards' },
           ].map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+            <div key={text} className="flex items-center gap-1.5 text-[11px] text-white/70 font-medium">
               <span>{icon}</span> {text}
             </div>
           ))}
