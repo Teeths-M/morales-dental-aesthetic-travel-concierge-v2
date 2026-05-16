@@ -76,33 +76,22 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
 
       // Auto-assign specialties
       if (formData.specialties && formData.specialties.length > 0) {
-        // Fetch all MasterProcedures to match procedure names to IDs
         const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
-        
+
         const specialtyData = formData.specialties.map(spec => {
           const matched = masterProcs.find(mp => mp.en_name === spec);
           return {
             doctor_id: doctor.id,
-            procedure_id: matched?.procedure_id || spec, // Use procedure_id from master, or fall back to spec name
+            procedure_id: matched?.procedure_id || spec,
             procedure_name: spec,
             category: matched?.category || 'General'
           };
         });
-        
+
         if (specialtyData.length > 0) {
           await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
         }
       }
-
-      // Auto-create Partner entry
-      const partnerData = {
-        name: formData.full_name,
-        title: 'Medical Professional',
-        specialty: formData.specialties?.length > 0 ? formData.specialties[0] : 'General',
-        bio: `Doctor from ${formData.clinic_country}${formData.clinic_name ? ` - ${formData.clinic_name}` : ''}`,
-        is_featured: false
-      };
-      await base44.entities.Partner.create(partnerData);
 
       onComplete(doctor);
       } catch (error) {
