@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Calendar, Plane, Heart, Check } from 'lucide-react';
+import { AlertCircle, Plane, Check } from 'lucide-react';
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isBefore, isAfter } from 'date-fns';
 
 const AIRLINE_DAYS = [0, 1, 4]; // Sunday, Monday, Thursday (0-6 indexing)
@@ -14,7 +14,6 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [capacityInfo, setCapacityInfo] = useState(null);
-  const [flightRecommendation, setFlightRecommendation] = useState(null);
   const [showUrgencyPopup, setShowUrgencyPopup] = useState(false);
   const [loading, setLoading] = useState(true);
   const [confirmingWithDoctor, setConfirmingWithDoctor] = useState(false);
@@ -53,40 +52,7 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
     return days[day];
   };
 
-  const calculateFlightRecommendation = (procedureDate) => {
-    // Recommended arrival: day before procedure if procedure is on Mon, else nearest prior flight day
-    const procedureDayOfWeek = procedureDate.getDay();
-    let arrivalDate;
-    
-    if (procedureDayOfWeek === 1) { // Monday
-      arrivalDate = addDays(procedureDate, -1); // Sunday before
-    } else {
-      // Find nearest prior flight day
-      let checkDate = addDays(procedureDate, -1);
-      while (!isAirlineDay(checkDate)) {
-        checkDate = addDays(checkDate, -1);
-      }
-      arrivalDate = checkDate;
-    }
 
-    // Recovery departure: first flight day (Sun/Mon/Thu) after procedure + MIN_RECOVERY_DAYS
-    let departureDate = addDays(procedureDate, MIN_RECOVERY_DAYS);
-    while (!isAirlineDay(departureDate)) {
-      departureDate = addDays(departureDate, 1);
-    }
-
-    const arrivalDaysFromNow = Math.ceil((arrivalDate - new Date()) / (1000 * 60 * 60 * 24));
-    const recoveryDays = Math.ceil((departureDate - procedureDate) / (1000 * 60 * 60 * 24));
-
-    return {
-      arrival: arrivalDate,
-      procedure: procedureDate,
-      departure: departureDate,
-      arrivalDaysBeforeProcedure: Math.ceil((procedureDate - arrivalDate) / (1000 * 60 * 60 * 24)),
-      recoveryDays,
-      totalStayDays: Math.ceil((departureDate - arrivalDate) / (1000 * 60 * 60 * 24))
-    };
-  };
 
   const handleDateSelect = (date) => {
     // Only allow future dates on airline days
@@ -95,8 +61,6 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
     }
 
     setSelectedDate(date);
-    const recommendation = calculateFlightRecommendation(date);
-    setFlightRecommendation(recommendation);
   };
 
   const handleConfirmWithDoctor = async () => {
@@ -104,25 +68,12 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
 
     setConfirmingWithDoctor(true);
     try {
-      const res = await base44.functions.invoke('portalHubWorkflowEngine', {
-        action: 'request_doctor_date_confirmation',
-        consultation_id: consultationId,
-        procedure_date: format(selectedDate, 'yyyy-MM-dd'),
-        recommended_arrival: format(flightRecommendation.arrival, 'yyyy-MM-dd'),
-        recommended_departure: format(flightRecommendation.departure, 'yyyy-MM-dd')
+      setDoctorConfirmed(true);
+      onDateConfirmed({
+        procedure_date: selectedDate
       });
-
-      if (res.data.doctor_approved) {
-        setDoctorConfirmed(true);
-        onDateConfirmed({
-          procedure_date: selectedDate,
-          arrival_date: flightRecommendation.arrival,
-          departure_date: flightRecommendation.departure,
-          recovery_days: flightRecommendation.recoveryDays
-        });
-      }
     } catch (error) {
-      alert('Error confirming with doctor. Please try again.');
+      alert('Error confirming date. Please try again.');
       console.error(error);
     } finally {
       setConfirmingWithDoctor(false);
@@ -255,116 +206,39 @@ export default function SmartProcedureDateSelector({ consultationId, onDateConfi
         </div>
       </Card>
 
-      {/* Flight Recommendation */}
-      <AnimatePresence>
-        {flightRecommendation && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
+      {/* Confirm Selection Button */}
+      {selectedDate && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-3"
+        >
+          <Button
+            variant="outline"
+            onClick={() => setSelectedDate(null)}
+            className="flex-1"
           >
-            <Card className="p-8 bg-gradient-to-br from-primary/5 via-card to-accent/5 border-0 shadow-lg">
-              <div className="flex items-start gap-4 mb-8">
-                <div className="bg-gradient-to-br from-primary to-primary/70 p-3 rounded-xl">
-                  <Heart className="w-6 h-6 text-primary-foreground flex-shrink-0" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-display text-2xl text-foreground">Your Wellness Timeline</h4>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Optimized for flight availability and full recovery. We've calculated the perfect itinerary based on medical best practices.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Arrival */}
-                <div className="flex items-start gap-4 p-5 bg-white/60 rounded-xl border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all">
-                  <div className="bg-primary/10 p-2.5 rounded-lg flex-shrink-0">
-                    <Calendar className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground text-lg">
-                      Arrival: {format(flightRecommendation.arrival, 'EEEE, MMMM d')}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1.5">
-                      {flightRecommendation.arrivalDaysBeforeProcedure} day{flightRecommendation.arrivalDaysBeforeProcedure !== 1 ? 's' : ''} of pre-treatment rest and acclimatization
-                    </p>
-                  </div>
-                </div>
-
-                {/* Procedure */}
-                <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-accent/10 to-accent/5 rounded-xl border border-accent/20 hover:border-accent/40 transition-all">
-                  <div className="bg-accent/20 p-2.5 rounded-lg flex-shrink-0">
-                    <Heart className="w-5 h-5 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground text-lg">
-                      Procedure: {format(flightRecommendation.procedure, 'EEEE, MMMM d')}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1.5">
-                      {getDayName(flightRecommendation.procedure.getDay())} – Optimal timing for your procedure
-                    </p>
-                  </div>
-                </div>
-
-                {/* Departure */}
-                <div className="flex items-start gap-4 p-5 bg-white/60 rounded-xl border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-all">
-                  <div className="bg-primary/10 p-2.5 rounded-lg flex-shrink-0">
-                    <Plane className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground text-lg">
-                      Departure: {format(flightRecommendation.departure, 'EEEE, MMMM d')}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1.5">
-                      {flightRecommendation.recoveryDays} days post-treatment recovery – Optimal healing timeline
-                    </p>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="mt-6 p-5 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Stay</p>
-                      <p className="text-2xl font-semibold text-foreground mt-1">{flightRecommendation.totalStayDays} days</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recovery Window</p>
-                      <p className="text-2xl font-semibold text-foreground mt-1">{flightRecommendation.recoveryDays} days</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Confirm with Doctor */}
-            <Card className="p-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                The doctor will review your procedure date and confirm availability. They may adjust recovery recommendations based on your specific needs.
-              </p>
-              <Button
-                size="lg"
-                onClick={handleConfirmWithDoctor}
-                disabled={confirmingWithDoctor || doctorConfirmed}
-                className="w-full gap-2"
-              >
-                {doctorConfirmed ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Doctor Approved ✓
-                  </>
-                ) : confirmingWithDoctor ? (
-                  'Requesting doctor confirmation...'
-                ) : (
-                  'Request Doctor Confirmation'
-                )}
-              </Button>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Clear Selection
+          </Button>
+          <Button
+            size="lg"
+            onClick={handleConfirmWithDoctor}
+            disabled={confirmingWithDoctor || doctorConfirmed}
+            className="flex-1 gap-2"
+          >
+            {doctorConfirmed ? (
+              <>
+                <Check className="w-4 h-4" />
+                Confirmed ✓
+              </>
+            ) : confirmingWithDoctor ? (
+              'Confirming...'
+            ) : (
+              'Confirm Date'
+            )}
+          </Button>
+        </motion.div>
+      )}
     </div>
   );
 }
