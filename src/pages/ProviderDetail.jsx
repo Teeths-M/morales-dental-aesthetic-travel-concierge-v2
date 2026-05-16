@@ -96,9 +96,6 @@ export default function ProviderDetail() {
                       Book Consultation
                     </Button>
                   </Link>
-                  <Button variant="outline">
-                    <MessageCircle className="w-4 h-4 mr-2" /> Contact
-                  </Button>
                 </div>
               </div>
             </div>
