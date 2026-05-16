@@ -32,7 +32,7 @@ export default function Navbar() {
   }, [language]);
 
   const handleDropdownMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => setDropdownOpen(false), 2000);
+    dropdownTimeoutRef.current = setTimeout(() => setDropdownOpen(false), 1000);
   };
 
   const handleDropdownMouseEnter = () => {
@@ -40,7 +40,7 @@ export default function Navbar() {
   };
 
   const handleLanguageMouseLeave = () => {
-    languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 2000);
+    languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 1000);
   };
 
   const handleLanguageMouseEnter = () => {
