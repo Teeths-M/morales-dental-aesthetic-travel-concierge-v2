@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   CreditCard,
+  DollarSign,
   LogOut,
   Menu
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import { base44 } from '@/api/base44Client';
 const navItems = [
   { id: 'workflows', label: 'Workflow Monitor', icon: LayoutDashboard },
   { id: 'providers', label: 'Provider Management', icon: Users },
+  { id: 'pricing', label: 'Pricing Catalog', icon: DollarSign },
   { id: 'payments', label: 'Payment Tracking', icon: CreditCard },
 ];
 
