@@ -19,12 +19,16 @@ const CATEGORIES = [
   { id: 'Orthopedics', label: 'Orthopedics', emoji: '🦴' },
 ];
 
-function PricingForm({ doctor, procedures, initial, onSave, onCancel }) {
+function PricingForm({ doctor, procedures, allowedProcedureIds, initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || { procedure_id: '', doctor_price_usd: '', specialty_expertise_level: 'intermediate' });
   const [category, setCategory] = useState('Dental');
 
   const selectedProc = procedures.find(p => p.id === form.procedure_id);
-  const filteredProcs = procedures.filter(p => p.category === category);
+  // Filter procedures by category AND by doctor's specialties (if adding new)
+  const filteredProcs = procedures.filter(p => 
+    p.category === category && 
+    (initial ? true : allowedProcedureIds.includes(p.id))
+  );
 
   const handleSave = () => {
     if (!form.procedure_id || !form.doctor_price_usd) {
@@ -133,6 +137,12 @@ export default function PricingCatalogManager() {
         category: p.category,
       }));
     },
+  });
+
+  const { data: doctorSpecialties = [] } = useQuery({
+    queryKey: ['doctor_specialties', selectedDoctor?.id],
+    queryFn: () => selectedDoctor ? base44.entities.DoctorSpecialty.filter({ doctor_id: selectedDoctor.id }, '-created_date', 200) : Promise.resolve([]),
+    enabled: !!selectedDoctor,
   });
 
   const createMutation = useMutation({
@@ -262,6 +272,7 @@ export default function PricingCatalogManager() {
             <PricingForm
               doctor={selectedDoctor}
               procedures={procedures}
+              allowedProcedureIds={doctorSpecialties.map(ds => ds.procedure_id)}
               onSave={d => createMutation.mutate(d)}
               onCancel={() => setAdding(false)}
             />
@@ -283,6 +294,7 @@ export default function PricingCatalogManager() {
                       key={price.id}
                       doctor={selectedDoctor}
                       procedures={procedures}
+                      allowedProcedureIds={doctorSpecialties.map(ds => ds.procedure_id)}
                       initial={price}
                       onSave={d => updateMutation.mutate({ id: price.id, data: d })}
                       onCancel={() => setEditingId(null)}
