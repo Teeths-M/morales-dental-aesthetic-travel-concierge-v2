@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Sparkles, Globe2, Lock } from 'lucide-react';
 
 export default function VisaHero() {
+  const [language, setLanguage] = useState('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
   return (
     <div className="relative overflow-hidden bg-[#0a0f1e] text-white">
       {/* Deep mesh gradient */}
@@ -34,7 +46,9 @@ export default function VisaHero() {
             <span className="w-px h-3 bg-white/20" />
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] text-emerald-400 font-medium">AI-Powered</span>
+              <span className="text-[11px] text-emerald-400 font-medium">
+                {language === 'es' ? 'Impulsado por IA' : language === 'fr' ? 'Alimentado por IA' : 'AI-Powered'}
+              </span>
             </div>
           </motion.div>
 
@@ -45,10 +59,8 @@ export default function VisaHero() {
             transition={{ delay: 0.25 }}
             className="font-display text-4xl lg:text-6xl font-bold mb-5 leading-[1.1] tracking-tight"
           >
-            Your Intelligent
-            <span className="block bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
-              Medical Travel Companion
-            </span>
+            {language === 'es' ? 'Tu Compañero de Viaje Médico Inteligente' : language === 'fr' ? 'Votre Compagnon Médical de Voyage Intelligent' : 'Your Intelligent Medical Travel Companion'}
+            {language === 'es' ? '' : language === 'fr' ? '' : <span className="block bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent"></span>}
           </motion.h1>
 
           <motion.p
@@ -57,7 +69,7 @@ export default function VisaHero() {
             transition={{ delay: 0.35 }}
             className="text-white/50 text-base lg:text-lg max-w-xl mx-auto leading-relaxed mb-12"
           >
-            Instant AI visa checks, personalized document checklists, and embassy guidance — so you can focus on your health journey.
+            {language === 'es' ? 'Verificaciones de visa instantáneas con IA, listas de documentos personalizadas y orientación de embajadas — para que te enfoques en tu viaje de salud.' : language === 'fr' ? 'Vérifications de visa instantanées avec IA, listes de documents personnalisées et orientation d\'ambassade — pour que vous puissiez vous concentrer sur votre voyage médical.' : 'Instant AI visa checks, personalized document checklists, and embassy guidance — so you can focus on your health journey.'}
           </motion.p>
 
           {/* Stats row */}
@@ -68,11 +80,11 @@ export default function VisaHero() {
             className="flex flex-wrap justify-center gap-px"
           >
             {[
-              { icon: <Globe2 className="w-4 h-4" />, value: '194+', label: 'Countries' },
-              { icon: <span className="text-sm">✈️</span>, value: '10', label: 'Destinations' },
-              { icon: <Sparkles className="w-4 h-4" />, value: 'Instant', label: 'AI Visa Check' },
-              { icon: <Lock className="w-4 h-4" />, value: '100%', label: 'Private & Secure' },
-            ].map((s, i) => (
+               { icon: <Globe2 className="w-4 h-4" />, value: '194+', label: language === 'es' ? 'Países' : language === 'fr' ? 'Pays' : 'Countries' },
+               { icon: <span className="text-sm">✈️</span>, value: '10', label: language === 'es' ? 'Destinos' : language === 'fr' ? 'Destinations' : 'Destinations' },
+               { icon: <Sparkles className="w-4 h-4" />, value: language === 'es' ? 'Instantáneo' : language === 'fr' ? 'Instantané' : 'Instant', label: language === 'es' ? 'Verificación de Visa IA' : language === 'fr' ? 'Vérification Visa IA' : 'AI Visa Check' },
+               { icon: <Lock className="w-4 h-4" />, value: '100%', label: language === 'es' ? 'Privado y Seguro' : language === 'fr' ? 'Privé et Sécurisé' : 'Private & Secure' },
+             ].map((s, i) => (
               <div key={s.label} className={`flex flex-col items-center px-8 py-4 ${i < 3 ? 'border-r border-white/10' : ''}`}>
                 <div className="text-blue-400 mb-1.5">{s.icon}</div>
                 <div className="text-xl font-bold text-white">{s.value}</div>

@@ -1,19 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Search, Mic, MicOff, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PASSPORT_COUNTRIES, DESTINATIONS, TRAVEL_PURPOSES, getVisaRule } from './visaData';
 import { base44 } from '@/api/base44Client';
 
-const STEPS = [
-  { id: 1, title: 'Passport', label: 'Your Passport' },
-  { id: 2, title: 'Destination', label: 'Destination' },
-  { id: 3, title: 'Purpose', label: 'Purpose of Visit' },
-  { id: 4, title: 'Details', label: 'Travel Details' },
-  { id: 5, title: 'Check', label: 'AI Evaluation' },
+const getSteps = (language) => [
+  { id: 1, title: language === 'es' ? 'Pasaporte' : language === 'fr' ? 'Passeport' : 'Passport', label: language === 'es' ? 'Tu Pasaporte' : language === 'fr' ? 'Votre Passeport' : 'Your Passport' },
+  { id: 2, title: language === 'es' ? 'Destino' : language === 'fr' ? 'Destination' : 'Destination', label: language === 'es' ? 'Destino' : language === 'fr' ? 'Destination' : 'Destination' },
+  { id: 3, title: language === 'es' ? 'Propósito' : language === 'fr' ? 'Objectif' : 'Purpose', label: language === 'es' ? 'Propósito de la Visita' : language === 'fr' ? 'Objet de la Visite' : 'Purpose of Visit' },
+  { id: 4, title: language === 'es' ? 'Detalles' : language === 'fr' ? 'Détails' : 'Details', label: language === 'es' ? 'Detalles del Viaje' : language === 'fr' ? 'Détails du Voyage' : 'Travel Details' },
+  { id: 5, title: language === 'es' ? 'Verificar' : language === 'fr' ? 'Vérifier' : 'Check', label: language === 'es' ? 'Evaluación IA' : language === 'fr' ? 'Évaluation IA' : 'AI Evaluation' },
 ];
 
 export default function VisaWizard({ onResult }) {
+  const [language, setLanguage] = useState('en');
   const [step, setStep] = useState(1);
   const [passportSearch, setPassportSearch] = useState('');
   const [passport, setPassport] = useState(null);
@@ -26,6 +27,19 @@ export default function VisaWizard({ onResult }) {
   const [isListening, setIsListening] = useState(false);
   const [voiceText, setVoiceText] = useState('');
   const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  const STEPS = getSteps(language);
 
   const filteredCountries = PASSPORT_COUNTRIES.filter(c =>
     c.name.toLowerCase().includes(passportSearch.toLowerCase())
@@ -127,9 +141,13 @@ export default function VisaWizard({ onResult }) {
             <Mic className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800">Voice Mode Available</p>
-            <p className="text-xs text-slate-400 mt-0.5 truncate">Try: <em>"I'm from Trinidad and I want to travel to Venezuela for dental implants"</em></p>
-            {voiceText && <p className="text-xs text-blue-600 mt-0.5 font-medium">Detected: "{voiceText}"</p>}
+            <p className="text-sm font-semibold text-slate-800">
+              {language === 'es' ? 'Modo de Voz Disponible' : language === 'fr' ? 'Mode Vocal Disponible' : 'Voice Mode Available'}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5 truncate">
+              {language === 'es' ? 'Intenta: ' : language === 'fr' ? 'Essayez: ' : 'Try: '}<em>{language === 'es' ? '"Soy de Trinidad y quiero viajar a Venezuela para implantes dentales"' : language === 'fr' ? '"Je suis de Trinité et je veux voyager au Venezuela pour des implants dentaires"' : '"I\'m from Trinidad and I want to travel to Venezuela for dental implants"'}</em>
+            </p>
+            {voiceText && <p className="text-xs text-blue-600 mt-0.5 font-medium">{language === 'es' ? 'Detectado: ' : language === 'fr' ? 'Détecté: ' : 'Detected: '}"{voiceText}"</p>}
           </div>
           <button
             onClick={handleVoice}
@@ -140,7 +158,7 @@ export default function VisaWizard({ onResult }) {
             }`}
           >
             {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-            {isListening ? 'Listening…' : 'Speak Now'}
+            {isListening ? (language === 'es' ? 'Escuchando…' : language === 'fr' ? 'À l\'écoute…' : 'Listening…') : (language === 'es' ? 'Habla Ahora' : language === 'fr' ? 'Parlez Maintenant' : 'Speak Now')}
           </button>
         </div>
       </motion.div>
@@ -148,20 +166,20 @@ export default function VisaWizard({ onResult }) {
       {/* Step Indicator */}
       <div className="mb-8">
         <div className="flex items-center gap-0 mb-5">
-          {STEPS.map((s, i) => (
-            <React.Fragment key={s.id}>
-              <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                  step > s.id
-                    ? 'bg-emerald-500 text-white'
-                    : step === s.id
-                    ? 'bg-slate-900 text-white ring-4 ring-slate-900/10'
-                    : 'bg-slate-100 text-slate-400'
-                }`}>
-                  {step > s.id ? <Check className="w-3.5 h-3.5" /> : s.id}
-                </div>
-                <span className={`text-[10px] mt-1 font-semibold hidden sm:block ${step === s.id ? 'text-slate-800' : 'text-slate-400'}`}>{s.title}</span>
-              </div>
+         {getSteps(language).map((s, i) => (
+           <React.Fragment key={s.id}>
+             <div className="flex flex-col items-center">
+               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                 step > s.id
+                   ? 'bg-emerald-500 text-white'
+                   : step === s.id
+                   ? 'bg-slate-900 text-white ring-4 ring-slate-900/10'
+                   : 'bg-slate-100 text-slate-400'
+               }`}>
+                 {step > s.id ? <Check className="w-3.5 h-3.5" /> : s.id}
+               </div>
+               <span className={`text-[10px] mt-1 font-semibold hidden sm:block ${step === s.id ? 'text-slate-800' : 'text-slate-400'}`}>{s.title}</span>
+             </div>
               {i < STEPS.length - 1 && (
                 <div className={`flex-1 h-px mx-2 transition-all duration-500 ${step > s.id ? 'bg-emerald-400' : 'bg-slate-200'}`} />
               )}
@@ -192,9 +210,9 @@ export default function VisaWizard({ onResult }) {
           {/* Card header strip */}
           <div className="px-7 pt-7 pb-5 border-b border-slate-100">
             <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-slate-400 mb-1">
-              Step {step} of {STEPS.length}
+              {language === 'es' ? 'Paso' : language === 'fr' ? 'Étape' : 'Step'} {step} {language === 'es' ? 'de' : language === 'fr' ? 'sur' : 'of'} {getSteps(language).length}
             </p>
-            <h2 className="font-display text-xl font-bold text-slate-900">{STEPS[step - 1].label}</h2>
+            <h2 className="font-display text-xl font-bold text-slate-900">{getSteps(language)[step - 1].label}</h2>
           </div>
 
           <div className="p-7">
@@ -206,7 +224,7 @@ export default function VisaWizard({ onResult }) {
                   <input
                     value={passportSearch}
                     onChange={e => { setPassportSearch(e.target.value); setPassport(null); }}
-                    placeholder="Search your passport country..."
+                    placeholder={language === 'es' ? 'Busca tu país de pasaporte...' : language === 'fr' ? 'Recherchez votre pays de passeport...' : 'Search your passport country...'}
                     className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
                 </div>
@@ -218,9 +236,11 @@ export default function VisaWizard({ onResult }) {
                   >
                     <span className="text-2xl">{passport.flag}</span>
                     <div className="flex-1">
-                      <p className="font-semibold text-slate-800 text-sm">{passport.name}</p>
-                      <p className="text-xs text-emerald-600 font-medium">Selected</p>
-                    </div>
+                       <p className="font-semibold text-slate-800 text-sm">{passport.name}</p>
+                       <p className="text-xs text-emerald-600 font-medium">
+                         {language === 'es' ? 'Seleccionado' : language === 'fr' ? 'Sélectionné' : 'Selected'}
+                       </p>
+                     </div>
                     <Check className="w-4 h-4 text-emerald-600" />
                   </motion.div>
                 )}
@@ -295,17 +315,21 @@ export default function VisaWizard({ onResult }) {
             {step === 4 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Estimated Travel Date</label>
-                  <input
-                    type="date"
-                    value={travelDate}
-                    onChange={e => setTravelDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Length of Stay</label>
+                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                     {language === 'es' ? 'Fecha Estimada de Viaje' : language === 'fr' ? 'Date de Voyage Estimée' : 'Estimated Travel Date'}
+                   </label>
+                   <input
+                     type="date"
+                     value={travelDate}
+                     onChange={e => setTravelDate(e.target.value)}
+                     min={new Date().toISOString().split('T')[0]}
+                     className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                     {language === 'es' ? 'Duración de la Estancia' : language === 'fr' ? 'Durée du Séjour' : 'Length of Stay'}
+                   </label>
                   <div className="grid grid-cols-4 gap-2 mb-3">
                     {['7', '14', '21', '30'].map(d => (
                       <button
@@ -322,20 +346,25 @@ export default function VisaWizard({ onResult }) {
                     ))}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span>Custom:</span>
+                    <span>{language === 'es' ? 'Personalizado:' : language === 'fr' ? 'Personnalisé:' : 'Custom:'}</span>
                     <input
                       type="number" min="1" max="365"
                       value={stayDuration}
                       onChange={e => setStayDuration(e.target.value)}
                       className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <span>days</span>
+                    <span>{language === 'es' ? 'días' : language === 'fr' ? 'jours' : 'days'}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Traveling with a companion?</label>
-                  <div className="flex gap-3">
-                    {[{ val: true, label: 'Yes, with companion', icon: '👫' }, { val: false, label: 'No, traveling alone', icon: '👤' }].map(opt => (
+                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                     {language === 'es' ? '¿Viajando con un compañero?' : language === 'fr' ? 'Voyager avec un compagnon?' : 'Traveling with a companion?'}
+                   </label>
+                   <div className="flex gap-3">
+                     {[
+                       { val: true, label: language === 'es' ? 'Sí, con compañero' : language === 'fr' ? 'Oui, avec compagnon' : 'Yes, with companion', icon: '👫' }, 
+                       { val: false, label: language === 'es' ? 'No, viajando solo' : language === 'fr' ? 'Non, voyager seul' : 'No, traveling alone', icon: '👤' }
+                     ].map(opt => (
                       <button
                         key={String(opt.val)}
                         onClick={() => setHasCompanion(opt.val)}
@@ -364,10 +393,14 @@ export default function VisaWizard({ onResult }) {
                         <Loader2 className="w-9 h-9 text-white animate-spin" />
                       </div>
                     </div>
-                    <h2 className="text-lg font-bold text-slate-800 mb-1">Analyzing your journey…</h2>
-                    <p className="text-sm text-slate-400 mb-7">SAFE-T VISA ASSIST™ is checking all requirements</p>
-                    <div className="space-y-2.5 text-left max-w-xs mx-auto">
-                      {['Checking passport database…', 'Verifying destination rules…', 'Generating document checklist…', 'Composing AI guidance…'].map((t, i) => (
+                    <h2 className="text-lg font-bold text-slate-800 mb-1">
+                       {language === 'es' ? 'Analizando tu viaje…' : language === 'fr' ? 'Analyse de votre voyage…' : 'Analyzing your journey…'}
+                     </h2>
+                     <p className="text-sm text-slate-400 mb-7">
+                       SAFE-T VISA ASSIST™ {language === 'es' ? 'está verificando todos los requisitos' : language === 'fr' ? 'vérifie tous les exigences' : 'is checking all requirements'}
+                     </p>
+                     <div className="space-y-2.5 text-left max-w-xs mx-auto">
+                       {(language === 'es' ? ['Comprobando base de datos de pasaporte…', 'Verificando reglas de destino…', 'Generando lista de documentos…', 'Componiendo guía de IA…'] : language === 'fr' ? ['Vérification de la base de données des passeports…', 'Vérification des règles de destination…', 'Génération de la liste de contrôle des documents…', 'Composée de directives IA…'] : ['Checking passport database…', 'Verifying destination rules…', 'Generating document checklist…', 'Composing AI guidance…']).map((t, i) => (
                         <motion.div
                           key={t}
                           initial={{ opacity: 0, x: -8 }}
@@ -386,8 +419,12 @@ export default function VisaWizard({ onResult }) {
                     <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-5">
                       <span className="text-2xl">🌍</span>
                     </div>
-                    <h2 className="text-lg font-bold text-slate-800 mb-1">Ready to check your visa?</h2>
-                    <p className="text-sm text-slate-400 mb-6">Review your details below and run the AI check</p>
+                    <h2 className="text-lg font-bold text-slate-800 mb-1">
+                      {language === 'es' ? '¿Listo para verificar tu visa?' : language === 'fr' ? 'Prêt à vérifier votre visa?' : 'Ready to check your visa?'}
+                    </h2>
+                    <p className="text-sm text-slate-400 mb-6">
+                      {language === 'es' ? 'Revisa tus detalles a continuación y ejecuta la verificación de IA' : language === 'fr' ? 'Consultez vos détails ci-dessous et exécutez la vérification IA' : 'Review your details below and run the AI check'}
+                    </p>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden mb-6 text-left">
                       {[
@@ -395,7 +432,7 @@ export default function VisaWizard({ onResult }) {
                         { label: 'Destination', value: `${destination?.flag} ${destination?.name}` },
                         { label: 'Purpose', value: `${purpose?.emoji} ${purpose?.label}` },
                         { label: 'Duration', value: `${stayDuration} days${travelDate ? ` from ${travelDate}` : ''}` },
-                        ...(hasCompanion ? [{ label: 'Companion', value: '👫 Yes' }] : []),
+                        ...(hasCompanion ? [{ label: language === 'es' ? 'Compañero' : language === 'fr' ? 'Compagnon' : 'Companion', value: '👫 ' + (language === 'es' ? 'Sí' : language === 'fr' ? 'Oui' : 'Yes') }] : []),
                       ].map((row, i, arr) => (
                         <div key={row.label} className={`flex justify-between items-center px-4 py-3 ${i < arr.length - 1 ? 'border-b border-slate-200' : ''}`}>
                           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{row.label}</span>
@@ -408,7 +445,7 @@ export default function VisaWizard({ onResult }) {
                       onClick={handleEvaluate}
                       className="w-full py-4 bg-gradient-to-r from-blue-600 to-emerald-600 hover:opacity-90 text-white font-bold rounded-xl text-sm shadow-lg shadow-blue-200 transition-all"
                     >
-                      Run AI Visa Check →
+                      {language === 'es' ? 'Ejecutar Verificación de Visa IA →' : language === 'fr' ? 'Exécuter la Vérification Visa IA →' : 'Run AI Visa Check →'}
                     </button>
                   </div>
                 )}
@@ -426,7 +463,7 @@ export default function VisaWizard({ onResult }) {
               onClick={() => setStep(s => s - 1)}
               className="flex items-center gap-1.5 px-5 py-3.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all"
             >
-              <ChevronLeft className="w-4 h-4" /> Back
+              <ChevronLeft className="w-4 h-4" /> {language === 'es' ? 'Atrás' : language === 'fr' ? 'Retour' : 'Back'}
             </button>
           )}
           <button
@@ -438,7 +475,7 @@ export default function VisaWizard({ onResult }) {
             }
             className="flex-1 flex items-center justify-center gap-1.5 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
-            Continue <ChevronRight className="w-4 h-4" />
+            {language === 'es' ? 'Continuar' : language === 'fr' ? 'Continuer' : 'Continue'} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}

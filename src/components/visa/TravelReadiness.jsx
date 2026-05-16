@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, AlertCircle, Clock, Upload, Zap, Target } from 'lucide-react';
 
-const READINESS_ITEMS = [
+const getReadinessItems = (language) => [
   { id: 'passport', label: 'Passport Valid (6+ months)', icon: '🛂', category: 'documents', points: 20 },
   { id: 'visa', label: 'Visa / Travel Authorization', icon: '✅', category: 'documents', points: 20 },
   { id: 'ticket', label: 'Return Flight Booked', icon: '✈️', category: 'travel', points: 15 },
@@ -24,10 +24,24 @@ const CATEGORIES = [
 ];
 
 export default function TravelReadiness() {
+  const [language, setLanguage] = useState('en');
   const [checked, setChecked] = useState({});
   const [activeCategory, setActiveCategory] = useState('all');
   const [passportExpiry, setPassportExpiry] = useState('');
   const [travelDate, setTravelDate] = useState('');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLanguage') || 'en';
+    setLanguage(savedLang);
+    
+    const handleLanguageChange = (event) => {
+      setLanguage(event.detail.language);
+    };
+    window.addEventListener('languageChange', handleLanguageChange);
+    return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  const READINESS_ITEMS = getReadinessItems(language);
 
   const totalPoints = READINESS_ITEMS.reduce((s, i) => s + i.points, 0);
   const earnedPoints = READINESS_ITEMS.filter(i => checked[i.id]).reduce((s, i) => s + i.points, 0);
@@ -60,18 +74,22 @@ export default function TravelReadiness() {
   };
 
   const getScoreLabel = (score) => {
-    if (score >= 90) return 'Excellent — Almost Ready to Fly! 🚀';
-    if (score >= 75) return 'Good — A few items remaining';
-    if (score >= 50) return 'In Progress — Keep going!';
-    return 'Just Getting Started — Let\'s prep your trip';
+    if (score >= 90) return language === 'es' ? 'Excelente — ¡Casi listo para volar! 🚀' : language === 'fr' ? 'Excellent — Presque prêt à voler! 🚀' : 'Excellent — Almost Ready to Fly! 🚀';
+    if (score >= 75) return language === 'es' ? 'Bueno — Faltan pocos elementos' : language === 'fr' ? 'Bien — Quelques éléments manquent' : 'Good — A few items remaining';
+    if (score >= 50) return language === 'es' ? 'En Progreso — ¡Sigue adelante!' : language === 'fr' ? 'En cours — Continuez!' : 'In Progress — Keep going!';
+    return language === 'es' ? 'Apenas Empezando — Preparemos tu viaje' : language === 'fr' ? 'Tout juste commencé — Préparons votre voyage' : 'Just Getting Started — Let\'s prep your trip';
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center mb-2">
-        <h2 className="font-display text-2xl font-bold text-slate-800">Travel Readiness Meter</h2>
-        <p className="text-slate-500 text-sm mt-1">Track your preparation for international medical travel</p>
-      </div>
+         <h2 className="font-display text-2xl font-bold text-slate-800">
+           {language === 'es' ? 'Medidor de Preparación para el Viaje' : language === 'fr' ? 'Indicateur de Préparation aux Voyages' : 'Travel Readiness Meter'}
+         </h2>
+         <p className="text-slate-500 text-sm mt-1">
+           {language === 'es' ? 'Realiza un seguimiento de tu preparación para viajes médicos internacionales' : language === 'fr' ? 'Suivez votre préparation aux voyages médicaux internationaux' : 'Track your preparation for international medical travel'}
+         </p>
+       </div>
 
       {/* Score display */}
       <motion.div
@@ -100,9 +118,11 @@ export default function TravelReadiness() {
               </defs>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-2xl font-bold ${getScoreColor(readiness)}`}>{readiness}%</span>
-              <span className="text-xs text-slate-400">Ready</span>
-            </div>
+               <span className={`text-2xl font-bold ${getScoreColor(readiness)}`}>{readiness}%</span>
+               <span className="text-xs text-slate-400">
+                 {language === 'es' ? 'Listo' : language === 'fr' ? 'Prêt' : 'Ready'}
+               </span>
+             </div>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -114,10 +134,10 @@ export default function TravelReadiness() {
               </div>
             )}
             {readiness === 100 && (
-              <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-semibold">
-                🎉 Congratulations! You're fully prepared for travel!
-              </div>
-            )}
+                <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-semibold">
+                  🎉 {language === 'es' ? '¡Felicitaciones! ¡Estás completamente preparado para viajar!' : language === 'fr' ? 'Félicitations! Vous êtes entièrement préparé pour voyager!' : 'Congratulations! You\'re fully prepared for travel!'}
+                </div>
+              )}
           </div>
         </div>
       </motion.div>
@@ -125,11 +145,13 @@ export default function TravelReadiness() {
       {/* Passport validity checker */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span>🛂</span> Passport Validity Checker
+          <span>🛂</span> {language === 'es' ? 'Verificador de Validez de Pasaporte' : language === 'fr' ? 'Vérificateur de Validité du Passeport' : 'Passport Validity Checker'}
         </h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">Passport Expiry Date</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-2">
+              {language === 'es' ? 'Fecha de Vencimiento del Pasaporte' : language === 'fr' ? 'Date d\'Expiration du Passeport' : 'Passport Expiry Date'}
+            </label>
             <input
               type="date"
               value={passportExpiry}
@@ -138,7 +160,9 @@ export default function TravelReadiness() {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">Planned Travel Date</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-2">
+              {language === 'es' ? 'Fecha de Viaje Planeada' : language === 'fr' ? 'Date de Voyage Prévue' : 'Planned Travel Date'}
+            </label>
             <input
               type="date"
               value={travelDate}
@@ -165,7 +189,9 @@ export default function TravelReadiness() {
 
       {/* Checklist */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-        <h3 className="font-bold text-slate-800 mb-4">Travel Preparation Checklist</h3>
+        <h3 className="font-bold text-slate-800 mb-4">
+          {language === 'es' ? 'Lista de Verificación de Preparación para el Viaje' : language === 'fr' ? 'Liste de Contrôle de Préparation aux Voyages' : 'Travel Preparation Checklist'}
+        </h3>
 
         {/* Category filter */}
         <div className="flex gap-2 flex-wrap mb-5">
