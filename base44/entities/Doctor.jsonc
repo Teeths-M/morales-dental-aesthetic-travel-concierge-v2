@@ -84,6 +84,11 @@
       "type": "number",
       "default": 0
     },
+    "successful_procedures_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of successful procedures completed"
+    },
     "portfolio": {
       "type": "array",
       "items": {

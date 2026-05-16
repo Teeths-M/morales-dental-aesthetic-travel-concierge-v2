@@ -128,6 +128,12 @@ export default function Providers() {
                             <span className="text-muted-foreground">({doctor.review_count || 0})</span>
                           </div>
                         )}
+                        {doctor.successful_procedures_count !== undefined && (
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <span>✓</span>
+                            <span>{doctor.successful_procedures_count} Successful Procedures</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Credentials */}
