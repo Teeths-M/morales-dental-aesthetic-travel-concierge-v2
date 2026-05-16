@@ -47,7 +47,7 @@ export default function SafeT() {
     >
       <div className="min-h-screen backdrop-blur-sm bg-black/20">
         {/* Hero Header */}
-        <div className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-16 lg:top-20 z-20">
+         <div className="bg-white/5 backdrop-blur-md border-b border-white/10 sticky top-16 lg:top-20 z-20 opacity-30 hover:opacity-100 transition-opacity duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             className="flex items-start gap-4"
