@@ -40,8 +40,18 @@ export default function SafeT() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
+      {/* Hero with Background Image */}
+      <div 
+        className="relative bg-cover bg-center bg-no-repeat py-12"
+        style={{
+          backgroundImage: 'url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/745794e0c_ChatGPTImageMay16202608_02_59AM.png)',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40"></div>
+      </div>
+
       {/* Hero Header */}
-      <div className="bg-card/50 backdrop-blur-sm border-b border-border/30">
+      <div className="bg-card/50 backdrop-blur-sm border-b border-border/30 relative z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
             className="flex items-start gap-4"
