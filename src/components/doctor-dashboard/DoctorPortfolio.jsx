@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, Trash2, Play, Image as ImageIcon } from 'lucide-react';
 
@@ -6,12 +6,21 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
   const [portfolioItems, setPortfolioItems] = useState(portfolio || []);
   const [uploading, setUploading] = useState(false);
 
+  const saveToDatabase = async (items) => {
+    try {
+      await base44.entities.Doctor.update(doctorId, { portfolio: items });
+    } catch (err) {
+      console.error('Failed to save portfolio:', err);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
     setUploading(true);
     try {
+      const newItems = [...portfolioItems];
       for (const file of files) {
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         const isVideo = file.type.startsWith('video/');
@@ -24,21 +33,27 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
           uploadedAt: new Date().toISOString(),
         };
         
-        setPortfolioItems([...portfolioItems, newItem]);
+        newItems.push(newItem);
       }
+      setPortfolioItems(newItems);
+      await saveToDatabase(newItems);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleRemove = (itemId) => {
-    setPortfolioItems(portfolioItems.filter(item => item.id !== itemId));
+  const handleRemove = async (itemId) => {
+    const updated = portfolioItems.filter(item => item.id !== itemId);
+    setPortfolioItems(updated);
+    await saveToDatabase(updated);
   };
 
-  const handleTitleUpdate = (itemId, newTitle) => {
-    setPortfolioItems(portfolioItems.map(item =>
+  const handleTitleUpdate = async (itemId, newTitle) => {
+    const updated = portfolioItems.map(item =>
       item.id === itemId ? { ...item, title: newTitle } : item
-    ));
+    );
+    setPortfolioItems(updated);
+    await saveToDatabase(updated);
   };
 
   return (
