@@ -39,40 +39,13 @@ export default function DoctorConfirmationPanel({ workflow }) {
         : `Doctor marked as unavailable. ${notes ? 'Notes: ' + notes : ''}`,
     });
 
-    // 2. If confirmed, notify travel/hotel/cab partners and patient
+    // 2. If confirmed, call backend to notify all partners and patient
     if (status === 'confirmed') {
-      const partners = await base44.entities.Partner.filter({ is_active: true });
-
-      const notifyTypes = [
-        { type: 'travel', subject: `✅ Doctor Confirmed — Travel Booking Needed for ${workflow.patient_name}`, body: `The doctor has confirmed the procedure for ${workflow.patient_name}. Quoted price: $${price}. Please arrange flights and travel itinerary and confirm availability.\n\n${notes ? 'Doctor notes: ' + notes : ''}` },
-        { type: 'hotel', subject: `✅ Doctor Confirmed — Recovery Hotel Needed for ${workflow.patient_name}`, body: `The doctor has confirmed the procedure for ${workflow.patient_name}. Please arrange recovery accommodation and confirm availability.\n\n${notes ? 'Doctor notes: ' + notes : ''}` },
-        { type: 'cab', subject: `✅ Doctor Confirmed — Transfer Needed for ${workflow.patient_name}`, body: `The doctor has confirmed the procedure for ${workflow.patient_name}. Please prepare local airport and clinic transfers.\n\n${notes ? 'Doctor notes: ' + notes : ''}` },
-      ];
-
-      for (const { type, subject, body } of notifyTypes) {
-        const matched = partners.filter(p => p.type === type);
-        for (const partner of matched) {
-          try {
-            await base44.integrations.Core.SendEmail({ to: partner.email, subject, body });
-          } catch (_) { /* skip if not registered user */ }
-        }
-      }
-
-      // Update travel/hotel/cab status to notified
-      await base44.entities.WorkflowEvent.update(workflow.id, {
-        travel_status: 'notified',
-        hotel_status: 'notified',
-        cab_status: 'notified',
+      await base44.functions.invoke('onDoctorConfirmed', {
+        workflow_id: workflow.id,
+        quoted_price: price,
+        notes,
       });
-
-      // Notify patient
-      try {
-        await base44.integrations.Core.SendEmail({
-          to: workflow.patient_email,
-          subject: '✓ Great News — Your Doctor Has Confirmed! | Morales Dental & Aesthetics',
-          body: `Dear ${workflow.patient_name},\n\nWe're thrilled to let you know that your doctor has confirmed your procedure!\n\nOur team is now arranging your travel, accommodation, and local transfers. You'll receive a full package summary within 24–48 hours.\n\nIf you have any questions, don't hesitate to reach out to your concierge.\n\nWarm regards,\nThe Morales Dental & Aesthetics Concierge Team`,
-        });
-      } catch (_) { /* skip if not registered user */ }
     }
 
     // Update local state immediately so UI reflects the change without waiting for refetch
