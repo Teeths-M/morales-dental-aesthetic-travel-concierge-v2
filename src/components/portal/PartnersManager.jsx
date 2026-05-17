@@ -84,7 +84,10 @@ function PartnerForm({ initial = emptyForm, onSave, onCancel }) {
 }
 
 function DriverAlertModal({ partner, onClose }) {
-  const [message, setMessage] = useState(`Hi ${partner?.name}, this is Morales Dental & Aesthetics. Please pick up our client at 4:00 PM this Sunday. Confirm receipt of this message. Thank you!`);
+  const defaultMsg = partner?.type === 'cab' || partner?.source === 'TaxiService'
+    ? `Hi ${partner?.name}, this is Morales Dental & Aesthetics. Please pick up our client at 4:00 PM this Sunday. Confirm receipt of this message. Thank you!`
+    : `Hi ${partner?.name}, this is Morales Dental & Aesthetics. We have an update regarding an upcoming patient. Please check your email or contact us at your earliest convenience. Thank you!`;
+  const [message, setMessage] = useState(defaultMsg);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -259,7 +262,7 @@ export default function PartnersManager() {
                             {p.notes && <p className="text-xs text-muted-foreground/70 mt-0.5 italic">{p.notes}</p>}
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
-                            {(p.type === 'cab' || p.source === 'TaxiService') && (
+                            {(p.type === 'cab' || p.type === 'doctor' || p.type === 'travel' || p.source === 'TaxiService' || p.source === 'TravelAgency') && (
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700" title="Send SMS/WhatsApp alert" onClick={() => setAlertPartner(p)}>
                                 <MessageSquare className="w-3.5 h-3.5" />
                               </Button>
