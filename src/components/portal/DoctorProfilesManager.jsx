@@ -248,20 +248,21 @@ export default function DoctorProfilesManager() {
                             {data.review_count !== undefined && (
                               <Badge variant="secondary">{data.review_count} Reviews</Badge>
                             )}
-                            {data.successful_procedures_count !== undefined && (
-                              <Badge className="bg-green-100 text-green-800">
-                                {data.successful_procedures_count} Successful Procedures
-                              </Badge>
-                            )}
+
                           </>
                         )}
                       </div>
 
                       {/* Procedures Count */}
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
                         <FileText className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Procedures:</span>
                         <Badge>{doctor.specialties_count || 0}</Badge>
+                        {data.successful_procedures_count !== undefined && (
+                          <Badge className="bg-green-100 text-green-800">
+                            {data.successful_procedures_count} Successful
+                          </Badge>
+                        )}
                         {!isEditing && (
                           <Button
                             size="sm"
