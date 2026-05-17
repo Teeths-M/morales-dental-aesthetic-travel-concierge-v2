@@ -9,7 +9,7 @@ export default function ProcedureSelectionGate({ children }) {
   const { items } = useCart();
   const navigate = useNavigate();
   
-  const hasSelectedProcedure = items.length > 0;
+  const hasSelectedProcedure = items && .length > 0;
 
   return (
     <>
