@@ -248,6 +248,11 @@ export default function DoctorProfilesManager() {
                             {data.review_count !== undefined && (
                               <Badge variant="secondary">{data.review_count} Reviews</Badge>
                             )}
+                            {data.successful_procedures_count !== undefined && (
+                              <Badge className="bg-green-100 text-green-800">
+                                {data.successful_procedures_count} Successful Procedures
+                              </Badge>
+                            )}
                           </>
                         )}
                       </div>
