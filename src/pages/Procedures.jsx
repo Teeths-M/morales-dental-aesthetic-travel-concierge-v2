@@ -178,6 +178,16 @@ export default function Procedures() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* Mobile Cart Summary - shown only on mobile when items exist */}
+        {items.length > 0 && (
+          <div className="lg:hidden mb-6">
+            <MyProceduresList
+              items={selectedProcs}
+              onRemove={removeProc}
+              onClear={() => clearCart()}
+            />
+          </div>
+        )}
 
         <div className="flex gap-8 items-start">
           {/* Main content */}
