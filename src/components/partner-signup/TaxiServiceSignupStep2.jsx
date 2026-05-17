@@ -114,28 +114,28 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
           <label className="text-sm font-medium text-foreground mb-4 block">💰 {language === 'es' ? 'Modelo de Precios' : language === 'fr' ? 'Modèle de Tarification' : 'Pricing Model'}</label>
           
           <div className="space-y-4">
-            {/* Per KM */}
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-              <div>
-                <p className="text-sm font-medium text-foreground">{language === 'es' ? 'Por Kilómetro' : language === 'fr' ? 'Par Kilomètre' : 'Per Kilometer'}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">${pricingModel.per_km || 0}/km</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => decrementPrice('per_km', 0.5)} className="p-2 hover:bg-secondary rounded">
-                  <Minus className="w-4 h-4" />
-                </button>
-                <Input
-                  type="number"
-                  value={pricingModel.per_km || 0}
-                  onChange={(e) => updatePrice('per_km', e.target.value)}
-                  className="w-16 text-center text-sm"
-                  step="0.5"
-                />
-                <button onClick={() => incrementPrice('per_km', 0.5)} className="p-2 hover:bg-secondary rounded">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            {/* Return Trip Home–Airport Fixed Price */}
+             <div className="flex items-center justify-between p-4 rounded-lg border border-border">
+               <div>
+                 <p className="text-sm font-medium text-foreground">{language === 'es' ? 'Viaje de Regreso Casa–Aeropuerto (Precio Fijo)' : language === 'fr' ? 'Trajet Retour Domicile–Aéroport (Prix Fixe)' : 'Return Trip Home–Airport (Fixed Price)'}</p>
+                 <p className="text-xs text-muted-foreground mt-0.5">${pricingModel.return_trip_home_airport || 0} fixed</p>
+               </div>
+               <div className="flex items-center gap-2">
+                 <button onClick={() => decrementPrice('return_trip_home_airport', 5)} className="p-2 hover:bg-secondary rounded">
+                   <Minus className="w-4 h-4" />
+                 </button>
+                 <Input
+                   type="number"
+                   value={pricingModel.return_trip_home_airport || 0}
+                   onChange={(e) => updatePrice('return_trip_home_airport', e.target.value)}
+                   className="w-16 text-center text-sm"
+                   step="5"
+                 />
+                 <button onClick={() => incrementPrice('return_trip_home_airport', 5)} className="p-2 hover:bg-secondary rounded">
+                   <Plus className="w-4 h-4" />
+                 </button>
+               </div>
+             </div>
 
             {/* Per Hour */}
             <div className="flex items-center justify-between p-4 rounded-lg border border-border">
