@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock, FileText, X } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
@@ -63,7 +63,46 @@ export default function Booking() {
   const [consultationId, setConsultationId] = useState(null);
   const [headerHovered, setHeaderHovered] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [draftData, setDraftData] = useState(null);
   const { items, clearCart } = useCart();
+
+  // Auto-save debounce timer
+  const saveTimerRef = useRef(null);
+
+  // Get current user email
+  const [userEmail, setUserEmail] = useState(null);
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user?.email) setUserEmail(user.email);
+      } catch (e) {
+        // User not logged in
+      }
+    };
+    getUser();
+  }, []);
+
+  // Check for existing draft on mount
+  const { data: existingDraft } = useQuery({
+    queryKey: ['consultation_draft', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return null;
+      const drafts = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
+      return drafts.length > 0 ? drafts[0] : null;
+    },
+    enabled: !!userEmail,
+    staleTime: 1000 * 60,
+  });
+
+  // Show resume modal when draft is found
+  useEffect(() => {
+    if (existingDraft && !submitted) {
+      setDraftData(existingDraft);
+      setShowResumeModal(true);
+    }
+  }, [existingDraft, submitted]);
 
   useEffect(() => {
     const handleLanguageChange = (event) => {
@@ -90,6 +129,86 @@ export default function Booking() {
   });
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+
+  // Auto-save draft (debounced 1 second)
+  const saveDraft = useCallback((formData, currentStep) => {
+    if (!userEmail || submitted) return;
+    
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        // Convert Set to array for JSON serialization
+        const formDataSerializable = {
+          ...formData,
+          acknowledged_statements: Array.from(formData.acknowledged_statements)
+        };
+        
+        const existing = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
+        
+        if (existing.length > 0) {
+          // Update existing draft
+          await base44.entities.ConsultationDraft.update(existing[0].id, {
+            form_data: formDataSerializable,
+            step: steps[currentStep]?.label || 'unknown',
+            last_saved_at: new Date().toISOString(),
+          });
+        } else {
+          // Create new draft
+          await base44.entities.ConsultationDraft.create({
+            user_email: userEmail,
+            form_data: formDataSerializable,
+            step: steps[currentStep]?.label || 'unknown',
+            last_saved_at: new Date().toISOString(),
+          });
+        }
+      } catch (e) {
+        console.error('Auto-save failed:', e);
+      }
+    }, 1000);
+  }, [userEmail, submitted]);
+
+  // Save draft on form changes
+  useEffect(() => {
+    saveDraft(form, step);
+  }, [form, step, saveDraft]);
+
+  // Resume draft
+  const handleResumeDraft = async () => {
+    if (!draftData?.form_data) return;
+    
+    // Convert acknowledged_statements array back to Set
+    const restoredForm = {
+      ...draftData.form_data,
+      acknowledged_statements: new Set(draftData.form_data.acknowledged_statements || [])
+    };
+    
+    setForm(restoredForm);
+    
+    // Find step index from saved step label
+    const savedStepIndex = steps.findIndex(s => s.label === draftData.step);
+    if (savedStepIndex >= 0) {
+      setStep(savedStepIndex);
+    }
+    
+    setShowResumeModal(false);
+    setDraftData(null);
+  };
+
+  // Delete draft after successful submission
+  const deleteDraft = useCallback(async () => {
+    if (!userEmail) return;
+    try {
+      const drafts = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
+      if (drafts.length > 0) {
+        await base44.entities.ConsultationDraft.delete(drafts[0].id);
+      }
+    } catch (e) {
+      console.error('Failed to delete draft:', e);
+    }
+  }, [userEmail]);
 
   const createMutation = useMutation({
     mutationFn: (data) => {
@@ -151,6 +270,13 @@ export default function Booking() {
     createMutation.mutate(form);
     setShowPreview(false);
   };
+
+  // Delete draft on successful submission
+  useEffect(() => {
+    if (submitted) {
+      deleteDraft();
+    }
+  }, [submitted, deleteDraft]);
 
   if (submitted) return <SubmissionSuccess form={form} items={items} />;
 
@@ -362,6 +488,72 @@ export default function Booking() {
         }}
         onCancel={() => setShowFeeModal(false)}
       />
+
+      {/* Resume Draft Modal */}
+      {showResumeModal && draftData && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-lg">Saved Consultation Found</h3>
+                  <p className="text-xs text-slate-500">
+                    Last saved {new Date(draftData.last_saved_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowResumeModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-slate-700 mb-3">
+                We found a saved consultation from <strong>{new Date(draftData.last_saved_at).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</strong>.
+              </p>
+              <div className="space-y-2 text-xs text-slate-600">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Step: <strong>{draftData.step}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>All entered information preserved</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={handleResumeDraft}
+                className="flex-1 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white"
+              >
+                Resume Consultation
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowResumeModal(false);
+                  deleteDraft();
+                }}
+                className="flex-1"
+              >
+                Start Over
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
