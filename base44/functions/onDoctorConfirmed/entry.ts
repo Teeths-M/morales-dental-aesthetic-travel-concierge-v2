@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const { workflow_id, quoted_price, notes, only_agency_id } = await req.json();
+    const { workflow_id, quoted_price, notes, only_agency_id, doctor_email, doctor_name } = await req.json();
 
     if (!workflow_id) {
       return Response.json({ error: 'workflow_id is required' }, { status: 400 });
@@ -21,7 +21,24 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
     ]);
 
-    const results = { travel: [], hotel: [], cab: [], patient: null };
+    const appUrl = Deno.env.get('APP_URL') || 'https://your-portal-url.com';
+    const portalLink = `${appUrl}/doctor-dashboard`;
+
+    const results = { travel: [], hotel: [], cab: [], patient: null, doctor: null };
+
+    // Notify doctor with portal link
+    if (doctor_email) {
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: doctor_email,
+          subject: `✅ Procedure Confirmed — Patient ${workflow.patient_name} | Morales Dental & Aesthetics`,
+          body: `Dear ${doctor_name || 'Doctor'},\n\nThis is a confirmation that you have been assigned the following procedure:\n\nPatient: ${workflow.patient_name}\nQuoted Price: $${quoted_price || 'TBD'}\n${notes ? 'Your Notes: ' + notes + '\n' : ''}\nYou can view and manage this case from your doctor portal:\n${portalLink}\n\nThank you for being part of our network!\n\n— Morales Dental & Aesthetics Concierge Team`,
+        });
+        results.doctor = 'sent';
+      } catch (e) {
+        results.doctor = `failed: ${e.message}`;
+      }
+    }
 
     // Notify travel agencies (flights + hotels)
     const filteredAgencies = only_agency_id ? travelAgencies.filter(a => a.id === only_agency_id) : travelAgencies;
