@@ -297,8 +297,9 @@ export default function DoctorDashboard() {
                                 Cancel
                               </button>
                             </div>
-                            </div>
-                          ) : (
+                          </div>
+                          </div>
+                        ) : (
                             <>
                               <div className="mb-4">
                                 <div className="flex items-start justify-between">
