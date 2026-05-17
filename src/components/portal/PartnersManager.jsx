@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { Stethoscope, Plane, Hotel, Car, Plus, Pencil, Trash2, Check, X, Users } from 'lucide-react';
+import { Stethoscope, Plane, Hotel, Car, Plus, Pencil, Trash2, Check, X, Users, MessageSquare } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 const PARTNER_TYPES = [
   { value: 'doctor', label: 'Doctor / Clinic', icon: Stethoscope, color: 'bg-blue-100 text-blue-700' },
@@ -81,10 +83,55 @@ function PartnerForm({ initial = emptyForm, onSave, onCancel }) {
   );
 }
 
+function DriverAlertModal({ partner, onClose }) {
+  const [message, setMessage] = useState(`Hi ${partner?.name}, this is Morales Dental & Aesthetics. Please pick up our client at 4:00 PM this Sunday. Confirm receipt of this message. Thank you!`);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const send = async () => {
+    if (!partner?.phone) { setResult({ error: 'No phone number on file for this driver.' }); return; }
+    setSending(true);
+    try {
+      const res = await base44.functions.invoke('sendDriverAlert', { phone: partner.phone, message, channels: ['sms', 'whatsapp'] });
+      setResult(res.data);
+    } catch (e) {
+      setResult({ error: e.message });
+    }
+    setSending(false);
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Send Alert to {partner?.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="text-xs text-muted-foreground">Sending via <span className="font-semibold">SMS + WhatsApp</span> to {partner?.phone || <span className="text-destructive">No phone on file</span>}</div>
+          <Textarea value={message} onChange={e => setMessage(e.target.value)} rows={5} className="text-sm" />
+          {result && (
+            <div className={`text-xs rounded-lg p-3 ${result.error ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+              {result.error ? `❌ ${result.error}` : result.results ? `✅ SMS: ${result.results.sms?.status || result.results.sms?.error || 'sent'} · WhatsApp: ${result.results.whatsapp?.status || result.results.whatsapp?.error || 'sent'}` : '✅ Sent!'}
+              {result.error?.includes('not configured') && <div className="mt-1 font-semibold">Set up Twilio credentials in Dashboard → Settings → Environment Variables.</div>}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+            <Button size="sm" onClick={send} disabled={sending} className="bg-green-600 hover:bg-green-700 text-white">
+              <MessageSquare className="w-3.5 h-3.5 mr-1" /> {sending ? 'Sending…' : 'Send SMS + WhatsApp'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function PartnersManager() {
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [alertPartner, setAlertPartner] = useState(null);
 
   const { data: partners = [], isLoading } = useQuery({
     queryKey: ['partners'],
@@ -157,6 +204,7 @@ export default function PartnersManager() {
 
   return (
     <div className="space-y-6">
+      {alertPartner && <DriverAlertModal partner={alertPartner} onClose={() => setAlertPartner(null)} />}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Manage your network of partners. Their emails will be used when the workflow sends notifications.</p>
         {!adding && (
@@ -211,6 +259,11 @@ export default function PartnersManager() {
                             {p.notes && <p className="text-xs text-muted-foreground/70 mt-0.5 italic">{p.notes}</p>}
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
+                            {(p.type === 'cab' || p.source === 'TaxiService') && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700" title="Send SMS/WhatsApp alert" onClick={() => setAlertPartner(p)}>
+                                <MessageSquare className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(p.id)}>
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
