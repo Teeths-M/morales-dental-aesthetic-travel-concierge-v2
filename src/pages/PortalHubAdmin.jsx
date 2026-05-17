@@ -17,6 +17,7 @@ import WorkflowDashboard from '@/components/portal/WorkflowDashboard';
 import ProviderManager from '@/components/portal/ProviderManager';
 import PaymentDashboard from '@/components/portal/PaymentDashboard';
 import PricingCatalogManager from '@/components/portal/PricingCatalogManager';
+import DoctorProfilesManager from '@/components/portal/DoctorProfilesManager';
 
 const statusConfig = {
   'FULLY_CONFIRMED': { color: 'bg-green-50 border-green-200', icon: CheckCircle2, label: 'Fully Confirmed', textColor: 'text-green-700' },
@@ -28,7 +29,7 @@ const statusConfig = {
 };
 
 export default function PortalHubAdmin() {
-  const [activeTab, setActiveTab] = useState('workflows');
+  const [activeTab, setActiveTab] = useState('doctors');
   const [subTab, setSubTab] = useState('workflows');
   const [filters, setFilters] = useState({ status: null });
 
@@ -103,6 +104,7 @@ export default function PortalHubAdmin() {
           {/* Content */}
           <div className="p-8">
             {activeTab === 'workflows' && <WorkflowDashboard workflows={workflows} isLoading={isLoading} />}
+            {activeTab === 'doctors' && <DoctorProfilesManager />}
             {activeTab === 'providers' && <ProviderManager />}
             {activeTab === 'payments' && <PaymentDashboard paymentPlans={paymentPlans} />}
             {activeTab === 'pricing' && <PricingCatalogManager />}

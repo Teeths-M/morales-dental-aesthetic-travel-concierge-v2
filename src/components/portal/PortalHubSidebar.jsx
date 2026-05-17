@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
+  Stethoscope,
   Users,
   CreditCard,
   DollarSign,
@@ -14,6 +15,7 @@ import { base44 } from '@/api/base44Client';
 
 const navItems = [
   { id: 'workflows', label: 'Workflow Monitor', icon: LayoutDashboard },
+  { id: 'doctors', label: 'Doctor Profiles', icon: Stethoscope },
   { id: 'providers', label: 'Provider Management', icon: Users },
   { id: 'pricing', label: 'Pricing Catalog', icon: DollarSign },
   { id: 'payments', label: 'Payment Tracking', icon: CreditCard },
