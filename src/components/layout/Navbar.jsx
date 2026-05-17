@@ -17,7 +17,8 @@ const getNavLinks = (language) => [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [portalHubOpen, setPortalHubOpen] = useState(false);
+  const [partnerDropdownOpen, setPartnerDropdownOpen] = useState(false);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem('appLanguage') || 'en';
@@ -31,12 +32,22 @@ export default function Navbar() {
     setNavLinks(getNavLinks(language));
   }, [language]);
 
-  const handleDropdownMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => setDropdownOpen(false), 1000);
+  const handlePortalHubMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 1000);
   };
 
-  const handleDropdownMouseEnter = () => {
+  const handlePortalHubMouseEnter = () => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
+    setPortalHubOpen(true);
+  };
+
+  const handlePartnerMouseLeave = () => {
+    languageTimeoutRef.current = setTimeout(() => setPartnerDropdownOpen(false), 1000);
+  };
+
+  const handlePartnerMouseEnter = () => {
+    if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current);
+    setPartnerDropdownOpen(true);
   };
 
   const handleLanguageMouseLeave = () => {
@@ -100,22 +111,19 @@ export default function Navbar() {
             {/* Portal Hub Dropdown (Doctor Access) */}
             <div 
               className="relative" 
-              onMouseLeave={handleDropdownMouseLeave} 
-              onMouseEnter={() => {
-                handleDropdownMouseEnter();
-                setDropdownOpen(true);
-              }}
+              onMouseLeave={handlePortalHubMouseLeave} 
+              onMouseEnter={handlePortalHubMouseEnter}
             >
               <button
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
               >
                 <Stethoscope className="w-4 h-4" />
                 {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
-                {dropdownOpen && (
+                {portalHubOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -124,21 +132,21 @@ export default function Navbar() {
                   >
                     <Link
                       to="/portal-hub"
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => setPortalHubOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
                     >
                       {language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access'}
                     </Link>
                     <Link
                       to="/portal-hub/admin"
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => setPortalHubOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
                     >
                       {language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard'}
                     </Link>
                     <Link
                       to="/doctor-dashboard"
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => setPortalHubOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
                     >
                       {language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard'}
@@ -151,21 +159,18 @@ export default function Navbar() {
             {/* Partner Dropdown */}
             <div 
               className="relative" 
-              onMouseLeave={handleDropdownMouseLeave} 
-              onMouseEnter={() => {
-                handleDropdownMouseEnter();
-                setDropdownOpen(true);
-              }}
+              onMouseLeave={handlePartnerMouseLeave} 
+              onMouseEnter={handlePartnerMouseEnter}
             >
               <button
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
               >
                 {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
-                {dropdownOpen && (
+                {partnerDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -174,21 +179,21 @@ export default function Navbar() {
                   >
                     <Link
                       to="/doctor-signup"
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => setPartnerDropdownOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
                     >
                       {language === 'es' ? 'Registro de Doctor' : language === 'fr' ? 'Enregistrement Docteur' : 'Doctor Sign-up'}
                     </Link>
                     <Link
                       to="/partner-signup"
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => setPartnerDropdownOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
                     >
                       {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyage' : 'Travel Agency'}
                     </Link>
                     <Link
                       to="/partner-signup/taxi-service"
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => setPartnerDropdownOpen(false)}
                       className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
                     >
                       {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
@@ -286,18 +291,18 @@ export default function Navbar() {
 
               {/* Mobile Portal Hub Dropdown */}
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => setPortalHubOpen(!portalHubOpen)}
                 className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
               >
                 <span className="flex items-center gap-2">
                   <Stethoscope className="w-4 h-4" />
                   {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
                 </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
-                {dropdownOpen && (
+                {portalHubOpen && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -331,15 +336,15 @@ export default function Navbar() {
 
               {/* Mobile Partner Dropdown */}
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => setPartnerDropdownOpen(!partnerDropdownOpen)}
                 className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
               >
                 {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
-                {dropdownOpen && (
+                {partnerDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
