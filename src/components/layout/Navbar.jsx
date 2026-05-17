@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Globe, ChevronDown } from 'lucide-react';
+import { Menu, X, Globe, ChevronDown, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getNavLinks = (language) => [
@@ -96,6 +96,57 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+
+            {/* Portal Hub Dropdown (Doctor Access) */}
+            <div 
+              className="relative" 
+              onMouseLeave={handleDropdownMouseLeave} 
+              onMouseEnter={() => {
+                handleDropdownMouseEnter();
+                setDropdownOpen(true);
+              }}
+            >
+              <button
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
+              >
+                <Stethoscope className="w-4 h-4" />
+                {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
+                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full left-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg z-50"
+                  >
+                    <Link
+                      to="/portal-hub"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
+                    >
+                      {language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access'}
+                    </Link>
+                    <Link
+                      to="/portal-hub/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
+                    >
+                      {language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard'}
+                    </Link>
+                    <Link
+                      to="/doctor-dashboard"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
+                    >
+                      {language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard'}
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Partner Dropdown */}
             <div 
@@ -232,6 +283,51 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+
+              {/* Mobile Portal Hub Dropdown */}
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4" />
+                  {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-1 pl-4"
+                  >
+                    <Link
+                      to="/portal-hub"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      {language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access'}
+                    </Link>
+                    <Link
+                      to="/portal-hub/admin"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      {language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard'}
+                    </Link>
+                    <Link
+                      to="/doctor-dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      {language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard'}
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Mobile Partner Dropdown */}
               <button
