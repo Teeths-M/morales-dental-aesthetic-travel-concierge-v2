@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     ]);
 
     const appUrl = Deno.env.get('APP_URL') || 'https://your-portal-url.com';
-    const portalLink = `${appUrl}/doctor-dashboard`;
+    const portalLink = `${appUrl}/portal-hub`;
 
     const results = { travel: [], hotel: [], cab: [], patient: null, doctor: null };
 
