@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock, FileText, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock, FileText, X, AlertCircle } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
@@ -24,6 +24,8 @@ import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
 import ClientAcknowledgement from '../components/booking/ClientAcknowledgement';
+import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
+import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -212,6 +214,10 @@ export default function Booking() {
 
   const createMutation = useMutation({
     mutationFn: (data) => {
+      // Backend safeguard: refuse if no procedures selected
+      if (!items || items.length === 0) {
+        throw new Error('No procedure selected – please go back and choose one.');
+      }
       const procedureNames = items.map(item => item.name).join(', ') || 'other';
       return base44.entities.Consultation.create({ ...data, procedure_interest: procedureNames });
     },
@@ -219,6 +225,9 @@ export default function Booking() {
       setConsultationId(consultation.id);
       setShowFeeModal(true);
       clearCart();
+    },
+    onError: (error) => {
+      console.error('Consultation creation failed:', error.message);
     },
   });
 
@@ -267,6 +276,11 @@ export default function Booking() {
   };
 
   const handleConfirmSubmit = () => {
+    // Backend safeguard: ensure at least one procedure is selected
+    if (!items || items.length === 0) {
+      alert('No procedure selected – please go back and choose one.');
+      return;
+    }
     createMutation.mutate(form);
     setShowPreview(false);
   };
@@ -283,6 +297,7 @@ export default function Booking() {
   const progressPct = Math.round((step / (steps.length - 1)) * 100);
 
   return (
+    <ProcedureSelectionGate>
     <div className="min-h-screen bg-transparent">
       <MedicalSlideshowBackground step={step} />
       {/* Premium Header — full glass over the background - Ghost effect */}
@@ -305,6 +320,11 @@ export default function Booking() {
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/60 font-normal">{translations[language].stepOf} {steps.length}</span></p>
                 <p className="text-[10px] text-emerald-300">{progressPct}% {translations[language].percentComplete}</p>
+              </div>
+              {/* Procedure count indicator */}
+              <div className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${items.length > 0 ? 'bg-emerald-500/30 border-emerald-400/30 text-emerald-200' : 'bg-red-500/30 border-red-400/30 text-red-200'}`}>
+                {items.length > 0 ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                <span className="text-[10px] font-bold">{items.length} {items.length === 1 ? 'Procedure' : 'Procedures'}</span>
               </div>
             </div>
           </div>
@@ -416,6 +436,9 @@ export default function Booking() {
 
           {/* Right Sidebar - Step Info + Cart */}
           <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-24 lg:h-fit">
+          {/* Procedure Requirement Notice */}
+          <ProcedureRequirementNotice />
+          
           {/* Step Info Card */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-3 sticky top-16">
           <div className="flex items-center gap-2 mb-2">
@@ -555,5 +578,6 @@ export default function Booking() {
         </div>
       )}
     </div>
+    </ProcedureSelectionGate>
   );
 }

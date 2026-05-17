@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar } from 'lucide-react';
+import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar, AlertCircle } from 'lucide-react';
 import ProcedureModal from '@/components/procedures/ProcedureModal';
 import SelectDoctorModal from '@/components/procedures/SelectDoctorModal';
 import { Button } from '@/components/ui/button';
@@ -248,10 +248,16 @@ export default function Procedures() {
                 {language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.'}
               </p>
               <Link to="/booking">
-                <Button size="lg" className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-10 shadow-md">
-                {language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation'} <ArrowRight className="w-4 h-4 ml-2" />
+                <Button size="lg" className={`font-semibold px-10 shadow-md ${items.length > 0 ? 'bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`} disabled={items.length === 0}>
+                {language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation'} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </Link>
+              {items.length === 0 && (
+                <p className="text-center text-xs text-amber-600 mt-3 flex items-center justify-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Select at least one procedure to continue
+                </p>
+              )}
             </motion.div>
           </div>
 
