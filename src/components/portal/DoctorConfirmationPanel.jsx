@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, DollarSign, MessageSquare } from 'lucide-react';
+import { CheckCircle2, XCircle, DollarSign, MessageSquare, Send, AlertTriangle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function DoctorConfirmationPanel({ workflow }) {
@@ -14,6 +14,8 @@ export default function DoctorConfirmationPanel({ workflow }) {
   const [notes, setNotes] = useState(workflow.doctor_notes || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendResult, setResendResult] = useState(null);
   const [localStatus, setLocalStatus] = useState(workflow.doctor_status);
   const [localQuotedPrice, setLocalQuotedPrice] = useState(workflow.doctor_quoted_price);
   const [localNotes, setLocalNotes] = useState(workflow.doctor_notes);
@@ -58,6 +60,19 @@ export default function DoctorConfirmationPanel({ workflow }) {
     setSaving(false);
   };
 
+  const handleResend = async () => {
+    setResending(true);
+    setResendResult(null);
+    const res = await base44.functions.invoke('onDoctorConfirmed', {
+      workflow_id: workflow.id,
+      quoted_price: localQuotedPrice,
+      notes: localNotes,
+    });
+    setResendResult(res.data);
+    setResending(false);
+    qc.invalidateQueries({ queryKey: ['portal_workflows'] });
+  };
+
   const handleReset = async () => {
     await base44.entities.WorkflowEvent.update(workflow.id, { doctor_status: 'notified' });
     setLocalStatus('notified');
@@ -89,6 +104,44 @@ export default function DoctorConfirmationPanel({ workflow }) {
               {new Date(localDate).toLocaleString()}
             </p>
           )}
+
+          {isConfirmed && (
+            <div className="mt-3 space-y-2">
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 w-full"
+                onClick={handleResend}
+                disabled={resending}
+              >
+                <Send className="w-3.5 h-3.5" />
+                {resending ? 'Sending Quote Requests…' : 'Resend Quote Requests to Partners'}
+              </Button>
+
+              {resendResult && (
+                <div className="text-xs rounded-lg p-3 bg-white border border-green-200 space-y-1">
+                  <p className="font-semibold text-green-700">✓ Quote requests sent:</p>
+                  {['travel', 'hotel', 'cab'].map(type => {
+                    const list = resendResult.results?.[type] || [];
+                    if (list.length === 0) return (
+                      <p key={type} className="text-amber-600 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        No {type} partners found — add them in Partners Manager
+                      </p>
+                    );
+                    return list.map((r, i) => (
+                      <p key={i} className={r.status === 'sent' ? 'text-green-600' : 'text-red-600'}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}: {r.email} — {r.status}
+                      </p>
+                    ));
+                  })}
+                  <p className={`${resendResult.results?.patient === 'sent' ? 'text-green-600' : 'text-amber-600'}`}>
+                    Patient: {resendResult.results?.patient}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <Button
             size="sm"
             variant="ghost"
