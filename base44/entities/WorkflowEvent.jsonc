@@ -55,6 +55,14 @@
     "doctor_notes": {
       "type": "string"
     },
+    "doctor_quoted_price": {
+      "type": "number",
+      "description": "Price quoted by doctor for the procedure (USD)"
+    },
+    "doctor_confirmed_date": {
+      "type": "string",
+      "description": "ISO timestamp when doctor confirmed"
+    },
     "travel_status": {
       "type": "string",
       "enum": [

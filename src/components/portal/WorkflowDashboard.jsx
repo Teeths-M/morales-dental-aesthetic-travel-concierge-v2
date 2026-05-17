@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Filter
 } from 'lucide-react';
+import DoctorConfirmationPanel from '@/components/portal/DoctorConfirmationPanel';
 
 const statusConfig = {
   'risk_check': { icon: AlertCircle, label: 'Risk Check', color: 'bg-yellow-50 border-yellow-200 text-yellow-700' },
@@ -150,13 +151,13 @@ export default function WorkflowDashboard({ workflows = [], isLoading }) {
                       </div>
                     </div>
 
-                    {/* Notes */}
-                    {workflow.doctor_notes && (
+                    {/* Doctor Confirmation */}
+                    {workflow.stage === 'doctor' || workflow.doctor_status === 'notified' || workflow.doctor_status === 'confirmed' || workflow.doctor_status === 'unavailable' ? (
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Doctor Notes</p>
-                        <p className="text-sm text-foreground">{workflow.doctor_notes}</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Doctor Response</p>
+                        <DoctorConfirmationPanel workflow={workflow} />
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-4 border-t border-border">
