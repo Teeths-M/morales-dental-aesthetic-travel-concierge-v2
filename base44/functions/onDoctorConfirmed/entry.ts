@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const { workflow_id, quoted_price, notes } = await req.json();
+    const { workflow_id, quoted_price, notes, only_agency_id } = await req.json();
 
     if (!workflow_id) {
       return Response.json({ error: 'workflow_id is required' }, { status: 400 });
@@ -24,7 +24,8 @@ Deno.serve(async (req) => {
     const results = { travel: [], hotel: [], cab: [], patient: null };
 
     // Notify travel agencies (flights + hotels)
-    for (const agency of travelAgencies) {
+    const filteredAgencies = only_agency_id ? travelAgencies.filter(a => a.id === only_agency_id) : travelAgencies;
+    for (const agency of filteredAgencies) {
       const offersFlights = agency.services_offered?.includes('flights');
       const offersHotels = agency.services_offered?.includes('hotels');
       const name = agency.agency_name || agency.email;
