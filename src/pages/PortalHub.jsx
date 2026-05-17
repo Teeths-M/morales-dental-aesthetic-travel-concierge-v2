@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck, ShieldX, Stethoscope, Plane, Hotel, Car,
-  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users
+  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ function PartnerRow({ icon: Icon, label, status, notes }) {
   );
 }
 
-function WorkflowCard({ workflow, onRerun }) {
+function WorkflowCard({ workflow, onRerun, onDelete }) {
   const [expanded, setExpanded] = useState(false);
   const isBlocked = workflow.risk_result === 'blocked';
   const isApproved = workflow.risk_result === 'approved';
@@ -121,14 +121,25 @@ function WorkflowCard({ workflow, onRerun }) {
             <><XCircle className="w-3.5 h-3.5 text-muted-foreground" /> Customer not notified yet</>
           )}
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 text-xs gap-1.5"
-          onClick={() => onRerun(workflow.consultation_id)}
-        >
-          <RefreshCw className="w-3 h-3" /> Re-run Workflow
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => onRerun(workflow.consultation_id)}
+          >
+            <RefreshCw className="w-3 h-3" /> Re-run Workflow
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+            onClick={() => onDelete(workflow.id)}
+            title="Delete workflow"
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
       </div>
     </motion.div>
   );
@@ -156,6 +167,12 @@ export default function PortalHub() {
     const res = await base44.functions.invoke('portalHubWorkflow', { consultation_id });
     setRunning(null);
     setMessage(`Workflow complete: ${res.data?.status?.toUpperCase()} — ${res.data?.message}`);
+    refetch();
+  };
+
+  const deleteWorkflow = async (workflow_id) => {
+    if (!confirm('Delete this workflow event?')) return;
+    await base44.entities.WorkflowEvent.delete(workflow_id);
     refetch();
   };
 
@@ -280,10 +297,10 @@ export default function PortalHub() {
             </div>
           ) : (
             <div className="space-y-4">
-              {workflows.map(w => (
-                <WorkflowCard key={w.id} workflow={w} onRerun={rerun} />
-              ))}
-            </div>
+               {workflows.map(w => (
+                 <WorkflowCard key={w.id} workflow={w} onRerun={rerun} onDelete={deleteWorkflow} />
+               ))}
+             </div>
           )}
         </div>
 
