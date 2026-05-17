@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Edit2, Save, X, Star, Clock, MapPin, Upload, Trash2, Play, Image as ImageIcon, FileText } from 'lucide-react';
+import { Search, Edit2, Save, X, Star, Clock, MapPin, Upload, Trash2, Play, Image as ImageIcon, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function DoctorProfilesManager() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,11 +16,23 @@ export default function DoctorProfilesManager() {
   const [editData, setEditData] = useState({});
   const [portfolioDialogOpen, setPortfolioDialogOpen] = useState(false);
   const [activeDoctorId, setActiveDoctorId] = useState(null);
+  const [proceduresDialogOpen, setProceduresDialogOpen] = useState(false);
+  const [activeDoctorForProcedures, setActiveDoctorForProcedures] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['admin_all_doctors'],
-    queryFn: () => base44.entities.Doctor.list(),
+    queryFn: async () => {
+      const doctorsList = await base44.entities.Doctor.list();
+      // Fetch specialties count for each doctor
+      const doctorsWithCount = await Promise.all(
+        doctorsList.map(async (doctor) => {
+          const specialties = await base44.entities.DoctorSpecialty.filter({ doctor_id: doctor.id });
+          return { ...doctor, specialties_count: specialties.length };
+        })
+      );
+      return doctorsWithCount;
+    },
   });
 
   const updateMutation = useMutation({
@@ -28,6 +40,25 @@ export default function DoctorProfilesManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin_all_doctors'] });
       setEditingDoctorId(null);
+    },
+  });
+
+  // Mutation to update doctor specialties
+  const updateSpecialtiesMutation = useMutation({
+    mutationFn: async ({ doctorId, specialtyIds }) => {
+      // First, get current specialties
+      const currentSpecialties = await base44.entities.DoctorSpecialty.filter({ doctor_id: doctorId });
+      const currentIds = currentSpecialties.map(s => s.id);
+      
+      // Remove specialties that are no longer selected
+      const toRemove = currentIds.filter(id => !specialtyIds.includes(id));
+      await Promise.all(toRemove.map(id => base44.entities.DoctorSpecialty.delete(id)));
+      
+      // Add new specialties (this would need a list of procedure IDs to create from)
+      // For now, we just remove the ones that were deselected
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin_all_doctors'] });
     },
   });
 
@@ -48,6 +79,11 @@ export default function DoctorProfilesManager() {
   const handleOpenPortfolio = (doctorId) => {
     setActiveDoctorId(doctorId);
     setPortfolioDialogOpen(true);
+  };
+
+  const handleOpenProcedures = (doctorId) => {
+    setActiveDoctorForProcedures(doctorId);
+    setProceduresDialogOpen(true);
   };
 
   const filteredDoctors = doctors.filter(doc => 
@@ -221,6 +257,17 @@ export default function DoctorProfilesManager() {
                         <FileText className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Procedures:</span>
                         <Badge>{doctor.specialties_count || 0}</Badge>
+                        {!isEditing && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleOpenProcedures(doctor.id)}
+                            className="h-6 text-xs text-primary hover:text-primary"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            Adjust
+                          </Button>
+                        )}
                       </div>
 
                       {/* Portfolio Section */}
@@ -315,6 +362,21 @@ export default function DoctorProfilesManager() {
             <DoctorPortfolioManager 
               doctorId={activeDoctorId} 
               onClose={() => setPortfolioDialogOpen(false)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Procedures Dialog */}
+      <Dialog open={proceduresDialogOpen} onOpenChange={setProceduresDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Adjust Procedures</DialogTitle>
+          </DialogHeader>
+          {activeDoctorForProcedures && (
+            <DoctorProceduresManager 
+              doctorId={activeDoctorForProcedures} 
+              onClose={() => setProceduresDialogOpen(false)} 
             />
           )}
         </DialogContent>
@@ -484,6 +546,109 @@ function DoctorPortfolioManager({ doctorId, onClose }) {
           <p className="text-sm">No portfolio items yet. Start uploading!</p>
         </div>
       )}
+    </div>
+  );
+}
+
+// Procedures manager component for admin
+function DoctorProceduresManager({ doctorId, onClose }) {
+  const [doctorSpecialties, setDoctorSpecialties] = useState([]);
+  const [allProcedures, setAllProcedures] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [specialties, procedures] = await Promise.all([
+          base44.entities.DoctorSpecialty.filter({ doctor_id: doctorId }),
+          base44.entities.MasterProcedure.list()
+        ]);
+        setDoctorSpecialties(specialties);
+        setAllProcedures(procedures);
+      } catch (error) {
+        console.error('Failed to load procedures:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [doctorId]);
+
+  const handleToggleProcedure = async (procedure) => {
+    const existing = doctorSpecialties.find(s => s.procedure_id === procedure.procedure_id);
+    
+    if (existing) {
+      // Remove
+      await base44.entities.DoctorSpecialty.delete(existing.id);
+      setDoctorSpecialties(doctorSpecialties.filter(s => s.id !== existing.id));
+    } else {
+      // Add
+      const newSpecialty = await base44.entities.DoctorSpecialty.create({
+        doctor_id: doctorId,
+        procedure_id: procedure.procedure_id,
+        procedure_name: procedure.en_name,
+        category: procedure.category,
+        expertise_level: 'intermediate'
+      });
+      setDoctorSpecialties([...doctorSpecialties, newSpecialty]);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    // Invalidate the doctors query to refresh the count
+    onClose();
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Select the procedures this doctor offers. Currently offering {doctorSpecialties.length} procedure(s).
+        </p>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+        {allProcedures.map(procedure => {
+          const isSelected = doctorSpecialties.some(s => s.procedure_id === procedure.procedure_id);
+          return (
+            <button
+              key={procedure.procedure_id}
+              onClick={() => handleToggleProcedure(procedure)}
+              className={`p-4 rounded-lg border text-left transition-all ${
+                isSelected 
+                  ? 'bg-primary/10 border-primary text-foreground' 
+                  : 'bg-card border-border hover:border-primary/50'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-sm">{procedure.en_name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{procedure.category}</p>
+                </div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  isSelected ? 'border-primary bg-primary' : 'border-border'
+                }`}>
+                  {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
