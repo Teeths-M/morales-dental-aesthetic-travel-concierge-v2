@@ -25,7 +25,8 @@ export default function Navbar() {
   });
   const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
-  const dropdownTimeoutRef = useRef(null);
+  const portalHubTimeoutRef = useRef(null);
+  const partnerTimeoutRef = useRef(null);
   const languageTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -33,20 +34,20 @@ export default function Navbar() {
   }, [language]);
 
   const handlePortalHubMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 1000);
+    portalHubTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 1000);
   };
 
   const handlePortalHubMouseEnter = () => {
-    if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
+    if (portalHubTimeoutRef.current) clearTimeout(portalHubTimeoutRef.current);
     setPortalHubOpen(true);
   };
 
   const handlePartnerMouseLeave = () => {
-    languageTimeoutRef.current = setTimeout(() => setPartnerDropdownOpen(false), 1000);
+    partnerTimeoutRef.current = setTimeout(() => setPartnerDropdownOpen(false), 1000);
   };
 
   const handlePartnerMouseEnter = () => {
-    if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current);
+    if (partnerTimeoutRef.current) clearTimeout(partnerTimeoutRef.current);
     setPartnerDropdownOpen(true);
   };
 
