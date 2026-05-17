@@ -59,6 +59,18 @@ function PartnerForm({ initial = emptyForm, onSave, onCancel }) {
           <Input value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Any extra details…" />
         </div>
       </div>
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={() => set('is_active', !form.is_active)}
+          className={`w-11 h-6 rounded-full transition-all flex-shrink-0 ${form.is_active ? 'bg-green-500' : 'bg-slate-300'}`}
+        >
+          <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${form.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
+        <Label className="text-xs font-semibold cursor-pointer select-none" onClick={() => set('is_active', !form.is_active)}>
+          {form.is_active ? <span className="text-green-600">Active — will receive workflow email notifications</span> : <span className="text-slate-500">Inactive — will NOT receive notifications</span>}
+        </Label>
+      </div>
       <div className="flex items-center gap-2 justify-end pt-1">
         <Button variant="ghost" size="sm" onClick={onCancel}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
         <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => onSave(form)}>
@@ -122,8 +134,8 @@ export default function PartnersManager() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data, source }) => {
-      if (source === 'TravelAgency') return base44.entities.TravelAgency.update(id, { status: data.is_active ? 'active' : 'inactive' });
-      if (source === 'TaxiService') return base44.entities.TaxiService.update(id, { status: data.is_active ? 'active' : 'inactive' });
+      if (source === 'TravelAgency') return base44.entities.TravelAgency.update(id, { status: data.is_active ? 'active' : 'pending_verification' });
+      if (source === 'TaxiService') return base44.entities.TaxiService.update(id, { status: data.is_active ? 'active' : 'pending_verification' });
       return base44.entities.Partner.update(id, data);
     },
     onSuccess: () => { qc.invalidateQueries(['partners']); setEditingId(null); },
