@@ -121,7 +121,11 @@ export default function PartnersManager() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Partner.update(id, data),
+    mutationFn: ({ id, data, source }) => {
+      if (source === 'TravelAgency') return base44.entities.TravelAgency.update(id, { status: data.is_active ? 'active' : 'inactive' });
+      if (source === 'TaxiService') return base44.entities.TaxiService.update(id, { status: data.is_active ? 'active' : 'inactive' });
+      return base44.entities.Partner.update(id, data);
+    },
     onSuccess: () => { qc.invalidateQueries(['partners']); setEditingId(null); },
   });
 
@@ -178,7 +182,7 @@ export default function PartnersManager() {
                         <PartnerForm
                           key={p.id}
                           initial={p}
-                          onSave={d => updateMutation.mutate({ id: p.id, data: d })}
+                          onSave={d => updateMutation.mutate({ id: p.id, data: d, source: p.source })}
                           onCancel={() => setEditingId(null)}
                         />
                       ) : (
