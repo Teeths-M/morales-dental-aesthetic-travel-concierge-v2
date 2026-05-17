@@ -14,24 +14,42 @@ export default function DoctorConfirmationPanel({ workflow }) {
   const [notes, setNotes] = useState(workflow.doctor_notes || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [localStatus, setLocalStatus] = useState(workflow.doctor_status);
+  const [localQuotedPrice, setLocalQuotedPrice] = useState(workflow.doctor_quoted_price);
+  const [localNotes, setLocalNotes] = useState(workflow.doctor_notes);
+  const [localDate, setLocalDate] = useState(workflow.doctor_confirmed_date);
 
-  const isConfirmed = workflow.doctor_status === 'confirmed';
-  const isUnavailable = workflow.doctor_status === 'unavailable';
+  const isConfirmed = localStatus === 'confirmed';
+  const isUnavailable = localStatus === 'unavailable';
 
   const handleConfirm = async (status) => {
     setSaving(true);
+    const price = status === 'confirmed' ? Number(quotedPrice) : null;
+    const date = new Date().toISOString();
     await base44.entities.WorkflowEvent.update(workflow.id, {
       doctor_status: status,
-      doctor_quoted_price: status === 'confirmed' ? Number(quotedPrice) : null,
+      doctor_quoted_price: price,
       doctor_notes: notes,
-      doctor_confirmed_date: new Date().toISOString(),
+      doctor_confirmed_date: date,
       last_update_summary: status === 'confirmed'
         ? `Doctor confirmed. Quoted price: $${quotedPrice}. ${notes ? 'Notes: ' + notes : ''}`
         : `Doctor marked as unavailable. ${notes ? 'Notes: ' + notes : ''}`,
     });
-    qc.invalidateQueries(['portal_workflows']);
+    // Update local state immediately so UI reflects the change without waiting for refetch
+    setLocalStatus(status);
+    setLocalQuotedPrice(price);
+    setLocalNotes(notes);
+    setLocalDate(date);
+    qc.invalidateQueries({ queryKey: ['portal_workflows'] });
     setSaved(true);
     setSaving(false);
+  };
+
+  const handleReset = async () => {
+    await base44.entities.WorkflowEvent.update(workflow.id, { doctor_status: 'notified' });
+    setLocalStatus('notified');
+    setSaved(false);
+    qc.invalidateQueries({ queryKey: ['portal_workflows'] });
   };
 
   if (isConfirmed || isUnavailable) {
@@ -45,27 +63,24 @@ export default function DoctorConfirmationPanel({ workflow }) {
           <p className={`text-sm font-semibold ${isConfirmed ? 'text-green-800' : 'text-red-800'}`}>
             {isConfirmed ? 'Doctor Confirmed' : 'Doctor Unavailable'}
           </p>
-          {isConfirmed && workflow.doctor_quoted_price && (
+          {isConfirmed && localQuotedPrice && (
             <p className="text-sm text-green-700 mt-1">
-              Quoted Price: <span className="font-bold">${workflow.doctor_quoted_price.toLocaleString()}</span>
+              Quoted Price: <span className="font-bold">${Number(localQuotedPrice).toLocaleString()}</span>
             </p>
           )}
-          {workflow.doctor_notes && (
-            <p className="text-xs text-muted-foreground mt-1 italic">"{workflow.doctor_notes}"</p>
+          {localNotes && (
+            <p className="text-xs text-muted-foreground mt-1 italic">"{localNotes}"</p>
           )}
-          {workflow.doctor_confirmed_date && (
+          {localDate && (
             <p className="text-xs text-muted-foreground mt-1">
-              {new Date(workflow.doctor_confirmed_date).toLocaleString()}
+              {new Date(localDate).toLocaleString()}
             </p>
           )}
           <Button
             size="sm"
             variant="ghost"
             className="mt-2 text-xs h-6 px-2"
-            onClick={() => {
-              base44.entities.WorkflowEvent.update(workflow.id, { doctor_status: 'notified' });
-              qc.invalidateQueries(['portal_workflows']);
-            }}
+            onClick={handleReset}
           >
             Reset
           </Button>
