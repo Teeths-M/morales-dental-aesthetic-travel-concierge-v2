@@ -278,6 +278,7 @@ export default function Booking() {
   const handleConfirmSubmit = () => {
     // Backend safeguard: ensure at least one procedure is selected
     if (!items || items.length === 0) {
+      // removed - procedures already validated in cart
       alert('No procedure selected – please go back and choose one.');
       return;
     }
