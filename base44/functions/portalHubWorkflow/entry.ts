@@ -3,6 +3,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
+  const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
+  const portalUrl = `${appUrl}/portal-hub`;
+
   const body = await req.json();
   // Support both direct call { consultation_id } and entity automation payload { event: { entity_id } }
   const consultation_id = body.consultation_id || body.event?.entity_id;
@@ -173,6 +176,8 @@ Risk Level: ${riskAssessment.risk_level}
 Notes: ${consultation.notes || 'None'}
 
 Please confirm availability by logging into the portal or replying to this email.
+
+🔗 Access the Patient Portal now: ${portalUrl}
 
 — Morales Concierge Team
       `,
