@@ -15,53 +15,59 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
-    // Fetch all active partners
-    const partners = await base44.asServiceRole.entities.Partner.filter({ is_active: true });
+    // Fetch active partners from all relevant entities
+    const [travelAgencies, taxiServices] = await Promise.all([
+      base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }),
+      base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
+    ]);
 
     const results = { travel: [], hotel: [], cab: [], patient: null };
 
-    // Notify travel partners
-    const travelPartners = partners.filter(p => p.type === 'travel');
-    for (const partner of travelPartners) {
-      try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: partner.email,
-          subject: `✅ Doctor Confirmed — Travel Booking Needed for ${workflow.patient_name}`,
-          body: `Hello ${partner.name || partner.contact_person || ''},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nDoctor's quoted price: $${quoted_price || 'TBD'}\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\nPlease arrange flights and travel itinerary and reply with your quote as soon as possible.\n\n— Morales Dental & Aesthetics Concierge Team`,
-        });
-        results.travel.push({ email: partner.email, status: 'sent' });
-      } catch (e) {
-        results.travel.push({ email: partner.email, status: 'failed', error: e.message });
+    // Notify travel agencies (flights + hotels)
+    for (const agency of travelAgencies) {
+      const offersFlights = agency.services_offered?.includes('flights');
+      const offersHotels = agency.services_offered?.includes('hotels');
+      const name = agency.agency_name || agency.email;
+
+      if (offersFlights) {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: agency.email,
+            subject: `✅ Doctor Confirmed — Travel Booking Needed for ${workflow.patient_name}`,
+            body: `Hello ${name},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nDoctor's quoted price: $${quoted_price || 'TBD'}\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\nPlease arrange flights and travel itinerary and reply with your quote as soon as possible.\n\n— Morales Dental & Aesthetics Concierge Team`,
+          });
+          results.travel.push({ email: agency.email, name, status: 'sent' });
+        } catch (e) {
+          results.travel.push({ email: agency.email, name, status: 'failed', error: e.message });
+        }
+      }
+
+      if (offersHotels) {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: agency.email,
+            subject: `✅ Doctor Confirmed — Recovery Hotel Needed for ${workflow.patient_name}`,
+            body: `Hello ${name},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nPlease arrange recovery accommodation and reply with your quote and availability.\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\n— Morales Dental & Aesthetics Concierge Team`,
+          });
+          results.hotel.push({ email: agency.email, name, status: 'sent' });
+        } catch (e) {
+          results.hotel.push({ email: agency.email, name, status: 'failed', error: e.message });
+        }
       }
     }
 
-    // Notify hotel partners
-    const hotelPartners = partners.filter(p => p.type === 'hotel');
-    for (const partner of hotelPartners) {
+    // Notify taxi/cab services
+    for (const taxi of taxiServices) {
+      const name = taxi.driver_name || taxi.company_name || taxi.email;
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
-          to: partner.email,
-          subject: `✅ Doctor Confirmed — Recovery Hotel Needed for ${workflow.patient_name}`,
-          body: `Hello ${partner.name || partner.contact_person || ''},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nPlease arrange recovery accommodation and reply with your quote and availability.\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\n— Morales Dental & Aesthetics Concierge Team`,
-        });
-        results.hotel.push({ email: partner.email, status: 'sent' });
-      } catch (e) {
-        results.hotel.push({ email: partner.email, status: 'failed', error: e.message });
-      }
-    }
-
-    // Notify cab partners
-    const cabPartners = partners.filter(p => p.type === 'cab');
-    for (const partner of cabPartners) {
-      try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: partner.email,
+          to: taxi.email,
           subject: `✅ Doctor Confirmed — Transfer Needed for ${workflow.patient_name}`,
-          body: `Hello ${partner.name || partner.contact_person || ''},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nPlease prepare airport and clinic transfer availability and reply with your quote.\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\n— Morales Dental & Aesthetics Concierge Team`,
+          body: `Hello ${name},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nPlease prepare airport and clinic transfer availability and reply with your quote.\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\n— Morales Dental & Aesthetics Concierge Team`,
         });
-        results.cab.push({ email: partner.email, status: 'sent' });
+        results.cab.push({ email: taxi.email, name, status: 'sent' });
       } catch (e) {
-        results.cab.push({ email: partner.email, status: 'failed', error: e.message });
+        results.cab.push({ email: taxi.email, name, status: 'failed', error: e.message });
       }
     }
 
@@ -80,9 +86,9 @@ Deno.serve(async (req) => {
     // Update workflow stage and partner statuses
     await base44.asServiceRole.entities.WorkflowEvent.update(workflow_id, {
       stage: 'travel',
-      travel_status: travelPartners.length > 0 ? 'notified' : 'pending',
-      hotel_status: hotelPartners.length > 0 ? 'notified' : 'pending',
-      cab_status: cabPartners.length > 0 ? 'notified' : 'pending',
+      travel_status: results.travel.length > 0 ? 'notified' : 'pending',
+      hotel_status: results.hotel.length > 0 ? 'notified' : 'pending',
+      cab_status: results.cab.length > 0 ? 'notified' : 'pending',
     });
 
     return Response.json({ status: 'ok', results });
