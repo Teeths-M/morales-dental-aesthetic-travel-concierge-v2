@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Edit2, Save, X, Star, Clock, MapPin } from 'lucide-react';
+import { Search, Edit2, Save, X, Star, Clock, MapPin, Upload, Trash2, Play, Image as ImageIcon, FileText } from 'lucide-react';
 
 export default function DoctorProfilesManager() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingDoctorId, setEditingDoctorId] = useState(null);
   const [editData, setEditData] = useState({});
+  const [portfolioDialogOpen, setPortfolioDialogOpen] = useState(false);
+  const [activeDoctorId, setActiveDoctorId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: doctors = [], isLoading } = useQuery({
@@ -40,6 +43,11 @@ export default function DoctorProfilesManager() {
 
   const handleSave = () => {
     updateMutation.mutate({ id: editingDoctorId, data: editData });
+  };
+
+  const handleOpenPortfolio = (doctorId) => {
+    setActiveDoctorId(doctorId);
+    setPortfolioDialogOpen(true);
   };
 
   const filteredDoctors = doctors.filter(doc => 
@@ -208,6 +216,33 @@ export default function DoctorProfilesManager() {
                         )}
                       </div>
 
+                      {/* Procedures Count */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Procedures:</span>
+                        <Badge>{doctor.specialties_count || 0}</Badge>
+                      </div>
+
+                      {/* Portfolio Section */}
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">Portfolio:</span>
+                            <Badge variant="secondary">{(data.portfolio || []).length} items</Badge>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenPortfolio(doctor.id)}
+                            className="gap-1 h-7 text-xs"
+                          >
+                            <Upload className="w-3 h-3" />
+                            {isEditing ? 'Manage Photos/Videos' : 'View Portfolio'}
+                          </Button>
+                        </div>
+                      </div>
+
                       {/* Contact Info */}
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
@@ -267,6 +302,186 @@ export default function DoctorProfilesManager() {
       {filteredDoctors.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No doctors found matching "{searchQuery}"</p>
+        </div>
+      )}
+
+      {/* Portfolio Dialog */}
+      <Dialog open={portfolioDialogOpen} onOpenChange={setPortfolioDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Portfolio</DialogTitle>
+          </DialogHeader>
+          {activeDoctorId && (
+            <DoctorPortfolioManager 
+              doctorId={activeDoctorId} 
+              onClose={() => setPortfolioDialogOpen(false)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Inline portfolio manager component for admin
+function DoctorPortfolioManager({ doctorId, onClose }) {
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load doctor data to get portfolio
+  useEffect(() => {
+    const loadPortfolio = async () => {
+      try {
+        const doctor = await base44.entities.Doctor.get(doctorId);
+        setPortfolioItems(doctor.portfolio || []);
+      } catch (error) {
+        console.error('Failed to load portfolio:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPortfolio();
+  }, [doctorId]);
+
+  const saveToDatabase = async (items) => {
+    try {
+      await base44.entities.Doctor.update(doctorId, { portfolio: items });
+    } catch (err) {
+      console.error('Failed to save portfolio:', err);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setUploading(true);
+    try {
+      const newItems = [...portfolioItems];
+      for (const file of files) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const isVideo = file.type.startsWith('video/');
+        
+        const newItem = {
+          id: Date.now() + Math.random(),
+          url: file_url,
+          type: isVideo ? 'video' : 'image',
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          uploadedAt: new Date().toISOString(),
+        };
+        
+        newItems.push(newItem);
+      }
+      setPortfolioItems(newItems);
+      await saveToDatabase(newItems);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async (itemId) => {
+    const updated = portfolioItems.filter(item => item.id !== itemId);
+    setPortfolioItems(updated);
+    await saveToDatabase(updated);
+  };
+
+  const handleTitleUpdate = async (itemId, newTitle) => {
+    const updated = portfolioItems.map(item =>
+      item.id === itemId ? { ...item, title: newTitle } : item
+    );
+    setPortfolioItems(updated);
+    await saveToDatabase(updated);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Upload Section */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Upload Photos & Videos</h3>
+            <p className="text-sm text-muted-foreground">Showcase before/after results and procedures</p>
+          </div>
+        </div>
+        
+        <label className="block w-full">
+          <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+            <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="font-medium text-foreground mb-1">
+              {uploading ? 'Uploading...' : 'Click to upload or drag and drop'}
+            </p>
+            <p className="text-xs text-muted-foreground">PNG, JPG, MP4, WebM up to 100MB</p>
+          </div>
+          <input
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            onChange={handleFileUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {/* Portfolio Grid */}
+      {portfolioItems.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {portfolioItems.map(item => (
+            <div key={item.id} className="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
+              {/* Thumbnail */}
+              <div className="relative w-full h-48 bg-secondary/50 flex items-center justify-center overflow-hidden">
+                {item.type === 'image' ? (
+                  <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <video src={item.url} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-white fill-white" />
+                    </div>
+                  </>
+                )}
+                <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-full flex items-center gap-1">
+                  {item.type === 'image' ? <ImageIcon className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  {item.type === 'image' ? 'Photo' : 'Video'}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-4 space-y-3">
+                <input
+                  type="text"
+                  value={item.title}
+                  onChange={(e) => handleTitleUpdate(item.id, e.target.value)}
+                  className="w-full px-2 py-1 border border-border rounded text-sm font-medium text-foreground bg-background"
+                  placeholder="Add a title"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {new Date(item.uploadedAt).toLocaleDateString()}
+                </p>
+                <button
+                  onClick={() => handleRemove(item.id)}
+                  className="w-full px-3 py-2 border border-destructive/50 text-destructive text-sm font-medium rounded hover:bg-destructive/10 flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 text-muted-foreground bg-secondary/20 rounded-lg">
+          <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">No portfolio items yet. Start uploading!</p>
         </div>
       )}
     </div>
