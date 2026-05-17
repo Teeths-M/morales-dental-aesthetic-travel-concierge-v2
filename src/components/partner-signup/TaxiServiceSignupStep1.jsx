@@ -1,14 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronDown, Search } from 'lucide-react';
 import { translations } from '@/lib/translations';
 
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Van', 'Wheelchair van'];
 
+const ALL_COUNTRIES = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia",
+  "Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin",
+  "Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi",
+  "Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia",
+  "Comoros","Congo (Congo-Brazzaville)","Costa Rica","Croatia","Cuba","Cyprus","Czechia","Denmark","Djibouti",
+  "Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia",
+  "Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece",
+  "Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India",
+  "Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya",
+  "Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein",
+  "Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands",
+  "Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco",
+  "Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria",
+  "North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea",
+  "Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis",
+  "Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia",
+  "Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+  "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
+  "Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago",
+  "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom",
+  "United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+];
+
 export default function TaxiServiceSignupStep1({ formData, setFormData, language, onNext }) {
   const t = translations[language];
   const [vehicles, setVehicles] = useState(formData.vehicle_types || []);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const countryRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (countryRef.current && !countryRef.current.contains(e.target)) {
+        setShowCountryDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCountries = ALL_COUNTRIES.filter(c =>
+    c.toLowerCase().includes(countrySearch.toLowerCase())
+  );
 
   const toggleVehicle = (vehicle) => {
     setVehicles(prev =>
@@ -84,14 +125,49 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
           />
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-foreground block mb-2">🗺️ {language === 'es' ? 'Ciudad de Operación' : language === 'fr' ? 'Ville d\'Opération' : 'Operating City'}</label>
-          <Input
-            placeholder={language === 'es' ? 'Ej: Santo Domingo' : 'e.g., Santo Domingo'}
-            value={formData.operating_city || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
-            className="h-12"
-          />
+        <div ref={countryRef} className="relative">
+          <label className="text-sm font-medium text-foreground block mb-2">🗺️ {language === 'es' ? 'País de Operación' : language === 'fr' ? 'Pays d\'Opération' : 'Operating Country'}</label>
+          <button
+            type="button"
+            onClick={() => setShowCountryDropdown(v => !v)}
+            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <span className={formData.operating_city ? 'text-foreground' : 'text-muted-foreground'}>
+              {formData.operating_city || (language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country')}
+            </span>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </button>
+          {showCountryDropdown && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
+                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <input
+                  autoFocus
+                  value={countrySearch}
+                  onChange={e => setCountrySearch(e.target.value)}
+                  placeholder={language === 'es' ? 'Buscar país...' : language === 'fr' ? 'Rechercher un pays...' : 'Search country...'}
+                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+              <ul className="max-h-56 overflow-y-auto">
+                {filteredCountries.length === 0 ? (
+                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">No results</li>
+                ) : filteredCountries.map(country => (
+                  <li
+                    key={country}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, operating_city: country }));
+                      setShowCountryDropdown(false);
+                      setCountrySearch('');
+                    }}
+                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_city === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                  >
+                    {country}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div>
