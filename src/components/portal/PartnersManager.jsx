@@ -91,6 +91,7 @@ export default function PartnersManager() {
         contact_person: '',
         notes: `Regions: ${ta.service_regions?.join(', ')} | Services: ${ta.services_offered?.join(', ')}`,
         is_active: ta.status === 'active',
+        raw_status: ta.status,
         created_date: ta.created_date,
         source: 'TravelAgency'
       }));
@@ -105,6 +106,7 @@ export default function PartnersManager() {
         contact_person: ts.driver_name ? ts.company_name : '',
         notes: `City: ${ts.operating_city} | Vehicles: ${ts.vehicle_types?.join(', ')}`,
         is_active: ts.status === 'active',
+        raw_status: ts.status,
         created_date: ts.created_date,
         source: 'TaxiService'
       }));
@@ -184,7 +186,9 @@ export default function PartnersManager() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-medium text-foreground">{p.name}</p>
-                              {!p.is_active && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
+                              {p.raw_status === 'pending_verification' && <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700 bg-amber-50">Pending Verification</Badge>}
+                              {p.raw_status === 'inactive' && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
+                              {!p.raw_status && !p.is_active && <Badge variant="outline" className="text-[10px]">Inactive</Badge>}
                               {p.contact_person && <span className="text-xs text-muted-foreground">· {p.contact_person}</span>}
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">{p.email}{p.phone ? ` · ${p.phone}` : ''}</p>
