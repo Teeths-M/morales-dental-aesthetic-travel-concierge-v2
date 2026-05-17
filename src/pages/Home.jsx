@@ -7,6 +7,7 @@ import WhyChooseUs from '../components/home/WhyChooseUs';
 import HowItWorks from '../components/home/HowItWorks';
 import HeroSlideshow from '../components/home/HeroSlideshow';
 import BrandSlideshow from '../components/home/BrandSlideshow';
+import SlotCounter from '../components/home/SlotCounter';
 
 
 export default function Home() {
@@ -46,6 +47,7 @@ export default function Home() {
     <div>
       <Hero />
       <StatsBar />
+      <SlotCounter className="mx-auto mt-6" />
       <HeroSlideshow />
       <WhyChooseUs />
       <BrandSlideshow />
