@@ -177,7 +177,7 @@ Notes: ${consultation.notes || 'None'}
 
 Please confirm availability by logging into the portal or replying to this email.
 
-🔗 Access the Patient Portal now: ${appUrl}/portal-hub/admin
+🔗 Access the Patient Portal now:  ${portalUrl}
 
 — Morales Concierge Team
       `,
