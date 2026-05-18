@@ -148,6 +148,7 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
 export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('stripe');
+  const { clearCart } = useCart();
 
   if (!isOpen) return null;
 
