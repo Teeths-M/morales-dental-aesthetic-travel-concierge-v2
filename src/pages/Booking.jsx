@@ -214,10 +214,7 @@ export default function Booking() {
 
   const createMutation = useMutation({
     mutationFn: (data) => {
-      // Backend safeguard: refuse if no procedures selected
-      if (!items || items.length === 0) {
-        throw new Error('No procedure selected – please go back and choose one.');
-      }
+      
       const procedureNames = items.map(item => item.name).join(', ') || 'other';
       return base44.entities.Consultation.create({ ...data, procedure_interest: procedureNames });
     },
