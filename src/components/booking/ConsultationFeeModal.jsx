@@ -21,6 +21,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       
       if (response.data.success) {
         onSuccess(response.data);
+        clearCart();
       }
     } catch (err) {
       setError(err.message);
