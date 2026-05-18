@@ -165,7 +165,7 @@ The Morales Dental & Aesthetics Concierge Team
       partner: 'doctor',
       email_subject: `New Patient Confirmed — ${consultation.patient_name} | Procedure: ${consultation.procedure_interest?.replace(/_/g, ' ')}`,
       email_body: `
-Hello,
+Hello ${partner.name || 'Doctor'},
 
 Morales Dental & Aesthetics Portal Hub has approved a new patient for scheduling.
 
