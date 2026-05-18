@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
   const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
-  const portalUrl = `${appUrl}/portal-hub`;
+  const portalUrl = `${appUrl}/portal-hub/admin`;
 
   const body = await req.json();
   // Support both direct call { consultation_id } and entity automation payload { event: { entity_id } }
