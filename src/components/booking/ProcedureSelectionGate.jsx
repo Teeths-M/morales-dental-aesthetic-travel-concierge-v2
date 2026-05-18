@@ -18,7 +18,7 @@ export default function ProcedureSelectionGate({ children }) {
 
       {/* Blocking Modal Popup - shown when no procedures selected */}
       <AnimatePresence>
-        {!hasSelectedProcedure {false && (
+         {false && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
