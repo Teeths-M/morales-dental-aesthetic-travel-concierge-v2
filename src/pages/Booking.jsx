@@ -221,7 +221,7 @@ export default function Booking() {
     onSuccess: (consultation) => {
       setConsultationId(consultation.id);
       setShowFeeModal(true);
-      clearCart();
+
     },
     onError: (error) => {
       console.error('Consultation creation failed:', error.message);
