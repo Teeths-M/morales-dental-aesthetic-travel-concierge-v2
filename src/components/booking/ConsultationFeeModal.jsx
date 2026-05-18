@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-
+import { useCart } from '@/context/CartContext';
 function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
   const [error, setError] = useState(null);
 
