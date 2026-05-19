@@ -9,7 +9,7 @@ const roles = [
     role: 'client',
     title: 'Patient / Client',
     description: 'Start your medical travel journey and request a consultation.',
-    path: '/booking',
+    path: '/client-signup',
     icon: UserRound,
     accentClass: 'bg-primary/10 text-primary'
   },

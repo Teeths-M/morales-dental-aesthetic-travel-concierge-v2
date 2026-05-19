@@ -27,6 +27,7 @@ import DoctorSignup from './pages/DoctorSignup';
 import PartnerSignup from './pages/PartnerSignup';
 import TravelAgencySignup from './pages/TravelAgencySignup';
 import TaxiServiceSignup from './pages/TaxiServiceSignup';
+import ClientSignup from './pages/ClientSignup';
 import RegisterRole from './pages/RegisterRole';
 import DoctorDashboard from './pages/DoctorDashboard';
 import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
           <Route path="/dashboard/journey" element={<Dashboard />} />
           <Route path="/dashboard/support" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<Dashboard />} />
+          <Route path="/client-signup" element={<ClientSignup />} />
         </Route>
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<About />} />

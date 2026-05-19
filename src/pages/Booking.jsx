@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
@@ -68,6 +69,7 @@ export default function Booking() {
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [draftData, setDraftData] = useState(null);
+  const navigate = useNavigate();
   const { items, clearCart } = useCart();
 
   // Auto-save debounce timer
@@ -546,6 +548,7 @@ export default function Booking() {
           });
           setShowFeeModal(false);
           setSubmitted(true);
+          navigate('/dashboard');
         }}
         onCancel={() => setShowFeeModal(false)}
       />
