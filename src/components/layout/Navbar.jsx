@@ -271,11 +271,13 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/register-role" className="hidden sm:inline-flex">
-                  <Button variant="outline" className="text-sm font-semibold px-5">
-                    Register
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  className="hidden sm:inline-flex text-sm font-semibold px-5"
+                  onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
+                >
+                  Register
+                </Button>
                 <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={navigateToLogin}>
                   Login
                 </Button>
@@ -388,11 +390,16 @@ export default function Navbar() {
                   </Button>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <Link to="/register-role" onClick={() => setMobileOpen(false)}>
-                      <Button variant="outline" className="w-full">
-                        Register
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        navigateToLogin(`${window.location.origin}/register-role`);
+                      }}
+                    >
+                      Register
+                    </Button>
                     <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(); setMobileOpen(false); }}>
                       Login
                     </Button>

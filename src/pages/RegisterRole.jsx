@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { Car, HeartPulse, Plane, UserRound } from 'lucide-react';
 import SignupRoleCard from '@/components/signup/SignupRoleCard.jsx';
+import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 
 const roles = [
   {
@@ -39,10 +41,23 @@ const roles = [
 ];
 
 export default function RegisterRole() {
-  const handleRoleSelect = (role) => {
+  const { isAuthenticated, authChecked, navigateToLogin } = useAuth();
+
+  useEffect(() => {
+    if (authChecked && !isAuthenticated) {
+      navigateToLogin(`${window.location.origin}/register-role`);
+    }
+  }, [authChecked, isAuthenticated, navigateToLogin]);
+
+  const handleRoleSelect = async (role) => {
     localStorage.setItem('signupRole', role.role);
+    await base44.auth.updateMe({ role: role.role });
     window.location.href = role.path;
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background px-4 py-16">
