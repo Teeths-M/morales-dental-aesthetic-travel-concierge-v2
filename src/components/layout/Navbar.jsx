@@ -4,14 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { Menu, X, Globe, ChevronDown, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ADMIN_ROLES,
-  CLIENT_ROLES,
-  DOCTOR_ROLES,
-  TRAVEL_AGENCY_ROLES,
-  TAXI_SERVICE_ROLES,
-  hasAnyRole,
-} from '@/lib/rolePermissions';
 
 const getNavLinks = (language) => [
   { label: language === 'es' ? 'Inicio' : language === 'fr' ? 'Accueil' : 'Home', path: '/' },
@@ -86,29 +78,34 @@ export default function Navbar() {
     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
   };
 
-  const isAdmin = hasAnyRole(user?.role, ADMIN_ROLES);
-  const isClient = hasAnyRole(user?.role, CLIENT_ROLES);
+  const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
   const portalLinks = [
     ...(isAdmin ? [
       { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
       { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
     ] : []),
-    ...(hasAnyRole(user?.role, DOCTOR_ROLES) || isAdmin ? [
+    ...(['doctor'].includes(user?.role) || isAdmin ? [
       { label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard', path: '/doctor-dashboard' },
     ] : []),
-    ...(hasAnyRole(user?.role, TRAVEL_AGENCY_ROLES) || isAdmin ? [
+    ...(['travel_agency'].includes(user?.role) || isAdmin ? [
       { label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
     ] : []),
-    ...(hasAnyRole(user?.role, TAXI_SERVICE_ROLES) || isAdmin ? [
+    ...(['taxi_service'].includes(user?.role) || isAdmin ? [
       { label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
     ] : []),
   ];
 
   const clientOnlyPaths = ['/dashboard', '/safe-t', '/visa-assist'];
+  const canUseClientPortal = ['client', 'user', 'platform_admin', 'admin'].includes(user?.role);
   const visibleNavLinks = navLinks.filter(link => {
     if (!clientOnlyPaths.includes(link.path)) return true;
-    return isAuthenticated && isClient;
+    return isAuthenticated && canUseClientPortal;
   });
+  const rolePrimaryAction = {
+    doctor: { path: '/doctor-dashboard', label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau Docteur' : 'Doctor Dashboard' },
+    travel_agency: { path: '/travel-agency-dashboard', label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard' },
+    taxi_service: { path: '/taxi-service-dashboard', label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Dashboard' },
+  }[user?.role] || { path: '/booking', label: language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation' };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
@@ -263,13 +260,11 @@ export default function Navbar() {
               </div>
             {isAuthenticated ? (
               <>
-                {isClient && (
-                  <Link to="/booking">
-                    <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
-                      {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
-                    </Button>
-                  </Link>
-                )}
+                <Link to={rolePrimaryAction.path}>
+                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
+                    {rolePrimaryAction.label}
+                  </Button>
+                </Link>
                 <Button variant="outline" className="hidden sm:inline-flex text-sm" onClick={() => logout()}>
                   Logout
                 </Button>

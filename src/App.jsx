@@ -7,13 +7,6 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from './components/ProtectedRoute';
-import {
-  ADMIN_PORTAL_ROLES,
-  CLIENT_PORTAL_ROLES,
-  DOCTOR_PORTAL_ROLES,
-  TRAVEL_AGENCY_PORTAL_ROLES,
-  TAXI_SERVICE_PORTAL_ROLES,
-} from '@/lib/rolePermissions';
 
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
@@ -71,7 +64,7 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Home />} />
         <Route path="/providers" element={<Providers />} />
         <Route path="/providers/:id" element={<ProviderDetail />} />
-        <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
+        <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
           <Route path="/safe-t" element={<SafeT />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -87,11 +80,11 @@ const AuthenticatedApp = () => {
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
-        <Route element={<ProtectedRoute allowedRoles={ADMIN_PORTAL_ROLES} />}>
+        <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
           <Route path="/portal-hub" element={<PortalHub />} />
           <Route path="/portal-hub/admin" element={<PortalHubAdmin />} />
         </Route>
-        <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
+        <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
           <Route path="/portal-hub/checkout/:consultation_id" element={<PaymentCheckout />} />
           <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
           <Route path="/visa-assist" element={<VisaAssist />} />
@@ -101,13 +94,13 @@ const AuthenticatedApp = () => {
         <Route path="/partner-signup" element={<PartnerSignup />} />
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
         <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
-        <Route element={<ProtectedRoute allowedRoles={DOCTOR_PORTAL_ROLES} />}>
+        <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
         </Route>
-        <Route element={<ProtectedRoute allowedRoles={TRAVEL_AGENCY_PORTAL_ROLES} />}>
+        <Route element={<ProtectedRoute allowedRoles={["travel_agency", "platform_admin", "admin"]} />}>
           <Route path="/travel-agency-dashboard" element={<TravelAgencyDashboard />} />
         </Route>
-        <Route element={<ProtectedRoute allowedRoles={TAXI_SERVICE_PORTAL_ROLES} />}>
+        <Route element={<ProtectedRoute allowedRoles={["taxi_service", "platform_admin", "admin"]} />}>
           <Route path="/taxi-service-dashboard" element={<TaxiServiceDashboard />} />
         </Route>
       </Route>
