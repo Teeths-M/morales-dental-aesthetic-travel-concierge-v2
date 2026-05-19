@@ -44,10 +44,10 @@ export default function SafeT() {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
       style={{
-        backgroundImage: 'url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/745794e0c_ChatGPTImageMay16202608_02_59AM.png)',
+        backgroundImage: 'url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8cfc78356_image.png)',
       }}
     >
-      <div className="min-h-screen bg-black/10">
+      <div className="min-h-screen bg-gradient-to-b from-black/5 via-white/10 to-background/90">
         {/* Hero Header */}
          <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
