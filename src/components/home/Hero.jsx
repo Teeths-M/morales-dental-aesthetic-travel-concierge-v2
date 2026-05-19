@@ -31,6 +31,11 @@ export default function Hero() {
   const t = translations[language] || translations['en'];
   const testimonials = getTestimonials(language);
   const badges = getBadges(language);
+  const signupRoles = [
+    { label: language === 'es' ? 'Doctor' : language === 'fr' ? 'Médecin' : 'Doctor', path: '/doctor-signup', icon: BadgeCheck },
+    { label: language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyage' : 'Travel Agency', path: '/partner-signup/travel-agency', icon: Plane },
+    { label: language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service Taxi' : 'Taxi Service', path: '/partner-signup/taxi-service', icon: Shield },
+  ];
 
   return (
     <section
@@ -124,39 +129,49 @@ export default function Hero() {
             )}
           </motion.div>
 
-          {/* Right Image */}
+          {/* Partner Signup CTA */}
           <motion.div
-            className="relative hidden"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className="hidden lg:flex justify-end"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}>
             
-            <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-h-[680px]">
-              <img
-                src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png"
-                alt="SAFE-T 4LIFE care team on the beach"
-                className="w-full h-full object-cover object-center" />
-              
-              {/* Floating service badge */}
-              <div className="absolute top-5 left-5 bg-card/95 backdrop-blur-md rounded-xl px-4 py-2.5 border border-border/50 shadow-lg">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-0.5">SAFE-T 4LIFE™ Healthcare</p>
-                <p className="text-sm font-bold text-foreground">Integrated Care Platform</p>
+            <div className="w-full max-w-md rounded-[2rem] border border-white/25 bg-white/95 p-6 shadow-2xl backdrop-blur-md">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                <Shield className="h-3.5 w-3.5" />
+                {language === 'es' ? 'Únete a nuestra red' : language === 'fr' ? 'Rejoignez notre réseau' : 'Join our network'}
+              </div>
+              <h2 className="font-display text-3xl text-foreground leading-tight">
+                {language === 'es' ? '¿Eres proveedor?' : language === 'fr' ? 'Vous êtes partenaire ?' : 'Are you a provider?'}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {language === 'es' ? 'Regístrate aquí para comenzar tu viaje con nosotros como doctor, agencia de viajes o servicio de taxi.' : language === 'fr' ? 'Inscrivez-vous ici pour commencer votre parcours avec nous comme médecin, agence de voyage ou service taxi.' : 'Sign up here to start your journey with us as a doctor, travel agency, or taxi service.'}
+              </p>
+
+              <div className="mt-6 space-y-3">
+                {signupRoles.map(({ label, path, icon: Icon }) => (
+                  <Link
+                    key={label}
+                    to={path}
+                    className="group flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 transition-all hover:border-primary/30 hover:bg-primary/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">{label}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'es' ? 'Comenzar registro' : language === 'fr' ? 'Commencer l’inscription' : 'Start signup'}</p>
+                      </div>
+                    </div>
+                    <span className="text-lg text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary">→</span>
+                  </Link>
+                ))}
               </div>
 
-              {/* Overlay Card */}
-              <div className="absolute bottom-6 left-6 right-6 bg-card/90 backdrop-blur-xl rounded-xl p-5 border border-border/50">
-                <p className="text-sm font-semibold text-foreground mb-3">
-                  {language === 'es' ? 'Por Qué Los Pacientes Nos Eligen' : language === 'fr' ? 'Pourquoi les Patients Nous Choisissent' : 'Why Patients Choose Us'}
-                </p>
-                <div className="space-y-2">
-                  {(language === 'es' ? ['Especialistas de Élite Verificados', 'Planificación Segura Asistida por IA', 'Cuidado Concierge Todo Incluido', 'Comodidad, Seguridad y Privacidad', 'Soporte 24/7'] : language === 'fr' ? ['Spécialistes d\'Élite Vérifiés', 'Planification Sécurisée Assistée par IA', 'Soins Concierge Tout Compris', 'Confort, Sécurité et Confidentialité', 'Support 24/7'] : ['Verified Elite Specialists', 'AI-Assisted Safe Planning', 'All-Inclusive Concierge Care', 'Comfort, Safety & Privacy', '24/7 Support']).map((item) =>
-                  <div key={item} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                      <span className="text-xs text-muted-foreground">{item}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Link to="/register-role" className="mt-5 block text-center text-xs font-bold uppercase tracking-widest text-primary hover:underline">
+                {language === 'es' ? 'Ver todas las opciones' : language === 'fr' ? 'Voir toutes les options' : 'View all role options'}
+              </Link>
             </div>
           </motion.div>
         </div>
