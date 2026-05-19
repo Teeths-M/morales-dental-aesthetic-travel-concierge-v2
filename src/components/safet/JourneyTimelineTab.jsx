@@ -132,7 +132,7 @@ export default function JourneyTimelineTab() {
   return (
     <div className="space-y-6">
       {/* Progress Header */}
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/40 bg-white/80 p-6 shadow-xl shadow-slate-900/10 backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-[2rem] border border-white bg-white p-6 shadow-xl shadow-slate-900/12">
         <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-blue-200/40 blur-3xl" />
         <div className="absolute -left-12 bottom-0 h-32 w-32 rounded-full bg-emerald-200/40 blur-3xl" />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -141,7 +141,7 @@ export default function JourneyTimelineTab() {
             <h2 className="mt-2 font-display text-3xl text-slate-950">Your Healthcare Journey</h2>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">Stage 3 of 7 — travel, lodging, and arrival support are being coordinated by your care team.</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white/75 px-5 py-4 text-right shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-right shadow-sm">
             <div className="text-4xl font-bold text-slate-950">{progress}%</div>
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Complete</p>
           </div>
@@ -179,10 +179,10 @@ export default function JourneyTimelineTab() {
                 className="relative sm:pl-12"
               >
                 <div className={`absolute left-0 top-6 z-10 hidden h-4 w-4 rounded-full border-4 border-white ${s.rail} shadow-md sm:block`} />
-                <div className={`overflow-hidden rounded-[1.6rem] border border-white/65 bg-white/92 shadow-lg backdrop-blur-xl transition-all ${s.glow}`}>
+                <div className={`overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-xl transition-all ${s.glow}`}>
                   <button
                     onClick={() => setExpanded(isExpanded ? null : stage.id)}
-                    className="w-full p-5 text-left transition-colors hover:bg-white/55"
+                    className="w-full p-5 text-left transition-colors hover:bg-slate-50"
                   >
                     <div className="flex items-start gap-4">
                       <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border shadow-sm ${s.icon}`}>
@@ -204,7 +204,7 @@ export default function JourneyTimelineTab() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{stage.description}</p>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{stage.description}</p>
                       </div>
 
                       <div className="flex flex-shrink-0 items-center gap-3 pt-1">
@@ -223,10 +223,10 @@ export default function JourneyTimelineTab() {
                       exit={{ height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="mx-5 mb-5 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                      <div className="mx-5 mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <div className="grid gap-2 sm:grid-cols-2">
                           {stage.tasks.map((task, i) => (
-                            <div key={i} className="flex items-center gap-3 rounded-xl bg-white/80 px-3 py-2.5">
+                            <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 shadow-sm">
                               {task.done
                                 ? <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" />
                                 : <Circle className="h-4 w-4 flex-shrink-0 text-slate-300" />
@@ -248,7 +248,7 @@ export default function JourneyTimelineTab() {
       </div>
 
       {/* Disclaimer */}
-      <div className="flex items-start gap-3 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
+      <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <AlertCircle className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
         <p className="text-xs text-slate-500 leading-relaxed">
           <strong>SAFE-T 4LIFE™</strong> is an educational and coordination support system designed to assist clients throughout their healthcare journey and does not replace professional medical advice, diagnosis, or treatment from licensed healthcare providers.
