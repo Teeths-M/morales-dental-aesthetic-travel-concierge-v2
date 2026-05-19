@@ -1,5 +1,54 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const BRAND = 'Morales Dental & Aesthetics';
+const TEAM = 'Morales Concierge Team';
+
+const escapeHtml = (value) => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;');
+
+const formatProcedure = (value) => String(value || 'Procedure').replace(/_/g, ' ');
+
+const row = (label, value) => `
+  <tr>
+    <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
+    <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(value || 'Not provided')}</td>
+  </tr>`;
+
+const emailLayout = ({ eyebrow, title, intro, rows = [], note, ctaText, ctaUrl, footer = 'Please reply to this email if you need assistance.' }) => `<!doctype html>
+<html>
+  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
+            <tr>
+              <td style="background:#29483d;padding:28px 32px;color:#ffffff;">
+                <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
+                <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${escapeHtml(eyebrow)}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">${escapeHtml(title)}</h1>
+                <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${escapeHtml(intro)}</p>
+                ${rows.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.join('')}</table>` : ''}
+                ${note ? `<div style="margin:22px 0;padding:16px 18px;background:#f8f4ee;border-left:4px solid #b68a52;border-radius:12px;color:#40514a;font-size:14px;line-height:1.6;">${escapeHtml(note)}</div>` : ''}
+                ${ctaText && ctaUrl ? `<a href="${escapeHtml(ctaUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:700;">${escapeHtml(ctaText)}</a>` : ''}
+                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">${escapeHtml(footer)}</p>
+                <p style="margin:18px 0 0;font-size:14px;color:#13221d;font-weight:700;">${TEAM}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
@@ -107,25 +156,17 @@ Return a JSON with:
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: consultation.email,
         subject: 'Important Update Regarding Your Consultation Request — Morales Dental & Aesthetics',
-        body: `
-Dear ${consultation.patient_name},
-
-Thank you for trusting Morales Dental & Aesthetics with your health journey.
-
-Our SAFE-T 4LIFE™ system has completed a preliminary safety review of your consultation request for: ${consultation.procedure_interest?.replace(/_/g, ' ')}.
-
-Based on the information you provided, our team needs to speak with you directly before proceeding further to ensure your safety and comfort.
-
-${riskAssessment.summary}
-
-${riskAssessment.flags && riskAssessment.flags.length > 0 ? `Areas of attention:\n${riskAssessment.flags.map(f => `• ${f}`).join('\n')}\n` : ''}
-A member of our concierge team will reach out within 24 hours to discuss your options and next steps.
-
-Your health and safety are always our first priority.
-
-Warm regards,
-The Morales Dental & Aesthetics Concierge Team
-      `,
+        body: emailLayout({
+          eyebrow: 'SAFE-T review',
+          title: 'A concierge review is needed',
+          intro: `Dear ${consultation.patient_name}, your SAFE-T 4LIFE review is complete. Before moving forward with ${formatProcedure(consultation.procedure_interest)}, our team needs to speak with you directly to protect your safety and comfort.`,
+          rows: [
+            row('Procedure', formatProcedure(consultation.procedure_interest)),
+            row('Review result', 'Concierge follow-up required'),
+          ],
+          note: [riskAssessment.summary, ...(riskAssessment.flags || [])].filter(Boolean).join(' | '),
+          footer: 'A member of our concierge team will reach out within 24 hours to discuss your options and next steps.',
+        }),
       });
     } catch (error) {
       console.log(`Blocked notification email skipped for ${consultation.email}: ${error.message}`);
@@ -153,7 +194,7 @@ The Morales Dental & Aesthetics Concierge Team
   const sendToPartners = async (emails, subject, body) => {
     for (const email of emails) {
       try {
-        await base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body });
+        await base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: email, subject, body });
       } catch (error) {
         console.log(`Email skipped for ${email} (external user): ${error.message}`);
       }
@@ -163,80 +204,72 @@ The Morales Dental & Aesthetics Concierge Team
   const partnerNotifications = [
     {
       partner: 'doctor',
-      email_subject: `New Patient Confirmed — ${consultation.patient_name} | Procedure: ${consultation.procedure_interest?.replace(/_/g, ' ')}`,
-      email_body: `
-Hello ${partner.name || 'Doctor'},
-
-Morales Dental & Aesthetics Portal Hub has approved a new patient for scheduling.
-
-Patient: ${consultation.patient_name}
-Procedure: ${consultation.procedure_interest?.replace(/_/g, ' ')}
-Preferred Date: ${consultation.preferred_date || 'Flexible'}
-Risk Level: ${riskAssessment.risk_level}
-Notes: ${consultation.notes || 'None'}
-
-Please confirm availability by logging into the portal or replying to this email.
-
-🔗 Review the Patient Portal now:  ${portalUrl}
-
-— Morales Concierge Team
-      `,
+      email_subject: `New patient approved — ${consultation.patient_name} | ${BRAND}`,
+      email_body: emailLayout({
+        eyebrow: 'Doctor request',
+        title: 'New patient ready for scheduling',
+        intro: 'A patient has passed the SAFE-T review and is ready for clinical availability confirmation.',
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Procedure', formatProcedure(consultation.procedure_interest)),
+          row('Preferred date', consultation.preferred_date || 'Flexible'),
+          row('Risk level', riskAssessment.risk_level),
+          row('Notes', consultation.notes || 'None'),
+        ],
+        ctaText: 'Review in portal',
+        ctaUrl: portalUrl,
+        footer: 'Please confirm availability through the portal or by replying to this email.',
+      }),
     },
     {
       partner: 'travel',
-      email_subject: `Travel Request — ${consultation.patient_name} | ${consultation.preferred_date || 'Flexible Date'}`,
-      email_body: `
-Hello,
-
-A new patient travel arrangement is needed.
-
-Patient: ${consultation.patient_name}
-Nationality: ${consultation.nationality || 'Not specified'}
-Preferred Date: ${consultation.preferred_date || 'Flexible'}
-Has Companion: ${consultation.has_companion ? `Yes (${consultation.companion_relationship})` : 'No'}
-Travel Services Requested: ${(consultation.travel_buddy_services || []).join(', ') || 'Standard'}
-
-Please arrange flights and itinerary and confirm via the portal.
-
-— Morales Concierge Team
-      `,
+      email_subject: `Travel request — ${consultation.patient_name} | ${BRAND}`,
+      email_body: emailLayout({
+        eyebrow: 'Travel request',
+        title: 'Patient travel arrangement needed',
+        intro: 'A newly approved patient requires travel planning support.',
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Nationality', consultation.nationality || 'Not specified'),
+          row('Preferred date', consultation.preferred_date || 'Flexible'),
+          row('Companion', consultation.has_companion ? `Yes (${consultation.companion_relationship || 'relationship not specified'})` : 'No'),
+          row('Requested services', (consultation.travel_buddy_services || []).join(', ') || 'Standard itinerary support'),
+        ],
+        footer: 'Please reply with flight options, itinerary details, and pricing.',
+      }),
     },
     {
       partner: 'hotel',
-      email_subject: `Recovery Lodging Request — ${consultation.patient_name}`,
-      email_body: `
-Hello,
-
-A recovery lodging arrangement is needed for a patient.
-
-Patient: ${consultation.patient_name}
-Procedure: ${consultation.procedure_interest?.replace(/_/g, ' ')}
-Preferred Date: ${consultation.preferred_date || 'Flexible'}
-Companion: ${consultation.has_companion ? 'Yes' : 'No'}
-Cultural/Comfort Preferences: ${(consultation.cultural_preferences || []).join(', ') || 'None specified'}
-
-Please confirm room availability and recovery accommodation details via the portal.
-
-— Morales Concierge Team
-      `,
+      email_subject: `Recovery lodging request — ${consultation.patient_name} | ${BRAND}`,
+      email_body: emailLayout({
+        eyebrow: 'Accommodation request',
+        title: 'Recovery lodging arrangement needed',
+        intro: 'A newly approved patient requires suitable recovery accommodation.',
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Procedure', formatProcedure(consultation.procedure_interest)),
+          row('Preferred date', consultation.preferred_date || 'Flexible'),
+          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          row('Comfort preferences', (consultation.cultural_preferences || []).join(', ') || 'None specified'),
+        ],
+        footer: 'Please reply with room availability, recovery support details, and pricing.',
+      }),
     },
     {
       partner: 'cab',
-      email_subject: `Local Transfer Request — ${consultation.patient_name}`,
-      email_body: `
-Hello,
-
-A local transfer/cab arrangement is needed for an incoming patient.
-
-Patient: ${consultation.patient_name}
-Date: ${consultation.preferred_date || 'Flexible'}
-Has Companion: ${consultation.has_companion ? 'Yes' : 'No'}
-Services: Airport pickup, clinic transfer, hotel return
-
-Please confirm availability via the portal.
-
-— Morales Concierge Team
-      `,
+      email_subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
+      email_body: emailLayout({
+        eyebrow: 'Transfer request',
+        title: 'Local patient transfer needed',
+        intro: 'A newly approved patient requires airport, clinic, and hotel transfer support.',
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Date', consultation.preferred_date || 'Flexible'),
+          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          row('Services', 'Airport pickup, clinic transfer, hotel return'),
+        ],
+        footer: 'Please reply with availability, vehicle details, and pricing.',
+      }),
     },
   ];
 
@@ -265,24 +298,17 @@ Please confirm availability via the portal.
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: consultation.email,
       subject: '✓ Your Consultation Is Approved — Morales Dental & Aesthetics',
-      body: `
-M
-─────────────────────
-
-Dear ${consultation.patient_name},
-
-Great news! Your consultation has been approved. We're coordinating with our partners to build your personalized package.
-
-✓ Specialist clinic — confirming availability
-✓ Travel arrangements — flights & itinerary  
-✓ Recovery accommodation — comfortable lodging
-✓ Local transfers — seamless transport
-
-You'll receive complete details within 24-48 hours. Any questions? Contact your concierge anytime.
-
-Warm regards,
-The Morales Dental & Aesthetics Concierge Team
-    `,
+      body: emailLayout({
+        eyebrow: 'Consultation approved',
+        title: 'Your consultation is approved',
+        intro: `Dear ${consultation.patient_name}, your consultation has been approved. We are now coordinating the specialist clinic, travel arrangements, recovery accommodation, and local transfers for your care package.`,
+        rows: [
+          row('Procedure', formatProcedure(consultation.procedure_interest)),
+          row('Risk level', riskAssessment.risk_level),
+          row('Next update', 'Within 24–48 hours'),
+        ],
+        footer: 'Your concierge team will contact you with the complete package details as each part is confirmed.',
+      }),
     });
   } catch (error) {
     console.log(`Approval notification email skipped for ${consultation.email}: ${error.message}`);

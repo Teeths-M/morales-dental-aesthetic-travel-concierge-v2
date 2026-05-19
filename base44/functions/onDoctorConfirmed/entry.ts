@@ -1,5 +1,54 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const BRAND = 'Morales Dental & Aesthetics';
+const TEAM = 'Morales Concierge Team';
+
+const escapeHtml = (value) => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;');
+
+const formatMoney = (value) => value ? `$${Number(value).toLocaleString('en-US')}` : 'To be confirmed';
+
+const row = (label, value) => `
+  <tr>
+    <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
+    <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(value || 'Not provided')}</td>
+  </tr>`;
+
+const emailLayout = ({ eyebrow, title, intro, rows = [], note, ctaText, ctaUrl, footer = 'Please reply to this email if you need assistance.' }) => `<!doctype html>
+<html>
+  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
+            <tr>
+              <td style="background:#29483d;padding:28px 32px;color:#ffffff;">
+                <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
+                <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${escapeHtml(eyebrow)}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">${escapeHtml(title)}</h1>
+                <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${escapeHtml(intro)}</p>
+                ${rows.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.join('')}</table>` : ''}
+                ${note ? `<div style="margin:22px 0;padding:16px 18px;background:#f8f4ee;border-left:4px solid #b68a52;border-radius:12px;color:#40514a;font-size:14px;line-height:1.6;">${escapeHtml(note)}</div>` : ''}
+                ${ctaText && ctaUrl ? `<a href="${escapeHtml(ctaUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:700;">${escapeHtml(ctaText)}</a>` : ''}
+                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">${escapeHtml(footer)}</p>
+                <p style="margin:18px 0 0;font-size:14px;color:#13221d;font-weight:700;">${TEAM}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -15,7 +64,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
-    // Fetch active partners from all relevant entities
     const [travelAgencies, taxiServices] = await Promise.all([
       base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }),
       base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
@@ -26,13 +74,25 @@ Deno.serve(async (req) => {
 
     const results = { travel: [], hotel: [], cab: [], patient: null, doctor: null };
 
-    // Notify doctor with portal link
     if (doctor_email) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: BRAND,
           to: doctor_email,
-          subject: `✅ Procedure Confirmed — Patient ${workflow.patient_name} | Morales Dental & Aesthetics`,
-          body: `Dear ${doctor_name || 'Doctor'},\n\nThis is a confirmation that you have been assigned the following procedure:\n\nPatient: ${workflow.patient_name}\nQuoted Price: $${quoted_price || 'TBD'}\n${notes ? 'Your Notes: ' + notes + '\n' : ''}\nYou can view and manage this case from your doctor portal:\n${portalLink}\n\nThank you for being part of our network!\n\n— Morales Dental & Aesthetics Concierge Team`,
+          subject: `Procedure confirmed for ${workflow.patient_name} | ${BRAND}`,
+          body: emailLayout({
+            eyebrow: 'Doctor confirmation',
+            title: `Confirmed case: ${workflow.patient_name}`,
+            intro: `Hello ${doctor_name || 'Doctor'}, this case has been assigned to you and is now moving into travel coordination.`,
+            rows: [
+              row('Patient', workflow.patient_name),
+              row('Quoted price', formatMoney(quoted_price)),
+              row('Portal', 'Doctor case management'),
+            ],
+            note: notes || '',
+            ctaText: 'Open portal',
+            ctaUrl: portalLink,
+          }),
         });
         results.doctor = 'sent';
       } catch (e) {
@@ -40,7 +100,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Notify travel agencies (flights + hotels)
     const filteredAgencies = only_agency_id ? travelAgencies.filter(a => a.id === only_agency_id) : travelAgencies;
     for (const agency of filteredAgencies) {
       const offersFlights = agency.services_offered?.includes('flights');
@@ -50,9 +109,21 @@ Deno.serve(async (req) => {
       if (offersFlights) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: BRAND,
             to: agency.email,
-            subject: `✅ Doctor Confirmed — Travel Booking Needed for ${workflow.patient_name}`,
-            body: `Hello ${name},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nDoctor's quoted price: $${quoted_price || 'TBD'}\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\nPlease arrange flights and travel itinerary and reply with your quote as soon as possible.\n\n— Morales Dental & Aesthetics Concierge Team`,
+            subject: `Travel coordination needed for ${workflow.patient_name} | ${BRAND}`,
+            body: emailLayout({
+              eyebrow: 'Travel request',
+              title: 'Flight and itinerary quote needed',
+              intro: `Hello ${name}, a doctor has confirmed this patient and travel planning can begin.`,
+              rows: [
+                row('Patient', workflow.patient_name),
+                row('Doctor quote', formatMoney(quoted_price)),
+                row('Requested service', 'Flights and travel itinerary'),
+              ],
+              note: notes || '',
+              footer: 'Please reply with availability, routing options, and pricing.',
+            }),
           });
           results.travel.push({ email: agency.email, name, status: 'sent' });
         } catch (e) {
@@ -63,9 +134,21 @@ Deno.serve(async (req) => {
       if (offersHotels) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: BRAND,
             to: agency.email,
-            subject: `✅ Doctor Confirmed — Recovery Hotel Needed for ${workflow.patient_name}`,
-            body: `Hello ${name},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nPlease arrange recovery accommodation and reply with your quote and availability.\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\n— Morales Dental & Aesthetics Concierge Team`,
+            subject: `Recovery lodging needed for ${workflow.patient_name} | ${BRAND}`,
+            body: emailLayout({
+              eyebrow: 'Accommodation request',
+              title: 'Recovery hotel quote needed',
+              intro: `Hello ${name}, this confirmed patient requires recovery-focused accommodation options.`,
+              rows: [
+                row('Patient', workflow.patient_name),
+                row('Requested service', 'Recovery lodging'),
+                row('Status', 'Doctor confirmed'),
+              ],
+              note: notes || '',
+              footer: 'Please reply with room availability, recovery suitability, and pricing.',
+            }),
           });
           results.hotel.push({ email: agency.email, name, status: 'sent' });
         } catch (e) {
@@ -74,14 +157,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Notify taxi/cab services
     for (const taxi of taxiServices) {
       const name = taxi.driver_name || taxi.company_name || taxi.email;
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: BRAND,
           to: taxi.email,
-          subject: `✅ Doctor Confirmed — Transfer Needed for ${workflow.patient_name}`,
-          body: `Hello ${name},\n\nThe doctor has confirmed the procedure for patient: ${workflow.patient_name}.\n\nPlease prepare airport and clinic transfer availability and reply with your quote.\n${notes ? 'Doctor notes: ' + notes + '\n' : ''}\n— Morales Dental & Aesthetics Concierge Team`,
+          subject: `Transfer coordination needed for ${workflow.patient_name} | ${BRAND}`,
+          body: emailLayout({
+            eyebrow: 'Transfer request',
+            title: 'Patient transfer quote needed',
+            intro: `Hello ${name}, this confirmed patient will need reliable local transportation support.`,
+            rows: [
+              row('Patient', workflow.patient_name),
+              row('Requested service', 'Airport, clinic, and hotel transfers'),
+              row('Status', 'Doctor confirmed'),
+            ],
+            note: notes || '',
+            footer: 'Please reply with availability, vehicle details, and pricing.',
+          }),
         });
         results.cab.push({ email: taxi.email, name, status: 'sent' });
       } catch (e) {
@@ -89,19 +183,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Notify patient
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: BRAND,
         to: workflow.patient_email,
-        subject: '✓ Great News — Your Doctor Has Confirmed! | Morales Dental & Aesthetics',
-        body: `Dear ${workflow.patient_name},\n\nWe're thrilled to let you know that your doctor has confirmed your procedure!\n\nOur team is now arranging your travel, accommodation, and local transfers. You'll receive a full package summary within 24–48 hours.\n\nIf you have any questions, don't hesitate to reach out to your concierge.\n\nWarm regards,\nThe Morales Dental & Aesthetics Concierge Team`,
+        subject: `Your doctor has confirmed | ${BRAND}`,
+        body: emailLayout({
+          eyebrow: 'Care journey update',
+          title: 'Your doctor has confirmed',
+          intro: `Dear ${workflow.patient_name}, your doctor has confirmed your procedure. Our concierge team is now coordinating the next steps around travel, lodging, and local transfers.`,
+          rows: [
+            row('Current stage', 'Travel coordination'),
+            row('Next update', 'Full package summary within 24–48 hours'),
+          ],
+          footer: 'Your concierge team will keep you updated as each part of your care journey is confirmed.',
+        }),
       });
       results.patient = 'sent';
     } catch (e) {
       results.patient = `failed: ${e.message}`;
     }
 
-    // Update workflow stage and partner statuses
     await base44.asServiceRole.entities.WorkflowEvent.update(workflow_id, {
       stage: 'travel',
       travel_status: results.travel.length > 0 ? 'notified' : 'pending',
@@ -110,7 +212,6 @@ Deno.serve(async (req) => {
     });
 
     return Response.json({ status: 'ok', results });
-
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

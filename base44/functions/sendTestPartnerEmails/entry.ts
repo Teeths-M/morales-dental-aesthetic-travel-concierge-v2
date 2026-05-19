@@ -1,5 +1,33 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const BRAND = 'Morales Dental & Aesthetics';
+
+const escapeHtml = (value) => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;');
+
+const partnerEmail = ({ type, name }) => `<!doctype html>
+<html>
+  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
+          <tr><td style="background:#29483d;padding:28px 32px;color:#ffffff;"><div style="font-family:Georgia,serif;font-size:26px;">${BRAND}</div><div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">Partner notification test</div></td></tr>
+          <tr><td style="padding:32px;">
+            <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;font-weight:400;">Your partner notifications are active</h1>
+            <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">Hello ${escapeHtml(name)}, this confirms your ${escapeHtml(type)} notification channel is ready.</p>
+            <div style="padding:16px 18px;background:#f8f4ee;border-left:4px solid #b68a52;border-radius:12px;color:#40514a;font-size:14px;line-height:1.6;">You will receive clear case details when a patient needs your service. Please keep your availability, pricing, and contact details current.</div>
+            <p style="margin:28px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
@@ -22,24 +50,7 @@ Deno.serve(async (req) => {
         from_name: 'Morales Dental & Aesthetics',
         to: agency.email,
         subject: '✈️ Partner Notification — Flight & Hotel Package Coordination',
-        body: `Hello ${agency.agency_name},
-
-This is a test notification from the Morales Dental & Aesthetics Portal Hub.
-
-We are confirming your partnership for coordinating flight and hotel packages for our medical tourism clients.
-
-As an active travel partner, you will receive notifications when a new patient consultation is approved and requires:
-• ✈️ Flight arrangements (economy, business, or first class)
-• 🏨 Hotel accommodations during their medical stay
-• 🧳 Full travel itinerary coordination
-
-Please ensure your availability and pricing packages are up to date in our system.
-
-For any questions, contact our concierge team directly.
-
-Warm regards,
-The Morales Dental & Aesthetics Concierge Team
-      `,
+        body: partnerEmail({ type: 'travel agency', name: agency.agency_name }),
       });
       results.travel.push({ name: agency.agency_name, email: agency.email, sent: true });
     } catch (error) {
@@ -55,25 +66,7 @@ The Morales Dental & Aesthetics Concierge Team
         from_name: 'Morales Dental & Aesthetics',
         to: taxi.email,
         subject: '🚗 Partner Notification — Client Airport & Clinic Transfers',
-        body: `Hello ${name},
-
-This is a test notification from the Morales Dental & Aesthetics Portal Hub.
-
-We are confirming your partnership for client transportation and transfer services.
-
-As an active transfer partner, you will receive pickup requests when a new patient arrives, including:
-• 🛬 Airport pickup upon arrival
-• 🏥 Airport → Clinic transfer
-• 🏨 Clinic → Hotel / recovery accommodation transport
-• 🛫 Return trip to airport at end of stay
-
-Please ensure your availability and vehicle details are current in our system.
-
-For any questions, contact our concierge team directly.
-
-Warm regards,
-The Morales Dental & Aesthetics Concierge Team
-      `,
+        body: partnerEmail({ type: 'transfer partner', name }),
       });
       results.taxi.push({ name, email: taxi.email, sent: true });
     } catch (error) {
