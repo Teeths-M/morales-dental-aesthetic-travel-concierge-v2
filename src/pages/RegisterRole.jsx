@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 
 import { Car, HeartPulse, Plane, UserRound } from 'lucide-react';
 import SignupRoleCard from '@/components/signup/SignupRoleCard.jsx';
-import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { useAuth } from '@/lib/AuthContext';
 
 const roles = [
@@ -49,13 +48,8 @@ export default function RegisterRole() {
     }
   }, [authChecked, isAuthenticated, navigateToLogin]);
 
-  const handleRoleSelect = async (role) => {
+  const handleRoleSelect = (role) => {
     localStorage.setItem('signupRole', role.role);
-    await saveUserOnboardingProfile({
-      role: role.role,
-      status: 'started',
-      profileData: { selected_role: role.role, selected_role_title: role.title }
-    });
     window.location.href = role.path;
   };
 
