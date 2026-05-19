@@ -37,8 +37,8 @@ export default function Hero() {
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png)" }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-foreground/45 via-transparent to-background/15 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-foreground/35 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/35 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-foreground/45 via-transparent to-background/10 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top service label */}
@@ -48,7 +48,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}>
           
-          <div className="inline-flex items-center gap-2 bg-white/75 backdrop-blur-md border border-white/40 rounded-full px-4 py-1.5 shadow-sm">
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5">
             <MapPin className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs font-semibold text-primary uppercase tracking-widest">
               {language === 'es' ? 'Concierge de Turismo Médico — Isla de Margarita, Venezuela' : language === 'fr' ? 'Concierge de Tourisme Médical — Île de Margarita, Venezuela' : 'Medical Tourism Concierge — Margarita Island, Venezuela'}
@@ -56,24 +56,24 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-7rem)] pb-14">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end min-h-[calc(100vh-7rem)] pb-14">
           {/* Left Content */}
           <motion.div
-            className="lg:col-start-2 max-w-xl justify-self-end rounded-[1.75rem] border border-white/50 bg-white/78 p-6 sm:p-8 lg:p-10 backdrop-blur-xl shadow-2xl"
+            className="max-w-2xl rounded-[2rem] border border-white/15 bg-foreground/35 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}>
             
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-foreground leading-[1.02] mb-5">
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.02] mb-5 drop-shadow-sm">
               {language === 'es' ? 'Cuidado seguro. Recuperación tranquila. Un equipo contigo.' : language === 'fr' ? 'Des soins sûrs. Une récupération sereine. Une équipe avec vous.' : 'Safe care. Calm recovery. A team beside you.'}
             </h1>
 
-            <p className="lg:text-lg max-w-xl mb-5 leading-relaxed text-foreground/80 text-xl">
+            <p className="lg:text-lg max-w-xl mb-5 leading-relaxed text-white/90 text-xl drop-shadow-sm">
               {language === 'es' ? 'SAFE-T 4LIFE™ combina especialistas verificados, coordinación de viaje y apoyo de recuperación junto al mar para que cada paso se sienta claro, humano y seguro.' : language === 'fr' ? 'SAFE-T 4LIFE™ combine spécialistes vérifiés, coordination de voyage et soutien de récupération au bord de la mer pour rendre chaque étape claire, humaine et sûre.' : 'SAFE-T 4LIFE™ brings verified specialists, travel coordination, and seaside recovery support together so every step feels clear, human, and safe.'}
             </p>
 
             {/* Emotional pull quote */}
-            <p className="text-sm font-semibold text-accent italic mb-8">
+            <p className="text-sm font-medium text-accent italic mb-8">
               {language === 'es' ? '"Desde la consulta hasta la costa — tu seguridad viaja contigo."' : language === 'fr' ? '"De la consultation à la côte — votre sécurité voyage avec vous."' : '"From consultation to the coast — your safety travels with you."'}
             </p>
 
@@ -86,17 +86,17 @@ export default function Hero() {
                 </Button>
               </Link>
               <Link to="/procedures">
-                <Button size="lg" variant="outline" className="h-12 px-8 font-semibold bg-white/50 hover:bg-white/80">
+                <Button size="lg" variant="outline" className="h-12 px-8 font-semibold">
                   {language === 'es' ? 'Explorar Procedimientos' : language === 'fr' ? 'Explorer les Procédures' : 'Explore Procedures'}
                 </Button>
               </Link>
             </div>
 
             {/* Trust Badges */}
-            <div className="grid sm:grid-cols-3 gap-3 mb-2">
+            <div className="flex flex-wrap gap-5 mb-10">
               {badges.map(({ icon: Icon, label, sub }) =>
-              <div key={label} className="flex items-center gap-3 rounded-xl bg-white/45 border border-white/50 p-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div key={label} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
