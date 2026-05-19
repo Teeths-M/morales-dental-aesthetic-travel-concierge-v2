@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { UserRound, ShieldCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ClientSignup() {
   const navigate = useNavigate();
+  const { checkUserAuth } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
     full_name: '',
@@ -39,7 +41,7 @@ export default function ClientSignup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSaving(true);
-    await saveUserOnboardingProfile({
+    const profile = await saveUserOnboardingProfile({
       role: 'client',
       status: 'completed',
       profileData: {
@@ -48,7 +50,19 @@ export default function ClientSignup() {
         completed_from: 'client_signup'
       }
     });
+
+    await base44.functions.invoke('syncTenantRole', {
+      tenant_id: profile.id,
+      tenant_type: 'client',
+      tenant_name: form.full_name,
+      user_email: form.email,
+      user_role: 'client',
+      linked_entity_name: 'UserOnboardingProfile',
+      linked_entity_id: profile.id
+    });
+
     localStorage.setItem('signupRole', 'client');
+    await checkUserAuth();
     navigate('/dashboard');
   };
 
