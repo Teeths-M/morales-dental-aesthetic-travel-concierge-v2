@@ -41,21 +41,6 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/35 via-transparent to-background/5 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top service label */}
-        <motion.div
-          className="flex justify-center pt-8 lg:pt-12"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}>
-          
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5">
-            <MapPin className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs font-semibold text-primary uppercase tracking-widest">
-              {language === 'es' ? 'Concierge de Turismo Médico — Isla de Margarita, Venezuela' : language === 'fr' ? 'Concierge de Tourisme Médical — Île de Margarita, Venezuela' : 'Medical Tourism Concierge — Margarita Island, Venezuela'}
-            </span>
-          </div>
-        </motion.div>
-
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end min-h-[calc(100vh-7rem)] pb-14">
           {/* Left Content */}
           <motion.div
