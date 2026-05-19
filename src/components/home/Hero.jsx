@@ -147,9 +147,9 @@ export default function Hero() {
             
             <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-h-[680px]">
               <img
-                src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/3ea195321_generated_8e246ca1.png"
-                alt="Premium dental care patient"
-                className="w-full h-full object-cover" />
+                src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png"
+                alt="SAFE-T 4LIFE care team on the beach"
+                className="w-full h-full object-cover object-center" />
               
               {/* Floating service badge */}
               <div className="absolute top-5 left-5 bg-card/95 backdrop-blur-md rounded-xl px-4 py-2.5 border border-border/50 shadow-lg">
