@@ -37,7 +37,7 @@ export default function Hero() {
       className="relative overflow-hidden bg-cover bg-[center_35%] bg-no-repeat"
       style={{ backgroundImage: "url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png)" }}
     >
-      <div className="absolute inset-0 backdrop-blur-[1.5px] scale-[1.01] pointer-events-none" />
+      <div className="absolute inset-0 scale-[1.01] backdrop-blur-[0.75px] backdrop-saturate-125 backdrop-contrast-110 pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-foreground/76 via-foreground/30 to-transparent pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/38 via-transparent to-background/5 pointer-events-none" />
 
