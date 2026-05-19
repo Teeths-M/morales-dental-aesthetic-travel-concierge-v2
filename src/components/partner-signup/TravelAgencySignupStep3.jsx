@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowRight, ChevronLeft, Upload } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
+import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
 export default function TravelAgencySignupStep3({ formData, setFormData, language, onNext, onBack, onComplete }) {
   const t = translations[language];
@@ -73,7 +74,13 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
       };
 
       const agency = await base44.entities.TravelAgency.create(agencyData);
-      await base44.auth.updateMe({ role: 'travel_agency' });
+      await saveUserOnboardingProfile({
+        role: 'travel_agency',
+        status: 'completed',
+        linkedEntityName: 'TravelAgency',
+        linkedEntityId: agency.id,
+        profileData: { ...formData, ...agencyData }
+      });
       onComplete(agency);
     } catch (error) {
       console.error('Submit failed:', error);

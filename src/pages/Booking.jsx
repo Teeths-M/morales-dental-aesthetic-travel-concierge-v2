@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock, FileText, X, AlertCircle } from 'lucide-react';
@@ -218,8 +219,19 @@ export default function Booking() {
       const procedureNames = items.map(item => item.name).join(', ') || 'other';
       return base44.entities.Consultation.create({ ...data, procedure_interest: procedureNames });
     },
-    onSuccess: (consultation) => {
+    onSuccess: async (consultation) => {
       setConsultationId(consultation.id);
+      await saveUserOnboardingProfile({
+        role: 'client',
+        status: 'completed',
+        linkedEntityName: 'Consultation',
+        linkedEntityId: consultation.id,
+        profileData: {
+          ...form,
+          acknowledged_statements: Array.from(form.acknowledged_statements || []),
+          procedure_interest: consultation.procedure_interest
+        }
+      });
       setShowFeeModal(true);
 
     },

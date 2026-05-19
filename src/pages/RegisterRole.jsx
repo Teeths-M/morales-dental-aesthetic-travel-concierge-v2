@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import { Car, HeartPulse, Plane, UserRound } from 'lucide-react';
 import SignupRoleCard from '@/components/signup/SignupRoleCard.jsx';
-import { base44 } from '@/api/base44Client';
+import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { useAuth } from '@/lib/AuthContext';
 
 const roles = [
@@ -51,7 +51,11 @@ export default function RegisterRole() {
 
   const handleRoleSelect = async (role) => {
     localStorage.setItem('signupRole', role.role);
-    await base44.auth.updateMe({ role: role.role });
+    await saveUserOnboardingProfile({
+      role: role.role,
+      status: 'started',
+      profileData: { selected_role: role.role, selected_role_title: role.title }
+    });
     window.location.href = role.path;
   };
 

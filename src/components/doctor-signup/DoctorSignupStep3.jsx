@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { translations } from '@/lib/translations';
 import { ArrowRight, ChevronLeft, Upload, CloudUpload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
 export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
@@ -73,7 +74,13 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
        };
 
        const doctor = await base44.entities.Doctor.create(doctorData);
-       await base44.auth.updateMe({ role: 'doctor' });
+       await saveUserOnboardingProfile({
+         role: 'doctor',
+         status: 'completed',
+         linkedEntityName: 'Doctor',
+         linkedEntityId: doctor.id,
+         profileData: { ...formData, ...doctorData }
+       });
 
        // Auto-assign specialties
        if (formData.specialties && formData.specialties.length > 0) {

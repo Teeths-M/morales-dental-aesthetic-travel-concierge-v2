@@ -18,7 +18,7 @@
     },
     "tenant_id": {
       "type": "string",
-      "description": "Primary tenant this user belongs to"
+      "description": "Primary profile or tenant record this user belongs to"
     },
     "tenant_type": {
       "type": "string",
@@ -30,6 +30,34 @@
         "platform_admin"
       ],
       "description": "Primary tenant type for this user"
+    },
+    "profile_entity_name": {
+      "type": "string",
+      "enum": [
+        "Doctor",
+        "Consultation",
+        "TravelAgency",
+        "TaxiService",
+        "UserOnboardingProfile"
+      ],
+      "description": "Main profile data table connected to this user"
+    },
+    "profile_entity_id": {
+      "type": "string",
+      "description": "Record ID for this user's main profile"
+    },
+    "onboarding_profile_id": {
+      "type": "string",
+      "description": "Reference to the user's onboarding profile record"
+    },
+    "onboarding_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "started",
+        "completed"
+      ],
+      "default": "not_started"
     }
   }
 }
