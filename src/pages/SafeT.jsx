@@ -56,9 +56,6 @@ export default function SafeT() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Shield className="w-7 h-7 text-white" />
-            </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl lg:text-3xl text-slate-900">SAFE-T 4LIFE™</h1>
