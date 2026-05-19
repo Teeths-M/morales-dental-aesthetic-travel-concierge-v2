@@ -150,9 +150,9 @@ export default function RiskAssessmentTab() {
                     transition={{ delay: index * 0.05 }}
                     className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                   >
-                    <div className="mb-4 flex flex-col items-start gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] leading-snug text-slate-500">{risk.label}</p>
-                      <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${tone.badge}`}>
+                    <div className="mb-4 space-y-2">
+                      <p className="min-h-8 text-[11px] font-bold uppercase tracking-[0.16em] leading-snug text-slate-500">{risk.label}</p>
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${tone.badge}`}>
                         {risk.level}
                       </span>
                     </div>
