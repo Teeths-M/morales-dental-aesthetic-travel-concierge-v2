@@ -125,7 +125,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {visibleNavLinks.map(link => (
               <Link
                 key={link.path}
@@ -214,7 +214,7 @@ export default function Navbar() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {/* Language Dropdown */}
               <div 
                 className="relative hidden sm:block" 
@@ -282,7 +282,7 @@ export default function Navbar() {
               </>
             )}
             <button
-              className="lg:hidden p-2"
+              className="xl:hidden p-2"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -298,7 +298,7 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-t border-border bg-card"
+            className="xl:hidden border-t border-border bg-card"
           >
             <nav className="px-4 py-4 space-y-1">
               {visibleNavLinks.map(link => (
