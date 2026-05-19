@@ -1,103 +1,103 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, Circle, ChevronRight, MapPin, Calendar, Plane, Stethoscope, HeartPulse, Star, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronRight, Plane, ClipboardCheck, Stethoscope, HeartPulse, Star, AlertCircle, MessageCircle, ShieldCheck, Hospital, Leaf } from 'lucide-react';
 
 const STAGES = [
   {
     id: 'consultation',
-    label: 'Initial Consultation',
-    icon: '💬',
+    label: 'Care Intake',
+    icon: MessageCircle,
     status: 'completed',
     date: 'Completed',
-    description: 'Medical history review, procedure selection, and risk assessment completed.',
+    description: 'Your goals, health background, and travel preferences are now organized into one care profile.',
     tasks: [
-      { label: 'Medical intake form submitted', done: true },
-      { label: 'Procedure interests confirmed', done: true },
-      { label: 'Risk assessment completed', done: true },
-      { label: 'Initial consultation call', done: true },
+      { label: 'Health intake received', done: true },
+      { label: 'Treatment goals clarified', done: true },
+      { label: 'Safety scan completed', done: true },
+      { label: 'First care conversation logged', done: true },
     ],
   },
   {
     id: 'doctor_review',
-    label: 'Doctor Review',
-    icon: '🩺',
+    label: 'Clinical Review',
+    icon: Stethoscope,
     status: 'completed',
     date: 'Completed',
-    description: 'Your assigned healthcare provider has reviewed your medical profile.',
+    description: 'A licensed provider has reviewed your profile and shaped the next steps around your needs.',
     tasks: [
-      { label: 'Medical profile reviewed by doctor', done: true },
-      { label: 'Treatment plan created', done: true },
-      { label: 'Pre-procedure instructions issued', done: true },
+      { label: 'Profile reviewed by clinician', done: true },
+      { label: 'Care direction outlined', done: true },
+      { label: 'Preparation notes added', done: true },
     ],
   },
   {
     id: 'planning',
-    label: 'Travel Planning',
-    icon: '✈️',
+    label: 'Arrival Plan',
+    icon: Plane,
     status: 'active',
     date: 'In Progress',
-    description: 'Coordinating your travel, accommodation, and logistics for a seamless arrival.',
+    description: 'Your route, stay, pickup, and arrival details are being coordinated into a smooth landing plan.',
     tasks: [
-      { label: 'Visa requirements checked', done: true },
-      { label: 'Flight booking confirmed', done: false },
-      { label: 'Hotel/accommodation arranged', done: false },
-      { label: 'Airport transfer scheduled', done: false },
-      { label: 'Travel insurance secured', done: false },
+      { label: 'Entry requirements confirmed', done: true },
+      { label: 'Flight details pending', done: false },
+      { label: 'Recovery-friendly stay to be selected', done: false },
+      { label: 'Clinic transfer to be scheduled', done: false },
+      { label: 'Travel coverage to be verified', done: false },
     ],
   },
   {
     id: 'preparation',
-    label: 'Pre-Procedure Prep',
-    icon: '📋',
+    label: 'Readiness Check',
+    icon: ClipboardCheck,
     status: 'upcoming',
     date: 'Upcoming',
-    description: 'Final preparations including fasting, medications, and document readiness.',
+    description: 'A final checklist will help you arrive prepared, calm, and medically ready for care.',
     tasks: [
-      { label: 'Pre-procedure blood work', done: false },
-      { label: 'Fasting instructions followed', done: false },
-      { label: 'Medications reviewed with doctor', done: false },
-      { label: 'Recovery supplies packed', done: false },
+      { label: 'Required lab work completed', done: false },
+      { label: 'Fasting window confirmed', done: false },
+      { label: 'Medication guidance reviewed', done: false },
+      { label: 'Recovery essentials packed', done: false },
     ],
   },
   {
     id: 'procedure',
-    label: 'Procedure Day',
-    icon: '🏥',
+    label: 'Care Day',
+    icon: Hospital,
     status: 'upcoming',
     date: 'Upcoming',
-    description: 'Your care team will be fully prepared to guide you through your procedure safely.',
+    description: 'Your local team will guide arrivals, checks, treatment, and early monitoring step by step.',
     tasks: [
-      { label: 'Arrival at clinic', done: false },
-      { label: 'Pre-procedure check with doctor', done: false },
-      { label: 'Procedure completed', done: false },
-      { label: 'Post-procedure monitoring', done: false },
+      { label: 'Clinic arrival confirmed', done: false },
+      { label: 'Provider check-in completed', done: false },
+      { label: 'Treatment completed', done: false },
+      { label: 'Early recovery monitored', done: false },
     ],
   },
   {
     id: 'recovery',
-    label: 'Recovery',
-    icon: '🌿',
+    label: 'Recovery Watch',
+    icon: Leaf,
     status: 'upcoming',
     date: 'Upcoming',
-    description: 'SAFE-T 4LIFE™ will check in daily to monitor your recovery and wellbeing.',
+    description: 'Daily check-ins will track comfort, mobility, and concerns while you recover away from home.',
     tasks: [
-      { label: '24-hour post-procedure check-in', done: false },
-      { label: 'Day 3 wellness check', done: false },
+      { label: '24-hour comfort check', done: false },
+      { label: 'Day 3 progress review', done: false },
       { label: 'Day 7 follow-up review', done: false },
-      { label: 'Return travel cleared by doctor', done: false },
+      { label: 'Return travel clearance requested', done: false },
     ],
   },
   {
     id: 'aftercare',
-    label: 'Aftercare & Follow-Up',
-    icon: '⭐',
+    label: 'Long-Term Follow-Up',
+    icon: Star,
     status: 'upcoming',
     date: 'Upcoming',
-    description: 'Ongoing support, follow-up consultations, and long-term wellness guidance.',
+    description: 'After you return home, follow-ups and care notes keep your results and wellbeing on track.',
     tasks: [
-      { label: '30-day remote follow-up', done: false },
-      { label: 'Final results review', done: false },
-      { label: 'Long-term care instructions', done: false },
+      { label: '30-day remote review', done: false },
+      { label: 'Results discussion scheduled', done: false },
+      { label: 'Long-term care notes delivered', done: false },
     ],
   },
 ];
@@ -162,12 +162,13 @@ export default function JourneyTimelineTab() {
 
       {/* Timeline */}
       <div className="relative pl-3 sm:pl-6">
-        <div className="absolute left-[1.55rem] top-4 hidden h-[calc(100%-2rem)] w-px bg-white/70 sm:block" />
+        <div className="absolute left-8 top-8 hidden h-[calc(100%-4rem)] w-px bg-white/80 sm:block" />
         <div className="space-y-4">
           {STAGES.map((stage, idx) => {
             const s = STATUS_STYLES[stage.status];
             const isExpanded = expanded === stage.id;
             const doneCount = stage.tasks.filter(t => t.done).length;
+            const StageIcon = stage.icon;
 
             return (
               <motion.div
@@ -177,20 +178,20 @@ export default function JourneyTimelineTab() {
                 transition={{ delay: idx * 0.05 }}
                 className="relative sm:pl-12"
               >
-                <div className={`absolute left-0 top-5 z-10 hidden h-4 w-4 rounded-full border-4 border-white ${s.rail} shadow-md sm:block`} />
-                <div className={`overflow-hidden rounded-[1.6rem] border border-white/55 bg-white/88 shadow-lg backdrop-blur-xl transition-all ${s.glow}`}>
+                <div className={`absolute left-0 top-6 z-10 hidden h-4 w-4 rounded-full border-4 border-white ${s.rail} shadow-md sm:block`} />
+                <div className={`overflow-hidden rounded-[1.6rem] border border-white/65 bg-white/92 shadow-lg backdrop-blur-xl transition-all ${s.glow}`}>
                   <button
                     onClick={() => setExpanded(isExpanded ? null : stage.id)}
                     className="w-full p-5 text-left transition-colors hover:bg-white/55"
                   >
                     <div className="flex items-start gap-4">
-                      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border text-xl shadow-sm ${s.icon}`}>
-                        {stage.status === 'completed' ? <CheckCircle2 className="h-6 w-6" /> : <span>{stage.icon}</span>}
+                      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border shadow-sm ${s.icon}`}>
+                        {stage.status === 'completed' ? <ShieldCheck className="h-6 w-6" /> : <StageIcon className="h-6 w-6" />}
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className={`font-display text-xl ${stage.status === 'upcoming' ? 'text-slate-500' : 'text-slate-950'}`}>
+                          <h3 className={`text-base font-bold tracking-tight ${stage.status === 'upcoming' ? 'text-slate-600' : 'text-slate-950'}`}>
                             {stage.label}
                           </h3>
                           <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${s.chip}`}>
@@ -203,7 +204,7 @@ export default function JourneyTimelineTab() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{stage.description}</p>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{stage.description}</p>
                       </div>
 
                       <div className="flex flex-shrink-0 items-center gap-3 pt-1">
