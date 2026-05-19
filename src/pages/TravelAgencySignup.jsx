@@ -16,9 +16,13 @@ export default function TravelAgencySignup() {
   const [successAgency, setSuccessAgency] = useState(null);
   const [formData, setFormData] = useState({
     agency_name: '',
+    contact_person: '',
     email: '',
     phone: '',
     headquarters_country: '',
+    website_url: '',
+    medical_travel_experience_years: '',
+    emergency_support_available: false,
     service_regions: [],
     services_offered: [],
     service_options: {},

@@ -6,6 +6,10 @@
       "type": "string",
       "description": "Name of the travel agency"
     },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
     "email": {
       "type": "string",
       "format": "email"
@@ -13,8 +17,19 @@
     "phone": {
       "type": "string"
     },
+    "website_url": {
+      "type": "string"
+    },
     "headquarters_country": {
       "type": "string"
+    },
+    "medical_travel_experience_years": {
+      "type": "number",
+      "default": 0
+    },
+    "emergency_support_available": {
+      "type": "boolean",
+      "default": false
     },
     "service_regions": {
       "type": "array",
@@ -32,7 +47,7 @@
     },
     "service_options": {
       "type": "object",
-      "description": "Detailed options per service (e.g., Flights: [Economy, Business, First])"
+      "description": "Detailed options per service"
     },
     "payout_method": {
       "type": "string",

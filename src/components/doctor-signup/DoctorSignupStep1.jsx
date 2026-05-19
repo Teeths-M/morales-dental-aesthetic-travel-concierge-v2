@@ -24,7 +24,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
     }
   };
 
-  const canProceed = formData.full_name && formData.email && formData.phone && formData.clinic_country;
+  const canProceed = formData.full_name && formData.email && formData.phone && formData.clinic_country && formData.professional_background && formData.years_experience;
 
   return (
     <div className="space-y-8">
@@ -91,6 +91,38 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             placeholder="Smile Care Clinic"
             value={formData.clinic_name}
             onChange={(e) => handleChange('clinic_name', e.target.value)}
+            className="h-12 text-base"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">🎓 Professional Background</label>
+          <Input
+            placeholder="Education, certifications, board memberships"
+            value={formData.professional_background}
+            onChange={(e) => handleChange('professional_background', e.target.value)}
+            className="h-12 text-base"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">⭐ Years of Experience</label>
+          <Input
+            type="number"
+            min="0"
+            placeholder="10"
+            value={formData.years_experience}
+            onChange={(e) => handleChange('years_experience', e.target.value)}
+            className="h-12 text-base"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">📝 Short Bio</label>
+          <Input
+            placeholder="A short patient-facing introduction"
+            value={formData.bio}
+            onChange={(e) => handleChange('bio', e.target.value)}
             className="h-12 text-base"
           />
         </div>

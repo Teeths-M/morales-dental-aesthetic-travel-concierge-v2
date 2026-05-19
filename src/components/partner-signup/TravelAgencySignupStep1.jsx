@@ -28,7 +28,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
     onNext();
   };
 
-  const canContinue = formData.agency_name && formData.email && formData.phone && formData.headquarters_country && agencies.length > 0;
+  const canContinue = formData.agency_name && formData.contact_person && formData.email && formData.phone && formData.headquarters_country && agencies.length > 0;
 
   return (
     <div className="space-y-8">
@@ -48,6 +48,16 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
             placeholder={language === 'es' ? 'Ej: Viajes Globales' : language === 'fr' ? 'Ex: Voyages Mondiaux' : 'e.g., Global Travels'}
             value={formData.agency_name || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, agency_name: e.target.value }))}
+            className="h-12"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-2">👤 {language === 'es' ? 'Persona de Contacto' : language === 'fr' ? 'Personne de Contact' : 'Contact Person'}</label>
+          <Input
+            placeholder={language === 'es' ? 'Nombre completo' : language === 'fr' ? 'Nom complet' : 'Full name'}
+            value={formData.contact_person || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, contact_person: e.target.value }))}
             className="h-12"
           />
         </div>
@@ -79,6 +89,28 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
             placeholder={language === 'es' ? 'Ej: España' : language === 'fr' ? 'Ex: France' : 'e.g., USA'}
             value={formData.headquarters_country || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, headquarters_country: e.target.value }))}
+            className="h-12"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-2">🌐 Website (Optional)</label>
+          <Input
+            placeholder="https://youragency.com"
+            value={formData.website_url || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
+            className="h-12"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-2">🏥 Medical Travel Experience (Years)</label>
+          <Input
+            type="number"
+            min="0"
+            placeholder="3"
+            value={formData.medical_travel_experience_years || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, medical_travel_experience_years: e.target.value }))}
             className="h-12"
           />
         </div>

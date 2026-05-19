@@ -63,11 +63,16 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
         driver_name: formData.driver_name,
         email: formData.email,
         phone: formData.phone,
+        operating_country: formData.operating_country,
         operating_city: formData.operating_city,
+        service_radius_km: Number(formData.service_radius_km) || 0,
+        patient_assistance: formData.patient_assistance,
         vehicle_types: formData.vehicle_types,
         operating_hours: formData.operating_hours,
         pricing_model: formData.pricing_model,
         vehicle_photo_url: formData.vehicle_photo_url || '',
+        driver_license_number: formData.driver_license_number,
+        insurance_provider: formData.insurance_provider,
         payout_method: formData.payout_method,
         payout_account: formData.payout_account,
         language_preference: language,
@@ -93,7 +98,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
     }
   };
 
-  const canSubmit = payoutMethod && formData.payout_account && licenseConfirmed && insuranceConfirmed;
+  const canSubmit = payoutMethod && formData.payout_account && formData.driver_license_number && formData.insurance_provider && licenseConfirmed && insuranceConfirmed;
 
   return (
     <div className="space-y-8">
@@ -168,6 +173,27 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
             />
           </div>
         )}
+
+        <div className="grid gap-4 border-t border-border pt-6">
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">🪪 Driver License Number</label>
+            <Input
+              placeholder="License number"
+              value={formData.driver_license_number || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, driver_license_number: e.target.value }))}
+              className="h-12"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">🛡️ Insurance Provider</label>
+            <Input
+              placeholder="Insurance company name"
+              value={formData.insurance_provider || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, insurance_provider: e.target.value }))}
+              className="h-12"
+            />
+          </div>
+        </div>
 
         {/* Legal Confirmations */}
         <div className="space-y-3 border-t border-border pt-6">

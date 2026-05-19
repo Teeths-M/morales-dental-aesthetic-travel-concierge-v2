@@ -5,6 +5,7 @@ import { ArrowRight, ChevronDown, Search } from 'lucide-react';
 import { translations } from '@/lib/translations';
 
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Van', 'Wheelchair van'];
+const ASSISTANCE_OPTIONS = ['Luggage help', 'Mobility assistance', 'Wheelchair support', 'Clinic escort', 'Post-procedure careful driving'];
 
 const ALL_COUNTRIES = [
   "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia",
@@ -33,6 +34,7 @@ const ALL_COUNTRIES = [
 export default function TaxiServiceSignupStep1({ formData, setFormData, language, onNext }) {
   const t = translations[language];
   const [vehicles, setVehicles] = useState(formData.vehicle_types || []);
+  const [assistance, setAssistance] = useState(formData.patient_assistance || []);
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const countryRef = useRef(null);
@@ -57,6 +59,12 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
     );
   };
 
+  const toggleAssistance = (option) => {
+    setAssistance(prev =>
+      prev.includes(option) ? prev.filter(item => item !== option) : [...prev, option]
+    );
+  };
+
   const handleNext = () => {
     setFormData(prev => ({
       ...prev,
@@ -64,13 +72,16 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
       driver_name: formData.driver_name,
       email: formData.email,
       phone: formData.phone,
+      operating_country: formData.operating_country,
       operating_city: formData.operating_city,
+      service_radius_km: formData.service_radius_km,
+      patient_assistance: assistance,
       vehicle_types: vehicles
     }));
     onNext();
   };
 
-  const canContinue = formData.email && formData.phone && formData.operating_city && vehicles.length > 0;
+  const canContinue = formData.email && formData.phone && formData.operating_country && formData.operating_city && vehicles.length > 0 && assistance.length > 0;
 
   return (
     <div className="space-y-8">
@@ -132,8 +143,8 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
             onClick={() => setShowCountryDropdown(v => !v)}
             className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            <span className={formData.operating_city ? 'text-foreground' : 'text-muted-foreground'}>
-              {formData.operating_city || (language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country')}
+            <span className={formData.operating_country ? 'text-foreground' : 'text-muted-foreground'}>
+              {formData.operating_country || (language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country')}
             </span>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -156,11 +167,11 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
                   <li
                     key={country}
                     onClick={() => {
-                      setFormData(prev => ({ ...prev, operating_city: country }));
+                      setFormData(prev => ({ ...prev, operating_country: country }));
                       setShowCountryDropdown(false);
                       setCountrySearch('');
                     }}
-                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_city === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
                   >
                     {country}
                   </li>
@@ -168,6 +179,47 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
               </ul>
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-2">📍 Operating City / Region</label>
+          <Input
+            placeholder="Port of Spain, Kingston, Caracas..."
+            value={formData.operating_city || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
+            className="h-12"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-2">📏 Service Radius (km)</label>
+          <Input
+            type="number"
+            min="1"
+            placeholder="50"
+            value={formData.service_radius_km || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, service_radius_km: e.target.value }))}
+            className="h-12"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-3">🤝 Patient Assistance Offered</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {ASSISTANCE_OPTIONS.map(option => (
+              <button
+                key={option}
+                onClick={() => toggleAssistance(option)}
+                className={`p-3 rounded-lg border-2 transition-all text-sm font-medium text-center ${
+                  assistance.includes(option)
+                    ? 'border-blue-400 bg-blue-50 text-blue-700'
+                    : 'border-border bg-card text-foreground hover:border-blue-300'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>

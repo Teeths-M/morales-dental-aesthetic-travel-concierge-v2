@@ -19,11 +19,16 @@ export default function TaxiServiceSignup() {
     driver_name: '',
     email: '',
     phone: '',
+    operating_country: '',
     operating_city: '',
+    service_radius_km: '',
+    patient_assistance: [],
     vehicle_types: [],
     operating_hours: {},
     pricing_model: {},
     vehicle_photo_url: '',
+    driver_license_number: '',
+    insurance_provider: '',
     payout_method: '',
     payout_account: ''
   });

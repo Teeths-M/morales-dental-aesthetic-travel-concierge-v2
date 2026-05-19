@@ -15,9 +15,24 @@
     "phone": {
       "type": "string"
     },
+    "operating_country": {
+      "type": "string",
+      "description": "Country where driver operates"
+    },
     "operating_city": {
       "type": "string",
       "description": "City or region where driver operates"
+    },
+    "service_radius_km": {
+      "type": "number",
+      "description": "Service radius in kilometers"
+    },
+    "patient_assistance": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Patient assistance offered, such as luggage help, mobility help, wheelchair support"
     },
     "vehicle_types": {
       "type": "array",
@@ -28,13 +43,19 @@
     },
     "operating_hours": {
       "type": "object",
-      "description": "Days of week and hours (e.g., {mon: '08:00-22:00', tue: '24h'})"
+      "description": "Days of week and hours"
     },
     "pricing_model": {
       "type": "object",
-      "description": "Pricing info: per_km, per_hour, fixed_airport_clinic"
+      "description": "Pricing info"
     },
     "vehicle_photo_url": {
+      "type": "string"
+    },
+    "driver_license_number": {
+      "type": "string"
+    },
+    "insurance_provider": {
       "type": "string"
     },
     "insurance_verified": {
@@ -106,6 +127,7 @@
   "required": [
     "email",
     "phone",
+    "operating_country",
     "operating_city",
     "vehicle_types"
   ]

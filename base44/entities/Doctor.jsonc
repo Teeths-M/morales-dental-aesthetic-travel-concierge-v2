@@ -25,6 +25,15 @@
       "type": "string",
       "description": "Education, certifications, and professional credentials"
     },
+    "years_experience": {
+      "type": "number"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
     "license_url": {
       "type": "string",
       "description": "URL to uploaded medical license"
@@ -66,15 +75,6 @@
         "inactive"
       ],
       "default": "pending_verification"
-    },
-    "bio": {
-      "type": "string"
-    },
-    "photo_url": {
-      "type": "string"
-    },
-    "years_experience": {
-      "type": "number"
     },
     "rating": {
       "type": "number",
