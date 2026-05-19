@@ -37,14 +37,15 @@ export default function Hero() {
       className="relative overflow-hidden bg-cover bg-[center_35%] bg-no-repeat"
       style={{ backgroundImage: "url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png)" }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-foreground/78 via-foreground/28 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-foreground/35 via-transparent to-background/5 pointer-events-none" />
+      <div className="absolute inset-0 backdrop-blur-[1.5px] scale-[1.01] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-foreground/76 via-foreground/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-foreground/38 via-transparent to-background/5 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end min-h-[calc(100vh-7rem)] pb-14">
           {/* Left Content */}
           <motion.div
-            className="max-w-2xl rounded-[2rem] border border-white/25 bg-foreground/75 p-6 sm:p-8 lg:p-10 shadow-2xl"
+            className="max-w-2xl rounded-[2rem] border border-white/25 bg-foreground/72 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}>
