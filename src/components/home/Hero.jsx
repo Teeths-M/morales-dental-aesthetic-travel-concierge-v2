@@ -47,7 +47,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/38 via-transparent to-background/5 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end min-h-[calc(100vh-7rem)] pb-14">
+        <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-16 items-center min-h-[calc(100vh-7rem)] pb-14 pt-8 lg:pt-0">
           {/* Left Content */}
           <motion.div
             className="max-w-2xl rounded-[2rem] border border-white/25 bg-foreground/72 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
@@ -131,12 +131,12 @@ export default function Hero() {
 
           {/* Partner Signup CTA */}
           <motion.div
-            className="hidden lg:flex justify-end"
+            className="flex justify-end"
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}>
             
-            <div className="w-full max-w-md rounded-[2rem] border border-white/25 bg-white/95 p-6 shadow-2xl backdrop-blur-md">
+            <div className="w-full max-w-md rounded-[2rem] border border-white/25 bg-white/95 p-5 sm:p-6 shadow-2xl backdrop-blur-md">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
                 <Shield className="h-3.5 w-3.5" />
                 {language === 'es' ? 'Únete a nuestra red' : language === 'fr' ? 'Rejoignez notre réseau' : 'Join our network'}

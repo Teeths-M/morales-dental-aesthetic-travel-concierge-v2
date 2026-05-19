@@ -270,9 +270,16 @@ export default function Navbar() {
                 </Button>
               </>
             ) : (
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={navigateToLogin}>
-                Login
-              </Button>
+              <>
+                <Link to="/register-role" className="hidden sm:inline-flex">
+                  <Button variant="outline" className="text-sm font-semibold px-5">
+                    Register
+                  </Button>
+                </Link>
+                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={navigateToLogin}>
+                  Login
+                </Button>
+              </>
             )}
             <button
               className="lg:hidden p-2"
@@ -380,9 +387,16 @@ export default function Navbar() {
                     Logout
                   </Button>
                 ) : (
-                  <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(); setMobileOpen(false); }}>
-                    Login
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/register-role" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Register
+                      </Button>
+                    </Link>
+                    <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(); setMobileOpen(false); }}>
+                      Login
+                    </Button>
+                  </div>
                 )}
               </div>
             </nav>
