@@ -1,0 +1,35 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "platform_admin",
+        "client",
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "admin",
+        "user"
+      ],
+      "default": "client",
+      "description": "Application role for multi-tenant access"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "Primary tenant this user belongs to"
+    },
+    "tenant_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "client",
+        "travel_agency",
+        "taxi_service",
+        "platform_admin"
+      ],
+      "description": "Primary tenant type for this user"
+    }
+  }
+}

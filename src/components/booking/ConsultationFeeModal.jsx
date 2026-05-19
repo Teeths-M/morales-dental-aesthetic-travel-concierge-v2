@@ -4,7 +4,7 @@ import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useCart } from '@/context/CartContext';
-function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
+function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, clearCart }) {
   const [error, setError] = useState(null);
 
   const handleStripePayment = async (e) => {
@@ -233,6 +233,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
             onCancel={onCancel}
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
+            clearCart={clearCart}
           />
         )}
 
