@@ -121,7 +121,7 @@ export default function RiskAssessmentTab() {
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-0 xl:grid-cols-[1.65fr_0.75fr]">
           <div className="p-6 sm:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
@@ -139,7 +139,7 @@ export default function RiskAssessmentTab() {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
               {riskLevels.map((risk, index) => {
                 const tone = toneStyles[risk.tone];
                 return (
@@ -150,9 +150,9 @@ export default function RiskAssessmentTab() {
                     transition={{ delay: index * 0.05 }}
                     className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                   >
-                    <div className="mb-4 flex items-center justify-between gap-2">
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">{risk.label}</p>
-                      <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${tone.badge}`}>
+                    <div className="mb-4 flex flex-col items-start gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] leading-snug text-slate-500">{risk.label}</p>
+                      <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${tone.badge}`}>
                         {risk.level}
                       </span>
                     </div>
@@ -166,7 +166,7 @@ export default function RiskAssessmentTab() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-950 p-6 text-white lg:border-l lg:border-t-0 sm:p-8">
+          <div className="border-t border-slate-200 bg-slate-950 p-6 text-white xl:border-l xl:border-t-0 sm:p-8">
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
               <Sparkles className="h-6 w-6 text-emerald-300" />
             </div>
