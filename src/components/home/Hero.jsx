@@ -17,7 +17,7 @@ const getBadges = (language) => [
 
 export default function Hero() {
   const [language, setLanguage] = useState('en');
-  const { isAuthenticated, navigateToLogin } = useAuth();
+  const { navigateToLogin } = useAuth();
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -48,18 +48,16 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-foreground/76 via-foreground/30 to-transparent pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/38 via-transparent to-background/5 pointer-events-none" />
 
-      {!isAuthenticated && (
-        <div className="absolute right-4 top-24 z-30 flex items-center gap-2 sm:right-6 lg:right-10">
-          <Link to="/register-role">
-            <Button variant="outline" className="h-10 border-white/60 bg-white/90 px-4 text-xs font-bold text-primary shadow-lg hover:bg-white sm:text-sm">
-              Register
-            </Button>
-          </Link>
-          <Button onClick={navigateToLogin} className="h-10 bg-accent px-4 text-xs font-bold text-accent-foreground shadow-lg hover:bg-accent/90 sm:text-sm">
-            Login
+      <div className="absolute right-4 top-5 z-40 flex items-center gap-2 rounded-full border border-white/30 bg-foreground/55 p-1.5 shadow-2xl backdrop-blur-md sm:right-6 lg:right-10">
+        <Link to="/register-role">
+          <Button variant="outline" className="h-9 rounded-full border-white bg-white px-4 text-xs font-bold text-primary shadow-lg hover:bg-white sm:text-sm">
+            Register
           </Button>
-        </div>
-      )}
+        </Link>
+        <Button onClick={navigateToLogin} className="h-9 rounded-full bg-accent px-4 text-xs font-bold text-accent-foreground shadow-lg hover:bg-accent/90 sm:text-sm">
+          Login
+        </Button>
+      </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center min-h-[calc(100vh-7rem)] pb-14 pt-8 lg:pt-0">
