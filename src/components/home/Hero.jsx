@@ -59,21 +59,21 @@ export default function Hero() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end min-h-[calc(100vh-7rem)] pb-14">
           {/* Left Content */}
           <motion.div
-            className="max-w-2xl rounded-[2rem] border border-white/15 bg-foreground/35 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
+            className="max-w-2xl rounded-[2rem] border border-white/25 bg-foreground/65 p-6 sm:p-8 lg:p-10 backdrop-blur-lg shadow-2xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}>
             
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.02] mb-5 drop-shadow-sm">
-              {language === 'es' ? 'Cuidado seguro. Recuperación tranquila. Un equipo contigo.' : language === 'fr' ? 'Des soins sûrs. Une récupération sereine. Une équipe avec vous.' : 'Safe care. Calm recovery. A team beside you.'}
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.05] mb-5 drop-shadow-md">
+              {language === 'es' ? 'Tu cuidado seguro comienza aquí.' : language === 'fr' ? 'Vos soins sûrs commencent ici.' : 'Your safe care journey starts here.'}
             </h1>
 
-            <p className="lg:text-lg max-w-xl mb-5 leading-relaxed text-white/90 text-xl drop-shadow-sm">
-              {language === 'es' ? 'SAFE-T 4LIFE™ combina especialistas verificados, coordinación de viaje y apoyo de recuperación junto al mar para que cada paso se sienta claro, humano y seguro.' : language === 'fr' ? 'SAFE-T 4LIFE™ combine spécialistes vérifiés, coordination de voyage et soutien de récupération au bord de la mer pour rendre chaque étape claire, humaine et sûre.' : 'SAFE-T 4LIFE™ brings verified specialists, travel coordination, and seaside recovery support together so every step feels clear, human, and safe.'}
+            <p className="lg:text-lg max-w-xl mb-5 leading-relaxed text-white text-lg sm:text-xl font-medium drop-shadow-sm">
+              {language === 'es' ? 'Especialistas verificados, coordinación de viaje y apoyo de recuperación en un solo plan claro y humano.' : language === 'fr' ? 'Des spécialistes vérifiés, une coordination de voyage et un soutien de récupération dans un plan clair et humain.' : 'Verified specialists, travel coordination, and recovery support in one clear, human care plan.'}
             </p>
 
             {/* Emotional pull quote */}
-            <p className="text-sm font-medium text-accent italic mb-8">
+            <p className="text-sm font-semibold text-accent italic mb-8 drop-shadow-sm">
               {language === 'es' ? '"Desde la consulta hasta la costa — tu seguridad viaja contigo."' : language === 'fr' ? '"De la consultation à la côte — votre sécurité voyage avec vous."' : '"From consultation to the coast — your safety travels with you."'}
             </p>
 
@@ -86,22 +86,22 @@ export default function Hero() {
                 </Button>
               </Link>
               <Link to="/procedures">
-                <Button size="lg" variant="outline" className="h-12 px-8 font-semibold">
+                <Button size="lg" variant="outline" className="h-12 px-8 font-semibold border-white/70 bg-white/10 text-white hover:bg-white hover:text-foreground">
                   {language === 'es' ? 'Explorar Procedimientos' : language === 'fr' ? 'Explorer les Procédures' : 'Explore Procedures'}
                 </Button>
               </Link>
             </div>
 
             {/* Trust Badges */}
-            <div className="flex flex-wrap gap-5 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {badges.map(({ icon: Icon, label, sub }) =>
-              <div key={label} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+              <div key={label} className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-3">
+                  <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{label}</p>
-                    <p className="text-[11px] text-muted-foreground">{sub}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white leading-tight">{label}</p>
+                    <p className="text-[11px] text-white/75 leading-tight mt-0.5">{sub}</p>
                   </div>
                 </div>
               )}
