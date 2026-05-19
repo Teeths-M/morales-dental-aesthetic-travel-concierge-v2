@@ -278,7 +278,7 @@ export default function Navbar() {
                 >
                   Register
                 </Button>
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={navigateToLogin}>
+                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}>
                   Login
                 </Button>
               </>
@@ -400,7 +400,7 @@ export default function Navbar() {
                     >
                       Register
                     </Button>
-                    <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(); setMobileOpen(false); }}>
+                    <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(`${window.location.origin}/dashboard`); setMobileOpen(false); }}>
                       Login
                     </Button>
                   </div>

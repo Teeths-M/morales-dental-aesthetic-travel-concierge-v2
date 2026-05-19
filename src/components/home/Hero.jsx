@@ -56,7 +56,7 @@ export default function Hero() {
         >
           Register
         </Button>
-        <Button onClick={navigateToLogin} className="h-9 rounded-full bg-accent px-4 text-xs font-bold text-accent-foreground shadow-lg hover:bg-accent/90 sm:text-sm">
+        <Button onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)} className="h-9 rounded-full bg-accent px-4 text-xs font-bold text-accent-foreground shadow-lg hover:bg-accent/90 sm:text-sm">
           Login
         </Button>
       </div>
