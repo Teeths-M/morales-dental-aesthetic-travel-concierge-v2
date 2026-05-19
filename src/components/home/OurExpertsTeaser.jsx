@@ -28,7 +28,7 @@ export default function OurExpertsTeaser() {
               <img
                 src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png"
                 alt="SAFE-T 4LIFE medical care team"
-                className="w-full h-[320px] object-cover"
+                className="w-full h-[420px] md:h-[500px] object-cover object-center scale-110"
               />
             </div>
             <div className="grid sm:grid-cols-3 gap-4">
