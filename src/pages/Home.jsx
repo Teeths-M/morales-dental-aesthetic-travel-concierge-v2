@@ -8,6 +8,7 @@ import HowItWorks from '../components/home/HowItWorks';
 import HeroSlideshow from '../components/home/HeroSlideshow';
 import BrandSlideshow from '../components/home/BrandSlideshow';
 import SlotCounter from '../components/home/SlotCounter';
+import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 
 
 export default function Home() {
@@ -49,6 +50,7 @@ export default function Home() {
       <StatsBar />
       <SlotCounter className="mx-auto mt-6" />
       <HeroSlideshow />
+      <OurExpertsTeaser />
       <WhyChooseUs />
       <BrandSlideshow />
       <HowItWorks />

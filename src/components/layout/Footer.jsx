@@ -59,8 +59,6 @@ export default function Footer() {
             <div className="space-y-2.5">
               {[
                 { label: 'About Us', path: '/about' },
-                { label: 'Our Experts', path: '/providers' },
-                { label: 'SAFE-T 4LIFE™', path: '/safe-t' },
                 { label: 'How It Works', path: '/how-it-works' },
               ].map(l => (
                 <Link key={l.path} to={l.path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{l.label}</Link>

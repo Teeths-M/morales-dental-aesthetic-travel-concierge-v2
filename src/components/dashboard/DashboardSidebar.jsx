@@ -2,17 +2,21 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ClipboardList, User, FileText, CalendarDays,
-  MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight
+  MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight,
+  Stethoscope, Plane, Users
 } from 'lucide-react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Stethoscope, label: 'Book Consultation', path: '/booking' },
+  { icon: Users, label: 'Our Experts', path: '/providers' },
   { icon: ClipboardList, label: 'My Consultations', path: '/dashboard/consultations' },
   { icon: User, label: 'Medical Profile', path: '/dashboard/profile' },
   { icon: FileText, label: 'Documents', path: '/dashboard/documents' },
   { icon: CalendarDays, label: 'My Bookings', path: '/dashboard/bookings' },
   { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages', badge: 2 },
   { icon: Shield, label: 'SAFE-T 4LIFE™', path: '/safe-t' },
+  { icon: Plane, label: 'Visa Assist', path: '/visa-assist' },
   { icon: Map, label: 'My Journey', path: '/dashboard/journey' },
   { icon: Headphones, label: 'Support', path: '/dashboard/support' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
@@ -91,7 +95,7 @@ export default function DashboardSidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed top-20 left-4 z-50 w-10 h-10 bg-white border border-slate-200 rounded-xl shadow-md flex items-center justify-center"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white border border-slate-200 rounded-xl shadow-md flex items-center justify-center"
         onClick={() => setMobileOpen(true)}
       >
         <Menu className="w-4 h-4 text-slate-600" />
@@ -108,7 +112,7 @@ export default function DashboardSidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 shadow-sm min-h-[calc(100vh-5rem)] flex-shrink-0">
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 shadow-sm min-h-screen flex-shrink-0">
         <SidebarContent location={location} />
       </aside>
     </>
