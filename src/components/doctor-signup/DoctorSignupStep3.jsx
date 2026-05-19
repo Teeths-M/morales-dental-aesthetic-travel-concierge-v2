@@ -73,6 +73,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
        };
 
        const doctor = await base44.entities.Doctor.create(doctorData);
+       await base44.auth.updateMe({ role: 'doctor' });
 
        // Auto-assign specialties
        if (formData.specialties && formData.specialties.length > 0) {

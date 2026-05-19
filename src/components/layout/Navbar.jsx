@@ -4,6 +4,14 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { Menu, X, Globe, ChevronDown, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ADMIN_ROLES,
+  CLIENT_ROLES,
+  DOCTOR_ROLES,
+  TRAVEL_AGENCY_ROLES,
+  TAXI_SERVICE_ROLES,
+  hasAnyRole,
+} from '@/lib/rolePermissions';
 
 const getNavLinks = (language) => [
   { label: language === 'es' ? 'Inicio' : language === 'fr' ? 'Accueil' : 'Home', path: '/' },
@@ -78,24 +86,29 @@ export default function Navbar() {
     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
   };
 
-  const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
+  const isAdmin = hasAnyRole(user?.role, ADMIN_ROLES);
+  const isClient = hasAnyRole(user?.role, CLIENT_ROLES);
   const portalLinks = [
     ...(isAdmin ? [
       { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
       { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
     ] : []),
-    ...(['doctor'].includes(user?.role) || isAdmin ? [
+    ...(hasAnyRole(user?.role, DOCTOR_ROLES) || isAdmin ? [
       { label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard', path: '/doctor-dashboard' },
     ] : []),
-    ...(['travel_agency'].includes(user?.role) || isAdmin ? [
+    ...(hasAnyRole(user?.role, TRAVEL_AGENCY_ROLES) || isAdmin ? [
       { label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
     ] : []),
-    ...(['taxi_service'].includes(user?.role) || isAdmin ? [
+    ...(hasAnyRole(user?.role, TAXI_SERVICE_ROLES) || isAdmin ? [
       { label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
     ] : []),
   ];
 
-  const visibleNavLinks = navLinks.filter(link => isAuthenticated || !['/dashboard', '/safe-t', '/visa-assist'].includes(link.path));
+  const clientOnlyPaths = ['/dashboard', '/safe-t', '/visa-assist'];
+  const visibleNavLinks = navLinks.filter(link => {
+    if (!clientOnlyPaths.includes(link.path)) return true;
+    return isAuthenticated && isClient;
+  });
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
@@ -250,11 +263,13 @@ export default function Navbar() {
               </div>
             {isAuthenticated ? (
               <>
-                <Link to="/booking">
-                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
-                    {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
-                  </Button>
-                </Link>
+                {isClient && (
+                  <Link to="/booking">
+                    <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
+                      {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="outline" className="hidden sm:inline-flex text-sm" onClick={() => logout()}>
                   Logout
                 </Button>

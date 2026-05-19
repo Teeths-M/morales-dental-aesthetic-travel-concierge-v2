@@ -73,6 +73,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
       };
 
       const agency = await base44.entities.TravelAgency.create(agencyData);
+      await base44.auth.updateMe({ role: 'travel_agency' });
       onComplete(agency);
     } catch (error) {
       console.error('Submit failed:', error);

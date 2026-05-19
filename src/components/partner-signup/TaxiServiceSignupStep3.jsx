@@ -77,6 +77,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
       };
 
       const taxi = await base44.entities.TaxiService.create(taxiData);
+      await base44.auth.updateMe({ role: 'taxi_service' });
       onComplete(taxi);
     } catch (error) {
       console.error('Submit failed:', error);

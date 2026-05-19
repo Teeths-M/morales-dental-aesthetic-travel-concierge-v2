@@ -156,7 +156,7 @@ export default function TaxiServiceSignup() {
               taxi={successTaxi}
               language={language}
               onDashboard={() => {
-                window.location.href = '/portal-hub';
+                window.location.href = '/taxi-service-dashboard';
               }}
             />
           )}

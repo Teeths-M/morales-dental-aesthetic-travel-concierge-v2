@@ -1,7 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { Car, HeartPulse, Plane, UserRound } from 'lucide-react';
 import SignupRoleCard from '@/components/signup/SignupRoleCard.jsx';
+import { base44 } from '@/api/base44Client';
 
 const roles = [
   {
@@ -39,11 +40,10 @@ const roles = [
 ];
 
 export default function RegisterRole() {
-  const navigate = useNavigate();
-
-  const handleRoleSelect = (role) => {
+  const handleRoleSelect = async (role) => {
     localStorage.setItem('signupRole', role.role);
-    navigate(role.path);
+    await base44.auth.updateMe({ role: role.role });
+    window.location.href = role.path;
   };
 
   return (

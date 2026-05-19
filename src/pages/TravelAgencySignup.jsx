@@ -142,7 +142,7 @@ export default function TravelAgencySignup() {
               agency={successAgency}
               language={language}
               onDashboard={() => {
-                window.location.href = '/portal-hub';
+                window.location.href = '/travel-agency-dashboard';
               }}
             />
           )}
