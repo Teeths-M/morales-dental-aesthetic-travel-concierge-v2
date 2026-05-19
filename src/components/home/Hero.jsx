@@ -47,7 +47,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-t from-foreground/38 via-transparent to-background/5 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:gap-16 items-center min-h-[calc(100vh-7rem)] pb-14 pt-8 lg:pt-0 xl:pr-[26rem]">
+        <div className="flex items-center min-h-[calc(100vh-7rem)] pb-14 pt-8 lg:pt-0">
           {/* Left Content */}
           <motion.div
             className="max-w-2xl rounded-[2rem] border border-white/25 bg-foreground/72 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
@@ -98,6 +98,24 @@ export default function Hero() {
               )}
             </div>
 
+            <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-4">
+              <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                <Shield className="h-3.5 w-3.5" />
+                {language === 'es' ? 'Únete a nuestra red' : language === 'fr' ? 'Rejoignez notre réseau' : 'Join our network'}
+              </div>
+              <p className="mb-3 text-sm font-semibold text-white">
+                {language === 'es' ? 'Regístrate como proveedor:' : language === 'fr' ? 'Inscrivez-vous comme partenaire :' : 'Sign up as a provider:'}
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {signupRoles.map(({ label, path, icon: Icon }) => (
+                  <Link key={label} to={path} className="group flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-primary transition-all hover:bg-accent hover:text-accent-foreground">
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs font-bold leading-tight">{label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             {/* Live testimonial strip - hidden until real testimonials exist */}
             {testimonials.length > 0 && (
             <div className="border-t border-border pt-6">
@@ -129,51 +147,6 @@ export default function Hero() {
             )}
           </motion.div>
 
-          {/* Partner Signup CTA */}
-          <motion.div
-            className="hidden xl:flex justify-end fixed right-6 top-28 z-40 w-[24rem]"
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}>
-            
-            <div className="w-full rounded-[2rem] border border-primary/15 bg-white p-5 sm:p-6 shadow-2xl shadow-black/25">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-                <Shield className="h-3.5 w-3.5" />
-                {language === 'es' ? 'Únete a nuestra red' : language === 'fr' ? 'Rejoignez notre réseau' : 'Join our network'}
-              </div>
-              <h2 className="font-display text-3xl text-foreground leading-tight">
-                {language === 'es' ? '¿Eres proveedor?' : language === 'fr' ? 'Vous êtes partenaire ?' : 'Are you a provider?'}
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {language === 'es' ? 'Regístrate aquí para comenzar tu viaje con nosotros como doctor, agencia de viajes o servicio de taxi.' : language === 'fr' ? 'Inscrivez-vous ici pour commencer votre parcours avec nous comme médecin, agence de voyage ou service taxi.' : 'Sign up here to start your journey with us as a doctor, travel agency, or taxi service.'}
-              </p>
-
-              <div className="mt-6 space-y-3">
-                {signupRoles.map(({ label, path, icon: Icon }) => (
-                  <Link
-                    key={label}
-                    to={path}
-                    className="group flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 transition-all hover:border-primary/30 hover:bg-primary/5"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">{label}</p>
-                        <p className="text-xs text-muted-foreground">{language === 'es' ? 'Comenzar registro' : language === 'fr' ? 'Commencer l’inscription' : 'Start signup'}</p>
-                      </div>
-                    </div>
-                    <span className="text-lg text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary">→</span>
-                  </Link>
-                ))}
-              </div>
-
-              <Link to="/register-role" className="mt-5 block text-center text-xs font-bold uppercase tracking-widest text-primary hover:underline">
-                {language === 'es' ? 'Ver todas las opciones' : language === 'fr' ? 'Voir toutes les options' : 'View all role options'}
-              </Link>
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>);
