@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/AuthContext';
 import { Menu, X, Globe, ChevronDown, Stethoscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,6 +26,7 @@ export default function Navbar() {
   });
   const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
+  const { user, isAuthenticated, navigateToLogin, logout } = useAuth();
   const portalHubTimeoutRef = useRef(null);
   const partnerTimeoutRef = useRef(null);
   const languageTimeoutRef = useRef(null);
@@ -76,6 +78,25 @@ export default function Navbar() {
     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
   };
 
+  const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
+  const portalLinks = [
+    ...(isAdmin ? [
+      { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
+      { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
+    ] : []),
+    ...(['doctor'].includes(user?.role) || isAdmin ? [
+      { label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard', path: '/doctor-dashboard' },
+    ] : []),
+    ...(['travel_agency'].includes(user?.role) || isAdmin ? [
+      { label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
+    ] : []),
+    ...(['taxi_service'].includes(user?.role) || isAdmin ? [
+      { label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
+    ] : []),
+  ];
+
+  const visibleNavLinks = navLinks.filter(link => isAuthenticated || !['/dashboard', '/safe-t', '/visa-assist'].includes(link.path));
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,7 +116,7 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map(link => (
+            {visibleNavLinks.map(link => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -156,53 +177,44 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Portal Hub Dropdown (Doctor Access) */}
-            <div 
-              className="relative" 
-              onMouseLeave={handlePortalHubMouseLeave} 
-              onMouseEnter={handlePortalHubMouseEnter}
-            >
-              <button
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
+            {/* Portal Hub Dropdown */}
+            {isAuthenticated && portalLinks.length > 0 && (
+              <div 
+                className="relative" 
+                onMouseLeave={handlePortalHubMouseLeave} 
+                onMouseEnter={handlePortalHubMouseEnter}
               >
-                <Stethoscope className="w-4 h-4" />
-                {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
-              </button>
+                <button
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
+                >
+                  <Stethoscope className="w-4 h-4" />
+                  {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-              <AnimatePresence>
-                {portalHubOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute top-full left-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg z-50"
-                  >
-                    <Link
-                      to="/portal-hub"
-                      onClick={() => setPortalHubOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
+                <AnimatePresence>
+                  {portalHubOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50"
                     >
-                      {language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access'}
-                    </Link>
-                    <Link
-                      to="/portal-hub/admin"
-                      onClick={() => setPortalHubOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
-                    >
-                      {language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard'}
-                    </Link>
-                    <Link
-                      to="/doctor-dashboard"
-                      onClick={() => setPortalHubOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
-                    >
-                      {language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard'}
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      {portalLinks.map((link, index) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          onClick={() => setPortalHubOpen(false)}
+                          className={`block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition-colors ${index === 0 ? 'rounded-t-lg' : 'border-t border-border'} ${index === portalLinks.length - 1 ? 'rounded-b-lg' : ''}`}
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </nav>
 
           {/* Right Actions */}
@@ -250,11 +262,22 @@ export default function Navbar() {
                   )}
                 </AnimatePresence>
               </div>
-            <Link to="/booking">
-              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
-                {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
+            {isAuthenticated ? (
+              <>
+                <Link to="/booking">
+                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
+                    {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
+                  </Button>
+                </Link>
+                <Button variant="outline" className="hidden sm:inline-flex text-sm" onClick={() => logout()}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={navigateToLogin}>
+                Login
               </Button>
-            </Link>
+            )}
             <button
               className="lg:hidden p-2"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -275,7 +298,7 @@ export default function Navbar() {
             className="lg:hidden border-t border-border bg-card"
           >
             <nav className="px-4 py-4 space-y-1">
-              {navLinks.map(link => (
+              {visibleNavLinks.map(link => (
                 <Link
                   key={link.path}
                   to={link.path}
@@ -291,49 +314,42 @@ export default function Navbar() {
               ))}
 
               {/* Mobile Portal Hub Dropdown */}
-              <button
-                onClick={() => setPortalHubOpen(!portalHubOpen)}
-                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
-              >
-                <span className="flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4" />
-                  {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {portalHubOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-1 pl-4"
+              {isAuthenticated && portalLinks.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setPortalHubOpen(!portalHubOpen)}
+                    className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
                   >
-                    <Link
-                      to="/portal-hub"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access'}
-                    </Link>
-                    <Link
-                      to="/portal-hub/admin"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard'}
-                    </Link>
-                    <Link
-                      to="/doctor-dashboard"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard'}
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <span className="flex items-center gap-2">
+                      <Stethoscope className="w-4 h-4" />
+                      {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {portalHubOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-1 pl-4"
+                      >
+                        {portalLinks.map(link => (
+                          <Link
+                            key={link.path}
+                            to={link.path}
+                            onClick={() => setMobileOpen(false)}
+                            className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
 
               {/* Mobile Partner Dropdown */}
               <button
@@ -376,6 +392,17 @@ export default function Navbar() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              <div className="pt-3 border-t border-border">
+                {isAuthenticated ? (
+                  <Button variant="outline" className="w-full" onClick={() => { logout(); setMobileOpen(false); }}>
+                    Logout
+                  </Button>
+                ) : (
+                  <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(); setMobileOpen(false); }}>
+                    Login
+                  </Button>
+                )}
+              </div>
             </nav>
           </motion.div>
         )}

@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
@@ -27,6 +28,8 @@ import PartnerSignup from './pages/PartnerSignup';
 import TravelAgencySignup from './pages/TravelAgencySignup';
 import TaxiServiceSignup from './pages/TaxiServiceSignup';
 import DoctorDashboard from './pages/DoctorDashboard';
+import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
+import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -60,30 +63,44 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Home />} />
         <Route path="/providers" element={<Providers />} />
         <Route path="/providers/:id" element={<ProviderDetail />} />
-        <Route path="/safe-t" element={<SafeT />} />
-        <Route path="/booking" element={<Booking />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/consultations" element={<Dashboard />} />
-        <Route path="/dashboard/profile" element={<Dashboard />} />
-        <Route path="/dashboard/documents" element={<Dashboard />} />
-        <Route path="/dashboard/bookings" element={<Dashboard />} />
-        <Route path="/dashboard/messages" element={<Dashboard />} />
-        <Route path="/dashboard/journey" element={<Dashboard />} />
-        <Route path="/dashboard/support" element={<Dashboard />} />
-        <Route path="/dashboard/settings" element={<Dashboard />} />
+        <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
+          <Route path="/safe-t" element={<SafeT />} />
+          <Route path="/booking" element={<Booking />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/consultations" element={<Dashboard />} />
+          <Route path="/dashboard/profile" element={<Dashboard />} />
+          <Route path="/dashboard/documents" element={<Dashboard />} />
+          <Route path="/dashboard/bookings" element={<Dashboard />} />
+          <Route path="/dashboard/messages" element={<Dashboard />} />
+          <Route path="/dashboard/journey" element={<Dashboard />} />
+          <Route path="/dashboard/support" element={<Dashboard />} />
+          <Route path="/dashboard/settings" element={<Dashboard />} />
+        </Route>
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
-        <Route path="/portal-hub" element={<PortalHub />} />
-        <Route path="/portal-hub/admin" element={<PortalHubAdmin />} />
-        <Route path="/portal-hub/checkout/:consultation_id" element={<PaymentCheckout />} />
-        <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
-        <Route path="/visa-assist" element={<VisaAssist />} />
+        <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
+          <Route path="/portal-hub" element={<PortalHub />} />
+          <Route path="/portal-hub/admin" element={<PortalHubAdmin />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
+          <Route path="/portal-hub/checkout/:consultation_id" element={<PaymentCheckout />} />
+          <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
+          <Route path="/visa-assist" element={<VisaAssist />} />
+        </Route>
         <Route path="/doctor-signup" element={<DoctorSignup />} />
-        <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
         <Route path="/partner-signup" element={<PartnerSignup />} />
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
         <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
+        <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["travel_agency", "platform_admin", "admin"]} />}>
+          <Route path="/travel-agency-dashboard" element={<TravelAgencyDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["taxi_service", "platform_admin", "admin"]} />}>
+          <Route path="/taxi-service-dashboard" element={<TaxiServiceDashboard />} />
+        </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
