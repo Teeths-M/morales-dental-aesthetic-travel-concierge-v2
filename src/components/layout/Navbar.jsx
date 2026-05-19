@@ -136,45 +136,14 @@ export default function Navbar() {
               onMouseLeave={handlePartnerMouseLeave} 
               onMouseEnter={handlePartnerMouseEnter}
             >
-              <button
+              <Link
+                to="/signup"
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
               >
-                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+                {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un rôle' : 'Choose Role'}
+              </Link>
 
-              <AnimatePresence>
-                {partnerDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50"
-                  >
-                    <Link
-                      to="/doctor-signup"
-                      onClick={() => setPartnerDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-t-lg transition-colors"
-                    >
-                      {language === 'es' ? 'Registro de Doctor' : language === 'fr' ? 'Enregistrement Docteur' : 'Doctor Sign-up'}
-                    </Link>
-                    <Link
-                      to="/partner-signup"
-                      onClick={() => setPartnerDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
-                    >
-                      {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyage' : 'Travel Agency'}
-                    </Link>
-                    <Link
-                      to="/partner-signup/taxi-service"
-                      onClick={() => setPartnerDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary border-t border-border transition-colors"
-                    >
-                      {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
             </div>
 
             {/* Portal Hub Dropdown */}
@@ -351,47 +320,13 @@ export default function Navbar() {
                 </>
               )}
 
-              {/* Mobile Partner Dropdown */}
-              <button
-                onClick={() => setPartnerDropdownOpen(!partnerDropdownOpen)}
-                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
+              <Link
+                to="/signup"
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
               >
-                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {partnerDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-1 pl-4"
-                  >
-                    <Link
-                      to="/doctor-signup"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Registro de Doctor' : language === 'fr' ? 'Enregistrement Docteur' : 'Doctor Sign-up'}
-                    </Link>
-                    <Link
-                      to="/partner-signup"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyage' : 'Travel Agency'}
-                    </Link>
-                    <Link
-                      to="/partner-signup/taxi-service"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un rôle' : 'Choose Role'}
+              </Link>
               <div className="pt-3 border-t border-border">
                 {isAuthenticated ? (
                   <Button variant="outline" className="w-full" onClick={() => { logout(); setMobileOpen(false); }}>
