@@ -33,12 +33,11 @@ export default function Hero() {
   const badges = getBadges(language);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-background via-secondary/30 to-background">
-      {/* Subtle decorative background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-accent/5 blur-3xl" />
-      </div>
+    <section
+      className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png)" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/45 to-foreground/10 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top service label */}
@@ -64,11 +63,11 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}>
             
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-foreground leading-[1.05] mb-4">
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.05] mb-4 drop-shadow-sm">
               {language === 'es' ? 'Tu Transformación. Nuestra Prioridad. Tu Seguridad.' : language === 'fr' ? 'Votre Transformation. Notre Priorité. Votre Sécurité.' : 'Your Transformation. Our Priority. Your Safety.'}
             </h1>
 
-            <p className="lg:text-lg max-w-md mb-4 leading-relaxed text-[hsl(var(--sidebar-accent-foreground))] text-xl">
+            <p className="lg:text-lg max-w-md mb-4 leading-relaxed text-white/90 text-xl drop-shadow-sm">
               {language === 'es' ? 'Cuidado dental, estético y de bienestar premium con servicio de concierge puerta a puerta. Ahorra 30-40% versus precios de EE.UU. y Canadá — sin comprometer la calidad.' : language === 'fr' ? 'Soins dentaires, esthétiques et de bien-être premium avec service de concierge porte-à-porte. Économisez 30 à 40% par rapport aux prix des États-Unis et du Canada — sans compromettre la qualité.' : 'Premium dental, aesthetic & wellness care with door-to-door concierge service. Save 30–40% versus US & Canadian pricing — without compromising on quality.'}
             </p>
 
@@ -140,7 +139,7 @@ export default function Hero() {
 
           {/* Right Image */}
           <motion.div
-            className="relative hidden lg:block"
+            className="relative hidden"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}>
