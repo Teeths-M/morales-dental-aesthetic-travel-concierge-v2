@@ -51,15 +51,6 @@ export default function ClientSignup() {
       }
     });
 
-    await base44.functions.invoke('syncTenantRole', {
-      tenant_id: profile.id,
-      tenant_type: 'client',
-      tenant_name: form.full_name,
-      user_email: form.email,
-      user_role: 'client',
-      linked_entity_name: 'UserOnboardingProfile',
-      linked_entity_id: profile.id
-    });
 
     localStorage.setItem('signupRole', 'client');
     await checkUserAuth();

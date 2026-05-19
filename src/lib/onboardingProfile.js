@@ -28,5 +28,16 @@ export async function saveUserOnboardingProfile({
     ? await base44.entities.UserOnboardingProfile.update(existing[0].id, data)
     : await base44.entities.UserOnboardingProfile.create(data);
 
+  await base44.functions.invoke('syncTenantRole', {
+    tenant_id: profile.id,
+    tenant_type: role,
+    tenant_name: user.full_name || user.email,
+    user_email: user.email,
+    user_role: role,
+    linked_entity_name: linkedEntityName || 'UserOnboardingProfile',
+    linked_entity_id: linkedEntityId || profile.id,
+    onboarding_status: status,
+  });
+
   return profile;
 }

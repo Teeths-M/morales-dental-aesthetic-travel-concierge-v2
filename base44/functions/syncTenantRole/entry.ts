@@ -37,11 +37,15 @@ Deno.serve(async (req) => {
         role: userRole,
         tenant_id: membership.tenant_id,
         tenant_type: membership.tenant_type,
+        profile_entity_name: membership.linked_entity_name || 'UserOnboardingProfile',
+        profile_entity_id: membership.linked_entity_id || membership.tenant_id,
+        onboarding_profile_id: membership.linked_entity_name === 'UserOnboardingProfile' ? membership.linked_entity_id || membership.tenant_id : membership.onboarding_profile_id || '',
+        onboarding_status: membership.onboarding_status || 'completed',
       });
     }
 
     const linkedEntityName = membership.linked_entity_name || entityByTenantType[membership.tenant_type];
-    if (linkedEntityName && linkedEntityName !== 'User') {
+    if (linkedEntityName && !['User', 'UserOnboardingProfile'].includes(linkedEntityName)) {
       const entityApi = base44.asServiceRole.entities[linkedEntityName];
       if (membership.linked_entity_id) {
         await entityApi.update(membership.linked_entity_id, {
