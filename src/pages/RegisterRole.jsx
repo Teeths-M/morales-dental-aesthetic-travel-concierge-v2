@@ -2,7 +2,6 @@ import React from 'react';
 
 import { Car, HeartPulse, Plane, UserRound } from 'lucide-react';
 import SignupRoleCard from '@/components/signup/SignupRoleCard.jsx';
-import { base44 } from '@/api/base44Client';
 
 const roles = [
   {
@@ -40,9 +39,8 @@ const roles = [
 ];
 
 export default function RegisterRole() {
-  const handleRoleSelect = async (role) => {
+  const handleRoleSelect = (role) => {
     localStorage.setItem('signupRole', role.role);
-    await base44.auth.updateMe({ role: role.role });
     window.location.href = role.path;
   };
 
