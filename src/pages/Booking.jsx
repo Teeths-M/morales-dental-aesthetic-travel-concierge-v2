@@ -75,11 +75,21 @@ export default function Booking() {
 
   // Get current user email
   const [userEmail, setUserEmail] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
   useEffect(() => {
     const getUser = async () => {
       try {
         const user = await base44.auth.me();
-        if (user?.email) setUserEmail(user.email);
+        if (user?.email) {
+          setUserEmail(user.email);
+          setCurrentUser(user);
+          await saveUserOnboardingProfile({
+            role: 'client',
+            status: 'started',
+            profileData: { selected_role: 'client', started_from: 'booking' }
+          });
+        }
       } catch (e) {
         // User not logged in
       }
@@ -167,6 +177,15 @@ export default function Booking() {
             last_saved_at: new Date().toISOString(),
           });
         }
+
+        await saveUserOnboardingProfile({
+          role: 'client',
+          status: 'started',
+          profileData: {
+            ...formDataSerializable,
+            current_step: steps[currentStep]?.label || 'unknown'
+          }
+        });
       } catch (e) {
         console.error('Auto-save failed:', e);
       }
@@ -223,13 +242,14 @@ export default function Booking() {
       setConsultationId(consultation.id);
       await saveUserOnboardingProfile({
         role: 'client',
-        status: 'completed',
+        status: 'started',
         linkedEntityName: 'Consultation',
         linkedEntityId: consultation.id,
         profileData: {
           ...form,
           acknowledged_statements: Array.from(form.acknowledged_statements || []),
-          procedure_interest: consultation.procedure_interest
+          procedure_interest: consultation.procedure_interest,
+          consultation_submitted: true
         }
       });
       setShowFeeModal(true);
@@ -510,7 +530,20 @@ export default function Booking() {
       <ConsultationFeeModal
         form={form}
         isOpen={showFeeModal}
-        onSuccess={(feeData) => {
+        onSuccess={async (feeData) => {
+          await saveUserOnboardingProfile({
+            role: 'client',
+            status: 'completed',
+            linkedEntityName: 'Consultation',
+            linkedEntityId: consultationId,
+            profileData: {
+              ...form,
+              acknowledged_statements: Array.from(form.acknowledged_statements || []),
+              procedure_interest: items.map(item => item.name).join(', ') || form.procedure_interest || 'other',
+              consultation_fee_paid: true,
+              fee_data: feeData || null
+            }
+          });
           setShowFeeModal(false);
           setSubmitted(true);
         }}
