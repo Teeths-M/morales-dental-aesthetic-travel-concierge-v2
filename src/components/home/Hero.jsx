@@ -37,7 +37,8 @@ export default function Hero() {
       className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b929116bb_image.png)" }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/45 to-foreground/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/35 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-foreground/45 via-transparent to-background/10 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top service label */}
@@ -55,25 +56,25 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-7rem)]">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-end min-h-[calc(100vh-7rem)] pb-14">
           {/* Left Content */}
           <motion.div
-            className="py-10 lg:py-16"
+            className="max-w-2xl rounded-[2rem] border border-white/15 bg-foreground/35 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}>
             
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.05] mb-4 drop-shadow-sm">
-              {language === 'es' ? 'Tu Transformación. Nuestra Prioridad. Tu Seguridad.' : language === 'fr' ? 'Votre Transformation. Notre Priorité. Votre Sécurité.' : 'Your Transformation. Our Priority. Your Safety.'}
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white leading-[1.02] mb-5 drop-shadow-sm">
+              {language === 'es' ? 'Cuidado seguro. Recuperación tranquila. Un equipo contigo.' : language === 'fr' ? 'Des soins sûrs. Une récupération sereine. Une équipe avec vous.' : 'Safe care. Calm recovery. A team beside you.'}
             </h1>
 
-            <p className="lg:text-lg max-w-md mb-4 leading-relaxed text-white/90 text-xl drop-shadow-sm">
-              {language === 'es' ? 'Cuidado dental, estético y de bienestar premium con servicio de concierge puerta a puerta. Ahorra 30-40% versus precios de EE.UU. y Canadá — sin comprometer la calidad.' : language === 'fr' ? 'Soins dentaires, esthétiques et de bien-être premium avec service de concierge porte-à-porte. Économisez 30 à 40% par rapport aux prix des États-Unis et du Canada — sans compromettre la qualité.' : 'Premium dental, aesthetic & wellness care with door-to-door concierge service. Save 30–40% versus US & Canadian pricing — without compromising on quality.'}
+            <p className="lg:text-lg max-w-xl mb-5 leading-relaxed text-white/90 text-xl drop-shadow-sm">
+              {language === 'es' ? 'SAFE-T 4LIFE™ combina especialistas verificados, coordinación de viaje y apoyo de recuperación junto al mar para que cada paso se sienta claro, humano y seguro.' : language === 'fr' ? 'SAFE-T 4LIFE™ combine spécialistes vérifiés, coordination de voyage et soutien de récupération au bord de la mer pour rendre chaque étape claire, humaine et sûre.' : 'SAFE-T 4LIFE™ brings verified specialists, travel coordination, and seaside recovery support together so every step feels clear, human, and safe.'}
             </p>
 
             {/* Emotional pull quote */}
             <p className="text-sm font-medium text-accent italic mb-8">
-              {language === 'es' ? '"Más que una visita clínica — es un viaje que cambia la vida que hacemos juntos."' : language === 'fr' ? '"Plus qu\'une visite à la clinique — c\'est un voyage qui change la vie que nous faisons ensemble."' : '"More than a clinic visit — it\'s a life-changing journey we take together."'}
+              {language === 'es' ? '"Desde la consulta hasta la costa — tu seguridad viaja contigo."' : language === 'fr' ? '"De la consultation à la côte — votre sécurité voyage avec vous."' : '"From consultation to the coast — your safety travels with you."'}
             </p>
 
             <SlotCounter className="mb-4" />
