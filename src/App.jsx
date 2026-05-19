@@ -27,10 +27,10 @@ import DoctorSignup from './pages/DoctorSignup';
 import PartnerSignup from './pages/PartnerSignup';
 import TravelAgencySignup from './pages/TravelAgencySignup';
 import TaxiServiceSignup from './pages/TaxiServiceSignup';
+import RegisterRole from './pages/RegisterRole';
 import DoctorDashboard from './pages/DoctorDashboard';
 import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
 import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
-import RoleSignup from './pages/RoleSignup';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -89,7 +89,7 @@ const AuthenticatedApp = () => {
           <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
           <Route path="/visa-assist" element={<VisaAssist />} />
         </Route>
-        <Route path="/signup" element={<RoleSignup />} />
+        <Route path="/register-role" element={<RegisterRole />} />
         <Route path="/doctor-signup" element={<DoctorSignup />} />
         <Route path="/partner-signup" element={<PartnerSignup />} />
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />

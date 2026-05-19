@@ -136,14 +136,31 @@ export default function Navbar() {
               onMouseLeave={handlePartnerMouseLeave} 
               onMouseEnter={handlePartnerMouseEnter}
             >
-              <Link
-                to="/signup"
+              <button
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
               >
-                {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un rôle' : 'Choose Role'}
-              </Link>
+                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
+                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-
+              <AnimatePresence>
+                {partnerDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50"
+                  >
+                    <Link
+                      to="/register-role"
+                      onClick={() => setPartnerDropdownOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
+                    >
+                      {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un Rôle' : 'Choose Role'}
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Portal Hub Dropdown */}
@@ -320,13 +337,33 @@ export default function Navbar() {
                 </>
               )}
 
-              <Link
-                to="/signup"
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+              {/* Mobile Partner Dropdown */}
+              <button
+                onClick={() => setPartnerDropdownOpen(!partnerDropdownOpen)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
               >
-                {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un rôle' : 'Choose Role'}
-              </Link>
+                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
+                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {partnerDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-1 pl-4"
+                  >
+                    <Link
+                      to="/register-role"
+                      onClick={() => setMobileOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                    >
+                      {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un Rôle' : 'Choose Role'}
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="pt-3 border-t border-border">
                 {isAuthenticated ? (
                   <Button variant="outline" className="w-full" onClick={() => { logout(); setMobileOpen(false); }}>
