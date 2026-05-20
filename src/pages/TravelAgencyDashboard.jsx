@@ -2,18 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import TravelAgencyDashboardView from '@/components/partner-dashboard/TravelAgencyDashboard';
 import { AlertCircle } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function TravelAgencyDashboard() {
   const [agency, setAgency] = useState(null);
   const [user, setUser] = useState(null);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [loading, setLoading] = useState(true);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const loadAgency = async () => {
-      const currentUser = await base44.auth.me();
+      const currentUser = authUser?.isPreviewAdmin ? authUser : await base44.auth.me();
       setUser(currentUser);
-      const agencies = await base44.entities.TravelAgency.filter({ email: currentUser.email });
+      const agencies = currentUser?.isPreviewAdmin
+        ? await base44.entities.TravelAgency.list('-updated_date', 1)
+        : await base44.entities.TravelAgency.filter({ email: currentUser.email });
       setAgency(agencies[0] || null);
       setLoading(false);
     };
@@ -22,7 +26,7 @@ export default function TravelAgencyDashboard() {
     window.addEventListener('languageChange', handleLanguageChange);
     loadAgency();
     return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
+  }, [authUser]);
 
   if (loading) {
     return (

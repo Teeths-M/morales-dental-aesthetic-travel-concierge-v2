@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
-  const isPreviewAdmin = Boolean(appParams.previewToken) && window.location.hostname.includes('preview');
+  const isPreviewAdmin = appParams.isPreview || (Boolean(appParams.previewToken) && window.location.hostname.includes('preview'));
 
   useEffect(() => {
     checkAppState();

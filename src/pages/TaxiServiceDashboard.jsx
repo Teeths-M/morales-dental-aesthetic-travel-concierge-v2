@@ -2,18 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import TaxiServiceDashboardView from '@/components/partner-dashboard/TaxiServiceDashboard';
 import { AlertCircle } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function TaxiServiceDashboard() {
   const [taxi, setTaxi] = useState(null);
   const [user, setUser] = useState(null);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [loading, setLoading] = useState(true);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const loadTaxi = async () => {
-      const currentUser = await base44.auth.me();
+      const currentUser = authUser?.isPreviewAdmin ? authUser : await base44.auth.me();
       setUser(currentUser);
-      const taxis = await base44.entities.TaxiService.filter({ email: currentUser.email });
+      const taxis = currentUser?.isPreviewAdmin
+        ? await base44.entities.TaxiService.list('-updated_date', 1)
+        : await base44.entities.TaxiService.filter({ email: currentUser.email });
       setTaxi(taxis[0] || null);
       setLoading(false);
     };
@@ -22,7 +26,7 @@ export default function TaxiServiceDashboard() {
     window.addEventListener('languageChange', handleLanguageChange);
     loadTaxi();
     return () => window.removeEventListener('languageChange', handleLanguageChange);
-  }, []);
+  }, [authUser]);
 
   if (loading) {
     return (

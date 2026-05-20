@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function DoctorDashboard() {
   const [doctor, setDoctor] = useState(null);
@@ -13,12 +14,25 @@ export default function DoctorDashboard() {
   const [formData, setFormData] = useState({});
   const [activeTab, setActiveTab] = useState('profile');
   const [user, setUser] = useState(null);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const currentUser = authUser?.isPreviewAdmin ? authUser : await base44.auth.me();
         setUser(currentUser);
+
+        if (currentUser?.isPreviewAdmin) {
+          const doctors = await base44.entities.Doctor.list('-updated_date', 1);
+          const previewDoctor = doctors[0] || null;
+          if (previewDoctor) {
+            setDoctor(previewDoctor);
+            setFormData(previewDoctor);
+            setSpecialties(await base44.entities.DoctorSpecialty.filter({ doctor_id: previewDoctor.id }));
+            setPricing(await base44.entities.DoctorPricing.filter({ doctor_id: previewDoctor.id }));
+          }
+          return;
+        }
         
         const response = await base44.functions.invoke('getMyDoctorProfile', {});
         
@@ -36,7 +50,7 @@ export default function DoctorDashboard() {
     };
     
     loadData();
-  }, []);
+  }, [authUser]);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
