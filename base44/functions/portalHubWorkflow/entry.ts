@@ -12,6 +12,15 @@ const escapeHtml = (value) => String(value ?? '')
 
 const formatProcedure = (value) => String(value || 'Procedure').replace(/_/g, ' ');
 
+const normalizeRiskLevel = (value) => {
+  const normalized = String(value || 'low').toLowerCase();
+  if (normalized === 'high') return 'high';
+  if (normalized === 'medium' || normalized === 'moderate') return 'medium';
+  return 'low';
+};
+
+const normalizeRiskResult = (value) => String(value || '').toLowerCase() === 'blocked' ? 'blocked' : 'approved';
+
 const row = (label, value) => `
   <tr>
     <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
@@ -50,29 +59,29 @@ const emailLayout = ({ eyebrow, title, intro, rows = [], note, ctaText, ctaUrl, 
 </html>`;
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-
-  const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
-  const portalUrl = `${appUrl}/portal-hub/admin`;
-
-  const body = await req.json();
-  // Support both direct call { consultation_id } and entity automation payload { event: { entity_id } }
-  const consultation_id = body.consultation_id || body.event?.entity_id;
-
-  if (!consultation_id) {
-    return Response.json({ error: 'consultation_id is required' }, { status: 400 });
-  }
-
-  // 1. Fetch the consultation
-  let consultation;
   try {
-    consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
-  } catch {
-    return Response.json({ error: 'Consultation not found' }, { status: 404 });
-  }
-  if (!consultation) {
-    return Response.json({ error: 'Consultation not found' }, { status: 404 });
-  }
+    const base44 = createClientFromRequest(req);
+
+    const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
+    const portalUrl = `${appUrl}/portal-hub/admin`;
+
+    const body = await req.json();
+    // Support both direct calls and Consultation entity automation payloads.
+    const consultation_id = body.consultation_id || body.event?.entity_id || body.data?.id || body.old_data?.id;
+
+    if (!consultation_id) {
+      return Response.json({ error: 'consultation_id is required' }, { status: 400 });
+    }
+
+    // 1. Fetch the consultation, or use the automation payload when available.
+    let consultation = body.data || null;
+    if (!consultation) {
+      const matches = await base44.asServiceRole.entities.Consultation.filter({ id: consultation_id });
+      consultation = matches?.[0] || null;
+    }
+    if (!consultation) {
+      return Response.json({ error: 'Consultation not found' }, { status: 404 });
+    }
 
   // 2. Create or update the WorkflowEvent record
   const existing = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });
@@ -135,19 +144,21 @@ Return a JSON with:
     },
   });
 
-  const isBlocked = riskAssessment.result === 'blocked';
+  const riskResult = normalizeRiskResult(riskAssessment.result);
+  const riskLevel = normalizeRiskLevel(riskAssessment.risk_level);
+  const isBlocked = riskResult === 'blocked';
 
   // 4. Update workflow with risk result
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
-    risk_result: riskAssessment.result,
-    risk_summary: `${riskAssessment.summary} — ${riskAssessment.recommendation}`,
-    risk_flags: riskAssessment.flags || [],
+    risk_result: riskResult,
+    risk_summary: `${riskAssessment.summary || 'Risk assessment completed.'} — ${riskAssessment.recommendation || 'Review workflow details.'}`,
+    risk_flags: Array.isArray(riskAssessment.flags) ? riskAssessment.flags : [],
     stage: isBlocked ? 'blocked' : 'doctor',
   });
 
   // Also update consultation risk_level
   await base44.asServiceRole.entities.Consultation.update(consultation_id, {
-    risk_level: riskAssessment.risk_level || 'low',
+    risk_level: riskLevel,
   });
 
   // 5. If BLOCKED — notify customer and stop
@@ -213,7 +224,7 @@ Return a JSON with:
           row('Patient', consultation.patient_name),
           row('Procedure', formatProcedure(consultation.procedure_interest)),
           row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Risk level', riskAssessment.risk_level),
+          row('Risk level', riskLevel),
           row('Notes', consultation.notes || 'None'),
         ],
         ctaText: 'Review in portal',
@@ -287,7 +298,7 @@ Return a JSON with:
     hotel_status: hotelEmails.length > 0 ? 'notified' : 'pending',
     cab_status: cabEmails.length > 0 ? 'notified' : 'pending',
     stage: 'doctor',
-    last_update_summary: `SAFE-T approved (${riskAssessment.risk_level} risk). Partners notified.`,
+    last_update_summary: `SAFE-T approved (${riskLevel} risk). Partners notified.`,
   };
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, partnerUpdates);
@@ -304,7 +315,7 @@ Return a JSON with:
         intro: `Dear ${consultation.patient_name}, your consultation has been approved. We are now coordinating the specialist clinic, travel arrangements, recovery accommodation, and local transfers for your care package.`,
         rows: [
           row('Procedure', formatProcedure(consultation.procedure_interest)),
-          row('Risk level', riskAssessment.risk_level),
+          row('Risk level', riskLevel),
           row('Next update', 'Within 24–48 hours'),
         ],
         footer: 'Your concierge team will contact you with the complete package details as each part is confirmed.',
@@ -316,10 +327,14 @@ Return a JSON with:
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, { customer_notified: true });
 
-  return Response.json({
-    status: 'approved',
-    message: 'Risk approved. All partners notified. Customer email sent.',
-    risk: riskAssessment,
-    workflow_id: workflow.id,
-  });
+    return Response.json({
+      status: 'approved',
+      message: 'Risk approved. All partners notified. Customer email sent.',
+      risk: riskAssessment,
+      workflow_id: workflow.id,
+    });
+  } catch (error) {
+    console.error('portalHubWorkflow failed:', error);
+    return Response.json({ error: error.message || 'Workflow failed' }, { status: 500 });
+  }
 });
