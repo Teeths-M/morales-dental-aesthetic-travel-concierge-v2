@@ -86,9 +86,11 @@ Deno.serve(async (req) => {
 
     // 1. Fetch the consultation, or use the automation payload when available.
     let consultation = body.data || null;
+    let consultationExists = false;
     if (!consultation) {
       const matches = await base44.asServiceRole.entities.Consultation.filter({ id: consultation_id });
       consultation = matches?.[0] || null;
+      consultationExists = Boolean(consultation);
     }
     if (!consultation) {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });
@@ -167,10 +169,14 @@ Return a JSON with:
     stage: isBlocked ? 'blocked' : 'doctor',
   });
 
-  // Also update consultation risk_level
-  await base44.asServiceRole.entities.Consultation.update(consultation_id, {
-    risk_level: riskLevel,
-  });
+  // Also update consultation risk_level when the database record is available.
+  try {
+    await base44.asServiceRole.entities.Consultation.update(consultation_id, {
+      risk_level: riskLevel,
+    });
+  } catch (error) {
+    console.log(`Consultation risk update skipped for ${consultation_id}: ${error.message}`);
+  }
 
   // 5. If BLOCKED — notify customer and stop
   if (isBlocked) {
@@ -313,7 +319,11 @@ Return a JSON with:
   };
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, partnerUpdates);
-  await base44.asServiceRole.entities.Consultation.update(consultation_id, { status: 'in_progress', journey_stage: 'planning' });
+  try {
+    await base44.asServiceRole.entities.Consultation.update(consultation_id, { status: 'in_progress', journey_stage: 'planning' });
+  } catch (error) {
+    console.log(`Consultation status update skipped for ${consultation_id}: ${error.message}`);
+  }
 
   // 7. Notify the customer of approval
   try {
