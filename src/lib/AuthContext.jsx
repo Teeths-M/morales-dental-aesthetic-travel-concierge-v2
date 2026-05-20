@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const isPreviewAdmin = Boolean(appParams.previewToken) && window.location.hostname.includes('preview');
 
   useEffect(() => {
     checkAppState();
@@ -39,7 +40,12 @@ export const AuthProvider = ({ children }) => {
         setAppPublicSettings(publicSettings);
         
         // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
+        if (isPreviewAdmin) {
+          setUser({ role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true });
+          setIsAuthenticated(true);
+          setIsLoadingAuth(false);
+          setAuthChecked(true);
+        } else if (appParams.token) {
           await checkUserAuth();
         } else {
           setIsLoadingAuth(false);
@@ -51,7 +57,12 @@ export const AuthProvider = ({ children }) => {
         console.error('App state check failed:', appError);
         
         // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
+        if (isPreviewAdmin) {
+          setUser({ role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true });
+          setIsAuthenticated(true);
+          setAuthChecked(true);
+          setAuthError(null);
+        } else if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
           if (reason === 'auth_required') {
             setAuthError({
@@ -93,6 +104,13 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
+      if (isPreviewAdmin) {
+        setUser({ role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true });
+        setIsAuthenticated(true);
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
+      }
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
