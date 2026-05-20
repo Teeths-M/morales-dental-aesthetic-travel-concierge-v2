@@ -21,6 +21,17 @@ const normalizeRiskLevel = (value) => {
 
 const normalizeRiskResult = (value) => String(value || '').toLowerCase() === 'blocked' ? 'blocked' : 'approved';
 
+const toArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  return [String(value)];
+};
+
+const formatList = (value, fallback = 'None') => {
+  const items = toArray(value).filter(Boolean);
+  return items.length ? items.join(', ') : fallback;
+};
+
 const row = (label, value) => `
   <tr>
     <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
@@ -109,18 +120,18 @@ Age: ${consultation.age || 'Not provided'}
 Gender: ${consultation.gender || 'Not provided'}
 Weight: ${consultation.weight || 'Not provided'}
 Height: ${consultation.height || 'Not provided'}
-Medical Conditions: ${(consultation.medical_conditions || []).join(', ') || 'None reported'}
+Medical Conditions: ${formatList(consultation.medical_conditions, 'None reported')}
 Other Medical: ${consultation.medical_conditions_other || 'None'}
 Previous Surgery: ${consultation.had_surgery ? 'Yes' : 'No'}
 Previous Procedures: ${consultation.previous_procedures || 'None'}
-Surgery Complications: ${consultation.had_complications ? (consultation.surgery_complications || []).join(', ') : 'None'}
-Anesthesia Complications: ${consultation.anesthesia_complications ? (consultation.anesthesia_complication_types || []).join(', ') : 'None'}
-Allergies: ${(consultation.allergies || []).join(', ') || 'None'}
+Surgery Complications: ${consultation.had_complications ? formatList(consultation.surgery_complications) : 'None'}
+Anesthesia Complications: ${consultation.anesthesia_complications ? formatList(consultation.anesthesia_complication_types) : 'None'}
+Allergies: ${formatList(consultation.allergies)}
 Allergy Details: ${consultation.allergy_details || 'None'}
-Medications: ${consultation.takes_medications ? (consultation.medication_types || []).join(', ') : 'None'}
-Lifestyle Habits: ${(consultation.lifestyle_habits || []).join(', ') || 'None'}
+Medications: ${consultation.takes_medications ? formatList(consultation.medication_types) : 'None'}
+Lifestyle Habits: ${formatList(consultation.lifestyle_habits)}
 Pregnancy Status: ${consultation.pregnancy_status || 'N/A'}
-Emotional Concerns: ${consultation.emotional_concerns ? (consultation.emotional_concern_types || []).join(', ') : 'None'}
+Emotional Concerns: ${consultation.emotional_concerns ? formatList(consultation.emotional_concern_types) : 'None'}
 
 Return a JSON with:
 - result: "approved" or "blocked"
@@ -152,7 +163,7 @@ Return a JSON with:
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
     risk_result: riskResult,
     risk_summary: `${riskAssessment.summary || 'Risk assessment completed.'} — ${riskAssessment.recommendation || 'Review workflow details.'}`,
-    risk_flags: Array.isArray(riskAssessment.flags) ? riskAssessment.flags : [],
+    risk_flags: toArray(riskAssessment.flags),
     stage: isBlocked ? 'blocked' : 'doctor',
   });
 
@@ -175,7 +186,7 @@ Return a JSON with:
             row('Procedure', formatProcedure(consultation.procedure_interest)),
             row('Review result', 'Concierge follow-up required'),
           ],
-          note: [riskAssessment.summary, ...(riskAssessment.flags || [])].filter(Boolean).join(' | '),
+          note: [riskAssessment.summary, ...toArray(riskAssessment.flags)].filter(Boolean).join(' | '),
           footer: 'A member of our concierge team will reach out within 24 hours to discuss your options and next steps.',
         }),
       });
@@ -244,7 +255,7 @@ Return a JSON with:
           row('Nationality', consultation.nationality || 'Not specified'),
           row('Preferred date', consultation.preferred_date || 'Flexible'),
           row('Companion', consultation.has_companion ? `Yes (${consultation.companion_relationship || 'relationship not specified'})` : 'No'),
-          row('Requested services', (consultation.travel_buddy_services || []).join(', ') || 'Standard itinerary support'),
+          row('Requested services', formatList(consultation.travel_buddy_services, 'Standard itinerary support')),
         ],
         footer: 'Please reply with flight options, itinerary details, and pricing.',
       }),
@@ -261,7 +272,7 @@ Return a JSON with:
           row('Procedure', formatProcedure(consultation.procedure_interest)),
           row('Preferred date', consultation.preferred_date || 'Flexible'),
           row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-          row('Comfort preferences', (consultation.cultural_preferences || []).join(', ') || 'None specified'),
+          row('Comfort preferences', formatList(consultation.cultural_preferences, 'None specified')),
         ],
         footer: 'Please reply with room availability, recovery support details, and pricing.',
       }),
