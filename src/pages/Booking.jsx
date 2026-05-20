@@ -306,6 +306,10 @@ export default function Booking() {
     return true;
   };
 
+  const goToDashboard = () => {
+    navigate({ pathname: '/dashboard', search: window.location.search });
+  };
+
   const handleConfirmSubmit = () => {
    
     createMutation.mutate(form);
@@ -548,7 +552,7 @@ export default function Booking() {
           });
           setShowFeeModal(false);
           setSubmitted(true);
-          navigate('/dashboard');
+          goToDashboard();
         }}
         onCancel={() => setShowFeeModal(false)}
       />
