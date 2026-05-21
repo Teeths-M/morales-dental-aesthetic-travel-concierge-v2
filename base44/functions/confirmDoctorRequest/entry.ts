@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { randomBytes } from 'node:crypto';
 
 const addDays = (date, days) => { const d = new Date(date); d.setDate(d.getDate() + days); return d; };
 const isoDate = (date) => new Date(date).toISOString().slice(0, 10);
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const token = () => crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
+const token = () => randomBytes(32).toString('hex');
 
 const calcDates = (procedureDateTime, recoveryDays, destination) => {
   const flightDays = destination.flight_days || [];
@@ -47,14 +48,27 @@ Deno.serve(async (req) => {
 
     const appUrl = Deno.env.get('APP_URL') || 'https://yourapp.com';
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const arrivalDate = body.recommended_arrival_date || calculated.arrival;
+    const departureDate = body.recommended_departure_date || calculated.departure;
+    const procedureDate = new Date(request.procedure_datetime).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
     const sendMagic = async (entity, record, type) => {
       const magicToken = token();
       await base44.asServiceRole.entities[entity].update(record.id, { token: magicToken, token_expires_at: expires });
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: record.email,
-        subject: `New concierge request for ${patient.name}`,
-        body: `Patient: ${patient.name}\nProcedure: ${procedure.name}\nArrival: ${body.recommended_arrival_date || calculated.arrival}\nDeparture: ${body.recommended_departure_date || calculated.departure}\n\nOpen your portal: ${appUrl}/portal/${type}?token=${magicToken}`
-      });
+
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: record.email,
+          subject: `New Patient Needs Your Quote – ${patient.name}`,
+          body: `A patient has been confirmed for a procedure in ${request.destination_country} on ${procedureDate}.\n\nPatient: ${patient.name}\nProcedure: ${procedure.name}\nRecommended arrival: ${arrivalDate}\nRecommended departure: ${departureDate}\n\nClick the link below to log in and provide your quote:\n\n${appUrl}/portal/${type}?token=${magicToken}&request_id=${request.id}\n\nThis link is unique to you and expires in 7 days.`
+        });
+      } catch (error) {
+        console.log(`Partner email failed for ${record.email}: ${error.message}`);
+      }
     };
 
     const agencies = await base44.asServiceRole.entities.TravelAgency.filter({ country: request.destination_country });
