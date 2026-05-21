@@ -5,9 +5,7 @@ import { Input } from '@/components/ui/input';
 import ConciergeShell from '@/components/concierge/ConciergeShell';
 
 export default function PartnerConciergePortal({ type = 'travel' }) {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
-  const requestId = params.get('request_id');
+  const token = new URLSearchParams(window.location.search).get('token');
   const [data, setData] = useState({ me: null, requests: [], patients: [], procedures: [], offers: [] });
   const [form, setForm] = useState({});
 
@@ -17,7 +15,7 @@ export default function PartnerConciergePortal({ type = 'travel' }) {
 
   const load = async () => {
     const me = (await base44.entities[entityName].filter({ token }))[0];
-    if (!me || (me.token_expires_at && new Date(me.token_expires_at) < new Date())) return;
+    if (!me) return;
     const [requests, patients, procedures, offers] = await Promise.all([
       base44.entities.PatientRequest.filter({ status: 'procedures_confirmed' }), base44.entities.Patient.list(), base44.entities.ConciergeProcedure.list(), base44.entities[quoteName].list()
     ]);
@@ -25,10 +23,7 @@ export default function PartnerConciergePortal({ type = 'travel' }) {
   };
   useEffect(() => { load(); }, [type]);
 
-  const visible = data.requests.filter(r => {
-    if (requestId && r.id !== requestId) return false;
-    return type === 'travel' ? r.destination_country === data.me?.country : type === 'origin' ? data.patients.find(p => p.id === r.patient_id)?.home_country === data.me?.country : r.destination_country === data.me?.country;
-  });
+  const visible = data.requests.filter(r => type === 'travel' ? r.destination_country === data.me?.country : type === 'origin' ? data.patients.find(p => p.id === r.patient_id)?.home_country === data.me?.country : r.destination_country === data.me?.country);
   const submit = async (request) => { await base44.functions.invoke(submitFn, { token, patient_request_id: request.id, ...(form[request.id] || {}) }); load(); };
 
   return (

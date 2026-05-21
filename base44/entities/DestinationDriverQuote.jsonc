@@ -8,9 +8,6 @@
     "patient_request_id": {
       "type": "string"
     },
-    "patient_id": {
-      "type": "string"
-    },
     "leg_airport_hotel": {
       "type": "number"
     },
