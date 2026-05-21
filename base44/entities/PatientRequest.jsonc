@@ -1,0 +1,85 @@
+{
+  "name": "PatientRequest",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string"
+    },
+    "procedure_id": {
+      "type": "string"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "procedure_datetime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "doctor_price_usd": {
+      "type": "number"
+    },
+    "recovery_days": {
+      "type": "number"
+    },
+    "recommended_arrival_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "recommended_departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "travel_recommendation_explanation": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "procedures_confirmed",
+        "package_finalized",
+        "completed"
+      ],
+      "default": "pending"
+    },
+    "final_package_price": {
+      "type": "number"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "paid_full",
+        "paying_terms"
+      ],
+      "default": "unpaid"
+    },
+    "selected_payment_method": {
+      "type": "string",
+      "enum": [
+        "",
+        "full",
+        "terms"
+      ],
+      "default": ""
+    },
+    "payment_token": {
+      "type": "string"
+    },
+    "selected_travel_offer_id": {
+      "type": "string"
+    },
+    "selected_origin_quote_id": {
+      "type": "string"
+    },
+    "selected_destination_quote_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_id",
+    "procedure_id",
+    "destination_country",
+    "procedure_datetime"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "Patient",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "home_address": {
+      "type": "string"
+    },
+    "home_city": {
+      "type": "string"
+    },
+    "home_country": {
+      "type": "string"
+    },
+    "home_airport_code": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "home_country",
+    "home_airport_code"
+  ]
+}

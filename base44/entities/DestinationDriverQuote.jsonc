@@ -1,0 +1,39 @@
+{
+  "name": "DestinationDriverQuote",
+  "type": "object",
+  "properties": {
+    "driver_id": {
+      "type": "string"
+    },
+    "patient_request_id": {
+      "type": "string"
+    },
+    "leg_airport_hotel": {
+      "type": "number"
+    },
+    "leg_hotel_clinic": {
+      "type": "number"
+    },
+    "leg_clinic_hotel": {
+      "type": "number"
+    },
+    "leg_hotel_airport": {
+      "type": "number"
+    },
+    "vehicle_type": {
+      "type": "string"
+    },
+    "waiting_included": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "driver_id",
+    "patient_request_id",
+    "leg_airport_hotel",
+    "leg_hotel_clinic",
+    "leg_clinic_hotel",
+    "leg_hotel_airport"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Destination",
+  "type": "object",
+  "properties": {
+    "country": {
+      "type": "string"
+    },
+    "flight_days": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "0=Sunday, 6=Saturday"
+    },
+    "default_buffer_days": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "country",
+    "flight_days"
+  ]
+}

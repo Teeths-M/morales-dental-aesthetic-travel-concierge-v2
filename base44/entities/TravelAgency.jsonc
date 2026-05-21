@@ -6,9 +6,11 @@
       "type": "string",
       "description": "Name of the travel agency"
     },
+    "name": {
+      "type": "string"
+    },
     "contact_person": {
-      "type": "string",
-      "description": "Primary contact person"
+      "type": "string"
     },
     "email": {
       "type": "string",
@@ -23,6 +25,9 @@
     "headquarters_country": {
       "type": "string"
     },
+    "country": {
+      "type": "string"
+    },
     "medical_travel_experience_years": {
       "type": "number",
       "default": 0
@@ -35,19 +40,16 @@
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Geographic regions served (Caribbean, North America, Europe, Asia, etc.)"
+      }
     },
     "services_offered": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Services: Flights, Hotels, Airport Transfers, Clinic Coordination"
+      }
     },
     "service_options": {
-      "type": "object",
-      "description": "Detailed options per service"
+      "type": "object"
     },
     "payout_method": {
       "type": "string",
@@ -85,8 +87,7 @@
       "default": "pending_verification"
     },
     "sign_up_completed_at": {
-      "type": "string",
-      "description": "ISO timestamp"
+      "type": "string"
     },
     "approved_by_admin": {
       "type": "boolean",
@@ -99,13 +100,16 @@
     "rating": {
       "type": "number",
       "default": 5.0
+    },
+    "token": {
+      "type": "string"
+    },
+    "token_expires_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
-    "agency_name",
-    "email",
-    "phone",
-    "headquarters_country",
-    "service_regions"
+    "email"
   ]
 }

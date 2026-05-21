@@ -32,6 +32,11 @@ import RegisterRole from './pages/RegisterRole';
 import DoctorDashboard from './pages/DoctorDashboard';
 import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
 import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
+import ConciergeBooking from './pages/ConciergeBooking';
+import DoctorConciergePortal from './pages/DoctorConciergePortal';
+import PartnerConciergePortal from './pages/PartnerConciergePortal';
+import AdminConciergeDashboard from './pages/AdminConciergeDashboard';
+import PackagePayment from './pages/PackagePayment';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -93,6 +98,18 @@ const AuthenticatedApp = () => {
         </Route>
         <Route path="/register-role" element={<RegisterRole />} />
         <Route path="/doctor-signup" element={<DoctorSignup />} />
+        <Route path="/concierge/book" element={<ConciergeBooking />} />
+        <Route path="/portal/travel" element={<PartnerConciergePortal type="travel" />} />
+        <Route path="/portal/origin" element={<PartnerConciergePortal type="origin" />} />
+        <Route path="/portal/destination" element={<PartnerConciergePortal type="destination" />} />
+        <Route path="/payment/full" element={<PackagePayment method="full" />} />
+        <Route path="/payment/terms" element={<PackagePayment method="terms" />} />
+        <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
+          <Route path="/doctor/concierge" element={<DoctorConciergePortal />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
+          <Route path="/admin/concierge" element={<AdminConciergeDashboard />} />
+        </Route>
         <Route path="/partner-signup" element={<PartnerSignup />} />
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
         <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
