@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { Menu, X, Globe, ChevronDown, Stethoscope } from 'lucide-react';
@@ -78,6 +78,22 @@ export default function Navbar() {
     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
   };
 
+  const navigate = useNavigate();
+
+  const SENSITIVE_PATHS = ['/checkout', '/payment', '/signup', '/register-role'];
+  const isSensitive = SENSITIVE_PATHS.some(p => location.pathname.includes(p));
+  const isHome = location.pathname === '/';
+
+  const handleBack = () => {
+    if (isSensitive) {
+      navigate('/', { replace: true });
+    } else if (window.history.length <= 1) {
+      navigate('/');
+    } else {
+      navigate(-1);
+    }
+  };
+
   const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
   const portalLinks = [
     ...(isAdmin ? [
@@ -123,6 +139,18 @@ export default function Navbar() {
               <p className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">Dental & Aesthetic</p>
             </div>
           </Link>
+
+          {/* Context-Aware Back Button */}
+          {!isHome && (
+            <button
+              onClick={handleBack}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-accent/60 hover:bg-accent/5 transition-all duration-200"
+              title="Go back"
+            >
+              <span className="text-accent font-bold">←</span>
+              <span>Back</span>
+            </button>
+          )}
 
           {/* Desktop Nav */}
           <nav className="hidden xl:flex items-center gap-1">
