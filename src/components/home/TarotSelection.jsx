@@ -171,7 +171,11 @@ export default function TarotSelection() {
 
   useEffect(() => {
     if (selectedCard) {
-      navigate('/procedures');
+      // Delay navigation to allow card flip exit animation to complete
+      const timer = setTimeout(() => {
+        navigate('/procedures');
+      }, 400);
+      return () => clearTimeout(timer);
     }
   }, [selectedCard, navigate]);
 
