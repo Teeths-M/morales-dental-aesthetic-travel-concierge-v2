@@ -63,7 +63,6 @@ function fmtDate(date) {
   return format(date, 'MMMM d, yyyy');
 }
 
-const MIN_RECOVERY = 3; // minimum recovery days for all procedures
 
 export default function TravelTimelineCard({ selectedDate, cartItems }) {
   const [extraDays, setExtraDays] = useState(0); // client can only add days on top of minimum
@@ -83,11 +82,9 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
 
   const { arrivalDate, procedureDate } = base;
 
-  // Departure = next Sunday or Thursday after (procedure date + MIN_RECOVERY + extraDays)
-  const effectiveRecovery = MIN_RECOVERY + extraDays;
-
+  // Departure = next Sunday or Thursday after (procedure date + extraDays)
   const earliestDeparture = new Date(procedureDate);
-  earliestDeparture.setDate(procedureDate.getDate() + effectiveRecovery);
+  earliestDeparture.setDate(procedureDate.getDate() + extraDays);
   const departureDate = snapToFlightDay(earliestDeparture, 'forward');
 
   const msPerDay = 1000 * 60 * 60 * 24;
@@ -184,7 +181,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
             <div>
               <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Minimum Window</p>
               <p className="text-xs leading-relaxed text-white/70">
-                Arrive 1 day before your procedure, recover for 3 days, then fly home. Use + to extend your stay if you'd like more recovery time.
+                Arrive on the nearest flight day before your procedure, then fly home on the next available flight day. Use + to extend your stay if you'd like more recovery time.
               </p>
             </div>
           </div>
