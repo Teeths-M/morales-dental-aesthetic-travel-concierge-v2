@@ -52,11 +52,14 @@ export default function PortalTravelAgency() {
       const results = await base44.entities.Consultation.filter({ id });
       const c = results[0];
       if (!c) { setError('Case not found.'); setLoading(false); return; }
-      // No status gate — travel agency can always access to submit a quote
+      console.log('Consultation loaded:', c);
+      console.log('Consultation status:', c.status);
+      // No status gate — travel agency can always access to submit a quote regardless of status
       setConsultation(c);
       // Pre-fill taxi service from case
       if (c.taxi_service_id) setTaxiServiceId(c.taxi_service_id);
     } catch (e) {
+      console.error('Load error:', e);
       setError('Failed to load case data.');
     }
     setLoading(false);
