@@ -11,53 +11,42 @@ export default function CinematicIntro({ onComplete }) {
 
   const handleBegin = async () => {
     setExiting(true);
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     onComplete();
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#faf6f0]">
+    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-r from-[#0F3A20] via-[#144d2b] to-[#1a2e22]">
       
-      {/* LAYER 1 — DEEP BACKGROUND (z-0): Beach Sunset */}
-      <div className="absolute inset-0 w-full h-full object-cover opacity-80 z-0">
-        <img
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2400&q=80"
-          alt="Golden Sunset Beach"
-          className="w-full h-full object-cover"
-        />
-        {/* Warm overlay tint */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#ffd4a3]/60 via-[#ffc894]/40 to-[#f5e6d3]/50" />
-      </div>
-
-      {/* LAYER 2 — TEXT & CTAs (z-10): Left-Aligned Container */}
-      <div className="absolute inset-y-0 left-0 w-full md:w-1/2 flex flex-col justify-center z-10 pl-8 md:pl-16 pr-4 pointer-events-auto">
+      {/* LEFT TEXT CONTAINER (z-10) */}
+      <div className="absolute inset-y-0 left-0 w-full md:w-1/2 flex flex-col justify-center z-10 pl-8 md:pl-20 pr-6 text-white">
         {/* Brand label */}
         <motion.p
           initial={{ opacity: 0, x: -30 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-sm font-semibold tracking-widest text-slate-700 uppercase mb-4"
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="text-[10px] font-bold tracking-[0.35em] text-[#C5A059] uppercase mb-6"
         >
-          Medical Travel Concierge
+          SAFE-T 4LIFE™ · Medical Travel Concierge
         </motion.p>
 
         {/* Main headline */}
         <motion.h1
           initial={{ opacity: 0, x: -40 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="font-display text-5xl sm:text-6xl lg:text-7xl leading-tight mb-6"
+          transition={{ duration: 0.9, delay: 0.4 }}
+          className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl leading-tight mb-6"
         >
-          <span className="text-slate-900 block">Your Journey</span>
-          <span className="text-slate-900 block">to Care</span>
+          <span className="block text-white">Your Journey</span>
+          <span className="block text-white">to Care</span>
           <motion.span
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={loaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.9, delay: 0.7 }}
-            className="block italic"
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="block italic mt-2"
             style={{ 
-              color: '#D4A574',
-              textShadow: '0 2px 8px rgba(212,165,116,0.3)'
+              color: '#C5A059',
+              textShadow: '0 4px 20px rgba(197,160,89,0.4)'
             }}
           >
             Begins Here
@@ -68,95 +57,125 @@ export default function CinematicIntro({ onComplete }) {
         <motion.p
           initial={{ opacity: 0, x: -30 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="text-slate-800 text-lg max-w-xl leading-relaxed mb-8"
+          transition={{ duration: 0.7, delay: 0.5 }}
+          className="text-slate-300 text-base sm:text-lg max-w-lg leading-relaxed mb-10"
         >
-          World-Class Care. Total Confidence. Completely Coordinated.
-          <br />
-          We make your medical travel safe, simple, and stress-free.
+          World-class medical care meets luxury concierge service. 
+          From consultation through recovery, we coordinate every detail 
+          so you can focus on what matters most.
         </motion.p>
 
         {/* CTA Button */}
         <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={loaded ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.7 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
           onClick={handleBegin}
           disabled={exiting}
-          className="group relative px-10 py-3.5 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 disabled:pointer-events-none self-start shadow-lg"
+          className="group relative px-12 py-4 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 disabled:pointer-events-none self-start"
           style={{
-            background: 'linear-gradient(135deg, #1a3a2e 0%, #2d5a4f 100%)',
-            border: '1.5px solid #D4A574',
-            color: '#D4A574',
-            boxShadow: '0 8px 32px rgba(212,165,116,0.25)',
+            background: 'linear-gradient(135deg, #C5A059 0%, #D4B577 100%)',
+            color: '#0F3A20',
+            boxShadow: '0 8px 40px rgba(197,160,89,0.35)',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = '0 12px 48px rgba(212,165,116,0.45)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 12px 60px rgba(197,160,89,0.55)';
+            e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = '0 8px 32px rgba(212,165,116,0.25)';
-            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 40px rgba(197,160,89,0.35)';
+            e.currentTarget.style.transform = 'translateY(0) scale(1)';
           }}
         >
-          <span className="relative z-10">Get Your Free Plan</span>
+          <span className="relative z-10 flex items-center gap-3">
+            Get Your Free Plan
+            <motion.span
+              animate={{ x: [0, 6, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              →
+            </motion.span>
+          </span>
         </motion.button>
 
         {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={loaded ? { opacity: 0.5 } : {}}
-          transition={{ duration: 0.8, delay: 1 }}
-          className="mt-14 flex flex-col items-start gap-3"
+          animate={loaded ? { opacity: 0.6 } : {}}
+          transition={{ duration: 0.7, delay: 1 }}
+          className="mt-16 flex flex-col items-start gap-3"
         >
           <motion.div
-            animate={{ y: [0, 10, 0] }}
+            animate={{ y: [0, 12, 0] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-px h-8 bg-slate-700"
+            className="w-px h-10 bg-[#C5A059]"
           />
-          <p className="text-xs tracking-widest text-slate-600 uppercase">Scroll to explore</p>
+          <p className="text-[10px] tracking-[0.25em] text-slate-400 uppercase">Scroll to explore</p>
         </motion.div>
       </div>
 
-      {/* LAYER 3 — FOREGROUND VISUALS (z-20) */}
-      
-      {/* Private Jet floating in sky */}
-      <motion.div
-        initial={{ x: -100, y: 50, opacity: 0, scale: 0.7 }}
-        animate={loaded ? { 
-          x: 0, 
-          y: 0, 
-          opacity: 0.9, 
-          scale: 1 
-        } : {}}
-        transition={{ duration: 3, ease: 'easeOut', delay: 0.3 }}
-        className="absolute top-12 right-[45%] w-72 object-contain hidden md:block z-20 pointer-events-none"
-      >
-        <img
-          src="https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=800&q=80"
-          alt="Luxury Private Jet"
-          className="w-full h-auto object-contain"
-          style={{ filter: 'drop-shadow(0 15px 45px rgba(100,70,30,0.4))' }}
-        />
-      </motion.div>
+      {/* RIGHT HERO VISUAL LAYER (z-0) */}
+      <div className="absolute inset-y-0 right-0 w-full md:w-1/2 z-0 hidden md:block">
+        <motion.div
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={loaded ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
+          className="w-full h-full relative"
+        >
+          {/* Luxury clinic/resort interior */}
+          <img
+            src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1200&q=80"
+            alt="Luxury Medical Facility"
+            className="w-full h-full object-cover object-center"
+            style={{ 
+              clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)',
+              filter: 'brightness(1.05) contrast(1.05)'
+            }}
+          />
+          
+          {/* Soft left shadow mask for smooth blend */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(90deg, rgba(15,58,32,0.95) 0%, rgba(15,58,32,0.7) 25%, transparent 50%)',
+            }}
+          />
+          
+          {/* Premium overlay accent */}
+          <div 
+            className="absolute inset-0 opacity-20"
+            style={{
+              background: 'linear-gradient(135deg, rgba(197,160,89,0.15) 0%, transparent 60%)',
+            }}
+          />
+        </motion.div>
+      </div>
 
-      {/* Doctor standing on right side */}
-      <motion.div
-        initial={{ x: 100, opacity: 0, scale: 0.9 }}
-        animate={loaded ? { x: 0, opacity: 1, scale: 1.02 } : {}}
-        transition={{ duration: 1.6, ease: 'easeOut', delay: 0.5 }}
-        className="absolute bottom-0 right-0 h-[75vh] w-auto object-contain z-20 pointer-events-none"
-      >
-        <img
-          src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=80"
-          alt="Welcoming Medical Professional"
-          className="h-full w-auto object-contain object-bottom"
-          style={{ filter: 'drop-shadow(0 0 60px rgba(212,165,116,0.4)) brightness(1.08)' }}
-        />
-      </motion.div>
-
-      {/* Subtle vignette overlay for polish */}
-      <div className="absolute inset-0 z-30 pointer-events-none bg-gradient-to-r from-[#f5e6d3]/30 via-transparent to-[#d4a574]/15" />
+      {/* Subtle ambient particles for depth */}
+      <div className="absolute inset-0 z-5 pointer-events-none">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 0 }}
+            animate={{ 
+              opacity: [0, 0.25, 0],
+              y: [0, -80, -160],
+            }}
+            transition={{ 
+              duration: 10 + Math.random() * 5,
+              repeat: Infinity,
+              delay: i * 1.5,
+              ease: 'easeInOut'
+            }}
+            className="absolute w-0.5 h-0.5 bg-[#C5A059] rounded-full"
+            style={{
+              left: `${20 + Math.random() * 60}%`,
+              top: `${20 + (i % 4) * 20}%`,
+              filter: 'blur(1px)'
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
