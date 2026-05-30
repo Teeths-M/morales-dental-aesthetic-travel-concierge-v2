@@ -1,25 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Clock } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
-const BASE_PRICES = {
-  'Dental Implants': 2800,
-  'All-on-4 / All-on-6': 9500,
-  'Porcelain Veneers': 3200,
-  'Smile Makeover': 4500,
-  'Rhinoplasty': 5800,
-  'Breast Surgery': 6200,
-  'Facelift': 7400,
-  'Liposuction': 4800,
-  'Gastric Sleeve': 8500,
-  'Joint Replacement': 12000,
-  'IVF': 7200,
-  'Oncology Surgery': 15000,
-};
 const CONSULTATION_CREDIT = 49;
 const CONCIERGE_FEE = 399;
+const LUXURY_MARKUP = 0.32;
 
 function useCountUp(target, duration = 1800, start = false) {
   const [value, setValue] = useState(0);
@@ -42,17 +30,28 @@ export default function ConversionEngine() {
   const { items } = useCart();
   const navigate = useNavigate();
   const [inView, setInView] = useState(false);
-
-  const procedurePrice = items.length > 0
-    ? (BASE_PRICES[items[0].name] || 3500)
-    : 3500;
-  const subtotal = procedurePrice + CONCIERGE_FEE;
-  const total = subtotal - CONSULTATION_CREDIT;
-
-  const animatedTotal = useCountUp(total, 1600, inView);
+  const [procedurePrice, setProcedurePrice] = useState(0);
+  const [loadingPrice, setLoadingPrice] = useState(true);
 
   const selectedPath = items[0]?.category || null;
   const selectedProcedure = items[0]?.name || null;
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      setLoadingPrice(true);
+      const name = selectedProcedure || 'Dental Implants';
+      const results = await base44.entities.ProcedurePricing.filter({ procedure_name: name });
+      const basePrice = results?.[0]?.base_price_usd || 2800;
+      setProcedurePrice(Math.round(basePrice * (1 + LUXURY_MARKUP)));
+      setLoadingPrice(false);
+    };
+    fetchPrice();
+  }, [selectedProcedure]);
+
+  const subtotal = procedurePrice + CONCIERGE_FEE;
+  const total = subtotal - CONSULTATION_CREDIT;
+
+  const animatedTotal = useCountUp(total, 1600, inView && !loadingPrice);
 
   const summaryItems = [
     { label: 'Care Path Selected', value: selectedPath ? `Path of ${selectedPath}` : 'Not yet selected', ok: !!selectedPath },
@@ -167,15 +166,21 @@ export default function ConversionEngine() {
 
           {/* Line items */}
           <div className="space-y-3 mb-6">
-            {[
-              { label: selectedProcedure || 'Medical Procedure', amount: procedurePrice },
-              { label: 'Concierge & Coordination Fee', amount: CONCIERGE_FEE },
-            ].map((line, i) => (
-              <div key={i} className="flex justify-between items-center text-sm">
-                <span className="text-slate-400">{line.label}</span>
-                <span className="text-slate-300 font-mono">${line.amount.toLocaleString()}</span>
+            {loadingPrice ? (
+              <div className="flex justify-center py-4">
+                <div className="w-5 h-5 border-2 border-[#C5A059]/30 border-t-[#C5A059] rounded-full animate-spin" />
               </div>
-            ))}
+            ) : (
+              [
+                { label: selectedProcedure || 'Medical Procedure', amount: procedurePrice },
+                { label: 'Concierge & Coordination Fee', amount: CONCIERGE_FEE },
+              ].map((line, i) => (
+                <div key={i} className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">{line.label}</span>
+                  <span className="text-slate-300 font-mono">${line.amount.toLocaleString()}</span>
+                </div>
+              ))
+            )}
 
             {/* Divider */}
             <div className="h-px" style={{ background: 'rgba(197,160,89,0.2)' }} />
@@ -213,7 +218,8 @@ export default function ConversionEngine() {
           {/* CTA */}
           <button
             onClick={() => navigate('/booking')}
-            className="w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold tracking-widest uppercase text-sm transition-all duration-300 hover:scale-[1.02]"
+            disabled={loadingPrice}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold tracking-widest uppercase text-sm transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: 'linear-gradient(135deg, #0F3A20 0%, #1a5c35 100%)',
               border: '1px solid #C5A059',
