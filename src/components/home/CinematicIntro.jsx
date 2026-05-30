@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PremiumAmbientBackground from './PremiumAmbientBackground';
+import HeroTrustVisual from './HeroTrustVisual';
 
 export default function CinematicIntro({ onComplete }) {
   const [loaded, setLoaded] = useState(false);
@@ -214,70 +215,8 @@ export default function CinematicIntro({ onComplete }) {
         </motion.div>
       </div>
 
-      {/* RIGHT HERO VISUAL LAYER (z-0) - Abstract luxury atmosphere */}
-      <div className="absolute inset-y-0 right-0 w-full md:w-1/2 z-0 hidden md:block">
-        <motion.div
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={loaded ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 1.6, ease: 'easeOut', delay: 0.5 }}
-          className="w-full h-full relative"
-        >
-          {/* Abstract luxury hotel/clinic atmosphere - subtle and elegant */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(15,58,32,0.4) 50%, rgba(197,160,89,0.06) 100%)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-            }}
-          />
-          
-          {/* Soft glowing accent - represents care and warmth */}
-          <motion.div
-            className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full"
-            style={{
-              background: 'radial-gradient(circle, rgba(197,160,89,0.15) 0%, transparent 70%)',
-              filter: 'blur(40px)',
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.4, 0.6, 0.4],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          
-          {/* Subtle vertical light streaks - premium travel aesthetic */}
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={`streak-${i}`}
-              className="absolute w-px h-96"
-              style={{
-                background: 'linear-gradient(180deg, transparent 0%, rgba(197,160,89,0.2) 50%, transparent 100%)',
-                left: `${30 + i * 25}%`,
-                top: '5%',
-              }}
-              animate={{
-                opacity: [0.2, 0.4, 0.2],
-                scaleY: [0.95, 1.05, 0.95],
-              }}
-              transition={{
-                duration: 6 + i * 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: i * 1.5,
-              }}
-            />
-          ))}
-          
-          {/* Soft left shadow mask for smooth blend with text */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(90deg, rgba(15,58,32,0.98) 0%, rgba(15,58,32,0.6) 30%, transparent 60%)',
-            }}
-          />
-        </motion.div>
-      </div>
+      {/* RIGHT HERO VISUAL LAYER (z-0) - Premium Trust Composition */}
+      <HeroTrustVisual loaded={loaded} />
     </div>
   );
 }
