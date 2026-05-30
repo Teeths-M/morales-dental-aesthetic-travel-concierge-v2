@@ -34,7 +34,7 @@ export default function AdminPartners() {
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
     queryKey: ['admin_doctors'],
     queryFn: async () => {
-      const result = await base44.entities.Doctor.list('-created_date', 200);
+      const result = await base44.entities.Doctor.list('-created_date', 1000);
       console.log('Fetched doctors:', result);
       return result;
     },
