@@ -17,6 +17,10 @@
       "type": "string",
       "description": "Country where clinic is located"
     },
+    "clinic_city": {
+      "type": "string",
+      "description": "City where clinic is located"
+    },
     "clinic_name": {
       "type": "string",
       "description": "Clinic name (optional)"
@@ -127,6 +131,7 @@
     "full_name",
     "email",
     "phone",
-    "clinic_country"
+    "clinic_country",
+    "clinic_city"
   ]
 }
