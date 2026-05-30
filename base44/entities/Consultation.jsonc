@@ -302,6 +302,30 @@
     "taxi_service_id": {
       "type": "string",
       "description": "ID of the assigned taxi/chauffeur service"
+    },
+    "passport_number": {
+      "type": "string",
+      "description": "Client passport number"
+    },
+    "passport_expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Passport expiry date (6-month sentinel rule applied)"
+    },
+    "ip_country_origin": {
+      "type": "string",
+      "description": "Auto-detected country from IP geolocation at intake"
+    },
+    "visa_required_status": {
+      "type": "string",
+      "enum": [
+        "exempt",
+        "evisa",
+        "embassy",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "Visa requirement state: exempt | evisa | embassy | unknown"
     }
   },
   "required": [
