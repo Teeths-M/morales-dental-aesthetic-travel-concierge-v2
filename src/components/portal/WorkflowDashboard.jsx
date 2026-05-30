@@ -8,8 +8,10 @@ import {
   Clock,
   AlertCircle,
   ChevronRight,
-  Filter
+  Filter,
+  Send
 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import DoctorConfirmationPanel from '@/components/portal/DoctorConfirmationPanel';
 
 const statusConfig = {
@@ -31,6 +33,20 @@ const paymentStatusConfig = {
 
 export default function WorkflowDashboard({ workflows = [], isLoading }) {
   const [expandedId, setExpandedId] = useState(null);
+  const [resendingId, setResendingId] = useState(null);
+  const [resendResult, setResendResult] = useState({});
+
+  const handleResendChauffeur = async (consultation_id, workflowId) => {
+    setResendingId(workflowId);
+    try {
+      const res = await base44.functions.invoke('resendChauffeurPortalEmail', { consultation_id });
+      setResendResult(prev => ({ ...prev, [workflowId]: { ok: true, count: res.data?.sent?.length || 0 } }));
+    } catch (e) {
+      setResendResult(prev => ({ ...prev, [workflowId]: { ok: false, error: e.message } }));
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -160,9 +176,26 @@ export default function WorkflowDashboard({ workflows = [], isLoading }) {
                     ) : null}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-2 pt-4 border-t border-border">
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-border items-center">
                       <Button size="sm" variant="default">View Full Details</Button>
                       <Button size="sm" variant="outline">Send Message</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 border-cyan-300 text-cyan-700 hover:bg-cyan-50"
+                        disabled={resendingId === workflow.id}
+                        onClick={(e) => { e.stopPropagation(); handleResendChauffeur(workflow.consultation_id, workflow.id); }}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        {resendingId === workflow.id ? 'Sending...' : 'Resend Chauffeur Email'}
+                      </Button>
+                      {resendResult[workflow.id] && (
+                        <span className={`text-xs font-medium ${resendResult[workflow.id].ok ? 'text-green-600' : 'text-red-500'}`}>
+                          {resendResult[workflow.id].ok
+                            ? `✓ Sent to ${resendResult[workflow.id].count} driver(s)`
+                            : `✗ ${resendResult[workflow.id].error}`}
+                        </span>
+                      )}
                     </div>
                   </motion.div>
                 )}
