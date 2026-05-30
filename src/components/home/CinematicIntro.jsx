@@ -43,18 +43,16 @@ export default function CinematicIntro({ onComplete }) {
       onMouseLeave={handleMouseLeave}
     >
       {/* Layer 1 — Background sanctuary */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 flex items-center justify-end overflow-hidden bg-emerald-950">
         <img
           src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80"
           alt="Luxury Medical Sanctuary"
-          className="w-full h-full object-cover opacity-60"
+          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay filter blur-sm"
         />
-        {/* Welcoming Professional */}
         <img
           src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"
-          alt="Welcoming Medical Professional"
-          className="absolute bottom-0 right-16 h-[72%] w-auto object-contain object-bottom opacity-80"
-          style={{ filter: 'drop-shadow(0 0 40px rgba(0,0,0,0.7))' }}
+          alt="Welcoming Professional"
+          className="relative z-10 h-full max-h-[85vh] object-contain object-right-bottom pr-4 md:pr-12 lg:pr-24 mix-blend-normal transform scale-105"
         />
         {/* warm cinematic vignette */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
