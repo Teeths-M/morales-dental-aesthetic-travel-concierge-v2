@@ -6,8 +6,9 @@ import DoctorSignupStep1 from '@/components/doctor-signup/DoctorSignupStep1';
 import DoctorSignupStep2 from '@/components/doctor-signup/DoctorSignupStep2';
 import DoctorSignupStep3 from '@/components/doctor-signup/DoctorSignupStep3';
 import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess';
-import { Globe, MapPin } from 'lucide-react';
+import { Globe, MapPin, Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
 
 export default function DoctorSignup() {
   const [language, setLanguage] = useState('en');
@@ -40,6 +41,21 @@ export default function DoctorSignup() {
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
+
+  // Load saved draft on mount
+  useEffect(() => {
+    const savedDraft = loadSignupDraft('doctor');
+    if (savedDraft) {
+      setFormData(savedDraft);
+    }
+  }, []);
+
+  // Auto-save draft on every change
+  useEffect(() => {
+    if (step < 3) { // Don't save after completion
+      saveSignupDraft('doctor', formData);
+    }
+  }, [formData, step]);
 
   // Auto-detect location using IP geolocation on mount
   useEffect(() => {
@@ -154,6 +170,16 @@ export default function DoctorSignup() {
           </div>
         )}
         
+        {/* Draft Saved Indicator */}
+        {step < 3 && (
+          <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center gap-2">
+            <Save className="w-3 h-3 text-blue-600" />
+            <span className="text-xs text-blue-700 font-medium">
+              Progress saved {getDraftAge('doctor') || 'just now'} - you can continue later
+            </span>
+          </div>
+        )}
+        
         {/* Logo & Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/20 border border-primary/40 mb-4">
@@ -216,6 +242,7 @@ export default function DoctorSignup() {
                  specialties: formData.specialties
                });
                setStep(3);
+               clearSignupDraft('doctor'); // Clear draft after successful signup
              }}
            />
           )}

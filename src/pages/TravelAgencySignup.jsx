@@ -6,9 +6,10 @@ import TravelAgencySignupStep1 from '@/components/partner-signup/TravelAgencySig
 import TravelAgencySignupStep2 from '@/components/partner-signup/TravelAgencySignupStep2';
 import TravelAgencySignupStep3 from '@/components/partner-signup/TravelAgencySignupStep3';
 import TravelAgencySuccess from '@/components/partner-signup/TravelAgencySuccess';
-import { Globe, Plane, MapPin } from 'lucide-react';
+import { Globe, Plane, MapPin, Save } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
 
 export default function TravelAgencySignup() {
   const location = useLocation();
@@ -41,7 +42,20 @@ export default function TravelAgencySignup() {
     };
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
+
+    // Load saved draft
+    const savedDraft = loadSignupDraft('travel_agency');
+    if (savedDraft) {
+      setFormData(savedDraft);
+    }
   }, []);
+
+  // Auto-save draft
+  useEffect(() => {
+    if (step < 3) {
+      saveSignupDraft('travel_agency', formData);
+    }
+  }, [formData, step]);
 
   // Auto-detect location using IP geolocation on mount
   useEffect(() => {
@@ -169,7 +183,14 @@ export default function TravelAgencySignup() {
 
         {/* Progress Indicator */}
         {step < 3 && (
-          <div className="mb-8">
+          <>
+            <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center gap-2">
+              <Save className="w-3 h-3 text-blue-600" />
+              <span className="text-xs text-blue-700 font-medium">
+                Progress saved {getDraftAge('travel_agency') || 'just now'} - you can continue later
+              </span>
+            </div>
+            <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-medium text-muted-foreground">
                 {step === 0 ? '1 of 3' : step === 1 ? '2 of 3' : '3 of 3'}
@@ -182,6 +203,7 @@ export default function TravelAgencySignup() {
               ></div>
             </div>
           </div>
+          </>
         )}
 
         {/* Step Content */}
@@ -215,6 +237,7 @@ export default function TravelAgencySignup() {
               onComplete={(agency) => {
                 setSuccessAgency(agency);
                 setStep(3);
+                clearSignupDraft('travel_agency');
               }}
             />
           )}
