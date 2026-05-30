@@ -30,7 +30,11 @@ export default function AdminPartners() {
   // Fetch all partner types
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
     queryKey: ['admin_doctors'],
-    queryFn: () => base44.asServiceRole.entities.Doctor.list('-created_date', 100),
+    queryFn: async () => {
+      const result = await base44.asServiceRole.entities.Doctor.list('-created_date', 100);
+      console.log('Fetched doctors:', result);
+      return result;
+    },
   });
 
   const { data: travelAgencies = [], isLoading: loadingTravel } = useQuery({
@@ -287,12 +291,14 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
     const searchLower = searchTerm.toLowerCase();
     
     if (type === 'doctor' || type === 'all') {
-      return (
+      const match = (
         partner.full_name?.toLowerCase().includes(searchLower) ||
         partner.email?.toLowerCase().includes(searchLower) ||
         partner.clinic_country?.toLowerCase().includes(searchLower) ||
         partner.clinic_city?.toLowerCase().includes(searchLower)
       );
+      console.log('Doctor filter check:', { name: partner.full_name, email: partner.email, searchLower, match });
+      return match;
     }
     
     if (type === 'travel' || type === 'all') {
@@ -345,16 +351,25 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
           {title} ({filteredPartners.length})
         </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPartners.map(partner => (
-            <PartnerCard 
-              key={partner.id} 
-              partner={partner} 
-              type={type === 'all' ? 'unknown' : type}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              onClick={() => openPartnerDetails(partner, type)}
-            />
-          ))}
+          {filteredPartners.map(partner => {
+            // Determine the actual type for each partner when in 'all' view
+            let actualType = type;
+            if (type === 'all') {
+              if (partner.full_name) actualType = 'doctor';
+              else if (partner.agency_name) actualType = 'travel';
+              else if (partner.company_name || partner.driver_name) actualType = 'taxi';
+            }
+            return (
+              <PartnerCard 
+                key={partner.id} 
+                partner={partner} 
+                type={actualType}
+                getStatusBadge={getStatusBadge}
+                getRatingBadge={getRatingBadge}
+                onClick={() => openPartnerDetails(partner, actualType)}
+              />
+            );
+          })}
         </div>
       </CardContent>
     </Card>
