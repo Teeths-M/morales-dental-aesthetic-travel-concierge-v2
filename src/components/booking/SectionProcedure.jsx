@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, addMonths, startOfMonth, endOfMonth, isBefore } from 'date-fns';
+import { format, addMonths, isBefore } from 'date-fns';
 import CapacityGate from './CapacityGate';
+import TravelTimelineCard from './TravelTimelineCard';
+import { useCart } from '@/context/CartContext';
 
 const procedures = [
   // Dental
@@ -52,7 +54,10 @@ const procedures = [
 export default function SectionProcedure({ form, update }) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(form.preferred_date ? new Date(form.preferred_date) : new Date());
+  const { items } = useCart();
 
+  // FLIGHT_DAYS are the ONLY valid procedure-scheduling days (non-flight days)
+  // Sun=0 and Thu=4 are flight days → DISABLED for procedure booking
   const DISABLED_DAYS = [0, 4]; // Sunday (0) and Thursday (4)
 
   // Helper: check if a date is disabled (Sunday or Thursday)
@@ -259,6 +264,11 @@ export default function SectionProcedure({ form, update }) {
       {/* Capacity gate — shown once both procedure and date are selected */}
       {form.preferred_date && (
         <CapacityGate form={form} />
+      )}
+
+      {/* Travel Timeline Engine — shown once date is selected and cart has items */}
+      {form.preferred_date && items.length > 0 && (
+        <TravelTimelineCard selectedDate={form.preferred_date} cartItems={items} />
       )}
 
       <div>
