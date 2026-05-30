@@ -27,8 +27,9 @@ export default function DoctorDashboard() {
           const doctors = await base44.entities.Doctor.list('-updated_date', 1);
           const previewDoctor = doctors[0] || null;
           if (previewDoctor) {
-            setDoctor(previewDoctor);
-            setFormData(previewDoctor);
+            const doctorData = { ...previewDoctor, successful_procedures_count: previewDoctor.successful_procedures_count || 0 };
+            setDoctor(doctorData);
+            setFormData(doctorData);
             setSpecialties(await base44.entities.DoctorSpecialty.filter({ doctor_id: previewDoctor.id }));
             setPricing(await base44.entities.DoctorPricing.filter({ doctor_id: previewDoctor.id }));
           }
@@ -38,8 +39,9 @@ export default function DoctorDashboard() {
         const response = await base44.functions.invoke('getMyDoctorProfile', {});
         
         if (response.data.doctor) {
-          setDoctor(response.data.doctor);
-          setFormData(response.data.doctor);
+          const doctorData = { ...response.data.doctor, successful_procedures_count: response.data.doctor.successful_procedures_count || 0 };
+          setDoctor(doctorData);
+          setFormData(doctorData);
           setSpecialties(response.data.specialties || []);
           setPricing(response.data.pricing || []);
         }
@@ -63,8 +65,12 @@ export default function DoctorDashboard() {
 
   const handleSave = async () => {
     try {
-      await base44.entities.Doctor.update(doctor.id, formData);
-      setDoctor({ ...doctor, ...formData });
+      const updateData = {
+        ...formData,
+        successful_procedures_count: formData.successful_procedures_count !== undefined ? parseInt(formData.successful_procedures_count) || 0 : 0
+      };
+      await base44.entities.Doctor.update(doctor.id, updateData);
+      setDoctor({ ...doctor, ...updateData });
       setEditing(false);
     } catch (error) {
       console.error('Failed to save profile:', error);
