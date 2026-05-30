@@ -42,7 +42,23 @@
     },
     "recovery_days": {
       "type": "number",
-      "description": "Recovery period"
+      "description": "Legacy recovery period field"
+    },
+    "preparation_days": {
+      "type": "number",
+      "description": "Days needed before procedure for pre-op preparation"
+    },
+    "min_safe_recovery_days": {
+      "type": "number",
+      "description": "Minimum clinically safe recovery days post-procedure"
+    },
+    "ideal_recovery_days": {
+      "type": "number",
+      "description": "Ideal full recovery days post-procedure"
+    },
+    "vacation_friendly_window": {
+      "type": "number",
+      "description": "Max total trip days threshold for vacation-friendly classification"
     },
     "material_options": {
       "type": "array",
