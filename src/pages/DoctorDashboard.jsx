@@ -237,6 +237,13 @@ export default function DoctorDashboard() {
                         className="w-full px-3 py-2 border border-border rounded-lg"
                         placeholder="Number of Reviews"
                       />
+                      <input
+                        type="number"
+                        value={formData.successful_procedures_count || ''}
+                        onChange={(e) => setFormData({ ...formData, successful_procedures_count: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        placeholder="Successful Procedures Completed"
+                      />
                       <textarea
                         value={formData.bio || ''}
                         onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
@@ -311,6 +318,11 @@ export default function DoctorDashboard() {
                         {formData.review_count !== undefined && (
                           <div className="px-3 py-1 bg-secondary rounded-full text-sm font-medium text-foreground">
                             {formData.review_count} Review{formData.review_count !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                        {formData.successful_procedures_count !== undefined && (
+                          <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                            {formData.successful_procedures_count} Procedure{formData.successful_procedures_count !== 1 ? 's' : ''}
                           </div>
                         )}
                       </div>
