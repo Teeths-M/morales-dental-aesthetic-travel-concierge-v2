@@ -187,9 +187,9 @@ Don't miss this opportunity — slots fill fast!
   // ── action: get_overview (admin dashboard) ────────────────────────────────
   if (action === 'get_overview') {
     const user = await base44.auth.me();
-    // Allow admin and platform_admin roles to access
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    // Require authentication - any logged-in user can view capacity
+    if (!user) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Build 6-month overview
