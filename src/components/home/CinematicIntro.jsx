@@ -16,21 +16,30 @@ export default function CinematicIntro({ onComplete }) {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-r from-[#0F3A20] via-[#144d2b] to-[#1a2e22]">
+    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-r from-[#0F3A20] via-[#0d2f3e] to-[#1a2e22]">
+      
+      {/* Blue-gold ambient overlay for brand integration */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, transparent 50%, rgba(197,160,89,0.06) 100%)' }} />
       
       {/* LEFT TEXT CONTAINER (z-10) */}
       <div className="absolute inset-y-0 left-0 w-full md:w-1/2 flex flex-col justify-center z-10 pl-8 md:pl-20 pr-6 text-white">
-        {/* Brand label */}
+        {/* Brand label with blue-gold gradient */}
         <motion.p
           initial={{ opacity: 0, x: -30 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-[10px] font-bold tracking-[0.35em] text-[#C5A059] uppercase mb-6"
+          className="text-[10px] font-bold tracking-[0.35em] uppercase mb-6"
+          style={{
+            background: 'linear-gradient(90deg, #3B82F6, #C5A059)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
         >
           SAFE-T 4LIFE™ · Medical Travel Concierge
         </motion.p>
 
-        {/* Main headline */}
+        {/* Main headline with blue-gold accent */}
         <motion.h1
           initial={{ opacity: 0, x: -40 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
@@ -45,8 +54,11 @@ export default function CinematicIntro({ onComplete }) {
             transition={{ duration: 0.8, delay: 0.7 }}
             className="block italic mt-2"
             style={{ 
-              color: '#C5A059',
-              textShadow: '0 4px 20px rgba(197,160,89,0.4)'
+              background: 'linear-gradient(90deg, #3B82F6, #C5A059)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              textShadow: '0 4px 20px rgba(197,160,89,0.3)'
             }}
           >
             Begins Here
@@ -65,7 +77,7 @@ export default function CinematicIntro({ onComplete }) {
           so you can focus on what matters most.
         </motion.p>
 
-        {/* CTA Button */}
+        {/* CTA Button with blue-gold gradient */}
         <motion.button
           initial={{ opacity: 0, scale: 0.95 }}
           animate={loaded ? { opacity: 1, scale: 1 } : {}}
@@ -74,16 +86,16 @@ export default function CinematicIntro({ onComplete }) {
           disabled={exiting}
           className="group relative px-12 py-4 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 disabled:pointer-events-none self-start"
           style={{
-            background: 'linear-gradient(135deg, #C5A059 0%, #D4B577 100%)',
-            color: '#0F3A20',
-            boxShadow: '0 8px 40px rgba(197,160,89,0.35)',
+            background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 50%, #C5A059 100%)',
+            color: '#ffffff',
+            boxShadow: '0 8px 40px rgba(59,130,246,0.35), 0 8px 40px rgba(197,160,89,0.2)',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = '0 12px 60px rgba(197,160,89,0.55)';
+            e.currentTarget.style.boxShadow = '0 12px 60px rgba(59,130,246,0.55), 0 12px 60px rgba(197,160,89,0.35)';
             e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = '0 8px 40px rgba(197,160,89,0.35)';
+            e.currentTarget.style.boxShadow = '0 8px 40px rgba(59,130,246,0.35), 0 8px 40px rgba(197,160,89,0.2)';
             e.currentTarget.style.transform = 'translateY(0) scale(1)';
           }}
         >
@@ -141,36 +153,37 @@ export default function CinematicIntro({ onComplete }) {
             }}
           />
           
-          {/* Premium overlay accent */}
+          {/* Premium blue-gold overlay accent */}
           <div 
-            className="absolute inset-0 opacity-20"
+            className="absolute inset-0 opacity-25"
             style={{
-              background: 'linear-gradient(135deg, rgba(197,160,89,0.15) 0%, transparent 60%)',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(197,160,89,0.15) 100%)',
             }}
           />
         </motion.div>
       </div>
 
-      {/* Subtle ambient particles for depth */}
+      {/* Subtle ambient particles for depth - blue and gold */}
       <div className="absolute inset-0 z-5 pointer-events-none">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(10)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 0 }}
             animate={{ 
-              opacity: [0, 0.25, 0],
+              opacity: [0, 0.3, 0],
               y: [0, -80, -160],
             }}
             transition={{ 
               duration: 10 + Math.random() * 5,
               repeat: Infinity,
-              delay: i * 1.5,
+              delay: i * 1.2,
               ease: 'easeInOut'
             }}
-            className="absolute w-0.5 h-0.5 bg-[#C5A059] rounded-full"
+            className="absolute w-0.5 h-0.5 rounded-full"
             style={{
+              background: i % 2 === 0 ? '#3B82F6' : '#C5A059',
               left: `${20 + Math.random() * 60}%`,
-              top: `${20 + (i % 4) * 20}%`,
+              top: `${20 + (i % 5) * 16}%`,
               filter: 'blur(1px)'
             }}
           />
