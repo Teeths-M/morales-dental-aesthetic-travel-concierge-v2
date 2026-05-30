@@ -27,12 +27,11 @@ export default function StatsBar() {
     <section className="border-y border-border bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 gap-8 will-change-transform transform-gpu"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
         >
           {stats.map(({ value, label }) => (
             <div key={label} className="text-center">

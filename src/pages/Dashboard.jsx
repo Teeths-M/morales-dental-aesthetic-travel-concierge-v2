@@ -20,7 +20,6 @@ import JourneyModule from '@/components/dashboard/modules/JourneyModule';
 import SupportModule from '@/components/dashboard/modules/SupportModule';
 import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
-import LuxuryScarcityCounter from '@/components/dashboard/LuxuryScarcityCounter';
 
 const notifications = [
   { type: 'warning', text: 'Lab work still required for medical clearance', time: '2h ago' },
@@ -55,9 +54,6 @@ function DashboardHome({ user, consultations, language }) {
 
   return (
     <div className="space-y-6">
-      {/* Luxury Scarcity Counter */}
-      <LuxuryScarcityCounter />
-
       {/* Welcome Header */}
       <motion.div
         className="bg-gradient-to-r from-emerald-800 to-blue-900 rounded-2xl p-6 text-white shadow-lg"
