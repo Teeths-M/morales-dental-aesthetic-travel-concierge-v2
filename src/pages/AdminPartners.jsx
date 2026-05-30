@@ -90,17 +90,17 @@ export default function AdminPartners() {
   const handleApproveDoctor = async (doctorId) => {
     setIsApproving(true);
     try {
+      console.log('Approving doctor:', doctorId);
       await base44.entities.Doctor.update(doctorId, { 
         status: 'active',
         verification_status: 'verified'
       });
+      console.log('Doctor approved successfully');
       toast.success('Doctor approved successfully');
-      // Refresh the query
-      await base44.entities.Doctor.list('-created_date', 200);
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to approve doctor:', error);
-      toast.error('Failed to approve doctor');
+      toast.error('Failed to approve doctor: ' + error.message);
     } finally {
       setIsApproving(false);
     }
@@ -109,15 +109,17 @@ export default function AdminPartners() {
   const handleRejectDoctor = async (doctorId) => {
     setIsApproving(true);
     try {
+      console.log('Rejecting doctor:', doctorId);
       await base44.entities.Doctor.update(doctorId, { 
-        status: 'rejected',
+        status: 'inactive',
         verification_status: 'rejected'
       });
+      console.log('Doctor rejected successfully');
       toast.success('Doctor rejected');
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to reject doctor:', error);
-      toast.error('Failed to reject doctor');
+      toast.error('Failed to reject doctor: ' + error.message);
     } finally {
       setIsApproving(false);
     }
