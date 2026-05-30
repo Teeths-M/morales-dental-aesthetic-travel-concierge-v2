@@ -283,37 +283,60 @@ Return a JSON with:
         footer: 'Please reply with room availability, recovery support details, and pricing.',
       }),
     },
-    {
-      partner: 'cab',
-      email_subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
-      email_body: emailLayout({
-        eyebrow: 'Transfer request',
-        title: 'Local patient transfer needed',
-        intro: 'A newly approved patient requires airport, clinic, and hotel transfer support.',
-        rows: [
-          row('Patient', consultation.patient_name),
-          row('Date', consultation.preferred_date || 'Flexible'),
-          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-          row('Services', 'Airport pickup, clinic transfer, hotel return'),
-        ],
-        footer: 'Please reply with availability, vehicle details, and pricing.',
-      }),
-    },
   ];
 
+  // Build per-cab portal links (each cab partner gets a unique token)
+  const cabPartners = allPartners.filter(p => p.type === 'cab');
+  const cabNotifications = cabPartners.map(cab => {
+    const token = btoa(JSON.stringify({
+      consultation_id,
+      partner_id: cab.id,
+      portal_type: 'transfer',
+      expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    }));
+    const portalLink = `${appUrl}/portal/transfer?token=${token}`;
+    return {
+      email: cab.email,
+      subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
+      body: emailLayout({
+        eyebrow: 'Transfer request',
+        title: 'Patient transfer quote needed',
+        intro: `Hello ${cab.name || cab.contact_person || 'Partner'}, this confirmed patient will need reliable local transportation support.`,
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Requested service', 'Airport, clinic, and hotel transfers'),
+          row('Preferred date', consultation.preferred_date || 'Flexible'),
+          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          row('Special instructions', consultation.transfer_notes || 'None'),
+        ],
+        ctaText: 'Open Chauffeur Portal & Submit Pricing →',
+        ctaUrl: portalLink,
+        footer: 'Click the button above to access your secure portal and submit your per-leg transfer pricing.',
+      }),
+    };
+  });
+
   // Send emails to each partner type
-  const [doctorNotif, travelNotif, hotelNotif, cabNotif] = partnerNotifications;
+  const [doctorNotif, travelNotif, hotelNotif] = partnerNotifications;
   if (doctorEmails.length > 0) await sendToPartners(doctorEmails, doctorNotif.email_subject, doctorNotif.email_body);
   if (travelEmails.length > 0) await sendToPartners(travelEmails, travelNotif.email_subject, travelNotif.email_body);
   if (hotelEmails.length > 0) await sendToPartners(hotelEmails, hotelNotif.email_subject, hotelNotif.email_body);
-  if (cabEmails.length > 0) await sendToPartners(cabEmails, cabNotif.email_subject, cabNotif.email_body);
+
+  // Send each cab partner their own unique portal link
+  for (const cabNotif of cabNotifications) {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: cabNotif.email, subject: cabNotif.subject, body: cabNotif.body });
+    } catch (error) {
+      console.log(`Cab email skipped for ${cabNotif.email}: ${error.message}`);
+    }
+  }
 
   // Update partners status to "notified"
   const partnerUpdates = {
     doctor_status: doctorEmails.length > 0 ? 'notified' : 'pending',
     travel_status: travelEmails.length > 0 ? 'notified' : 'pending',
     hotel_status: hotelEmails.length > 0 ? 'notified' : 'pending',
-    cab_status: cabEmails.length > 0 ? 'notified' : 'pending',
+    cab_status: cabNotifications.length > 0 ? 'notified' : 'pending',
     stage: 'doctor',
     last_update_summary: `SAFE-T approved (${riskLevel} risk). Partners notified.`,
   };
