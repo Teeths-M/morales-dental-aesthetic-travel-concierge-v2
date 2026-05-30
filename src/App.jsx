@@ -36,6 +36,7 @@ import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
 import PortalTravelAgency from './pages/PortalTravelAgency';
 import PortalChauffeur from './pages/PortalChauffeur';
 import IQ200AdminCenter from './pages/IQ200AdminCenter';
+import SimpleAdminDashboard from './pages/SimpleAdminDashboard';
 import ClientProposalPortal from './pages/ClientProposalPortal';
 import ConsultationForm from './pages/ConsultationForm';
 import ConsultationSuccess from './pages/ConsultationSuccess';
@@ -124,7 +125,8 @@ const AuthenticatedApp = () => {
       <Route path="/portal/doctor/:token" element={<PortalDoctor />} />
       <Route path="/portal/proposal" element={<ClientProposalPortal />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
-        <Route path="/iq200" element={<IQ200AdminCenter />} />
+        <Route path="/iq200" element={<SimpleAdminDashboard />} />
+        <Route path="/iq200-advanced" element={<IQ200AdminCenter />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
