@@ -109,17 +109,173 @@ Deno.serve(async (req) => {
       // Fetch consultation for patient details
       const consultation = await base44.entities.Consultation.get(consultation_id);
       
-      // Trigger quote request creation for all provider types
-      const partners = await base44.entities.Partner.filter({ is_active: true });
-      const quoteRequests = [];
-
-      const provider_types = ['flight', 'hotel', 'taxi_origin', 'taxi_destination', 'recovery_accommodation'];
+      // STEP 2: Now notify travel, hotel, and taxi partners (doctor confirmed)
+      const [partners, taxiServices] = await Promise.all([
+        base44.entities.Partner.filter({ is_active: true }),
+        base44.entities.TaxiService.filter({ status: 'active' }),
+      ]);
       
-      for (const provider_type of provider_types) {
+      const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
+      const portalUrl = `${appUrl}/portal-hub/admin`;
+      
+      const getPartnerEmails = (type) => partners.filter(p => p.type === type).map(p => p.email);
+      const travelEmails = getPartnerEmails('travel');
+      const hotelEmails = getPartnerEmails('hotel');
+      
+      const BRAND = 'Morales Dental & Aesthetics';
+      const TEAM = 'Morales Concierge Team';
+      
+      const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+      
+      const formatProcedure = (value) => String(value || 'Procedure').replace(/_/g, ' ');
+      
+      const row = (label, value) => `
+        <tr>
+          <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
+          <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(value || 'Not provided')}</td>
+        </tr>`;
+      
+      const emailLayout = ({ eyebrow, title, intro, rows = [], note, ctaText, ctaUrl, footer = 'Please reply to this email if you need assistance.' }) => `<!doctype html>
+<html>
+  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
+            <tr>
+              <td style="background:#29483d;padding:28px 32px;color:#ffffff;">
+                <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
+                <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${escapeHtml(eyebrow)}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">${escapeHtml(title)}</h1>
+                <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${escapeHtml(intro)}</p>
+                ${rows.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.join('')}</table>` : ''}
+                ${note ? `<div style="margin:22px 0;padding:16px 18px;background:#f8f4ee;border-left:4px solid #b68a52;border-radius:12px;color:#40514a;font-size:14px;line-height:1.6;">${escapeHtml(note)}</div>` : ''}
+                ${ctaText && ctaUrl ? `<a href="${escapeHtml(ctaUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:700;">${escapeHtml(ctaText)}</a>` : ''}
+                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">${escapeHtml(footer)}</p>
+                <p style="margin:18px 0 0;font-size:14px;color:#13221d;font-weight:700;">${TEAM}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+      
+      const sendToPartners = async (emails, subject, body) => {
+        for (const email of emails) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: email, subject, body });
+          } catch (error) {
+            console.log(`Email skipped for ${email} (external user): ${error.message}`);
+          }
+        }
+      };
+      
+      // Notify travel agencies
+      if (travelEmails.length > 0) {
+        await sendToPartners(travelEmails, `Travel request — ${consultation.patient_name} | ${BRAND}`, emailLayout({
+          eyebrow: 'Travel request',
+          title: 'Patient travel arrangement needed',
+          intro: 'A patient has been approved by our medical team and now requires travel planning support.',
+          rows: [
+            row('Patient', consultation.patient_name),
+            row('Procedure', formatProcedure(consultation.procedure_interest)),
+            row('Nationality', consultation.nationality || 'Not specified'),
+            row('Preferred date', consultation.preferred_date || 'Flexible'),
+            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          ],
+          ctaText: 'Review in portal',
+          ctaUrl: portalUrl,
+          footer: 'Please reply with flight options, itinerary details, and pricing.',
+        }));
+      }
+      
+      // Notify hotels
+      if (hotelEmails.length > 0) {
+        await sendToPartners(hotelEmails, `Recovery lodging request — ${consultation.patient_name} | ${BRAND}`, emailLayout({
+          eyebrow: 'Accommodation request',
+          title: 'Recovery lodging arrangement needed',
+          intro: 'A patient has been approved by our medical team and now requires suitable recovery accommodation.',
+          rows: [
+            row('Patient', consultation.patient_name),
+            row('Procedure', formatProcedure(consultation.procedure_interest)),
+            row('Preferred date', consultation.preferred_date || 'Flexible'),
+            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          ],
+          ctaText: 'Review in portal',
+          ctaUrl: portalUrl,
+          footer: 'Please reply with room availability, recovery support details, and pricing.',
+        }));
+      }
+      
+      // Notify taxi services with unique portal links
+      for (const cab of taxiServices) {
+        const driverName = cab.driver_name || cab.company_name || 'Partner';
+        const token = btoa(JSON.stringify({
+          consultation_id,
+          partner_id: cab.id,
+          portal_type: 'transfer',
+          expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        }));
+        const portalLink = `${appUrl}/portal/transfer?token=${token}`;
+        
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: BRAND,
+            to: cab.email,
+            subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
+            body: emailLayout({
+              eyebrow: 'Transfer request',
+              title: 'Patient transfer quote needed',
+              intro: `Hello ${driverName}, a patient has been approved and will need reliable local transportation support.`,
+              rows: [
+                row('Patient', consultation.patient_name),
+                row('Requested service', 'Airport, clinic, and hotel transfers'),
+                row('Preferred date', consultation.preferred_date || 'Flexible'),
+                row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+              ],
+              ctaText: 'Open Chauffeur Portal & Submit Pricing →',
+              ctaUrl: portalLink,
+              footer: 'Click the button above to access your secure portal and submit your per-leg transfer pricing.',
+            }),
+          });
+        } catch (error) {
+          console.log(`Cab email skipped for ${cab.email}: ${error.message}`);
+        }
+      }
+      
+      // Update workflow status - all partners now notified
+      await base44.entities.WorkflowEvent.update(workflowEvent[0].id, {
+        stage: 'travel',
+        travel_status: 'all_partners_notified',
+        last_update_summary: `Doctor confirmed (${procedure_name}, $${price}). Travel, hotel, and taxi partners notified.`,
+      });
+      
+      // Create QuoteRequests for tracking
+      const quoteRequests = [];
+      const provider_types = [
+        { type: 'flight', partnerType: 'travel' },
+        { type: 'hotel', partnerType: 'hotel' },
+        { type: 'taxi_origin', partnerType: 'cab' },
+        { type: 'taxi_destination', partnerType: 'cab' },
+        { type: 'recovery_accommodation', partnerType: 'other' },
+      ];
+      
+      for (const { type: provider_type, partnerType } of provider_types) {
         const relevant_partners = partners.filter(p => {
           if (provider_type === 'flight') return p.type === 'travel';
           if (provider_type === 'hotel') return p.type === 'hotel';
-          if (provider_type === 'taxi_origin' || provider_type === 'taxi_destination') return p.type === 'cab';
+          if (provider_type.includes('taxi')) return p.type === 'cab';
           if (provider_type === 'recovery_accommodation') return p.type === 'other' && p.name.toLowerCase().includes('recovery');
           return false;
         });
@@ -131,34 +287,24 @@ Deno.serve(async (req) => {
             procedure_name,
             procedure_date: consultation.preferred_date,
             recovery_days,
-            destination_country: 'Mexico', // TODO: make dynamic
+            destination_country: consultation.destination_country || 'Mexico',
             patient_country: consultation.nationality,
             provider_type,
             partner_id: partner.id,
             status: 'pending',
             delivery_method: 'email',
-            due_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString() // 5 days
+            due_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
           });
           
           quoteRequests.push(qr);
-
-          // Create notification for partner
-          await base44.entities.WorkflowNotification.create({
-            workflow_event_id: workflowEvent[0]?.id || '',
-            recipient_type: 'partner',
-            recipient_email: partner.email,
-            recipient_phone: partner.phone,
-            notification_type: 'quote_request',
-            channel: 'email',
-            content: `Quote request for ${procedure_name} - Patient: ${consultation.patient_name} - Travel dates: ${consultation.preferred_date} to ${new Date(new Date(consultation.preferred_date).getTime() + recovery_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}`
-          });
         }
       }
 
       return Response.json({ 
         status: 'quotes_initiated',
         quote_count: quoteRequests.length,
-        workflow_stage: 'awaiting_quotes'
+        workflow_stage: 'awaiting_quotes',
+        message: 'Doctor confirmed. All partners (travel, hotel, taxi) notified.',
       });
     }
 

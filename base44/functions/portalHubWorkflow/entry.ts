@@ -209,7 +209,7 @@ Return a JSON with:
     });
   }
 
-  // 6. APPROVED — fetch active partners and taxi services from DB
+  // 6. APPROVED — fetch active doctors only (other partners notified after doctor confirmation)
   const [allPartners, taxiServices] = await Promise.all([
     base44.asServiceRole.entities.Partner.filter({ is_active: true }),
     base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
@@ -217,8 +217,6 @@ Return a JSON with:
   const getPartnerEmails = (type) => allPartners.filter(p => p.type === type).map(p => p.email);
 
   const doctorEmails = getPartnerEmails('doctor');
-  const travelEmails = getPartnerEmails('travel');
-  const hotelEmails = getPartnerEmails('hotel');
 
   // notify partners — notify all emails per type (with error handling for non-app users)
   const sendToPartners = async (emails, subject, body) => {
@@ -231,116 +229,38 @@ Return a JSON with:
     }
   };
 
-  const partnerNotifications = [
-    {
-      partner: 'doctor',
-      email_subject: `New patient approved — ${consultation.patient_name} | ${BRAND}`,
-      email_body: emailLayout({
-        eyebrow: 'Doctor request',
-        title: 'New patient ready for scheduling',
-        intro: 'A patient has passed the SAFE-T review and is ready for clinical availability confirmation.',
-        rows: [
-          row('Patient', consultation.patient_name),
-          row('Procedure', formatProcedure(consultation.procedure_interest)),
-          row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Risk level', riskLevel),
-          row('Notes', consultation.notes || 'None'),
-        ],
-        ctaText: 'Review in portal',
-        ctaUrl: portalUrl,
-        footer: 'Please confirm availability through the portal or by replying to this email.',
-      }),
-    },
-    {
-      partner: 'travel',
-      email_subject: `Travel request — ${consultation.patient_name} | ${BRAND}`,
-      email_body: emailLayout({
-        eyebrow: 'Travel request',
-        title: 'Patient travel arrangement needed',
-        intro: 'A newly approved patient requires travel planning support.',
-        rows: [
-          row('Patient', consultation.patient_name),
-          row('Nationality', consultation.nationality || 'Not specified'),
-          row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Companion', consultation.has_companion ? `Yes (${consultation.companion_relationship || 'relationship not specified'})` : 'No'),
-          row('Requested services', formatList(consultation.travel_buddy_services, 'Standard itinerary support')),
-        ],
-        footer: 'Please reply with flight options, itinerary details, and pricing.',
-      }),
-    },
-    {
-      partner: 'hotel',
-      email_subject: `Recovery lodging request — ${consultation.patient_name} | ${BRAND}`,
-      email_body: emailLayout({
-        eyebrow: 'Accommodation request',
-        title: 'Recovery lodging arrangement needed',
-        intro: 'A newly approved patient requires suitable recovery accommodation.',
-        rows: [
-          row('Patient', consultation.patient_name),
-          row('Procedure', formatProcedure(consultation.procedure_interest)),
-          row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-          row('Comfort preferences', formatList(consultation.cultural_preferences, 'None specified')),
-        ],
-        footer: 'Please reply with room availability, recovery support details, and pricing.',
-      }),
-    },
-  ];
+  // STEP 1: Only notify doctors initially (sequential workflow)
+  const doctorNotif = {
+    partner: 'doctor',
+    email_subject: `New patient approved — ${consultation.patient_name} | ${BRAND}`,
+    email_body: emailLayout({
+      eyebrow: 'Doctor request',
+      title: 'New patient ready for scheduling',
+      intro: 'A patient has passed the SAFE-T review and is ready for clinical availability confirmation.',
+      rows: [
+        row('Patient', consultation.patient_name),
+        row('Procedure', formatProcedure(consultation.procedure_interest)),
+        row('Preferred date', consultation.preferred_date || 'Flexible'),
+        row('Risk level', riskLevel),
+        row('Notes', consultation.notes || 'None'),
+      ],
+      ctaText: 'Review in portal',
+      ctaUrl: portalUrl,
+      footer: 'Please confirm availability through the portal or by replying to this email.',
+    }),
+  };
 
-  // Build per-taxi portal links (each TaxiService gets a unique token)
-  const cabNotifications = taxiServices.map(cab => {
-    const driverName = cab.driver_name || cab.company_name || 'Partner';
-    const token = btoa(JSON.stringify({
-      consultation_id,
-      partner_id: cab.id,
-      portal_type: 'transfer',
-      expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    }));
-    const portalLink = `${appUrl}/portal/transfer?token=${token}`;
-    return {
-      email: cab.email,
-      subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
-      body: emailLayout({
-        eyebrow: 'Transfer request',
-        title: 'Patient transfer quote needed',
-        intro: `Hello ${driverName}, this confirmed patient will need reliable local transportation support.`,
-        rows: [
-          row('Patient', consultation.patient_name),
-          row('Requested service', 'Airport, clinic, and hotel transfers'),
-          row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-          row('Special instructions', consultation.transfer_notes || 'None'),
-        ],
-        ctaText: 'Open Chauffeur Portal & Submit Pricing →',
-        ctaUrl: portalLink,
-        footer: 'Click the button above to access your secure portal and submit your per-leg transfer pricing.',
-      }),
-    };
-  });
-
-  // Send emails to each partner type
-  const [doctorNotif, travelNotif, hotelNotif] = partnerNotifications;
+  // Send doctor notifications only
   if (doctorEmails.length > 0) await sendToPartners(doctorEmails, doctorNotif.email_subject, doctorNotif.email_body);
-  if (travelEmails.length > 0) await sendToPartners(travelEmails, travelNotif.email_subject, travelNotif.email_body);
-  if (hotelEmails.length > 0) await sendToPartners(hotelEmails, hotelNotif.email_subject, hotelNotif.email_body);
 
-  // Send each cab partner their own unique portal link
-  for (const cabNotif of cabNotifications) {
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: cabNotif.email, subject: cabNotif.subject, body: cabNotif.body });
-    } catch (error) {
-      console.log(`Cab email skipped for ${cabNotif.email}: ${error.message}`);
-    }
-  }
-
-  // Update partners status to "notified"
+  // Update workflow status - doctors notified, awaiting confirmation (other partners pending)
   const partnerUpdates = {
     doctor_status: doctorEmails.length > 0 ? 'notified' : 'pending',
-    travel_status: travelEmails.length > 0 ? 'notified' : 'pending',
-    hotel_status: hotelEmails.length > 0 ? 'notified' : 'pending',
-    cab_status: cabNotifications.length > 0 ? 'notified' : 'pending',
+    travel_status: 'pending', // Will be notified after doctor confirmation
+    hotel_status: 'pending', // Will be notified after doctor confirmation
+    cab_status: 'pending', // Will be notified after doctor confirmation
     stage: 'doctor',
-    last_update_summary: `SAFE-T approved (${riskLevel} risk). Partners notified.`,
+    last_update_summary: `SAFE-T approved (${riskLevel} risk). Doctors notified, awaiting confirmation.`,
   };
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, partnerUpdates);
