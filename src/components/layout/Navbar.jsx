@@ -80,7 +80,7 @@ export default function Navbar() {
 
   const navigate = useNavigate();
 
-  const SENSITIVE_PATHS = ['/checkout', '/payment', '/signup', '/register-role'];
+  const SENSITIVE_PATHS = ['/checkout', '/payment', '/signup', '/register-role', '/doctor-signup', '/partner-signup', '/travel-agency-signup', '/taxi-service-signup', '/client-signup'];
   const isSensitive = SENSITIVE_PATHS.some(p => location.pathname.includes(p));
   const isHome = location.pathname === '/';
 
@@ -128,15 +128,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 shrink-0">
             <img 
               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg" 
               alt="Morales Logo" 
               className="h-10 w-auto object-contain"
             />
             <div className="hidden sm:block border-l border-border/30 pl-3">
-              <p className="font-display text-lg leading-tight text-foreground">MORALES</p>
-              <p className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">Dental & Aesthetic</p>
+              <p className="font-['Instrument_Serif'] text-base leading-tight text-foreground tracking-wide">MORALES DENTAL & AESTHETIC</p>
+              <p className="text-[9px] tracking-[0.25em] text-accent uppercase font-semibold">Travel Concierge · SAFE-T4LIFE™</p>
             </div>
           </Link>
 
