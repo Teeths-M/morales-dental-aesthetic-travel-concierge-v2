@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
@@ -61,7 +61,6 @@ function TarotCard({ card, isSelected, onSelect }) {
 
   const handleSelect = () => {
     onSelect(card.id);
-    navigate('/procedures');
   };
 
   return (
@@ -168,6 +167,13 @@ function TarotCard({ card, isSelected, onSelect }) {
 
 export default function TarotSelection() {
   const [selectedCard, setSelectedCard] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (selectedCard) {
+      navigate('/procedures');
+    }
+  }, [selectedCard, navigate]);
 
   return (
     <section
