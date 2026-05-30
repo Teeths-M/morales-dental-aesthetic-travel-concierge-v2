@@ -31,9 +31,11 @@ export default function PremiumAmbientBackground() {
       
       {/* LAYER 1: Base Deep Gradient (slowest movement - furthest back) */}
       <motion.div
-        className="absolute inset-0"
+        className="absolute inset-0 will-change-transform transform-gpu"
         style={{
           background: 'linear-gradient(135deg, #0F3A20 0%, #0d2f3e 35%, #1a2e22 70%, #0a1f29 100%)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
         }}
         animate={{
           background: [
@@ -47,9 +49,11 @@ export default function PremiumAmbientBackground() {
 
       {/* LAYER 2: Slow-Moving Elegant Gradient Overlays */}
       <motion.div
-        className="absolute inset-0 opacity-40"
+        className="absolute inset-0 opacity-40 will-change-transform transform-gpu"
         style={{
           background: 'radial-gradient(circle at 30% 40%, rgba(59,130,246,0.08) 0%, transparent 50%)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
         }}
         animate={{
           scale: [1, 1.1, 1],
@@ -59,9 +63,11 @@ export default function PremiumAmbientBackground() {
       />
       
       <motion.div
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 opacity-30 will-change-transform transform-gpu"
         style={{
           background: 'radial-gradient(circle at 70% 60%, rgba(197,160,89,0.06) 0%, transparent 50%)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
         }}
         animate={{
           scale: [1, 1.15, 1],

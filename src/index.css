@@ -93,3 +93,21 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* Force GPU Layer Backing to Stop Parallax Flickering */
+[data-shadowbox-frame], 
+.motion-parallax-layer,
+img[alt="Luxury Medical Sanctuary"],
+img[alt="Welcoming Professional"] {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0) translateZ(0);
+  -webkit-transform: translate3d(0, 0, 0) translateZ(0);
+  will-change: transform;
+  perspective: 1000px;
+}
+
+/* Eliminate rapid browser repaint flashes */
+.overflow-hidden {
+  isolation: isolate;
+}

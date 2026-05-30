@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useSpring } from 'framer-motion';
 import PremiumAmbientBackground from './PremiumAmbientBackground';
 import HeroTrustVisual from './HeroTrustVisual';
 
 export default function CinematicIntro({ onComplete }) {
   const [loaded, setLoaded] = useState(false);
   const [exiting, setExiting] = useState(false);
+  
+  // Spring configuration for smooth mouse parallax
+  const springConfig = { stiffness: 80, damping: 25, mass: 0.5 };
 
   useEffect(() => {
     setLoaded(true);

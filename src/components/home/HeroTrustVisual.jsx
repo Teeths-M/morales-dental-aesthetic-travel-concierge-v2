@@ -75,11 +75,13 @@ export default function HeroTrustVisual({ loaded }) {
       
       {/* Base gradient background */}
       <motion.div
-        className="absolute inset-0"
+        className="absolute inset-0 will-change-transform transform-gpu"
         style={{
           background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(15,58,32,0.3) 50%, rgba(197,160,89,0.06) 100%)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
         }}
         initial={{ opacity: 0 }}
         animate={loaded ? { opacity: 1 } : {}}
@@ -88,10 +90,14 @@ export default function HeroTrustVisual({ loaded }) {
 
       {/* LAYER 1: Animated World Travel Map */}
       <motion.div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-20 will-change-transform transform-gpu"
         initial={{ opacity: 0 }}
         animate={loaded ? { opacity: 0.2 } : {}}
         transition={{ duration: 2, delay: 0.5 }}
+        style={{
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+        }}
       >
         <svg className="w-full h-full" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
           {/* Abstract world continents - very subtle */}
@@ -167,10 +173,12 @@ export default function HeroTrustVisual({ loaded }) {
 
       {/* LAYER 2: Central Abstract Care Visual - Elegant glowing orb */}
       <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform transform-gpu"
         style={{
           width: '400px',
           height: '400px',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
         }}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={loaded ? { scale: 1, opacity: 1 } : {}}
@@ -286,10 +294,14 @@ export default function HeroTrustVisual({ loaded }) {
 
       {/* LAYER 4: Floating Trust Metrics - Bottom area */}
       <motion.div
-        className="absolute bottom-8 left-8 right-8"
+        className="absolute bottom-8 left-8 right-8 will-change-transform transform-gpu"
         initial={{ opacity: 0, y: 30 }}
         animate={loaded ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 1, delay: 1.5 }}
+        style={{
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+        }}
       >
         <div className="grid grid-cols-2 gap-4">
           {trustMetrics.map((metric, i) => (
