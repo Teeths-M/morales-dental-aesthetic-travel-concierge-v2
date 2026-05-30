@@ -244,9 +244,28 @@ export default function Booking() {
 
   const createMutation = useMutation({
     mutationFn: (data) => {
-      
-      const procedureNames = items.map(item => item.name).join(', ') || 'other';
-      return base44.entities.Consultation.create({ ...data, procedure_interest: procedureNames });
+      // Map cart items to valid enum values; fall back to 'other'
+      const VALID_PROCEDURE_ENUMS = [
+        'dental_implants','all_on_4','porcelain_veneers','smile_makeover','bone_regeneration',
+        'teeth_whitening','rhinoplasty','breast_surgery','liposuction','tummy_tuck','facelift',
+        'brow_lift','blepharoplasty','otoplasty','thigh_arm_lift','laser_resurfacing',
+        'mole_removal','lipoma_removal','gastric_sleeve','gastric_bypass','gastric_band_revision',
+        'gynecological_exams','ivf','egg_freezing','oncology_surgery','tumor_testing',
+        'joint_replacement','spine_surgery','sports_arthroscopy','fracture_surgery','other'
+      ];
+      // items have a .value that is already a valid enum key
+      const procedureEnum = items.length > 0 && VALID_PROCEDURE_ENUMS.includes(items[0].value)
+        ? items[0].value
+        : 'other';
+      // Store full names in notes for reference
+      const procedureNames = items.map(item => item.name).join(', ') || '';
+      return base44.entities.Consultation.create({
+        ...data,
+        procedure_interest: procedureEnum,
+        notes: items.length > 1
+          ? (data.notes ? `${data.notes}\n\nAll procedures requested: ${procedureNames}` : `All procedures requested: ${procedureNames}`)
+          : data.notes || '',
+      });
     },
     onSuccess: async (consultation) => {
       setConsultationId(consultation.id);
