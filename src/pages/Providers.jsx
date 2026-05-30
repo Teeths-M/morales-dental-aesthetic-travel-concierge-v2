@@ -43,7 +43,7 @@ export default function Providers() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-fixed relative pt-16 lg:pt-20"
+      className="min-h-screen bg-cover bg-center bg-fixed relative"
       style={{
         backgroundImage: 'url(https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80)',
       }}

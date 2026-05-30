@@ -34,7 +34,7 @@ export default function VisaAssist() {
   const sections = getSections(language);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background pt-16 lg:pt-20">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       <VisaHero />
 
       {/* Premium Tab Navigation */}
