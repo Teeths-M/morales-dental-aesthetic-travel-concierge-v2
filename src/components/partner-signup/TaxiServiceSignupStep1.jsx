@@ -230,7 +230,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
               <ul className="max-h-56 overflow-y-auto">
                 {filteredCities().length === 0 ? (
                   <li className="px-4 py-3 text-sm text-muted-foreground text-center">
-                    {formData.operating_country ? (language === 'es' ? 'No se encontraron ciudades' : language === 'fr' ? 'Aucune ville trouvée' : 'No cities found') : (language === 'es' ? 'Primero selecciona un país' : language === 'fr' ? 'Sélectionnez un pays d'abord' : 'Select a country first')}
+                    {formData.operating_country ? (language === 'es' ? 'No se encontraron ciudades' : language === 'fr' ? 'Aucune ville trouv\u00e9e' : 'No cities found') : (language === 'es' ? 'Primero selecciona un pa\u00eds' : language === 'fr' ? 'S\u00e9lectionnez un pays d\u0027abord' : 'Select a country first')}
                   </li>
                 ) : (
                   filteredCities().map(city => (
