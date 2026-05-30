@@ -129,7 +129,7 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between px-8 md:px-16 h-20 items-center">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 shrink-0">
             <img 
@@ -155,8 +155,8 @@ export default function Navbar() {
             </button>
           )}
 
-          {/* Desktop Nav */}
-          <nav className="hidden xl:flex items-center gap-6">
+          {/* Desktop Nav - Hidden on mobile */}
+          <nav className="hidden lg:flex items-center gap-6">
             {visibleNavLinks.map(link => {
               if (link.path === '/safe-t' || link.path === '/visa-assist') return null;
               return (
@@ -233,11 +233,11 @@ export default function Navbar() {
             </div>
           </nav>
 
-          {/* Right Actions */}
+          {/* Right Actions - Mobile hamburger visible only on mobile */}
           <div className="flex shrink-0 items-center gap-3">
-            {/* Language Dropdown */}
+            {/* Language Dropdown - Hidden on mobile */}
               <div 
-                className="relative" 
+                className="hidden lg:block relative" 
                 onMouseLeave={handleLanguageMouseLeave} 
                 onMouseEnter={() => {
                   handleLanguageMouseEnter();
@@ -278,13 +278,14 @@ export default function Navbar() {
                   )}
                 </AnimatePresence>
               </div>
-            <Link to="/booking">
+            <Link to="/booking" className="hidden lg:block">
               <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-6">
                 {language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation'}
               </Button>
             </Link>
+            {/* Mobile hamburger button - visible only on mobile */}
             <button
-              className="xl:hidden p-2"
+              className="lg:hidden p-2"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -293,125 +294,136 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Full-screen slide-out panel */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="xl:hidden border-t border-border bg-card"
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 top-0 right-0 z-50 lg:hidden bg-emerald-950/95 backdrop-blur-xl"
           >
-            <nav className="px-4 py-4 space-y-1">
-              {visibleNavLinks.map(link => (
-                <Link
-                  key={link.path}
-                  to={link.path}
+            <div className="flex flex-col h-full">
+              {/* Mobile header with close button */}
+              <div className="flex items-center justify-between p-6 border-b border-emerald-800/30">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg" 
+                    alt="Morales Logo" 
+                    className="h-8 w-auto object-contain"
+                  />
+                  <span className="text-emerald-100 font-serif text-sm">MORALES</span>
+                </div>
+                <button
                   onClick={() => setMobileOpen(false)}
-                  className={`block px-4 py-3 rounded-lg text-sm font-medium ${
-                    location.pathname === link.path
-                      ? 'bg-secondary text-foreground'
-                      : 'text-muted-foreground hover:bg-secondary/50'
-                  }`}
+                  className="p-2 text-emerald-300 hover:text-white transition-colors"
                 >
-                  {link.label}
-                </Link>
-              ))}
-
-              {/* Mobile Client Portal Dropdown */}
-              <button
-                onClick={() => setClientPortalOpen(!clientPortalOpen)}
-                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
-              >
-                <span className="flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4" />
-                  {language === 'es' ? 'Portal de Cliente' : language === 'fr' ? 'Portail Client' : 'Client Portal'}
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${clientPortalOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {clientPortalOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-1 pl-4"
-                  >
-                    {clientPortalLinks.map(link => (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        onClick={() => setMobileOpen(false)}
-                        className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Mobile Partner Dropdown */}
-              <button
-                onClick={() => setPartnerDropdownOpen(!partnerDropdownOpen)}
-                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
-              >
-                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {partnerDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-1 pl-4"
-                  >
-                    <Link
-                      to="/register-role"
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                    >
-                      {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un Rôle' : 'Choose Role'}
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Mobile SAFE EXIT */}
-              <button
-                onClick={() => { handleSafeExit(); setMobileOpen(false); }}
-                className="w-full border border-emerald-600/40 text-emerald-100 bg-emerald-950/80 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:bg-emerald-900 hover:border-emerald-500 hover:text-white"
-              >
-                🔒 SAFE EXIT
-              </button>
-
-              <div className="pt-3 border-t border-border">
-                {isAuthenticated ? (
-                  <Button variant="outline" className="w-full" onClick={() => { logout(); setMobileOpen(false); }}>
-                    Logout
-                  </Button>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        setMobileOpen(false);
-                        navigateToLogin(`${window.location.origin}/register-role`);
-                      }}
-                    >
-                      Register
-                    </Button>
-                    <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => { navigateToLogin(`${window.location.origin}/dashboard`); setMobileOpen(false); }}>
-                      Login
-                    </Button>
-                  </div>
-                )}
+                  <X className="w-6 h-6" />
+                </button>
               </div>
-            </nav>
+
+              {/* Mobile navigation links - stacked vertically */}
+              <nav className="flex-1 overflow-y-auto px-6 py-8 space-y-6">
+                {visibleNavLinks.map(link => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-xl font-medium text-emerald-100 hover:text-white transition-colors py-2"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+
+                {/* Mobile How It Works Submenu */}
+                <div className="pt-4 border-t border-emerald-800/30">
+                  <Link
+                    to="/safe-t"
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-xl font-medium text-emerald-100 hover:text-white transition-colors py-3"
+                  >
+                    SAFE-T 4LIFE™
+                  </Link>
+                  <Link
+                    to="/visa-assist"
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-xl font-medium text-emerald-100 hover:text-white transition-colors py-3"
+                  >
+                    🌍 Visa Assist
+                  </Link>
+                </div>
+
+                {/* Mobile Client Portal Links */}
+                <div className="pt-4 border-t border-emerald-800/30">
+                  <p className="text-sm font-bold tracking-widest uppercase text-emerald-400 mb-4">Client Portal</p>
+                  {clientPortalLinks.map(link => (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setMobileOpen(false)}
+                      className="block text-lg font-medium text-emerald-200 hover:text-white transition-colors py-2"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Mobile Partner Links */}
+                <div className="pt-4 border-t border-emerald-800/30">
+                  <Link
+                    to="/register-role"
+                    onClick={() => setMobileOpen(false)}
+                    className="block text-xl font-medium text-emerald-100 hover:text-white transition-colors py-3"
+                  >
+                    {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
+                  </Link>
+                </div>
+
+                {/* Mobile SAFE EXIT */}
+                <button
+                  onClick={() => { handleSafeExit(); setMobileOpen(false); }}
+                  className="w-full border border-emerald-500/50 text-emerald-100 bg-emerald-900/50 rounded-full px-6 py-4 text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-emerald-800 hover:border-emerald-400 hover:text-white mt-8"
+                >
+                  🔒 SAFE EXIT
+                </button>
+
+                {/* Mobile Auth Actions */}
+                <div className="pt-6 border-t border-emerald-800/30 mt-auto">
+                  {isAuthenticated ? (
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-emerald-600/50 text-emerald-100 hover:bg-emerald-800/50" 
+                      onClick={() => { logout(); setMobileOpen(false); }}
+                    >
+                      Logout
+                    </Button>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        className="w-full border-emerald-600/50 text-emerald-100 hover:bg-emerald-800/50"
+                        onClick={() => {
+                          setMobileOpen(false);
+                          navigateToLogin(`${window.location.origin}/register-role`);
+                        }}
+                      >
+                        Register
+                      </Button>
+                      <Button 
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" 
+                        onClick={() => { 
+                          navigateToLogin(`${window.location.origin}/dashboard`); 
+                          setMobileOpen(false); 
+                        }}
+                      >
+                        Login
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </nav>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
