@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Lock, FileText, X, AlertCircle } fr
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
+import { toast } from "sonner";
 import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
 import SubmissionSuccess from '@/components/booking/SubmissionSuccess';
@@ -332,6 +333,7 @@ export default function Booking() {
     },
     onError: (error) => {
       console.error('Consultation creation failed:', error.message);
+      toast.error(`Failed to create consultation: ${error.message}`);
     },
   });
 
@@ -389,7 +391,7 @@ export default function Booking() {
   };
 
   const handleConfirmSubmit = () => {
-   
+    console.log("Form data submitted:", form);
     createMutation.mutate(form);
     setShowPreview(false);
   };
