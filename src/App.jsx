@@ -37,6 +37,8 @@ import PortalTravelAgency from './pages/PortalTravelAgency';
 import PortalChauffeur from './pages/PortalChauffeur';
 import IQ200AdminCenter from './pages/IQ200AdminCenter';
 import ClientProposalPortal from './pages/ClientProposalPortal';
+import ConsultationForm from './pages/ConsultationForm';
+import ConsultationSuccess from './pages/ConsultationSuccess';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -103,6 +105,8 @@ const AuthenticatedApp = () => {
         <Route path="/partner-signup" element={<PartnerSignup />} />
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
         <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
+      <Route path="/consultation" element={<ConsultationForm />} />
+      <Route path="/consultation-success" element={<ConsultationSuccess />} />
         <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
         </Route>

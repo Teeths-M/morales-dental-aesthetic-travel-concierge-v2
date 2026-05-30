@@ -1,0 +1,304 @@
+{
+  "name": "Case",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "Submitted",
+        "Safe-T-Reviewed",
+        "Doctor-Pending",
+        "Vendor-Pending",
+        "Admin-Review",
+        "Proposal-Sent",
+        "PMP-25",
+        "PMP-50",
+        "Deposit-Paid",
+        "Travel-Coordination",
+        "Ready-For-Travel",
+        "Procedure-In-Progress",
+        "Recovery",
+        "Completed"
+      ],
+      "default": "Submitted"
+    },
+    "case_priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ],
+      "default": "Medium"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "client_phone": {
+      "type": "string"
+    },
+    "client_country": {
+      "type": "string"
+    },
+    "emergency_contact": {
+      "type": "string"
+    },
+    "procedure_country": {
+      "type": "string"
+    },
+    "procedures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "consultation_summary": {
+      "type": "string"
+    },
+    "risk_score": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Moderate",
+        "High"
+      ],
+      "default": "Low"
+    },
+    "safe_t_result": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PASSED",
+        "BLOCKED"
+      ],
+      "default": "PENDING"
+    },
+    "doctor_selected": {
+      "type": "string"
+    },
+    "clinic_selected": {
+      "type": "string"
+    },
+    "medications": {
+      "type": "string"
+    },
+    "allergies": {
+      "type": "string"
+    },
+    "smoking_status": {
+      "type": "string",
+      "enum": [
+        "Never",
+        "Former",
+        "Light",
+        "Heavy"
+      ],
+      "default": "Never"
+    },
+    "alcohol_use": {
+      "type": "string",
+      "enum": [
+        "None",
+        "Occasional",
+        "Moderate",
+        "Heavy"
+      ],
+      "default": "None"
+    },
+    "medical_conditions": {
+      "type": "string"
+    },
+    "anesthesia_history": {
+      "type": "string"
+    },
+    "mental_health_notes": {
+      "type": "string"
+    },
+    "pregnancy_status": {
+      "type": "string",
+      "enum": [
+        "Not Applicable",
+        "Pregnant",
+        "Trying",
+        "Breastfeeding"
+      ],
+      "default": "Not Applicable"
+    },
+    "exercise_level": {
+      "type": "string",
+      "enum": [
+        "Sedentary",
+        "Light",
+        "Moderate",
+        "Active"
+      ],
+      "default": "Moderate"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "doctor_portal_token": {
+      "type": "string"
+    },
+    "treatment_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "treatment_duration": {
+      "type": "number",
+      "default": 0
+    },
+    "recovery_days": {
+      "type": "number",
+      "default": 0
+    },
+    "doctor_confirmation_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Confirmed",
+        "Declined"
+      ],
+      "default": "Pending"
+    },
+    "travel_vendor_id": {
+      "type": "string"
+    },
+    "flight_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "flight_details": {
+      "type": "string"
+    },
+    "hotel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "hotel_name": {
+      "type": "string"
+    },
+    "hotel_address": {
+      "type": "string"
+    },
+    "itinerary_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Confirmed",
+        "Standby"
+      ],
+      "default": "Pending"
+    },
+    "origin_driver_id": {
+      "type": "string"
+    },
+    "destination_driver_id": {
+      "type": "string"
+    },
+    "pickup_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "dropoff_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "local_transfer_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "transfer_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Confirmed"
+      ],
+      "default": "Pending"
+    },
+    "base_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percentage": {
+      "type": "number",
+      "enum": [
+        30,
+        32,
+        35
+      ],
+      "default": 30
+    },
+    "final_package_price": {
+      "type": "number",
+      "default": 0
+    },
+    "profit": {
+      "type": "number",
+      "default": 0
+    },
+    "deposit_option": {
+      "type": "string",
+      "enum": [
+        "None",
+        "25percent",
+        "50percent",
+        "Full"
+      ],
+      "default": "None"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "25% Paid",
+        "50% Paid",
+        "Paid In Full",
+        "Failed",
+        "Refunded"
+      ],
+      "default": "Pending"
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "amount_remaining": {
+      "type": "number",
+      "default": 0
+    },
+    "next_payment_due": {
+      "type": "string",
+      "format": "date"
+    },
+    "stripe_payment_id": {
+      "type": "string"
+    },
+    "itinerary_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "travel_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "transfer_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "final_confirmation_sent": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "client_name",
+    "client_email",
+    "procedures"
+  ]
+}

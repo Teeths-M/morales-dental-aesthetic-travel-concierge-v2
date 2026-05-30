@@ -5,59 +5,14 @@
     "role": {
       "type": "string",
       "enum": [
-        "platform_admin",
-        "client",
-        "doctor",
-        "travel_agency",
-        "taxi_service",
         "admin",
-        "user"
-      ],
-      "default": "client",
-      "description": "Application role for multi-tenant access"
-    },
-    "tenant_id": {
-      "type": "string",
-      "description": "Primary profile or tenant record this user belongs to"
-    },
-    "tenant_type": {
-      "type": "string",
-      "enum": [
         "doctor",
-        "client",
         "travel_agency",
-        "taxi_service",
-        "platform_admin"
+        "driver_origin",
+        "driver_destination",
+        "client"
       ],
-      "description": "Primary tenant type for this user"
-    },
-    "profile_entity_name": {
-      "type": "string",
-      "enum": [
-        "Doctor",
-        "Consultation",
-        "TravelAgency",
-        "TaxiService",
-        "UserOnboardingProfile"
-      ],
-      "description": "Main profile data table connected to this user"
-    },
-    "profile_entity_id": {
-      "type": "string",
-      "description": "Record ID for this user's main profile"
-    },
-    "onboarding_profile_id": {
-      "type": "string",
-      "description": "Reference to the user's onboarding profile record"
-    },
-    "onboarding_status": {
-      "type": "string",
-      "enum": [
-        "not_started",
-        "started",
-        "completed"
-      ],
-      "default": "not_started"
+      "default": "client"
     }
   }
 }
