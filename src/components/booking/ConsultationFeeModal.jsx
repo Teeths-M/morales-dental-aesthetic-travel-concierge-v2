@@ -20,6 +20,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       });
       
       if (response.data.success) {
+        await fireConsentEmail(form, response.data);
         onSuccess(response.data);
         clearCart();
       }
@@ -144,6 +145,25 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
       </div>
     </form>
   );
+}
+
+async function fireConsentEmail(form, responseData) {
+  try {
+    await base44.functions.invoke('processInformedConsentAndEmail', {
+      consultation_id: form.consultation_id,
+      client_name: form.patient_name,
+      client_email: form.email,
+      procedures: form.procedure_interest,
+      signature_data: form.signature_data || '',
+      signature_timestamp: form.signature_timestamp || new Date().toISOString(),
+      signature_ip_address: form.ip_country_origin || '',
+      accepted_arbitration_clause: !!form.accepted_arbitration_clause,
+      charge_id: responseData?.charge_id,
+      amount: responseData?.amount || 49,
+    });
+  } catch (e) {
+    console.warn('Consent email dispatch failed (non-blocking):', e.message);
+  }
 }
 
 export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel }) {
