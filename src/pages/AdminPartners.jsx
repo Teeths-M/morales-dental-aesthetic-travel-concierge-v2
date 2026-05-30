@@ -20,12 +20,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export default function AdminPartners() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [partnerType, setPartnerType] = useState('all');
+  const [isApproving, setIsApproving] = useState(false);
 
   // Fetch all partner types
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
@@ -82,6 +85,42 @@ export default function AdminPartners() {
 
   const openPartnerDetails = (partner, type) => {
     setSelectedPartner({ ...partner, _type: type });
+  };
+
+  const handleApproveDoctor = async (doctorId) => {
+    setIsApproving(true);
+    try {
+      await base44.entities.Doctor.update(doctorId, { 
+        status: 'active',
+        verification_status: 'verified'
+      });
+      toast.success('Doctor approved successfully');
+      // Refresh the query
+      await base44.entities.Doctor.list('-created_date', 200);
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to approve doctor:', error);
+      toast.error('Failed to approve doctor');
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleRejectDoctor = async (doctorId) => {
+    setIsApproving(true);
+    try {
+      await base44.entities.Doctor.update(doctorId, { 
+        status: 'rejected',
+        verification_status: 'rejected'
+      });
+      toast.success('Doctor rejected');
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to reject doctor:', error);
+      toast.error('Failed to reject doctor');
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   const stats = {
@@ -286,7 +325,10 @@ export default function AdminPartners() {
         <PartnerDetailsDialog 
           partner={selectedPartner} 
           open={!!selectedPartner} 
-          onOpenChange={() => setSelectedPartner(null)} 
+          onOpenChange={() => setSelectedPartner(null)}
+          onApprove={handleApproveDoctor}
+          onReject={handleRejectDoctor}
+          isApproving={isApproving}
         />
       )}
     </div>
@@ -447,7 +489,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick })
   );
 }
 
-function PartnerDetailsDialog({ partner, open, onOpenChange }) {
+function PartnerDetailsDialog({ partner, open, onOpenChange, onApprove, onReject, isApproving }) {
   if (!partner) return null;
 
   const renderDetails = () => {
@@ -677,8 +719,27 @@ function PartnerDetailsDialog({ partner, open, onOpenChange }) {
         <div className="space-y-6">
           {renderDetails()}
           
-          <div className="pt-4 border-t border-slate-200">
-            <div className="flex items-center justify-between">
+          <DialogFooter className="pt-4 border-t border-slate-200">
+            {(partner._type === 'doctor' || partner.full_name) && partner.status === 'pending_verification' && (
+              <div className="flex gap-3 w-full">
+                <Button
+                  variant="destructive"
+                  onClick={() => onReject(partner.id)}
+                  disabled={isApproving}
+                  className="flex-1"
+                >
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => onApprove(partner.id)}
+                  disabled={isApproving}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isApproving ? 'Processing...' : 'Approve Doctor'}
+                </Button>
+              </div>
+            )}
+            <div className="flex items-center justify-between w-full pt-4">
               <div className="space-y-1">
                 <p className="text-sm text-slate-500">Registered on</p>
                 <p className="text-slate-900 font-medium">
@@ -692,7 +753,7 @@ function PartnerDetailsDialog({ partner, open, onOpenChange }) {
                 </p>
               </div>
             </div>
-          </div>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>
