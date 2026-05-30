@@ -2,6 +2,7 @@
  * Visa Matrix — evaluates origin nationality vs procedure destination country.
  * Returns: 'exempt' | 'evisa' | 'embassy' | 'unknown'
  *
+ * Updated: May 2026 — sources: Wikipedia Visa Policy pages, doyouneedvisa.com
  * Primary focus: Caribbean / Latin America destinations (our core markets).
  * Explicit route overrides take priority over regional defaults.
  */
@@ -9,26 +10,155 @@
 // ── Explicit route overrides: [origin, destination] → status ──────────────
 // These fire FIRST before any regional fallback.
 const EXPLICIT_ROUTES = [
-  // US / Canada / UK → LATAM & Caribbean → exempt
-  { origins: ['American', 'Canadian'], destinations: ['Mexico', 'Dominican Republic', 'Colombia', 'Costa Rica', 'Panama', 'Jamaica', 'Belize'], status: 'exempt' },
-  { origins: ['British', 'Irish', 'Australian', 'New Zealander'], destinations: ['Dominican Republic', 'Jamaica', 'Barbados', 'Trinidad and Tobago', 'Trinidad', 'Colombia'], status: 'exempt' },
-  // Schengen → LATAM → exempt
-  { origins: ['French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish'], destinations: ['Colombia', 'Dominican Republic', 'Costa Rica', 'Panama', 'Jamaica'], status: 'exempt' },
-  // India → Caribbean → evisa
-  { origins: ['Indian'], destinations: ['Trinidad and Tobago', 'Trinidad', 'Jamaica', 'Barbados', 'Grenada', 'Saint Lucia'], status: 'evisa' },
-  // China → LATAM → evisa
-  { origins: ['Chinese'], destinations: ['Colombia', 'Dominican Republic', 'Costa Rica', 'Panama'], status: 'evisa' },
-  // Russia / CIS → Caribbean → evisa
-  { origins: ['Russian', 'Ukrainian', 'Georgian'], destinations: ['Dominican Republic', 'Colombia', 'Jamaica'], status: 'evisa' },
-  // LATAM intra-region → mostly exempt
-  { origins: ['Brazilian', 'Argentine', 'Chilean', 'Peruvian', 'Ecuadorian', 'Colombian', 'Mexican'], destinations: ['Colombia', 'Dominican Republic', 'Panama', 'Costa Rica', 'Belize'], status: 'exempt' },
-  // Venezuelan → restricted
-  { origins: ['Venezuelan'], destinations: ['Trinidad and Tobago', 'Trinidad', 'Barbados', 'Saint Lucia', 'Grenada'], status: 'embassy' },
-  // African → Caribbean → embassy
-  { origins: ['Nigerian', 'Ghanaian', 'Kenyan', 'South African'], destinations: ['Trinidad and Tobago', 'Trinidad', 'Jamaica', 'Barbados'], status: 'embassy' },
+  // ── VENEZUELA entries (source: en.wikipedia.org/wiki/Visa_policy_of_Venezuela) ──
+  // CARICOM / Caribbean → Venezuela → exempt
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Antiguan', 'Belizean', 'Dominican', 'Vincentian', 'Kittitian'],
+    destinations: ['Venezuela'],
+    status: 'exempt',
+  },
+  // LATAM → Venezuela → exempt
+  {
+    origins: ['Brazilian', 'Argentine', 'Colombian', 'Ecuadorian', 'Mexican', 'Bolivian', 'Peruvian', 'Chilean', 'Costa Rican', 'Uruguayan'],
+    destinations: ['Venezuela'],
+    status: 'exempt',
+  },
+  // Western nations → Venezuela → exempt
+  {
+    origins: ['American', 'British', 'Canadian', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Irish', 'Japanese', 'Russian'],
+    destinations: ['Venezuela'],
+    status: 'exempt',
+  },
+  // Saint Lucian → Venezuela → embassy (Saint Lucia NOT on Venezuela exempt list)
+  {
+    origins: ['Saint Lucian', 'St. Lucian'],
+    destinations: ['Venezuela'],
+    status: 'embassy',
+  },
+
+  // ── COLOMBIA entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish'],
+    destinations: ['Colombia'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Brazilian', 'Argentine', 'Chilean', 'Peruvian', 'Ecuadorian', 'Mexican', 'Uruguayan', 'Costa Rican', 'Bolivian'],
+    destinations: ['Colombia'],
+    status: 'exempt',
+  },
+  { origins: ['Indian', 'Chinese', 'Russian'], destinations: ['Colombia'], status: 'evisa' },
+
+  // ── DOMINICAN REPUBLIC entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Japanese'],
+    destinations: ['Dominican Republic'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Saint Lucian', 'St. Lucian', 'Brazilian', 'Argentine', 'Chilean', 'Colombian', 'Mexican', 'Peruvian', 'Ecuadorian'],
+    destinations: ['Dominican Republic'],
+    status: 'exempt',
+  },
+  { origins: ['Russian', 'Ukrainian', 'Chinese', 'Indian'], destinations: ['Dominican Republic'], status: 'evisa' },
+  { origins: ['Nigerian', 'Ghanaian', 'Kenyan', 'South African'], destinations: ['Dominican Republic'], status: 'embassy' },
+
+  // ── JAMAICA entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish'],
+    destinations: ['Jamaica'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Barbadian', 'Grenadian', 'Saint Lucian', 'St. Lucian', 'Brazilian', 'Argentine', 'Colombian', 'Mexican'],
+    destinations: ['Jamaica'],
+    status: 'exempt',
+  },
+  { origins: ['Indian', 'Chinese'], destinations: ['Jamaica'], status: 'evisa' },
+  { origins: ['Nigerian', 'Ghanaian', 'Kenyan', 'South African'], destinations: ['Jamaica'], status: 'embassy' },
+
+  // ── BARBADOS entries (CARICOM free movement applies) ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Japanese'],
+    destinations: ['Barbados'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Grenadian', 'Saint Lucian', 'St. Lucian', 'Brazilian', 'Argentine', 'Colombian', 'Venezuelan'],
+    destinations: ['Barbados'],
+    status: 'exempt',
+  },
+  { origins: ['Indian'], destinations: ['Barbados'], status: 'evisa' },
+  { origins: ['Nigerian', 'Ghanaian', 'Kenyan', 'South African'], destinations: ['Barbados'], status: 'embassy' },
+
+  // ── TRINIDAD AND TOBAGO entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Japanese'],
+    destinations: ['Trinidad and Tobago', 'Trinidad', 'Tobago'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Jamaican', 'Barbadian', 'Grenadian', 'Saint Lucian', 'St. Lucian', 'Brazilian', 'Argentine', 'Colombian'],
+    destinations: ['Trinidad and Tobago', 'Trinidad', 'Tobago'],
+    status: 'exempt',
+  },
+  { origins: ['Indian'], destinations: ['Trinidad and Tobago', 'Trinidad', 'Tobago'], status: 'evisa' },
+  { origins: ['Venezuelan'], destinations: ['Trinidad and Tobago', 'Trinidad', 'Tobago'], status: 'embassy' },
+  { origins: ['Nigerian', 'Ghanaian', 'Kenyan', 'South African'], destinations: ['Trinidad and Tobago', 'Trinidad', 'Tobago'], status: 'embassy' },
+
+  // ── PANAMA entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish'],
+    destinations: ['Panama'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Brazilian', 'Argentine', 'Colombian', 'Mexican', 'Chilean', 'Peruvian', 'Ecuadorian'],
+    destinations: ['Panama'],
+    status: 'exempt',
+  },
+  { origins: ['Chinese', 'Indian', 'Russian'], destinations: ['Panama'], status: 'evisa' },
+
+  // ── COSTA RICA entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Japanese'],
+    destinations: ['Costa Rica'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Brazilian', 'Argentine', 'Colombian', 'Mexican', 'Chilean', 'Peruvian', 'Ecuadorian'],
+    destinations: ['Costa Rica'],
+    status: 'exempt',
+  },
+  { origins: ['Chinese', 'Indian', 'Russian'], destinations: ['Costa Rica'], status: 'evisa' },
+
+  // ── MEXICO entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Japanese'],
+    destinations: ['Mexico'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Brazilian', 'Argentine', 'Colombian', 'Chilean', 'Peruvian', 'Ecuadorian'],
+    destinations: ['Mexico'],
+    status: 'exempt',
+  },
+  { origins: ['Chinese', 'Indian'], destinations: ['Mexico'], status: 'evisa' },
+
+  // ── BELIZE entries ──
+  {
+    origins: ['American', 'Canadian', 'British', 'Irish', 'Australian', 'New Zealander', 'French', 'German', 'Italian', 'Spanish', 'Portuguese', 'Dutch', 'Belgian', 'Austrian', 'Swiss', 'Swedish', 'Norwegian', 'Danish', 'Finnish'],
+    destinations: ['Belize'],
+    status: 'exempt',
+  },
+  {
+    origins: ['Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Saint Lucian', 'St. Lucian', 'Brazilian', 'Argentine', 'Colombian', 'Mexican'],
+    destinations: ['Belize'],
+    status: 'exempt',
+  },
 ];
 
-// ── Regional defaults ──────────────────────────────────────────────────────
+// ── Regional defaults (fallback when no explicit route matches) ─────────────
 const EXEMPT_TO_CARIBBEAN = [
   'American', 'British', 'Canadian', 'French', 'German', 'Dutch', 'Italian',
   'Spanish', 'Portuguese', 'Australian', 'New Zealander', 'Irish', 'Swedish',
@@ -46,6 +176,7 @@ const CARIBBEAN_DESTINATIONS = [
   'Trinidad and Tobago', 'Trinidad', 'Tobago', 'Jamaica', 'Barbados',
   'Saint Lucia', 'Grenada', 'Antigua', 'Dominican Republic', 'Guyana',
   'Suriname', 'Belize', 'Panama', 'Costa Rica', 'Colombia', 'Mexico',
+  'Venezuela',
 ];
 
 function matchesList(value, list) {
@@ -91,6 +222,7 @@ export const EVISA_LINKS = {
   'Costa Rica': 'https://visas.migracion.go.cr',
   'Colombia': 'https://cancilleria.gov.co/tramites_servicios/visas',
   'Panama': 'https://www.migracion.gob.pa',
+  'Venezuela': 'https://evisa.mppre.gob.ve',
 };
 
 export function getEvisaLink(procedureCountry) {
