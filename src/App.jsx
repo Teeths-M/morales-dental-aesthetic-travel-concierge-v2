@@ -19,9 +19,7 @@ import Dashboard from './pages/Dashboard';
 import HowItWorksPage from './pages/HowItWorksPage';
 import About from './pages/About';
 import Procedures from './pages/Procedures';
-import PortalHub from './pages/PortalHub';
 import VisaAssist from './pages/VisaAssist';
-import PortalHubAdmin from './pages/PortalHubAdmin';
 import PaymentCheckout from './pages/PaymentCheckout';
 import EstimateDashboard from './pages/EstimateDashboard';
 import DoctorSignup from './pages/DoctorSignup';
@@ -35,7 +33,6 @@ import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
 import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
 import PortalTravelAgency from './pages/PortalTravelAgency';
 import PortalChauffeur from './pages/PortalChauffeur';
-import IQ200AdminCenter from './pages/IQ200AdminCenter';
 import SimpleAdminDashboard from './pages/SimpleAdminDashboard';
 import ClientProposalPortal from './pages/ClientProposalPortal';
 import ConsultationForm from './pages/ConsultationForm';
@@ -93,10 +90,7 @@ const AuthenticatedApp = () => {
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
-        <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
-          <Route path="/portal-hub" element={<PortalHub />} />
-          <Route path="/portal-hub/admin" element={<PortalHubAdmin />} />
-        </Route>
+
         <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
           <Route path="/portal-hub/checkout/:consultation_id" element={<PaymentCheckout />} />
           <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
@@ -125,8 +119,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/doctor/:token" element={<PortalDoctor />} />
       <Route path="/portal/proposal" element={<ClientProposalPortal />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
-        <Route path="/iq200" element={<SimpleAdminDashboard />} />
-        <Route path="/iq200-advanced" element={<IQ200AdminCenter />} />
+        <Route path="/admin" element={<SimpleAdminDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
