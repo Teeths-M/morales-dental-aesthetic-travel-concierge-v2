@@ -2,28 +2,51 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, ChevronLeft } from 'lucide-react';
-import { translations } from '@/lib/translations';
+import { translations, procedureCategories } from '@/lib/translations';
 
-const CATEGORY_MAP = {
-  dental: { label: 'Dental', emoji: '🦷' },
-  cosmetic: { label: 'Cosmetic Surgery', emoji: '💄' },
-  weight_loss: { label: 'Weight Loss', emoji: '⚖️' },
-  orthopedics: { label: 'Orthopedics', emoji: '🦴' },
-  cardiology: { label: 'Cardiology', emoji: '❤️' },
-  ophthalmology: { label: 'Ophthalmology', emoji: '👁️' },
-  gynecology: { label: 'Gynecology', emoji: '🤰' },
-  oncology: { label: 'Oncology', emoji: '🔬' },
+const categoryMap = {
+  'dental-general': { emoji: '🦷', label: 'General Dentistry' },
+  'dental-cosmetic': { emoji: '✨', label: 'Cosmetic Dentistry' },
+  'dental-implants': { emoji: '🔩', label: 'Implant Dentistry' },
+  'dental-orthodontics': { emoji: '😁', label: 'Orthodontics' },
+  'aesthetic-face': { emoji: '💆', label: 'Facial Aesthetics' },
+  'aesthetic-body': { emoji: '💪', label: 'Body Contouring' },
+  'aesthetic-breast': { emoji: '🌸', label: 'Breast Surgery' },
+  'wellness': { emoji: '🌿', label: 'Wellness & Regenerative' },
 };
 
 const PROCEDURES_BY_CATEGORY = {
-  dental: ['Dental Implants', 'All-on-4', 'Porcelain Veneers', 'Smile Makeover', 'Bone Regeneration', 'Teeth Whitening'],
-  cosmetic: ['Rhinoplasty', 'Breast Surgery', 'Liposuction', 'Tummy Tuck', 'Facelift', 'Brow Lift', 'Blepharoplasty'],
-  weight_loss: ['Gastric Sleeve', 'Gastric Bypass', 'Gastric Band Revision'],
-  orthopedics: ['Joint Replacement', 'Spine Surgery', 'Sports Arthroscopy', 'Fracture Surgery'],
-  cardiology: ['Cardiac Surgery', 'Angioplasty', 'Valve Replacement'],
-  ophthalmology: ['LASIK', 'Cataract Surgery', 'Corneal Transplant'],
-  gynecology: ['Hysterectomy', 'Fibroid Removal', 'Laparoscopy'],
-  oncology: ['Tumor Removal', 'Cancer Screening', 'Biopsy'],
+  'dental-general': [
+    'Dental Cleaning', 'Deep Cleaning', 'Dental Exam', 'Dental X-Rays', 'Fillings',
+    'Tooth Extraction', 'Wisdom Tooth Removal', 'Root Canal Treatment', 'Dental Crowns',
+    'Dental Bridges', 'Dentures', 'Partial Dentures', 'Inlays & Onlays'
+  ],
+  'dental-cosmetic': [
+    'Teeth Whitening', 'Porcelain Veneers', 'Composite Bonding', 'Smile Makeover',
+    'Gum Contouring', 'Hollywood Smile'
+  ],
+  'dental-implants': [
+    'Single Dental Implant', 'Multiple Dental Implants', 'Full Mouth Implants',
+    'All-on-4 Implants', 'All-on-6 Implants', 'Implant-Supported Dentures', 'Bone Grafting', 'Sinus Lift'
+  ],
+  'dental-orthodontics': [
+    'Braces', 'Invisalign', 'Clear Aligners', 'Retainers'
+  ],
+  'aesthetic-face': [
+    'Rhinoplasty', 'Facelift', 'Neck Lift', 'Eyelid Surgery', 'Chin Augmentation',
+    'Buccal Fat Removal', 'Lip Lift', 'Botox', 'Dermal Fillers'
+  ],
+  'aesthetic-body': [
+    'Liposuction', 'Tummy Tuck', 'Mommy Makeover', 'Brazilian Butt Lift', 'Body Contouring',
+    'Arm Lift', 'Thigh Lift'
+  ],
+  'aesthetic-breast': [
+    'Breast Augmentation', 'Breast Lift', 'Breast Reduction', 'Breast Revision'
+  ],
+  'wellness': [
+    'IV Therapy', 'Stem Cell Therapy', 'PRP Therapy', 'Hormone Therapy',
+    'Medical Weight Loss', 'Nutritional Programs', 'Recovery Therapy'
+  ],
 };
 
 export default function DoctorSignupStep2Pricing({ formData, setFormData, language, onNext, onBack }) {
@@ -46,9 +69,11 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
     onNext();
   };
 
-  const selectedCategories = new Set(formData.selectedCategories || []);
+  const selectedCategories = formData.selectedCategories || [];
   const selectedProcedures = new Set(formData.specialties || []);
-  const allSelectedProcedures = Array.from(selectedCategories)
+  
+  // Get all selected procedures from selected categories
+  const allSelectedProcedures = selectedCategories
     .flatMap(catId => PROCEDURES_BY_CATEGORY[catId] || [])
     .filter(proc => selectedProcedures.has(proc));
 
@@ -65,7 +90,7 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
 
       {/* Procedures Grid */}
       <div className="space-y-6">
-        {Array.from(selectedCategories).map(catId => {
+        {selectedCategories.map(catId => {
           const categoryProcedures = (PROCEDURES_BY_CATEGORY[catId] || []).filter(proc => 
             selectedProcedures.has(proc)
           );
@@ -75,8 +100,8 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
           return (
             <div key={catId} className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-border">
-                <span className="text-2xl">{CATEGORY_MAP[catId]?.emoji}</span>
-                <h3 className="font-semibold text-foreground">{CATEGORY_MAP[catId]?.label}</h3>
+                <span className="text-2xl">{categoryMap[catId]?.emoji}</span>
+                <h3 className="font-semibold text-foreground">{categoryMap[catId]?.label}</h3>
               </div>
 
               <div className="space-y-2">
