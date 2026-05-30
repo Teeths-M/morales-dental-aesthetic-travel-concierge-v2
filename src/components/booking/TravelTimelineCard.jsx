@@ -1,48 +1,46 @@
-import React, { useMemo } from 'react';
-import { format, addDays, parseISO } from 'date-fns';
-import { Plane, CalendarDays, Moon, AlertTriangle, Sparkles } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { format } from 'date-fns';
+import { Plane, Moon, AlertTriangle, Sparkles, Plus, Minus } from 'lucide-react';
 
 // Flight days: 0 = Sunday, 4 = Thursday
 const FLIGHT_DAYS = [0, 4];
 
-// Procedure recovery data defaults — used when ProcedurePricing DB data is unavailable
+// Procedure recovery defaults — used when DB data is unavailable
 const PROCEDURE_DEFAULTS = {
-  dental_implants:      { preparation_days: 1, min_safe_recovery_days: 5 },
-  all_on_4:             { preparation_days: 2, min_safe_recovery_days: 7 },
-  porcelain_veneers:    { preparation_days: 1, min_safe_recovery_days: 3 },
-  smile_makeover:       { preparation_days: 2, min_safe_recovery_days: 5 },
-  bone_regeneration:    { preparation_days: 2, min_safe_recovery_days: 7 },
-  teeth_whitening:      { preparation_days: 1, min_safe_recovery_days: 2 },
-  rhinoplasty:          { preparation_days: 2, min_safe_recovery_days: 10 },
-  breast_surgery:       { preparation_days: 2, min_safe_recovery_days: 7  },
-  liposuction:          { preparation_days: 1, min_safe_recovery_days: 5  },
-  tummy_tuck:           { preparation_days: 2, min_safe_recovery_days: 10 },
-  facelift:             { preparation_days: 2, min_safe_recovery_days: 10 },
-  brow_lift:            { preparation_days: 1, min_safe_recovery_days: 7  },
-  blepharoplasty:       { preparation_days: 1, min_safe_recovery_days: 5  },
-  otoplasty:            { preparation_days: 1, min_safe_recovery_days: 5  },
-  thigh_arm_lift:       { preparation_days: 2, min_safe_recovery_days: 10 },
-  laser_resurfacing:    { preparation_days: 1, min_safe_recovery_days: 4  },
-  mole_removal:         { preparation_days: 1, min_safe_recovery_days: 3  },
-  lipoma_removal:       { preparation_days: 1, min_safe_recovery_days: 3  },
-  gastric_sleeve:       { preparation_days: 3, min_safe_recovery_days: 10 },
-  gastric_bypass:       { preparation_days: 3, min_safe_recovery_days: 12 },
-  gastric_band_revision:{ preparation_days: 2, min_safe_recovery_days: 7  },
-  gynecological_exams:  { preparation_days: 1, min_safe_recovery_days: 2  },
-  ivf:                  { preparation_days: 3, min_safe_recovery_days: 5  },
-  egg_freezing:         { preparation_days: 2, min_safe_recovery_days: 3  },
-  oncology_surgery:     { preparation_days: 3, min_safe_recovery_days: 14 },
-  tumor_testing:        { preparation_days: 1, min_safe_recovery_days: 2  },
-  joint_replacement:    { preparation_days: 3, min_safe_recovery_days: 14 },
-  spine_surgery:        { preparation_days: 3, min_safe_recovery_days: 14 },
-  sports_arthroscopy:   { preparation_days: 1, min_safe_recovery_days: 7  },
-  fracture_surgery:     { preparation_days: 2, min_safe_recovery_days: 10 },
-  other:                { preparation_days: 2, min_safe_recovery_days: 7  },
+  dental_implants:       { preparation_days: 1, min_safe_recovery_days: 5  },
+  all_on_4:              { preparation_days: 2, min_safe_recovery_days: 7  },
+  porcelain_veneers:     { preparation_days: 1, min_safe_recovery_days: 3  },
+  smile_makeover:        { preparation_days: 2, min_safe_recovery_days: 5  },
+  bone_regeneration:     { preparation_days: 2, min_safe_recovery_days: 7  },
+  teeth_whitening:       { preparation_days: 1, min_safe_recovery_days: 2  },
+  dental_xrays:          { preparation_days: 0, min_safe_recovery_days: 1  },
+  rhinoplasty:           { preparation_days: 2, min_safe_recovery_days: 10 },
+  breast_surgery:        { preparation_days: 2, min_safe_recovery_days: 7  },
+  liposuction:           { preparation_days: 1, min_safe_recovery_days: 5  },
+  tummy_tuck:            { preparation_days: 2, min_safe_recovery_days: 10 },
+  facelift:              { preparation_days: 2, min_safe_recovery_days: 10 },
+  brow_lift:             { preparation_days: 1, min_safe_recovery_days: 7  },
+  blepharoplasty:        { preparation_days: 1, min_safe_recovery_days: 5  },
+  otoplasty:             { preparation_days: 1, min_safe_recovery_days: 5  },
+  thigh_arm_lift:        { preparation_days: 2, min_safe_recovery_days: 10 },
+  laser_resurfacing:     { preparation_days: 1, min_safe_recovery_days: 4  },
+  mole_removal:          { preparation_days: 1, min_safe_recovery_days: 3  },
+  lipoma_removal:        { preparation_days: 1, min_safe_recovery_days: 3  },
+  gastric_sleeve:        { preparation_days: 3, min_safe_recovery_days: 10 },
+  gastric_bypass:        { preparation_days: 3, min_safe_recovery_days: 12 },
+  gastric_band_revision: { preparation_days: 2, min_safe_recovery_days: 7  },
+  gynecological_exams:   { preparation_days: 1, min_safe_recovery_days: 2  },
+  ivf:                   { preparation_days: 3, min_safe_recovery_days: 5  },
+  egg_freezing:          { preparation_days: 2, min_safe_recovery_days: 3  },
+  oncology_surgery:      { preparation_days: 3, min_safe_recovery_days: 14 },
+  tumor_testing:         { preparation_days: 1, min_safe_recovery_days: 2  },
+  joint_replacement:     { preparation_days: 3, min_safe_recovery_days: 14 },
+  spine_surgery:         { preparation_days: 3, min_safe_recovery_days: 14 },
+  sports_arthroscopy:    { preparation_days: 1, min_safe_recovery_days: 7  },
+  fracture_surgery:      { preparation_days: 2, min_safe_recovery_days: 10 },
+  other:                 { preparation_days: 2, min_safe_recovery_days: 7  },
 };
 
-// Snap a date to the nearest flight day:
-// direction = 'back'    => most recent preceding Sunday or Thursday
-// direction = 'forward' => next upcoming Sunday or Thursday
 function snapToFlightDay(date, direction = 'back') {
   const d = new Date(date);
   for (let i = 0; i <= 7; i++) {
@@ -64,12 +62,14 @@ function fmtDate(date) {
 }
 
 export default function TravelTimelineCard({ selectedDate, cartItems }) {
-  const timeline = useMemo(() => {
+  const [recoveryOverride, setRecoveryOverride] = useState(null);
+
+  // Compute base values from cart
+  const base = useMemo(() => {
     if (!selectedDate || !cartItems?.length) return null;
 
-    // Extract max preparation_days and min_safe_recovery_days across all selected procedures
     let maxPrep = 1;
-    let maxRecovery = 3;
+    let maxRecovery = 1; // start at 1 instead of 3 — respect the procedure's own floor
 
     for (const item of cartItems) {
       const key = item.value || item.procedure_value || item.id;
@@ -80,32 +80,36 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
       if (recovery > maxRecovery) maxRecovery = recovery;
     }
 
-    const procedureDate = parseDateStr(selectedDate);
-
-    // Raw ideal dates before snapping
-    const rawArrival = new Date(procedureDate);
-    rawArrival.setDate(procedureDate.getDate() - maxPrep);
-
-    const rawDeparture = new Date(procedureDate);
-    rawDeparture.setDate(procedureDate.getDate() + maxRecovery + 1);
-
-    // Snap to nearest valid flight day
-    const arrivalDate  = snapToFlightDay(rawArrival, 'back');
-    const departureDate = snapToFlightDay(rawDeparture, 'forward');
-
-    // Total trip = departure - arrival (inclusive)
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
-    const totalNights = totalDays - 1;
-
-    const isExtended = totalDays > 14;
-
-    return { arrivalDate, procedureDate, departureDate, totalDays, totalNights, isExtended, maxPrep, maxRecovery };
+    return { maxPrep, minRecovery: maxRecovery, procedureDate: parseDateStr(selectedDate) };
   }, [selectedDate, cartItems]);
 
-  if (!timeline) return null;
+  // Reset override whenever cart or date changes
+  useMemo(() => { setRecoveryOverride(null); }, [selectedDate, cartItems]);
 
-  const { arrivalDate, procedureDate, departureDate, totalDays, totalNights, isExtended } = timeline;
+  if (!base) return null;
+
+  const { maxPrep, minRecovery, procedureDate } = base;
+
+  // Use override if set, otherwise use the procedure's min_safe_recovery_days
+  const effectiveRecovery = recoveryOverride !== null ? recoveryOverride : minRecovery;
+
+  const rawArrival = new Date(procedureDate);
+  rawArrival.setDate(procedureDate.getDate() - maxPrep);
+  const arrivalDate = snapToFlightDay(rawArrival, 'back');
+
+  const rawDeparture = new Date(procedureDate);
+  rawDeparture.setDate(procedureDate.getDate() + effectiveRecovery + 1);
+  const departureDate = snapToFlightDay(rawDeparture, 'forward');
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
+  const totalNights = totalDays - 1;
+  const isExtended = totalDays > 14;
+
+  const handleIncrease = () => setRecoveryOverride((effectiveRecovery) + 1);
+  const handleDecrease = () => {
+    if (effectiveRecovery > minRecovery) setRecoveryOverride(effectiveRecovery - 1);
+  };
 
   return (
     <div
@@ -121,10 +125,36 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>SAFE-T4LIFE™ Engine</p>
           <h4 className="text-sm font-bold text-white">Recommended Medical Travel Timeline</h4>
         </div>
-        {/* Trip duration badge */}
-        <div className="ml-auto flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5" style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}>
-          <Moon className="w-3 h-3" />
-          {totalDays} Days · {totalNights} Nights
+
+        {/* Trip duration badge + stepper */}
+        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+          {/* Minus */}
+          <button
+            onClick={handleDecrease}
+            disabled={effectiveRecovery <= minRecovery}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-30"
+            style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)' }}
+            title={`Min recovery: ${minRecovery} days`}
+          >
+            <Minus className="w-3 h-3" style={{ color: '#C5A059' }} />
+          </button>
+
+          <div
+            className="px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5"
+            style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}
+          >
+            <Moon className="w-3 h-3" />
+            {totalDays} Days · {totalNights} Nights
+          </div>
+
+          {/* Plus */}
+          <button
+            onClick={handleIncrease}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+            style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)' }}
+          >
+            <Plus className="w-3 h-3" style={{ color: '#C5A059' }} />
+          </button>
         </div>
       </div>
 
@@ -154,6 +184,20 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           accent
         />
       </div>
+
+      {/* Recovery override indicator */}
+      {recoveryOverride !== null && (
+        <div className="mx-5 mb-2 px-3 py-1.5 rounded-lg flex items-center justify-between" style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.2)' }}>
+          <span className="text-[10px] text-white/50">Recovery override active</span>
+          <button
+            onClick={() => setRecoveryOverride(null)}
+            className="text-[10px] underline"
+            style={{ color: '#C5A059' }}
+          >
+            Reset to recommended ({minRecovery}d)
+          </button>
+        </div>
+      )}
 
       {/* Compliance notice */}
       <div
@@ -189,15 +233,13 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
   );
 }
 
-function TimelineRow({ icon, label, value, sub, accent, highlight }) {
+function TimelineRow({ icon, label, value, sub, highlight }) {
   return (
     <div className="flex items-center gap-3">
       <div
         className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
         style={{
-          background: highlight
-            ? 'rgba(197,160,89,0.2)'
-            : 'rgba(255,255,255,0.05)',
+          background: highlight ? 'rgba(197,160,89,0.2)' : 'rgba(255,255,255,0.05)',
           border: highlight ? '1px solid rgba(197,160,89,0.5)' : '1px solid rgba(255,255,255,0.08)',
         }}
       >

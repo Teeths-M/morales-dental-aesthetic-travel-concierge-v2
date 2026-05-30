@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,57 +51,47 @@ const procedures = [
 
 export default function SectionProcedure({ form, update }) {
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(form.preferred_date ? new Date(form.preferred_date) : new Date());
+  const [currentMonth, setCurrentMonth] = useState(
+    form.preferred_date ? new Date(form.preferred_date) : new Date()
+  );
   const { items } = useCart();
 
-  // FLIGHT_DAYS are the ONLY valid procedure-scheduling days (non-flight days)
-  // Sun=0 and Thu=4 are flight days → DISABLED for procedure booking
-  const DISABLED_DAYS = [0, 4]; // Sunday (0) and Thursday (4)
+  // ONLY Sundays (0) and Thursdays (4) are valid flight-arrival/departure days
+  const ALLOWED_DAYS = [0, 4];
 
-  // Helper: check if a date is disabled (Sunday or Thursday)
-  const isDisabledDate = (date) => DISABLED_DAYS.includes(date.getDay());
+  const isDisabledDate = (date) => !ALLOWED_DAYS.includes(date.getDay());
 
-  // Helper: check if a date is in the past
   const isPastDate = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return isBefore(date, today);
   };
 
-  // Build full calendar grid (6 rows × 7 columns = 42 cells)
   const buildCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-
     const firstDay = new Date(year, month, 1);
-    const startWeekday = firstDay.getDay(); // 0=Sun, 6=Sat
-
+    const startWeekday = firstDay.getDay();
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-
     const prevMonthLastDay = new Date(year, month, 0).getDate();
 
     const cells = [];
     for (let i = 0; i < 42; i++) {
       let dayNumber, dateObj, isCurrentMonth;
-
       if (i < startWeekday) {
-        // Previous month days
         dayNumber = prevMonthLastDay - (startWeekday - i) + 1;
         dateObj = new Date(year, month - 1, dayNumber);
         isCurrentMonth = false;
       } else if (i >= startWeekday + daysInMonth) {
-        // Next month days
         dayNumber = i - (startWeekday + daysInMonth) + 1;
         dateObj = new Date(year, month + 1, dayNumber);
         isCurrentMonth = false;
       } else {
-        // Current month days
         dayNumber = i - startWeekday + 1;
         dateObj = new Date(year, month, dayNumber);
         isCurrentMonth = true;
       }
-
       cells.push({
         day: dayNumber,
         date: dateObj,
@@ -116,14 +104,15 @@ export default function SectionProcedure({ form, update }) {
   };
 
   const calendarDays = buildCalendarDays();
-  
-  // Parse date string without timezone conversion
+
   const getParsedDate = (dateStr) => {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
-  
-  const displayDate = form.preferred_date ? format(getParsedDate(form.preferred_date), 'MMM d, yyyy') : '';
+
+  const displayDate = form.preferred_date
+    ? format(getParsedDate(form.preferred_date), 'MMM d, yyyy')
+    : '';
 
   return (
     <div className="space-y-5">
@@ -133,7 +122,9 @@ export default function SectionProcedure({ form, update }) {
       </div>
 
       <div>
-        <Label>Preferred Consultation Date <span className="text-destructive">*</span></Label>
+        <Label>
+          Preferred Consultation Date <span className="text-destructive">*</span>
+        </Label>
         <div className="relative mt-1.5">
           <motion.button
             onClick={() => setShowCalendar(!showCalendar)}
@@ -162,7 +153,9 @@ export default function SectionProcedure({ form, update }) {
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <h4 className="font-display text-lg text-foreground">{format(currentMonth, 'MMMM yyyy')}</h4>
+                  <h4 className="font-display text-lg text-foreground">
+                    {format(currentMonth, 'MMMM yyyy')}
+                  </h4>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -175,7 +168,7 @@ export default function SectionProcedure({ form, update }) {
 
                 {/* Day labels */}
                 <div className="grid grid-cols-7 gap-2 mb-3 text-center">
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
                     <div key={day} className="text-xs font-semibold text-muted-foreground py-2">
                       {day}
                     </div>
@@ -185,17 +178,18 @@ export default function SectionProcedure({ form, update }) {
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-1 mb-6">
                   {calendarDays.map((cell, idx) => {
-                    const isSelected = form.preferred_date && 
-                      `${cell.date.getFullYear()}-${String(cell.date.getMonth() + 1).padStart(2, '0')}-${String(cell.date.getDate()).padStart(2, '0')}` === form.preferred_date;
+                    const isSelected =
+                      form.preferred_date &&
+                      `${cell.date.getFullYear()}-${String(cell.date.getMonth() + 1).padStart(2, '0')}-${String(cell.date.getDate()).padStart(2, '0')}` ===
+                        form.preferred_date;
                     const canSelect = cell.isCurrentMonth && !cell.isPast && !cell.isDisabled;
 
                     const handleClick = () => {
                       if (canSelect) {
-                        const year = cell.date.getFullYear();
-                        const month = String(cell.date.getMonth() + 1).padStart(2, '0');
-                        const day = String(cell.date.getDate()).padStart(2, '0');
-                        const dateStr = `${year}-${month}-${day}`;
-                        update('preferred_date', dateStr);
+                        const y = cell.date.getFullYear();
+                        const m = String(cell.date.getMonth() + 1).padStart(2, '0');
+                        const d = String(cell.date.getDate()).padStart(2, '0');
+                        update('preferred_date', `${y}-${m}-${d}`);
                         setShowCalendar(false);
                       }
                     };
@@ -212,8 +206,8 @@ export default function SectionProcedure({ form, update }) {
                             : isSelected
                             ? 'bg-foreground text-primary-foreground shadow-md font-semibold'
                             : cell.isPast || cell.isDisabled
-                            ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed line-through opacity-60'
-                            : 'bg-white border border-border hover:bg-sky-50 hover:border-sky-400 cursor-pointer'
+                            ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed opacity-40'
+                            : 'bg-emerald-50 border border-emerald-400 text-emerald-800 hover:bg-emerald-100 cursor-pointer font-semibold'
                         }`}
                       >
                         {cell.day}
@@ -228,8 +222,8 @@ export default function SectionProcedure({ form, update }) {
                 </div>
 
                 {/* Info message */}
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4 text-xs text-yellow-800">
-                  ✈️ <strong>Flying days:</strong> Sundays & Thursdays are disabled and cannot be selected.
+                <div className="bg-emerald-50 border-l-4 border-emerald-500 rounded p-3 mb-4 text-xs text-emerald-800">
+                  ✈️ <strong>Logistics schedule restricted to Sundays & Thursdays.</strong>
                 </div>
 
                 {/* Footer buttons */}
@@ -258,22 +252,27 @@ export default function SectionProcedure({ form, update }) {
             )}
           </AnimatePresence>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Sundays & Thursdays are unavailable for procedure scheduling.</p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Logistics schedule restricted to Sundays & Thursdays.
+        </p>
       </div>
 
-      {/* Capacity gate — shown once both procedure and date are selected */}
-      {form.preferred_date && (
-        <CapacityGate form={form} />
-      )}
+      {/* Capacity gate — shown once date is selected */}
+      {form.preferred_date && <CapacityGate form={form} />}
 
-      {/* Travel Timeline Engine — shown once date is selected and cart has items */}
+      {/* Travel Timeline Engine */}
       {form.preferred_date && items.length > 0 && (
         <TravelTimelineCard selectedDate={form.preferred_date} cartItems={items} />
       )}
 
       <div>
         <Label>Additional Notes (optional)</Label>
-        <Textarea value={form.notes} onChange={e => update('notes', e.target.value)} placeholder="Tell us about your goals..." className="mt-1.5 h-24" />
+        <Textarea
+          value={form.notes}
+          onChange={(e) => update('notes', e.target.value)}
+          placeholder="Tell us about your goals..."
+          className="mt-1.5 h-24"
+        />
       </div>
     </div>
   );
