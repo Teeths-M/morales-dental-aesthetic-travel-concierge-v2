@@ -722,23 +722,39 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApprove, onReject
           {renderDetails()}
           
           <DialogFooter className="pt-4 border-t border-slate-200">
-            {(partner._type === 'doctor' || partner.full_name) && partner.status === 'pending_verification' && (
-              <div className="flex gap-3 w-full">
-                <Button
-                  variant="destructive"
-                  onClick={() => onReject(partner.id)}
-                  disabled={isApproving}
-                  className="flex-1"
-                >
-                  Reject
-                </Button>
-                <Button
-                  onClick={() => onApprove(partner.id)}
-                  disabled={isApproving}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  {isApproving ? 'Processing...' : 'Approve Doctor'}
-                </Button>
+            {(partner._type === 'doctor' || partner.full_name) && (
+              <div className="space-y-3 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">Status:</span>
+                  <Badge className={partner.status === 'active' ? 'bg-emerald-100 text-emerald-700' : partner.status === 'pending_verification' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}>
+                    {partner.status}
+                  </Badge>
+                </div>
+                {partner.status === 'pending_verification' && (
+                  <div className="flex gap-3">
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        console.log('Reject clicked for:', partner.id, partner.full_name);
+                        onReject(partner.id);
+                      }}
+                      disabled={isApproving}
+                      className="flex-1"
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        console.log('Approve clicked for:', partner.id, partner.full_name);
+                        onApprove(partner.id);
+                      }}
+                      disabled={isApproving}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {isApproving ? 'Processing...' : 'Approve Doctor'}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
             <div className="flex items-center justify-between w-full pt-4">
