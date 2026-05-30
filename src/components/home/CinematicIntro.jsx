@@ -50,7 +50,7 @@ export default function CinematicIntro({ onComplete }) {
           className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay filter blur-sm"
         />
         <img
-          src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"
+          src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80"
           alt="Welcoming Professional"
           className="relative z-10 h-full max-h-[85vh] object-contain object-right-bottom pr-4 md:pr-12 lg:pr-24 mix-blend-normal transform scale-105"
         />
