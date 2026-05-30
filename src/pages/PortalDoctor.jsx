@@ -19,10 +19,6 @@ export default function PortalDoctor() {
   const [success, setSuccess] = useState(false);
   
   const [formData, setFormData] = useState({
-    treatment_cost: '',
-    treatment_duration: '',
-    recovery_days: '',
-    available_dates: '',
     doctor_notes: ''
   });
 
@@ -51,23 +47,35 @@ export default function PortalDoctor() {
     loadCase();
   }, [token]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleConfirm = async () => {
     setSubmitting(true);
-
     try {
       await base44.entities.Case.update(caseData.id, {
-        treatment_cost: parseFloat(formData.treatment_cost),
-        treatment_duration: parseInt(formData.treatment_duration),
-        recovery_days: parseInt(formData.recovery_days),
         doctor_confirmation_status: 'Confirmed',
         doctor_confirmed_at: new Date().toISOString(),
+        doctor_notes: formData.doctor_notes,
         status: 'Vendor-Pending'
       });
-
       setSuccess(true);
     } catch (err) {
-      setError('Failed to submit quote');
+      setError('Failed to confirm case');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleNotAvailable = async () => {
+    setSubmitting(true);
+    try {
+      await base44.entities.Case.update(caseData.id, {
+        doctor_confirmation_status: 'Declined',
+        doctor_notes: formData.doctor_notes,
+        status: 'Admin-Review'
+      });
+      setSuccess(true);
+    } catch (err) {
+      setError('Failed to decline case');
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -128,18 +136,25 @@ export default function PortalDoctor() {
             </p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-6">
+              {/* Patient Information */}
               {/* Patient Information */}
               <div className="space-y-4 p-4 bg-muted rounded-lg">
                 <h3 className="font-semibold">Patient Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Age</p>
-                    <p className="font-medium">N/A</p>
-                  </div>
-                  <div>
                     <p className="text-sm text-muted-foreground">Country</p>
                     <p className="font-medium">{caseData.client_country || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Requested Procedure Date</p>
+                    <p className="font-medium">{caseData.preferred_date || 'Not specified'}</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Duration of Stay</p>
+                    <p className="font-medium">{caseData.duration_of_stay || 'Not specified'}</p>
                   </div>
                 </div>
                 <div>
@@ -160,65 +175,41 @@ export default function PortalDoctor() {
                 )}
               </div>
 
-              {/* Quote Form */}
+              {/* Doctor Notes */}
               <div className="space-y-4">
-                <h3 className="font-semibold">Treatment Quote</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Treatment Cost (USD) *</Label>
-                    <Input
-                      type="number"
-                      value={formData.treatment_cost}
-                      onChange={(e) => setFormData({...formData, treatment_cost: e.target.value})}
-                      required
-                      placeholder="e.g., 5000"
-                    />
-                  </div>
-                  <div>
-                    <Label>Treatment Duration (days) *</Label>
-                    <Input
-                      type="number"
-                      value={formData.treatment_duration}
-                      onChange={(e) => setFormData({...formData, treatment_duration: e.target.value})}
-                      required
-                      placeholder="e.g., 3"
-                    />
-                  </div>
-                  <div>
-                    <Label>Recovery Time (days) *</Label>
-                    <Input
-                      type="number"
-                      value={formData.recovery_days}
-                      onChange={(e) => setFormData({...formData, recovery_days: e.target.value})}
-                      required
-                      placeholder="e.g., 7"
-                    />
-                  </div>
-                  <div>
-                    <Label>Available Dates</Label>
-                    <Input
-                      value={formData.available_dates}
-                      onChange={(e) => setFormData({...formData, available_dates: e.target.value})}
-                      placeholder="e.g., June 2026"
-                    />
-                  </div>
-                </div>
+                <h3 className="font-semibold">Your Response</h3>
                 <div>
-                  <Label>Doctor Notes</Label>
+                  <Label>Doctor Notes (Optional)</Label>
                   <Textarea
                     value={formData.doctor_notes}
                     onChange={(e) => setFormData({...formData, doctor_notes: e.target.value})}
-                    placeholder="Additional notes, recommendations, or requirements..."
+                    placeholder="Add any notes or requirements for this case..."
                     className="h-32"
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {submitting ? 'Submitting...' : 'Submit Quote'}
-              </Button>
-            </form>
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <Button 
+                  onClick={handleConfirm} 
+                  className="flex-1 bg-primary hover:bg-primary/90" 
+                  disabled={submitting}
+                >
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {submitting ? 'Processing...' : 'Confirm Availability'}
+                </Button>
+                <Button 
+                  onClick={handleNotAvailable} 
+                  variant="outline" 
+                  className="flex-1" 
+                  disabled={submitting}
+                >
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {submitting ? 'Processing...' : 'Not Available'}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
