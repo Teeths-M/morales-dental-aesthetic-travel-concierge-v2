@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, useSpring } from 'framer-motion';
+import { motion } from 'framer-motion';
 import PremiumAmbientBackground from './PremiumAmbientBackground';
-import HeroTrustVisual from './HeroTrustVisual';
 
 export default function CinematicIntro({ onComplete }) {
   const [loaded, setLoaded] = useState(false);
@@ -106,7 +105,7 @@ export default function CinematicIntro({ onComplete }) {
             initial={{ opacity: 0, y: 30 }}
             animate={loaded ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.9, delay: 1.2 }}
-            className="block italic mt-2"
+            className="block italic mt-2 text-shimmer"
             style={{ 
               background: 'linear-gradient(90deg, #3B82F6, #C5A059)',
               WebkitBackgroundClip: 'text',
@@ -218,8 +217,78 @@ export default function CinematicIntro({ onComplete }) {
         </motion.div>
       </div>
 
-      {/* RIGHT HERO VISUAL LAYER (z-0) - Premium Trust Composition */}
-      <HeroTrustVisual loaded={loaded} />
+      {/* RIGHT HERO VISUAL LAYER (z-10) - Cinematic Glassmorphism Overlay */}
+      <motion.div
+        className="absolute inset-y-0 right-0 w-full md:w-1/2 z-10 overflow-hidden"
+        style={{ willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+      >
+        {/* Background Imagery: Luxury Resort Sunset */}
+        <motion.div
+          className="absolute inset-0 will-change-transform transform-gpu"
+          initial={{ opacity: 0 }}
+          animate={loaded ? { opacity: 1 } : {}}
+          transition={{ duration: 1.5, delay: 0.3 }}
+          style={{
+            backgroundImage: `linear-gradient(to right, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.7) 40%, transparent 80%), url('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=2938&auto=format&fit=crop')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+          }}
+        />
+
+        {/* Floating Premium Airplane Silhouette */}
+        <motion.div
+          className="absolute w-16 h-16 text-white opacity-50"
+          animate={{
+            x: ['-20%', '120%'],
+            y: ['60%', '20%', '80%'],
+            rotate: [0, 5, -5, 0],
+          }}
+          transition={{
+            x: { duration: 25, repeat: Infinity, ease: 'linear' },
+            y: { duration: 15, repeat: Infinity, ease: 'easeInOut' },
+            rotate: { duration: 20, repeat: Infinity, ease: 'easeInOut' },
+          }}
+          style={{ top: '10%', left: '-20%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', willChange: 'transform' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 12h20"/><path d="M13 5v7"/><path d="M13 12l7 7"/><path d="M13 12l-7 7"/>
+          </svg>
+        </motion.div>
+
+        {/* Glassmorphism Badges Grid */}
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center p-8"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={loaded ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 1.2, delay: 0.8 }}
+          style={{ willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+        >
+          <div className="grid grid-cols-2 gap-6 max-w-lg">
+            {[
+              { title: 'Verified Specialists', icon: '✓' },
+              { title: 'Recovery Tracking', icon: '♥' },
+              { title: 'Flight Coordination', icon: '✈' },
+              { title: 'SAFE-T4LIFE™ Protection', icon: '🛡' },
+            ].map((badge, i) => (
+              <motion.div
+                key={i}
+                className="relative bg-white/5 backdrop-blur-md border border-[#C5A059]/30 text-[#C5A059] rounded-xl px-6 py-4 shadow-xl text-center flex flex-col items-center justify-center will-change-transform transform-gpu"
+                whileHover={{
+                  scale: 1.05,
+                  borderColor: 'rgba(197,160,89,0.7)',
+                  boxShadow: '0 8px 40px rgba(197,160,89,0.4)',
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="text-3xl mb-2">{badge.icon}</span>
+                <p className="text-sm font-bold tracking-wide">{badge.title}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

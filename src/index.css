@@ -94,6 +94,31 @@
   }
 }
 
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(197,160,89,0.7) 0%,
+    rgba(255,230,180,1) 30%,
+    rgba(197,160,89,0.7) 60%,
+    rgba(255,230,180,1) 80%,
+    rgba(197,160,89,0.7) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 4s linear infinite;
+  display: inline-block;
+}
+
 /* Force GPU Layer Backing to Stop Parallax Flickering */
 [data-shadowbox-frame], 
 .motion-parallax-layer,
