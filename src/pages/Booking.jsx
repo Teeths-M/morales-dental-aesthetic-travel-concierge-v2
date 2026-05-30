@@ -140,6 +140,8 @@ export default function Booking() {
     emotional_concerns: null, emotional_concern_types: [], emotional_notes: '',
     pregnancy_status: '', document_types: [], uploaded_files: [],
     procedure_interest: '', preferred_date: '', notes: '',
+    passport_number: '', passport_expiry_date: '',
+    ip_country_origin: '', visa_required_status: 'unknown',
     acknowledged_statements: new Set(),
   });
 

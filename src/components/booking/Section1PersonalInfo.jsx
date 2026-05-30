@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { translations } from '@/lib/translations';
+import { useIpGeolocation } from '@/hooks/useIpGeolocation';
+import PassportVaultSection from './PassportVaultSection';
 
 const ages = Array.from({ length: 83 }, (_, i) => String(i + 18));
 const heights = ['Under 140cm','140–150cm','151–160cm','161–170cm','171–180cm','181–190cm','191cm+'];
@@ -24,6 +26,14 @@ function kgToLbs(kg) {
 export default function Section1PersonalInfo({ form, update, language = 'en' }) {
   const [weightUnit, setWeightUnit] = useState('kg');
   const [nationalitySearch, setNationalitySearch] = useState('');
+  const { country: ipCountry } = useIpGeolocation();
+
+  // Auto-populate ip_country_origin once on mount
+  useEffect(() => {
+    if (ipCountry && !form.ip_country_origin) {
+      update('ip_country_origin', ipCountry);
+    }
+  }, [ipCountry]);
 
   return (
     <div className="space-y-5">
@@ -143,6 +153,9 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
           <Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder={translations[language].phoneNumber} className="mt-1.5" />
         </div>
       </div>
+
+      {/* Passport Vault + Visa Matrix */}
+      <PassportVaultSection form={form} update={update} ipCountry={ipCountry} />
     </div>
   );
 }
