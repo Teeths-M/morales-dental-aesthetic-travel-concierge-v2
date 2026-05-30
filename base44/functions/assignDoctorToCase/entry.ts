@@ -9,10 +9,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
-    const { caseId } = await req.json();
+    const { caseId, doctorId } = await req.json();
     
     if (!caseId) {
       return Response.json({ error: 'Case ID required' }, { status: 400 });
+    }
+    
+    if (!doctorId) {
+      return Response.json({ error: 'Doctor ID required' }, { status: 400 });
     }
 
     // Fetch the case
@@ -30,27 +34,12 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Find doctors in the procedure country
-    const doctors = await base44.entities.Doctor.filter({
-      clinic_country: caseRecord.procedure_country,
-      status: 'active'
-    });
-
-    if (doctors.length === 0) {
-      // No doctors available - escalate to admin
-      await base44.entities.Case.update(caseId, {
-        status: 'Admin-Review',
-        admin_notes: `No doctors available in ${caseRecord.procedure_country} for procedure: ${caseRecord.procedures.join(', ')}`
-      });
-
-      return Response.json({
-        status: 'NO_DOCTORS',
-        message: `No doctors found in ${caseRecord.procedure_country}. Admin review required.`
-      });
+    // Fetch the selected doctor
+    const selectedDoctor = await base44.entities.Doctor.get(doctorId);
+    
+    if (!selectedDoctor || selectedDoctor.status !== 'active') {
+      return Response.json({ error: 'Selected doctor not found or inactive' }, { status: 400 });
     }
-
-    // Select first available doctor (could implement smarter matching later)
-    const selectedDoctor = doctors[0];
 
     // Generate secure token for doctor portal access
     const portalToken = `doc_${caseId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,13 @@ import {
   TrendingUp, Calendar, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const STATUS_COLORS = {
   'Submitted': 'bg-slate-100 text-slate-700',
@@ -24,13 +32,24 @@ const STATUS_COLORS = {
 
 export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
   const [assigningDoctor, setAssigningDoctor] = useState(null);
-  const [showDoctorPanel, setShowDoctorPanel] = useState(null);
+  const [selectedDoctors, setSelectedDoctors] = useState({});
 
-  const assignDoctor = async (caseId) => {
+  // Fetch available doctors
+  const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
+    queryKey: ['available_doctors'],
+    queryFn: () => base44.asServiceRole.entities.Doctor.filter({ status: 'active' }),
+  });
+
+  const assignDoctor = async (caseId, doctorId) => {
+    if (!doctorId) {
+      toast.error('Please select a doctor first');
+      return;
+    }
     setAssigningDoctor(caseId);
     try {
-      await base44.functions.invoke('assignDoctorToCase', { caseId });
+      await base44.functions.invoke('assignDoctorToCase', { caseId, doctorId });
       toast.success('Doctor assigned! They will receive an email with secure link.');
+      setSelectedDoctors(prev => ({ ...prev, [caseId]: undefined }));
       onRefresh();
     } catch (error) {
       toast.error('Failed to assign doctor: ' + error.message);
@@ -83,8 +102,10 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 caseRecord={caseRecord} 
                 onAssignDoctor={assignDoctor}
                 assigningDoctor={assigningDoctor}
-                showDoctorPanel={showDoctorPanel}
-                setShowDoctorPanel={setShowDoctorPanel}
+                doctors={doctors}
+                loadingDoctors={loadingDoctors}
+                selectedDoctors={selectedDoctors}
+                setSelectedDoctors={setSelectedDoctors}
               />
             ))}
           </div>
@@ -105,8 +126,10 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 caseRecord={caseRecord} 
                 onAssignDoctor={assignDoctor}
                 assigningDoctor={assigningDoctor}
-                showDoctorPanel={showDoctorPanel}
-                setShowDoctorPanel={setShowDoctorPanel}
+                doctors={doctors}
+                loadingDoctors={loadingDoctors}
+                selectedDoctors={selectedDoctors}
+                setSelectedDoctors={setSelectedDoctors}
               />
             ))}
           </div>
@@ -127,8 +150,10 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 caseRecord={caseRecord} 
                 onAssignDoctor={assignDoctor}
                 assigningDoctor={assigningDoctor}
-                showDoctorPanel={showDoctorPanel}
-                setShowDoctorPanel={setShowDoctorPanel}
+                doctors={doctors}
+                loadingDoctors={loadingDoctors}
+                selectedDoctors={selectedDoctors}
+                setSelectedDoctors={setSelectedDoctors}
               />
             ))}
           </div>
@@ -149,8 +174,10 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 caseRecord={caseRecord} 
                 onAssignDoctor={assignDoctor}
                 assigningDoctor={assigningDoctor}
-                showDoctorPanel={showDoctorPanel}
-                setShowDoctorPanel={setShowDoctorPanel}
+                doctors={doctors}
+                loadingDoctors={loadingDoctors}
+                selectedDoctors={selectedDoctors}
+                setSelectedDoctors={setSelectedDoctors}
               />
             ))}
           </div>
@@ -160,10 +187,11 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
   );
 }
 
-function CaseCard({ caseRecord, onAssignDoctor, assigningDoctor, showDoctorPanel, setShowDoctorPanel }) {
+function CaseCard({ caseRecord, onAssignDoctor, assigningDoctor, doctors, loadingDoctors, selectedDoctors, setSelectedDoctors }) {
   const isBlocked = caseRecord.safe_t_result === 'BLOCKED';
   const needsDoctor = caseRecord.status === 'Safe-T-Reviewed' || caseRecord.status === 'Doctor-Pending';
   const doctorAssigned = caseRecord.doctor_email && caseRecord.doctor_confirmation_status !== 'PENDING';
+  const selectedDoctorId = selectedDoctors[caseRecord.id];
 
   return (
     <Card className={`border-l-4 ${isBlocked ? 'border-l-red-500' : needsDoctor ? 'border-l-violet-500' : 'border-l-amber-500'}`}>
@@ -196,29 +224,52 @@ function CaseCard({ caseRecord, onAssignDoctor, assigningDoctor, showDoctorPanel
               {caseRecord.procedures?.join(', ') || 'Procedure not specified'}
             </p>
 
-            {/* Doctor Status */}
+            {/* Doctor Selection */}
             {needsDoctor && !isBlocked && (
-              <div className="flex items-center gap-2 mt-3">
-                <Button
-                  size="sm"
-                  onClick={() => onAssignDoctor(caseRecord.id)}
-                  disabled={assigningDoctor === caseRecord.id}
-                  className="bg-violet-600 hover:bg-violet-700 text-white text-xs"
-                >
-                  {assigningDoctor === caseRecord.id ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                      Assigning...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-3 h-3 mr-2" />
-                      Assign Doctor
-                    </>
-                  )}
-                </Button>
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedDoctorId || ''}
+                    onValueChange={(value) => setSelectedDoctors(prev => ({ ...prev, [caseRecord.id]: value }))}
+                  >
+                    <SelectTrigger className="w-full md:w-64 text-xs">
+                      <SelectValue placeholder="Select a doctor..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingDoctors ? (
+                        <SelectItem value="loading" disabled>Loading doctors...</SelectItem>
+                      ) : doctors.length === 0 ? (
+                        <SelectItem value="none" disabled>No active doctors</SelectItem>
+                      ) : (
+                        doctors.map(doctor => (
+                          <SelectItem key={doctor.id} value={doctor.id}>
+                            Dr. {doctor.full_name} - {doctor.clinic_country} ({doctor.clinic_city})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    onClick={() => onAssignDoctor(caseRecord.id, selectedDoctorId)}
+                    disabled={assigningDoctor === caseRecord.id || !selectedDoctorId}
+                    className="bg-violet-600 hover:bg-violet-700 text-white text-xs flex-shrink-0"
+                  >
+                    {assigningDoctor === caseRecord.id ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-3 h-3 mr-2" />
+                        Send Token
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-slate-500">
-                  System will auto-select based on procedure country
+                  Select a doctor above, then click "Send Token" to email them the secure portal link
                 </p>
               </div>
             )}
