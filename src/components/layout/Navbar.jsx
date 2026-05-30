@@ -67,15 +67,6 @@ export default function Navbar() {
     { code: 'it', flag: '🇮🇹', name: 'Italiano' },
   ];
 
-  const clientPortalLinks = [
-    { label: language === 'es' ? 'Panel de Control' : language === 'fr' ? 'Tableau de Bord' : 'Dashboard', path: '/dashboard' },
-    ...(isAdmin ? [
-      { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
-      { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
-    ] : []),
-    { label: language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner', path: '/register-role' },
-  ];
-
   const handleLanguageChange = (langCode) => {
     setLanguage(langCode);
     localStorage.setItem('appLanguage', langCode);
