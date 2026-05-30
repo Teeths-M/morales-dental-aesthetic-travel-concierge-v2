@@ -72,7 +72,7 @@ export default function Booking() {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [draftData, setDraftData] = useState(null);
   const navigate = useNavigate();
-  const { items, clearCart } = useCart();
+  const { items, clearCart, procedureCountry } = useCart();
 
   // Auto-save debounce timer
   const saveTimerRef = useRef(null);
@@ -129,6 +129,51 @@ export default function Booking() {
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
+  // Bridge procedure_country from cart selection
+  useEffect(() => {
+    if (procedureCountry && !form.procedure_country) {
+      update('procedure_country', procedureCountry);
+    }
+  }, [procedureCountry]);
+
+  // Keep visa_required_status in sync for persistence
+  useEffect(() => {
+    const status = checkVisaRequirement(form.nationality, form.procedure_country);
+    update('visa_required_status', status);
+  }, [form.nationality, form.procedure_country]);
+
+  // Auto-derive client_country from nationality (nationality → country name)
+  useEffect(() => {
+    if (form.nationality) {
+      // Map common nationality adjectives to country names for visa/taxi matching
+      const nationalityToCountry = {
+        'American': 'United States', 'Canadian': 'Canada', 'British': 'United Kingdom',
+        'Australian': 'Australia', 'German': 'Germany', 'French': 'France',
+        'Italian': 'Italy', 'Spanish': 'Spain', 'Portuguese': 'Portugal',
+        'Dutch': 'Netherlands', 'Belgian': 'Belgium', 'Swiss': 'Switzerland',
+        'Swedish': 'Sweden', 'Norwegian': 'Norway', 'Danish': 'Denmark',
+        'Finnish': 'Finland', 'Austrian': 'Austria', 'Irish': 'Ireland',
+        'Brazilian': 'Brazil', 'Argentine': 'Argentina', 'Colombian': 'Colombia',
+        'Mexican': 'Mexico', 'Venezuelan': 'Venezuela', 'Peruvian': 'Peru',
+        'Chilean': 'Chile', 'Ecuadorian': 'Ecuador', 'Uruguayan': 'Uruguay',
+        'Indian': 'India', 'Chinese': 'China', 'Japanese': 'Japan',
+        'South Korean': 'South Korea', 'Singaporean': 'Singapore',
+        'Russian': 'Russia', 'Ukrainian': 'Ukraine', 'Turkish': 'Turkey',
+        'Israeli': 'Israel', 'Emirati': 'United Arab Emirates',
+        'Saudi': 'Saudi Arabia', 'Jamaican': 'Jamaica', 'Trinidadian': 'Trinidad and Tobago',
+        'Barbadian': 'Barbados', 'Nigerian': 'Nigeria', 'Ghanaian': 'Ghana',
+        'Kenyan': 'Kenya', 'South African': 'South Africa',
+        'New Zealander': 'New Zealand', 'Pakistani': 'Pakistan',
+        'Bangladeshi': 'Bangladesh', 'Filipino': 'Philippines',
+        'Indonesian': 'Indonesia', 'Malaysian': 'Malaysia', 'Thai': 'Thailand',
+        'Vietnamese': 'Vietnam', 'Egyptian': 'Egypt', 'Moroccan': 'Morocco',
+        'Lebanese': 'Lebanon', 'Jordanian': 'Jordan', 'Georgian': 'Georgia',
+      };
+      const country = nationalityToCountry[form.nationality] || form.nationality;
+      update('client_country', country);
+    }
+  }, [form.nationality]);
+
   const [form, setForm] = useState({
     patient_name: '', email: '', phone: '', age: '', gender: '', height: '', weight: '',
     nationality: '', occupation: '', emergency_contact_name: '', emergency_contact_number: '',
@@ -144,6 +189,7 @@ export default function Booking() {
     procedure_interest: '', preferred_date: '', notes: '',
     passport_number: '', passport_expiry_date: '',
     ip_country_origin: '', visa_required_status: 'unknown',
+    procedure_country: '', client_country: '',
     acknowledged_statements: new Set(),
     signature_data: '',
     accepted_arbitration_clause: false,

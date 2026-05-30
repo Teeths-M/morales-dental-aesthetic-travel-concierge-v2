@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 const STORAGE_KEY = 'morales_consultation_cart';
+const COUNTRY_KEY = 'morales_procedure_country';
 
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState(() => {
@@ -12,6 +13,15 @@ export const CartProvider = ({ children }) => {
       return [];
     }
   });
+
+  const [procedureCountry, setProcedureCountryState] = useState(() => {
+    try { return localStorage.getItem(COUNTRY_KEY) || ''; } catch { return ''; }
+  });
+
+  const setProcedureCountry = (country) => {
+    setProcedureCountryState(country);
+    try { localStorage.setItem(COUNTRY_KEY, country); } catch {}
+  };
 
   useEffect(() => {
     try {
@@ -45,7 +55,7 @@ export const CartProvider = ({ children }) => {
   const getTotalCount = () => items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry }}>
       {children}
     </CartContext.Provider>
   );
