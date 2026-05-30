@@ -49,12 +49,7 @@ export default function PortalTravelAgency() {
       const results = await base44.entities.Consultation.filter({ id });
       const c = results[0];
       if (!c) { setError('Case not found.'); setLoading(false); return; }
-      const blockedStatuses = ['cancelled', 'completed'];
-      if (blockedStatuses.includes(c.status)) {
-        setError(`This portal is not accessible for cases with status "${c.status}".`);
-        setLoading(false);
-        return;
-      }
+      // No status gate — travel agency can always access to submit a quote
       setConsultation(c);
       // Pre-fill taxi service from case
       if (c.taxi_service_id) setTaxiServiceId(c.taxi_service_id);
