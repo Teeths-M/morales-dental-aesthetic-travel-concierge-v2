@@ -102,22 +102,6 @@ export default function Navbar() {
   };
 
   const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
-  const portalLinks = [
-    ...(isAdmin ? [
-      { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
-      { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
-    ] : []),
-    ...(['doctor'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard', path: '/doctor-dashboard' },
-    ] : []),
-    ...(['travel_agency'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
-    ] : []),
-    ...(['taxi_service'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
-    ] : []),
-  ];
-
   const clientOnlyPaths = ['/dashboard', '/safe-t', '/visa-assist'];
   const canUseClientPortal = ['client', 'user', 'platform_admin', 'admin'].includes(user?.role);
   const visibleNavLinks = navLinks.filter(link => {
@@ -141,6 +125,15 @@ export default function Navbar() {
     if (clientPortalTimeoutRef.current) clearTimeout(clientPortalTimeoutRef.current);
     setClientPortalOpen(true);
   };
+
+  const clientPortalLinks = [
+    { label: language === 'es' ? 'Panel de Control' : language === 'fr' ? 'Tableau de Bord' : 'Dashboard', path: '/dashboard' },
+    ...(isAdmin ? [
+      { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
+      { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
+    ] : []),
+    { label: language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner', path: '/register-role' },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
@@ -334,43 +327,39 @@ export default function Navbar() {
                 </Link>
               ))}
 
-              {/* Mobile Portal Hub Dropdown */}
-              {isAuthenticated && portalLinks.length > 0 && (
-                <>
-                  <button
-                    onClick={() => setPortalHubOpen(!portalHubOpen)}
-                    className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Stethoscope className="w-4 h-4" />
-                      {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
-                  </button>
+              {/* Mobile Client Portal Dropdown */}
+              <button
+                onClick={() => setClientPortalOpen(!clientPortalOpen)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4" />
+                  {language === 'es' ? 'Portal de Cliente' : language === 'fr' ? 'Portail Client' : 'Client Portal'}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${clientPortalOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-                  <AnimatePresence>
-                    {portalHubOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-1 pl-4"
+              <AnimatePresence>
+                {clientPortalOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-1 pl-4"
+                  >
+                    {clientPortalLinks.map(link => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        onClick={() => setMobileOpen(false)}
+                        className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
                       >
-                        {portalLinks.map(link => (
-                          <Link
-                            key={link.path}
-                            to={link.path}
-                            onClick={() => setMobileOpen(false)}
-                            className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
+                        {link.label}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Mobile Partner Dropdown */}
               <button
