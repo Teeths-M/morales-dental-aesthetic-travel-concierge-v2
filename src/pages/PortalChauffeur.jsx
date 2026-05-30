@@ -44,8 +44,9 @@ export default function PortalChauffeur() {
 
       const c = consultations[0];
       if (!c) { setError('Case not found.'); setLoading(false); return; }
-      if (c.status !== 'Transfer-Pending') {
-        setError(`This portal is only accessible when the case status is "Transfer-Pending". Current status: ${c.status}`);
+      const blockedStatuses = ['cancelled', 'completed'];
+      if (blockedStatuses.includes(c.status)) {
+        setError(`This transfer request is no longer active. Current status: ${c.status}`);
         setLoading(false);
         return;
       }
