@@ -18,8 +18,8 @@ const categoryMap = {
 export default function DoctorSignupStep2({ formData, setFormData, language = 'en', onNext, onBack }) {
   const t = translations[language] || translations['en'];
   const categories = procedureCategories[language] || procedureCategories['en'];
-  const [selectedCategories, setSelectedCategories] = useState(new Set());
-  const [selectedProcedures, setSelectedProcedures] = useState(new Set());
+  const [selectedCategories, setSelectedCategories] = useState(new Set(formData.selectedCategories || []));
+  const [selectedProcedures, setSelectedProcedures] = useState(new Set(formData.specialties || []));
 
   const proceduresByCategory = {
     'dental-general': [
