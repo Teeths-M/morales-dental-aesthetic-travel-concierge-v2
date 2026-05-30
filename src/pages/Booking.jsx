@@ -314,8 +314,6 @@ export default function Booking() {
     },
     onSuccess: async (consultation) => {
       setConsultationId(consultation.id);
-      // Ingest into IQ200 pipeline (fire-and-forget; non-blocking)
-      base44.functions.invoke('iq200Pipeline', { action: 'create', consultation_id: consultation.id }).catch(e => console.warn('IQ200 ingest:', e.message));
       await saveUserOnboardingProfile({
         role: 'client',
         status: 'started',
@@ -329,7 +327,6 @@ export default function Booking() {
         }
       });
       setShowFeeModal(true);
-
     },
     onError: (error) => {
       console.error('Consultation creation failed:', error.message);
