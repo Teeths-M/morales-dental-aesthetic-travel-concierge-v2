@@ -13,6 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import PortalHubSidebar from '@/components/portal/PortalHubSidebar';
+import BottomNavbar from '@/components/portal/BottomNavbar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import WorkflowDashboard from '@/components/portal/WorkflowDashboard';
 import ProviderManager from '@/components/portal/ProviderManager';
 import PaymentDashboard from '@/components/portal/PaymentDashboard';
@@ -32,6 +34,7 @@ export default function PortalHubAdmin() {
   const [activeTab, setActiveTab] = useState('doctors');
   const [subTab, setSubTab] = useState('workflows');
   const [filters, setFilters] = useState({ status: null });
+  const isMobile = useIsMobile();
 
   const { data: workflows = [], isLoading } = useQuery({
     queryKey: ['portal_workflows'],
@@ -53,9 +56,9 @@ export default function PortalHubAdmin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       <div className="flex gap-0">
-        <PortalHubSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        {!isMobile && <PortalHubSidebar activeTab={activeTab} setActiveTab={setActiveTab} />}
         
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pb-16 lg:pb-0">
           {/* Header */}
           <div className="sticky top-0 z-30 bg-card/50 backdrop-blur-sm border-b border-border/30 px-8 py-6">
             <div className="flex justify-between items-center">
@@ -111,6 +114,7 @@ export default function PortalHubAdmin() {
           </div>
         </div>
       </div>
+      {isMobile && <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
-const navItems = [
+export const navItems = [
   { id: 'workflows', label: 'Workflow Monitor', icon: LayoutDashboard },
   { id: 'doctors', label: 'Doctor Profiles', icon: Stethoscope },
   { id: 'providers', label: 'Provider Management', icon: Users },
