@@ -64,12 +64,11 @@ function fmtDate(date) {
 }
 
 export default function TravelTimelineCard({ selectedDate, cartItems }) {
-  const [extraDays, setExtraDays] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0); // can be negative (shorter) or positive (extended)
 
   const base = useMemo(() => {
     if (!selectedDate || !cartItems?.length) return null;
 
-    // Use the PRIMARY (first) procedure's values as the baseline — not the max across all
     const firstItem = cartItems[0];
     const key = firstItem.value || firstItem.procedure_value || firstItem.id;
     const defaults = PROCEDURE_DEFAULTS[key] || PROCEDURE_DEFAULTS['other'];
@@ -89,8 +88,8 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
 
   const { arrivalDate, procedureDate, minRecovery } = base;
 
-  // Apply client override — never below min_safe_recovery_days
-  const effectiveRecovery = minRecovery + extraDays;
+  // Allow client to go below minimum (with warning), but never below 1 recovery day
+  const effectiveRecovery = Math.max(1, minRecovery + dayOffset);
 
   const rawDeparture = new Date(procedureDate);
   rawDeparture.setDate(procedureDate.getDate() + effectiveRecovery + 1);
@@ -99,7 +98,9 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
   const msPerDay = 1000 * 60 * 60 * 24;
   const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
   const totalNights = totalDays - 1;
-  const isExtended = extraDays > 0;
+  const isBelowMin = effectiveRecovery < minRecovery;
+  const isExtended = dayOffset > 0 && !isBelowMin;
+  const canDecrease = effectiveRecovery > 1;
 
   return (
     <div
@@ -118,8 +119,8 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
         {/* Trip duration badge + stepper */}
         <div className="ml-auto flex-shrink-0 flex items-center gap-2">
           <button
-            onClick={() => setExtraDays(d => Math.max(0, d - 1))}
-            disabled={extraDays === 0}
+            onClick={() => setDayOffset(d => d - 1)}
+            disabled={!canDecrease}
             className="w-6 h-6 rounded-full flex items-center justify-center transition-all disabled:opacity-30"
             style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}
           >
@@ -130,7 +131,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
             {totalDays} Days · {totalNights} Nights
           </div>
           <button
-            onClick={() => setExtraDays(d => d + 1)}
+            onClick={() => setDayOffset(d => d + 1)}
             className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
             style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}
           >
@@ -174,13 +175,23 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           border: '1px solid rgba(197,160,89,0.25)',
         }}
       >
-        {isExtended ? (
+        {isBelowMin ? (
+          <div className="flex gap-3">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-400" />
+            <div>
+              <p className="text-xs font-bold mb-1 text-red-400">⚠️ Below Recommended Recovery ({effectiveRecovery} of {minRecovery} days)</p>
+              <p className="text-xs leading-relaxed text-white/70">
+                You are departing earlier than our clinical minimum. This is your choice, but our medical team may advise against it. Use + to restore the safe window.
+              </p>
+            </div>
+          </div>
+        ) : isExtended ? (
           <div className="flex gap-3">
             <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C5A059' }} />
             <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ Extended Stay Selected (+{extraDays} day{extraDays !== 1 ? 's' : ''})</p>
+              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ Extended Stay Selected (+{dayOffset} day{dayOffset !== 1 ? 's' : ''})</p>
               <p className="text-xs leading-relaxed text-white/70">
-                Your return date has been adjusted. Use the − button to reduce your stay, but it cannot go below the minimum safe recovery window of {minRecovery} days.
+                Your return date has been adjusted. Use − to reduce your stay.
               </p>
             </div>
           </div>
@@ -190,7 +201,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
             <div>
               <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Minimum Window</p>
               <p className="text-xs leading-relaxed text-white/70">
-                This is your minimum safe recovery window. Use the + button to extend your stay if you'd like more time to recover before flying home.
+                This is your minimum safe recovery window. Use + to extend your stay or − to shorten it.
               </p>
             </div>
           </div>
