@@ -6,6 +6,7 @@ import { translations } from '@/lib/translations';
 import { ArrowRight, ChevronLeft, Upload, CloudUpload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
+import VerificationInfo from './VerificationInfo';
 
 export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
@@ -153,6 +154,9 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       </div>
 
       <div className="space-y-6">
+        {/* Verification Info */}
+        <VerificationInfo language={language} />
+
         {/* License Upload */}
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">📄 {t.uploadLicense}</label>

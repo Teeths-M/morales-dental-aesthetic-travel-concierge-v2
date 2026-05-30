@@ -46,6 +46,26 @@
       "type": "boolean",
       "default": false
     },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "ai_verified",
+        "manual_review",
+        "verified",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "AI verification status: pending, ai_verified (high confidence), manual_review (low confidence), verified (admin approved), rejected"
+    },
+    "verification_confidence": {
+      "type": "number",
+      "description": "AI confidence score 0-100%"
+    },
+    "verification_notes": {
+      "type": "string",
+      "description": "AI or admin notes about verification"
+    },
     "payout_method": {
       "type": "string",
       "enum": [
