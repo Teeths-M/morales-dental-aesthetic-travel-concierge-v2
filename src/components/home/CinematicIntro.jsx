@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import PremiumAmbientBackground from './PremiumAmbientBackground';
 
 export default function CinematicIntro({ onComplete }) {
   const [loaded, setLoaded] = useState(false);
@@ -16,18 +17,53 @@ export default function CinematicIntro({ onComplete }) {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-r from-[#0F3A20] via-[#0d2f3e] to-[#1a2e22]">
+    <div className="relative h-screen w-full overflow-hidden">
       
-      {/* Blue-gold ambient overlay for brand integration */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, transparent 50%, rgba(197,160,89,0.06) 100%)' }} />
+      {/* Premium Ambient Background - Multi-layered cinematic animation */}
+      <PremiumAmbientBackground />
       
       {/* LEFT TEXT CONTAINER (z-10) */}
       <div className="absolute inset-y-0 left-0 w-full md:w-1/2 flex flex-col justify-center z-10 pl-8 md:pl-20 pr-6 text-white">
+        
+        {/* Trust Badges - Floating */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={loaded ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="flex flex-wrap gap-3 mb-8"
+        >
+          {[
+            { text: 'Verified Specialists', icon: '✓' },
+            { text: 'Secure Planning', icon: '✓' },
+            { text: 'Recovery Support', icon: '✓' },
+            { text: 'SAFE-T4LIFE™', icon: '✓' },
+          ].map((badge, i) => (
+            <motion.div
+              key={i}
+              className="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#C5A059',
+              }}
+              whileHover={{ 
+                scale: 1.05, 
+                background: 'rgba(197,160,89,0.15)',
+                borderColor: 'rgba(197,160,89,0.4)',
+              }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="mr-1.5">{badge.icon}</span>
+              {badge.text}
+            </motion.div>
+          ))}
+        </motion.div>
+
         {/* Brand label with blue-gold gradient */}
         <motion.p
           initial={{ opacity: 0, x: -30 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.2 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
           className="text-[10px] font-bold tracking-[0.35em] uppercase mb-6"
           style={{
             background: 'linear-gradient(90deg, #3B82F6, #C5A059)',
@@ -36,79 +72,131 @@ export default function CinematicIntro({ onComplete }) {
             backgroundClip: 'text',
           }}
         >
-          SAFE-T 4LIFE™ · Medical Travel Concierge
+          Morales Dental & Aesthetic Travel Concierge
         </motion.p>
 
-        {/* Main headline with blue-gold accent */}
+        {/* Main headline - Emotionally powerful, premium, memorable */}
         <motion.h1
           initial={{ opacity: 0, x: -40 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.9, delay: 0.4 }}
+          transition={{ duration: 1, delay: 0.6 }}
           className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl leading-tight mb-6"
         >
-          <span className="block text-white">Your Journey</span>
-          <span className="block text-white">to Care</span>
           <motion.span
-            initial={{ opacity: 0, y: 25 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={loaded ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.7 }}
+            transition={{ duration: 0.9, delay: 0.8 }}
+            className="block text-white"
+          >
+            Trusted Care.
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0, y: 30 }}
+            animate={loaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.9, delay: 1 }}
+            className="block text-white"
+          >
+            Comfortable Travel.
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0, y: 30 }}
+            animate={loaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.9, delay: 1.2 }}
             className="block italic mt-2"
             style={{ 
               background: 'linear-gradient(90deg, #3B82F6, #C5A059)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              textShadow: '0 4px 20px rgba(197,160,89,0.3)'
+              textShadow: '0 4px 30px rgba(197,160,89,0.4)'
             }}
           >
-            Begins Here
+            Peace of Mind.
           </motion.span>
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Subheadline - Verified specialists, travel coordination, comfort-first, SAFE-T4LIFE™ */}
         <motion.p
           initial={{ opacity: 0, x: -30 }}
           animate={loaded ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.5 }}
+          transition={{ duration: 0.8, delay: 1 }}
           className="text-slate-300 text-base sm:text-lg max-w-lg leading-relaxed mb-10"
         >
-          World-class medical care meets luxury concierge service. 
-          From consultation through recovery, we coordinate every detail 
-          so you can focus on what matters most.
+          Premium healthcare travel coordination with verified specialists, 
+          comfort-first planning, and SAFE-T4LIFE™ protection. Experience 
+          world-class care with luxury concierge support from consultation 
+          through recovery.
         </motion.p>
 
-        {/* CTA Button with blue-gold gradient */}
-        <motion.button
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={loaded ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          onClick={handleBegin}
-          disabled={exiting}
-          className="group relative px-12 py-4 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 disabled:pointer-events-none self-start"
-          style={{
-            background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 50%, #C5A059 100%)',
-            color: '#ffffff',
-            boxShadow: '0 8px 40px rgba(59,130,246,0.35), 0 8px 40px rgba(197,160,89,0.2)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = '0 12px 60px rgba(59,130,246,0.55), 0 12px 60px rgba(197,160,89,0.35)';
-            e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = '0 8px 40px rgba(59,130,246,0.35), 0 8px 40px rgba(197,160,89,0.2)';
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-          }}
+        {/* CTA Buttons - Premium styling with subtle hover animation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={loaded ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, delay: 1.2 }}
+          className="flex flex-col sm:flex-row gap-4 mb-10"
         >
-          <span className="relative z-10 flex items-center gap-3">
-            Get Your Free Plan
-            <motion.span
-              animate={{ x: [0, 6, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              →
-            </motion.span>
-          </span>
-        </motion.button>
+          {/* Primary CTA - High-converting, action-driven */}
+          <motion.button
+            onClick={handleBegin}
+            disabled={exiting}
+            className="group relative px-10 py-4 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-500 disabled:pointer-events-none"
+            style={{
+              background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 50%, #C5A059 100%)',
+              color: '#ffffff',
+              boxShadow: '0 8px 40px rgba(59,130,246,0.35), 0 8px 40px rgba(197,160,89,0.2)',
+            }}
+            whileHover={{ 
+              boxShadow: '0 15px 70px rgba(59,130,246,0.55), 0 15px 70px rgba(197,160,89,0.35)',
+              scale: 1.03,
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="relative z-10 flex items-center gap-3">
+              Get My Personalized Care Plan
+              <motion.span
+                animate={{ x: [0, 8, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                className="text-lg"
+              >
+                →
+              </motion.span>
+            </span>
+            {/* Elegant glow effect on hover */}
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-500"
+              style={{
+                background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%)',
+              }}
+            />
+          </motion.button>
+
+          {/* Secondary CTA - Low-pressure exploration */}
+          <motion.button
+            onClick={handleBegin}
+            disabled={exiting}
+            className="group px-10 py-4 rounded-full text-sm font-bold tracking-widest uppercase backdrop-blur-sm transition-all duration-500 disabled:pointer-events-none"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(197,160,89,0.4)',
+              color: '#C5A059',
+            }}
+            whileHover={{ 
+              background: 'rgba(197,160,89,0.15)',
+              borderColor: 'rgba(197,160,89,0.7)',
+              scale: 1.02,
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              Explore Treatments
+              <motion.span
+                animate={{ y: [0, -3, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+              >
+                ↓
+              </motion.span>
+            </span>
+          </motion.button>
+        </motion.div>
 
         {/* Scroll indicator */}
         <motion.div
@@ -126,68 +214,69 @@ export default function CinematicIntro({ onComplete }) {
         </motion.div>
       </div>
 
-      {/* RIGHT HERO VISUAL LAYER (z-0) */}
+      {/* RIGHT HERO VISUAL LAYER (z-0) - Abstract luxury atmosphere */}
       <div className="absolute inset-y-0 right-0 w-full md:w-1/2 z-0 hidden md:block">
         <motion.div
           initial={{ opacity: 0, scale: 1.05 }}
           animate={loaded ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
+          transition={{ duration: 1.6, ease: 'easeOut', delay: 0.5 }}
           className="w-full h-full relative"
         >
-          {/* Luxury clinic/resort interior */}
-          <img
-            src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1200&q=80"
-            alt="Luxury Medical Facility"
-            className="w-full h-full object-cover object-center"
-            style={{ 
-              clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)',
-              filter: 'brightness(1.05) contrast(1.05)'
-            }}
-          />
-          
-          {/* Soft left shadow mask for smooth blend */}
+          {/* Abstract luxury hotel/clinic atmosphere - subtle and elegant */}
           <div 
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(90deg, rgba(15,58,32,0.95) 0%, rgba(15,58,32,0.7) 25%, transparent 50%)',
+              background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(15,58,32,0.4) 50%, rgba(197,160,89,0.06) 100%)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
             }}
           />
           
-          {/* Premium blue-gold overlay accent */}
-          <div 
-            className="absolute inset-0 opacity-25"
+          {/* Soft glowing accent - represents care and warmth */}
+          <motion.div
+            className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full"
             style={{
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(197,160,89,0.15) 100%)',
+              background: 'radial-gradient(circle, rgba(197,160,89,0.15) 0%, transparent 70%)',
+              filter: 'blur(40px)',
+            }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.4, 0.6, 0.4],
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          
+          {/* Subtle vertical light streaks - premium travel aesthetic */}
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={`streak-${i}`}
+              className="absolute w-px h-96"
+              style={{
+                background: 'linear-gradient(180deg, transparent 0%, rgba(197,160,89,0.2) 50%, transparent 100%)',
+                left: `${30 + i * 25}%`,
+                top: '5%',
+              }}
+              animate={{
+                opacity: [0.2, 0.4, 0.2],
+                scaleY: [0.95, 1.05, 0.95],
+              }}
+              transition={{
+                duration: 6 + i * 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 1.5,
+              }}
+            />
+          ))}
+          
+          {/* Soft left shadow mask for smooth blend with text */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(90deg, rgba(15,58,32,0.98) 0%, rgba(15,58,32,0.6) 30%, transparent 60%)',
             }}
           />
         </motion.div>
-      </div>
-
-      {/* Subtle ambient particles for depth - blue and gold */}
-      <div className="absolute inset-0 z-5 pointer-events-none">
-        {[...Array(10)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 0 }}
-            animate={{ 
-              opacity: [0, 0.3, 0],
-              y: [0, -80, -160],
-            }}
-            transition={{ 
-              duration: 10 + Math.random() * 5,
-              repeat: Infinity,
-              delay: i * 1.2,
-              ease: 'easeInOut'
-            }}
-            className="absolute w-0.5 h-0.5 rounded-full"
-            style={{
-              background: i % 2 === 0 ? '#3B82F6' : '#C5A059',
-              left: `${20 + Math.random() * 60}%`,
-              top: `${20 + (i % 5) * 16}%`,
-              filter: 'blur(1px)'
-            }}
-          />
-        ))}
       </div>
     </div>
   );
