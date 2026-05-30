@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function CinematicIntro({ onComplete }) {
   const [loaded, setLoaded] = useState(false);
   const [exiting, setExiting] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
-    
-    // Show patient sitting animation every 2 seconds
-    const interval = setInterval(() => {
-      setShowAnimation(true);
-      setTimeout(() => setShowAnimation(false), 1500);
-    }, 2000);
-
-    return () => clearInterval(interval);
   }, []);
 
   const handleBegin = async () => {
@@ -171,34 +162,6 @@ export default function CinematicIntro({ onComplete }) {
           />
         </motion.div>
       </div>
-
-      {/* Patient sitting animation - appears every 2 seconds */}
-      <AnimatePresence>
-        {showAnimation && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, x: -50 }}
-            animate={{ opacity: 0.4, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8, x: 50 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="absolute bottom-20 right-10 md:right-32 z-5 pointer-events-none"
-          >
-            <div className="relative">
-              {/* Glow effect */}
-              <div 
-                className="absolute inset-0 blur-xl opacity-50"
-                style={{ background: 'radial-gradient(circle, rgba(197,160,89,0.4) 0%, transparent 70%)' }}
-              />
-              {/* Patient silhouette image */}
-              <img
-                src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/d9c48d400_generated_image.png"
-                alt="Patient care animation"
-                className="w-24 h-24 md:w-32 md:h-32 object-contain opacity-80"
-                style={{ filter: 'drop-shadow(0 4px 12px rgba(197,160,89,0.3))' }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Subtle ambient particles for depth - blue and gold */}
       <div className="absolute inset-0 z-5 pointer-events-none">
