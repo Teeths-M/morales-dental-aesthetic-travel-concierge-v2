@@ -91,10 +91,18 @@ export default function AdminPartners() {
     setIsApproving(true);
     try {
       console.log('Approving doctor:', doctorId);
-      await base44.entities.Doctor.update(doctorId, { 
+      // First fetch the doctor to get missing required fields
+      const doctors = await base44.entities.Doctor.filter({ id: doctorId });
+      const doctor = doctors[0];
+      
+      // Add clinic_city if missing (use clinic_country as fallback)
+      const updateData = { 
         status: 'active',
-        verification_status: 'verified'
-      });
+        verification_status: 'verified',
+        clinic_city: doctor.clinic_city || doctor.clinic_country || 'Unknown'
+      };
+      
+      await base44.entities.Doctor.update(doctorId, updateData);
       console.log('Doctor approved successfully');
       toast.success('Doctor approved successfully');
       setTimeout(() => window.location.reload(), 500);
