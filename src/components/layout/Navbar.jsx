@@ -30,6 +30,7 @@ export default function Navbar() {
   const portalHubTimeoutRef = useRef(null);
   const partnerTimeoutRef = useRef(null);
   const languageTimeoutRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setNavLinks(getNavLinks(language));
@@ -74,11 +75,8 @@ export default function Navbar() {
     setLanguage(langCode);
     localStorage.setItem('appLanguage', langCode);
     setLanguageDropdownOpen(false);
-    // Dispatch event so other components can listen for language changes
     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
   };
-
-  const navigate = useNavigate();
 
   const SENSITIVE_PATHS = ['/checkout', '/payment', '/signup', '/register-role', '/doctor-signup', '/partner-signup', '/travel-agency-signup', '/taxi-service-signup', '/client-signup'];
   const isSensitive = SENSITIVE_PATHS.some(p => location.pathname.includes(p));
@@ -92,6 +90,10 @@ export default function Navbar() {
     } else {
       navigate(-1);
     }
+  };
+
+  const handleSafeExit = () => {
+    navigate('/', { replace: true });
   };
 
   const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
@@ -135,8 +137,8 @@ export default function Navbar() {
               className="h-10 w-auto object-contain"
             />
             <div className="hidden sm:block border-l border-border/30 pl-3">
-              <p className="font-['Instrument_Serif'] text-base leading-tight text-foreground tracking-wide">MORALES DENTAL & AESTHETIC</p>
-              <p className="text-[9px] tracking-[0.25em] text-accent uppercase font-semibold">Travel Concierge · SAFE-T4LIFE™</p>
+              <p className="font-['Instrument_Serif'] text-base leading-tight text-foreground tracking-wide">MORALES DENTAL & AESTHETIC TRAVEL CONCIERGE</p>
+              <p className="text-[9px] tracking-[0.25em] text-accent uppercase font-semibold">SAFE-T4LIFE™</p>
             </div>
           </Link>
 
@@ -239,6 +241,14 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             )}
+
+            {/* SAFE EXIT Button */}
+            <button
+              onClick={handleSafeExit}
+              className="border border-emerald-600/40 text-emerald-100 bg-emerald-950/80 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-[0_0_15px_rgba(15,58,32,0.1)] hover:bg-emerald-900 hover:border-emerald-500 hover:text-white hover:scale-105"
+            >
+              🔒 SAFE EXIT
+            </button>
           </nav>
 
           {/* Right Actions */}
@@ -411,6 +421,15 @@ export default function Navbar() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Mobile SAFE EXIT */}
+              <button
+                onClick={() => { handleSafeExit(); setMobileOpen(false); }}
+                className="w-full border border-emerald-600/40 text-emerald-100 bg-emerald-950/80 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:bg-emerald-900 hover:border-emerald-500 hover:text-white"
+              >
+                🔒 SAFE EXIT
+              </button>
+
               <div className="pt-3 border-t border-border">
                 {isAuthenticated ? (
                   <Button variant="outline" className="w-full" onClick={() => { logout(); setMobileOpen(false); }}>
