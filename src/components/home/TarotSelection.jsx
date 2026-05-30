@@ -60,7 +60,7 @@ function TarotCard({ card, isSelected, onSelect }) {
   const navigate = useNavigate();
 
   const handleSelect = () => {
-    onSelect(card.id);
+    navigate('/procedures');
   };
 
   return (
@@ -166,19 +166,6 @@ function TarotCard({ card, isSelected, onSelect }) {
 }
 
 export default function TarotSelection() {
-  const [selectedCard, setSelectedCard] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (selectedCard) {
-      // Delay navigation to allow card flip exit animation to complete
-      const timer = setTimeout(() => {
-        navigate('/procedures');
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedCard, navigate]);
-
   return (
     <section
       className="relative min-h-screen w-full flex flex-col items-center justify-center py-20 px-4 overflow-hidden"
@@ -222,8 +209,8 @@ export default function TarotSelection() {
           >
             <TarotCard
               card={card}
-              isSelected={selectedCard === card.id}
-              onSelect={setSelectedCard}
+              isSelected={false}
+              onSelect={() => {}}
             />
           </motion.div>
         ))}
