@@ -104,6 +104,24 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
          if (specialtyData.length > 0) {
            await base44.entities.DoctorSpecialty.bulkCreate(specialtyData);
          }
+
+         // Save pricing information
+         if (formData.procedurePrices && Object.keys(formData.procedurePrices).length > 0) {
+           const pricingData = Object.entries(formData.procedurePrices)
+             .filter(([, price]) => price !== '' && price !== null && price > 0)
+             .map(([procedure_name, doctor_price_usd]) => {
+               const matched = masterProcs.find(mp => mp.en_name === procedure_name);
+               return {
+                 doctor_id: doctor.id,
+                 procedure_id: matched?.procedure_id || procedure_name,
+                 procedure_name: procedure_name,
+                 doctor_price_usd: parseFloat(doctor_price_usd),
+               };
+             });
+           if (pricingData.length > 0) {
+             await base44.entities.DoctorPricing.bulkCreate(pricingData);
+           }
+         }
        }
 
        onComplete(doctor);
