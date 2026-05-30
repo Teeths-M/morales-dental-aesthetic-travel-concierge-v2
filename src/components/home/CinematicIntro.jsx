@@ -45,9 +45,16 @@ export default function CinematicIntro({ onComplete }) {
       {/* Layer 1 — Background sanctuary */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1920&q=80"
+          src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80"
           alt="Luxury Medical Sanctuary"
           className="w-full h-full object-cover opacity-60"
+        />
+        {/* Welcoming Professional */}
+        <img
+          src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"
+          alt="Welcoming Medical Professional"
+          className="absolute bottom-0 right-16 h-[72%] w-auto object-contain object-bottom opacity-80"
+          style={{ filter: 'drop-shadow(0 0 40px rgba(0,0,0,0.7))' }}
         />
         {/* warm cinematic vignette */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
