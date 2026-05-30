@@ -61,7 +61,7 @@ function TarotCard({ card, isSelected, onSelect }) {
 
   const handleSelect = () => {
     onSelect(card.id);
-    setTimeout(() => navigate('/procedures'), 600);
+    navigate('/procedures');
   };
 
   return (
