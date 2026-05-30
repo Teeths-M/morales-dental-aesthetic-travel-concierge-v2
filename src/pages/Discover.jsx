@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DoctorSearchCard from "@/components/discover/DoctorSearchCard";
 import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
-import { cityData } from "@/lib/cityData.json";
+import cityData from "@/lib/cityData.json";
 
 const PROCEDURES = [
   { id: "dental_implants", name: "Dental Implants", category: "Dental" },
