@@ -32,6 +32,8 @@ import RegisterRole from './pages/RegisterRole';
 import DoctorDashboard from './pages/DoctorDashboard';
 import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
 import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
+import PortalTravelAgency from './pages/PortalTravelAgency';
+import PortalChauffeur from './pages/PortalChauffeur';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -106,6 +108,9 @@ const AuthenticatedApp = () => {
           <Route path="/taxi-service-dashboard" element={<TaxiServiceDashboard />} />
         </Route>
       </Route>
+      {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
+      <Route path="/portal/travel" element={<PortalTravelAgency />} />
+      <Route path="/portal/transfer" element={<PortalChauffeur />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </>

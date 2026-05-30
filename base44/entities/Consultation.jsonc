@@ -59,7 +59,10 @@
         "confirmed",
         "in_progress",
         "completed",
-        "cancelled"
+        "cancelled",
+        "Travel-Pending",
+        "Transfer-Pending",
+        "Admin-Review"
       ],
       "default": "pending"
     },
@@ -231,6 +234,74 @@
       "items": {
         "type": "string"
       }
+    },
+    "duration_of_stay": {
+      "type": "string",
+      "description": "e.g. '7 days', '2 weeks'"
+    },
+    "destination_country": {
+      "type": "string",
+      "description": "Country where the procedure takes place"
+    },
+    "client_country": {
+      "type": "string",
+      "description": "Patient's home country"
+    },
+    "procedure_country": {
+      "type": "string",
+      "description": "Country where procedure happens (for chauffeur leg logic)"
+    },
+    "flight_cost_usd": {
+      "type": "number",
+      "description": "Flight cost quoted by travel agency (USD)"
+    },
+    "hotel_cost_usd": {
+      "type": "number",
+      "description": "Hotel cost quoted by travel agency (USD)"
+    },
+    "flight_itinerary_summary": {
+      "type": "string",
+      "description": "e.g. 'Arrives MCO 10:30 AM on 2026-06-15, UA 123 from DEN'"
+    },
+    "hotel_selection": {
+      "type": "string",
+      "description": "Hotel name and location chosen by travel agency"
+    },
+    "transfer_notes": {
+      "type": "string",
+      "description": "Special instructions for chauffeur (mobility needs, etc.)"
+    },
+    "leg_1_cost_usd": {
+      "type": "number",
+      "description": "Origin leg: Client Home \u2192 Local Airport"
+    },
+    "leg_2_cost_usd": {
+      "type": "number",
+      "description": "Origin leg: Local Airport \u2192 Client Home (return)"
+    },
+    "leg_3_cost_usd": {
+      "type": "number",
+      "description": "Destination leg: Airport \u2192 Hotel (arrival)"
+    },
+    "leg_4_cost_usd": {
+      "type": "number",
+      "description": "Destination leg: Hotel \u2192 Clinic"
+    },
+    "leg_5_cost_usd": {
+      "type": "number",
+      "description": "Destination leg: Clinic \u2192 Hotel (post-op)"
+    },
+    "leg_6_cost_usd": {
+      "type": "number",
+      "description": "Destination leg: Hotel \u2192 Airport (final departure)"
+    },
+    "travel_agency_id": {
+      "type": "string",
+      "description": "ID of the assigned travel agency"
+    },
+    "taxi_service_id": {
+      "type": "string",
+      "description": "ID of the assigned taxi/chauffeur service"
     }
   },
   "required": [
