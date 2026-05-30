@@ -35,6 +35,20 @@ export default function WorkflowDashboard({ workflows = [], isLoading }) {
   const [expandedId, setExpandedId] = useState(null);
   const [resendingId, setResendingId] = useState(null);
   const [resendResult, setResendResult] = useState({});
+  const [resendingTravelId, setResendingTravelId] = useState(null);
+  const [resendTravelResult, setResendTravelResult] = useState({});
+
+  const handleResendTravel = async (consultation_id, workflowId) => {
+    setResendingTravelId(workflowId);
+    try {
+      const res = await base44.functions.invoke('resendTravelAgencyPortalEmail', { consultation_id });
+      setResendTravelResult(prev => ({ ...prev, [workflowId]: { ok: true, count: res.data?.sent?.length || 0 } }));
+    } catch (e) {
+      setResendTravelResult(prev => ({ ...prev, [workflowId]: { ok: false, error: e.message } }));
+    } finally {
+      setResendingTravelId(null);
+    }
+  };
 
   const handleResendChauffeur = async (consultation_id, workflowId) => {
     setResendingId(workflowId);
@@ -194,6 +208,23 @@ export default function WorkflowDashboard({ workflows = [], isLoading }) {
                           {resendResult[workflow.id].ok
                             ? `✓ Sent to ${resendResult[workflow.id].count} driver(s)`
                             : `✗ ${resendResult[workflow.id].error}`}
+                        </span>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 border-purple-300 text-purple-700 hover:bg-purple-50"
+                        disabled={resendingTravelId === workflow.id}
+                        onClick={(e) => { e.stopPropagation(); handleResendTravel(workflow.consultation_id, workflow.id); }}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        {resendingTravelId === workflow.id ? 'Sending...' : 'Resend Travel Agency Email'}
+                      </Button>
+                      {resendTravelResult[workflow.id] && (
+                        <span className={`text-xs font-medium ${resendTravelResult[workflow.id].ok ? 'text-green-600' : 'text-red-500'}`}>
+                          {resendTravelResult[workflow.id].ok
+                            ? `✓ Sent to ${resendTravelResult[workflow.id].count} agency(s)`
+                            : `✗ ${resendTravelResult[workflow.id].error}`}
                         </span>
                       )}
                     </div>
