@@ -65,16 +65,29 @@ export default function TravelAgencyDashboard({ agency, language }) {
         </Button>
       </div>
 
-      {/* Info Box */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p className="text-sm text-amber-900 font-medium">
-          ⏳ {language === 'es'
-            ? 'Tu perfil está en revisión. Será aprobado pronto.'
-            : language === 'fr'
-            ? 'Votre profil est en cours d\'examen. Il sera approuvé bientôt.'
-            : 'Your profile is under review. It will be approved soon.'}
-        </p>
-      </div>
+      {/* Status Box */}
+      {!agency.approved_by_admin && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-sm text-amber-900 font-medium">
+            ⏳ {language === 'es'
+              ? 'Tu perfil está en revisión. Será aprobado pronto.'
+              : language === 'fr'
+              ? 'Votre profil est en cours d\'examen. Il sera approuvé bientôt.'
+              : 'Your profile is under review. It will be approved soon.'}
+          </p>
+        </div>
+      )}
+      {agency.approved_by_admin && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+          <p className="text-sm text-green-900 font-medium">
+            ✅ {language === 'es'
+              ? 'Tu perfil está aprobado y activo.'
+              : language === 'fr'
+              ? 'Votre profil est approuvé et actif.'
+              : 'Your profile is approved and active.'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
