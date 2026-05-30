@@ -30,12 +30,14 @@ export default function PortalTravelAgency() {
 
   useEffect(() => {
     const token = getTokenFromUrl();
+    console.log('Portal token from URL:', token ? 'present' : 'missing');
     if (!token) {
-      setTokenError('No access token provided. Please use the link sent to you.');
+      setTokenError('No access token provided. Please use the link sent to you. The URL should contain ?token=...');
       setLoading(false);
       return;
     }
     const decoded = decodePortalToken(token);
+    console.log('Decoded token:', decoded);
     if (!decoded.valid) {
       setTokenError(decoded.error || 'Invalid or expired access link.');
       setLoading(false);
