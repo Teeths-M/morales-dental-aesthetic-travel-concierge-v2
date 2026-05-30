@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
-import { format, addDays, parseISO } from 'date-fns';
-import { Plane, CalendarDays, Moon, AlertTriangle, Sparkles } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { format } from 'date-fns';
+import { Plane, Moon, AlertTriangle, Sparkles, Plus, Minus } from 'lucide-react';
 
 // Flight days: 0 = Sunday, 4 = Thursday
 const FLIGHT_DAYS = [0, 4];
@@ -64,48 +64,42 @@ function fmtDate(date) {
 }
 
 export default function TravelTimelineCard({ selectedDate, cartItems }) {
-  const timeline = useMemo(() => {
+  const [extraDays, setExtraDays] = useState(0);
+
+  const base = useMemo(() => {
     if (!selectedDate || !cartItems?.length) return null;
 
-    // Extract max preparation_days and min_safe_recovery_days across all selected procedures
-    let maxPrep = 1;
-    let maxRecovery = 3;
-
-    for (const item of cartItems) {
-      const key = item.value || item.procedure_value || item.id;
-      const defaults = PROCEDURE_DEFAULTS[key] || PROCEDURE_DEFAULTS['other'];
-      const prep = item.preparation_days ?? defaults.preparation_days;
-      const recovery = item.min_safe_recovery_days ?? defaults.min_safe_recovery_days;
-      if (prep > maxPrep) maxPrep = prep;
-      if (recovery > maxRecovery) maxRecovery = recovery;
-    }
+    // Use the PRIMARY (first) procedure's values as the baseline — not the max across all
+    const firstItem = cartItems[0];
+    const key = firstItem.value || firstItem.procedure_value || firstItem.id;
+    const defaults = PROCEDURE_DEFAULTS[key] || PROCEDURE_DEFAULTS['other'];
+    const prep = firstItem.preparation_days ?? defaults.preparation_days;
+    const minRecovery = firstItem.min_safe_recovery_days ?? defaults.min_safe_recovery_days;
 
     const procedureDate = parseDateStr(selectedDate);
 
-    // Raw ideal dates before snapping
     const rawArrival = new Date(procedureDate);
-    rawArrival.setDate(procedureDate.getDate() - maxPrep);
+    rawArrival.setDate(procedureDate.getDate() - prep);
+    const arrivalDate = snapToFlightDay(rawArrival, 'back');
 
-    const rawDeparture = new Date(procedureDate);
-    rawDeparture.setDate(procedureDate.getDate() + maxRecovery + 1);
-
-    // Snap to nearest valid flight day
-    const arrivalDate  = snapToFlightDay(rawArrival, 'back');
-    const departureDate = snapToFlightDay(rawDeparture, 'forward');
-
-    // Total trip = departure - arrival (inclusive)
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
-    const totalNights = totalDays - 1;
-
-    const isExtended = totalDays > 14;
-
-    return { arrivalDate, procedureDate, departureDate, totalDays, totalNights, isExtended, maxPrep, maxRecovery };
+    return { arrivalDate, procedureDate, prep, minRecovery };
   }, [selectedDate, cartItems]);
 
-  if (!timeline) return null;
+  if (!base) return null;
 
-  const { arrivalDate, procedureDate, departureDate, totalDays, totalNights, isExtended } = timeline;
+  const { arrivalDate, procedureDate, minRecovery } = base;
+
+  // Apply client override — never below min_safe_recovery_days
+  const effectiveRecovery = minRecovery + extraDays;
+
+  const rawDeparture = new Date(procedureDate);
+  rawDeparture.setDate(procedureDate.getDate() + effectiveRecovery + 1);
+  const departureDate = snapToFlightDay(rawDeparture, 'forward');
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
+  const totalNights = totalDays - 1;
+  const isExtended = extraDays > 0;
 
   return (
     <div
@@ -121,10 +115,27 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>SAFE-T4LIFE™ Engine</p>
           <h4 className="text-sm font-bold text-white">Recommended Medical Travel Timeline</h4>
         </div>
-        {/* Trip duration badge */}
-        <div className="ml-auto flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5" style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}>
-          <Moon className="w-3 h-3" />
-          {totalDays} Days · {totalNights} Nights
+        {/* Trip duration badge + stepper */}
+        <div className="ml-auto flex-shrink-0 flex items-center gap-2">
+          <button
+            onClick={() => setExtraDays(d => Math.max(0, d - 1))}
+            disabled={extraDays === 0}
+            className="w-6 h-6 rounded-full flex items-center justify-center transition-all disabled:opacity-30"
+            style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <div className="px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5" style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}>
+            <Moon className="w-3 h-3" />
+            {totalDays} Days · {totalNights} Nights
+          </div>
+          <button
+            onClick={() => setExtraDays(d => d + 1)}
+            className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
+            style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}
+          >
+            <Plus className="w-3 h-3" />
+          </button>
         </div>
       </div>
 
@@ -159,17 +170,17 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
       <div
         className="mx-5 mb-5 rounded-xl p-4"
         style={{
-          background: isExtended ? 'rgba(217, 119, 6, 0.12)' : 'rgba(197, 160, 89, 0.08)',
-          border: `1px solid ${isExtended ? 'rgba(217,119,6,0.35)' : 'rgba(197,160,89,0.25)'}`,
+          background: isExtended ? 'rgba(197,160,89,0.08)' : 'rgba(197, 160, 89, 0.08)',
+          border: '1px solid rgba(197,160,89,0.25)',
         }}
       >
         {isExtended ? (
           <div className="flex gap-3">
-            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#d97706' }} />
+            <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C5A059' }} />
             <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#fbbf24' }}>⚠️ Safety Compliance Notice</p>
+              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ Extended Stay Selected (+{extraDays} day{extraDays !== 1 ? 's' : ''})</p>
               <p className="text-xs leading-relaxed text-white/70">
-                Based on your selected combination of treatments, extended recovery time is recommended for your absolute biological safety. If you have limited travel availability, your assigned doctor can review your profile for a custom compressed timeline override.
+                Your return date has been adjusted. Use the − button to reduce your stay, but it cannot go below the minimum safe recovery window of {minRecovery} days.
               </p>
             </div>
           </div>
@@ -177,9 +188,9 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <div className="flex gap-3">
             <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C5A059' }} />
             <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Optimization</p>
+              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Minimum Window</p>
               <p className="text-xs leading-relaxed text-white/70">
-                This timeline is balanced for both safe clinical recovery and realistic vacation schedules. Most patients safely complete treatment and return home comfortably within a 1–2 week window, continuing minor follow-up care remotely.
+                This is your minimum safe recovery window. Use the + button to extend your stay if you'd like more time to recover before flying home.
               </p>
             </div>
           </div>

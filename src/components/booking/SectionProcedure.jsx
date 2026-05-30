@@ -56,12 +56,11 @@ export default function SectionProcedure({ form, update }) {
   const [currentMonth, setCurrentMonth] = useState(form.preferred_date ? new Date(form.preferred_date) : new Date());
   const { items } = useCart();
 
-  // FLIGHT_DAYS are the ONLY valid procedure-scheduling days (non-flight days)
-  // Sun=0 and Thu=4 are flight days → DISABLED for procedure booking
-  const DISABLED_DAYS = [0, 4]; // Sunday (0) and Thursday (4)
+  // ONLY Sundays (0) and Thursdays (4) are valid flight arrival days
+  const ALLOWED_DAYS = [0, 4];
 
-  // Helper: check if a date is disabled (Sunday or Thursday)
-  const isDisabledDate = (date) => DISABLED_DAYS.includes(date.getDay());
+  // A date is disabled if it is NOT a Sunday or Thursday
+  const isDisabledDate = (date) => !ALLOWED_DAYS.includes(date.getDay());
 
   // Helper: check if a date is in the past
   const isPastDate = (date) => {
@@ -229,7 +228,7 @@ export default function SectionProcedure({ form, update }) {
 
                 {/* Info message */}
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4 text-xs text-yellow-800">
-                  ✈️ <strong>Flying days:</strong> Sundays & Thursdays are disabled and cannot be selected.
+                  ✈️ <strong>Logistics schedule restricted to Sundays & Thursdays.</strong>
                 </div>
 
                 {/* Footer buttons */}
@@ -258,7 +257,7 @@ export default function SectionProcedure({ form, update }) {
             )}
           </AnimatePresence>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Sundays & Thursdays are unavailable for procedure scheduling.</p>
+        <p className="text-xs text-muted-foreground mt-2">Logistics schedule restricted to Sundays & Thursdays.</p>
       </div>
 
       {/* Capacity gate — shown once both procedure and date are selected */}
