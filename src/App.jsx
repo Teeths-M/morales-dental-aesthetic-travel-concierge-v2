@@ -35,6 +35,7 @@ import PortalTravelAgency from './pages/PortalTravelAgency';
 import PortalChauffeur from './pages/PortalChauffeur';
 import SimpleAdminDashboard from './pages/SimpleAdminDashboard';
 import AdminPartners from './pages/AdminPartners';
+import AdminImports from './pages/AdminImports';
 import ClientProposalPortal from './pages/ClientProposalPortal';
 import ConsultationForm from './pages/ConsultationForm';
 import ConsultationSuccess from './pages/ConsultationSuccess';
@@ -122,6 +123,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
+        <Route path="/admin/imports" element={<AdminImports />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

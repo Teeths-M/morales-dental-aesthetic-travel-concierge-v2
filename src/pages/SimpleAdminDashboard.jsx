@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { 
   Users, FileText, CheckCircle, Clock, AlertCircle, 
-  RefreshCw, Zap, UserPlus, Building2
+  RefreshCw, Zap, UserPlus, Building2, Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,6 +59,11 @@ export default function SimpleAdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild className="rounded-full">
+                <Link to="/admin/imports">
+                  <Upload className="w-4 h-4 mr-2" /> Import Data
+                </Link>
+              </Button>
               <Button variant="outline" size="sm" asChild className="rounded-full">
                 <Link to="/admin/partners">
                   <Building2 className="w-4 h-4 mr-2" /> View Partners
