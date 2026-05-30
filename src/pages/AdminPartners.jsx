@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Users, Plane, Car, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 import {
   Tabs,
   TabsContent,
@@ -89,6 +90,11 @@ export default function AdminPartners() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" asChild className="rounded-full">
+                <Link to="/admin">
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+              </Button>
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <Users className="w-6 h-6 text-white" />
               </div>
