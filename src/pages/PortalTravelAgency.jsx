@@ -49,8 +49,9 @@ export default function PortalTravelAgency() {
       const results = await base44.entities.Consultation.filter({ id });
       const c = results[0];
       if (!c) { setError('Case not found.'); setLoading(false); return; }
-      if (c.status !== 'Travel-Pending') {
-        setError(`This portal is only accessible when the case status is "Travel-Pending". Current status: ${c.status}`);
+      const blockedStatuses = ['cancelled', 'completed'];
+      if (blockedStatuses.includes(c.status)) {
+        setError(`This portal is not accessible for cases with status "${c.status}".`);
         setLoading(false);
         return;
       }
