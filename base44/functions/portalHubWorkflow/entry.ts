@@ -209,14 +209,16 @@ Return a JSON with:
     });
   }
 
-  // 6. APPROVED — fetch active partners from DB
-  const allPartners = await base44.asServiceRole.entities.Partner.filter({ is_active: true });
+  // 6. APPROVED — fetch active partners and taxi services from DB
+  const [allPartners, taxiServices] = await Promise.all([
+    base44.asServiceRole.entities.Partner.filter({ is_active: true }),
+    base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
+  ]);
   const getPartnerEmails = (type) => allPartners.filter(p => p.type === type).map(p => p.email);
 
   const doctorEmails = getPartnerEmails('doctor');
   const travelEmails = getPartnerEmails('travel');
   const hotelEmails = getPartnerEmails('hotel');
-  const cabEmails = getPartnerEmails('cab');
 
   // notify partners — notify all emails per type (with error handling for non-app users)
   const sendToPartners = async (emails, subject, body) => {
@@ -285,9 +287,9 @@ Return a JSON with:
     },
   ];
 
-  // Build per-cab portal links (each cab partner gets a unique token)
-  const cabPartners = allPartners.filter(p => p.type === 'cab');
-  const cabNotifications = cabPartners.map(cab => {
+  // Build per-taxi portal links (each TaxiService gets a unique token)
+  const cabNotifications = taxiServices.map(cab => {
+    const driverName = cab.driver_name || cab.company_name || 'Partner';
     const token = btoa(JSON.stringify({
       consultation_id,
       partner_id: cab.id,
@@ -301,7 +303,7 @@ Return a JSON with:
       body: emailLayout({
         eyebrow: 'Transfer request',
         title: 'Patient transfer quote needed',
-        intro: `Hello ${cab.name || cab.contact_person || 'Partner'}, this confirmed patient will need reliable local transportation support.`,
+        intro: `Hello ${driverName}, this confirmed patient will need reliable local transportation support.`,
         rows: [
           row('Patient', consultation.patient_name),
           row('Requested service', 'Airport, clinic, and hotel transfers'),

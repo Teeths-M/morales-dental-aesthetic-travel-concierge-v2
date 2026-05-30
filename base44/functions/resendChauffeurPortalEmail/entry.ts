@@ -63,16 +63,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });
     }
 
-    // Fetch active cab partners
-    const allPartners = await base44.asServiceRole.entities.Partner.filter({ is_active: true });
-    const cabPartners = allPartners.filter(p => p.type === 'cab');
+    // Fetch active taxi services (chauffeur partners)
+    const taxiServices = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' });
 
-    if (cabPartners.length === 0) {
-      return Response.json({ error: 'No active cab partners found' }, { status: 404 });
+    if (taxiServices.length === 0) {
+      return Response.json({ error: 'No active taxi services found' }, { status: 404 });
     }
 
     const sent = [];
-    for (const cab of cabPartners) {
+    for (const cab of taxiServices) {
+      const driverName = cab.driver_name || cab.company_name || 'Partner';
       const token = btoa(JSON.stringify({
         consultation_id,
         partner_id: cab.id,
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         body: emailLayout({
           eyebrow: 'Transfer request',
           title: 'Patient transfer quote needed',
-          intro: `Hello ${cab.name || cab.contact_person || 'Partner'}, this confirmed patient will need reliable local transportation support.`,
+          intro: `Hello ${driverName}, this confirmed patient will need reliable local transportation support.`,
           rows: [
             row('Patient', consultation.patient_name),
             row('Requested service', 'Airport, clinic, and hotel transfers'),
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
         }),
       });
 
-      sent.push({ name: cab.name, email: cab.email, portal_link: portalLink });
+      sent.push({ name: driverName, email: cab.email, portal_link: portalLink });
     }
 
     return Response.json({ success: true, sent });
