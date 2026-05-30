@@ -31,7 +31,7 @@ export default function AdminPartners() {
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
     queryKey: ['admin_doctors'],
     queryFn: async () => {
-      const result = await base44.asServiceRole.entities.Doctor.list('-created_date', 100);
+      const result = await base44.entities.Doctor.list('-created_date', 200);
       console.log('Fetched doctors:', result);
       return result;
     },
@@ -39,12 +39,20 @@ export default function AdminPartners() {
 
   const { data: travelAgencies = [], isLoading: loadingTravel } = useQuery({
     queryKey: ['admin_travel_agencies'],
-    queryFn: () => base44.asServiceRole.entities.TravelAgency.list('-created_date', 100),
+    queryFn: async () => {
+      const result = await base44.entities.TravelAgency.list('-created_date', 200);
+      console.log('Fetched travel agencies:', result);
+      return result;
+    },
   });
 
   const { data: taxiServices = [], isLoading: loadingTaxi } = useQuery({
     queryKey: ['admin_taxi_services'],
-    queryFn: () => base44.asServiceRole.entities.TaxiService.list('-created_date', 100),
+    queryFn: async () => {
+      const result = await base44.entities.TaxiService.list('-created_date', 200);
+      console.log('Fetched taxi services:', result);
+      return result;
+    },
   });
 
   const getStatusBadge = (status) => {
