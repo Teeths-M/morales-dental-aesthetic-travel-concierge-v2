@@ -34,6 +34,8 @@ import TravelAgencyDashboard from './pages/TravelAgencyDashboard';
 import TaxiServiceDashboard from './pages/TaxiServiceDashboard';
 import PortalTravelAgency from './pages/PortalTravelAgency';
 import PortalChauffeur from './pages/PortalChauffeur';
+import IQ200AdminCenter from './pages/IQ200AdminCenter';
+import ClientProposalPortal from './pages/ClientProposalPortal';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -77,6 +79,7 @@ const AuthenticatedApp = () => {
           <Route path="/dashboard/bookings" element={<Dashboard />} />
           <Route path="/dashboard/messages" element={<Dashboard />} />
           <Route path="/dashboard/journey" element={<Dashboard />} />
+          <Route path="/dashboard/case-status" element={<Dashboard />} />
           <Route path="/dashboard/support" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<Dashboard />} />
           <Route path="/client-signup" element={<ClientSignup />} />
@@ -111,6 +114,10 @@ const AuthenticatedApp = () => {
       {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
       <Route path="/portal/travel" element={<PortalTravelAgency />} />
       <Route path="/portal/transfer" element={<PortalChauffeur />} />
+      <Route path="/portal/proposal" element={<ClientProposalPortal />} />
+      <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
+        <Route path="/iq200" element={<IQ200AdminCenter />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </>

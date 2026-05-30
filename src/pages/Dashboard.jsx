@@ -19,6 +19,7 @@ import MessagesModule from '@/components/dashboard/modules/MessagesModule';
 import JourneyModule from '@/components/dashboard/modules/JourneyModule';
 import SupportModule from '@/components/dashboard/modules/SupportModule';
 import SettingsModule from '@/components/dashboard/modules/SettingsModule';
+import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 
 const notifications = [
   { type: 'warning', text: 'Lab work still required for medical clearance', time: '2h ago' },
@@ -31,6 +32,7 @@ const quickActions = [
   { icon: MessageCircle, label: 'Message Coordinator', to: '/dashboard/messages', color: 'blue' },
   { icon: HeartPulse, label: 'View Recovery Plan', to: '/safe-t', color: 'sky' },
   { icon: Users, label: 'Companion Package', to: '/dashboard/bookings', color: 'pink' },
+  { icon: Star, label: 'My Case Status', to: '/dashboard/case-status', color: 'violet' },
 ];
 
 const colorMap = {
@@ -228,6 +230,7 @@ export default function Dashboard() {
     if (p === '/dashboard/journey') return <JourneyModule />;
     if (p === '/dashboard/support') return <SupportModule />;
     if (p === '/dashboard/settings') return <SettingsModule />;
+    if (p === '/dashboard/case-status') return <CaseStatusModule userEmail={user?.email} />;
     return <DashboardHome user={user} consultations={consultations} language={language} />;
   };
 

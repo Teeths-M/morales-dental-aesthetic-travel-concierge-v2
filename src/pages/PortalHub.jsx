@@ -4,13 +4,14 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck, ShieldX, Stethoscope, Plane, Hotel, Car,
-  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users, Trash2
+  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users, Trash2, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PartnersManager from '@/components/portal/PartnersManager';
 import CapacityDashboard from '@/components/portal/CapacityDashboard';
+import { Link } from 'react-router-dom';
 
 const stagePipeline = [
   { key: 'risk_check', label: 'SAFE-T Risk Check', icon: ShieldCheck },
@@ -212,6 +213,25 @@ export default function PortalHub() {
 
         {/* Tabs */}
         <Tabs defaultValue="workflows" className="w-full">
+        <div className="mb-5">
+          <Link to="/iq200">
+            <div className="w-full rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ background: 'linear-gradient(135deg, #0F3A20, #1a4f2e)', border: '1px solid rgba(197,160,89,0.3)' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(197,160,89,0.15)' }}>
+                  <ShieldCheck className="w-4 h-4" style={{ color: '#C5A059' }} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>NEW</p>
+                  <p className="text-white font-bold text-sm">IQ200 Executive Operations Center</p>
+                  <p className="text-white/50 text-[10px]">Full pipeline state machine · Pricing workbench · Audit logs</p>
+                </div>
+              </div>
+              <ChevronDown className="w-4 h-4 text-white/40 -rotate-90" />
+            </div>
+          </Link>
+        </div>
+
         <TabsList className="mb-6">
           <TabsTrigger value="workflows" className="gap-1.5"><ShieldCheck className="w-4 h-4" /> Workflows</TabsTrigger>
           <TabsTrigger value="partners" className="gap-1.5"><Users className="w-4 h-4" /> Partners</TabsTrigger>
