@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, AlertTriangle, CheckCircle2, DollarSign, Send,
   RefreshCw, ChevronDown, ChevronUp, Zap, TrendingUp,
-  XCircle, BarChart2, FileText
+  XCircle, BarChart2, FileText, Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -335,6 +335,7 @@ export default function IQ200AdminCenter() {
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState('all');
   const [creatingCase, setCreatingCase] = useState(null);
+  const [populatingData, setPopulatingData] = useState(false);
 
   const { data: cases = [], isLoading, refetch } = useQuery({
     queryKey: ['iq200_cases'],
@@ -355,6 +356,19 @@ export default function IQ200AdminCenter() {
     setCreatingCase(null);
     refetch();
     qc.invalidateQueries({ queryKey: ['iq200_cases'] });
+  };
+
+  const handlePopulateSampleData = async () => {
+    setPopulatingData(true);
+    try {
+      await base44.functions.invoke('seedSampleData', {});
+      refetch();
+      qc.invalidateQueries({ queryKey: ['consultations_for_iq200'] });
+    } catch (error) {
+      console.error('Failed to populate sample data:', error);
+    } finally {
+      setPopulatingData(false);
+    }
   };
 
   const filtered = filterStatus === 'all' ? cases : cases.filter(c => c.status === filterStatus);
@@ -389,9 +403,20 @@ export default function IQ200AdminCenter() {
               <h1 className="font-bold text-slate-900 text-lg leading-none">Executive Operations Center</h1>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5 text-xs h-8">
-            <RefreshCw className="w-3 h-3" /> Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePopulateSampleData}
+              disabled={populatingData}
+              className="gap-1.5 text-xs h-8"
+            >
+              <Database className="w-3 h-3" /> {populatingData ? 'Populating...' : 'Populate Sample Data'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5 text-xs h-8">
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </Button>
+          </div>
         </div>
       </div>
 
