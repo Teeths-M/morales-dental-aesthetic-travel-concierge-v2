@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, ChevronDown, Search } from 'lucide-react';
 import { translations } from '@/lib/translations';
+import cityData from '@/lib/cityData.json';
 
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Van', 'Wheelchair van'];
 const ASSISTANCE_OPTIONS = ['Luggage help', 'Mobility assistance', 'Wheelchair support', 'Clinic escort', 'Post-procedure careful driving'];
@@ -38,6 +39,9 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const countryRef = useRef(null);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const cityRef = useRef(null);
+  const [citySearch, setCitySearch] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -48,6 +52,25 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const filteredCities = useCallback(() => {
+    if (!formData.operating_country || !cityData[formData.operating_country]) return [];
+    return cityData[formData.operating_country].filter(city =>
+      city.toLowerCase().includes(citySearch.toLowerCase())
+    );
+  }, [formData.operating_country, citySearch]);
+
+  const handleSelectCountry = (country) => {
+    setFormData(prev => ({ ...prev, operating_country: country, operating_city: '' }));
+    setShowCountryDropdown(false);
+    setCountrySearch('');
+  };
+
+  const handleSelectCity = (city) => {
+    setFormData(prev => ({ ...prev, operating_city: city }));
+    setShowCityDropdown(false);
+    setCitySearch('');
+  };
 
   const filteredCountries = ALL_COUNTRIES.filter(c =>
     c.toLowerCase().includes(countrySearch.toLowerCase())
@@ -166,11 +189,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
                 ) : filteredCountries.map(country => (
                   <li
                     key={country}
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, operating_country: country }));
-                      setShowCountryDropdown(false);
-                      setCountrySearch('');
-                    }}
+                    onClick={() => handleSelectCountry(country)}
                     className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
                   >
                     {country}
@@ -181,14 +200,52 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
           )}
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-foreground block mb-2">📍 Operating City / Region</label>
-          <Input
-            placeholder="Port of Spain, Kingston, Caracas..."
-            value={formData.operating_city || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
-            className="h-12"
-          />
+        <div ref={cityRef} className="relative">
+          <label className="text-sm font-medium text-foreground block mb-2">
+            📍 {language === 'es' ? 'Ciudad/Regi\u00f3n de Operaci\u00f3n' : language === 'fr' ? 'Ville/R\u00e9gion d\'Op\u00e9ration' : 'Operating City / Region'}
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowCityDropdown(v => !v)}
+            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            disabled={!formData.operating_country}
+          >
+            <span className={formData.operating_city ? 'text-foreground' : 'text-muted-foreground'}>
+              {formData.operating_city || (language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city')}
+            </span>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </button>
+          {showCityDropdown && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
+                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <input
+                  autoFocus
+                  value={citySearch}
+                  onChange={e => setCitySearch(e.target.value)}
+                  placeholder={language === 'es' ? 'Buscar ciudad...' : language === 'fr' ? 'Rechercher une ville...' : 'Search city...'}
+                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+              <ul className="max-h-56 overflow-y-auto">
+                {filteredCities().length === 0 ? (
+                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">
+                    {formData.operating_country ? (language === 'es' ? 'No se encontraron ciudades' : language === 'fr' ? 'Aucune ville trouvée' : 'No cities found') : (language === 'es' ? 'Primero selecciona un país' : language === 'fr' ? 'Sélectionnez un pays d'abord' : 'Select a country first')}
+                  </li>
+                ) : (
+                  filteredCities().map(city => (
+                    <li
+                      key={city}
+                      onClick={() => handleSelectCity(city)}
+                      className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                    >
+                      {city}
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div>
