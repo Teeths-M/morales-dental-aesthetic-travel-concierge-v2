@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Loader2, UserPlus, Mail, CheckCircle, AlertCircle, 
-  TrendingUp, Calendar, Shield
+  TrendingUp, Calendar, Shield, FileDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -33,6 +33,7 @@ const STATUS_COLORS = {
 export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
   const [assigningDoctor, setAssigningDoctor] = useState(null);
   const [selectedDoctors, setSelectedDoctors] = useState({});
+  const [generatingProposal, setGeneratingProposal] = useState(null);
 
   // Fetch available doctors
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
@@ -55,6 +56,19 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
       toast.error('Failed to assign doctor: ' + error.message);
     } finally {
       setAssigningDoctor(null);
+    }
+  };
+
+  const generateProposal = async (caseId) => {
+    setGeneratingProposal(caseId);
+    try {
+      const result = await base44.functions.invoke('generateClientProposalPDF', { consultation_id: caseId });
+      toast.success('PDF proposal generated and sent to client!');
+      onRefresh();
+    } catch (error) {
+      toast.error('Failed to generate proposal: ' + error.message);
+    } finally {
+      setGeneratingProposal(null);
     }
   };
 
@@ -106,6 +120,8 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 loadingDoctors={loadingDoctors}
                 selectedDoctors={selectedDoctors}
                 setSelectedDoctors={setSelectedDoctors}
+                onGenerateProposal={generateProposal}
+                generatingProposal={generatingProposal}
               />
             ))}
           </div>
@@ -130,6 +146,8 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 loadingDoctors={loadingDoctors}
                 selectedDoctors={selectedDoctors}
                 setSelectedDoctors={setSelectedDoctors}
+                onGenerateProposal={generateProposal}
+                generatingProposal={generatingProposal}
               />
             ))}
           </div>
@@ -154,6 +172,8 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 loadingDoctors={loadingDoctors}
                 selectedDoctors={selectedDoctors}
                 setSelectedDoctors={setSelectedDoctors}
+                onGenerateProposal={generateProposal}
+                generatingProposal={generatingProposal}
               />
             ))}
           </div>
@@ -178,6 +198,8 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
                 loadingDoctors={loadingDoctors}
                 selectedDoctors={selectedDoctors}
                 setSelectedDoctors={setSelectedDoctors}
+                onGenerateProposal={generateProposal}
+                generatingProposal={generatingProposal}
               />
             ))}
           </div>
@@ -187,7 +209,7 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
   );
 }
 
-function CaseCard({ caseRecord, onAssignDoctor, assigningDoctor, doctors, loadingDoctors, selectedDoctors, setSelectedDoctors }) {
+function CaseCard({ caseRecord, onAssignDoctor, assigningDoctor, doctors, loadingDoctors, selectedDoctors, setSelectedDoctors, onGenerateProposal, generatingProposal }) {
   const isBlocked = caseRecord.safe_t_result === 'BLOCKED';
   const needsDoctor = caseRecord.status === 'Safe-T-Reviewed' || caseRecord.status === 'Doctor-Pending';
   const doctorAssigned = caseRecord.doctor_email && caseRecord.doctor_confirmation_status !== 'PENDING';
@@ -285,6 +307,33 @@ function CaseCard({ caseRecord, onAssignDoctor, assigningDoctor, doctors, loadin
                   )}
                 </AlertDescription>
               </Alert>
+            )}
+
+            {/* Generate PDF Proposal Button */}
+            {doctorAssigned && caseRecord.doctor_confirmed_at && (
+              <div className="mt-3">
+                <Button
+                  size="sm"
+                  onClick={() => onGenerateProposal(caseRecord.id)}
+                  disabled={generatingProposal === caseRecord.id}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs w-full"
+                >
+                  {generatingProposal === caseRecord.id ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-3 h-3 mr-2" />
+                      Generate PDF Proposal
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-slate-500 mt-1">
+                  Calculates total costs and emails PDF proposal to client
+                </p>
+              </div>
             )}
           </div>
 
