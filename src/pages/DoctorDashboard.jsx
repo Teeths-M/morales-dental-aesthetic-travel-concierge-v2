@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
+import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -372,30 +373,7 @@ export default function DoctorDashboard() {
             </TabsContent>
 
             <TabsContent value="pricing" className="p-8">
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-accent/10 to-primary/10 border border-accent/20 rounded-lg p-6">
-                  <h3 className="text-lg font-bold text-foreground mb-4">My Pricing</h3>
-                  {pricing.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">No pricing information set yet.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {pricing.map((p) => (
-                        <div key={p.id} className="bg-white rounded-lg p-4 border border-border">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-semibold text-foreground">{p.procedure_name}</p>
-                              <p className="text-xs text-muted-foreground">Base Price: ${p.doctor_price_usd}</p>
-                            </div>
-                            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
-                              Active
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <DoctorPricingManager doctorId={doctor.id} language={doctor.language_preference || 'en'} />
             </TabsContent>
           </Tabs>
         </div>
