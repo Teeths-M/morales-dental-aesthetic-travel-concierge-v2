@@ -142,7 +142,7 @@ function TarotCard({ card, isSelected, onSelect }) {
           <p className="text-slate-300 text-xs leading-relaxed mb-6">{card.backText}</p>
 
           <button
-            onClick={() => window.location.href = '/procedures'}
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.location.href = '/procedures'; }}
             className="flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:scale-105"
             style={{
               background: `linear-gradient(135deg, ${card.accent}22, ${card.accent}44)`,
