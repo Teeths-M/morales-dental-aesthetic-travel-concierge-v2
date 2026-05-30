@@ -187,7 +187,10 @@ Don't miss this opportunity — slots fill fast!
   // ── action: get_overview (admin dashboard) ────────────────────────────────
   if (action === 'get_overview') {
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    // Allow admin and platform_admin roles to access
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Build 6-month overview
     const now = new Date();
@@ -230,7 +233,10 @@ Don't miss this opportunity — slots fill fast!
   // ── action: update_capacity (admin override) ──────────────────────────────
   if (action === 'update_capacity') {
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    // Only admin and platform_admin can update capacity
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const { record_id, updates } = body;
     if (!record_id) return Response.json({ error: 'record_id required' }, { status: 400 });
