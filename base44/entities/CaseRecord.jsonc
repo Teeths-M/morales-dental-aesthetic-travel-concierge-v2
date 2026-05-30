@@ -1,0 +1,347 @@
+{
+  "name": "CaseRecord",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "Submitted",
+        "Safe-T-Reviewed",
+        "Doctor-Pending",
+        "Vendor-Pending",
+        "Admin-Review",
+        "Proposal-Sent",
+        "PMP-25",
+        "PMP-50",
+        "Deposit-Paid",
+        "Travel-Coordination",
+        "Ready-For-Travel",
+        "Procedure-In-Progress",
+        "Recovery",
+        "Completed"
+      ],
+      "default": "Submitted"
+    },
+    "case_priority": {
+      "type": "string",
+      "enum": [
+        "Normal",
+        "Urgent",
+        "Critical"
+      ],
+      "default": "Normal"
+    },
+    "consultation_id": {
+      "type": "string",
+      "description": "Linked Consultation entity ID"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "client_phone": {
+      "type": "string"
+    },
+    "client_country": {
+      "type": "string"
+    },
+    "emergency_contact": {
+      "type": "string"
+    },
+    "procedure_country": {
+      "type": "string"
+    },
+    "client_pickup_address": {
+      "type": "string"
+    },
+    "procedures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "consultation_summary": {
+      "type": "string"
+    },
+    "risk_score": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Moderate",
+        "High"
+      ]
+    },
+    "safe_t_result": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PASSED",
+        "BLOCKED"
+      ],
+      "default": "PENDING"
+    },
+    "safe_t_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "doctor_selected": {
+      "type": "string"
+    },
+    "clinic_selected": {
+      "type": "string"
+    },
+    "medications": {
+      "type": "string"
+    },
+    "allergies": {
+      "type": "string"
+    },
+    "smoking_status": {
+      "type": "boolean",
+      "default": false
+    },
+    "alcohol_use": {
+      "type": "string"
+    },
+    "medical_conditions": {
+      "type": "string"
+    },
+    "anesthesia_history": {
+      "type": "string"
+    },
+    "mental_health_notes": {
+      "type": "string"
+    },
+    "pregnancy_status": {
+      "type": "boolean",
+      "default": false
+    },
+    "exercise_level": {
+      "type": "string"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "doctor_portal_token": {
+      "type": "string"
+    },
+    "treatment_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "treatment_duration": {
+      "type": "number"
+    },
+    "recovery_days": {
+      "type": "number",
+      "default": 0
+    },
+    "doctor_confirmation_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "CONFIRMED",
+        "DECLINED"
+      ],
+      "default": "PENDING"
+    },
+    "doctor_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "doctor_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "travel_vendor_id": {
+      "type": "string"
+    },
+    "flight_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "flight_details": {
+      "type": "string"
+    },
+    "hotel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "hotel_name": {
+      "type": "string"
+    },
+    "hotel_address": {
+      "type": "string"
+    },
+    "itinerary_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "SUBMITTED",
+        "CONFIRMED"
+      ],
+      "default": "PENDING"
+    },
+    "origin_driver_id": {
+      "type": "string"
+    },
+    "destination_driver_id": {
+      "type": "string"
+    },
+    "pickup_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "dropoff_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "local_transfer_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "transfer_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "SUBMITTED",
+        "CONFIRMED"
+      ],
+      "default": "PENDING"
+    },
+    "base_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Auto-computed: sum of all vendor costs"
+    },
+    "markup_percentage": {
+      "type": "number",
+      "default": 0.3
+    },
+    "final_package_price": {
+      "type": "number",
+      "default": 0
+    },
+    "profit": {
+      "type": "number",
+      "default": 0
+    },
+    "deposit_option": {
+      "type": "string",
+      "enum": [
+        "Full",
+        "25%",
+        "50%"
+      ]
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "25% Paid",
+        "50% Paid",
+        "Paid In Full",
+        "Failed",
+        "Refunded"
+      ],
+      "default": "Pending"
+    },
+    "consultation_fee_paid": {
+      "type": "boolean",
+      "default": false
+    },
+    "consultation_fee_amount": {
+      "type": "number",
+      "default": 49.0
+    },
+    "consultation_credit_applied": {
+      "type": "boolean",
+      "default": false
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "amount_remaining": {
+      "type": "number",
+      "default": 0
+    },
+    "next_payment_due": {
+      "type": "string",
+      "format": "date"
+    },
+    "stripe_payment_id": {
+      "type": "string"
+    },
+    "proposal_token": {
+      "type": "string"
+    },
+    "proposal_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "itinerary_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "travel_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "transfer_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "final_confirmation_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "timeline_log": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "signature_data": {
+      "type": "string",
+      "description": "Base64 DataURI of the client's drawn digital signature"
+    },
+    "signature_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when the signature was captured"
+    },
+    "signature_ip_address": {
+      "type": "string",
+      "description": "Client IP address at the moment of signature"
+    },
+    "accepted_arbitration_clause": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicit client acceptance of the Cross-Border Arbitration Agreement"
+    },
+    "informed_consent_email_html": {
+      "type": "string",
+      "description": "Archived full HTML of the informed consent confirmation email"
+    },
+    "informed_consent_email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the informed consent email was dispatched"
+    }
+  },
+  "required": [
+    "client_name",
+    "client_email",
+    "procedures"
+  ]
+}
