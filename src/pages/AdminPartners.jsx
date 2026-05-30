@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, ArrowLeft } from 'lucide-react';
+import { Users, Plane, Car, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, ArrowLeft, Trash2, Square, SquareCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tabs,
   TabsContent,
@@ -29,6 +30,8 @@ export default function AdminPartners() {
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [partnerType, setPartnerType] = useState('all');
   const [isApproving, setIsApproving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch all partner types
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
@@ -130,6 +133,56 @@ export default function AdminPartners() {
       toast.error('Failed to reject doctor: ' + error.message);
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  const toggleSelectId = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(id_ => id_ !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllOnPage = (ids) => {
+    setSelectedIds(ids);
+  };
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    
+    const confirmDelete = window.confirm(`Are you sure you want to permanently delete ${selectedIds.length} partners? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // Determine type of each selected ID and delete using appropriate function
+      const allPartners = [...doctors, ...travelAgencies, ...taxiServices];
+      const selectedPartners = allPartners.filter(p => selectedIds.includes(p.id));
+
+      for (const partner of selectedPartners) {
+        if (partner.full_name) {
+          // Doctor - use deleteDoctorCompletely
+          await base44.functions.invoke('deleteDoctorCompletely', { doctor_id: partner.id });
+        } else if (partner.agency_name) {
+          // Travel Agency - use deleteTravelAgencyCompletely
+          await base44.functions.invoke('deleteTravelAgencyCompletely', { agency_id: partner.id });
+        } else if (partner.company_name || partner.driver_name) {
+          // Taxi Service - use deleteTaxiServiceCompletely
+          await base44.functions.invoke('deleteTaxiServiceCompletely', { taxi_id: partner.id });
+        }
+      }
+
+      toast.success(`Successfully deleted ${selectedPartners.length} partners`);
+      setSelectedIds([]);
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      toast.error('Failed to delete partners: ' + error.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -241,6 +294,42 @@ export default function AdminPartners() {
           </div>
         </div>
 
+        {/* Bulk Action Toolbar */}
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-red-900">{selectedIds.length} partner(s) selected</p>
+                <p className="text-sm text-red-700">Ready for permanent deletion</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={clearSelection}
+                className="border-red-300 text-red-700 hover:bg-red-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Deleting...' : 'Delete All'}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Partner Tabs */}
         <Tabs defaultValue="all" className="space-y-4" onValueChange={setPartnerType}>
           <TabsList className="bg-white rounded-2xl shadow-md border border-slate-100 p-1">
@@ -261,6 +350,8 @@ export default function AdminPartners() {
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
               openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
             />
             <PartnerSection 
               title="Travel Agencies" 
@@ -272,6 +363,8 @@ export default function AdminPartners() {
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
               openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
             />
             <PartnerSection 
               title="Taxi Services" 
@@ -283,6 +376,8 @@ export default function AdminPartners() {
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
               openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
             />
           </TabsContent>
 
@@ -297,6 +392,8 @@ export default function AdminPartners() {
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
               openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
             />
           </TabsContent>
 
@@ -311,6 +408,8 @@ export default function AdminPartners() {
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
               openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
             />
           </TabsContent>
 
@@ -325,6 +424,8 @@ export default function AdminPartners() {
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
               openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
             />
           </TabsContent>
         </Tabs>
@@ -345,7 +446,7 @@ export default function AdminPartners() {
   );
 }
 
-function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTerm, getStatusBadge, getRatingBadge, openPartnerDetails }) {
+function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTerm, getStatusBadge, getRatingBadge, openPartnerDetails, selectedIds, toggleSelectId }) {
   const filteredPartners = partners.filter(partner => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
@@ -427,6 +528,8 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
                 getStatusBadge={getStatusBadge}
                 getRatingBadge={getRatingBadge}
                 onClick={() => openPartnerDetails(partner, actualType)}
+                isSelected={selectedIds.includes(partner.id)}
+                onToggleSelect={() => toggleSelectId(partner.id)}
               />
             );
           })}
@@ -436,7 +539,7 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
   );
 }
 
-function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick }) {
+function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, isSelected, onToggleSelect }) {
   const getName = () => {
     if (type === 'doctor') return partner.full_name || 'Unnamed Doctor';
     if (type === 'travel') return partner.agency_name || 'Unnamed Agency';
@@ -451,19 +554,44 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick })
     return 'Location unknown';
   };
 
+  const handleCardClick = (e) => {
+    // Don't open dialog if clicking checkbox
+    if (e.target.closest('.checkbox-container')) {
+      e.stopPropagation();
+    }
+    onClick();
+  };
+
+  const handleCheckboxClick = (e) => {
+    e.stopPropagation();
+    onToggleSelect();
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
       <Card 
-        className="border border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all cursor-pointer rounded-xl"
-        onClick={onClick}
+        className={`border-2 transition-all cursor-pointer rounded-xl ${
+          isSelected 
+            ? 'border-red-300 bg-red-50 shadow-lg' 
+            : 'border border-slate-200 hover:border-slate-300 hover:shadow-lg'
+        }`}
+        onClick={handleCardClick}
       >
         <CardContent className="pt-5">
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
-              <h4 className="font-semibold text-slate-900 line-clamp-1">{getName()}</h4>
+              <div className="flex items-center gap-2 flex-1">
+                <div className="checkbox-container" onClick={handleCheckboxClick}>
+                  <Checkbox
+                    checked={isSelected}
+                    className="border-slate-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                  />
+                </div>
+                <h4 className="font-semibold text-slate-900 line-clamp-1 flex-1">{getName()}</h4>
+              </div>
               {getRatingBadge(partner.rating)}
             </div>
             
