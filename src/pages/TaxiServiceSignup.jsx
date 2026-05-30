@@ -6,8 +6,9 @@ import TaxiServiceSignupStep1 from '@/components/partner-signup/TaxiServiceSignu
 import TaxiServiceSignupStep2 from '@/components/partner-signup/TaxiServiceSignupStep2';
 import TaxiServiceSignupStep3 from '@/components/partner-signup/TaxiServiceSignupStep3';
 import TaxiServiceSuccess from '@/components/partner-signup/TaxiServiceSuccess';
-import { Globe } from 'lucide-react';
+import { Globe, MapPin } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 
 export default function TaxiServiceSignup() {
   const location = useLocation();
@@ -42,6 +43,258 @@ export default function TaxiServiceSignup() {
     };
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  // Auto-detect location using IP geolocation on mount
+  useEffect(() => {
+    const detectLocation = async () => {
+      try {
+        const response = await base44.functions.invoke('getGeolocationAndCurrency', {});
+        const { country } = response.data;
+        
+        if (country) {
+          // Map country code to full country name
+          const countryNameMap = {
+            'US': 'United States',
+            'MX': 'Mexico',
+            'CA': 'Canada',
+            'GB': 'United Kingdom',
+            'FR': 'France',
+            'DE': 'Germany',
+            'IT': 'Italy',
+            'ES': 'Spain',
+            'PT': 'Portugal',
+            'BR': 'Brazil',
+            'TT': 'Trinidad and Tobago',
+            'GY': 'Guyana',
+            'VE': 'Venezuela',
+            'JM': 'Jamaica',
+            'BB': 'Barbados',
+            'BS': 'Bahamas',
+            'DO': 'Dominican Republic',
+            'PR': 'Puerto Rico',
+            'CR': 'Costa Rica',
+            'PA': 'Panama',
+            'CO': 'Colombia',
+            'EC': 'Ecuador',
+            'PE': 'Peru',
+            'CL': 'Chile',
+            'AR': 'Argentina',
+            'UY': 'Uruguay',
+            'PY': 'Paraguay',
+            'BO': 'Bolivia',
+            'GT': 'Guatemala',
+            'HN': 'Honduras',
+            'SV': 'El Salvador',
+            'NI': 'Nicaragua',
+            'BZ': 'Belize',
+            'CU': 'Cuba',
+            'HT': 'Haiti',
+            'LC': 'Saint Lucia',
+            'VC': 'Saint Vincent and the Grenadines',
+            'GD': 'Grenada',
+            'AG': 'Antigua and Barbuda',
+            'KN': 'Saint Kitts and Nevis',
+            'DM': 'Dominica',
+            'AW': 'Aruba',
+            'CW': 'Curaçao',
+            'SX': 'Sint Maarten',
+            'BQ': 'Caribbean Netherlands',
+            'VI': 'U.S. Virgin Islands',
+            'VG': 'British Virgin Islands',
+            'AI': 'Anguilla',
+            'MS': 'Montserrat',
+            'GP': 'Guadeloupe',
+            'MQ': 'Martinique',
+            'GF': 'French Guiana',
+            'SR': 'Suriname',
+            'CY': 'Cyprus',
+            'MT': 'Malta',
+            'IS': 'Iceland',
+            'NO': 'Norway',
+            'SE': 'Sweden',
+            'DK': 'Denmark',
+            'FI': 'Finland',
+            'IE': 'Ireland',
+            'NL': 'Netherlands',
+            'BE': 'Belgium',
+            'LU': 'Luxembourg',
+            'CH': 'Switzerland',
+            'AT': 'Austria',
+            'PL': 'Poland',
+            'CZ': 'Czechia',
+            'SK': 'Slovakia',
+            'HU': 'Hungary',
+            'SI': 'Slovenia',
+            'HR': 'Croatia',
+            'BA': 'Bosnia and Herzegovina',
+            'RS': 'Serbia',
+            'ME': 'Montenegro',
+            'MK': 'North Macedonia',
+            'AL': 'Albania',
+            'BG': 'Bulgaria',
+            'RO': 'Romania',
+            'MD': 'Moldova',
+            'UA': 'Ukraine',
+            'BY': 'Belarus',
+            'LT': 'Lithuania',
+            'LV': 'Latvia',
+            'EE': 'Estonia',
+            'RU': 'Russia',
+            'GE': 'Georgia',
+            'AM': 'Armenia',
+            'AZ': 'Azerbaijan',
+            'KZ': 'Kazakhstan',
+            'UZ': 'Uzbekistan',
+            'TM': 'Turkmenistan',
+            'KG': 'Kyrgyzstan',
+            'TJ': 'Tajikistan',
+            'AF': 'Afghanistan',
+            'PK': 'Pakistan',
+            'IN': 'India',
+            'BD': 'Bangladesh',
+            'LK': 'Sri Lanka',
+            'MV': 'Maldives',
+            'NP': 'Nepal',
+            'BT': 'Bhutan',
+            'MM': 'Myanmar',
+            'TH': 'Thailand',
+            'LA': 'Laos',
+            'KH': 'Cambodia',
+            'VN': 'Vietnam',
+            'MY': 'Malaysia',
+            'SG': 'Singapore',
+            'BN': 'Brunei',
+            'ID': 'Indonesia',
+            'TL': 'Timor-Leste',
+            'PH': 'Philippines',
+            'TW': 'Taiwan',
+            'HK': 'Hong Kong',
+            'MO': 'Macau',
+            'CN': 'China',
+            'MN': 'Mongolia',
+            'KP': 'North Korea',
+            'KR': 'South Korea',
+            'JP': 'Japan',
+            'AU': 'Australia',
+            'NZ': 'New Zealand',
+            'PG': 'Papua New Guinea',
+            'FJ': 'Fiji',
+            'SB': 'Solomon Islands',
+            'VU': 'Vanuatu',
+            'NC': 'New Caledonia',
+            'PF': 'French Polynesia',
+            'WS': 'Samoa',
+            'TO': 'Tonga',
+            'KI': 'Kiribati',
+            'TV': 'Tuvalu',
+            'NR': 'Nauru',
+            'FM': 'Micronesia',
+            'MH': 'Marshall Islands',
+            'PW': 'Palau',
+            'GU': 'Guam',
+            'MP': 'Northern Mariana Islands',
+            'AS': 'American Samoa',
+            'CK': 'Cook Islands',
+            'NU': 'Niue',
+            'TK': 'Tokelau',
+            'WF': 'Wallis and Futuna',
+            'ZA': 'South Africa',
+            'NA': 'Namibia',
+            'BW': 'Botswana',
+            'ZW': 'Zimbabwe',
+            'MZ': 'Mozambique',
+            'ZM': 'Zambia',
+            'MW': 'Malawi',
+            'TZ': 'Tanzania',
+            'KE': 'Kenya',
+            'UG': 'Uganda',
+            'RW': 'Rwanda',
+            'BI': 'Burundi',
+            'ET': 'Ethiopia',
+            'ER': 'Eritrea',
+            'DJ': 'Djibouti',
+            'SO': 'Somalia',
+            'SD': 'Sudan',
+            'SS': 'South Sudan',
+            'EG': 'Egypt',
+            'LY': 'Libya',
+            'TN': 'Tunisia',
+            'DZ': 'Algeria',
+            'MA': 'Morocco',
+            'EH': 'Western Sahara',
+            'MR': 'Mauritania',
+            'ML': 'Mali',
+            'BF': 'Burkina Faso',
+            'NE': 'Niger',
+            'NG': 'Nigeria',
+            'GH': 'Ghana',
+            'TG': 'Togo',
+            'BJ': 'Benin',
+            'CI': 'Ivory Coast',
+            'LR': 'Liberia',
+            'SL': 'Sierra Leone',
+            'GN': 'Guinea',
+            'GW': 'Guinea-Bissau',
+            'SN': 'Senegal',
+            'GM': 'Gambia',
+            'CV': 'Cabo Verde',
+            'CM': 'Cameroon',
+            'CF': 'Central African Republic',
+            'TD': 'Chad',
+            'GA': 'Gabon',
+            'GQ': 'Equatorial Guinea',
+            'ST': 'Sao Tome and Principe',
+            'CG': 'Congo (Congo-Brazzaville)',
+            'CD': 'Democratic Republic of the Congo',
+            'AO': 'Angola',
+            'SZ': 'Eswatini',
+            'LS': 'Lesotho',
+            'MU': 'Mauritius',
+            'SC': 'Seychelles',
+            'KM': 'Comoros',
+            'YT': 'Mayotte',
+            'RE': 'Réunion',
+            'MG': 'Madagascar',
+            'IR': 'Iran',
+            'IQ': 'Iraq',
+            'SY': 'Syria',
+            'LB': 'Lebanon',
+            'JO': 'Jordan',
+            'IL': 'Israel',
+            'PS': 'Palestine',
+            'SA': 'Saudi Arabia',
+            'KW': 'Kuwait',
+            'BH': 'Bahrain',
+            'QA': 'Qatar',
+            'AE': 'United Arab Emirates',
+            'OM': 'Oman',
+            'YE': 'Yemen',
+            'TR': 'Turkey',
+            'GR': 'Greece',
+            'PT': 'Portugal',
+            'ES': 'Spain',
+            'AD': 'Andorra',
+            'GI': 'Gibraltar',
+            'SM': 'San Marino',
+            'VA': 'Vatican City',
+            'MC': 'Monaco',
+            'LI': 'Liechtenstein',
+          };
+          
+          const fullCountryName = countryNameMap[country] || country;
+          
+          setFormData(prev => ({
+            ...prev,
+            operating_country: fullCountryName
+          }));
+        }
+      } catch (error) {
+        console.log('Could not auto-detect location:', error.message);
+      }
+    };
+
+    detectLocation();
   }, []);
 
   const t = translations[language];
@@ -80,8 +333,22 @@ export default function TaxiServiceSignup() {
 
       {/* Main Content - Split Layout */}
       <div className="max-w-6xl mx-auto px-4 py-12 grid md:grid-cols-2 gap-8 items-center min-h-screen">
+        {/* Auto-detection indicator */}
+        {formData.operating_country && (
+          <div className="md:hidden mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-green-600" />
+            <span className="text-sm text-green-700">Location auto-detected: {formData.operating_country}</span>
+          </div>
+        )}
+        
         {/* Hero Section */}
-        <div className="hidden md:flex flex-col items-center justify-center">
+        <div className="hidden md:flex flex-col items-center justify-center relative">
+          {formData.operating_country && (
+            <div className="absolute top-0 right-0 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 shadow-sm">
+              <MapPin className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-green-700 font-medium">Auto-detected: {formData.operating_country}</span>
+            </div>
+          )}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-blue-100 mb-6">
               <svg className="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
