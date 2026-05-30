@@ -65,6 +65,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
          email: formData.email,
          phone: formData.phone,
          clinic_country: formData.clinic_country,
+         clinic_city: formData.clinic_city,
          clinic_name: formData.clinic_name,
          professional_background: formData.professional_background,
          years_experience: Number(formData.years_experience) || 0,
