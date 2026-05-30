@@ -39,6 +39,7 @@ import IQ200AdminCenter from './pages/IQ200AdminCenter';
 import ClientProposalPortal from './pages/ClientProposalPortal';
 import ConsultationForm from './pages/ConsultationForm';
 import ConsultationSuccess from './pages/ConsultationSuccess';
+import PortalDoctor from './pages/PortalDoctor';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -120,6 +121,7 @@ const AuthenticatedApp = () => {
       {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
       <Route path="/portal/travel" element={<PortalTravelAgency />} />
       <Route path="/portal/transfer" element={<PortalChauffeur />} />
+      <Route path="/portal/doctor/:token" element={<PortalDoctor />} />
       <Route path="/portal/proposal" element={<ClientProposalPortal />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/iq200" element={<IQ200AdminCenter />} />
