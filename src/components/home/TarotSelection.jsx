@@ -66,8 +66,8 @@ function TarotCard({ card, isSelected, onSelect }) {
 
   return (
     <motion.div
-      className="relative cursor-pointer flex-shrink-0"
-      style={{ width: 260, height: 380, perspective: 1000 }}
+      className="relative cursor-pointer flex-shrink-0 will-change-transform transform-gpu"
+      style={{ width: 260, height: 380, perspective: 1000, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
       initial={{ opacity: 0, y: 60 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={!flipped ? { y: -12, scale: 1.03 } : {}}
@@ -75,10 +75,10 @@ function TarotCard({ card, isSelected, onSelect }) {
     >
       {/* Card inner wrapper — flips on state */}
       <motion.div
-        className="w-full h-full relative"
+        className="w-full h-full relative will-change-transform transform-gpu"
         animate={{ rotateY: flipped ? 180 : 0 }}
         transition={{ duration: 0.7, ease: [0.43, 0.13, 0.23, 0.96] }}
-        style={{ transformStyle: 'preserve-3d' }}
+        style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
       >
         {/* FRONT */}
         <div
@@ -182,10 +182,11 @@ export default function TarotSelection() {
 
       {/* Header */}
       <motion.div
-        className="text-center mb-14 relative z-10"
+        className="text-center mb-14 relative z-10 will-change-transform transform-gpu"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
+        style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
       >
         <p className="text-[10px] font-bold tracking-[0.4em] uppercase mb-4" style={{ color: '#C5A059' }}>
           Choose Your Journey
@@ -203,6 +204,8 @@ export default function TarotSelection() {
         {CARDS.map((card, i) => (
           <motion.div
             key={card.id}
+            className="will-change-transform transform-gpu"
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: i * 0.15 }}

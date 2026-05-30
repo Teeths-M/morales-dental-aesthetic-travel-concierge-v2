@@ -69,12 +69,13 @@ function MilestoneCard({ day, index, scrollYProgress }) {
       {/* Card side */}
       <div className={`w-5/12 ${isLeft ? 'pr-10 text-right' : 'pl-10 text-left'}`}>
         <motion.div
-          style={{ opacity, scale, x }}
-          className="inline-block rounded-2xl p-6 w-full"
+          className="inline-block rounded-2xl p-6 w-full will-change-transform transform-gpu"
           style={{
             opacity,
             scale,
             x,
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
             background: 'linear-gradient(135deg, #0a2614 0%, #0F3A20 100%)',
             border: '1px solid rgba(197,160,89,0.35)',
             boxShadow: '0 4px 40px rgba(0,0,0,0.4), inset 0 0 15px rgba(255,255,255,0.02)',
@@ -95,7 +96,8 @@ function MilestoneCard({ day, index, scrollYProgress }) {
       <div className="w-2/12 flex justify-center">
         <motion.div
           style={{ opacity, scale }}
-          className="flex flex-col items-center"
+          className="flex flex-col items-center will-change-transform transform-gpu"
+          style={{ ...{ opacity, scale }, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
         >
           <div
             className="w-4 h-4 rounded-full z-10"
@@ -135,11 +137,12 @@ export default function ItineraryScroll() {
     >
       {/* Header */}
       <motion.div
-        className="text-center mb-20 relative z-10"
+        className="text-center mb-20 relative z-10 will-change-transform transform-gpu"
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
+        style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
       >
         <p className="text-[10px] font-bold tracking-[0.4em] uppercase mb-4" style={{ color: '#C5A059' }}>
           Your Journey, Mapped

@@ -98,10 +98,11 @@ export default function BrandSlideshow() {
 
         {/* Section header */}
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-12 will-change-transform transform-gpu"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
         >
           <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Morales Dental & Aesthetics Travel Concierge</p>
           <h2 className="font-display text-3xl lg:text-5xl text-foreground mb-4">
@@ -117,10 +118,11 @@ export default function BrandSlideshow() {
 
           {/* Left: Image + emotional testimonial overlay */}
           <motion.div
-            className="relative"
+            className="relative will-change-transform transform-gpu"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           >
             <div className="rounded-2xl overflow-hidden shadow-2xl">
               <img
@@ -131,14 +133,16 @@ export default function BrandSlideshow() {
             </div>
 
             {/* Floating emotional testimonial card */}
-            <div className="absolute -bottom-5 -right-3 lg:-right-6 max-w-[260px] bg-card border border-border rounded-2xl p-4 shadow-xl">
+            <div className="absolute -bottom-5 -right-3 lg:-right-6 max-w-[260px] bg-card border border-border rounded-2xl p-4 shadow-xl will-change-transform transform-gpu">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={testimonialIdx}
+                  className="will-change-transform transform-gpu"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.4 }}
+                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                 >
                   <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
@@ -166,11 +170,12 @@ export default function BrandSlideshow() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={current}
-                  className="relative z-10"
+                  className="relative z-10 will-change-transform transform-gpu"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -16 }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
+                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">

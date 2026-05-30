@@ -52,10 +52,11 @@ export default function WhyChooseUs() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Image */}
           <motion.div
-            className="relative rounded-2xl overflow-hidden aspect-video"
+            className="relative rounded-2xl overflow-hidden aspect-video will-change-transform transform-gpu"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           >
             <img
               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/deb22db2c_addhome5.png"
@@ -66,9 +67,11 @@ export default function WhyChooseUs() {
 
           {/* Content */}
           <motion.div
+            className="will-change-transform transform-gpu"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           >
             <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
               {language === 'es' ? 'Por Qué Los Pacientes Nos Eligen' : language === 'fr' ? 'Pourquoi les Patients Nous Choisissent' : 'Why Patients Choose Us'}

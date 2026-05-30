@@ -32,10 +32,11 @@ export default function HowItWorks() {
     <section className="py-16 lg:py-24 bg-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="text-center mb-12"
+          className="text-center mb-12 will-change-transform transform-gpu"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
         >
           <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
             {language === 'es' ? 'Tu Viaje' : language === 'fr' ? 'Votre Voyage' : 'Your Journey'}
@@ -53,11 +54,12 @@ export default function HowItWorks() {
             {steps.map(({ icon: Icon, num, title, desc }, i) => (
               <motion.div
                 key={title}
-                className="text-center relative"
+                className="text-center relative will-change-transform transform-gpu"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
+                style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
               >
                 <div className="w-16 h-16 rounded-full bg-card border-2 border-border mx-auto flex items-center justify-center relative z-10 mb-3">
                   <Icon className="w-6 h-6 text-primary" />
