@@ -28,7 +28,8 @@ export async function saveUserOnboardingProfile({
     ? await base44.entities.UserOnboardingProfile.update(existing[0].id, data)
     : await base44.entities.UserOnboardingProfile.create(data);
 
-  await base44.functions.invoke('syncTenantRole', {
+  // Fire-and-forget — syncTenantRole failure must never block the booking flow
+  base44.functions.invoke('syncTenantRole', {
     tenant_id: profile.id,
     tenant_type: role,
     tenant_name: user.full_name || user.email,
@@ -37,7 +38,7 @@ export async function saveUserOnboardingProfile({
     linked_entity_name: linkedEntityName || 'UserOnboardingProfile',
     linked_entity_id: linkedEntityId || profile.id,
     onboarding_status: status,
-  });
+  }).catch(e => console.warn('syncTenantRole (non-blocking):', e.message));
 
   return profile;
 }
