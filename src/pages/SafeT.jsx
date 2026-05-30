@@ -42,7 +42,7 @@ export default function SafeT() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed pt-16 lg:pt-20"
       style={{
         backgroundImage: 'url(https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8cfc78356_image.png)',
       }}

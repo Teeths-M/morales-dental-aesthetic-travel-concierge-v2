@@ -135,7 +135,7 @@ export default function Procedures() {
     : procedureCategories.filter(c => c.parent === activeParent);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background pt-16 lg:pt-20">
       {/* Hero */}
       <div className="bg-card/50 backdrop-blur-sm border-b border-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
