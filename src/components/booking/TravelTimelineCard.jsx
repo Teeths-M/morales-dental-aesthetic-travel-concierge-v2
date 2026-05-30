@@ -73,9 +73,8 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
 
     const procedureDate = parseDateStr(selectedDate);
 
-    // Arrive exactly 1 day before procedure
-    const arrivalDate = new Date(procedureDate);
-    arrivalDate.setDate(procedureDate.getDate() - 1);
+    // Arrival = most recent Sunday or Thursday BEFORE the procedure date
+    const arrivalDate = snapToFlightDay(procedureDate, 'back');
 
     return { arrivalDate, procedureDate };
   }, [selectedDate, cartItems]);
@@ -84,11 +83,12 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
 
   const { arrivalDate, procedureDate } = base;
 
-  // Return = procedure date + MIN_RECOVERY + any extra days chosen by client
+  // Departure = next Sunday or Thursday after (procedure date + MIN_RECOVERY + extraDays)
   const effectiveRecovery = MIN_RECOVERY + extraDays;
 
-  const departureDate = new Date(procedureDate);
-  departureDate.setDate(procedureDate.getDate() + effectiveRecovery);
+  const earliestDeparture = new Date(procedureDate);
+  earliestDeparture.setDate(procedureDate.getDate() + effectiveRecovery);
+  const departureDate = snapToFlightDay(earliestDeparture, 'forward');
 
   const msPerDay = 1000 * 60 * 60 * 24;
   const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
