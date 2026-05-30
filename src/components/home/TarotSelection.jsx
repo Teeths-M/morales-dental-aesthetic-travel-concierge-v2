@@ -57,15 +57,11 @@ const CARDS = [
 
 function TarotCard({ card, isSelected, onSelect }) {
   const [flipped, setFlipped] = useState(false);
-  const { addItem } = useCart();
   const navigate = useNavigate();
 
   const handleSelect = () => {
-    // Add first procedure from this path to cart
-    const proc = card.procedures[0];
-    addItem({ name: proc.name, value: proc.value, category: card.title });
     onSelect(card.id);
-    setTimeout(() => navigate('/booking'), 600);
+    setTimeout(() => navigate('/procedures'), 600);
   };
 
   return (
