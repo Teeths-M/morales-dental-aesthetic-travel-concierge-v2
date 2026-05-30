@@ -64,6 +64,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
+    // Fetch consultation to get preferred date and duration
+    let consultation = null;
+    if (workflow.consultation_id) {
+      try {
+        consultation = await base44.asServiceRole.entities.Consultation.get(workflow.consultation_id);
+      } catch (e) {
+        console.log('Could not fetch consultation:', e.message);
+      }
+    }
+
     const [travelAgencies, taxiServices] = await Promise.all([
       base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }),
       base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
@@ -87,6 +97,8 @@ Deno.serve(async (req) => {
             rows: [
               row('Patient', workflow.patient_name),
               row('Quoted price', formatMoney(quoted_price)),
+              row('Requested date', consultation?.preferred_date ? new Date(consultation.preferred_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified'),
+              row('Duration of stay', consultation?.duration_of_stay || 'Not specified'),
               row('Portal', 'Doctor case management'),
             ],
             note: notes || '',
