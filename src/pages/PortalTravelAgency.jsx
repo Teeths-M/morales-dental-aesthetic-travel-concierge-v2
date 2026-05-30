@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { decodePortalToken, getTokenFromUrl } from '@/lib/portalToken';
+import moment from 'moment';
 
 const USD = (val) => `$${(Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -81,6 +82,28 @@ export default function PortalTravelAgency() {
 
   const risk = RISK_COLORS[consultation?.risk_level] || RISK_COLORS.low;
   const packageTotal = (parseFloat(flightCost) || 0) + (parseFloat(hotelCost) || 0);
+
+  // Calculate travel dates
+  const calculateTravelDates = () => {
+    if (!consultation?.preferred_date || !consultation?.duration_of_stay) return null;
+    
+    const arrivalDate = moment(consultation.preferred_date);
+    const durationMatch = consultation.duration_of_stay.match(/(\d+)\s*(day|night)s?/i);
+    const days = durationMatch ? parseInt(durationMatch[1]) : 7;
+    const returnDate = arrivalDate.clone().add(days, 'days');
+    const nights = days - 1;
+    
+    return {
+      arrival: arrivalDate.format('MMMM D, YYYY'),
+      arrivalShort: arrivalDate.format('ddd, MMM D'),
+      return: returnDate.format('MMMM D, YYYY'),
+      returnShort: returnDate.format('ddd, MMM D'),
+      nights: nights,
+      days: days
+    };
+  };
+
+  const travelDates = calculateTravelDates();
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#f8faf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -165,8 +188,6 @@ export default function PortalTravelAgency() {
           {[
             ['Patient Name', consultation?.patient_name],
             ['Procedure Type', (consultation?.procedure_interest || '').replace(/_/g, ' ')],
-            ['Travel Dates Requested', consultation?.preferred_date || 'Flexible'],
-            ['Duration of Stay', consultation?.duration_of_stay || 'Not specified'],
             ['Destination', consultation?.destination_country || 'Not specified'],
           ].map(([label, value], i) => (
             <div key={label} style={{ display: 'flex', padding: '12px 20px', background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f3f4f6' }}>
@@ -174,6 +195,32 @@ export default function PortalTravelAgency() {
               <span style={{ fontSize: 14, fontWeight: 600, color: '#111', textTransform: label === 'Procedure Type' ? 'capitalize' : 'none' }}>{value || '—'}</span>
             </div>
           ))}
+          
+          {/* Travel Dates Summary */}
+          {travelDates && (
+            <div style={{ padding: '16px 20px', background: '#f0fdf4', borderTop: '2px solid #bbf7d0' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#166534', marginBottom: 12 }}>
+                📅 RECOMMENDED TRAVEL ITINERARY
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                <div>
+                  <p style={{ fontSize: 11, color: '#166534', fontWeight: 600, marginBottom: 4 }}>ARRIVAL DATE</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#0F3A20' }}>{travelDates.arrivalShort}</p>
+                  <p style={{ fontSize: 12, color: '#666' }}>{travelDates.arrival}</p>
+                </div>
+                <div style={{ borderLeft: '1px solid #bbf7d0', paddingLeft: 16 }}>
+                  <p style={{ fontSize: 11, color: '#166534', fontWeight: 600, marginBottom: 4 }}>DURATION</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#0F3A20' }}>{travelDates.days} days / {travelDates.nights} nights</p>
+                  <p style={{ fontSize: 12, color: '#666' }}>Hotel stay period</p>
+                </div>
+                <div style={{ borderLeft: '1px solid #bbf7d0', paddingLeft: 16 }}>
+                  <p style={{ fontSize: 11, color: '#166534', fontWeight: 600, marginBottom: 4 }}>RETURN DATE</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: '#0F3A20' }}>{travelDates.returnShort}</p>
+                  <p style={{ fontSize: 12, color: '#666' }}>{travelDates.return}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quote Form */}
