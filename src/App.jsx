@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
+import Discover from './pages/Discover';
 import Providers from './pages/Providers';
 import ProviderDetail from './pages/ProviderDetail';
 import SafeT from './pages/SafeT';
@@ -67,6 +68,7 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/discover" element={<Discover />} />
         <Route path="/providers" element={<Providers />} />
         <Route path="/providers/:id" element={<ProviderDetail />} />
         <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>

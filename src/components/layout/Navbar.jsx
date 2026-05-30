@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const getNavLinks = (language) => [
   { label: language === 'es' ? 'Inicio' : language === 'fr' ? 'Accueil' : 'Home', path: '/' },
+  { label: language === 'es' ? 'Descubrir' : language === 'fr' ? 'Découvrir' : 'Discover', path: '/discover' },
   { label: language === 'es' ? 'Procedimientos' : language === 'fr' ? 'Procédures' : 'Procedures', path: '/procedures' },
   { label: language === 'es' ? 'Cómo Funciona' : language === 'fr' ? 'Comment Ça Marche' : 'How It Works', path: '/how-it-works' },
   { label: language === 'es' ? 'Nuestros Expertos' : language === 'fr' ? 'Nos Experts' : 'Our Experts', path: '/providers' },
