@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Shield, Lock, FileText, X, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Lock, FileText, X, AlertCircle } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
@@ -68,7 +68,6 @@ export default function Booking() {
   const [showPreview, setShowPreview] = useState(false);
   const [showFeeModal, setShowFeeModal] = useState(false);
   const [consultationId, setConsultationId] = useState(null);
-  const [headerHovered, setHeaderHovered] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [draftData, setDraftData] = useState(null);
@@ -347,64 +346,6 @@ export default function Booking() {
     <ProcedureSelectionGate>
     <div className="min-h-screen bg-transparent">
       <MedicalSlideshowBackground step={step} />
-      {/* Premium Header — full glass over the background - Ghost effect */}
-      <div 
-        className="bg-black/10 backdrop-blur-md border-b border-white/5 sticky top-16 lg:top-20 z-20 opacity-30 hover:opacity-100 transition-opacity duration-300"
-        onMouseEnter={() => setHeaderHovered(true)}
-        onMouseLeave={() => setHeaderHovered(false)}
-      >
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-0.5">{translations[language].medicalConsultation}</p>
-              <h1 className="font-display text-lg lg:text-xl text-white leading-tight drop-shadow-lg">{steps[step].label}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5">
-                <Shield className="w-3 h-3 text-emerald-300" />
-                <span className="text-[10px] font-bold text-white uppercase tracking-wide">SAFE-T 4LIFE™</span>
-              </div>
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-white">{step + 1} <span className="text-white/60 font-normal">{translations[language].stepOf} {steps.length}</span></p>
-                <p className="text-[10px] text-emerald-300">{progressPct}% {translations[language].percentComplete}</p>
-              </div>
-              {/* Procedure count indicator */}
-              <div className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${items.length > 0 ? 'bg-emerald-500/30 border-emerald-400/30 text-emerald-200' : 'bg-red-500/30 border-red-400/30 text-red-200'}`}>
-                {items.length > 0 ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                <span className="text-[10px] font-bold">{items.length} {items.length === 1 ? 'Procedure' : 'Procedures'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar - Ghost effect */}
-           <div className="h-1 bg-white/10 rounded-full overflow-hidden opacity-30 hover:opacity-100 transition-opacity duration-300">
-             <motion.div
-               className="h-full bg-gradient-to-r from-emerald-400 to-blue-400 rounded-full"
-               animate={{ width: `${progressPct}%` }}
-               transition={{ duration: 0.4, ease: 'easeOut' }}
-             />
-           </div>
-
-          {/* Step pills — scrollable */}
-          <div className="flex gap-1 mt-3 overflow-x-auto pb-0.5 scrollbar-hide">
-            {steps.map((s, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap flex-shrink-0 transition-all ${
-                  i < step
-                    ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
-                    : i === step
-                    ? 'bg-white/25 text-white border border-white/30 shadow-sm'
-                    : 'bg-white/5 text-white/30 border border-white/10'
-                }`}
-              >
-                <span>{i < step ? '✓' : s.emoji}</span>
-                <span className="hidden sm:inline">{s.short}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Content Layout - Form Left, Sidebar Right */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 pt-12">
