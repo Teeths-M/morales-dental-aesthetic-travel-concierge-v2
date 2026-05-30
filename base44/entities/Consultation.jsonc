@@ -332,5 +332,51 @@
     "patient_name",
     "email",
     "procedure_interest"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.email": "{{user.email}}",
+      "$or": [
+        {
+          "user_condition": {
+            "isAuthenticated": true
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
