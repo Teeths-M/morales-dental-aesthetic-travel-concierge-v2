@@ -4,11 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { 
   Users, FileText, CheckCircle, Clock, AlertCircle, 
-  RefreshCw, Zap, UserPlus
+  RefreshCw, Zap, UserPlus, Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 
 import ConsultationIntake from '@/components/iq200/ConsultationIntake';
 import SimpleCaseList from '@/components/iq200/SimpleCaseList';
@@ -57,9 +58,16 @@ export default function SimpleAdminDashboard() {
                 <p className="text-sm text-slate-500">Manage patient cases in 3 simple steps</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleRefresh} className="rounded-full">
-              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild className="rounded-full">
+                <Link to="/admin/partners">
+                  <Building2 className="w-4 h-4 mr-2" /> View Partners
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleRefresh} className="rounded-full">
+                <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
