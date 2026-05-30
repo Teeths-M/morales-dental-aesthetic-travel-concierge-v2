@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { translations } from '@/lib/translations';
 import DoctorSignupStep1 from '@/components/doctor-signup/DoctorSignupStep1';
 import DoctorSignupStep2 from '@/components/doctor-signup/DoctorSignupStep2';
+import DoctorSignupStep2Pricing from '@/components/doctor-signup/DoctorSignupStep2Pricing';
 import DoctorSignupStep3 from '@/components/doctor-signup/DoctorSignupStep3';
 import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess';
 import { Globe, MapPin, Save } from 'lucide-react';
@@ -192,11 +193,11 @@ export default function DoctorSignup() {
         </div>
 
         {/* Progress Indicator */}
-        {step < 4 && (
+        {step < 5 && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-medium text-muted-foreground">
-                {step === 0 ? '1 of 4' : step === 1 ? '2 of 4' : step === 2 ? '3 of 4' : '4 of 4'}
+                {step === 0 ? '1 of 5' : step === 1 ? '2 of 5' : step === 2 ? '3 of 5' : step === 3 ? '4 of 5' : '5 of 5'}
               </span>
             </div>
             <div className="h-1 bg-secondary rounded-full overflow-hidden">
@@ -230,30 +231,40 @@ export default function DoctorSignup() {
           )}
 
           {step === 2 && (
+            <DoctorSignupStep2Pricing
+              formData={formData}
+              setFormData={setFormData}
+              language={language}
+              onNext={() => setStep(3)}
+              onBack={() => setStep(1)}
+            />
+          )}
+
+          {step === 3 && (
            <DoctorSignupStep3
              formData={formData}
              setFormData={setFormData}
              language={language}
-             onNext={() => setStep(3)}
-             onBack={() => setStep(1)}
+             onNext={() => setStep(4)}
+             onBack={() => setStep(2)}
              onComplete={(doctor) => {
                setSuccessDoctor({
                  ...doctor,
-                 specialties: formData.specialties
+                 specialties: formData.specialties,
+                 procedurePrices: formData.procedurePrices
                });
-               setStep(3);
-               clearSignupDraft('doctor'); // Clear draft after successful signup
+               setStep(4);
+               clearSignupDraft('doctor');
              }}
            />
           )}
 
-          {step === 3 && successDoctor && (
+          {step === 4 && successDoctor && (
            <DoctorSignupSuccess
              doctor={successDoctor}
              specialties={successDoctor.specialties}
              language={language}
              onDashboard={() => {
-               // Redirect to doctor dashboard
                window.location.href = '/doctor-dashboard';
              }}
            />
