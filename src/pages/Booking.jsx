@@ -25,7 +25,8 @@ import Section8Emotional from '../components/booking/Section8Emotional';
 import Section9Pregnancy from '../components/booking/Section9Pregnancy';
 import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
-import ClientAcknowledgement from '../components/booking/ClientAcknowledgement';
+import ClientAcknowledgement, { getRequiredAckCount } from '../components/booking/ClientAcknowledgement';
+import { checkVisaRequirement } from '@/lib/visaMatrix';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
 import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
 
@@ -305,7 +306,9 @@ export default function Booking() {
       return form.preferred_date;
     }
     if (step === 11) {
-      return form.acknowledged_statements.size === 4;
+      const visaStatus = checkVisaRequirement(form.nationality, form.procedure_country);
+      const required = getRequiredAckCount(visaStatus);
+      return form.acknowledged_statements.size >= required;
     }
     return true;
   };
@@ -432,7 +435,7 @@ export default function Booking() {
                  {step === 8  && <Section9Pregnancy form={form} update={update} language={language} />}
                  {step === 9  && <Section10Documents form={form} update={update} language={language} />}
                  {step === 10 && <SectionProcedure form={form} update={update} language={language} />}
-                 {step === 11 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} />}
+                 {step === 11 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={checkVisaRequirement(form.nationality, form.procedure_country)} />}
               </motion.div>
             </AnimatePresence>
           </div>
