@@ -50,30 +50,50 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
         </div>
       )}
 
+      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        ⚠️ All passport and travel date fields are <strong>required</strong> — the travel agency needs this information to accurately price your package.
+      </p>
+
       <div className="grid sm:grid-cols-2 gap-4">
         {/* Passport Number */}
         <div className="sm:col-span-2">
           <Label className="text-sm font-medium text-slate-700">
-            Passport Number <span className="text-slate-400 font-normal">(optional)</span>
+            Passport Number <span className="text-destructive">*</span>
           </Label>
           <Input
             value={form.passport_number || ''}
             onChange={e => update('passport_number', e.target.value)}
             placeholder="e.g. A12345678"
             className="mt-1.5 font-mono tracking-widest"
+            required
+          />
+        </div>
+
+        {/* Passport Issue Date */}
+        <div>
+          <Label className="text-sm font-medium text-slate-700">
+            Passport Issue Date <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            type="date"
+            value={form.passport_issue_date || ''}
+            onChange={e => update('passport_issue_date', e.target.value)}
+            className="mt-1.5"
+            required
           />
         </div>
 
         {/* Passport Expiry Date */}
-        <div className="sm:col-span-2">
+        <div>
           <Label className="text-sm font-medium text-slate-700">
-            Passport Expiry Date
+            Passport Expiry Date <span className="text-destructive">*</span>
           </Label>
           <Input
             type="date"
             value={form.passport_expiry_date || ''}
             onChange={e => update('passport_expiry_date', e.target.value)}
             className="mt-1.5"
+            required
           />
 
           {/* 6-Month Sentinel Warning */}

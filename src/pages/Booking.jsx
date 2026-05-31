@@ -143,7 +143,8 @@ export default function Booking() {
     emotional_concerns: null, emotional_concern_types: [], emotional_notes: '',
     pregnancy_status: '', document_types: [], uploaded_files: [],
     procedure_interest: '', preferred_date: '', notes: '',
-    passport_number: '', passport_expiry_date: '',
+    passport_number: '', passport_issue_date: '', passport_expiry_date: '',
+    return_date: '', number_of_companions: 0,
     ip_country_origin: '', visa_required_status: 'unknown',
     procedure_country: '', client_country: '',
     acknowledged_statements: new Set(),
@@ -336,11 +337,15 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) {
-      return form.patient_name && form.email && form.phone && 
-             form.emergency_contact_name && form.emergency_contact_number;
+      return form.patient_name && form.email && form.phone &&
+             form.emergency_contact_name && form.emergency_contact_number &&
+             form.passport_number && form.passport_issue_date && form.passport_expiry_date;
     }
     if (step === 1) {
-      return form.has_companion !== null && (form.has_companion ? form.companion_relationship && form.travel_buddy_services.length > 0 : true);
+      const datesOk = form.preferred_date && form.return_date;
+      const companionsOk = form.number_of_companions !== null && form.number_of_companions !== '' && form.number_of_companions !== undefined;
+      const companionDetailsOk = form.number_of_companions > 0 ? (form.companion_relationship && form.travel_buddy_services.length > 0) : true;
+      return datesOk && companionsOk && companionDetailsOk;
     }
     if (step === 2) {
       return form.has_cultural_preferences !== null && (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);

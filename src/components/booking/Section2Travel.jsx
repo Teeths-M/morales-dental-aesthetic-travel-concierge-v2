@@ -1,5 +1,6 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import RadioGroup from './FormRadioGroup';
 
@@ -54,6 +55,53 @@ export default function Section2Travel({ form, update }) {
           </div>
         </div>
       )}
+
+      {/* Travel Dates & Companions */}
+      <div className="space-y-4 pt-2 border-t border-border">
+        <p className="text-xs font-semibold text-primary uppercase tracking-wider">Travel Dates & Party Size <span className="text-destructive">*</span></p>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-medium">Arrival Date <span className="text-destructive">*</span></Label>
+            <Input
+              type="date"
+              value={form.preferred_date || ''}
+              onChange={e => update('preferred_date', e.target.value)}
+              className="mt-1.5"
+              required
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Return Date <span className="text-destructive">*</span></Label>
+            <Input
+              type="date"
+              value={form.return_date || ''}
+              onChange={e => update('return_date', e.target.value)}
+              className="mt-1.5"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label className="text-sm font-medium">Number of Companions <span className="text-destructive">*</span></Label>
+          <Select
+            value={String(form.number_of_companions ?? '')}
+            onValueChange={v => {
+              const num = parseInt(v);
+              update('number_of_companions', num);
+              update('has_companion', num > 0);
+            }}
+          >
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select..." /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">0 – Travelling alone</SelectItem>
+              <SelectItem value="1">1 companion</SelectItem>
+              <SelectItem value="2">2 companions</SelectItem>
+              <SelectItem value="3">3 companions</SelectItem>
+              <SelectItem value="4">4 companions</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <div className="bg-primary/5 border border-primary/15 rounded-lg p-4 text-sm">
         <p className="font-semibold text-primary text-xs uppercase tracking-wider mb-1">SAFE-T 4LIFE™ Note</p>
