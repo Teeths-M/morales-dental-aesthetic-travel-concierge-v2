@@ -55,12 +55,12 @@ export default function PortalHubAdmin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
-      <div className="flex gap-0">
-        {!isMobile && <PortalHubSidebar activeTab={activeTab} setActiveTab={setActiveTab} />}
+      <div className="flex">
+        <PortalHubSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         
-        <div className="flex-1 overflow-auto pb-16 lg:pb-0">
-          {/* Header */}
-          <div className="sticky top-0 z-30 bg-card/50 backdrop-blur-sm border-b border-border/30 px-8 py-6">
+        <div className="flex-1 overflow-auto min-w-0">
+          {/* Header — desktop only (mobile uses sidebar topbar) */}
+          <div className="hidden md:block sticky top-0 z-30 bg-card/50 backdrop-blur-sm border-b border-border/30 px-8 py-6">
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="font-display text-3xl text-foreground">PORTAL HUB™</h1>
@@ -75,7 +75,7 @@ export default function PortalHubAdmin() {
 
           {/* Quick Stats */}
           {activeTab === 'workflows' && (
-            <div className="p-8 grid grid-cols-4 gap-4 mb-8">
+            <div className="p-4 md:p-8 grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 md:mb-8">
               {[
                 { label: 'Fully Confirmed', value: stats.fully_confirmed, color: 'green' },
                 { label: 'Pending Payment', value: stats.pending_payment, color: 'orange' },
@@ -105,7 +105,7 @@ export default function PortalHubAdmin() {
           )}
 
           {/* Content */}
-          <div className="p-8">
+          <div className="p-4 md:p-8">
             {activeTab === 'workflows' && <WorkflowDashboard workflows={workflows} isLoading={isLoading} />}
             {activeTab === 'doctors' && <DoctorProfilesManager />}
             {activeTab === 'providers' && <ProviderManager />}
@@ -114,7 +114,7 @@ export default function PortalHubAdmin() {
           </div>
         </div>
       </div>
-      {isMobile && <BottomNavbar activeTab={activeTab} setActiveTab={setActiveTab} />}
+      
     </div>
   );
 }
