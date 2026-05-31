@@ -40,9 +40,9 @@ Deno.serve(async (req) => {
       proposal_sent_at: new Date().toISOString()
     });
 
-    // Send proposal email - route to payment checkout (HARDCODED OVERRIDE)
+    // Send proposal email - route to NEW standalone payment page
     const appUrl = 'https://sentinel-dental-care.base44.app';
-    const checkoutUrl = `${appUrl}/portal-hub/checkout/${mockCase.id}`;
+    const paymentUrl = `${appUrl}/pay/${mockCase.id}`;
     
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: 'theonmorales@gmail.com',
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
                     <tr>
                       <td align="center">
-                        <a href="${checkoutUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 48px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:0.5px;border:2px solid #0F3A20;transition:all 0.3s ease;">
+                        <a href="${paymentUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 48px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:0.5px;border:2px solid #0F3A20;transition:all 0.3s ease;">
                           Review & Accept Proposal
                         </a>
                       </td>
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     return Response.json({ 
       status: 'TEST_EMAIL_SENT', 
       case_id: mockCase.id,
-      checkout_url: checkoutUrl,
+      payment_url: paymentUrl,
       message: 'Test proposal email sent to theonmorales@gmail.com' 
     });
 

@@ -171,9 +171,9 @@ Deno.serve(async (req) => {
         profit: caseRecord.base_cost * markupPct
       });
 
-      // Send proposal email to client with absolute URL - route to payment checkout (HARDCODED)
+      // Send proposal email to client with absolute URL - route to NEW standalone payment page
       const appUrl = 'https://sentinel-dental-care.base44.app';
-      const checkoutUrl = `${appUrl}/portal-hub/checkout/${case_id}`;
+      const paymentUrl = `${appUrl}/pay/${case_id}`;
       
       await base44.integrations.Core.SendEmail({
         to: caseRecord.client_email,
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
 
                   <!-- CTA -->
                   <div class="cta-container">
-                    <a href="${checkoutUrl}" class="cta-button">Review & Accept Proposal</a>
+                    <a href="${paymentUrl}" class="cta-button">Review & Accept Proposal</a>
                   </div>
 
                   <p style="font-size: 13px; color: #6B7280; text-align: center; margin: 20px 0; font-style: italic;">Please review and confirm your package within 7 days to secure your dates.</p>
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
 
       return Response.json({ 
         status: 'PROPOSAL_SENT', 
-        checkout_url: checkoutUrl,
+        payment_url: paymentUrl,
         message: 'Proposal sent to client successfully' 
       });
     }
