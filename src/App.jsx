@@ -96,7 +96,7 @@ const AuthenticatedApp = () => {
         <Route path="/procedures" element={<Procedures />} />
 
         <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user", "travel_agency", "doctor", "taxi_service"]} />}>
-          <Route path="/portal-hub/checkout/:consultation_id" element={<PaymentCheckout />} />
+          <Route path="/portal-hub/checkout/:case_id" element={<PaymentCheckout />} />
           <Route path="/estimate/:estimate_id" element={<EstimateDashboard />} />
           <Route path="/visa-assist" element={<VisaAssist />} />
         </Route>

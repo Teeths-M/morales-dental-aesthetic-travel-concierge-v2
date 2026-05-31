@@ -9,86 +9,58 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Lock, Zap } from 'lucide-react';
 
 export default function PaymentCheckout() {
-  const { consultation_id, case_id } = useParams();
+  const { case_id } = useParams();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
 
-  // Accept either case_id or consultation_id from URL
-  const recordId = case_id || consultation_id;
-
-  // DEVELOPMENT FALLBACK: Mock data for testing
-  const mockConsultation = {
-    id: 'mock-consultation',
-    patient_name: 'Theon Morales',
-    procedure_interest: 'Dental Implants'
-  };
-
-  const mockPaymentPlan = {
-    id: 'mock-plan',
-    consultation_id: recordId,
-    total_package_cost: 5950,
-    final_cost: 6750
-  };
-
-  // Fetch CaseRecord if case_id is provided
-  const { data: caseRecord } = useQuery({
+  // Fetch CaseRecord directly
+  const { data: caseRecord, isLoading: isLoadingCase } = useQuery({
     queryKey: ['case_record', case_id],
     queryFn: () => base44.entities.CaseRecord.get(case_id),
     staleTime: Infinity,
     enabled: !!case_id
   });
 
-  // Use consultation_id from caseRecord if available, otherwise use URL param
-  const effectiveConsultationId = caseRecord?.consultation_id || consultation_id;
+  // Derive consultation and payment plan from CaseRecord
+  const consultation = caseRecord ? {
+    patient_name: caseRecord.client_name,
+    procedure_interest: caseRecord.procedures?.[0] || 'Procedure'
+  } : null;
 
-  const { data: consultation = mockConsultation } = useQuery({
-    queryKey: ['consultation', effectiveConsultationId],
-    queryFn: () => base44.entities.Consultation.get(effectiveConsultationId),
-    staleTime: Infinity
-  });
+  const paymentPlan = caseRecord ? {
+    id: caseRecord.id,
+    consultation_id: caseRecord.consultation_id,
+    total_package_cost: caseRecord.base_cost || 0,
+    final_cost: caseRecord.final_package_price || 0
+  } : null;
 
-  const { data: paymentPlan = mockPaymentPlan } = useQuery({
-    queryKey: ['payment_plan', effectiveConsultationId],
-    queryFn: async () => {
-      const plans = await base44.entities.PaymentPlan.filter({ consultation_id: effectiveConsultationId });
-      return plans[0];
-    },
-    staleTime: Infinity
-  });
-
-  const { data: quotes = [] } = useQuery({
-    queryKey: ['quotes', effectiveConsultationId],
-    queryFn: async () => {
-      const qr = await base44.entities.QuoteRequest.filter({ consultation_id: effectiveConsultationId });
-      const quoteIds = qr.map(q => q.id);
-      const allQuotes = await base44.entities.Quote.list();
-      return allQuotes.filter(q => quoteIds.includes(q.quote_request_id) && q.is_selected);
-    }
-  });
+  const quotes = [];
 
   const selectPlanMutation = useMutation({
     mutationFn: (plan_type) => 
       base44.functions.invoke('portalHubWorkflowEngine', {
         action: 'client_selects_payment_option',
-        consultation_id: effectiveConsultationId,
-        case_id: caseRecord?.id,
+        case_id: caseRecord.id,
         data: { plan_type }
       }),
     onSuccess: (res) => {
-      if (res.data.plan_type === 'full_payment') {
-        setShowPayment(true);
-      } else {
-        // Navigate to payment screen
-        setShowPayment(true);
-      }
+      setShowPayment(true);
     }
   });
 
-  if (!paymentPlan || !consultation) {
+  if (isLoadingCase) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!caseRecord) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center">
+        <div className="text-muted-foreground">Case not found</div>
       </div>
     );
   }
@@ -156,39 +128,31 @@ export default function PaymentCheckout() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between pb-2 border-b border-border">
                   <span className="text-muted-foreground">Doctor Fee</span>
-                  <span className="font-semibold">$5,200</span>
+                  <span className="font-semibold">${caseRecord.treatment_cost?.toLocaleString() || '0'}</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-border">
                   <span className="text-muted-foreground">Flights</span>
-                  <span className="font-semibold">$1,200</span>
+                  <span className="font-semibold">${caseRecord.flight_cost?.toLocaleString() || '0'}</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Hotel (5 nights)</span>
-                  <span className="font-semibold">$800</span>
+                  <span className="text-muted-foreground">Hotel</span>
+                  <span className="font-semibold">${caseRecord.hotel_cost?.toLocaleString() || '0'}</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-border">
                   <span className="text-muted-foreground">Transportation</span>
-                  <span className="font-semibold">$400</span>
+                  <span className="font-semibold">${(caseRecord.pickup_cost + caseRecord.dropoff_cost + caseRecord.local_transfer_cost)?.toLocaleString() || '0'}</span>
                 </div>
-                <div className="flex justify-between pb-4 border-b border-border">
-                   <span className="text-muted-foreground">Recovery Services</span>
-                   <span className="font-semibold">$300</span>
-                 </div>
                  <div className="flex justify-between pb-2 border-b border-border">
                    <span className="text-muted-foreground">Subtotal</span>
-                   <span className="font-semibold">${(paymentPlan.total_package_cost).toLocaleString()}</span>
+                   <span className="font-semibold">${caseRecord.base_cost?.toLocaleString() || '0'}</span>
                  </div>
                  <div className="flex justify-between pb-2 border-b border-border">
-                   <span className="text-muted-foreground">Platform Fee (35%)</span>
-                   <span className="font-semibold">${(paymentPlan.final_cost - paymentPlan.total_package_cost).toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between pb-2 border-b border-border">
-                   <span className="text-green-600 font-medium">Consultation Fee Credit</span>
-                   <span className="font-semibold text-green-600">-$49</span>
+                   <span className="text-muted-foreground">Platform Fee ({(caseRecord.markup_percentage * 100 || 35).toFixed(0)}%)</span>
+                   <span className="font-semibold">${caseRecord.profit?.toLocaleString() || '0'}</span>
                  </div>
                  <div className="flex justify-between text-base font-bold text-foreground pt-2">
                    <span>Total Package</span>
-                   <span>${(paymentPlan.final_cost - 49).toLocaleString()}</span>
+                   <span>${caseRecord.final_package_price?.toLocaleString() || '0'}</span>
                  </div>
 
                  {/* Fee Refund Reminder */}
