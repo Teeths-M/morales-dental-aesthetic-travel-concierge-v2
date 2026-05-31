@@ -167,7 +167,9 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
                 onClick={() => handleDateClick(date)}
                 onContextMenu={(e) => {
                   e.preventDefault();
-                  handleToggleAvailability(false, date);
+                  // Right-click to quickly mark as unavailable (desktop only)
+                  toggleAvailabilityMutation.mutate({ date, isAvailable: false });
+                  setSelectedDate(date);
                 }}
                 className={`
                   relative min-h-[80px] p-2 rounded-lg border transition-all
