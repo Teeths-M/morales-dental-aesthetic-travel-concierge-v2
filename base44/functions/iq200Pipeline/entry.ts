@@ -151,11 +151,13 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Case not found' }, { status: 404 });
       }
 
+      const markupPct = payload?.markup_percentage || caseRecord.markup_percentage || 0.35;
+
       // Update with approved markup
       await base44.entities.CaseRecord.update(case_id, {
-        markup_percentage: payload.markup_percentage,
-        final_package_price: caseRecord.base_cost * (1 + payload.markup_percentage),
-        profit: caseRecord.base_cost * payload.markup_percentage,
+        markup_percentage: markupPct,
+        final_package_price: caseRecord.base_cost * (1 + markupPct),
+        profit: caseRecord.base_cost * markupPct,
         status: 'Proposal-Sent'
       });
 
@@ -164,7 +166,9 @@ Deno.serve(async (req) => {
       
       await base44.entities.CaseRecord.update(case_id, {
         proposal_token: proposalToken,
-        proposal_sent_at: new Date().toISOString()
+        proposal_sent_at: new Date().toISOString(),
+        final_package_price: caseRecord.base_cost * (1 + markupPct),
+        profit: caseRecord.base_cost * markupPct
       });
 
       // Send proposal email to client with absolute URL - route to payment checkout
