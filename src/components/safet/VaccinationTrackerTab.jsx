@@ -7,11 +7,48 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
-export default function VaccinationTrackerTab() {
+export default function VaccinationTrackerTab({ procedureCountry }) {
   const [destination, setDestination] = useState('');
   const [completedVaccines, setCompletedVaccines] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newVaccine, setNewVaccine] = useState({ name: '', date: '' });
+
+  // Auto-set destination from procedure country
+  useEffect(() => {
+    if (procedureCountry) {
+      const countryMap = {
+        'Venezuela': 'venezuela',
+        'Dominican Republic': 'dominican_republic',
+        'Jamaica': 'jamaica',
+        'Bahamas': 'bahamas',
+        'Barbados': 'barbados',
+        'Trinidad and Tobago': 'trinidad_and_tobago',
+        'Puerto Rico': 'puerto_rico',
+        'Cayman Islands': 'cayman_islands',
+        'Aruba': 'aruba',
+        'Curaçao': 'curacao',
+        'Belize': 'belize',
+        'Antigua and Barbuda': 'antigua_and_barbuda',
+        'Grenada': 'grenada',
+        'Saint Lucia': 'saint_lucia',
+        'Saint Kitts and Nevis': 'saint_kitts_nevis',
+        'Dominica': 'dominica',
+        'Saint Vincent and the Grenadines': 'saint_vincent_grenadines',
+        'Turks and Caicos Islands': 'turks_caicos',
+        'Virgin Islands, U.S.': 'virgin_islands_us',
+        'Virgin Islands, British': 'virgin_islands_british',
+        'Guadeloupe': 'guadeloupe',
+        'Martinique': 'martinique',
+        'Montserrat': 'montserrat',
+        'Bonaire': 'bonaire',
+        'Sint Maarten': 'sint_maarten',
+      };
+      const mappedId = countryMap[procedureCountry];
+      if (mappedId) {
+        setDestination(mappedId);
+      }
+    }
+  }, [procedureCountry]);
 
   // Fetch vaccination requirements for destination
   const { data: requirements = {} } = useQuery({
@@ -80,28 +117,43 @@ export default function VaccinationTrackerTab() {
 
   return (
     <div className="space-y-6">
-      {/* Destination Selector */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-blue-700" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-800 text-sm">Travel Destination</h3>
-            <p className="text-xs text-slate-400">Select where you're traveling in the Caribbean</p>
+      {/* Destination Display */}
+      {procedureCountry ? (
+        <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-2xl border border-emerald-100 shadow-sm p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-emerald-700" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm">Procedure Destination</h3>
+              <p className="text-sm text-emerald-700 font-medium">{procedureCountry}</p>
+              <p className="text-xs text-slate-500">Vaccination requirements auto-loaded from your consultation</p>
+            </div>
           </div>
         </div>
-        <select
-          value={destination}
-          onChange={(e) => setDestination(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-sm"
-        >
-          <option value="">-- Select Caribbean Destination --</option>
-          {caribbeanDestinations.map(dest => (
-            <option key={dest.id} value={dest.id}>{dest.label}</option>
-          ))}
-        </select>
-      </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-blue-700" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 text-sm">Travel Destination</h3>
+              <p className="text-xs text-slate-400">Select where you're traveling in the Caribbean</p>
+            </div>
+          </div>
+          <select
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-sm"
+          >
+            <option value="">-- Select Caribbean Destination --</option>
+            {caribbeanDestinations.map(dest => (
+              <option key={dest.id} value={dest.id}>{dest.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {destination && requirements.country && (
         <>

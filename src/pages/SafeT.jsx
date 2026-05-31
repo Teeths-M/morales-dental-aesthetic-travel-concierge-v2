@@ -10,6 +10,8 @@ import JourneyTimelineTab from '@/components/safet/JourneyTimelineTab';
 import WellnessMonitorTab from '@/components/safet/WellnessMonitorTab';
 import VaccinationTrackerTab from '@/components/safet/VaccinationTrackerTab';
 import SupportTab from '@/components/safet/SupportTab';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 const getTabs = (language) => [
   { value: 'overview', label: language === 'es' ? 'Descripción' : language === 'fr' ? 'Aperçu' : 'Overview', icon: Shield },
@@ -26,6 +28,33 @@ const getTabs = (language) => [
 export default function SafeT() {
   const [activeTab, setActiveTab] = useState('overview');
   const [language, setLanguage] = useState('en');
+  const [userEmail, setUserEmail] = useState(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      } catch (e) {
+        console.error("Failed to fetch user email:", e);
+      }
+    };
+    getUser();
+  }, []);
+
+  const { data: consultation } = useQuery({
+    queryKey: ['latestConsultation', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return null;
+      const consultations = await base44.entities.Consultation.filter({ email: userEmail }, '-created_date', 1);
+      return consultations.length > 0 ? consultations[0] : null;
+    },
+    enabled: !!userEmail,
+  });
+
+  const procedureCountry = consultation?.procedure_country;
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -114,7 +143,7 @@ export default function SafeT() {
             {activeTab === 'procedure' && <ProcedureSafetyTab />}
             {activeTab === 'preparation' && <PreparationTab />}
             {activeTab === 'recovery' && <RecoveryTab />}
-            {activeTab === 'vaccination' && <VaccinationTrackerTab />}
+            {activeTab === 'vaccination' && <VaccinationTrackerTab procedureCountry={procedureCountry} />}
             {activeTab === 'wellness' && <WellnessMonitorTab />}
             {activeTab === 'support' && <SupportTab />}
           </motion.div>
