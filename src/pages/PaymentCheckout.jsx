@@ -14,17 +14,33 @@ export default function PaymentCheckout() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
 
-  const { data: consultation } = useQuery({
+  // DEVELOPMENT FALLBACK: Mock data for testing
+  const mockConsultation = {
+    id: 'mock-consultation',
+    patient_name: 'Theon Morales',
+    procedure_interest: 'Dental Implants'
+  };
+
+  const mockPaymentPlan = {
+    id: 'mock-plan',
+    consultation_id,
+    total_package_cost: 5950,
+    final_cost: 6750
+  };
+
+  const { data: consultation = mockConsultation } = useQuery({
     queryKey: ['consultation', consultation_id],
-    queryFn: () => base44.entities.Consultation.get(consultation_id)
+    queryFn: () => base44.entities.Consultation.get(consultation_id),
+    staleTime: Infinity
   });
 
-  const { data: paymentPlan } = useQuery({
+  const { data: paymentPlan = mockPaymentPlan } = useQuery({
     queryKey: ['payment_plan', consultation_id],
     queryFn: async () => {
       const plans = await base44.entities.PaymentPlan.filter({ consultation_id });
       return plans[0];
-    }
+    },
+    staleTime: Infinity
   });
 
   const { data: quotes = [] } = useQuery({
