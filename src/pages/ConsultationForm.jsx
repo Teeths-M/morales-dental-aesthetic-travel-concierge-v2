@@ -23,6 +23,12 @@ export default function ConsultationForm() {
     procedure_country: '',
     procedures: '',
     consultation_summary: '',
+    passport_number: '',
+    passport_issue_date: '',
+    passport_expiry_date: '',
+    preferred_date: '',
+    return_date: '',
+    number_of_companions: '0',
     medications: '',
     allergies: '',
     smoking_status: 'Never',
@@ -43,6 +49,8 @@ export default function ConsultationForm() {
       await base44.entities.Case.create({
         ...formData,
         procedures: [formData.procedures],
+        number_of_companions: parseInt(formData.number_of_companions) || 0,
+        has_companion: parseInt(formData.number_of_companions) > 0,
         status: 'Submitted',
         safe_t_result: 'PENDING'
       });
@@ -123,6 +131,74 @@ export default function ConsultationForm() {
                     <Input
                       value={formData.procedure_country}
                       onChange={(e) => handleChange('procedure_country', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Travel & Passport Information */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Travel & Passport Information</h3>
+                <p className="text-sm text-muted-foreground">This information is required for your travel agency to accurately price your package.</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Passport Number *</Label>
+                    <Input
+                      value={formData.passport_number}
+                      onChange={(e) => handleChange('passport_number', e.target.value)}
+                      placeholder="e.g., A12345678"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Number of Companions *</Label>
+                    <Select value={formData.number_of_companions} onValueChange={(v) => handleChange('number_of_companions', v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">0 – Travelling alone</SelectItem>
+                        <SelectItem value="1">1 companion</SelectItem>
+                        <SelectItem value="2">2 companions</SelectItem>
+                        <SelectItem value="3">3 companions</SelectItem>
+                        <SelectItem value="4">4 companions</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Passport Issue Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.passport_issue_date}
+                      onChange={(e) => handleChange('passport_issue_date', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Passport Expiry Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.passport_expiry_date}
+                      onChange={(e) => handleChange('passport_expiry_date', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Arrival Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.preferred_date}
+                      onChange={(e) => handleChange('preferred_date', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Return Date *</Label>
+                    <Input
+                      type="date"
+                      value={formData.return_date}
+                      onChange={(e) => handleChange('return_date', e.target.value)}
                       required
                     />
                   </div>
