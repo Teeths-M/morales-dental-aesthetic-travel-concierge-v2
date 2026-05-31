@@ -43,17 +43,17 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
   const toggleAvailabilityMutation = useMutation({
     mutationFn: async ({ date, isAvailable }) => {
       const existingRecord = availabilityRecords.find(r => r.date === format(date, 'yyyy-MM-dd'));
-      
+
       if (existingRecord) {
         await base44.entities.DoctorAvailability.update(existingRecord.id, {
-          is_available: !isAvailable
+          is_available: isAvailable
         });
       } else {
         await base44.entities.DoctorAvailability.create({
           doctor_id: doctorId,
           doctor_email: doctorEmail,
           date: format(date, 'yyyy-MM-dd'),
-          is_available: !isAvailable
+          is_available: isAvailable
         });
       }
     },
@@ -198,7 +198,7 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
 
         {/* Selected Date Actions */}
         {selectedDate && (
-          <div className="mt-6 p-4 bg-muted rounded-lg">
+          <div className="mt-6 p-4 bg-muted rounded-lg mb-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
