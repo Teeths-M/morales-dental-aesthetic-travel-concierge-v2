@@ -41,9 +41,14 @@ const formatProcedure = (raw) => {
   if (!raw) return 'Not specified';
   // Handle array (Case.procedures) or single string (Consultation.procedure_interest)
   if (Array.isArray(raw)) {
-    return raw.map(p => PROCEDURE_LABELS[p] || p.replace(/_/g, ' ')).join(', ');
+    return raw.map(p => {
+      const normalized = String(p).toLowerCase().replace(/\s+/g, '_');
+      return PROCEDURE_LABELS[normalized] || p.replace(/_/g, ' ');
+    }).join(', ');
   }
-  return PROCEDURE_LABELS[raw] || raw.replace(/_/g, ' ');
+  // Normalize: strip spaces, lowercase, replace spaces with underscores
+  const normalized = String(raw).toLowerCase().replace(/\s+/g, '_');
+  return PROCEDURE_LABELS[normalized] || raw.replace(/_/g, ' ');
 };
 
 const escapeHtml = (v) => String(v ?? '')

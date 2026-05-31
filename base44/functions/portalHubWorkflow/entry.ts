@@ -10,7 +10,46 @@ const escapeHtml = (value) => String(value ?? '')
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;');
 
-const formatProcedure = (value) => String(value || 'Procedure').replace(/_/g, ' ');
+const PROCEDURE_LABELS = {
+  dental_implants: 'Dental Implants',
+  all_on_4: 'All-on-4 / All-on-6',
+  porcelain_veneers: 'Porcelain Veneers',
+  smile_makeover: 'Smile Makeover',
+  bone_regeneration: 'Bone Regeneration',
+  teeth_whitening: 'Teeth Whitening & Cosmetic Dentistry',
+  rhinoplasty: 'Rhinoplasty (Nose Reshaping)',
+  breast_surgery: 'Breast Augmentation / Reduction / Lift',
+  liposuction: 'Liposuction',
+  tummy_tuck: 'Abdominoplasty (Tummy Tuck)',
+  facelift: 'Facelift',
+  brow_lift: 'Brow Lift',
+  blepharoplasty: 'Eyelid Surgery (Blepharoplasty)',
+  otoplasty: 'Otoplasty (Ear Reshaping)',
+  thigh_arm_lift: 'Thigh Lift / Arm Lift',
+  laser_resurfacing: 'Skin Rejuvenation (Laser Resurfacing)',
+  mole_removal: 'Mole Removal (Skin Nevus)',
+  lipoma_removal: 'Lipoma Removal',
+  gastric_sleeve: 'Gastric Sleeve (Sleeve Gastrectomy)',
+  gastric_bypass: 'Gastric Bypass (Roux-en-Y)',
+  gastric_band_revision: 'Gastric Band Removal / Revision',
+  gynecological_exams: 'Gynecological Diagnostic Exams',
+  ivf: 'IVF (In Vitro Fertilization)',
+  egg_freezing: 'Fertility Preservation (Egg Freezing)',
+  oncology_surgery: 'Oncological Surgical Procedures',
+  tumor_testing: 'Tumor Marker & Blood Panel Testing',
+  joint_replacement: 'Joint Replacement (Hip & Knee)',
+  spine_surgery: 'Spine Surgery',
+  sports_arthroscopy: 'Sports Injuries & Arthroscopy',
+  fracture_surgery: 'Fracture Management & Trauma Surgery',
+  other: 'Other / Not Sure',
+};
+
+const formatProcedure = (raw) => {
+  if (!raw) return 'Not specified';
+  // Normalize: strip spaces, lowercase, replace spaces with underscores
+  const normalized = String(raw).toLowerCase().replace(/\s+/g, '_');
+  return PROCEDURE_LABELS[normalized] || raw.replace(/_/g, ' ');
+};
 
 const normalizeRiskLevel = (value) => {
   const normalized = String(value || 'low').toLowerCase();
