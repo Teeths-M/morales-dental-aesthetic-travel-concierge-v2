@@ -82,7 +82,9 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
   };
 
   const handleDateClick = (date) => {
-    setSelectedDate(date);
+    // Left click - mark as available
+    const availability = getAvailabilityStatus(date);
+    handleToggleAvailability(true, date);
   };
 
   const handleToggleAvailability = (isAvailable, dateOverride = null) => {
@@ -166,7 +168,7 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
                 onClick={() => handleDateClick(date)}
                 onContextMenu={(e) => {
                   e.preventDefault();
-                  handleToggleAvailability(!availability === 'available', date);
+                  handleToggleAvailability(false, date);
                 }}
                 className={`
                   relative min-h-[80px] p-2 rounded-lg border transition-all
