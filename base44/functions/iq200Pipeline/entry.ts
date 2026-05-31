@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
           doctor_email: 'rosedentalspa@gmail.com',
           clinic_selected: 'Dental Spa Margarita',
           procedure_country: 'Venezuela',
-          treatment_cost: 20,
+          treatment_cost: 60,
           status: 'Doctor-Pending',
           doctor_confirmation_status: 'PENDING',
           doctor_notified_at: new Date().toISOString(),
