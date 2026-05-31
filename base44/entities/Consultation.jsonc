@@ -136,6 +136,34 @@
       "default": 0,
       "description": "Number of additional persons travelling with the client"
     },
+    "companions_details": {
+      "type": "array",
+      "description": "Passport and relationship details for each travelling companion",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Companion full name as on passport"
+          },
+          "relationship": {
+            "type": "string",
+            "description": "Relationship to patient"
+          },
+          "passport_number": {
+            "type": "string"
+          },
+          "passport_issue_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "passport_expiry_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    },
     "travel_buddy_services": {
       "type": "array",
       "items": {
