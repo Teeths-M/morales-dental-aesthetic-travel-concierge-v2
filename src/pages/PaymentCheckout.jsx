@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Lock, Zap } from 'lucide-react';
+import { CheckCircle2, Lock, Zap, Plane, Sparkles } from 'lucide-react';
 
 // Fallback mock data for Dr. Rossanna $60 package
 const MOCK_CASE = {
@@ -31,20 +31,42 @@ const MOCK_CASE = {
 
 export default function PaymentCheckout() {
   const { case_id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  // Fetch CaseRecord directly, fallback to mock data if not found
+  // Extract token from URL query param
+  const proposalToken = searchParams.get('token');
+
+  // Fetch CaseRecord: prioritize token, then case_id, fallback to mock
   const { data: caseRecord, isLoading: isLoadingCase } = useQuery({
-    queryKey: ['case_record', case_id],
+    queryKey: ['case_record', case_id, proposalToken],
     queryFn: async () => {
-      if (!case_id) return MOCK_CASE;
-      try {
-        return await base44.entities.CaseRecord.get(case_id);
-      } catch (error) {
-        return MOCK_CASE;
+      // Try token-based lookup first
+      if (proposalToken) {
+        try {
+          const res = await base44.functions.invoke('iq200Pipeline', {
+            action: 'get_case',
+            payload: { token: proposalToken, type: 'proposal' }
+          });
+          if (res.data?.case) return res.data.case;
+        } catch (error) {
+          console.error('Token lookup failed:', error);
+        }
       }
+      
+      // Try case_id lookup
+      if (case_id) {
+        try {
+          return await base44.entities.CaseRecord.get(case_id);
+        } catch (error) {
+          console.error('Case ID lookup failed:', error);
+        }
+      }
+      
+      // Fallback to mock data
+      return MOCK_CASE;
     },
     staleTime: Infinity
   });
@@ -65,14 +87,34 @@ export default function PaymentCheckout() {
   const quotes = [];
 
   const selectPlanMutation = useMutation({
-    mutationFn: (plan_type) => 
-      base44.functions.invoke('portalHubWorkflowEngine', {
-        action: 'client_selects_payment_option',
-        case_id: caseRecord.id,
-        data: { plan_type }
-      }),
+    mutationFn: async (plan_type) => {
+      if (!proposalToken && !caseRecord?.proposal_token) {
+        throw new Error('No proposal token available');
+      }
+      
+      const token = proposalToken || caseRecord.proposal_token;
+      
+      // Map plan_type to deposit_option format expected by backend
+      const depositOption = plan_type === 'full_payment' ? 'Full' : 
+                           plan_type === 'deposit_50' ? '50%' : '25%';
+      
+      const res = await base44.functions.invoke('iq200Pipeline', {
+        action: 'process_payment',
+        payload: { 
+          token: token,
+          deposit_option: depositOption
+        }
+      });
+      
+      if (!res.data?.success) {
+        throw new Error(res.data?.error || 'Payment processing failed');
+      }
+      
+      return res.data;
+    },
     onSuccess: (res) => {
-      setShowPayment(true);
+      setPaymentSuccess(true);
+      setSelectedPlan(null);
     }
   });
 
@@ -80,6 +122,63 @@ export default function PaymentCheckout() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Success state
+  if (paymentSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-8 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-2xl w-full"
+        >
+          <Card className="p-12 text-center bg-white border-green-200">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6"
+            >
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            </motion.div>
+            
+            <h1 className="font-display text-3xl text-foreground mb-4">Payment Confirmed!</h1>
+            
+            <p className="text-muted-foreground mb-8">
+              Thank you, <strong>{caseRecord.client_name}</strong>. Your {caseRecord.procedures?.[0] || 'procedure'} package is now confirmed.
+            </p>
+
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
+              <div className="flex items-start gap-3">
+                <Plane className="w-5 h-5 text-green-600 mt-0.5" />
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-green-800 mb-2">Your travel itinerary is being prepared</p>
+                  <p className="text-sm text-green-700">
+                    A comprehensive confirmation email with all details (flights, hotel, transfers, and procedure schedule) is on its way to <strong>{caseRecord.client_email}</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <p>✓ Doctor has been notified to confirm your procedure date</p>
+              <p>✓ Travel agency is booking your flights and hotel</p>
+              <p>✓ Airport transfers are being arranged</p>
+              <p>✓ Your dedicated coordinator will contact you within 24 hours</p>
+            </div>
+
+            <Button
+              variant="outline"
+              className="mt-8"
+              onClick={() => navigate('/')}
+            >
+              Return to Home
+            </Button>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -175,11 +274,14 @@ export default function PaymentCheckout() {
                  </div>
 
                  {/* Fee Refund Reminder */}
-                 <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                   <p className="text-xs text-emerald-800 leading-relaxed">
-                     <span className="font-semibold">✓ Good news!</span> Your $49 consultation fee has been applied as a credit above. You've already paid it—no additional charges here.
-                   </p>
-                 </div>
+                 {caseRecord.consultation_fee_paid && (
+                   <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                     <p className="text-xs text-emerald-800 leading-relaxed">
+                       <Sparkles className="w-3 h-3 inline mr-1" />
+                       <span className="font-semibold"> Morales Luxury Credit Applied:</span> Your ${caseRecord.consultation_fee_amount || 49} consultation retainer has been fully refunded and credited to your package total.
+                     </p>
+                   </div>
+                 )}
               </div>
             </Card>
 
