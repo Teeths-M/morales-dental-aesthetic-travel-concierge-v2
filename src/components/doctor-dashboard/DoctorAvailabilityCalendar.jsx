@@ -92,9 +92,16 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
     }, 100);
   };
 
-  const handleToggleAvailability = (isAvailable) => {
-    if (selectedDate) {
-      toggleAvailabilityMutation.mutate({ date: selectedDate, isAvailable });
+  const handleToggleAvailability = (isAvailable, dateOverride = null) => {
+    const targetDate = dateOverride || selectedDate;
+    if (!targetDate) return;
+    
+    toggleAvailabilityMutation.mutate({ date: targetDate, isAvailable });
+    
+    // Update selected date if clicking on a different date
+    if (dateOverride) {
+      setSelectedDate(targetDate);
+    } else {
       setSelectedDate(null);
     }
   };
@@ -164,6 +171,10 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
               <button
                 key={index}
                 onClick={() => handleDateClick(date)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  handleToggleAvailability(!availability === 'available', date);
+                }}
                 className={`
                   relative min-h-[80px] p-2 rounded-lg border transition-all
                   ${!isSameMonth(date, currentMonth) ? 'bg-muted/50 text-muted-foreground' : 'bg-background'}
