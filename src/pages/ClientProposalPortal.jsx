@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { useParams } from 'react-router-dom';
 import { CheckCircle2, Clock, Shield, CreditCard, Sparkles, Lock, AlertCircle, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,15 +23,13 @@ const PIPELINE_STAGES = [
 ];
 
 export default function ClientProposalPortal() {
+  const { token } = useParams();
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [depositChoice, setDepositChoice] = useState(null);
   const [paying, setPaying] = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
 
   useEffect(() => {
     if (!token) { setError('No proposal token found.'); setLoading(false); return; }
