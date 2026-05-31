@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
+import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -142,6 +143,7 @@ export default function DoctorDashboard() {
             <div className="border-b border-border px-8 pt-6">
               <TabsList className="mb-0">
                 <TabsTrigger value="profile">My Profile</TabsTrigger>
+                <TabsTrigger value="availability">Availability Calendar</TabsTrigger>
                 <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
                 <TabsTrigger value="pricing">My Pricing</TabsTrigger>
               </TabsList>
@@ -384,6 +386,10 @@ export default function DoctorDashboard() {
                   )}
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="availability" className="p-8">
+              <DoctorAvailabilityCalendar doctorEmail={doctor.email} doctorId={doctor.id} />
             </TabsContent>
 
             <TabsContent value="portfolio" className="p-8">
