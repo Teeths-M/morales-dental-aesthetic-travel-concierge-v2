@@ -130,7 +130,7 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-48">
         {/* Legend */}
         <div className="flex gap-4 mb-4 text-sm">
           <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
 
         {/* Selected Date Actions */}
         {selectedDate && (
-          <div className="sticky bottom-0 left-0 right-0 mt-6 p-4 bg-muted rounded-lg rounded-b-none border-t border-border" id="selected-date-panel">
+          <div className="sticky bottom-0 left-0 right-0 mt-6 p-4 bg-muted rounded-lg rounded-b-none border-t border-border shadow-lg z-10" id="selected-date-panel">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
