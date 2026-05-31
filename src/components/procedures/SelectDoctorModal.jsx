@@ -122,7 +122,6 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
                         <MapPin className="w-3 h-3" />
                         <span>{price.clinic_city}, {price.clinic_country}</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-1 capitalize">{price.specialty_expertise_level} level</p>
                       
                       {/* Available Dates */}
                       {price.available_dates && price.available_dates.length > 0 && (
