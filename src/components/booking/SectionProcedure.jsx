@@ -1,23 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addMonths, isBefore } from 'date-fns';
 import CapacityGate from './CapacityGate';
 import TravelTimelineCard from './TravelTimelineCard';
 import { useCart } from '@/context/CartContext';
 
 const procedures = [
-  // Dental
   { group: '🦷 Dental', value: 'dental_implants', label: 'Dental Implants' },
   { group: '🦷 Dental', value: 'all_on_4', label: 'All-on-4 / All-on-6' },
   { group: '🦷 Dental', value: 'porcelain_veneers', label: 'Porcelain Veneers' },
   { group: '🦷 Dental', value: 'smile_makeover', label: 'Smile Makeover' },
   { group: '🦷 Dental', value: 'bone_regeneration', label: 'Bone Regeneration' },
   { group: '🦷 Dental', value: 'teeth_whitening', label: 'Teeth Whitening & Cosmetic Dentistry' },
-  // Cosmetic Surgery
   { group: '✨ Cosmetic Surgery', value: 'rhinoplasty', label: 'Rhinoplasty (Nose Reshaping)' },
   { group: '✨ Cosmetic Surgery', value: 'breast_surgery', label: 'Breast Augmentation / Reduction / Lift' },
   { group: '✨ Cosmetic Surgery', value: 'liposuction', label: 'Liposuction' },
@@ -30,18 +27,14 @@ const procedures = [
   { group: '✨ Cosmetic Surgery', value: 'laser_resurfacing', label: 'Skin Rejuvenation (Laser Resurfacing)' },
   { group: '✨ Cosmetic Surgery', value: 'mole_removal', label: 'Mole Removal (Skin Nevus)' },
   { group: '✨ Cosmetic Surgery', value: 'lipoma_removal', label: 'Lipoma Removal' },
-  // Bariatric
   { group: '⚖️ Weight Loss & Bariatric', value: 'gastric_sleeve', label: 'Gastric Sleeve (Sleeve Gastrectomy)' },
   { group: '⚖️ Weight Loss & Bariatric', value: 'gastric_bypass', label: 'Gastric Bypass (Roux-en-Y)' },
   { group: '⚖️ Weight Loss & Bariatric', value: 'gastric_band_revision', label: 'Gastric Band Removal / Revision' },
-  // Fertility
   { group: '🌸 Fertility & Gynecology', value: 'gynecological_exams', label: 'Gynecological Diagnostic Exams' },
   { group: '🌸 Fertility & Gynecology', value: 'ivf', label: 'IVF (In Vitro Fertilization)' },
   { group: '🌸 Fertility & Gynecology', value: 'egg_freezing', label: 'Fertility Preservation (Egg Freezing)' },
-  // Oncology
   { group: '🎗️ Cancer Care', value: 'oncology_surgery', label: 'Oncological Surgical Procedures' },
   { group: '🎗️ Cancer Care', value: 'tumor_testing', label: 'Tumor Marker & Blood Panel Testing' },
-  // Orthopedic
   { group: '🦴 Orthopedic Surgery', value: 'joint_replacement', label: 'Joint Replacement (Hip & Knee)' },
   { group: '🦴 Orthopedic Surgery', value: 'spine_surgery', label: 'Spine Surgery' },
   { group: '🦴 Orthopedic Surgery', value: 'sports_arthroscopy', label: 'Sports Injuries & Arthroscopy' },
@@ -49,44 +42,14 @@ const procedures = [
   { group: '', value: 'other', label: 'Other / Not Sure' },
 ];
 
+const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
 export default function SectionProcedure({ form, update }) {
-  const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(
-    form.preferred_date ? new Date(form.preferred_date) : new Date()
+    form.preferred_date ? new Date(form.preferred_date + 'T12:00:00') : new Date()
   );
-  const [calendarPos, setCalendarPos] = useState({ top: 0, left: 0, width: 0 });
-  const triggerRef = useRef(null);
   const { items } = useCart();
 
-  useEffect(() => {
-    if (showCalendar && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const calHeight = 480;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const top = spaceBelow >= calHeight
-        ? rect.bottom + 8
-        : rect.top - calHeight - 8;
-      setCalendarPos({
-        top,
-        left: Math.min(rect.left, window.innerWidth - Math.min(rect.width, 384) - 8),
-        width: rect.width,
-      });
-    }
-  }, [showCalendar]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!showCalendar) return;
-    const handler = (e) => {
-      if (triggerRef.current && !triggerRef.current.contains(e.target)) {
-        setShowCalendar(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showCalendar]);
-
-  // Sundays (0) and Thursdays (4) are LOGISTICS days — blocked for procedure booking
   const isDisabledDate = (date) => {
     const day = date.getDay();
     return day === 0 || day === 4;
@@ -122,182 +85,123 @@ export default function SectionProcedure({ form, update }) {
         dateObj = new Date(year, month, dayNumber);
         isCurrentMonth = true;
       }
-      cells.push({
-        day: dayNumber,
-        date: dateObj,
-        isCurrentMonth,
-        isDisabled: isDisabledDate(dateObj),
-        isPast: isPastDate(dateObj),
-      });
+      cells.push({ day: dayNumber, date: dateObj, isCurrentMonth, isDisabled: isDisabledDate(dateObj), isPast: isPastDate(dateObj) });
     }
     return cells;
   };
 
   const calendarDays = buildCalendarDays();
 
-  const getParsedDate = (dateStr) => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);
+  const toDateStr = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const handleDayClick = (cell) => {
+    if (!cell.isCurrentMonth || cell.isPast || cell.isDisabled) return;
+    update('preferred_date', toDateStr(cell.date));
   };
 
   const displayDate = form.preferred_date
-    ? format(getParsedDate(form.preferred_date), 'MMM d, yyyy')
-    : '';
+    ? format(new Date(form.preferred_date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')
+    : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-lg">🏥</span>
         <h3 className="font-display text-lg text-foreground">Procedure & Date</h3>
       </div>
 
+      {/* Inline Calendar */}
       <div>
-        <Label>Preferred Consultation Date <span className="text-destructive">*</span></Label>
-        <div className="relative mt-1.5" ref={triggerRef}>
-          <motion.button
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white border border-border rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-foreground"
-            whileHover={{ y: -1 }}
-          >
-            <span className="text-sm font-medium">{displayDate || 'Select a date'}</span>
-            <Calendar className="w-5 h-5 text-muted-foreground" />
-          </motion.button>
+        <Label className="text-sm font-semibold mb-3 block">
+          Preferred Consultation Date <span className="text-destructive">*</span>
+        </Label>
 
-          <AnimatePresence>
-            {showCalendar && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                style={{
-                  position: 'fixed',
-                  top: calendarPos.top,
-                  left: calendarPos.left,
-                  width: Math.min(calendarPos.width, 360),
-                  zIndex: 9999,
-                  maxHeight: '80vh',
-                  overflowY: 'auto',
-                }}
-                className="bg-white border border-border rounded-2xl shadow-xl p-6 max-h-[80vh] overflow-y-auto"
+        <div className="border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
+          {/* Month navigation */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-slate-50">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
+              className="h-8 w-8 rounded-full hover:bg-slate-200"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <h4 className="font-display text-base font-semibold text-foreground">
+              {format(currentMonth, 'MMMM yyyy')}
+            </h4>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              className="h-8 w-8 rounded-full hover:bg-slate-200"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 border-b border-border">
+            {DAY_LABELS.map((day) => (
+              <div
+                key={day}
+                className={`py-2 text-center text-xs font-semibold ${
+                  day === 'Su' || day === 'Th' ? 'text-red-400' : 'text-muted-foreground'
+                }`}
               >
-                {/* Month Header */}
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
-                    className="h-8 w-8 rounded-full"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <h4 className="font-display text-lg text-foreground">
-                    {format(currentMonth, 'MMMM yyyy')}
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                    className="h-8 w-8 rounded-full"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+                {day}
+              </div>
+            ))}
+          </div>
 
-                {/* Day labels — Su and Th visually greyed to hint they're blocked */}
-                <div className="grid grid-cols-7 gap-2 mb-3 text-center">
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                    <div
-                      key={day}
-                      className={`text-xs font-semibold py-2 ${
-                        day === 'Su' || day === 'Th'
-                          ? 'text-red-300'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 p-3 gap-1">
+            {calendarDays.map((cell, idx) => {
+              const isSelected = form.preferred_date && toDateStr(cell.date) === form.preferred_date;
+              const canSelect = cell.isCurrentMonth && !cell.isPast && !cell.isDisabled;
 
-                {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1 mb-6">
-                  {calendarDays.map((cell, idx) => {
-                    const isSelected =
-                      form.preferred_date &&
-                      `${cell.date.getFullYear()}-${String(cell.date.getMonth() + 1).padStart(2, '0')}-${String(cell.date.getDate()).padStart(2, '0')}` ===
-                        form.preferred_date;
-                    const canSelect =
-                      cell.isCurrentMonth && !cell.isPast && !cell.isDisabled;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleDayClick(cell)}
+                  disabled={!canSelect}
+                  className={`
+                    aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all
+                    ${!cell.isCurrentMonth
+                      ? 'text-muted-foreground/20 cursor-default'
+                      : isSelected
+                      ? 'bg-primary text-primary-foreground shadow-md font-semibold'
+                      : cell.isPast
+                      ? 'text-muted-foreground/30 cursor-not-allowed'
+                      : cell.isDisabled
+                      ? 'text-red-300 cursor-not-allowed line-through'
+                      : 'hover:bg-primary/10 hover:text-primary cursor-pointer text-foreground'
+                    }
+                  `}
+                >
+                  {cell.day}
+                </button>
+              );
+            })}
+          </div>
 
-                    const handleClick = () => {
-                      if (!canSelect) return;
-                      const y = cell.date.getFullYear();
-                      const m = String(cell.date.getMonth() + 1).padStart(2, '0');
-                      const d = String(cell.date.getDate()).padStart(2, '0');
-                      update('preferred_date', `${y}-${m}-${d}`);
-                      setShowCalendar(false);
-                    };
+          {/* Selected date pill */}
+          <div className="px-4 pb-3">
+            <div className={`rounded-xl px-4 py-2.5 text-sm text-center font-medium transition-all ${
+              displayDate
+                ? 'bg-primary/10 text-primary border border-primary/20'
+                : 'bg-muted/40 text-muted-foreground border border-transparent'
+            }`}>
+              {displayDate ? `✅ ${displayDate}` : 'No date selected — tap a date above'}
+            </div>
+          </div>
 
-                    return (
-                      <motion.button
-                        key={idx}
-                        onClick={handleClick}
-                        disabled={!canSelect}
-                        whileHover={canSelect ? { scale: 1.05 } : {}}
-                        className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
-                          !cell.isCurrentMonth
-                            ? 'text-muted-foreground/20 bg-transparent cursor-default'
-                            : isSelected
-                            ? 'bg-foreground text-primary-foreground shadow-md font-semibold'
-                            : cell.isPast
-                            ? 'text-muted-foreground/30 bg-muted/20 cursor-not-allowed opacity-40'
-                            : cell.isDisabled
-                            ? 'text-red-300 bg-red-50 cursor-not-allowed opacity-50 line-through'
-                            : 'bg-white border border-border hover:bg-sky-50 hover:border-sky-400 cursor-pointer'
-                        }`}
-                      >
-                        {cell.day}
-                      </motion.button>
-                    );
-                  })}
-                </div>
-
-                {/* Selected date display */}
-                <div className="bg-muted/30 rounded-lg p-2.5 text-center text-sm font-medium text-foreground mb-4 min-h-10 flex items-center justify-center">
-                  {displayDate ? `✅ ${displayDate}` : 'No date selected'}
-                </div>
-
-                {/* Info message */}
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4 text-xs text-yellow-800">
-                  ✈️ <strong>Sundays & Thursdays</strong> are reserved for flight logistics and cannot be booked as procedure dates.
-                </div>
-
-                {/* Footer buttons */}
-                <div className="flex items-center justify-between gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setShowCalendar(false); update('preferred_date', ''); }}
-                    className="flex-1"
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowCalendar(false)}
-                    disabled={!displayDate}
-                    className="flex-1"
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Logistics note */}
+          <div className="mx-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-xs text-yellow-800">
+            ✈️ <strong>Sundays & Thursdays</strong> are reserved for flight logistics and cannot be booked as procedure dates.
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Sundays & Thursdays are unavailable — reserved for flight logistics.
-        </p>
       </div>
 
       {form.preferred_date && <CapacityGate form={form} />}
