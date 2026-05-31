@@ -128,8 +128,6 @@ Deno.serve(async (req) => {
           
           <p>Your complete medical travel package is ready for review:</p>
           <ul>
-            <li><strong>Procedure:</strong> ${caseRecord.procedures.join(', ')}</li>
-            <li><strong>Destination:</strong> ${caseRecord.procedure_country}</li>
             <li><strong>Total Package Price:</strong> $${caseRecord.final_package_price.toFixed(2)}</li>
           </ul>
           
