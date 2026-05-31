@@ -40,9 +40,9 @@ Deno.serve(async (req) => {
       proposal_sent_at: new Date().toISOString()
     });
 
-    // Send proposal email with absolute URL
+    // Send proposal email - route to payment checkout
     const appUrl = Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app';
-    const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
+    const checkoutUrl = `${appUrl}/portal-hub/checkout/${mockCase.id}`;
     
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: 'theonmorales@gmail.com',
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                     <tr>
                       <td align="center">
-                        <a href="${proposalUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 32px;border-radius:999px;font-size:14px;font-weight:700;">
+                        <a href="${checkoutUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 32px;border-radius:999px;font-size:14px;font-weight:700;">
                           Review & Accept Proposal →
                         </a>
                       </td>
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     return Response.json({ 
       status: 'TEST_EMAIL_SENT', 
       case_id: mockCase.id,
-      proposal_url: proposalUrl,
+      checkout_url: checkoutUrl,
       message: 'Test proposal email sent to theonmorales@gmail.com' 
     });
 

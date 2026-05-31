@@ -167,9 +167,9 @@ Deno.serve(async (req) => {
         proposal_sent_at: new Date().toISOString()
       });
 
-      // Send proposal email to client with absolute URL
+      // Send proposal email to client with absolute URL - route to payment checkout
       const appUrl = Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app';
-      const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
+      const checkoutUrl = `${appUrl}/portal-hub/checkout/${case_id}`;
       
       await base44.integrations.Core.SendEmail({
         to: caseRecord.client_email,
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
             <li>All airport and clinic transfers</li>
           </ul>
           
-          <a href="${proposalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+          <a href="${checkoutUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
             Review & Accept Proposal
           </a>
           
@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
 
       return Response.json({ 
         status: 'PROPOSAL_SENT', 
-        proposal_url: proposalUrl,
+        checkout_url: checkoutUrl,
         message: 'Proposal sent to client successfully' 
       });
     }
