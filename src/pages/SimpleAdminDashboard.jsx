@@ -28,36 +28,20 @@ export default function SimpleAdminDashboard() {
     { path: '/admin/portal-viewer', label: 'Portal Viewer', icon: Eye },
   ];
 
-  // Fetch active cases (excluding Completed)
-  const { data: activeCases = [], isLoading: loadingActive } = useQuery({
-    queryKey: ['admin_active_cases'],
+  // Fetch all cases in a single query for better performance
+  const { data: allCases = [], isLoading } = useQuery({
+    queryKey: ['admin_all_cases'],
     queryFn: async () => {
-      const result = await base44.entities.CaseRecord.filter({
-        status: 'Travel-Coordination'
-      });
-      const readyCases = await base44.entities.CaseRecord.filter({
-        status: 'Ready-For-Travel'
-      });
-      const inProgressCases = await base44.entities.CaseRecord.filter({
-        status: 'Procedure-In-Progress'
-      });
-      const recoveryCases = await base44.entities.CaseRecord.filter({
-        status: 'Recovery'
-      });
-      return [...(result || []), ...(readyCases || []), ...(inProgressCases || []), ...(recoveryCases || [])];
-    },
-  });
-
-  // Fetch completed cases (archived)
-  const { data: completedCases = [], isLoading: loadingCompleted } = useQuery({
-    queryKey: ['admin_completed_cases'],
-    queryFn: async () => {
-      const result = await base44.entities.CaseRecord.filter({
-        status: 'Completed'
-      });
+      const result = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
       return result || [];
     },
   });
+
+  // Derive active and completed cases from the single query
+  const activeCases = allCases.filter(c => c.status !== 'Completed');
+  const completedCases = allCases.filter(c => c.status === 'Completed');
+  const loadingActive = isLoading;
+  const loadingCompleted = isLoading;
 
   const getStatusBadge = (status) => {
     const configs = {
