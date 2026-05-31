@@ -126,18 +126,148 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 5. Send confirmation to patient
+    // 5. Send confirmation to patient - LUXURY CONCIERGE TEMPLATE
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: caseRecord.client_email,
-      subject: `[MOCK TEST] Payment Confirmed - Your Medical Travel Journey`,
+      subject: `Your Medical Travel Journey Begins - Payment Confirmed`,
       body: `
-        <h2>🧪 MOCK TEST - Payment Confirmed!</h2>
-        <p>Dear ${caseRecord.client_name},</p>
-        <p><strong style="color: #dc2626;">This is a TEST email. No payment was actually processed.</strong></p>
-        <p>Your mock payment of <strong>${deposit_option}</strong> has been processed.</p>
-        <p><strong>Total Package:</strong> $${caseRecord.final_package_price}</p>
-        <p>All partner notifications have been triggered for testing purposes.</p>
-        <p>Best regards,<br/>IQ200 Medical Travel Team (TEST MODE)</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin:0; padding:0; background: linear-gradient(135deg, #f5f7f4 0%, #e8eceb 100%); font-family: 'Segoe UI', -apple-system, sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f5f7f4 0%, #e8eceb 100%);">
+            <tr>
+              <td align="center" style="padding: 48px 20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 640px; background: #ffffff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden;">
+                  
+                  <!-- LUXURY HEADER -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #0F3A20 0%, #1a5c3a 100%); padding: 48px 40px; text-align: center;">
+                      <div style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: 2px; margin-bottom: 8px;">MORALES</div>
+                      <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600;">Dental & Aesthetic Travel Concierge</div>
+                      <div style="margin-top: 20px; font-size: 18px; font-style: italic; color: #f0f0f0; font-weight: 300;">Your Journey Begins Here, ${caseRecord.client_name}.</div>
+                    </td>
+                  </tr>
+
+                  <!-- MAIN CONTENT -->
+                  <tr>
+                    <td style="padding: 48px 40px;">
+                      
+                      <!-- GREETING -->
+                      <div style="margin-bottom: 32px;">
+                        <p style="margin: 0 0 8px 0; font-size: 16px; color: #374151; line-height: 1.6;">Dear ${caseRecord.client_name},</p>
+                        <p style="margin: 0; font-size: 18px; font-weight: 600; color: #0F3A20; line-height: 1.6;">Your payment has been successfully processed. Your luxury medical travel experience is now secured.</p>
+                      </div>
+
+                      <!-- PROCEDURE CARD -->
+                      <div style="margin: 32px 0; padding: 24px; background: linear-gradient(135deg, rgba(15,58,32,0.05), rgba(197,160,89,0.05)); border-left: 4px solid #0F3A20; border-radius: 8px;">
+                        <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; margin-bottom: 8px; font-weight: 700;">Your Procedure</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #0F3A20; margin-bottom: 8px;">${(caseRecord.procedures || ['Your Procedure']).join(' + ')}</div>
+                        <div style="font-size: 14px; color: #4B5563;">Performed in ${caseRecord.procedure_country} by our vetted specialist network</div>
+                      </div>
+
+                      <!-- LOGISTICS CARDS -->
+                      <div style="margin: 32px 0;">
+                        <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; margin-bottom: 16px; font-weight: 700;">Your Complete Itinerary</div>
+                        
+                        <!-- Flight Card -->
+                        <div style="margin-bottom: 16px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                          <div style="display: flex; align-items: flex-start;">
+                            <div style="font-size: 24px; margin-right: 16px;">✈️</div>
+                            <div>
+                              <div style="font-weight: 700; color: #0F3A20; margin-bottom: 4px; font-size: 14px;">Premium Flights</div>
+                              <div style="font-size: 13px; color: #6B7280;">Round-trip international flights with selected routing</div>
+                              <div style="font-size: 13px; color: #0F3A20; font-weight: 600; margin-top: 8px;">Investment: $${caseRecord.flight_cost?.toLocaleString() || '0'}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Hotel Card -->
+                        <div style="margin-bottom: 16px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                          <div style="display: flex; align-items: flex-start;">
+                            <div style="font-size: 24px; margin-right: 16px;">🏨</div>
+                            <div>
+                              <div style="font-weight: 700; color: #0F3A20; margin-bottom: 4px; font-size: 14px;">Luxury Accommodation</div>
+                              <div style="font-size: 13px; color: #6B7280;">Premium hotel located near your treatment facility</div>
+                              <div style="font-size: 13px; color: #0F3A20; font-weight: 600; margin-top: 8px;">Investment: $${caseRecord.hotel_cost?.toLocaleString() || '0'}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Transfer Card -->
+                        <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                          <div style="display: flex; align-items: flex-start;">
+                            <div style="font-size: 24px; margin-right: 16px;">🚗</div>
+                            <div>
+                              <div style="font-weight: 700; color: #0F3A20; margin-bottom: 4px; font-size: 14px;">Private Airport Transfers</div>
+                              <div style="font-size: 13px; color: #6B7280;">Dedicated luxury ground transportation fully locked in</div>
+                              <div style="font-size: 13px; color: #0F3A20; font-weight: 600; margin-top: 8px;">Investment: $${((caseRecord.pickup_cost || 0) + (caseRecord.dropoff_cost || 0) + (caseRecord.local_transfer_cost || 0)).toLocaleString() || '0'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- CONCIERGE CALLOUT -->
+                      <div style="margin: 32px 0; padding: 24px; background: linear-gradient(135deg, #0F3A20 0%, #1a5c3a 100%); border-radius: 8px; color: #ffffff;">
+                        <div style="font-size: 14px; line-height: 1.8;">
+                          <strong>🎯 Concierge Note:</strong> Your dedicated travel coordinator is now orchestrating every detail of your journey. From pre-procedure consultations to post-care logistics, our premium service team is at your complete disposal. Expect personalized follow-up within 24 hours.
+                        </div>
+                      </div>
+
+                      <!-- FINANCIAL SUMMARY -->
+                      <div style="margin: 32px 0; padding: 28px; background: #f0f9ff; border: 2px solid #0F3A20; border-radius: 12px;">
+                        <div style="text-align: center;">
+                          <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; margin-bottom: 12px; font-weight: 700;">Payment Confirmation</div>
+                          <div style="font-size: 36px; font-weight: 900; color: #0F3A20; margin-bottom: 16px;">$${caseRecord.final_package_price?.toLocaleString() || '0'}</div>
+                          <div style="display: inline-block; padding: 8px 16px; background: #10b981; color: #ffffff; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;">✓ PAID IN FULL</div>
+                          <div style="margin-top: 16px; font-size: 13px; color: #4B5563;">Your total investment for this comprehensive medical travel experience</div>
+                        </div>
+                      </div>
+
+                      <!-- NEXT STEPS -->
+                      <div style="margin: 32px 0;">
+                        <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; margin-bottom: 16px; font-weight: 700;">What Happens Next</div>
+                        <ul style="margin: 0; padding: 0; list-style: none;">
+                          <li style="margin-bottom: 12px; font-size: 14px; color: #374151; line-height: 1.6;">
+                            <strong>Within 24 Hours:</strong> Your concierge coordinator sends personalized pre-travel briefing
+                          </li>
+                          <li style="margin-bottom: 12px; font-size: 14px; color: #374151; line-height: 1.6;">
+                            <strong>Flight Confirmation:</strong> Complete airline itinerary with VIP check-in details
+                          </li>
+                          <li style="margin-bottom: 12px; font-size: 14px; color: #374151; line-height: 1.6;">
+                            <strong>Hotel & Transfers:</strong> Premium accommodation details with concierge contact
+                          </li>
+                          <li style="font-size: 14px; color: #374151; line-height: 1.6;">
+                            <strong>Doctor Confirmation:</strong> Finalized procedure schedule with pre-care protocols
+                          </li>
+                        </ul>
+                      </div>
+
+                      <!-- LUXURY CLOSING -->
+                      <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid #e5e7eb; text-align: center;">
+                        <p style="margin: 0 0 24px 0; font-size: 14px; color: #374151; line-height: 1.8;">Dedicated to your beautiful smile and wellness journey,</p>
+                        <div style="font-family: Georgia, serif; font-size: 16px; font-weight: 600; color: #0F3A20; margin-bottom: 4px;">The IQ200 Medical Travel Team</div>
+                        <div style="font-size: 12px; color: #6B7280; font-style: italic;">Premium Medical Tourism & Aesthetic Excellence</div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- MOCK TEST FOOTER -->
+                  <tr>
+                    <td style="padding: 24px 40px; background: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
+                      <p style="margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.5;">🧪 <em>This is a test email transmission. No payment was processed.</em></p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `
     });
 
