@@ -52,16 +52,56 @@ const escapeHtml = (v) => String(v ?? '')
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user || user.role !== 'admin') {
+    const user = await base44.auth.me().catch(() => null);
+    const isAdmin = user && user.role === 'admin';
+    const isServiceRole = !user;
+
+    if (!isAdmin && !isServiceRole) {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
     const { caseId, doctorId } = await req.json();
     
     if (!caseId) return Response.json({ error: 'Case ID required' }, { status: 400 });
-    if (!doctorId) return Response.json({ error: 'Doctor ID required' }, { status: 400 });
+
+    // Auto-select doctor if not provided
+    let selectedDoctor = null;
+    if (!doctorId) {
+      const caseRecord = await base44.entities.CaseRecord.get(caseId);
+      if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
+
+      // Find doctors in procedure country
+      let doctors = await base44.entities.Doctor.filter({
+        clinic_country: caseRecord.procedure_country,
+        status: 'active'
+      });
+
+      // Fallback to any active doctor if no country match
+      if (doctors.length === 0) {
+        doctors = await base44.entities.Doctor.filter({ status: 'active' });
+      }
+
+      if (doctors.length === 0) {
+        await base44.entities.CaseRecord.update(caseId, {
+          status: 'Admin-Review',
+          admin_notes: 'No available doctor found — manual assignment required',
+          timeline_log: [...(caseRecord.timeline_log || []), {
+            timestamp: new Date().toISOString(),
+            action: 'auto_assign_failed',
+            details: 'No available doctor found — manual assignment required'
+          }]
+        });
+
+        return Response.json({
+          status: 'NO_DOCTOR_AVAILABLE',
+          message: 'No available doctor found. Case flagged for manual review.'
+        });
+      }
+
+      selectedDoctor = doctors[0];
+    } else {
+      selectedDoctor = await base44.entities.Doctor.get(doctorId);
+    }
 
     const caseRecord = await base44.entities.CaseRecord.get(caseId);
     if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
@@ -73,7 +113,6 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    const selectedDoctor = await base44.entities.Doctor.get(doctorId);
     if (!selectedDoctor || selectedDoctor.status !== 'active') {
       return Response.json({ error: 'Selected doctor not found or inactive' }, { status: 400 });
     }
