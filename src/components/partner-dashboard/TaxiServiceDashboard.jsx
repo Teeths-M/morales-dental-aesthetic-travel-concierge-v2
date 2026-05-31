@@ -119,10 +119,18 @@ export default function TaxiServiceDashboard({ taxi, language }) {
           <Zap className="w-5 h-5 mr-2" />
           {isOnline ? (language === 'es' ? 'Desconectarse' : language === 'fr' ? 'Se Déconnecter' : 'Go Offline') : (language === 'es' ? 'Conectarse' : language === 'fr' ? 'Se Connecter' : 'Go Online')}
         </Button>
-        <Button variant="outline" className="w-full h-12">
+        <Button 
+          variant="outline" 
+          className="w-full h-12"
+          onClick={() => alert(language === 'es' ? 'Próximamente: Actualizar Disponibilidad' : language === 'fr' ? 'Bientôt: Mettre à jour la disponibilité' : 'Coming Soon: Update Availability')}
+        >
           📅 {language === 'es' ? 'Actualizar Disponibilidad' : language === 'fr' ? 'Mettre à Jour la Disponibilité' : 'Update Availability'}
         </Button>
-        <Button variant="outline" className="w-full h-12">
+        <Button 
+          variant="outline" 
+          className="w-full h-12"
+          onClick={() => alert(language === 'es' ? 'Próximamente: Ver Historial de Viajes' : language === 'fr' ? 'Bientôt: Afficher l\'historique des trajets' : 'Coming Soon: View Trip History')}
+        >
           📊 {language === 'es' ? 'Ver Historial' : language === 'fr' ? 'Afficher l\'Historique' : 'View Trip History'}
         </Button>
       </div>

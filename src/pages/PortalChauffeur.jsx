@@ -277,7 +277,7 @@ export default function PortalChauffeur() {
         </button>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: '#aaa', marginTop: 16 }}>
-          Morales Dental & Aesthetics · Secure Vendor Portal · Powered by SAFE-T 4LIFE™
+          Morales Dental & Aesthetics · Secure Vendor Portal
         </p>
       </div>
     </div>
