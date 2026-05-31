@@ -121,7 +121,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/travel" element={<PortalTravelAgency />} />
       <Route path="/portal/transfer" element={<PortalChauffeur />} />
       <Route path="/portal/doctor/:token" element={<PortalDoctor />} />
-      <Route path="/portal/proposal" element={<ClientProposalPortal />} />
+      <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
