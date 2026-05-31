@@ -114,7 +114,6 @@ Deno.serve(async (req) => {
                               <div>
                                 <div style="font-weight: 700; color: #0F3A20; margin-bottom: 4px; font-size: 14px;">Premium Flights</div>
                                 <div style="font-size: 13px; color: #6B7280;">Round-trip international flights with selected routing</div>
-                                <div style="font-size: 13px; color: #0F3A20; font-weight: 600; margin-top: 8px;">Investment: $${caseRecord.flight_cost?.toLocaleString() || '0'}</div>
                               </div>
                             </div>
                           </div>
@@ -126,7 +125,6 @@ Deno.serve(async (req) => {
                               <div>
                                 <div style="font-weight: 700; color: #0F3A20; margin-bottom: 4px; font-size: 14px;">Luxury Accommodation</div>
                                 <div style="font-size: 13px; color: #6B7280;">Premium hotel located near your treatment facility</div>
-                                <div style="font-size: 13px; color: #0F3A20; font-weight: 600; margin-top: 8px;">Investment: $${caseRecord.hotel_cost?.toLocaleString() || '0'}</div>
                               </div>
                             </div>
                           </div>
@@ -138,7 +136,6 @@ Deno.serve(async (req) => {
                               <div>
                                 <div style="font-weight: 700; color: #0F3A20; margin-bottom: 4px; font-size: 14px;">Private Airport Transfers</div>
                                 <div style="font-size: 13px; color: #6B7280;">Dedicated luxury ground transportation fully locked in</div>
-                                <div style="font-size: 13px; color: #0F3A20; font-weight: 600; margin-top: 8px;">Investment: $${((caseRecord.pickup_cost || 0) + (caseRecord.dropoff_cost || 0) + (caseRecord.local_transfer_cost || 0)).toLocaleString() || '0'}</div>
                               </div>
                             </div>
                           </div>
