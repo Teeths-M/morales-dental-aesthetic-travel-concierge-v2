@@ -167,8 +167,9 @@ Deno.serve(async (req) => {
         proposal_sent_at: new Date().toISOString()
       });
 
-      // Send proposal email to client
-      const proposalUrl = `${Deno.env.get('APP_URL') || 'http://localhost:5173'}/portal/proposal/${proposalToken}`;
+      // Send proposal email to client with absolute URL
+      const appUrl = Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app';
+      const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
       
       await base44.integrations.Core.SendEmail({
         to: caseRecord.client_email,
