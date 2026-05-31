@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Phone, MessageCircle, Mail, Shield, Clock, ChevronRight, Star, AlertCircle, HeartHandshake, Stethoscope, Plane, MapPin } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
-const SUPPORT_CHANNELS = [
+const STATIC_SUPPORT_CHANNELS = [
   {
     id: 'concierge',
     title: 'Personal Concierge',
@@ -23,17 +25,6 @@ const SUPPORT_CHANNELS = [
     availability: 'Mon–Fri, 9am–5pm',
     responseTime: '< 4 hours',
     action: 'Message Doctor',
-    whatsapp: 'https://wa.me/18687481100',
-  },
-  {
-    id: 'travel',
-    title: 'Travel Coordinator',
-    desc: 'Logistics, transfers, accommodation, and travel support',
-    icon: Plane,
-    color: 'from-violet-600 to-purple-700',
-    availability: 'Mon–Fri, 9am–6pm',
-    responseTime: '< 2 hours',
-    action: 'Get Travel Help',
     whatsapp: 'https://wa.me/18687481100',
   },
   {
@@ -60,6 +51,47 @@ const FAQS = [
 
 export default function SupportTab() {
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      } catch (e) {
+        console.error("Failed to fetch user email:", e);
+      }
+    };
+    getUser();
+  }, []);
+
+  const { data: consultation } = useQuery({
+    queryKey: ['latestConsultation', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return null;
+      const consultations = await base44.entities.Consultation.filter({ email: userEmail }, '-created_date', 1);
+      return consultations.length > 0 ? consultations[0] : null;
+    },
+    enabled: !!userEmail,
+  });
+
+  const { data: travelAgency } = useQuery({
+    queryKey: ['assignedTravelAgency', consultation?.travel_agency_id],
+    queryFn: async () => {
+      if (!consultation?.travel_agency_id) return null;
+      try {
+        return await base44.entities.TravelAgency.get(consultation.travel_agency_id);
+      } catch (e) {
+        console.error("Failed to fetch travel agency:", e);
+        return null;
+      }
+    },
+    enabled: !!consultation?.travel_agency_id,
+  });
+
+  const travelCoordinatorWhatsapp = travelAgency?.whatsapp_number || 'https://wa.me/18687481100';
 
   return (
     <div className="space-y-6">
@@ -81,7 +113,17 @@ export default function SupportTab() {
 
       {/* Support Channels */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {SUPPORT_CHANNELS.map(ch => {
+        {[...STATIC_SUPPORT_CHANNELS, {
+          id: 'travel',
+          title: 'Travel Coordinator',
+          desc: 'Logistics, transfers, accommodation, and travel support',
+          icon: Plane,
+          color: 'from-violet-600 to-purple-700',
+          availability: 'Mon–Fri, 9am–6pm',
+          responseTime: '< 2 hours',
+          action: 'Get Travel Help',
+          whatsapp: travelCoordinatorWhatsapp,
+        }].map(ch => {
           const Icon = ch.icon;
           return (
             <motion.a

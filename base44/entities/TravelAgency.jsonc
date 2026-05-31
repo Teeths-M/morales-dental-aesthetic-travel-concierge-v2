@@ -17,6 +17,10 @@
     "phone": {
       "type": "string"
     },
+    "whatsapp_number": {
+      "type": "string",
+      "description": "WhatsApp number for the agency"
+    },
     "website_url": {
       "type": "string"
     },
