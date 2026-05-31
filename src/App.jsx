@@ -41,6 +41,7 @@ import ConsultationForm from './pages/ConsultationForm';
 import ConsultationSuccess from './pages/ConsultationSuccess';
 import PortalDoctor from './pages/PortalDoctor';
 import DoctorLicenseVerification from './pages/DoctorLicenseVerification';
+import AdminPortalViewer from './pages/AdminPortalViewer';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -126,6 +127,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/partners" element={<AdminPartners />} />
         <Route path="/admin/imports" element={<AdminImports />} />
         <Route path="/admin/doctor-verification" element={<DoctorLicenseVerification />} />
+        <Route path="/admin/portal-viewer" element={<AdminPortalViewer />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

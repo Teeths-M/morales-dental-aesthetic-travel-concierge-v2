@@ -90,6 +90,9 @@ export default function SimpleAdminDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/portal-viewer"><Eye className="w-4 h-4 mr-1" /> Partner Portals</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
                 <Link to="/admin/partners"><Building2 className="w-4 h-4 mr-1" /> Partners</Link>
               </Button>
               <Button variant="outline" size="sm" onClick={handleRefresh}>
