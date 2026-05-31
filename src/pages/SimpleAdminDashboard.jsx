@@ -166,163 +166,164 @@ export default function SimpleAdminDashboard() {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Card className="bg-white border-0 shadow-md rounded-2xl">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.active}</p>
-                  <p className="text-xs text-slate-500">Active Cases</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-0 shadow-md rounded-2xl">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <Plane className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.inTravel}</p>
-                  <p className="text-xs text-slate-500">Travel Phase</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-0 shadow-md rounded-2xl">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.inProcedure}</p>
-                  <p className="text-xs text-slate-500">In Procedure</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-0 shadow-md rounded-2xl">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-violet-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.inRecovery}</p>
-                  <p className="text-xs text-slate-500">In Recovery</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-0 shadow-md rounded-2xl">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                  <Archive className="w-5 h-5 text-slate-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.completed}</p>
-                  <p className="text-xs text-slate-500">Completed</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search Bar */}
-        <div className="bg-white rounded-2xl shadow-md p-4 border border-slate-100">
-          <div className="flex items-center gap-3">
-            <Search className="w-5 h-5 text-slate-400" />
-            <Input
-              placeholder="Search by patient name, email, procedure, or destination..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-0 focus-visible:ring-0 text-base"
-            />
-          </div>
-        </div>
-
-        {/* Tabs for Active vs Completed */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-white rounded-2xl shadow-md border border-slate-100 p-1">
-            <TabsTrigger value="active" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-xl">
-              <Activity className="w-4 h-4 mr-2" />
-              Active Cases ({activeCases.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white rounded-xl">
-              <Archive className="w-4 h-4 mr-2" />
-              Past Trips ({completedCases.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active" className="space-y-4">
-            {loadingActive ? (
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <Card className="bg-white border-0 shadow-md rounded-2xl">
-                <CardContent className="pt-6 text-center py-8">
-                  <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
+                <CardContent className="pt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">{stats.active}</p>
+                      <p className="text-xs text-slate-500">Active Cases</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            ) : filteredActiveCases.length === 0 ? (
-              <Card className="bg-white border-0 shadow-md rounded-2xl">
-                <CardContent className="pt-6 text-center py-8">
-                  <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600 font-medium">No active cases found</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredActiveCases.map(caseRecord => (
-                  <CaseCard 
-                    key={caseRecord.id} 
-                    caseRecord={caseRecord}
-                    getStatusBadge={getStatusBadge}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="completed" className="space-y-4">
-            {loadingCompleted ? (
               <Card className="bg-white border-0 shadow-md rounded-2xl">
-                <CardContent className="pt-6 text-center py-8">
-                  <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
+                <CardContent className="pt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                      <Plane className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">{stats.inTravel}</p>
+                      <p className="text-xs text-slate-500">Travel Phase</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            ) : filteredCompletedCases.length === 0 ? (
+
               <Card className="bg-white border-0 shadow-md rounded-2xl">
-                <CardContent className="pt-6 text-center py-8">
-                  <Archive className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600 font-medium">No completed trips yet</p>
+                <CardContent className="pt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">{stats.inProcedure}</p>
+                      <p className="text-xs text-slate-500">In Procedure</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCompletedCases.map(caseRecord => (
-                  <CaseCard 
-                    key={caseRecord.id} 
-                    caseRecord={caseRecord}
-                    getStatusBadge={getStatusBadge}
-                  />
-                ))}
+
+              <Card className="bg-white border-0 shadow-md rounded-2xl">
+                <CardContent className="pt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-violet-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">{stats.inRecovery}</p>
+                      <p className="text-xs text-slate-500">In Recovery</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-0 shadow-md rounded-2xl">
+                <CardContent className="pt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                      <Archive className="w-5 h-5 text-slate-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">{stats.completed}</p>
+                      <p className="text-xs text-slate-500">Completed</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Search Bar */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-slate-100">
+              <div className="flex items-center gap-3">
+                <Search className="w-5 h-5 text-slate-400" />
+                <Input
+                  placeholder="Search by patient name, email, procedure, or destination..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="border-0 focus-visible:ring-0 text-base"
+                />
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            </div>
+
+            {/* Tabs for Active vs Completed */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="bg-white rounded-2xl shadow-md border border-slate-100 p-1">
+                <TabsTrigger value="active" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-xl">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Active Cases ({activeCases.length})
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white rounded-xl">
+                  <Archive className="w-4 h-4 mr-2" />
+                  Past Trips ({completedCases.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="active" className="space-y-4">
+                {loadingActive ? (
+                  <Card className="bg-white border-0 shadow-md rounded-2xl">
+                    <CardContent className="pt-6 text-center py-8">
+                      <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
+                    </CardContent>
+                  </Card>
+                ) : filteredActiveCases.length === 0 ? (
+                  <Card className="bg-white border-0 shadow-md rounded-2xl">
+                    <CardContent className="pt-6 text-center py-8">
+                      <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-600 font-medium">No active cases found</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredActiveCases.map(caseRecord => (
+                      <CaseCard 
+                        key={caseRecord.id} 
+                        caseRecord={caseRecord}
+                        getStatusBadge={getStatusBadge}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="completed" className="space-y-4">
+                {loadingCompleted ? (
+                  <Card className="bg-white border-0 shadow-md rounded-2xl">
+                    <CardContent className="pt-6 text-center py-8">
+                      <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
+                    </CardContent>
+                  </Card>
+                ) : filteredCompletedCases.length === 0 ? (
+                  <Card className="bg-white border-0 shadow-md rounded-2xl">
+                    <CardContent className="pt-6 text-center py-8">
+                      <Archive className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-600 font-medium">No completed trips yet</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredCompletedCases.map(caseRecord => (
+                      <CaseCard 
+                        key={caseRecord.id} 
+                        caseRecord={caseRecord}
+                        getStatusBadge={getStatusBadge}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </main>
       </div>
-    );
+    </div>
+  );
 }
 
 function CaseCard({ caseRecord, getStatusBadge }) {
