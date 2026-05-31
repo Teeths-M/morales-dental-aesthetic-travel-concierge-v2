@@ -82,9 +82,8 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
   };
 
   const handleDateClick = (date) => {
-    // Left click - mark as available
-    const availability = getAvailabilityStatus(date);
-    handleToggleAvailability(true, date);
+    // Tap/click to select date only - use action panel buttons to mark available/unavailable
+    setSelectedDate(date);
   };
 
   const handleToggleAvailability = (isAvailable, dateOverride = null) => {
