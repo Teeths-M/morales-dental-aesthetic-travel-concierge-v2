@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { translations } from '@/lib/translations';
 import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 import PassportVaultSection from './PassportVaultSection';
+import CityOriginSelect from './CityOriginSelect';
 
 const ages = Array.from({ length: 83 }, (_, i) => String(i + 18));
 const heights = ['Under 140cm','140–150cm','151–160cm','161–170cm','171–180cm','181–190cm','191cm+'];
@@ -135,11 +136,10 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
 
         <div>
           <Label>City of Origin <span className="text-destructive">*</span></Label>
-          <Input
+          <CityOriginSelect
             value={form.client_city || ''}
-            onChange={e => update('client_city', e.target.value)}
-            placeholder="e.g. Denver, Miami, Toronto"
-            className="mt-1.5"
+            onChange={v => update('client_city', v)}
+            selectedCountry={form.nationality}
           />
         </div>
 
