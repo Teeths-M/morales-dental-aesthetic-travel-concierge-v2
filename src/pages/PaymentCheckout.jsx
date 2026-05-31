@@ -9,10 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Lock, Zap } from 'lucide-react';
 
 export default function PaymentCheckout() {
-  const { consultation_id } = useParams();
+  const { consultation_id, case_id } = useParams();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
+
+  // Accept either case_id or consultation_id from URL
+  const recordId = case_id || consultation_id;
 
   // DEVELOPMENT FALLBACK: Mock data for testing
   const mockConsultation = {
@@ -23,30 +26,41 @@ export default function PaymentCheckout() {
 
   const mockPaymentPlan = {
     id: 'mock-plan',
-    consultation_id,
+    consultation_id: recordId,
     total_package_cost: 5950,
     final_cost: 6750
   };
 
+  // Fetch CaseRecord if case_id is provided
+  const { data: caseRecord } = useQuery({
+    queryKey: ['case_record', case_id],
+    queryFn: () => base44.entities.CaseRecord.get(case_id),
+    staleTime: Infinity,
+    enabled: !!case_id
+  });
+
+  // Use consultation_id from caseRecord if available, otherwise use URL param
+  const effectiveConsultationId = caseRecord?.consultation_id || consultation_id;
+
   const { data: consultation = mockConsultation } = useQuery({
-    queryKey: ['consultation', consultation_id],
-    queryFn: () => base44.entities.Consultation.get(consultation_id),
+    queryKey: ['consultation', effectiveConsultationId],
+    queryFn: () => base44.entities.Consultation.get(effectiveConsultationId),
     staleTime: Infinity
   });
 
   const { data: paymentPlan = mockPaymentPlan } = useQuery({
-    queryKey: ['payment_plan', consultation_id],
+    queryKey: ['payment_plan', effectiveConsultationId],
     queryFn: async () => {
-      const plans = await base44.entities.PaymentPlan.filter({ consultation_id });
+      const plans = await base44.entities.PaymentPlan.filter({ consultation_id: effectiveConsultationId });
       return plans[0];
     },
     staleTime: Infinity
   });
 
   const { data: quotes = [] } = useQuery({
-    queryKey: ['quotes', consultation_id],
+    queryKey: ['quotes', effectiveConsultationId],
     queryFn: async () => {
-      const qr = await base44.entities.QuoteRequest.filter({ consultation_id });
+      const qr = await base44.entities.QuoteRequest.filter({ consultation_id: effectiveConsultationId });
       const quoteIds = qr.map(q => q.id);
       const allQuotes = await base44.entities.Quote.list();
       return allQuotes.filter(q => quoteIds.includes(q.quote_request_id) && q.is_selected);
@@ -57,7 +71,8 @@ export default function PaymentCheckout() {
     mutationFn: (plan_type) => 
       base44.functions.invoke('portalHubWorkflowEngine', {
         action: 'client_selects_payment_option',
-        consultation_id,
+        consultation_id: effectiveConsultationId,
+        case_id: caseRecord?.id,
         data: { plan_type }
       }),
     onSuccess: (res) => {
@@ -124,7 +139,7 @@ export default function PaymentCheckout() {
             Complete Your Booking
           </h1>
           <p className="text-muted-foreground">
-            {consultation.patient_name} • {consultation.procedure_interest}
+            {caseRecord?.client_name || consultation.patient_name} • {caseRecord?.procedures?.[0] || consultation.procedure_interest}
           </p>
         </motion.div>
 
