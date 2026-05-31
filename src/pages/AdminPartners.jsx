@@ -136,6 +136,45 @@ export default function AdminPartners() {
     }
   };
 
+  const handleApproveTaxiService = async (serviceId) => {
+    setIsApproving(true);
+    try {
+      console.log('Approving taxi service:', serviceId);
+      await base44.entities.TaxiService.update(serviceId, { 
+        status: 'active',
+        license_verified: true,
+        insurance_verified: true
+      });
+      console.log('Taxi service approved successfully');
+      toast.success('Taxi service approved successfully');
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error('Failed to approve taxi service:', error);
+      toast.error('Failed to approve taxi service: ' + error.message);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleApproveTravelAgency = async (agencyId) => {
+    setIsApproving(true);
+    try {
+      console.log('Approving travel agency:', agencyId);
+      await base44.entities.TravelAgency.update(agencyId, { 
+        status: 'active',
+        approved_by_admin: true
+      });
+      console.log('Travel agency approved successfully');
+      toast.success('Travel agency approved successfully');
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error('Failed to approve travel agency:', error);
+      toast.error('Failed to approve travel agency: ' + error.message);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
   const toggleSelectId = (id) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(id_ => id_ !== id) : [...prev, id]
@@ -437,8 +476,10 @@ export default function AdminPartners() {
           partner={selectedPartner} 
           open={!!selectedPartner} 
           onOpenChange={() => setSelectedPartner(null)}
-          onApprove={handleApproveDoctor}
-          onReject={handleRejectDoctor}
+          onApproveDoctor={handleApproveDoctor}
+          onRejectDoctor={handleRejectDoctor}
+          onApproveTaxiService={handleApproveTaxiService}
+          onApproveTravelAgency={handleApproveTravelAgency}
           isApproving={isApproving}
         />
       )}
@@ -627,7 +668,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, i
   );
 }
 
-function PartnerDetailsDialog({ partner, open, onOpenChange, onApprove, onReject, isApproving }) {
+function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, onRejectDoctor, onApproveTaxiService, onApproveTravelAgency, isApproving }) {
   if (!partner) return null;
 
   const renderDetails = () => {
@@ -858,39 +899,65 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApprove, onReject
           {renderDetails()}
           
           <DialogFooter className="pt-4 border-t border-slate-200">
-            {(partner._type === 'doctor' || partner.full_name) && (
+            {(partner._type === 'doctor' || partner.full_name) && partner.status === 'pending_verification' && (
               <div className="space-y-3 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">Status:</span>
-                  <Badge className={partner.status === 'active' ? 'bg-emerald-100 text-emerald-700' : partner.status === 'pending_verification' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}>
+                  <Badge className="bg-amber-100 text-amber-700">
                     {partner.status}
                   </Badge>
                 </div>
-                {partner.status === 'pending_verification' && (
-                  <div className="flex gap-3">
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        console.log('Reject clicked for:', partner.id, partner.full_name);
-                        onReject(partner.id);
-                      }}
-                      disabled={isApproving}
-                      className="flex-1"
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        console.log('Approve clicked for:', partner.id, partner.full_name);
-                        onApprove(partner.id);
-                      }}
-                      disabled={isApproving}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      {isApproving ? 'Processing...' : 'Approve Doctor'}
-                    </Button>
-                  </div>
-                )}
+                <div className="flex gap-3">
+                  <Button
+                    variant="destructive"
+                    onClick={() => onRejectDoctor(partner.id)}
+                    disabled={isApproving}
+                    className="flex-1"
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={() => onApproveDoctor(partner.id)}
+                    disabled={isApproving}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {isApproving ? 'Processing...' : 'Approve Doctor'}
+                  </Button>
+                </div>
+              </div>
+            )}
+            {(partner._type === 'taxi' || partner.operating_country) && partner.status === 'pending_verification' && (
+              <div className="space-y-3 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">Status:</span>
+                  <Badge className="bg-amber-100 text-amber-700">
+                    {partner.status}
+                  </Badge>
+                </div>
+                <Button
+                  onClick={() => onApproveTaxiService(partner.id)}
+                  disabled={isApproving}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isApproving ? 'Processing...' : 'Approve Taxi Service'}
+                </Button>
+              </div>
+            )}
+            {(partner._type === 'travel' || partner.agency_name) && partner.status === 'pending_verification' && (
+              <div className="space-y-3 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">Status:</span>
+                  <Badge className="bg-amber-100 text-amber-700">
+                    {partner.status}
+                  </Badge>
+                </div>
+                <Button
+                  onClick={() => onApproveTravelAgency(partner.id)}
+                  disabled={isApproving}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isApproving ? 'Processing...' : 'Approve Travel Agency'}
+                </Button>
               </div>
             )}
             <div className="flex items-center justify-between w-full pt-4">
