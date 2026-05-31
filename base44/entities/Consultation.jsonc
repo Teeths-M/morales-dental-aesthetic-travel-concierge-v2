@@ -109,7 +109,12 @@
       "type": "string"
     },
     "nationality": {
-      "type": "string"
+      "type": "string",
+      "description": "Client's country of origin"
+    },
+    "client_city": {
+      "type": "string",
+      "description": "Client's city of origin (for chauffeur origin leg routing)"
     },
     "occupation": {
       "type": "string"

@@ -114,10 +114,10 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
         </div>
 
         <div>
-          <Label>{translations[language].nationality}</Label>
+          <Label>Country of Origin <span className="text-destructive">*</span></Label>
           <Select value={form.nationality} onValueChange={v => { update('nationality', v); setNationalitySearch(''); }}>
             <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder={translations[language].selectNationality} />
+              <SelectValue placeholder="Select or type country" />
             </SelectTrigger>
             <SelectContent>
               <div className="p-2">
@@ -131,6 +131,16 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
               {nationalities.filter(n => n.toLowerCase().includes(nationalitySearch)).map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
             </SelectContent>
           </Select>
+        </div>
+
+        <div>
+          <Label>City of Origin <span className="text-destructive">*</span></Label>
+          <Input
+            value={form.client_city || ''}
+            onChange={e => update('client_city', e.target.value)}
+            placeholder="e.g. Denver, Miami, Toronto"
+            className="mt-1.5"
+          />
         </div>
 
         <div>

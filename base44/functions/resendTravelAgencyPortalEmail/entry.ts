@@ -91,7 +91,8 @@ Deno.serve(async (req) => {
           rows: [
             row('Client Full Name', consultation.patient_name),
             row('Procedure Destination', consultation.procedure_country || consultation.destination_country || 'To be confirmed'),
-            row('Client Origin Country', consultation.client_country || 'To be confirmed'),
+            row('Client Origin Country', consultation.client_country || consultation.nationality || 'To be confirmed'),
+            row('Client Origin City', consultation.client_city || 'To be confirmed'),
             row('Passport Number', consultation.passport_number || 'Not provided'),
             row('Passport Issue Date', consultation.passport_issue_date || 'Not provided'),
             row('Passport Expiry Date', consultation.passport_expiry_date || 'Not provided'),
