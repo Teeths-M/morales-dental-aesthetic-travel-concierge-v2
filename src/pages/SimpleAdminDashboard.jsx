@@ -1,442 +1,338 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { 
-  Users, FileText, AlertCircle, RefreshCw, Building2,
-  DollarSign, Activity, CheckCircle, Clock, XCircle,
-  TrendingUp, UserCheck, Stethoscope, Car, Plane, Eye
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 export default function SimpleAdminDashboard() {
-  const qc = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('active');
 
-  const { data: cases = [], isLoading: loadingCases } = useQuery({
-    queryKey: ['cases_monitor'],
-    queryFn: () => base44.entities.CaseRecord.list('-created_date', 100),
+  // Fetch active cases (excluding Completed)
+  const { data: activeCases = [], isLoading: loadingActive } = useQuery({
+    queryKey: ['admin_active_cases'],
+    queryFn: async () => {
+      const result = await base44.entities.CaseRecord.filter({
+        status: 'Travel-Coordination'
+      });
+      const readyCases = await base44.entities.CaseRecord.filter({
+        status: 'Ready-For-Travel'
+      });
+      const inProgressCases = await base44.entities.CaseRecord.filter({
+        status: 'Procedure-In-Progress'
+      });
+      const recoveryCases = await base44.entities.CaseRecord.filter({
+        status: 'Recovery'
+      });
+      return [...(result || []), ...(readyCases || []), ...(inProgressCases || []), ...(recoveryCases || [])];
+    },
   });
 
-  const { data: consultations = [], isLoading: loadingConsultations } = useQuery({
-    queryKey: ['consultations_monitor'],
-    queryFn: () => base44.entities.Consultation.list('-created_date', 50),
+  // Fetch completed cases (archived)
+  const { data: completedCases = [], isLoading: loadingCompleted } = useQuery({
+    queryKey: ['admin_completed_cases'],
+    queryFn: async () => {
+      const result = await base44.entities.CaseRecord.filter({
+        status: 'Completed'
+      });
+      return result || [];
+    },
   });
 
-  const { data: doctors = [] } = useQuery({
-    queryKey: ['doctors_monitor'],
-    queryFn: () => base44.entities.Doctor.list('-created_date', 100),
-  });
-
-  const { data: agencies = [] } = useQuery({
-    queryKey: ['agencies_monitor'],
-    queryFn: () => base44.entities.TravelAgency.list('-created_date', 100),
-  });
-
-  const { data: taxis = [] } = useQuery({
-    queryKey: ['taxis_monitor'],
-    queryFn: () => base44.entities.TaxiService.list('-created_date', 100),
-  });
-
-  const handleRefresh = () => {
-    qc.invalidateQueries({ queryKey: ['cases_monitor'] });
-    qc.invalidateQueries({ queryKey: ['consultations_monitor'] });
-    qc.invalidateQueries({ queryKey: ['doctors_monitor'] });
-    qc.invalidateQueries({ queryKey: ['agencies_monitor'] });
-    qc.invalidateQueries({ queryKey: ['taxis_monitor'] });
+  const getStatusBadge = (status) => {
+    const configs = {
+      'Submitted': { color: 'bg-slate-100 text-slate-700', icon: Clock, label: 'Submitted' },
+      'Safe-T-Reviewed': { color: 'bg-blue-100 text-blue-700', icon: CheckCircle, label: 'Safety Reviewed' },
+      'Doctor-Pending': { color: 'bg-amber-100 text-amber-700', icon: Clock, label: 'Doctor Pending' },
+      'Vendor-Pending': { color: 'bg-purple-100 text-purple-700', icon: Clock, label: 'Vendor Pending' },
+      'Admin-Review': { color: 'bg-orange-100 text-orange-700', icon: Clock, label: 'Admin Review' },
+      'Proposal-Sent': { color: 'bg-indigo-100 text-indigo-700', icon: Clock, label: 'Proposal Sent' },
+      'Travel-Coordination': { color: 'bg-blue-100 text-blue-700', icon: Plane, label: 'Travel Coordination' },
+      'Ready-For-Travel': { color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle, label: 'Ready for Travel' },
+      'Procedure-In-Progress': { color: 'bg-amber-100 text-amber-700', icon: Activity, label: 'Procedure In Progress' },
+      'Recovery': { color: 'bg-violet-100 text-violet-700', icon: Activity, label: 'Recovery' },
+      'Completed': { color: 'bg-slate-100 text-slate-600', icon: Archive, label: 'Completed' },
+    };
+    const config = configs[status] || configs['Submitted'];
+    const Icon = config.icon;
+    return (
+      <Badge className={config.color}>
+        <Icon className="w-3 h-3 mr-1" />
+        {config.label}
+      </Badge>
+    );
   };
 
-  // Stats
-  const totalRevenue = cases.reduce((sum, c) => sum + (c.final_package_price || 0), 0);
-  const totalPaid = cases.reduce((sum, c) => sum + (c.amount_paid || 0), 0);
-  const blockedCases = cases.filter(c => c.safe_t_result === 'BLOCKED');
-  const stalledCases = cases.filter(c => {
-    if (!c.updated_date) return false;
-    const daysSinceUpdate = (Date.now() - new Date(c.updated_date)) / (1000 * 60 * 60 * 24);
-    return daysSinceUpdate > 3 && !['Completed', 'Recovery'].includes(c.status);
+  const filteredActiveCases = activeCases.filter(caseRecord => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      caseRecord.client_name?.toLowerCase().includes(searchLower) ||
+      caseRecord.client_email?.toLowerCase().includes(searchLower) ||
+      caseRecord.procedures?.some(p => p.toLowerCase().includes(searchLower)) ||
+      caseRecord.procedure_country?.toLowerCase().includes(searchLower)
+    );
   });
-  const activeDoctors = doctors.filter(d => d.status === 'active').length;
-  const activeAgencies = agencies.filter(a => a.status === 'active').length;
-  const activeTaxis = taxis.filter(t => t.status === 'active').length;
-  const pendingPartners = [
-    ...doctors.filter(d => d.status === 'pending_verification'),
-    ...agencies.filter(a => a.status === 'pending_verification'),
-    ...taxis.filter(t => t.status === 'pending_verification'),
-  ];
 
-  const statusColors = {
-    'Submitted': 'bg-slate-100 text-slate-700',
-    'Safe-T-Reviewed': 'bg-blue-100 text-blue-700',
-    'Doctor-Pending': 'bg-amber-100 text-amber-700',
-    'Vendor-Pending': 'bg-purple-100 text-purple-700',
-    'Proposal-Sent': 'bg-indigo-100 text-indigo-700',
-    'Deposit-Paid': 'bg-emerald-100 text-emerald-700',
-    'Travel-Coordination': 'bg-cyan-100 text-cyan-700',
-    'Completed': 'bg-green-100 text-green-700',
-    'Admin-Review': 'bg-red-100 text-red-700',
+  const filteredCompletedCases = completedCases.filter(caseRecord => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      caseRecord.client_name?.toLowerCase().includes(searchLower) ||
+      caseRecord.client_email?.toLowerCase().includes(searchLower) ||
+      caseRecord.procedures?.some(p => p.toLowerCase().includes(searchLower))
+    );
+  });
+
+  const stats = {
+    active: activeCases.length,
+    completed: completedCases.length,
+    inTravel: activeCases.filter(c => c.status === 'Travel-Coordination' || c.status === 'Ready-For-Travel').length,
+    inProcedure: activeCases.filter(c => c.status === 'Procedure-In-Progress').length,
+    inRecovery: activeCases.filter(c => c.status === 'Recovery').length,
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Admin Monitor</h1>
-              <p className="text-xs text-slate-500">Read-only oversight — all assignments are automated</p>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">Patient Journey Dashboard</h1>
+                <p className="text-sm text-slate-500">Monitor active medical travel cases</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/portal-viewer"><Eye className="w-4 h-4 mr-1" /> Partner Portals</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/partners"><Building2 className="w-4 h-4 mr-1" /> Partners</Link>
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="w-4 h-4 mr-1" /> Refresh
-              </Button>
-            </div>
+            <Button variant="outline" asChild>
+              <Link to="/admin">
+                <Users className="w-4 h-4 mr-2" />
+                Partner Management
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-
-        {/* Alerts — issues needing attention */}
-        {(blockedCases.length > 0 || stalledCases.length > 0 || pendingPartners.length > 0) && (
-          <div className="space-y-2">
-            {blockedCases.length > 0 && (
-              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700 font-medium">
-                  {blockedCases.length} case{blockedCases.length > 1 ? 's' : ''} BLOCKED by Safe-T — review required
-                </p>
-              </div>
-            )}
-            {stalledCases.length > 0 && (
-              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                <Clock className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                <p className="text-sm text-amber-700 font-medium">
-                  {stalledCases.length} case{stalledCases.length > 1 ? 's' : ''} stalled for 3+ days without progress
-                </p>
-              </div>
-            )}
-            {pendingPartners.length > 0 && (
-              <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-                <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                <p className="text-sm text-blue-700 font-medium">
-                  {pendingPartners.length} partner{pendingPartners.length > 1 ? 's' : ''} awaiting verification
-                </p>
-                <Link to="/admin/partners" className="ml-auto text-xs text-blue-600 underline">Review</Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-slate-900">${totalRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-slate-500">Pipeline Value</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <Card className="bg-white border-0 shadow-md rounded-2xl">
             <CardContent className="pt-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <Activity className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900">${totalPaid.toLocaleString()}</p>
-                  <p className="text-xs text-slate-500">Collected</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-slate-900">{cases.length}</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats.active}</p>
                   <p className="text-xs text-slate-500">Active Cases</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
+          <Card className="bg-white border-0 shadow-md rounded-2xl">
             <CardContent className="pt-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Plane className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-slate-900">{blockedCases.length + stalledCases.length}</p>
-                  <p className="text-xs text-slate-500">Issues</p>
+                  <p className="text-2xl font-bold text-slate-900">{stats.inTravel}</p>
+                  <p className="text-xs text-slate-500">Travel Phase</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-0 shadow-md rounded-2xl">
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stats.inProcedure}</p>
+                  <p className="text-xs text-slate-500">In Procedure</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-0 shadow-md rounded-2xl">
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stats.inRecovery}</p>
+                  <p className="text-xs text-slate-500">In Recovery</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-0 shadow-md rounded-2xl">
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                  <Archive className="w-5 h-5 text-slate-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stats.completed}</p>
+                  <p className="text-xs text-slate-500">Completed</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="cases">
-          <TabsList className="bg-white border border-slate-200">
-            <TabsTrigger value="cases">Live Cases ({cases.length})</TabsTrigger>
-            <TabsTrigger value="issues">Issues {(blockedCases.length + stalledCases.length) > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5">{blockedCases.length + stalledCases.length}</span>}</TabsTrigger>
-            <TabsTrigger value="partners">Partners</TabsTrigger>
-            <TabsTrigger value="flow">Booking Flow ({consultations.length})</TabsTrigger>
+        {/* Search Bar */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-slate-100">
+          <div className="flex items-center gap-3">
+            <Search className="w-5 h-5 text-slate-400" />
+            <Input
+              placeholder="Search by patient name, email, procedure, or destination..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border-0 focus-visible:ring-0 text-base"
+            />
+          </div>
+        </div>
+
+        {/* Tabs for Active vs Completed */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="bg-white rounded-2xl shadow-md border border-slate-100 p-1">
+            <TabsTrigger value="active" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white rounded-xl">
+              <Activity className="w-4 h-4 mr-2" />
+              Active Cases ({activeCases.length})
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white rounded-xl">
+              <Archive className="w-4 h-4 mr-2" />
+              Past Trips ({completedCases.length})
+            </TabsTrigger>
           </TabsList>
 
-          {/* Live Cases */}
-          <TabsContent value="cases" className="mt-4">
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-slate-700">All Cases — Automated Pipeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingCases ? (
-                  <div className="text-center py-8 text-slate-400">Loading...</div>
-                ) : cases.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">No cases yet</div>
-                ) : (
-                  <div className="space-y-2">
-                    {cases.map(c => (
-                      <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white transition-colors">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-slate-900 text-sm">{c.client_name}</span>
-                            <Badge className={`text-xs ${statusColors[c.status] || 'bg-slate-100 text-slate-600'}`}>
-                              {c.status}
-                            </Badge>
-                            {c.safe_t_result === 'BLOCKED' && (
-                              <Badge className="text-xs bg-red-100 text-red-700">BLOCKED</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 flex-wrap">
-                            <span>📋 {c.procedures?.join(', ')}</span>
-                            {c.doctor_selected && <span>👨‍⚕️ {c.doctor_selected}</span>}
-                            {c.procedure_country && <span>📍 {c.procedure_country}</span>}
-                            {c.treatment_cost > 0 && <span>💰 ${c.treatment_cost}</span>}
-                            {c.doctor_confirmation_status && (
-                              <span className={c.doctor_confirmation_status === 'CONFIRMED' ? 'text-emerald-600' : 'text-amber-600'}>
-                                Dr: {c.doctor_confirmation_status}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right text-xs text-slate-400 flex-shrink-0">
-                          {c.final_package_price > 0 && (
-                            <p className="font-semibold text-emerald-600">${c.final_package_price.toLocaleString()}</p>
-                          )}
-                          <p>{new Date(c.created_date).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Issues */}
-          <TabsContent value="issues" className="mt-4">
-            <div className="space-y-4">
-              {blockedCases.length === 0 && stalledCases.length === 0 ? (
-                <Card className="border-0 shadow-sm">
-                  <CardContent className="pt-6 text-center py-12">
-                    <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium">No issues detected</p>
-                    <p className="text-sm text-slate-400">All cases are progressing normally</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {blockedCases.length > 0 && (
-                    <Card className="border-0 shadow-sm border-l-4 border-l-red-500">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-red-700 flex items-center gap-2">
-                          <XCircle className="w-4 h-4" /> Blocked by Safe-T ({blockedCases.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {blockedCases.map(c => (
-                            <div key={c.id} className="p-3 bg-red-50 rounded-lg text-sm">
-                              <p className="font-medium text-slate-900">{c.client_name}</p>
-                              <p className="text-xs text-slate-500">{c.procedures?.join(', ')} — {c.safe_t_flags?.join(', ') || 'Review required'}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {stalledCases.length > 0 && (
-                    <Card className="border-0 shadow-sm border-l-4 border-l-amber-500">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm text-amber-700 flex items-center gap-2">
-                          <Clock className="w-4 h-4" /> Stalled Cases 3+ Days ({stalledCases.length})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {stalledCases.map(c => (
-                            <div key={c.id} className="p-3 bg-amber-50 rounded-lg text-sm">
-                              <p className="font-medium text-slate-900">{c.client_name}</p>
-                              <p className="text-xs text-slate-500">Stuck at: {c.status} — {c.doctor_selected || 'No doctor assigned'}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Partners */}
-          <TabsContent value="partners" className="mt-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-                    <Stethoscope className="w-4 h-4 text-blue-500" /> Doctors ({doctors.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {doctors.slice(0, 8).map(d => (
-                      <div key={d.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <p className="font-medium text-slate-800">{d.full_name}</p>
-                          <p className="text-xs text-slate-400">{d.clinic_city}, {d.clinic_country}</p>
-                        </div>
-                        <Badge className={`text-xs ${d.status === 'active' ? 'bg-emerald-100 text-emerald-700' : d.status === 'pending_verification' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                          {d.status === 'active' ? 'Active' : d.status === 'pending_verification' ? 'Pending' : 'Inactive'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex gap-3 text-xs text-slate-500">
-                    <span className="text-emerald-600 font-medium">{activeDoctors} active</span>
-                    <span className="text-amber-600">{doctors.filter(d => d.status === 'pending_verification').length} pending</span>
-                  </div>
-                  <Link to="/admin/partners" className="block mt-2 text-xs text-blue-600 underline">Manage →</Link>
+          <TabsContent value="active" className="space-y-4">
+            {loadingActive ? (
+              <Card className="bg-white border-0 shadow-md rounded-2xl">
+                <CardContent className="pt-6 text-center py-8">
+                  <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
                 </CardContent>
               </Card>
-
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-                    <Plane className="w-4 h-4 text-purple-500" /> Travel Agencies ({agencies.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {agencies.slice(0, 8).map(a => (
-                      <div key={a.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <p className="font-medium text-slate-800">{a.agency_name}</p>
-                          <p className="text-xs text-slate-400">{a.headquarters_country}</p>
-                        </div>
-                        <Badge className={`text-xs ${a.status === 'active' ? 'bg-emerald-100 text-emerald-700' : a.status === 'pending_verification' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                          {a.status === 'active' ? 'Active' : a.status === 'pending_verification' ? 'Pending' : 'Inactive'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex gap-3 text-xs text-slate-500">
-                    <span className="text-emerald-600 font-medium">{activeAgencies} active</span>
-                    <span className="text-amber-600">{agencies.filter(a => a.status === 'pending_verification').length} pending</span>
-                  </div>
-                  <Link to="/admin/partners" className="block mt-2 text-xs text-blue-600 underline">Manage →</Link>
+            ) : filteredActiveCases.length === 0 ? (
+              <Card className="bg-white border-0 shadow-md rounded-2xl">
+                <CardContent className="pt-6 text-center py-8">
+                  <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-600 font-medium">No active cases found</p>
                 </CardContent>
               </Card>
-
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2 text-slate-700">
-                    <Car className="w-4 h-4 text-cyan-500" /> Chauffeurs ({taxis.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {taxis.slice(0, 8).map(t => (
-                      <div key={t.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <p className="font-medium text-slate-800">{t.driver_name || t.company_name}</p>
-                          <p className="text-xs text-slate-400">{t.operating_city}, {t.operating_country}</p>
-                        </div>
-                        <Badge className={`text-xs ${t.status === 'active' ? 'bg-emerald-100 text-emerald-700' : t.status === 'pending_verification' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                          {t.status === 'active' ? 'Active' : t.status === 'pending_verification' ? 'Pending' : 'Inactive'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex gap-3 text-xs text-slate-500">
-                    <span className="text-emerald-600 font-medium">{activeTaxis} active</span>
-                    <span className="text-amber-600">{taxis.filter(t => t.status === 'pending_verification').length} pending</span>
-                  </div>
-                  <Link to="/admin/partners" className="block mt-2 text-xs text-blue-600 underline">Manage →</Link>
-                </CardContent>
-              </Card>
-            </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredActiveCases.map(caseRecord => (
+                  <CaseCard 
+                    key={caseRecord.id} 
+                    caseRecord={caseRecord}
+                    getStatusBadge={getStatusBadge}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
 
-          {/* Booking Flow */}
-          <TabsContent value="flow" className="mt-4">
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-slate-700">Incoming Consultations — Automated Processing</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingConsultations ? (
-                  <div className="text-center py-8 text-slate-400">Loading...</div>
-                ) : consultations.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">No consultations yet</div>
-                ) : (
-                  <div className="space-y-2">
-                    {consultations.map(c => (
-                      <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900 text-sm">{c.patient_name}</span>
-                            <Badge variant="outline" className="text-xs">{c.procedure_interest?.replace(/_/g, ' ')}</Badge>
-                            <Badge className={`text-xs ${c.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                              {c.status}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {c.client_country} → {c.destination_country} · {c.email}
-                          </p>
-                        </div>
-                        <p className="text-xs text-slate-400 flex-shrink-0">{new Date(c.created_date).toLocaleDateString()}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <TabsContent value="completed" className="space-y-4">
+            {loadingCompleted ? (
+              <Card className="bg-white border-0 shadow-md rounded-2xl">
+                <CardContent className="pt-6 text-center py-8">
+                  <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
+                </CardContent>
+              </Card>
+            ) : filteredCompletedCases.length === 0 ? (
+              <Card className="bg-white border-0 shadow-md rounded-2xl">
+                <CardContent className="pt-6 text-center py-8">
+                  <Archive className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-600 font-medium">No completed trips yet</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCompletedCases.map(caseRecord => (
+                  <CaseCard 
+                    key={caseRecord.id} 
+                    caseRecord={caseRecord}
+                    getStatusBadge={getStatusBadge}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function CaseCard({ caseRecord, getStatusBadge }) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <Card className="border-2 border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all rounded-xl">
+        <CardContent className="pt-5">
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <h4 className="font-semibold text-slate-900 line-clamp-1">{caseRecord.client_name}</h4>
+              {getStatusBadge(caseRecord.status)}
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Users className="w-4 h-4 text-slate-400" />
+                <span className="line-clamp-1">{caseRecord.client_email}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Activity className="w-4 h-4 text-slate-400" />
+                <span className="line-clamp-1">{caseRecord.procedures?.join(', ') || 'Procedure TBD'}</span>
+              </div>
+              
+              {caseRecord.procedure_country && (
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Plane className="w-4 h-4 text-slate-400" />
+                  <span>{caseRecord.procedure_country}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs text-slate-500">
+                Created: {caseRecord.created_date ? new Date(caseRecord.created_date).toLocaleDateString() : 'Unknown'}
+              </span>
+              {caseRecord.final_package_price && (
+                <span className="text-sm font-semibold text-slate-700">
+                  ${caseRecord.final_package_price.toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
