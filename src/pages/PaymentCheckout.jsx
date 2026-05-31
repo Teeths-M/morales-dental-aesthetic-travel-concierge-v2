@@ -233,72 +233,12 @@ export default function PaymentCheckout() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Cost Breakdown */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-1 space-y-4"
-          >
-            <Card className="p-6 bg-secondary/30">
-              <h3 className="font-display text-lg text-foreground mb-4">Package Breakdown</h3>
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Doctor Fee</span>
-                  <span className="font-semibold">${caseRecord.treatment_cost?.toLocaleString() || '0'}</span>
-                </div>
-                <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Flights</span>
-                  <span className="font-semibold">${caseRecord.flight_cost?.toLocaleString() || '0'}</span>
-                </div>
-                <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Hotel</span>
-                  <span className="font-semibold">${caseRecord.hotel_cost?.toLocaleString() || '0'}</span>
-                </div>
-                <div className="flex justify-between pb-2 border-b border-border">
-                  <span className="text-muted-foreground">Transportation</span>
-                  <span className="font-semibold">${(caseRecord.pickup_cost + caseRecord.dropoff_cost + caseRecord.local_transfer_cost)?.toLocaleString() || '0'}</span>
-                </div>
-                 <div className="flex justify-between pb-2 border-b border-border">
-                   <span className="text-muted-foreground">Subtotal</span>
-                   <span className="font-semibold">${caseRecord.base_cost?.toLocaleString() || '0'}</span>
-                 </div>
-                 <div className="flex justify-between pb-2 border-b border-border">
-                   <span className="text-muted-foreground">Platform Fee ({(caseRecord.markup_percentage * 100 || 35).toFixed(0)}%)</span>
-                   <span className="font-semibold">${caseRecord.profit?.toLocaleString() || '0'}</span>
-                 </div>
-                 <div className="flex justify-between text-base font-bold text-foreground pt-2">
-                   <span>Total Package</span>
-                   <span>${caseRecord.final_package_price?.toLocaleString() || '0'}</span>
-                 </div>
-
-                 {/* Fee Refund Reminder */}
-                 {caseRecord.consultation_fee_paid && (
-                   <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                     <p className="text-xs text-emerald-800 leading-relaxed">
-                       <Sparkles className="w-3 h-3 inline mr-1" />
-                       <span className="font-semibold"> Morales Luxury Credit Applied:</span> Your ${caseRecord.consultation_fee_amount || 49} consultation retainer has been fully refunded and credited to your package total.
-                     </p>
-                   </div>
-                 )}
-              </div>
-            </Card>
-
-            {/* Security Badge */}
-            <Card className="p-4 bg-green-50 border-green-200">
-              <div className="flex items-center gap-2 text-sm text-green-700">
-                <Lock className="w-4 h-4" />
-                <span>Secure Stripe Payment</span>
-              </div>
-            </Card>
-          </motion.div>
-
+        <div className="flex justify-center">
           {/* Payment Plans */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2 space-y-4"
+            className="w-full max-w-2xl space-y-4"
           >
             {plans.map((plan, i) => {
               const Icon = plan.icon;
@@ -368,6 +308,14 @@ export default function PaymentCheckout() {
             >
               {selectPlanMutation.isPending ? 'Processing...' : 'Proceed to Payment'}
             </Button>
+
+            {/* Security Badge */}
+            <Card className="p-4 bg-green-50 border-green-200">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Lock className="w-4 h-4" />
+                <span>Secure Stripe Payment</span>
+              </div>
+            </Card>
 
             {/* Trust Badges */}
             <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground pt-4">
