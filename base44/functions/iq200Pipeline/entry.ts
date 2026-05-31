@@ -317,131 +317,155 @@ Deno.serve(async (req) => {
         ]
       });
 
-      // AUTO-TRIGGER: Notify all partners (HARDCODED)
+      // AUTO-TRIGGER: 5-way email notifications (concurrent)
       const appUrl = 'https://sentinel-dental-care.base44.app';
-      
-      // 1. Notify Travel Agency (if assigned)
-      if (caseRecord.travel_vendor_id) {
-        const travelAgency = await base44.asServiceRole.entities.TravelAgency.get(caseRecord.travel_vendor_id);
-        if (travelAgency) {
-          const portalUrl = `${appUrl}/portal/travel?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
-          await base44.integrations.Core.SendEmail({
-            to: travelAgency.email,
-            subject: `Payment Confirmed - Book Travel for ${caseRecord.client_name}`,
-            body: `
-              <h2>Travel Booking Request</h2>
-              <p>Dear ${travelAgency.agency_name || 'Travel Partner'},</p>
-              <p>Payment has been confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
-              <p><strong>Procedure:</strong> ${(caseRecord.procedures || []).join(', ')}</p>
-              <p><strong>Destination:</strong> ${caseRecord.procedure_country}</p>
-              <p><strong>Flight Budget:</strong> $${caseRecord.flight_cost}</p>
-              <p><strong>Hotel Budget:</strong> $${caseRecord.hotel_cost}</p>
-              <p><strong>Flight Details:</strong> ${caseRecord.flight_details || 'TBD'}</p>
-              <p><strong>Hotel:</strong> ${caseRecord.hotel_name || 'TBD'}</p>
-              <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-                Access Travel Portal
-              </a>
-              <p>Please proceed with booking flights and hotel accommodation.</p>
-            `
-          });
-        }
-      }
+      const emailPromises = [];
 
-      // 2. Notify Origin Driver (if assigned)
-      if (caseRecord.origin_driver_id) {
-        const originDriver = await base44.asServiceRole.entities.TaxiService.get(caseRecord.origin_driver_id);
-        if (originDriver) {
-          await base44.integrations.Core.SendEmail({
-            to: originDriver.email,
-            subject: `Payment Confirmed - Pickup Booking for ${caseRecord.client_name}`,
-            body: `
-              <h2>Transfer Booking Confirmed</h2>
-              <p>Dear ${originDriver.company_name || originDriver.driver_name},</p>
-              <p>Payment confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
-              <p><strong>Pickup Location:</strong> ${caseRecord.client_pickup_address || 'Client Home'}</p>
-              <p><strong>Destination:</strong> Local Airport</p>
-              <p><strong>Payment:</strong> $${caseRecord.pickup_cost}</p>
-              <p>Please confirm the pickup date and time.</p>
-            `
-          });
-        }
-      }
+      // 1. PATIENT - Luxury itinerary welcome package
+      const patientEmailBody = `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"></head>
+        <body style="margin:0; padding:0; background: linear-gradient(135deg, #f5f7f4 0%, #e8eceb 100%); font-family: 'Segoe UI', -apple-system, sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center" style="padding: 48px 20px;">
+              <table width="100%" style="max-width: 640px; background: #ffffff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden;">
+                <tr><td style="background: linear-gradient(135deg, #0F3A20 0%, #1a5c3a 100%); padding: 48px 40px; text-align: center;">
+                  <div style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">MORALES</div>
+                  <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600; margin-top: 8px;">Dental & Aesthetic Travel Concierge</div>
+                </td></tr>
+                <tr><td style="padding: 48px 40px;">
+                  <p style="font-size: 16px; color: #374151; margin: 0 0 24px;">Dear ${caseRecord.client_name},</p>
+                  <p style="font-size: 18px; font-weight: 600; color: #0F3A20; margin: 0 0 32px;">Your payment has been successfully processed. Your luxury medical travel experience is now secured.</p>
+                  
+                  <div style="padding: 24px; background: linear-gradient(135deg, rgba(15,58,32,0.05), rgba(197,160,89,0.05)); border-left: 4px solid #0F3A20; border-radius: 8px; margin: 32px 0;">
+                    <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; font-weight: 700;">Your Procedure</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #0F3A20; margin: 8px 0;">${(caseRecord.procedures || ['Your Procedure']).join(' + ')}</div>
+                    <div style="font-size: 14px; color: #4B5563;">${caseRecord.procedure_country}</div>
+                  </div>
 
-      // 3. Notify Destination Driver (if assigned)
-      if (caseRecord.destination_driver_id) {
-        const destDriver = await base44.asServiceRole.entities.TaxiService.get(caseRecord.destination_driver_id);
-        if (destDriver) {
-          const portalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
-          await base44.integrations.Core.SendEmail({
-            to: destDriver.email,
-            subject: `Payment Confirmed - Transfer Booking for ${caseRecord.client_name}`,
-            body: `
-              <h2>Destination Transfer Confirmed</h2>
-              <p>Dear ${destDriver.company_name || destDriver.driver_name},</p>
-              <p>Payment confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
-              <p><strong>Pickup:</strong> Airport in ${caseRecord.procedure_country}</p>
-              <p><strong>Drop-off:</strong> Hotel/Clinic</p>
-              <p><strong>Payment:</strong> $${caseRecord.dropoff_cost + caseRecord.local_transfer_cost}</p>
-              <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-                Access Transfer Portal
-              </a>
-              <p>Please confirm transfer dates.</p>
-            `
-          });
-        }
-      }
+                  <div style="margin: 32px 0;">
+                    <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; font-weight: 700; margin-bottom: 16px;">Your Complete Itinerary</div>
+                    <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px;">
+                      <div style="font-weight: 700; color: #0F3A20; font-size: 14px;">✈️ Premium Flights</div>
+                      <div style="font-size: 13px; color: #6B7280;">${caseRecord.flight_details || 'Round-trip international flights'}</div>
+                    </div>
+                    <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px;">
+                      <div style="font-weight: 700; color: #0F3A20; font-size: 14px;">🏨 Luxury Accommodation</div>
+                      <div style="font-size: 13px; color: #6B7280;">${caseRecord.hotel_name || 'Premium hotel'} - ${caseRecord.hotel_address || 'Near treatment facility'}</div>
+                    </div>
+                    <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                      <div style="font-weight: 700; color: #0F3A20; font-size: 14px;">🚗 Private Transfers</div>
+                      <div style="font-size: 13px; color: #6B7280;">Airport transfers and clinic transportation</div>
+                    </div>
+                  </div>
 
-      // 4. Notify Doctor
-      if (caseRecord.doctor_email) {
-        const doctorPortalUrl = `${appUrl}/portal/doctor/${caseRecord.doctor_portal_token || caseRecord.proposal_token}`;
-        await base44.integrations.Core.SendEmail({
-          to: caseRecord.doctor_email,
-          subject: `Payment Confirmed - Procedure Booking for ${caseRecord.client_name}`,
-          body: `
-            <h2>Procedure Booking Confirmed</h2>
-            <p>Dear ${caseRecord.doctor_selected || 'Doctor'},</p>
-            <p>Payment has been confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
-            <p><strong>Procedure:</strong> ${(caseRecord.procedures || []).join(', ')}</p>
-            <p><strong>Treatment Cost:</strong> $${caseRecord.treatment_cost}</p>
-            <a href="${doctorPortalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-              Access Doctor Portal
-            </a>
-            <p>Please confirm the procedure date.</p>
-          `
-        });
-      }
+                  <div style="padding: 28px; background: #f0f9ff; border: 2px solid #0F3A20; border-radius: 12px; text-align: center; margin: 32px 0;">
+                    <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; font-weight: 700;">Total Investment</div>
+                    <div style="font-size: 36px; font-weight: 900; color: #0F3A20; margin: 12px 0;">$${caseRecord.final_package_price?.toLocaleString() || '0'}</div>
+                    <div style="display: inline-block; padding: 8px 16px; background: #10b981; color: #ffffff; border-radius: 20px; font-size: 12px; font-weight: 700;">✓ PAID IN FULL</div>
+                    ${caseRecord.consultation_fee_paid ? `<p style="margin-top: 12px; font-size: 12px; color: #0F3A20; font-weight: 600;">Your $${caseRecord.consultation_fee_amount || 49}.00 consultation fee has been credited</p>` : ''}
+                  </div>
 
-      // 5. Send final confirmation to patient
-      await base44.integrations.Core.SendEmail({
-        to: caseRecord.client_email,
-        subject: `Payment Confirmed - Your Medical Travel Journey Begins!`,
-        body: `
-          <h2>Payment Confirmed! 🎉</h2>
-          <p>Dear ${caseRecord.client_name},</p>
-          <p>Your payment of <strong>${deposit_option}</strong> has been successfully processed.</p>
-          <p><strong>What happens next:</strong></p>
-          <ul>
-            <li>✈️ Travel agency will book your flights and hotel</li>
-            <li>🚗 Drivers will coordinate airport transfers</li>
-            <li>🩺 Doctor will confirm your procedure date</li>
-          </ul>
-          <p>You will receive separate emails with all confirmed details shortly.</p>
-          <p><strong>Total Package:</strong> $${caseRecord.final_package_price}</p>
-          <p><strong>Remaining Balance:</strong> $${caseRecord.amount_remaining || 0}</p>
-          <p>Track your journey status anytime through your portal.</p>
-          <p>Best regards,<br/>IQ200 Medical Travel Team</p>
-        `
-      });
+                  <p style="font-size: 14px; color: #374151; margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center;">
+                    Dedicated to your beautiful smile and wellness journey,<br/>
+                    <strong style="color: #0F3A20;">The IQ200 Medical Travel Team</strong>
+                  </p>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </body>
+        </html>
+      `;
+      emailPromises.push(base44.integrations.Core.SendEmail({
+        to: 'theonmorales243+patient@gmail.com',
+        subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,
+        body: patientEmailBody
+      }));
 
-      return Response.json({ 
-        success: true, 
+      // 2. TRAVEL AGENCY / ADMIN - Master portal notification
+      const travelAgency = caseRecord.travel_vendor_id ? await base44.asServiceRole.entities.TravelAgency.get(caseRecord.travel_vendor_id) : null;
+      const adminPortalUrl = `${appUrl}/admin/portal-viewer?case_id=${caseRecord.id}`;
+      const adminEmailBody = `
+        <h2>Master Portal Notification - Case #${caseRecord.id}</h2>
+        <p>Dear Admin,</p>
+        <p>Payment confirmed for <strong>${caseRecord.client_name}</strong>.</p>
+        <p><strong>Total Package:</strong> $${caseRecord.final_package_price?.toLocaleString()}</p>
+        <p><strong>Deposit:</strong> ${deposit_option} | <strong>Status:</strong> ${caseRecord.payment_status}</p>
+        <h3>Workflow Logs:</h3>
+        <ul>${(caseRecord.timeline_log || []).map(log => `<li>${log.timestamp}: ${log.action} - ${log.details}</li>`).join('')}</ul>
+        <p><strong>Travel Agency:</strong> ${travelAgency ? travelAgency.agency_name : 'Not assigned'}</p>
+        <p><strong>Doctor:</strong> ${caseRecord.doctor_selected || 'Not assigned'}</p>
+        <a href="${adminPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">View Case</a>
+      `;
+      emailPromises.push(base44.integrations.Core.SendEmail({
+        to: 'theonmorales243+admin@gmail.com',
+        subject: `[Admin] Payment Confirmed - Case ${caseRecord.id}`,
+        body: adminEmailBody
+      }));
+
+      // 3. DOCTOR PORTAL - Case confirmation for Dr. Rossanna
+      const doctorPortalUrl = `${appUrl}/portal/doctor/${caseRecord.doctor_portal_token || caseRecord.proposal_token}`;
+      const doctorEmailBody = `
+        <h2>Case Confirmation - Dr. Rossanna</h2>
+        <p>Dear Dr. Rossanna,</p>
+        <p>New <strong>Smile Makeover</strong> procedure confirmed for <strong>${caseRecord.client_name}</strong>.</p>
+        <p><strong>Treatment Cost:</strong> $${caseRecord.treatment_cost}</p>
+        <a href="${doctorPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Doctor Portal</a>
+        <p>Please confirm procedure date.</p>
+      `;
+      emailPromises.push(base44.integrations.Core.SendEmail({
+        to: 'theonmorales243+doctor@gmail.com',
+        subject: `Case Confirmation: Smile Makeover - ${caseRecord.client_name}`,
+        body: doctorEmailBody
+      }));
+
+      // 4. DRIVER - ORIGIN - Local pickup ticket
+      const originDriver = caseRecord.origin_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.origin_driver_id) : null;
+      const originDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
+      const originDriverEmailBody = `
+        <h2>Local Pickup Ticket</h2>
+        <p>Dear ${originDriver ? originDriver.company_name || originDriver.driver_name : 'Origin Driver'},</p>
+        <p>Pickup confirmed for <strong>${caseRecord.client_name}</strong>.</p>
+        <p><strong>Pickup:</strong> ${caseRecord.client_pickup_address || 'Client Home'}</p>
+        <p><strong>Destination:</strong> Local Airport</p>
+        <a href="${originDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
+      `;
+      emailPromises.push(base44.integrations.Core.SendEmail({
+        to: 'theonmorales243+driver.origin@gmail.com',
+        subject: `Pickup Request: ${caseRecord.client_name}`,
+        body: originDriverEmailBody
+      }));
+
+      // 5. DRIVER - DESTINATION - Airport arrival ticket
+      const destDriver = caseRecord.destination_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.destination_driver_id) : null;
+      const destDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
+      const destDriverEmailBody = `
+        <h2>International Arrival Transfer</h2>
+        <p>Dear ${destDriver ? destDriver.company_name || destDriver.driver_name : 'Destination Driver'},</p>
+        <p>Arrival transfer confirmed for <strong>${caseRecord.client_name}</strong>.</p>
+        <p><strong>Destination:</strong> ${caseRecord.hotel_name || 'Hotel'} - ${caseRecord.hotel_address || 'TBD'}</p>
+        <a href="${destDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
+      `;
+      emailPromises.push(base44.integrations.Core.SendEmail({
+        to: 'theonmorales243+driver.dest@gmail.com',
+        subject: `Arrival Transfer: ${caseRecord.client_name}`,
+        body: destDriverEmailBody
+      }));
+
+      // Execute all 5 emails concurrently
+      await Promise.all(emailPromises);
+
+      return Response.json({
+        success: true,
         case_id: caseRecord.id,
         notifications_sent: {
-          travel_agency: !!caseRecord.travel_vendor_id,
-          origin_driver: !!caseRecord.origin_driver_id,
-          destination_driver: !!caseRecord.destination_driver_id,
-          doctor: !!caseRecord.doctor_email,
-          patient: true
+          patient: true,
+          admin: true,
+          doctor: true,
+          origin_driver: true,
+          destination_driver: true
         }
       });
     }
