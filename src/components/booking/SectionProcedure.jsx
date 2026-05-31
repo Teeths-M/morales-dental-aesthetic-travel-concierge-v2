@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,32 @@ export default function SectionProcedure({ form, update }) {
   const [currentMonth, setCurrentMonth] = useState(
     form.preferred_date ? new Date(form.preferred_date) : new Date()
   );
+  const [calendarPos, setCalendarPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef(null);
   const { items } = useCart();
+
+  useEffect(() => {
+    if (showCalendar && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCalendarPos({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [showCalendar]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!showCalendar) return;
+    const handler = (e) => {
+      if (triggerRef.current && !triggerRef.current.contains(e.target)) {
+        setShowCalendar(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showCalendar]);
 
   // Sundays (0) and Thursdays (4) are LOGISTICS days — blocked for procedure booking
   const isDisabledDate = (date) => {
@@ -123,7 +148,7 @@ export default function SectionProcedure({ form, update }) {
 
       <div>
         <Label>Preferred Consultation Date <span className="text-destructive">*</span></Label>
-        <div className="relative mt-1.5">
+        <div className="relative mt-1.5" ref={triggerRef}>
           <motion.button
             onClick={() => setShowCalendar(!showCalendar)}
             className="w-full flex items-center justify-between px-4 py-3 bg-white border border-border rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-foreground"
@@ -139,7 +164,14 @@ export default function SectionProcedure({ form, update }) {
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="absolute top-full left-0 mt-2 bg-white border border-border rounded-2xl shadow-xl z-50 p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+                style={{
+                  position: 'fixed',
+                  top: calendarPos.top,
+                  left: calendarPos.left,
+                  width: Math.min(calendarPos.width, 384),
+                  zIndex: 9999,
+                }}
+                className="bg-white border border-border rounded-2xl shadow-xl p-6 max-h-[80vh] overflow-y-auto"
               >
                 {/* Month Header */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
