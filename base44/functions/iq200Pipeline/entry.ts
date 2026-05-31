@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
         status: 'Proposal-Sent'
       });
 
-      const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
+      const appUrl = 'https://sentinel-dental-care.base44.app';
       const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
 
       return Response.json({ 
@@ -171,8 +171,8 @@ Deno.serve(async (req) => {
         profit: caseRecord.base_cost * markupPct
       });
 
-      // Send proposal email to client with absolute URL - route to payment checkout
-      const appUrl = Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app';
+      // Send proposal email to client with absolute URL - route to payment checkout (HARDCODED)
+      const appUrl = 'https://sentinel-dental-care.base44.app';
       const checkoutUrl = `${appUrl}/portal-hub/checkout/${case_id}`;
       
       await base44.integrations.Core.SendEmail({
@@ -317,8 +317,8 @@ Deno.serve(async (req) => {
         ]
       });
 
-      // AUTO-TRIGGER: Notify all partners
-      const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
+      // AUTO-TRIGGER: Notify all partners (HARDCODED)
+      const appUrl = 'https://sentinel-dental-care.base44.app';
       
       // 1. Notify Travel Agency (if assigned)
       if (caseRecord.travel_vendor_id) {

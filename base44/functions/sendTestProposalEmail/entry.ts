@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       proposal_sent_at: new Date().toISOString()
     });
 
-    // Send proposal email - route to payment checkout (NEW dashboard)
+    // Send proposal email - route to payment checkout (HARDCODED OVERRIDE)
     const appUrl = 'https://sentinel-dental-care.base44.app';
     const checkoutUrl = `${appUrl}/portal-hub/checkout/${mockCase.id}`;
     
