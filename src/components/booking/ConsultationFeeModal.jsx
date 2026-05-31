@@ -4,7 +4,27 @@ import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useCart } from '@/context/CartContext';
-function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, clearCart }) {
+
+async function fireConsentEmail(form, responseData) {
+  try {
+    await base44.functions.invoke('processInformedConsentAndEmail', {
+      consultation_id: form.consultation_id,
+      client_name: form.patient_name,
+      client_email: form.email,
+      procedures: form.procedure_interest,
+      signature_data: form.signature_data || '',
+      signature_timestamp: form.signature_timestamp || new Date().toISOString(),
+      signature_ip_address: form.ip_country_origin || '',
+      accepted_arbitration_clause: !!form.accepted_arbitration_clause,
+      charge_id: responseData?.charge_id,
+      amount: responseData?.amount || 49,
+    });
+  } catch (e) {
+    console.warn('Consent email dispatch failed (non-blocking):', e.message);
+  }
+}
+
+function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, clearCart, handlePaymentSuccess }) {
   const [error, setError] = useState(null);
 
   const handleStripePayment = async (e) => {
@@ -21,7 +41,11 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       
       if (response.data.success) {
         await fireConsentEmail(form, response.data);
-        onSuccess(response.data);
+        if (handlePaymentSuccess) {
+          await handlePaymentSuccess(response.data);
+        } else {
+          onSuccess(response.data);
+        }
         clearCart();
       }
     } catch (err) {
@@ -53,7 +77,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
   );
 }
 
-function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
+function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, handlePaymentSuccess }) {
   const [error, setError] = useState(null);
 
   const handlePayPalPayment = async (e) => {
@@ -69,7 +93,11 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       });
       
       if (response.data.success) {
-        onSuccess(response.data);
+        if (handlePaymentSuccess) {
+          await handlePaymentSuccess(response.data);
+        } else {
+          onSuccess(response.data);
+        }
       }
     } catch (err) {
       setError(err.message);
@@ -100,7 +128,7 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
   );
 }
 
-function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing }) {
+function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProcessing, handlePaymentSuccess }) {
   const [error, setError] = useState(null);
 
   const handleWipayPayment = async (e) => {
@@ -116,7 +144,11 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
       });
       
       if (response.data.success) {
-        onSuccess(response.data);
+        if (handlePaymentSuccess) {
+          await handlePaymentSuccess(response.data);
+        } else {
+          onSuccess(response.data);
+        }
       }
     } catch (err) {
       setError(err.message);
@@ -147,29 +179,32 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
   );
 }
 
-async function fireConsentEmail(form, responseData) {
-  try {
-    await base44.functions.invoke('processInformedConsentAndEmail', {
-      consultation_id: form.consultation_id,
-      client_name: form.patient_name,
-      client_email: form.email,
-      procedures: form.procedure_interest,
-      signature_data: form.signature_data || '',
-      signature_timestamp: form.signature_timestamp || new Date().toISOString(),
-      signature_ip_address: form.ip_country_origin || '',
-      accepted_arbitration_clause: !!form.accepted_arbitration_clause,
-      charge_id: responseData?.charge_id,
-      amount: responseData?.amount || 49,
-    });
-  } catch (e) {
-    console.warn('Consent email dispatch failed (non-blocking):', e.message);
-  }
-}
-
 export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('stripe');
   const { clearCart } = useCart();
+
+  // Generate proposal redirect URL after successful payment
+  const handlePaymentSuccess = async (responseData) => {
+    try {
+      // Create CaseRecord and generate proposal token
+      const pipelineResponse = await base44.functions.invoke('iq200Pipeline', {
+        action: 'create',
+        consultation_id: form.consultation_id
+      });
+
+      if (pipelineResponse.data?.proposal_url) {
+        // Redirect to proposal portal immediately
+        window.location.href = pipelineResponse.data.proposal_url;
+        return;
+      }
+    } catch (error) {
+      console.error('Proposal generation failed:', error);
+    }
+    
+    // Fallback: call original onSuccess and go to dashboard
+    onSuccess(responseData);
+  };
 
   if (!isOpen) return null;
 
@@ -254,6 +289,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
             clearCart={clearCart}
+            handlePaymentSuccess={handlePaymentSuccess}
           />
         )}
 
@@ -264,6 +300,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
             onCancel={onCancel}
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
+            handlePaymentSuccess={handlePaymentSuccess}
           />
         )}
 
@@ -274,6 +311,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
             onCancel={onCancel}
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
+            handlePaymentSuccess={handlePaymentSuccess}
           />
         )}
 

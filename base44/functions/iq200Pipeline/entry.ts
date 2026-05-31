@@ -120,13 +120,26 @@ Deno.serve(async (req) => {
         console.error('SAFE-T scan failed:', scanError);
       }
 
+      // AUTO-GENERATE PROPOSAL TOKEN
+      const proposalToken = `prop_${caseRecord.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+        proposal_token: proposalToken,
+        proposal_sent_at: new Date().toISOString(),
+        status: 'Proposal-Sent'
+      });
+
+      const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
+      const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
+
       return Response.json({ 
         status: 'CREATED', 
         case_id: caseRecord.id,
+        proposal_token: proposalToken,
+        proposal_url: proposalUrl,
         doctor_auto_assigned: isDentalProcedure || isVenezuela,
         message: isDentalProcedure || isVenezuela
-          ? 'Case created, Dr Rossanna auto-assigned, SAFE-T review initiated'
-          : 'Case created and SAFE-T review initiated'
+          ? 'Case created, Dr Rossanna auto-assigned, SAFE-T review initiated, proposal generated'
+          : 'Case created, SAFE-T review initiated, proposal generated'
       });
     }
 
