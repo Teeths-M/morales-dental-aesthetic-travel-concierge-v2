@@ -52,6 +52,11 @@
       "type": "string",
       "format": "date"
     },
+    "return_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected return / departure date"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -120,6 +125,11 @@
     },
     "companion_relationship": {
       "type": "string"
+    },
+    "number_of_companions": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of additional persons travelling with the client"
     },
     "travel_buddy_services": {
       "type": "array",
@@ -306,6 +316,11 @@
     "passport_number": {
       "type": "string",
       "description": "Client passport number"
+    },
+    "passport_issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Passport issue date"
     },
     "passport_expiry_date": {
       "type": "string",
