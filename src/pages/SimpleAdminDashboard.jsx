@@ -20,13 +20,13 @@ export default function SimpleAdminDashboard() {
   // Fetch consultations (new patient requests)
   const { data: consultations = [], isLoading: loadingConsultations } = useQuery({
     queryKey: ['consultations_simple'],
-    queryFn: () => base44.asServiceRole.entities.Consultation.list('-created_date', 50),
+    queryFn: () => base44.entities.Consultation.list('-created_date', 50),
   });
 
   // Fetch case records (active cases in workflow)
   const { data: cases = [], isLoading: loadingCases, refetch } = useQuery({
     queryKey: ['cases_simple'],
-    queryFn: () => base44.asServiceRole.entities.CaseRecord.list('-created_date', 100),
+    queryFn: () => base44.entities.CaseRecord.list('-created_date', 100),
   });
 
   // Calculate simple stats
@@ -40,7 +40,6 @@ export default function SimpleAdminDashboard() {
   const handleRefresh = () => {
     qc.invalidateQueries({ queryKey: ['consultations_simple'] });
     qc.invalidateQueries({ queryKey: ['cases_simple'] });
-    refetch();
   };
 
   return (
