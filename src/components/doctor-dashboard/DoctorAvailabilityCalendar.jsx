@@ -128,7 +128,7 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-96">
         {/* Legend */}
         <div className="flex gap-4 mb-4 text-sm">
           <div className="flex items-center gap-2">
