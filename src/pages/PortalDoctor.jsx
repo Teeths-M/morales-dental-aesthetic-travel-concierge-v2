@@ -27,7 +27,7 @@ export default function PortalDoctor() {
     const loadCase = async () => {
       try {
         // Find case by doctor_portal_token
-        const cases = await base44.entities.Case.filter({});
+        const cases = await base44.entities.CaseRecord.filter({});
         const matchingCase = cases.find(c => c.doctor_portal_token === token);
         
         if (!matchingCase) {
@@ -61,7 +61,7 @@ export default function PortalDoctor() {
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      await base44.entities.Case.update(caseData.id, {
+      await base44.entities.CaseRecord.update(caseData.id, {
         doctor_confirmation_status: 'Confirmed',
         doctor_confirmed_at: new Date().toISOString(),
         doctor_notes: formData.doctor_notes,
@@ -79,7 +79,7 @@ export default function PortalDoctor() {
   const handleNotAvailable = async () => {
     setSubmitting(true);
     try {
-      await base44.entities.Case.update(caseData.id, {
+      await base44.entities.CaseRecord.update(caseData.id, {
         doctor_confirmation_status: 'Declined',
         doctor_notes: formData.doctor_notes,
         status: 'Admin-Review'
