@@ -83,13 +83,6 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
 
   const handleDateClick = (date) => {
     setSelectedDate(date);
-    // Scroll to the action panel after a short delay
-    setTimeout(() => {
-      const panel = document.getElementById('selected-date-panel');
-      if (panel) {
-        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
   };
 
   const handleToggleAvailability = (isAvailable, dateOverride = null) => {
