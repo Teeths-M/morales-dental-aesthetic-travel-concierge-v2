@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
       }]
     });
 
-    // Generate proposal token
-    const proposalToken = `prop_${mockCase.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // Generate proposal token (CLEAN alphanumeric only - no timestamps or random hashes)
+    const proposalToken = `prop_${mockCase.id}`;
     
     await base44.asServiceRole.entities.CaseRecord.update(mockCase.id, {
       proposal_token: proposalToken,
