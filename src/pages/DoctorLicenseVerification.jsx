@@ -4,12 +4,13 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { 
   FileText, CheckCircle, AlertCircle, Clock, Shield, Eye, 
-  Search, Filter, RefreshCw, UserCheck, XCircle
+  Search, Filter, RefreshCw, UserCheck, XCircle, ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 import {
   Select,
   SelectContent,
@@ -98,6 +99,11 @@ export default function DoctorLicenseVerification() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" asChild className="rounded-full">
+                <Link to="/admin">
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+              </Button>
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
