@@ -27,18 +27,6 @@ const STATIC_SUPPORT_CHANNELS = [
     action: 'Message Doctor',
     whatsapp: 'https://wa.me/18687481100',
   },
-  {
-    id: 'emergency',
-    title: 'Emergency Support',
-    desc: 'For urgent medical or safety concerns during your journey',
-    icon: AlertCircle,
-    color: 'from-red-600 to-rose-700',
-    availability: '24/7 Available',
-    responseTime: 'Immediate',
-    action: 'Emergency Contact',
-    whatsapp: 'https://wa.me/18687481100',
-    urgent: true,
-  },
 ];
 
 const FAQS = [
@@ -93,6 +81,21 @@ export default function SupportTab() {
 
   const travelCoordinatorWhatsapp = travelAgency?.whatsapp_number || 'https://wa.me/18687481100';
 
+  const { data: emergencyContact } = useQuery({
+    queryKey: ['emergencyContact', consultation?.client_country],
+    queryFn: async () => {
+      if (!consultation?.client_country) return null;
+      try {
+        const contacts = await base44.entities.EmergencyContacts.filter({ country_name: consultation.client_country });
+        return contacts.length > 0 ? contacts[0] : null;
+      } catch (e) {
+        console.error("Failed to fetch emergency contact:", e);
+        return null;
+      }
+    },
+    enabled: !!consultation?.client_country,
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -123,19 +126,36 @@ export default function SupportTab() {
           responseTime: '< 2 hours',
           action: 'Get Travel Help',
           whatsapp: travelCoordinatorWhatsapp,
-        }].map(ch => {
+        }, {
+          id: 'emergency',
+          title: 'Emergency Support',
+          desc: emergencyContact 
+            ? `Local emergency number for ${consultation?.client_country || 'your country'}`
+            : 'For urgent medical or safety concerns during your journey',
+          icon: AlertCircle,
+          color: 'from-red-600 to-rose-700',
+          availability: '24/7 Available',
+          responseTime: 'Immediate',
+          action: emergencyContact?.emergency_number || 'Call Emergency',
+          phone: emergencyContact?.emergency_number || '911',
+          country: consultation?.client_country || 'Your Country',
+          urgent: true,
+        }].map((ch, idx) => {
           const Icon = ch.icon;
+          const isEmergency = ch.urgent;
+          const href = isEmergency && ch.phone ? `tel:${ch.phone}` : ch.whatsapp;
+          
           return (
             <motion.a
               key={ch.id}
-              href={ch.whatsapp}
-              target="_blank"
+              href={href}
+              target={isEmergency ? '_self' : '_blank'}
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.01 }}
               className={`block bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${
-                ch.urgent ? 'border-red-200 hover:border-red-300' : 'border-slate-100 hover:border-slate-200'
+                isEmergency ? 'border-red-200 hover:border-red-300' : 'border-slate-100 hover:border-slate-200'
               }`}
             >
               <div className={`h-1.5 bg-gradient-to-r ${ch.color}`} />
@@ -158,7 +178,7 @@ export default function SupportTab() {
                     <div className="text-[10px] text-emerald-600 font-semibold">Response: {ch.responseTime}</div>
                   </div>
                   <span className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg bg-gradient-to-r ${ch.color} text-white`}>
-                    {ch.action} <ChevronRight className="w-3 h-3" />
+                    {ch.action} {isEmergency && ch.phone && `(${ch.phone})`} <ChevronRight className="w-3 h-3" />
                   </span>
                 </div>
               </div>
