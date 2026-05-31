@@ -322,28 +322,8 @@ Return a JSON with:
     console.log(`Consultation status update skipped for ${consultation_id}: ${error.message}`);
   }
 
-  // 7. Notify the customer of approval
-  try {
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: consultation.email,
-      subject: '✓ Your Consultation Is Approved — Morales Dental & Aesthetics',
-      body: emailLayout({
-        eyebrow: 'Consultation approved',
-        title: 'Your consultation is approved',
-        intro: `Dear ${consultation.patient_name}, your consultation has been approved. We are now coordinating the specialist clinic, travel arrangements, recovery accommodation, and local transfers for your care package.`,
-        rows: [
-          row('Procedure', formatProcedure(consultation.procedure_interest)),
-          row('Risk level', riskLevel),
-          row('Next update', 'Within 24–48 hours'),
-        ],
-        footer: 'Your concierge team will contact you with the complete package details as each part is confirmed.',
-      }),
-    });
-  } catch (error) {
-    console.log(`Approval notification email skipped for ${consultation.email}: ${error.message}`);
-  }
-
-  await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, { customer_notified: true });
+  // 7. Skip customer notification (doctor-only workflow for now)
+  // Customer will be notified after doctor confirms availability
 
     return Response.json({
       status: 'approved',
