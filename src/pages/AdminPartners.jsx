@@ -171,7 +171,7 @@ export default function AdminPartners() {
           await base44.functions.invoke('deleteTravelAgencyCompletely', { agency_id: partner.id });
         } else if (partner.company_name || partner.driver_name) {
           // Taxi Service - use deleteTaxiServiceCompletely
-          await base44.functions.invoke('deleteTaxiServiceCompletely', { taxi_id: partner.id });
+          await base44.functions.invoke('deleteTaxiServiceCompletely', { service_id: partner.id });
         }
       }
 
