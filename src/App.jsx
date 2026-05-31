@@ -42,6 +42,7 @@ import ConsultationSuccess from './pages/ConsultationSuccess';
 import PortalDoctor from './pages/PortalDoctor';
 import DoctorLicenseVerification from './pages/DoctorLicenseVerification';
 import AdminPortalViewer from './pages/AdminPortalViewer';
+import StandalonePayment from './pages/StandalonePayment';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -124,6 +125,8 @@ const AuthenticatedApp = () => {
       <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
       {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
       <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
+      {/* Standalone payment page - direct link for payments */}
+      <Route path="/pay/:case_id" element={<StandalonePayment />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
