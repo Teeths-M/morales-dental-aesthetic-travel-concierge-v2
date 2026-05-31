@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity } from 'lucide-react';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Tabs,
   TabsContent,
@@ -18,6 +18,15 @@ import {
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
+  const location = useLocation();
+
+  const adminNavItems = [
+    { path: '/admin', label: 'Patient Journey', icon: LayoutDashboard },
+    { path: '/admin/partners', label: 'Partner Management', icon: Users },
+    { path: '/admin/imports', label: 'Data Imports', icon: Import },
+    { path: '/admin/doctor-verification', label: 'Doctor Verification', icon: UserCheck },
+    { path: '/admin/portal-viewer', label: 'Portal Viewer', icon: Eye },
+  ];
 
   // Fetch active cases (excluding Completed)
   const { data: activeCases = [], isLoading: loadingActive } = useQuery({
@@ -105,30 +114,58 @@ export default function SimpleAdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <Users className="w-6 h-6 text-white" />
+      <div className="flex">
+        {/* Sidebar Navigation */}
+        <aside className="w-64 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Patient Journey Dashboard</h1>
-                <p className="text-sm text-slate-500">Monitor active medical travel cases</p>
+                <h2 className="font-bold text-slate-900 text-sm">Admin Portal</h2>
+                <p className="text-xs text-slate-500">Management Console</p>
               </div>
             </div>
-            <Button variant="outline" asChild>
-              <Link to="/admin">
-                <Users className="w-4 h-4 mr-2" />
-                Partner Management
-              </Link>
-            </Button>
+            
+            <nav className="space-y-2">
+              {adminNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
-        </div>
-      </div>
+        </aside>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Main Content */}
+        <main className="flex-1 ml-64">
+          {/* Header */}
+          <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900">Patient Journey Dashboard</h1>
+                  <p className="text-sm text-slate-500">Monitor active medical travel cases</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card className="bg-white border-0 shadow-md rounded-2xl">
@@ -282,9 +319,10 @@ export default function SimpleAdminDashboard() {
             )}
           </TabsContent>
         </Tabs>
+          </div>
+        </main>
       </div>
-    </div>
-  );
+    );
 }
 
 function CaseCard({ caseRecord, getStatusBadge }) {
