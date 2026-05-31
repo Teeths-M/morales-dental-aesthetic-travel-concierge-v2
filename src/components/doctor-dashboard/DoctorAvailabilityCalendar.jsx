@@ -83,6 +83,13 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
 
   const handleDateClick = (date) => {
     setSelectedDate(date);
+    // Scroll to the action panel after a short delay
+    setTimeout(() => {
+      const panel = document.getElementById('selected-date-panel');
+      if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const handleToggleAvailability = (isAvailable) => {
@@ -198,7 +205,7 @@ export default function DoctorAvailabilityCalendar({ doctorEmail, doctorId }) {
 
         {/* Selected Date Actions */}
         {selectedDate && (
-          <div className="mt-6 p-4 bg-muted rounded-lg mb-8">
+          <div className="mt-6 p-4 bg-muted rounded-lg mb-32" id="selected-date-panel">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
