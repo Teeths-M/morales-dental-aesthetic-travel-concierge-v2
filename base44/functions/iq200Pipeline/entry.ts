@@ -11,6 +11,25 @@ Deno.serve(async (req) => {
 
     const { action, consultation_id, case_id, payload } = await req.json();
 
+    // GET_CASE: Retrieve case by proposal token (no auth required - public link)
+    if (action === 'get_case') {
+      const { token, type } = payload;
+      
+      if (!token) {
+        return Response.json({ error: 'No token provided' }, { status: 400 });
+      }
+
+      // Find case by proposal token
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ proposal_token: token });
+      
+      if (!cases || cases.length === 0) {
+        return Response.json({ case: null, error: 'Proposal not found' }, { status: 404 });
+      }
+
+      const caseRecord = cases[0];
+      return Response.json({ case: caseRecord });
+    }
+
     // CREATE: Ingest consultation into IQ200 pipeline
     if (action === 'create') {
       const consultation = await base44.entities.Consultation.get(consultation_id);
@@ -154,6 +173,41 @@ Deno.serve(async (req) => {
         proposal_url: proposalUrl,
         message: 'Proposal sent to client successfully' 
       });
+    }
+
+    // PROCESS_PAYMENT: Handle deposit payment
+    if (action === 'process_payment') {
+      const { token, deposit_option } = payload;
+      
+      if (!token) {
+        return Response.json({ error: 'No token provided' }, { status: 400 });
+      }
+
+      // Find case by proposal token
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ proposal_token: token });
+      
+      if (!cases || cases.length === 0) {
+        return Response.json({ success: false, error: 'Proposal not found' }, { status: 404 });
+      }
+
+      const caseRecord = cases[0];
+
+      // Update payment status
+      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+        deposit_option: deposit_option,
+        payment_status: deposit_option === 'Full' ? 'Paid In Full' : deposit_option === '50%' ? '50% Paid' : '25% Paid',
+        status: 'Deposit-Paid',
+        timeline_log: [
+          ...(caseRecord.timeline_log || []),
+          {
+            timestamp: new Date().toISOString(),
+            action: 'payment_received',
+            details: `Deposit payment received: ${deposit_option}`
+          }
+        ]
+      });
+
+      return Response.json({ success: true, case_id: caseRecord.id });
     }
 
     // ADMIN_ESCALATE: Manual stage override
