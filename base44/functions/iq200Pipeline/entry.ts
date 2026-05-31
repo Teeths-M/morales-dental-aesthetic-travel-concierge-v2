@@ -48,6 +48,33 @@ Deno.serve(async (req) => {
         }]
       });
 
+      // AUTO-ASSIGN: Dr Rossanna for dental procedures in Venezuela
+      const DENTAL_PROCEDURES = ['dental_implants', 'all_on_4', 'porcelain_veneers', 'smile_makeover', 'bone_regeneration', 'teeth_whitening'];
+      const isDentalProcedure = DENTAL_PROCEDURES.includes(consultation.procedure_interest);
+      const isVenezuela = (consultation.destination_country || '').toLowerCase().includes('venezuela') || 
+                          (consultation.procedure_country || '').toLowerCase().includes('venezuela');
+
+      if (isDentalProcedure || isVenezuela) {
+        await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+          doctor_selected: 'Dr Rossanna',
+          doctor_email: 'rosedentalspa@gmail.com',
+          clinic_selected: 'Dental Spa Margarita',
+          procedure_country: 'Venezuela',
+          treatment_cost: 20,
+          status: 'Doctor-Pending',
+          doctor_confirmation_status: 'PENDING',
+          doctor_notified_at: new Date().toISOString(),
+          timeline_log: [
+            ...(caseRecord.timeline_log || []),
+            {
+              timestamp: new Date().toISOString(),
+              action: 'auto_assigned',
+              details: 'Dr Rossanna automatically assigned — Dental Spa Margarita, Venezuela'
+            }
+          ]
+        });
+      }
+
       // Trigger SAFE-T4LIFE scan
       try {
         await base44.functions.invoke('safeT4LifeScan', { caseId: caseRecord.id });
@@ -58,7 +85,10 @@ Deno.serve(async (req) => {
       return Response.json({ 
         status: 'CREATED', 
         case_id: caseRecord.id,
-        message: 'Case created and SAFE-T review initiated' 
+        doctor_auto_assigned: isDentalProcedure || isVenezuela,
+        message: isDentalProcedure || isVenezuela
+          ? 'Case created, Dr Rossanna auto-assigned, SAFE-T review initiated'
+          : 'Case created and SAFE-T review initiated'
       });
     }
 
