@@ -13,10 +13,25 @@ export default function CityOriginSelect({ value, onChange, selectedCountry }) {
   const [search, setSearch] = useState(value || '');
   const containerRef = useRef(null);
 
-  // Normalize country name to match cityData keys
-  const countryKey = Object.keys(cityData).find(
-    k => k.toLowerCase() === (selectedCountry || '').toLowerCase()
-  );
+  // Map nationality adjectives → cityData country keys
+  const nationalityToCountry = {
+    'american': 'United States', 'canadian': 'Canada', 'mexican': 'Mexico',
+    'venezuelan': 'Venezuela', 'colombian': 'Colombia', 'brazilian': 'Brazil',
+    'argentine': 'Argentina', 'spanish': 'Spain', 'british': 'United Kingdom',
+    'french': 'France', 'german': 'Germany', 'australian': 'Australia',
+    'indian': 'India', 'turkish': 'Turkey', 'thai': 'Thailand',
+    'costa rican': 'Costa Rica', 'panamanian': 'Panama', 'dominican': 'Dominican Republic',
+    'jamaican': 'Jamaica', 'trinidadian': 'Trinidad and Tobago',
+    'south african': 'South Africa', 'emirati': 'United Arab Emirates',
+    'singaporean': 'Singapore', 'malaysian': 'Malaysia', 'filipino': 'Philippines',
+    'indonesian': 'Indonesia', 'polish': 'Poland', 'hungarian': 'Hungary',
+    'czech': 'Czech Republic',
+  };
+
+  const normalized = (selectedCountry || '').toLowerCase();
+  const countryKey =
+    Object.keys(cityData).find(k => k.toLowerCase() === normalized) ||
+    (nationalityToCountry[normalized] ? nationalityToCountry[normalized] : null);
   const citiesForCountry = countryKey
     ? cityData[countryKey]
     : Object.values(cityData).flat();
