@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye } from 'lucide-react';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
+  const [refreshKey, setRefreshKey] = useState(0);
   const location = useLocation();
 
   const adminNavItems = [
@@ -29,14 +30,19 @@ export default function SimpleAdminDashboard() {
   ];
 
   // Fetch all cases in a single query for better performance
-  const { data: allCases = [], isLoading } = useQuery({
-    queryKey: ['admin_all_cases'],
+  const { data: allCases = [], isLoading, refetch } = useQuery({
+    queryKey: ['admin_all_cases', refreshKey],
     queryFn: async () => {
       const result = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
       return result || [];
     },
     staleTime: 30000, // Keep data fresh for 30 seconds
   });
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+    refetch();
+  };
 
   // Derive active and completed cases from the single query
   const activeCases = allCases.filter(c => c.status !== 'Completed');
@@ -157,6 +163,14 @@ export default function SimpleAdminDashboard() {
                   <h1 className="text-2xl font-bold text-slate-900">Patient Journey Dashboard</h1>
                   <p className="text-sm text-slate-500">Monitor active medical travel cases</p>
                 </div>
+                <Button
+                  onClick={handleRefresh}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </Button>
               </div>
             </div>
           </div>
