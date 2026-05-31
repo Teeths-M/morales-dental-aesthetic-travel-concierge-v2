@@ -61,9 +61,14 @@ export default function SectionProcedure({ form, update }) {
   useEffect(() => {
     if (showCalendar && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const calHeight = 480;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow >= calHeight
+        ? rect.bottom + 8
+        : rect.top - calHeight - 8;
       setCalendarPos({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
+        top,
+        left: Math.min(rect.left, window.innerWidth - Math.min(rect.width, 384) - 8),
         width: rect.width,
       });
     }
@@ -168,8 +173,10 @@ export default function SectionProcedure({ form, update }) {
                   position: 'fixed',
                   top: calendarPos.top,
                   left: calendarPos.left,
-                  width: Math.min(calendarPos.width, 384),
+                  width: Math.min(calendarPos.width, 360),
                   zIndex: 9999,
+                  maxHeight: '80vh',
+                  overflowY: 'auto',
                 }}
                 className="bg-white border border-border rounded-2xl shadow-xl p-6 max-h-[80vh] overflow-y-auto"
               >
