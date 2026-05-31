@@ -15,6 +15,7 @@ export default function PortalDoctor() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [caseData, setCaseData] = useState(null);
+  const [consultationData, setConsultationData] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   
@@ -36,6 +37,16 @@ export default function PortalDoctor() {
         }
 
         setCaseData(matchingCase);
+
+        // Fetch associated consultation data
+        if (matchingCase.consultation_id) {
+          try {
+            const consultation = await base44.entities.Consultation.get(matchingCase.consultation_id);
+            setConsultationData(consultation);
+          } catch (consultationError) {
+            console.error("Failed to load consultation data:", consultationError);
+          }
+        }
       } catch (err) {
         setError('Failed to load case data');
         console.error(err);
@@ -143,34 +154,180 @@ export default function PortalDoctor() {
                 <h3 className="font-semibold">Patient Information</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Country</p>
+                    <p className="text-sm text-muted-foreground">Age</p>
+                    <p className="font-medium">{consultationData?.age || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Gender</p>
+                    <p className="font-medium">{consultationData?.gender || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nationality</p>
+                    <p className="font-medium">{consultationData?.nationality || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Occupation</p>
+                    <p className="font-medium">{consultationData?.occupation || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Client Country</p>
                     <p className="font-medium">{caseData.client_country || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Requested Procedure Date</p>
-                    <p className="font-medium">{caseData.preferred_date || 'Not specified'}</p>
+                    <p className="text-sm text-muted-foreground">Destination Country</p>
+                    <p className="font-medium">{consultationData?.destination_country || 'N/A'}</p>
                   </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium">{caseData.client_phone || consultationData?.phone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{caseData.client_email || consultationData?.email || 'N/A'}</p>
+                  </div>
+                  {consultationData?.emergency_contact_name && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Emergency Contact</p>
+                      <p className="font-medium">{consultationData.emergency_contact_name} ({consultationData.emergency_contact_number})</p>
+                    </div>
+                  )}
+                  {consultationData?.has_companion && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Companion</p>
+                      <p className="font-medium">Yes ({consultationData.companion_relationship})</p>
+                    </div>
+                  )}
+                  {consultationData?.has_cultural_preferences && consultationData.cultural_preferences?.length > 0 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cultural Preferences</p>
+                      <p className="font-medium">{consultationData.cultural_preferences.join(', ')}</p>
+                    </div>
+                  )}
+                  {consultationData?.cultural_notes && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cultural Notes</p>
+                      <p className="font-medium">{consultationData.cultural_notes}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Preferred Procedure Date</p>
+                    <p className="font-medium">{consultationData?.preferred_date ? new Date(consultationData.preferred_date).toLocaleDateString() : 'N/A'}</p>
+                  </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Duration of Stay</p>
-                    <p className="font-medium">{caseData.duration_of_stay || 'Not specified'}</p>
+                    <p className="font-medium">{consultationData?.duration_of_stay || 'N/A'}</p>
                   </div>
+                  {consultationData?.notes && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Client Notes</p>
+                      <p className="font-medium">{consultationData.notes}</p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Medical Summary</p>
-                  <p className="text-sm">{caseData.consultation_summary}</p>
+                  <p className="text-sm">{caseData.consultation_summary || consultationData?.procedure_interest}</p>
                 </div>
-                {caseData.medical_conditions && (
+                {consultationData?.medical_conditions?.length > 0 && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Medical Conditions</p>
-                    <p className="text-sm">{caseData.medical_conditions}</p>
+                    <p className="text-sm">{consultationData.medical_conditions.join(', ')}</p>
                   </div>
                 )}
-                {caseData.allergies && (
+                {consultationData?.medical_conditions_other && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Other Medical Conditions</p>
+                    <p className="text-sm">{consultationData.medical_conditions_other}</p>
+                  </div>
+                )}
+                {consultationData?.allergies?.length > 0 && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Allergies</p>
-                    <p className="text-sm">{caseData.allergies}</p>
+                    <p className="text-sm">{consultationData.allergies.join(', ')}</p>
+                  </div>
+                )}
+                {consultationData?.allergy_details && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Allergy Details</p>
+                    <p className="text-sm">{consultationData.allergy_details}</p>
+                  </div>
+                )}
+                {consultationData?.takes_medications && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Medications</p>
+                    <p className="text-sm">{consultationData.medication_types.join(', ')}</p>
+                  </div>
+                )}
+                {consultationData?.medication_notes && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Medication Notes</p>
+                    <p className="text-sm">{consultationData.medication_notes}</p>
+                  </div>
+                )}
+                {consultationData?.lifestyle_habits?.length > 0 && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Lifestyle Habits</p>
+                    <p className="text-sm">{consultationData.lifestyle_habits.join(', ')}</p>
+                  </div>
+                )}
+                {consultationData?.exercises_regularly !== null && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Exercises Regularly</p>
+                    <p className="text-sm">{consultationData.exercises_regularly ? 'Yes' : 'No'}</p>
+                  </div>
+                )}
+                {consultationData?.activity_level && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Activity Level</p>
+                    <p className="text-sm">{consultationData.activity_level}</p>
+                  </div>
+                )}
+                {consultationData?.emotional_concerns && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Emotional Concerns</p>
+                    <p className="text-sm">{consultationData.emotional_concern_types.join(', ')}</p>
+                  </div>
+                )}
+                {consultationData?.emotional_notes && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Emotional Notes</p>
+                    <p className="text-sm">{consultationData.emotional_notes}</p>
+                  </div>
+                )}
+                {consultationData?.pregnancy_status && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Pregnancy Status</p>
+                    <p className="text-sm">{consultationData.pregnancy_status}</p>
+                  </div>
+                )}
+                {consultationData?.had_surgery !== null && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Previous Surgery</p>
+                    <p className="text-sm">{consultationData.had_surgery ? 'Yes' : 'No'}</p>
+                  </div>
+                )}
+                {consultationData?.previous_procedures && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Previous Procedures</p>
+                    <p className="text-sm">{consultationData.previous_procedures}</p>
+                  </div>
+                )}
+                {consultationData?.last_surgery_date && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Last Surgery Date</p>
+                    <p className="text-sm">{new Date(consultationData.last_surgery_date).toLocaleDateString()}</p>
+                  </div>
+                )}
+                {consultationData?.had_complications && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Surgery Complications</p>
+                    <p className="text-sm">{consultationData.surgery_complications.join(', ')}</p>
+                  </div>
+                )}
+                {consultationData?.anesthesia_complications && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Anesthesia Complications</p>
+                    <p className="text-sm">{consultationData.anesthesia_complication_types.join(', ')}</p>
                   </div>
                 )}
               </div>
