@@ -17,11 +17,13 @@ export default function CityOriginSelect({ value, onChange, selectedCountry }) {
   const countryKey = Object.keys(cityData).find(
     k => k.toLowerCase() === (selectedCountry || '').toLowerCase()
   );
-  const citiesForCountry = countryKey ? cityData[countryKey] : [];
+  const citiesForCountry = countryKey
+    ? cityData[countryKey]
+    : Object.values(cityData).flat();
 
-  const filtered = citiesForCountry.filter(c =>
-    c.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = search.length > 0
+    ? citiesForCountry.filter(c => c.toLowerCase().includes(search.toLowerCase()))
+    : citiesForCountry.slice(0, 40);
 
   // Sync external value changes (e.g. on draft load)
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function CityOriginSelect({ value, onChange, selectedCountry }) {
     setOpen(false);
   };
 
-  const showDropdown = open && (filtered.length > 0 || citiesForCountry.length === 0);
+  const showDropdown = open && filtered.length > 0;
 
   return (
     <div ref={containerRef} className="relative">
