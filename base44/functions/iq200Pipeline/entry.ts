@@ -24,14 +24,33 @@ Deno.serve(async (req) => {
       return Response.json({ case: caseRecord });
     }
 
+    // All other actions require admin authentication
+    const user = await base44.auth.me();
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+    }
+
     // CREATE: Ingest consultation into IQ200 pipeline
     if (action === 'create') {
-      // Admin-only action
-      const user = await base44.auth.me();
-      if (!user || user.role !== 'admin') {
-        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+      const { token, type } = payload;
+      
+      if (!token) {
+        return Response.json({ error: 'No token provided' }, { status: 400 });
       }
 
+      // Find case by proposal token
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ proposal_token: token });
+      
+      if (!cases || cases.length === 0) {
+        return Response.json({ case: null, error: 'Proposal not found' }, { status: 404 });
+      }
+
+      const caseRecord = cases[0];
+      return Response.json({ case: caseRecord });
+    }
+
+    // CREATE: Ingest consultation into IQ200 pipeline
+    if (action === 'create') {
       const consultation = await base44.entities.Consultation.get(consultation_id);
       
       if (!consultation) {
@@ -113,11 +132,6 @@ Deno.serve(async (req) => {
 
     // ADMIN_APPROVE_PROPOSAL: Send proposal to client
     if (action === 'admin_approve_proposal') {
-      // Admin-only action
-      const user = await base44.auth.me();
-      if (!user || user.role !== 'admin') {
-        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
-      }
       const caseRecord = await base44.entities.CaseRecord.get(case_id);
       
       if (!caseRecord) {
@@ -180,13 +194,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // PROCESS_PAYMENT: Handle deposit payment
+    // PROCESS_PAYMENT: Handle deposit payment and trigger partner notifications
     if (action === 'process_payment') {
-      // Admin-only action
-      const user = await base44.auth.me();
-      if (!user || user.role !== 'admin') {
-        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
-      }
       const { token, deposit_option } = payload;
       
       if (!token) {
@@ -206,7 +215,7 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
         deposit_option: deposit_option,
         payment_status: deposit_option === 'Full' ? 'Paid In Full' : deposit_option === '50%' ? '50% Paid' : '25% Paid',
-        status: 'Deposit-Paid',
+        status: 'Travel-Coordination',
         timeline_log: [
           ...(caseRecord.timeline_log || []),
           {
@@ -217,16 +226,137 @@ Deno.serve(async (req) => {
         ]
       });
 
-      return Response.json({ success: true, case_id: caseRecord.id });
+      // AUTO-TRIGGER: Notify all partners
+      const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
+      
+      // 1. Notify Travel Agency (if assigned)
+      if (caseRecord.travel_vendor_id) {
+        const travelAgency = await base44.asServiceRole.entities.TravelAgency.get(caseRecord.travel_vendor_id);
+        if (travelAgency) {
+          const portalUrl = `${appUrl}/portal/travel?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
+          await base44.integrations.Core.SendEmail({
+            to: travelAgency.email,
+            subject: `Payment Confirmed - Book Travel for ${caseRecord.client_name}`,
+            body: `
+              <h2>Travel Booking Request</h2>
+              <p>Dear ${travelAgency.agency_name || 'Travel Partner'},</p>
+              <p>Payment has been confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
+              <p><strong>Procedure:</strong> ${(caseRecord.procedures || []).join(', ')}</p>
+              <p><strong>Destination:</strong> ${caseRecord.procedure_country}</p>
+              <p><strong>Flight Budget:</strong> $${caseRecord.flight_cost}</p>
+              <p><strong>Hotel Budget:</strong> $${caseRecord.hotel_cost}</p>
+              <p><strong>Flight Details:</strong> ${caseRecord.flight_details || 'TBD'}</p>
+              <p><strong>Hotel:</strong> ${caseRecord.hotel_name || 'TBD'}</p>
+              <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+                Access Travel Portal
+              </a>
+              <p>Please proceed with booking flights and hotel accommodation.</p>
+            `
+          });
+        }
+      }
+
+      // 2. Notify Origin Driver (if assigned)
+      if (caseRecord.origin_driver_id) {
+        const originDriver = await base44.asServiceRole.entities.TaxiService.get(caseRecord.origin_driver_id);
+        if (originDriver) {
+          await base44.integrations.Core.SendEmail({
+            to: originDriver.email,
+            subject: `Payment Confirmed - Pickup Booking for ${caseRecord.client_name}`,
+            body: `
+              <h2>Transfer Booking Confirmed</h2>
+              <p>Dear ${originDriver.company_name || originDriver.driver_name},</p>
+              <p>Payment confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
+              <p><strong>Pickup Location:</strong> ${caseRecord.client_pickup_address || 'Client Home'}</p>
+              <p><strong>Destination:</strong> Local Airport</p>
+              <p><strong>Payment:</strong> $${caseRecord.pickup_cost}</p>
+              <p>Please confirm the pickup date and time.</p>
+            `
+          });
+        }
+      }
+
+      // 3. Notify Destination Driver (if assigned)
+      if (caseRecord.destination_driver_id) {
+        const destDriver = await base44.asServiceRole.entities.TaxiService.get(caseRecord.destination_driver_id);
+        if (destDriver) {
+          const portalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
+          await base44.integrations.Core.SendEmail({
+            to: destDriver.email,
+            subject: `Payment Confirmed - Transfer Booking for ${caseRecord.client_name}`,
+            body: `
+              <h2>Destination Transfer Confirmed</h2>
+              <p>Dear ${destDriver.company_name || destDriver.driver_name},</p>
+              <p>Payment confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
+              <p><strong>Pickup:</strong> Airport in ${caseRecord.procedure_country}</p>
+              <p><strong>Drop-off:</strong> Hotel/Clinic</p>
+              <p><strong>Payment:</strong> $${caseRecord.dropoff_cost + caseRecord.local_transfer_cost}</p>
+              <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+                Access Transfer Portal
+              </a>
+              <p>Please confirm transfer dates.</p>
+            `
+          });
+        }
+      }
+
+      // 4. Notify Doctor
+      if (caseRecord.doctor_email) {
+        const doctorPortalUrl = `${appUrl}/portal/doctor/${caseRecord.doctor_portal_token || caseRecord.proposal_token}`;
+        await base44.integrations.Core.SendEmail({
+          to: caseRecord.doctor_email,
+          subject: `Payment Confirmed - Procedure Booking for ${caseRecord.client_name}`,
+          body: `
+            <h2>Procedure Booking Confirmed</h2>
+            <p>Dear ${caseRecord.doctor_selected || 'Doctor'},</p>
+            <p>Payment has been confirmed for patient <strong>${caseRecord.client_name}</strong>.</p>
+            <p><strong>Procedure:</strong> ${(caseRecord.procedures || []).join(', ')}</p>
+            <p><strong>Treatment Cost:</strong> $${caseRecord.treatment_cost}</p>
+            <a href="${doctorPortalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+              Access Doctor Portal
+            </a>
+            <p>Please confirm the procedure date.</p>
+          `
+        });
+      }
+
+      // 5. Send final confirmation to patient
+      await base44.integrations.Core.SendEmail({
+        to: caseRecord.client_email,
+        subject: `Payment Confirmed - Your Medical Travel Journey Begins!`,
+        body: `
+          <h2>Payment Confirmed! 🎉</h2>
+          <p>Dear ${caseRecord.client_name},</p>
+          <p>Your payment of <strong>${deposit_option}</strong> has been successfully processed.</p>
+          <p><strong>What happens next:</strong></p>
+          <ul>
+            <li>✈️ Travel agency will book your flights and hotel</li>
+            <li>🚗 Drivers will coordinate airport transfers</li>
+            <li>🩺 Doctor will confirm your procedure date</li>
+          </ul>
+          <p>You will receive separate emails with all confirmed details shortly.</p>
+          <p><strong>Total Package:</strong> $${caseRecord.final_package_price}</p>
+          <p><strong>Remaining Balance:</strong> $${caseRecord.amount_remaining || 0}</p>
+          <p>Track your journey status anytime through your portal.</p>
+          <p>Best regards,<br/>IQ200 Medical Travel Team</p>
+        `
+      });
+
+      return Response.json({ 
+        success: true, 
+        case_id: caseRecord.id,
+        notifications_sent: {
+          travel_agency: !!caseRecord.travel_vendor_id,
+          origin_driver: !!caseRecord.origin_driver_id,
+          destination_driver: !!caseRecord.destination_driver_id,
+          doctor: !!caseRecord.doctor_email,
+          patient: true
+        }
+      });
     }
 
     // ADMIN_ESCALATE: Manual stage override
     if (action === 'admin_escalate') {
-      // Admin-only action
-      const user = await base44.auth.me();
-      if (!user || user.role !== 'admin') {
-        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
-      }
       const caseRecord = await base44.entities.CaseRecord.get(case_id);
       
       if (!caseRecord) {
