@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Case ID required' }, { status: 400 });
     }
 
-    const caseRecord = await base44.entities.Case.get(caseId);
+    const caseRecord = await base44.entities.CaseRecord.get(caseId);
     
     if (!caseRecord) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     });
 
     if (travelAgencies.length === 0) {
-      await base44.entities.Case.update(caseId, {
+      await base44.entities.CaseRecord.update(caseId, {
         status: 'Admin-Review',
         admin_notes: 'No travel agencies available for booking'
       });
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const portalToken = `travel_${caseId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
     // Update case
-    await base44.entities.Case.update(caseId, {
+    await base44.entities.CaseRecord.update(caseId, {
       travel_vendor_id: selectedAgency.id,
       status: 'Vendor-Pending'
     });

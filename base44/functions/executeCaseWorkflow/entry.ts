@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Case ID required' }, { status: 400 });
     }
 
-    const caseRecord = await base44.entities.Case.get(caseId);
+    const caseRecord = await base44.entities.CaseRecord.get(caseId);
     
     if (!caseRecord) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
 
     const updatedTimeline = caseRecord.timeline_log ? [...caseRecord.timeline_log, timelineEntry] : [timelineEntry];
 
-    await base44.entities.Case.update(caseId, {
+    await base44.entities.CaseRecord.update(caseId, {
       timeline_log: updatedTimeline
     });
 

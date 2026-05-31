@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     if (!caseId) return Response.json({ error: 'Case ID required' }, { status: 400 });
     if (!doctorId) return Response.json({ error: 'Doctor ID required' }, { status: 400 });
 
-    const caseRecord = await base44.entities.Case.get(caseId);
+    const caseRecord = await base44.entities.CaseRecord.get(caseId);
     if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
 
     if (caseRecord.safe_t_result !== 'PASSED') {
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
     const portalUrl = `${appUrl}/portal/doctor/${portalToken}`;
 
-    await base44.entities.Case.update(caseId, {
+    await base44.entities.CaseRecord.update(caseId, {
       status: 'Doctor-Pending',
       doctor_email: selectedDoctor.email,
       doctor_portal_token: portalToken,
