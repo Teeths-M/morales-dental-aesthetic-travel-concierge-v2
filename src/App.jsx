@@ -128,7 +128,7 @@ const AuthenticatedApp = () => {
       {/* Standalone payment page - direct link for payments */}
       <Route path="/pay-now" element={<PaymentCheckout />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
-        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
         <Route path="/admin/imports" element={<AdminImports />} />
         <Route path="/admin/doctor-verification" element={<DoctorLicenseVerification />} />
