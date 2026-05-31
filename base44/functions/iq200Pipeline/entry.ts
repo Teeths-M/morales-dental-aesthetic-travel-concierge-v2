@@ -3,12 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
-    }
-
     const { action, consultation_id, case_id, payload } = await req.json();
 
     // GET_CASE: Retrieve case by proposal token (no auth required - public link)
@@ -32,6 +26,12 @@ Deno.serve(async (req) => {
 
     // CREATE: Ingest consultation into IQ200 pipeline
     if (action === 'create') {
+      // Admin-only action
+      const user = await base44.auth.me();
+      if (!user || user.role !== 'admin') {
+        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+      }
+
       const consultation = await base44.entities.Consultation.get(consultation_id);
       
       if (!consultation) {
@@ -113,6 +113,11 @@ Deno.serve(async (req) => {
 
     // ADMIN_APPROVE_PROPOSAL: Send proposal to client
     if (action === 'admin_approve_proposal') {
+      // Admin-only action
+      const user = await base44.auth.me();
+      if (!user || user.role !== 'admin') {
+        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+      }
       const caseRecord = await base44.entities.CaseRecord.get(case_id);
       
       if (!caseRecord) {
@@ -177,6 +182,11 @@ Deno.serve(async (req) => {
 
     // PROCESS_PAYMENT: Handle deposit payment
     if (action === 'process_payment') {
+      // Admin-only action
+      const user = await base44.auth.me();
+      if (!user || user.role !== 'admin') {
+        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+      }
       const { token, deposit_option } = payload;
       
       if (!token) {
@@ -212,6 +222,11 @@ Deno.serve(async (req) => {
 
     // ADMIN_ESCALATE: Manual stage override
     if (action === 'admin_escalate') {
+      // Admin-only action
+      const user = await base44.auth.me();
+      if (!user || user.role !== 'admin') {
+        return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+      }
       const caseRecord = await base44.entities.CaseRecord.get(case_id);
       
       if (!caseRecord) {
