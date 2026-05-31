@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Zap, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function ConsultationIntake({ consultations, isLoading }) {
+export default function ConsultationIntake({ consultations, isLoading, onConverted }) {
   const [processingId, setProcessingId] = useState(null);
 
   const ingestConsultation = async (consultationId) => {
@@ -17,6 +17,7 @@ export default function ConsultationIntake({ consultations, isLoading }) {
         consultation_id: consultationId 
       });
       toast.success('Case created successfully!');
+      if (onConverted) onConverted();
     } catch (error) {
       toast.error('Failed to create case: ' + error.message);
     } finally {

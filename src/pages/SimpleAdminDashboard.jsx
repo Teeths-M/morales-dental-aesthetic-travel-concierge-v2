@@ -29,9 +29,13 @@ export default function SimpleAdminDashboard() {
     queryFn: () => base44.entities.CaseRecord.list('-created_date', 100),
   });
 
+  // Filter out consultations that already have a case
+  const convertedConsultationIds = new Set(cases.map(c => c.consultation_id).filter(Boolean));
+  const pendingConsultations = consultations.filter(c => !convertedConsultationIds.has(c.id));
+
   // Calculate simple stats
   const stats = {
-    newConsultations: consultations.length,
+    newConsultations: pendingConsultations.length,
     activeCases: cases.length,
     awaitingDoctor: cases.filter(c => c.status === 'Doctor-Pending').length,
     blocked: cases.filter(c => c.safe_t_result === 'BLOCKED').length,
@@ -173,9 +177,9 @@ export default function SimpleAdminDashboard() {
               <h2 className="text-xl font-bold text-slate-900">New Patient Requests</h2>
               <p className="text-sm text-slate-500">Convert these to cases to start the workflow</p>
             </div>
-            <Badge variant="outline" className="ml-auto bg-blue-50 text-blue-700 border-blue-200">{consultations.length} waiting</Badge>
+            <Badge variant="outline" className="ml-auto bg-blue-50 text-blue-700 border-blue-200">{pendingConsultations.length} waiting</Badge>
           </div>
-          <ConsultationIntake consultations={consultations} isLoading={loadingConsultations} />
+          <ConsultationIntake consultations={pendingConsultations} isLoading={loadingConsultations || loadingCases} onConverted={handleRefresh} />
         </section>
 
         {/* Step 2: Active Cases */}
