@@ -303,9 +303,9 @@ export default function Booking() {
         'gynecological_exams','ivf','egg_freezing','oncology_surgery','tumor_testing',
         'joint_replacement','spine_surgery','sports_arthroscopy','fracture_surgery','other'
       ];
-      // items have a .value that is already a valid enum key
-      const procedureEnum = items.length > 0 && VALID_PROCEDURE_ENUMS.includes(items[0].value)
-        ? items[0].value
+      // items have a .procedure_enum that is already a valid enum key (set in Procedures page)
+      const procedureEnum = items.length > 0 && VALID_PROCEDURE_ENUMS.includes(items[0].procedure_enum)
+        ? items[0].procedure_enum
         : 'other';
       // Store full names in notes for reference
       const procedureNames = items.map(item => item.name).join(', ') || '';

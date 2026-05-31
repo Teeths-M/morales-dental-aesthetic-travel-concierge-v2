@@ -42,6 +42,137 @@ const procedures = [
   { group: '', value: 'other', label: 'Other / Not Sure' },
 ];
 
+// Map procedure titles from Procedures page to enum values
+export const procedureTitleToEnum = {
+  // Dental Implants mapping
+  'Single Dental Implant': 'dental_implants',
+  'Multiple Dental Implants': 'dental_implants',
+  'Full Mouth Implants': 'dental_implants',
+  'Dental Implant': 'dental_implants',
+  'Implant Dentistry': 'dental_implants',
+  'Implant-Supported Dentures': 'dental_implants',
+  'Bone Grafting': 'bone_regeneration',
+  'Sinus Lift': 'bone_regeneration',
+  // All-on-4 mapping
+  'All-on-4 Implants': 'all_on_4',
+  'All-on-4': 'all_on_4',
+  'All-on-6 Implants': 'all_on_4',
+  'All-on-6': 'all_on_4',
+  // Veneers mapping
+  'Porcelain Veneers': 'porcelain_veneers',
+  'Veneers': 'porcelain_veneers',
+  'Composite Bonding': 'porcelain_veneers',
+  // Smile mapping
+  'Smile Makeover': 'smile_makeover',
+  'Hollywood Smile': 'smile_makeover',
+  'Gum Contouring': 'smile_makeover',
+  // Teeth whitening
+  'Teeth Whitening': 'teeth_whitening',
+  // Rhinoplasty
+  'Rhinoplasty': 'rhinoplasty',
+  'Nose Reshaping': 'rhinoplasty',
+  // Breast surgery
+  'Breast Augmentation': 'breast_surgery',
+  'Breast Lift': 'breast_surgery',
+  'Breast Reduction': 'breast_surgery',
+  'Breast Revision': 'breast_surgery',
+  'Breast Surgery': 'breast_surgery',
+  // Liposuction
+  'Liposuction': 'liposuction',
+  // Tummy tuck
+  'Tummy Tuck': 'tummy_tuck',
+  'Abdominoplasty': 'tummy_tuck',
+  // Facelift
+  'Facelift': 'facelift',
+  'Neck Lift': 'facelift',
+  // Eyelid
+  'Eyelid Surgery': 'blepharoplasty',
+  'Blepharoplasty': 'blepharoplasty',
+  // Other facial
+  'Brow Lift': 'brow_lift',
+  'Otoplasty': 'otoplasty',
+  'Ear Reshaping': 'otoplasty',
+  'Thigh Lift': 'thigh_arm_lift',
+  'Arm Lift': 'thigh_arm_lift',
+  'Thigh Arm Lift': 'thigh_arm_lift',
+  // Skin
+  'Laser Resurfacing': 'laser_resurfacing',
+  'Skin Rejuvenation': 'laser_resurfacing',
+  'Mole Removal': 'mole_removal',
+  'Lipoma Removal': 'lipoma_removal',
+  // Bariatric
+  'Gastric Sleeve': 'gastric_sleeve',
+  'Sleeve Gastrectomy': 'gastric_sleeve',
+  'Gastric Bypass': 'gastric_bypass',
+  'Gastric Band Revision': 'gastric_band_revision',
+  'Gastric Band Removal': 'gastric_band_revision',
+  // Gynecology
+  'Gynecological Exams': 'gynecological_exams',
+  'Gynecological Diagnostic Exams': 'gynecological_exams',
+  // Fertility
+  'IVF': 'ivf',
+  'In Vitro Fertilization': 'ivf',
+  'Egg Freezing': 'egg_freezing',
+  'Fertility Preservation': 'egg_freezing',
+  // Oncology
+  'Oncology Surgery': 'oncology_surgery',
+  'Oncological Surgical Procedures': 'oncology_surgery',
+  'Tumor Testing': 'tumor_testing',
+  'Tumor Marker': 'tumor_testing',
+  // Orthopedic
+  'Joint Replacement': 'joint_replacement',
+  'Hip Replacement': 'joint_replacement',
+  'Knee Replacement': 'joint_replacement',
+  'Spine Surgery': 'spine_surgery',
+  'Sports Arthroscopy': 'sports_arthroscopy',
+  'Sports Injuries': 'sports_arthroscopy',
+  'Fracture Surgery': 'fracture_surgery',
+  'Fracture Management': 'fracture_surgery',
+  // Orthodontics (map to other as not in enum)
+  'Braces': 'other',
+  'Invisalign': 'other',
+  'Clear Aligners': 'other',
+  'Retainers': 'other',
+  // General dentistry (map to other)
+  'Dental Cleaning': 'other',
+  'Deep Cleaning': 'other',
+  'Dental Exam': 'other',
+  'Dental X-Rays': 'other',
+  'Fillings': 'other',
+  'Tooth Extraction': 'other',
+  'Wisdom Tooth Removal': 'other',
+  'Root Canal': 'other',
+  'Dental Crowns': 'other',
+  'Dental Bridges': 'other',
+  'Dentures': 'other',
+  'Partial Dentures': 'other',
+  'Inlays Onlays': 'other',
+  // Wellness
+  'IV Therapy': 'other',
+  'Stem Cell Therapy': 'other',
+  'PRP Therapy': 'other',
+  'Hormone Therapy': 'other',
+  'Medical Weight Loss': 'other',
+  'Nutritional Programs': 'other',
+  'Recovery Therapy': 'other',
+  // Body contouring (map to other as not in enum)
+  'Body Contouring': 'other',
+  'Mommy Makeover': 'other',
+  'Brazilian Butt Lift': 'other',
+  'BBL': 'other',
+  'Arm Lift': 'other',
+  'Thigh Lift': 'other',
+  // Non-surgical
+  'Botox': 'other',
+  'Dermal Fillers': 'other',
+};
+
+// Helper function to get enum value from procedure title
+export const getProcedureEnumValue = (title) => {
+  if (!title) return 'other';
+  return procedureTitleToEnum[title] || 'other';
+};
+
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 export default function SectionProcedure({ form, update }) {

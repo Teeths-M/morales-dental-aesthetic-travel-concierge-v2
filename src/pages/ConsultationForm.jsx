@@ -50,6 +50,7 @@ export default function ConsultationForm() {
       await base44.entities.CaseRecord.create({
         ...formData,
         procedures: formData.procedure_interest ? [formData.procedure_interest] : [],
+        consultation_summary: formData.consultation_summary || '',
         number_of_companions: parseInt(formData.number_of_companions) || 0,
         has_companion: parseInt(formData.number_of_companions) > 0,
         status: 'Submitted',

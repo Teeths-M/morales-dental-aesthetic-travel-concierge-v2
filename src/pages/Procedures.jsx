@@ -11,6 +11,7 @@ import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
 
 import { useCart } from '@/context/CartContext';
+import { getProcedureEnumValue } from '@/components/booking/SectionProcedure';
 
 const getParentFilters = (language) => [
   { id: 'all', label: language === 'es' ? 'Todos' : language === 'fr' ? 'Tous' : 'All', emoji: '🏥' },
@@ -107,11 +108,15 @@ export default function Procedures() {
   const selectedProcs = items; // cart IS the selected list
 
   const addProc = (proc) => {
+    // Map procedure title to enum value
+    const procedureEnumValue = getProcedureEnumValue(proc.title);
+    
     // If proc has doctor info, add directly; otherwise show doctor selector
     if (proc.doctor_id) {
       addItem({ 
         name: proc.title, 
         category: proc.category,
+        procedure_enum: procedureEnumValue,
         doctor_name: proc.doctor_name,
         doctor_price_usd: proc.doctor_price_usd,
         clinic_country: proc.clinic_country,
@@ -119,7 +124,7 @@ export default function Procedures() {
         ...proc 
       });
       // Bridge: store procedure destination from selected doctor's clinic
-      console.log('Setting destination:', proc.clinic_country, proc.clinic_city);
+      console.log('Setting destination:', proc.clinic_country, proc.clinic_city, 'Enum:', procedureEnumValue);
       if (proc.clinic_country) setProcedureCountry(proc.clinic_country);
       if (proc.clinic_city) setProcedureCity(proc.clinic_city);
     } else {
