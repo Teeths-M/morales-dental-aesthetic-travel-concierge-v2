@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
-    const portalUrl = `${appUrl}/iq200`;
+    const adminPortalUrl = `${appUrl}/admin`;
 
     const body = await req.json();
     // Support both direct calls and Consultation entity automation payloads.
@@ -269,6 +269,19 @@ Return a JSON with:
   };
 
   // STEP 1: Only notify doctors initially (sequential workflow)
+  // Create a CaseRecord to get the doctor portal token
+  let doctorPortalToken = null;
+  let doctorPortalUrl = adminPortalUrl;
+  try {
+    const caseRecord = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id }).then(cases => cases[0] || null);
+    if (caseRecord && caseRecord.doctor_portal_token) {
+      doctorPortalToken = caseRecord.doctor_portal_token;
+      doctorPortalUrl = `${appUrl}/portal/doctor/${doctorPortalToken}`;
+    }
+  } catch (error) {
+    console.log(`Doctor portal URL lookup skipped: ${error.message}`);
+  }
+
   const doctorNotif = {
     partner: 'doctor',
     email_subject: `New patient approved — ${consultation.patient_name} | ${BRAND}`,
@@ -284,7 +297,7 @@ Return a JSON with:
         row('Notes', consultation.notes || 'None'),
       ],
       ctaText: 'Review in portal',
-      ctaUrl: portalUrl,
+      ctaUrl: doctorPortalUrl,
       footer: 'Please confirm availability through the portal or by replying to this email.',
     }),
   };

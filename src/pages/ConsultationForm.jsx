@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import { procedures } from '@/components/booking/SectionProcedure';
 
 export default function ConsultationForm() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function ConsultationForm() {
     client_country: '',
     emergency_contact: '',
     procedure_country: '',
-    procedures: '',
+    procedure_interest: '',
     consultation_summary: '',
     passport_number: '',
     passport_issue_date: '',
@@ -46,9 +47,9 @@ export default function ConsultationForm() {
     setError(null);
 
     try {
-      await base44.entities.Case.create({
+      await base44.entities.CaseRecord.create({
         ...formData,
-        procedures: [formData.procedures],
+        procedures: formData.procedure_interest ? [formData.procedure_interest] : [],
         number_of_companions: parseInt(formData.number_of_companions) || 0,
         has_companion: parseInt(formData.number_of_companions) > 0,
         status: 'Submitted',
@@ -210,12 +211,18 @@ export default function ConsultationForm() {
                 <h3 className="font-semibold text-lg">Procedure Information</h3>
                 <div>
                   <Label>Procedure Requested *</Label>
-                  <Input
-                    value={formData.procedures}
-                    onChange={(e) => handleChange('procedures', e.target.value)}
-                    placeholder="e.g., Dental Implants, Rhinoplasty"
-                    required
-                  />
+                  <Select value={formData.procedure_interest} onValueChange={(v) => handleChange('procedure_interest', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a procedure..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {procedures.map((proc) => (
+                        <SelectItem key={proc.value} value={proc.value}>
+                          {proc.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Consultation Summary *</Label>
