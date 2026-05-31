@@ -35,6 +35,7 @@ export default function SimpleAdminDashboard() {
       const result = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
       return result || [];
     },
+    staleTime: 30000, // Keep data fresh for 30 seconds
   });
 
   // Derive active and completed cases from the single query
@@ -95,6 +96,17 @@ export default function SimpleAdminDashboard() {
     inProcedure: activeCases.filter(c => c.status === 'Procedure-In-Progress').length,
     inRecovery: activeCases.filter(c => c.status === 'Recovery').length,
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
