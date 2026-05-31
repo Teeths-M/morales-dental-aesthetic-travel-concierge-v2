@@ -122,6 +122,8 @@ const AuthenticatedApp = () => {
       <Route path="/portal/transfer" element={<PortalChauffeur />} />
       <Route path="/portal/doctor/:token" element={<PortalDoctor />} />
       <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
+      {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
+      <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
