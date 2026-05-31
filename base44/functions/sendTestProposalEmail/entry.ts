@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
       proposal_sent_at: new Date().toISOString()
     });
 
-    // Send proposal email - route to payment checkout
-    const appUrl = Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app';
+    // Send proposal email - route to payment checkout (NEW dashboard)
+    const appUrl = 'https://sentinel-dental-care.base44.app';
     const checkoutUrl = `${appUrl}/portal-hub/checkout/${mockCase.id}`;
     
     await base44.asServiceRole.integrations.Core.SendEmail({
@@ -62,34 +62,41 @@ Deno.serve(async (req) => {
                   <h2 style="margin:0 0 12px;font-family:Georgia,serif;font-size:24px;color:#0F3A20;">Your Personalized Medical Travel Package</h2>
                   <p style="color:#555;font-size:14px;margin:0 0 20px;">Dear Test Patient,</p>
                   
-                  <p style="color:#555;font-size:14px;margin:0 0 20px;">Your complete medical travel package is ready for review:</p>
+                  <p style="color:#555;font-size:14px;margin:0 0 20px;">Your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.</p>
                   
                   <table width="100%" style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:24px;">
-                    <tr style="background:#f9fafb;">
-                      <td style="padding:16px;font-size:13px;color:#888;">Total Package Price</td>
-                      <td style="padding:16px;font-size:18px;font-weight:700;color:#0F3A20;">$6,750.00</td>
-                    </tr>
-                  </table>
-                  
-                  <p style="color:#555;font-size:14px;margin:0 0 12px;">Your package includes:</p>
-                  <ul style="color:#555;font-size:14px;margin:0 0 24px;padding-left:20px;">
-                    <li style="margin-bottom:8px;">Medical procedure with certified doctor</li>
-                    <li style="margin-bottom:8px;">Round-trip flights</li>
-                    <li style="margin-bottom:8px;">Hotel accommodation</li>
-                    <li style="margin-bottom:8px;">All airport and clinic transfers</li>
-                  </ul>
-                  
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
-                    <tr>
-                      <td align="center">
-                        <a href="${checkoutUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 32px;border-radius:999px;font-size:14px;font-weight:700;">
-                          Review & Accept Proposal →
-                        </a>
+                    <tr style="background:linear-gradient(135deg, rgba(15,58,32,0.08), rgba(197,160,89,0.08));">
+                      <td style="padding:24px;text-align:center;">
+                        <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Total Package Investment</div>
+                        <div style="font-size:36px;font-weight:700;color:#0F3A20;">$6,750.00</div>
                       </td>
                     </tr>
                   </table>
                   
-                  <p style="margin-top:24px;font-size:12px;color:#999;text-align:center;">Please review and accept within 7 days.</p>
+                  <p style="color:#0F3A20;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;">What's Included</p>
+                  <table width="100%" cellspacing="0" cellpadding="0">
+                    <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><span style="font-size:16px;margin-right:10px;">🦷</span><span style="font-size:13px;color:#374151;">Medical procedure with board-certified specialist in Venezuela</span></td></tr>
+                    <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><span style="font-size:16px;margin-right:10px;">✈️</span><span style="font-size:13px;color:#374151;">Hand-selected round-trip flights with premium comfort seating</span></td></tr>
+                    <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><span style="font-size:16px;margin-right:10px;">🏨</span><span style="font-size:13px;color:#374151;">Luxury hotel accommodations near your treatment facility</span></td></tr>
+                    <tr><td style="padding:10px 0;"><span style="font-size:16px;margin-right:10px;">🚘</span><span style="font-size:13px;color:#374151;">Private airport transfers and clinic transportation throughout your stay</span></td></tr>
+                  </table>
+                  
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
+                    <tr>
+                      <td align="center">
+                        <a href="${checkoutUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 48px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:0.5px;border:2px solid #0F3A20;transition:all 0.3s ease;">
+                          Review & Accept Proposal
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="font-size:12px;color:#6B7280;text-align:center;font-style:italic;margin:16px 0;">Please review and confirm your package within 7 days to secure your dates.</p>
+                  
+                  <div style="border-top:1px solid #e5e7eb;padding-top:16px;margin-top:24px;">
+                    <p style="font-size:12px;color:#6B7280;margin:0 0 8px;"><strong style="color:#1F2937;">Next Steps:</strong> Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.</p>
+                    <p style="font-size:12px;color:#6B7280;margin:0;">Questions? Contact us at <strong style="color:#0F3A20;">concierge@morales-dental.com</strong></p>
+                  </div>
                 </td></tr>
               </table>
             </td></tr>
