@@ -177,31 +177,104 @@ Deno.serve(async (req) => {
       
       await base44.integrations.Core.SendEmail({
         to: caseRecord.client_email,
-        subject: `Your IQ200 Medical Travel Package Proposal`,
+        subject: `Your Personalized Medical Travel Package — MORALES Concierge`,
         body: `
-          <h2>Your Personalized Medical Travel Package</h2>
-          <p>Dear ${caseRecord.client_name},</p>
-          
-          <p>Your complete medical travel package is ready for review:</p>
-          <ul>
-            <li><strong>Total Package Price:</strong> $${caseRecord.final_package_price.toFixed(2)}</li>
-          </ul>
-          
-          <p>Your package includes:</p>
-          <ul>
-            <li>Medical procedure with certified doctor</li>
-            <li>Round-trip flights</li>
-            <li>Hotel accommodation</li>
-            <li>All airport and clinic transfers</li>
-          </ul>
-          
-          <a href="${checkoutUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-            Review & Accept Proposal
-          </a>
-          
-          <p>Please review and accept within 7 days.</p>
-          
-          <p>Best regards,<br/>IQ200 Medical Travel Team</p>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+              .wrapper { background: #F9F9F9; padding: 32px 16px; }
+              .container { max-width: 580px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+              .header { background: #0F3A20; padding: 40px 32px; text-align: center; border-bottom: 3px solid #C5A059; }
+              .brand { font-size: 18px; font-weight: 600; color: #FFFFFF; letter-spacing: 1px; margin: 0; }
+              .subtext { font-size: 12px; color: #C5A059; letter-spacing: 2px; text-transform: uppercase; margin: 6px 0 0; }
+              .content { padding: 40px 32px; }
+              .greeting { font-size: 16px; color: #1F2937; margin: 0 0 24px; line-height: 1.6; }
+              .hero-card { background: linear-gradient(135deg, rgba(15,58,32,0.08), rgba(197,160,89,0.08)); border: 1px solid rgba(197,160,89,0.3); border-radius: 8px; padding: 28px 24px; margin: 24px 0; text-align: center; }
+              .price { font-size: 42px; font-weight: 700; color: #0F3A20; margin: 0; line-height: 1.2; }
+              .price-label { font-size: 13px; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 0; }
+              .section-title { font-size: 14px; font-weight: 600; color: #0F3A20; text-transform: uppercase; letter-spacing: 1px; margin: 32px 0 16px; }
+              .package-item { display: flex; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #E5E7EB; font-size: 14px; color: #374151; line-height: 1.6; }
+              .package-item:last-child { border-bottom: none; }
+              .package-icon { font-size: 20px; margin-right: 12px; flex-shrink: 0; }
+              .cta-container { text-align: center; margin: 32px 0; }
+              .cta-button { display: inline-block; background: #0F3A20; color: #FFFFFF; text-decoration: none; padding: 16px 48px; border-radius: 999px; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; transition: all 0.3s ease; border: 2px solid #0F3A20; }
+              .cta-button:hover { background: transparent; color: #0F3A20; }
+              .footer { padding: 24px 32px; background: #F9F9F9; border-top: 1px solid #E5E7EB; font-size: 12px; color: #6B7280; line-height: 1.6; }
+              .footer-text { margin: 0 0 8px; }
+              @media (max-width: 600px) {
+                .wrapper { padding: 16px 8px; }
+                .container { border-radius: 8px; }
+                .header { padding: 28px 20px; }
+                .content { padding: 24px 20px; }
+                .hero-card { padding: 20px 16px; }
+                .price { font-size: 36px; }
+                .cta-button { padding: 14px 32px; font-size: 13px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="wrapper">
+              <div class="container">
+                <!-- Header -->
+                <div class="header">
+                  <p class="brand">MORALES</p>
+                  <p class="subtext">Dental & Aesthetic Travel Concierge</p>
+                </div>
+
+                <!-- Content -->
+                <div class="content">
+                  <p class="greeting">Dear ${caseRecord.client_name},</p>
+                  <p style="font-size: 15px; color: #4B5563; margin: 0 0 24px; line-height: 1.6;">Your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.</p>
+
+                  <!-- Hero Card -->
+                  <div class="hero-card">
+                    <p class="price-label">Total Package Investment</p>
+                    <p class="price">$${caseRecord.final_package_price.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                  </div>
+
+                  <!-- Package Details -->
+                  <p class="section-title">What's Included</p>
+                  <div style="margin-bottom: 24px;">
+                    <div class="package-item">
+                      <span class="package-icon">🦷</span>
+                      <span>Medical procedure with board-certified specialist in ${caseRecord.procedure_country}</span>
+                    </div>
+                    <div class="package-item">
+                      <span class="package-icon">✈️</span>
+                      <span>Hand-selected round-trip flights with premium comfort seating</span>
+                    </div>
+                    <div class="package-item">
+                      <span class="package-icon">🏨</span>
+                      <span>Luxury hotel accommodations near your treatment facility</span>
+                    </div>
+                    <div class="package-item">
+                      <span class="package-icon">🚘</span>
+                      <span>Private airport transfers and clinic transportation throughout your stay</span>
+                    </div>
+                  </div>
+
+                  <!-- CTA -->
+                  <div class="cta-container">
+                    <a href="${checkoutUrl}" class="cta-button">Review & Accept Proposal</a>
+                  </div>
+
+                  <p style="font-size: 13px; color: #6B7280; text-align: center; margin: 20px 0; font-style: italic;">Please review and confirm your package within 7 days to secure your dates.</p>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer">
+                  <p class="footer-text"><strong style="color: #1F2937;">Next Steps:</strong> Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.</p>
+                  <p class="footer-text">Questions? Contact us at <strong style="color: #0F3A20;">concierge@morales-dental.com</strong></p>
+                  <p class="footer-text" style="margin-top: 16px; border-top: 1px solid #E5E7EB; padding-top: 16px;">Best regards,<br><strong>MORALES Medical Travel Concierge Team</strong></p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
         `
       });
 
