@@ -119,6 +119,7 @@ export default function Procedures() {
         ...proc 
       });
       // Bridge: store procedure destination from selected doctor's clinic
+      console.log('Setting destination:', proc.clinic_country, proc.clinic_city);
       if (proc.clinic_country) setProcedureCountry(proc.clinic_country);
       if (proc.clinic_city) setProcedureCity(proc.clinic_city);
     } else {

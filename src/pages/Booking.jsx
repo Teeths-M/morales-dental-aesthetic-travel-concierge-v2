@@ -158,6 +158,7 @@ export default function Booking() {
 
   // Bridge procedure destination from cart selection
   useEffect(() => {
+    console.log('Booking: procedureCountry=', procedureCountry, 'procedureCity=', procedureCity);
     if (procedureCountry && !form.procedure_country) {
       update('procedure_country', procedureCountry);
     }
