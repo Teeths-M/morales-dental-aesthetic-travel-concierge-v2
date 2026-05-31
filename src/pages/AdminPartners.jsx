@@ -899,7 +899,7 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
           {renderDetails()}
           
           <DialogFooter className="pt-4 border-t border-slate-200">
-            {(partner._type === 'doctor' || partner.full_name) && partner.status === 'pending_verification' && (
+            {partner.status === 'pending_verification' && (
               <div className="space-y-3 w-full">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700">Status:</span>
@@ -907,57 +907,41 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
                     {partner.status}
                   </Badge>
                 </div>
-                <div className="flex gap-3">
+                {(partner._type === 'doctor' || partner.full_name) ? (
+                  <div className="flex gap-3">
+                    <Button
+                      variant="destructive"
+                      onClick={() => onRejectDoctor(partner.id)}
+                      disabled={isApproving}
+                      className="flex-1"
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      onClick={() => onApproveDoctor(partner.id)}
+                      disabled={isApproving}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {isApproving ? 'Processing...' : 'Approve Doctor'}
+                    </Button>
+                  </div>
+                ) : (partner._type === 'taxi' || partner.operating_country || partner.company_name || partner.driver_name) ? (
                   <Button
-                    variant="destructive"
-                    onClick={() => onRejectDoctor(partner.id)}
+                    onClick={() => onApproveTaxiService(partner.id)}
                     disabled={isApproving}
-                    className="flex-1"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
                   >
-                    Reject
+                    {isApproving ? 'Processing...' : 'Approve Taxi Service'}
                   </Button>
+                ) : (partner._type === 'travel' || partner.agency_name) ? (
                   <Button
-                    onClick={() => onApproveDoctor(partner.id)}
+                    onClick={() => onApproveTravelAgency(partner.id)}
                     disabled={isApproving}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
                   >
-                    {isApproving ? 'Processing...' : 'Approve Doctor'}
+                    {isApproving ? 'Processing...' : 'Approve Travel Agency'}
                   </Button>
-                </div>
-              </div>
-            )}
-            {(partner._type === 'taxi' || partner.operating_country) && partner.status === 'pending_verification' && (
-              <div className="space-y-3 w-full">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">Status:</span>
-                  <Badge className="bg-amber-100 text-amber-700">
-                    {partner.status}
-                  </Badge>
-                </div>
-                <Button
-                  onClick={() => onApproveTaxiService(partner.id)}
-                  disabled={isApproving}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                >
-                  {isApproving ? 'Processing...' : 'Approve Taxi Service'}
-                </Button>
-              </div>
-            )}
-            {(partner._type === 'travel' || partner.agency_name) && partner.status === 'pending_verification' && (
-              <div className="space-y-3 w-full">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">Status:</span>
-                  <Badge className="bg-amber-100 text-amber-700">
-                    {partner.status}
-                  </Badge>
-                </div>
-                <Button
-                  onClick={() => onApproveTravelAgency(partner.id)}
-                  disabled={isApproving}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                >
-                  {isApproving ? 'Processing...' : 'Approve Travel Agency'}
-                </Button>
+                ) : null}
               </div>
             )}
             <div className="flex items-center justify-between w-full pt-4">
