@@ -171,9 +171,9 @@ Deno.serve(async (req) => {
         profit: caseRecord.base_cost * markupPct
       });
 
-      // Send proposal email to client with absolute URL - route to NEW standalone payment page
+      // Send proposal email to client with absolute URL - route to NEW standalone payment page (STATIC PATH)
       const appUrl = 'https://sentinel-dental-care.base44.app';
-      const paymentUrl = `${appUrl}/pay/${case_id}`;
+      const paymentUrl = `${appUrl}/pay-now`;
       
       await base44.integrations.Core.SendEmail({
         to: caseRecord.client_email,

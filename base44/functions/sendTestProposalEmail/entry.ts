@@ -40,9 +40,9 @@ Deno.serve(async (req) => {
       proposal_sent_at: new Date().toISOString()
     });
 
-    // Send proposal email - route to NEW standalone payment page
+    // Send proposal email - route to NEW standalone payment page (STATIC PATH)
     const appUrl = 'https://sentinel-dental-care.base44.app';
-    const paymentUrl = `${appUrl}/pay/${mockCase.id}`;
+    const paymentUrl = `${appUrl}/pay-now`;
     
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: 'theonmorales@gmail.com',

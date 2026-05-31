@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Case not found' }, { status: 404 });
     }
 
-    // Generate standalone payment link
+    // Generate standalone payment link (STATIC PATH)
     const appUrl = 'https://sentinel-dental-care.base44.app';
-    const paymentUrl = `${appUrl}/pay/${case_id}`;
+    const paymentUrl = `${appUrl}/pay-now`;
 
     // Send payment email
     await base44.asServiceRole.integrations.Core.SendEmail({
