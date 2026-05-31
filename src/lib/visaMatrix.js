@@ -16,9 +16,19 @@ const EU_WESTERN = [
 ];
 
 const CARICOM = [
-  'Trinidadian', 'Jamaican', 'Barbadian', 'Grenadian', 'Antiguan', 'Belizean',
-  'Dominican', 'Vincentian', 'Kittitian', 'Saint Lucian', 'St. Lucian', 'Guyanese',
-  'Bahamian',
+  // T&T stored as country name since nationality list update
+  'Trinidad and Tobago', 'Trinidadian',
+  'Jamaican', 'Barbadian', 'Grenadian',
+  // Both forms for Antigua
+  'Antiguans', 'Antiguan',
+  'Belizean',
+  // Dominican = from Dominica (island), not Dominican Republic
+  'Dominican',
+  // Both forms for St. Vincent
+  'Saint Vincentian', 'Vincentian',
+  // Both forms for St. Lucia
+  'Saint Lucian', 'St. Lucian',
+  'Kittitian', 'Guyanese', 'Bahamian', 'Surinamese',
 ];
 
 const LATAM = [
@@ -36,6 +46,7 @@ const EXPLICIT_ROUTES = [
 
   // ══════════════════════════════════════════════════════
   // VENEZUELA (source: en.wikipedia.org/wiki/Visa_policy_of_Venezuela)
+  // CARICOM members (incl. T&T) are visa-exempt. Saint Lucia requires embassy visa.
   // ══════════════════════════════════════════════════════
   { origins: [...EU_WESTERN, 'South Korean', 'Singaporean', 'Israeli', 'Emirati', 'Saudi', 'Russian'], destinations: ['Venezuela'], status: 'exempt' },
   { origins: CARICOM.filter(n => !['Saint Lucian', 'St. Lucian'].includes(n)), destinations: ['Venezuela'], status: 'exempt' },
@@ -183,12 +194,8 @@ const EXPLICIT_ROUTES = [
 
 // ── Helper ──────────────────────────────────────────────────────────────────
 function matchesList(value, list) {
-  return list.some(
-    item =>
-      item.toLowerCase() === value.toLowerCase() ||
-      value.toLowerCase().includes(item.toLowerCase()) ||
-      item.toLowerCase().includes(value.toLowerCase())
-  );
+  const v = value.toLowerCase();
+  return list.some(item => item.toLowerCase() === v);
 }
 
 // ── Main export ─────────────────────────────────────────────────────────────
@@ -197,8 +204,10 @@ export function checkVisaRequirement(originNationality, procedureCountry) {
   const origin = originNationality.trim();
   const dest = procedureCountry.trim();
 
-  // Same country → always exempt
-  if (origin.toLowerCase().includes(dest.toLowerCase())) return 'exempt';
+  // Same country → always exempt (e.g. Venezuelan going to Venezuela)
+  const originLower = origin.toLowerCase();
+  const destLower = dest.toLowerCase();
+  if (originLower === destLower || originLower.includes(destLower) || destLower.includes(originLower)) return 'exempt';
 
   // Check explicit route overrides first (highest priority)
   for (const route of EXPLICIT_ROUTES) {
@@ -208,9 +217,10 @@ export function checkVisaRequirement(originNationality, procedureCountry) {
   }
 
   // Broad regional fallback for unlisted combos
-  const euWesternNat = EU_WESTERN.includes(origin);
-  const caricomNat = CARICOM.includes(origin);
-  const latamNat = LATAM.includes(origin);
+  const includes = (list, val) => list.some(i => i.toLowerCase() === val.toLowerCase());
+  const euWesternNat = includes(EU_WESTERN, origin);
+  const caricomNat = includes(CARICOM, origin);
+  const latamNat = includes(LATAM, origin);
 
   // EU/Western to any unlisted destination → evisa (safe conservative guess)
   if (euWesternNat) return 'evisa';
