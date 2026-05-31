@@ -89,7 +89,7 @@ export default function Procedures() {
   const [selectDoctorProc, setSelectDoctorProc] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [language, setLanguage] = useState('en');
-  const { items, addItem, removeItem, clearCart, setProcedureCountry } = useCart();
+  const { items, addItem, removeItem, clearCart, setProcedureCountry, setProcedureCity } = useCart();
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -115,10 +115,12 @@ export default function Procedures() {
         doctor_name: proc.doctor_name,
         doctor_price_usd: proc.doctor_price_usd,
         clinic_country: proc.clinic_country,
+        clinic_city: proc.clinic_city,
         ...proc 
       });
-      // Bridge: store procedure country from selected doctor's clinic
+      // Bridge: store procedure destination from selected doctor's clinic
       if (proc.clinic_country) setProcedureCountry(proc.clinic_country);
+      if (proc.clinic_city) setProcedureCity(proc.clinic_city);
     } else {
       setSelectDoctorProc(proc);
     }
@@ -340,7 +342,6 @@ export default function Procedures() {
         onClose={() => setSelectDoctorProc(null)}
         onSelect={(proc) => {
           addProc(proc);
-          if (proc.clinic_country) setProcedureCountry(proc.clinic_country);
         }}
       />
     </div>

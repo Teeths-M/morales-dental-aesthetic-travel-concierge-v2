@@ -73,7 +73,7 @@ export default function Booking() {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [draftData, setDraftData] = useState(null);
   const navigate = useNavigate();
-  const { items, clearCart, procedureCountry } = useCart();
+  const { items, clearCart, procedureCountry, procedureCity } = useCart();
 
   // Auto-save debounce timer
   const saveTimerRef = useRef(null);
@@ -146,7 +146,7 @@ export default function Booking() {
     passport_number: '', passport_issue_date: '', passport_expiry_date: '',
     return_date: '', number_of_companions: 0,
     ip_country_origin: '', visa_required_status: 'unknown',
-    procedure_country: '', client_country: '',
+    procedure_country: '', procedure_city: '', client_country: '',
     acknowledged_statements: new Set(),
     signature_data: '',
     accepted_arbitration_clause: false,
@@ -156,12 +156,15 @@ export default function Booking() {
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  // Bridge procedure_country from cart selection
+  // Bridge procedure destination from cart selection
   useEffect(() => {
     if (procedureCountry && !form.procedure_country) {
       update('procedure_country', procedureCountry);
     }
-  }, [procedureCountry]);
+    if (procedureCity && !form.procedure_city) {
+      update('procedure_city', procedureCity);
+    }
+  }, [procedureCountry, procedureCity]);
 
   // Keep visa_required_status in sync for persistence
   useEffect(() => {

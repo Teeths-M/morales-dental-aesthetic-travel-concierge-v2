@@ -165,12 +165,15 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
       </div>
 
       {/* Procedure Destination — auto-populated from Procedures page */}
-      {form.procedure_country && (
+      {(form.procedure_country || form.procedure_city) && (
         <div className="sm:col-span-2 flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
           <span className="text-base">📍</span>
           <div>
             <p className="text-xs font-semibold text-emerald-800">Procedure Destination</p>
-            <p className="text-xs text-emerald-700">{form.procedure_country} <span className="text-emerald-500">(auto-filled from your procedure selection)</span></p>
+            <p className="text-xs text-emerald-700">
+              {form.procedure_city && <span>{form.procedure_city}, </span>}
+              {form.procedure_country} <span className="text-emerald-500">(auto-filled from your doctor selection)</span>
+            </p>
           </div>
         </div>
       )}

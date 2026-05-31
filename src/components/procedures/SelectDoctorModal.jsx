@@ -86,6 +86,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
         doctor_name: selectedPrice.doctor_name,
         doctor_price_usd: selectedPrice.doctor_price_usd,
         clinic_country: selectedPrice.clinic_country,
+        clinic_city: selectedPrice.clinic_city,
       });
       onClose();
     }
