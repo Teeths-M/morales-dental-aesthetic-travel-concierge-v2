@@ -7,10 +7,9 @@ import {
 } from 'lucide-react';
 
 const healingTimeline = [
-  { day: 'Day 1–2', label: 'Immediate Recovery', status: 'upcoming', note: 'Rest, hydrate, avoid chewing on treated area. Light sensitivity normal.' },
+  { day: 'Day 1–2', label: 'Immediate Recovery', status: 'active', note: 'Rest, hydrate, avoid chewing on treated area. Light sensitivity normal.' },
   { day: 'Day 3–5', label: 'Settling Period', status: 'upcoming', note: 'Mild sensitivity reduces. Resume soft foods. Gentle oral hygiene.' },
-  { day: 'Week 1–2', label: 'Adjustment Phase', status: 'upcoming', note: 'Bite adjusts naturally. Follow-up X-ray if recommended.' },
-  { day: 'Month 1+', label: 'Full Recovery', status: 'upcoming', note: 'Full bite function restored. Regular dental maintenance resumes.' },
+  { day: 'Day 6–7', label: 'Final Recovery Phase', status: 'upcoming', note: 'Most patients resume normal activities. Final assessment before travel clearance.' },
 ];
 
 const postCareInstructions = [
@@ -47,7 +46,7 @@ export default function RecoveryTab() {
         {[
           { icon: HeartPulse, label: 'Healing Status', value: 'Not Started', sub: 'Procedure pending', color: 'slate' },
           { icon: Calendar, label: 'Next Follow-Up', value: 'TBD', sub: 'Post-procedure scheduling', color: 'blue' },
-          { icon: Clock, label: 'Recovery Duration', value: '3–5 Days', sub: 'Estimated for your procedure', color: 'emerald' },
+          { icon: Clock, label: 'Recovery Duration', value: '7 Days', sub: 'Updated medical travel protocol', color: 'emerald' },
         ].map(({ icon: Icon, label, value, sub, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className={`w-9 h-9 rounded-xl mb-3 flex items-center justify-center

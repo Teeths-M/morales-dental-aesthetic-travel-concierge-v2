@@ -125,7 +125,7 @@ const AuthenticatedApp = () => {
       {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
       <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
-        <Route path="/admin" element={<SimpleAdminDashboard />} />
+        <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
         <Route path="/admin/imports" element={<AdminImports />} />
         <Route path="/admin/doctor-verification" element={<DoctorLicenseVerification />} />
