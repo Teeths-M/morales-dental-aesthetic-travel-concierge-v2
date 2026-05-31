@@ -309,6 +309,17 @@ export default function PaymentCheckout() {
               {selectPlanMutation.isPending ? 'Processing...' : 'Proceed to Payment'}
             </Button>
 
+            {/* Consultation Fee Credit Notice */}
+            <Card className="p-4 bg-emerald-50 border-emerald-200">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-emerald-600 mt-0.5" />
+                <div className="text-sm text-emerald-800">
+                  <p className="font-semibold mb-1">Consultation Fee Credited</p>
+                  <p>Your $49 consultation retainer has been fully refunded and applied as credit toward this package.</p>
+                </div>
+              </div>
+            </Card>
+
             {/* Security Badge */}
             <Card className="p-4 bg-green-50 border-green-200">
               <div className="flex items-center gap-2 text-sm text-green-700">
