@@ -342,10 +342,10 @@ export default function Booking() {
              form.passport_number && form.passport_issue_date && form.passport_expiry_date;
     }
     if (step === 1) {
-      const datesOk = form.preferred_date && form.return_date;
-      const companionsOk = form.number_of_companions !== null && form.number_of_companions !== '' && form.number_of_companions !== undefined;
-      const companionDetailsOk = form.number_of_companions > 0 ? (form.companion_relationship && form.travel_buddy_services.length > 0) : true;
-      return datesOk && companionsOk && companionDetailsOk;
+      if (form.has_companion === null || form.has_companion === undefined) return false;
+      if (form.has_companion === false) return true;
+      // Has companion: require at least count selected
+      return form.number_of_companions > 0;
     }
     if (step === 2) {
       return form.has_cultural_preferences !== null && (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);
