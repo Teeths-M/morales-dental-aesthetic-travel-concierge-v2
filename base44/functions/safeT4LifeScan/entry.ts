@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch the case
-    const caseRecord = await base44.entities.Case.get(caseId);
+    const caseRecord = await base44.entities.CaseRecord.get(caseId);
     
     if (!caseRecord) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // Determine if BLOCKED
     if (foundRisks.length > 0 || caseRecord.pregnancy_status === 'Pregnant') {
       // BLOCKED
-      await base44.entities.Case.update(caseId, {
+      await base44.entities.CaseRecord.update(caseId, {
         safe_t_result: 'BLOCKED',
         status: 'Submitted',
         risk_score: 'High'
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     // PASSED - Update case
-    await base44.entities.Case.update(caseId, {
+    await base44.entities.CaseRecord.update(caseId, {
       safe_t_result: 'PASSED',
       status: 'Safe-T-Reviewed',
       risk_score: riskScore
