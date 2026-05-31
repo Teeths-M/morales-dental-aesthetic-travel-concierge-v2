@@ -31,16 +31,19 @@ export default function ClientProposalPortal() {
   const [paying, setPaying] = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
 
+  // CLEAN TOKEN: Remove any trailing hashes/timestamps (e.g., prop_123_1234567890_abc → prop_123)
+  const cleanToken = token ? token.split('_').slice(0, 2).join('_') : null;
+
   useEffect(() => {
-    if (!token) { setError('No proposal token found.'); setLoading(false); return; }
+    if (!cleanToken) { setError('No proposal token found.'); setLoading(false); return; }
     loadCase();
     const interval = setInterval(loadCase, 30000); // poll every 30s
     return () => clearInterval(interval);
-  }, [token]);
+  }, [cleanToken]);
 
   const loadCase = async () => {
     try {
-      const res = await base44.functions.invoke('iq200Pipeline', { action: 'get_case', payload: { token, type: 'proposal' } });
+      const res = await base44.functions.invoke('iq200Pipeline', { action: 'get_case', payload: { token: cleanToken, type: 'proposal' } });
       if (res.data?.case) setCaseData(res.data.case);
       else setError('Proposal not found. Please contact your coordinator.');
     } catch (e) {
@@ -55,7 +58,7 @@ export default function ClientProposalPortal() {
     setPaying(true);
     const res = await base44.functions.invoke('iq200Pipeline', {
       action: 'process_payment',
-      payload: { token, deposit_option: depositChoice }
+      payload: { token: cleanToken, deposit_option: depositChoice }
     });
     if (res.data?.success) {
       setPaySuccess(true);

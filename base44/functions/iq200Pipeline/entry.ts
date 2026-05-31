@@ -120,8 +120,8 @@ Deno.serve(async (req) => {
         console.error('SAFE-T scan failed:', scanError);
       }
 
-      // AUTO-GENERATE PROPOSAL TOKEN
-      const proposalToken = `prop_${caseRecord.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // AUTO-GENERATE PROPOSAL TOKEN (clean alphanumeric only - no timestamps or random hashes)
+      const proposalToken = `prop_${caseRecord.id}`;
       await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
         proposal_token: proposalToken,
         proposal_sent_at: new Date().toISOString(),
@@ -159,8 +159,8 @@ Deno.serve(async (req) => {
         status: 'Proposal-Sent'
       });
 
-      // Generate proposal token
-      const proposalToken = `prop_${case_id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Generate proposal token (clean alphanumeric only - no timestamps or random hashes)
+      const proposalToken = `prop_${case_id}`;
       
       await base44.entities.CaseRecord.update(case_id, {
         proposal_token: proposalToken,
