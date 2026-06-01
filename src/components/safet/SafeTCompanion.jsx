@@ -70,7 +70,6 @@ export default function SafeTCompanion() {
   const [appLanguage, setAppLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const closeTimeoutRef = useRef(null);
   const labels = getCompanionLabels(appLanguage);
 
   // Derive alert context from cart
@@ -95,7 +94,8 @@ export default function SafeTCompanion() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
-  const [showPulse, setShowPulse] = useState(true);
+  const [showAlertPill, setShowAlertPill] = useState(false);
+  const alertPillTimerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -108,18 +108,27 @@ export default function SafeTCompanion() {
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
-  // Reset greeting when alert context changes (e.g. user adds a high-risk procedure)
+  // Reset greeting + show alert pill when high-risk context changes
   const prevAlertRef = useRef(isHighAnesthesia);
   useEffect(() => {
     if (prevAlertRef.current !== isHighAnesthesia) {
       prevAlertRef.current = isHighAnesthesia;
       setMessages([{ role: 'assistant', content: contextualGreeting, id: Date.now() }]);
+      // Only show pill when transitioning INTO high-risk, and only if window is closed
+      if (isHighAnesthesia && !isOpen) {
+        setShowAlertPill(true);
+        if (alertPillTimerRef.current) clearTimeout(alertPillTimerRef.current);
+        alertPillTimerRef.current = setTimeout(() => setShowAlertPill(false), 5000);
+      }
     }
-  }, [isHighAnesthesia, contextualGreeting]);
+    return () => { if (alertPillTimerRef.current) clearTimeout(alertPillTimerRef.current); };
+  }, [isHighAnesthesia, contextualGreeting, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
       setHasUnread(false);
+      setShowAlertPill(false);
+      if (alertPillTimerRef.current) clearTimeout(alertPillTimerRef.current);
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [isOpen]);
@@ -127,12 +136,6 @@ export default function SafeTCompanion() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Pulse after 4s to draw attention
-  useEffect(() => {
-    const t = setTimeout(() => setShowPulse(false), 8000);
-    return () => clearTimeout(t);
-  }, []);
 
   const sendMessage = async (text) => {
     const userText = text || input.trim();
@@ -215,30 +218,25 @@ export default function SafeTCompanion() {
     <>
       {/* Floating Button */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {/* Alert pill — shows only on high-risk context, auto-dismisses after 5s */}
         <AnimatePresence>
-          {!isOpen && showPulse && (
+          {!isOpen && showAlertPill && (
             <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-xl border border-slate-100 px-4 py-2.5 flex items-center gap-2 cursor-pointer max-w-[220px]"
-              onClick={() => { setIsOpen(true); setShowPulse(false); }}
+              initial={{ opacity: 0, x: 20, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 280 }}
+              className="bg-amber-50 border border-amber-300 rounded-2xl shadow-lg px-3.5 py-2.5 flex items-center gap-2 cursor-pointer max-w-[240px]"
+              onClick={() => { setIsOpen(true); setShowAlertPill(false); }}
             >
-              <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 animate-pulse" />
-              <p className="text-xs font-semibold text-slate-700 leading-tight">{labels.isHere}</p>
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+              <p className="text-[11px] font-semibold text-amber-800 leading-tight">Review recommended. Click to chat with your companion.</p>
             </motion.div>
           )}
         </AnimatePresence>
 
         <motion.button
-          onMouseEnter={() => {
-            if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-            setIsOpen(true);
-            setHasUnread(false);
-          }}
-          onMouseLeave={() => {
-            closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 1000);
-          }}
+          onClick={() => setIsOpen(o => !o)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 shadow-2xl shadow-emerald-900/30 flex items-center justify-center"
@@ -252,8 +250,9 @@ export default function SafeTCompanion() {
           {hasUnread && !isOpen && (
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white" />
           )}
-          {/* Pulse ring */}
-          <span className="absolute inset-0 rounded-full bg-emerald-600 opacity-20 animate-ping" />
+          {isHighAnesthesia && !isOpen && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-white" />
+          )}
         </motion.button>
       </div>
 
@@ -261,12 +260,6 @@ export default function SafeTCompanion() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            onMouseEnter={() => {
-              if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-            }}
-            onMouseLeave={() => {
-              closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 1000);
-            }}
             initial={{ opacity: 0, scale: 0.92, y: 20, transformOrigin: 'bottom right' }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
