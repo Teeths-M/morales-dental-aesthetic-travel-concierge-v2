@@ -25,10 +25,10 @@ Deno.serve(async (req) => {
     };
     
     const token = btoa(JSON.stringify(payload));
-    const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
     // URL-encode the token to handle Base64 special characters (+, /, =)
     const encodedToken = encodeURIComponent(token);
-    const portalUrl = `${appUrl}/portal/transfer?token=${encodedToken}`;
+    // Use relative URL path - will work in any environment
+    const portalUrl = `/portal/transfer?token=${encodedToken}`;
 
     return Response.json({
       success: true,

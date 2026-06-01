@@ -31,10 +31,15 @@ export default function PortalTestHub() {
       console.log('Portal URL:', response.data.portal_url);
 
       if (response.data.success) {
+        // Convert relative URL to absolute if needed
+        const portalUrl = response.data.portal_url.startsWith('/') 
+          ? `${window.location.origin}${response.data.portal_url}`
+          : response.data.portal_url;
+        
         setPortalLinks([
           {
             name: 'Chauffeur Portal (Test Case)',
-            url: response.data.portal_url,
+            url: portalUrl,
             patient: 'Test Patient Two',
             service: 'San José Medical Transport',
             type: 'chauffeur',
