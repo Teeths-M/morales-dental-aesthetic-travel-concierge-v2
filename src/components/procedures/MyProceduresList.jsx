@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, Shield, AlertTriangle, Clock, Sparkles, DollarSign } from 'lucide-react';
+import { X, ArrowRight, Clock, Sparkles, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { PricingEngine } from '@/lib/pricingEngine';
-
-const safetWarnings = [
-  { condition: (list) => list.length > 4, msg: 'Multiple procedures may require staged treatment plans for optimal healing.' },
-  { condition: (list) => list.some(p => p.categoryId?.includes('body')) && list.some(p => p.title?.toLowerCase().includes('tummy')), msg: 'Body contouring combinations often require 6–8 weeks total recovery.' },
-  { condition: (list) => list.some(p => p.title?.includes('Implant')) && list.some(p => p.title?.includes('Bone Graft')), msg: 'Bone grafting and implants may need to be staged across separate visits.' },
-];
+import CompatibilityFirewall from '@/components/procedures/CompatibilityFirewall';
 
 export default function MyProceduresList({ items, onRemove, onClear }) {
   const [pricingEngine, setPricingEngine] = useState(null);
@@ -68,7 +63,6 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
 
   if (items.length === 0) return null;
 
-  const warnings = safetWarnings.filter(w => w.condition(items));
   const totalDays = items.reduce((acc, p) => {
     const n = parseInt(p.downtime) || 0;
     return acc + n;
@@ -126,16 +120,10 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
         </AnimatePresence>
       </div>
 
-      {/* SAFE-T Warnings */}
-      {warnings.length > 0 && (
-        <div className="px-4 pb-3 space-y-2">
-          {warnings.map((w, i) => (
-            <div key={i} className="flex items-start gap-2.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-              <Shield className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] text-amber-800 leading-snug">{w.msg}</p>
-            </div>
-          ))}
-          <p className="text-[10px] text-slate-400 italic px-1">SAFE-T 4LIFE™ advisory — not medical advice.</p>
+      {/* SAFE-T4LIFE™ Compatibility Firewall */}
+      {items.length >= 2 && (
+        <div className="px-4 pb-3">
+          <CompatibilityFirewall items={items} compact={false} />
         </div>
       )}
 

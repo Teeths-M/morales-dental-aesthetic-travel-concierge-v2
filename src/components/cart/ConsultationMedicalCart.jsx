@@ -3,6 +3,7 @@ import { useCart } from '@/context/CartContext';
 import { Trash2, Stethoscope, ChevronDown, ChevronUp, Plus, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import CompatibilityFirewall from '@/components/procedures/CompatibilityFirewall';
 
 const CATEGORY_ICONS = {
   dental: '🦷', cosmetic: '✨', bariatric: '⚖️', fertility: '🌸',
@@ -102,6 +103,13 @@ export default function ConsultationMedicalCart() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+
+                {/* SAFE-T4LIFE™ Compact Firewall */}
+                {items.length >= 2 && (
+                  <div className="pt-1">
+                    <CompatibilityFirewall items={items} compact={true} />
+                  </div>
+                )}
 
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-2 px-1">
