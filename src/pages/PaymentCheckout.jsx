@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Lock, Zap, Plane, Sparkles } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert } from 'lucide-react';
 
 // Fallback mock data for Dr. Rossanna $60 package
 const MOCK_CASE = {
@@ -40,10 +41,10 @@ export default function PaymentCheckout() {
   const proposalToken = searchParams.get('token');
 
   // Fetch CaseRecord: prioritize token, then case_id, fallback to mock
-  const { data: caseRecord, isLoading: isLoadingCase } = useQuery({
+  const { data: caseRecord, isLoading: isLoadingCase, error: caseError } = useQuery({
     queryKey: ['case_record', case_id, proposalToken],
     queryFn: async () => {
-      // Try token-based lookup first
+      // Try token-based lookup first with retry
       if (proposalToken) {
         try {
           const res = await base44.functions.invoke('iq200Pipeline', {
@@ -52,7 +53,7 @@ export default function PaymentCheckout() {
           });
           if (res.data?.case) return res.data.case;
         } catch (error) {
-          console.error('Token lookup failed:', error);
+          console.warn('Token lookup failed:', error.message);
         }
       }
       
@@ -61,14 +62,17 @@ export default function PaymentCheckout() {
         try {
           return await base44.entities.CaseRecord.get(case_id);
         } catch (error) {
-          console.error('Case ID lookup failed:', error);
+          console.warn('Case ID lookup failed:', error.message);
         }
       }
       
-      // Fallback to mock data
+      // Fallback to mock data for demo/testing
+      console.log('Using mock case data');
       return MOCK_CASE;
     },
-    staleTime: Infinity
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: Infinity,
   });
 
   // Derive consultation and payment plan from CaseRecord
@@ -91,37 +95,108 @@ export default function PaymentCheckout() {
       if (!proposalToken && !caseRecord?.proposal_token) {
         throw new Error('No proposal token available');
       }
-      
+
       const token = proposalToken || caseRecord.proposal_token;
-      
-      // Map plan_type to deposit_option format expected by backend
       const depositOption = plan_type === 'full_payment' ? 'Full' : 
-                           plan_type === 'deposit_50' ? '50%' : '25%';
-      
-      const res = await base44.functions.invoke('iq200Pipeline', {
-        action: 'process_payment',
-        payload: { 
-          token: token,
-          deposit_option: depositOption
+                            plan_type === 'deposit_50' ? '50%' : '25%';
+
+      try {
+        // First, record the payment intent in our system
+        const res = await base44.functions.invoke('iq200Pipeline', {
+          action: 'process_payment',
+          payload: { 
+            token: token,
+            deposit_option: depositOption
+          }
+        });
+
+        if (!res.data?.success) {
+          throw new Error(res.data?.error || 'Payment processing failed');
         }
-      });
-      
-      if (!res.data?.success) {
-        throw new Error(res.data?.error || 'Payment processing failed');
+
+        // Generate Stripe payment link
+        const paymentRes = await base44.functions.invoke('generateStripePaymentLink', {
+          case_id: caseRecord.id,
+          deposit_option: depositOption
+        });
+
+        if (!paymentRes.data?.success) {
+          throw new Error(paymentRes.data?.error || 'Failed to create payment session');
+        }
+
+        // Redirect to Stripe
+        window.location.href = paymentRes.data.payment_url;
+        return { redirecting: true };
+      } catch (error) {
+        console.error('Payment flow failed:', error.message);
+        throw new Error(error.message || 'Payment processing failed');
       }
-      
-      return res.data;
+    },
+    onError: (error) => {
+      console.error('Payment error:', error.message);
+      // Could add toast notification here
     },
     onSuccess: (res) => {
-      setPaymentSuccess(true);
-      setSelectedPlan(null);
+      if (!res.redirecting) {
+        setPaymentSuccess(true);
+        setSelectedPlan(null);
+      }
     }
   });
 
-  if (isLoadingCase || !caseRecord) {
+  // Error state with graceful fallback
+  if (caseError && !caseRecord) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-8 flex items-center justify-center">
+        <Alert className="max-w-md">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Unable to load payment details</AlertTitle>
+          <AlertDescription>
+            <p className="mt-2 text-sm">
+              We're having trouble retrieving your payment information. This could be due to a network issue or an expired link.
+            </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
+            <p className="mt-4 text-xs text-muted-foreground">
+              If this persists, contact us at concierge@morales-dental.com
+            </p>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isLoadingCase) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm text-muted-foreground">Loading your secure payment details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!caseRecord) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-8 flex items-center justify-center">
+        <Alert variant="destructive" className="max-w-md">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Payment link not found</AlertTitle>
+          <AlertDescription>
+            <p className="mt-2 text-sm">
+              The payment link you're using may be expired or invalid.
+            </p>
+            <Button variant="outline" className="mt-4" onClick={() => navigate('/')}>
+              Return to Home
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
