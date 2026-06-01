@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -121,7 +122,11 @@ const AuthenticatedApp = () => {
       {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
       <Route path="/portal/travel" element={<PortalTravelAgency />} />
       <Route path="/portal/transfer" element={<PortalChauffeur />} />
-      <Route path="/portal/doctor/:token" element={<PortalDoctor />} />
+      <Route path="/portal/doctor/:token" element={
+        <ErrorBoundary>
+          <PortalDoctor />
+        </ErrorBoundary>
+      } />
       <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
       {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
       <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />

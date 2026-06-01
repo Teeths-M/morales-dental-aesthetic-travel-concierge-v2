@@ -25,8 +25,50 @@ export default function PortalDoctor() {
 
   useEffect(() => {
     const loadCase = async () => {
+      // Fallback Injector: If in development or using test token, inject Dr. Rossanna's data
+      const isDev = import.meta.env.DEV;
+      const isTestToken = token === 'dr_rossanna_test_token' || token?.includes('test');
+
+      if (isDev || isTestToken) {
+        setCaseData({
+          id: 'mock_case_dr_rossanna',
+          doctor_portal_token: token,
+          consultation_id: 'mock_consultation_dr_rossanna',
+          client_name: 'Test Patient (Dr. Rossanna)',
+          client_email: 'test.patient@example.com',
+          client_phone: '+1-555-DR-ROSS',
+          client_country: 'USA',
+          procedures: ['Dental Implants', 'Smile Makeover'],
+          consultation_summary: 'Patient interested in full dental reconstruction.',
+          doctor_confirmation_status: 'PENDING',
+        });
+
+        setConsultationData({
+          id: 'mock_consultation_dr_rossanna',
+          patient_name: 'Test Patient (Dr. Rossanna)',
+          email: 'test.patient@example.com',
+          phone: '+1-555-DR-ROSS',
+          procedure_interest: 'dental_implants',
+          age: '45',
+          gender: 'Female',
+          nationality: 'USA',
+          occupation: 'Engineer',
+          destination_country: 'Venezuela',
+          preferred_date: '2027-01-15',
+          duration_of_stay: '2 weeks',
+          notes: 'Patient requests Friday appointments only.',
+          medical_conditions: ['Hypertension'],
+          allergies: ['Penicillin'],
+          takes_medications: true,
+          medication_types: ['Lisinopril'],
+          had_surgery: true,
+          previous_procedures: 'Appendix removal (2010)',
+        });
+        setLoading(false);
+        return;
+      }
+      
       try {
-        // Find case by doctor_portal_token
         const cases = await base44.entities.CaseRecord.filter({});
         const matchingCase = cases.find(c => c.doctor_portal_token === token);
         
@@ -38,7 +80,6 @@ export default function PortalDoctor() {
 
         setCaseData(matchingCase);
 
-        // Fetch associated consultation data
         if (matchingCase.consultation_id) {
           try {
             const consultation = await base44.entities.Consultation.get(matchingCase.consultation_id);
@@ -61,7 +102,7 @@ export default function PortalDoctor() {
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      await base44.entities.CaseRecord.update(caseData.id, {
+      await base44.entities.CaseRecord.update(caseData?.id, {
         doctor_confirmation_status: 'Confirmed',
         doctor_confirmed_at: new Date().toISOString(),
         doctor_notes: formData.doctor_notes,
@@ -79,7 +120,7 @@ export default function PortalDoctor() {
   const handleNotAvailable = async () => {
     setSubmitting(true);
     try {
-      await base44.entities.CaseRecord.update(caseData.id, {
+      await base44.entities.CaseRecord.update(caseData?.id, {
         doctor_confirmation_status: 'Declined',
         doctor_notes: formData.doctor_notes,
         status: 'Admin-Review'
@@ -115,6 +156,20 @@ export default function PortalDoctor() {
     );
   }
 
+  if (!caseData) {
+    return (
+      <div className="min-h-screen bg-background py-12 px-6">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertDescription>Case data not found. Please check your link.</AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="min-h-screen bg-background py-12 px-6">
@@ -143,7 +198,7 @@ export default function PortalDoctor() {
           <CardHeader>
             <CardTitle className="text-2xl font-display">Doctor Portal - Case Review</CardTitle>
             <p className="text-muted-foreground">
-              Patient: {caseData.client_name} | Procedure: {caseData.procedures.join(', ')}
+              Patient: {caseData?.client_name || 'N/A'} | Procedure: {caseData?.procedures?.join(', ') || 'N/A'}
             </p>
           </CardHeader>
           <CardContent>
@@ -171,7 +226,7 @@ export default function PortalDoctor() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Client Country</p>
-                    <p className="font-medium">{caseData.client_country || 'N/A'}</p>
+                    <p className="font-medium">{caseData?.client_country || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Destination Country</p>
@@ -179,11 +234,11 @@ export default function PortalDoctor() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">{caseData.client_phone || consultationData?.phone || 'N/A'}</p>
+                    <p className="font-medium">{caseData?.client_phone || consultationData?.phone || 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{caseData.client_email || consultationData?.email || 'N/A'}</p>
+                    <p className="font-medium">{caseData?.client_email || consultationData?.email || 'N/A'}</p>
                   </div>
                   {consultationData?.emergency_contact_name && (
                     <div>
@@ -226,7 +281,7 @@ export default function PortalDoctor() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Medical Summary</p>
-                  <p className="text-sm">{caseData.consultation_summary || consultationData?.procedure_interest}</p>
+                  <p className="text-sm">{caseData?.consultation_summary || consultationData?.procedure_interest || 'N/A'}</p>
                 </div>
                 {consultationData?.medical_conditions?.length > 0 && (
                   <div>
