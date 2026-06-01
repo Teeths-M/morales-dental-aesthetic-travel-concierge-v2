@@ -44,6 +44,7 @@ import PortalDoctor from './pages/PortalDoctor';
 import DoctorLicenseVerification from './pages/DoctorLicenseVerification';
 import AdminPortalViewer from './pages/AdminPortalViewer';
 import StandalonePayment from './pages/StandalonePayment';
+import TestPortalLink from './pages/TestPortalLink';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -132,6 +133,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
       {/* Standalone payment page - direct link for payments */}
       <Route path="/pay-now" element={<PaymentCheckout />} />
+      <Route path="/test-portal-link" element={<TestPortalLink />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
