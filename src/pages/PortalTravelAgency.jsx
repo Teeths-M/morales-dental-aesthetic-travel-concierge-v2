@@ -30,31 +30,30 @@ export default function PortalTravelAgency() {
 
   useEffect(() => {
     const token = getTokenFromUrl();
-    console.log('Portal token from URL:', token ? 'present' : 'missing');
     if (!token) {
       setTokenError('No access token provided. Please use the link sent to you. The URL should contain ?token=...');
       setLoading(false);
       return;
     }
     const decoded = decodePortalToken(token);
-    console.log('Decoded token:', decoded);
     if (!decoded.valid) {
       setTokenError(decoded.error || 'Invalid or expired access link.');
       setLoading(false);
       return;
     }
     setTokenData(decoded);
-    loadConsultation(decoded.consultation_id);
+    loadConsultation(decoded.consultation_id, decoded.partner_id);
   }, []);
 
-  const loadConsultation = async (id) => {
+  const loadConsultation = async (consultationId, partnerId) => {
     try {
-      const results = await base44.entities.Consultation.filter({ id });
-      const c = results[0];
+      const response = await base44.functions.invoke('getPortalData', {
+        consultation_id: consultationId,
+        partner_id: partnerId,
+      });
+
+      const c = response.data.consultation;
       if (!c) { setError('Case not found.'); setLoading(false); return; }
-      console.log('Consultation loaded:', c);
-      console.log('Consultation status:', c.status);
-      // No status gate — travel agency can always access to submit a quote regardless of status
       setConsultation(c);
       // Pre-fill taxi service from case
       if (c.taxi_service_id) setTaxiServiceId(c.taxi_service_id);
