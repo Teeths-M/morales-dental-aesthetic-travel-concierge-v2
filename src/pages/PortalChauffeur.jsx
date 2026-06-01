@@ -39,13 +39,16 @@ export default function PortalChauffeur() {
 
   const loadData = async (consultationId, partnerId) => {
     try {
+      console.log('Loading data with IDs:', { consultationId, partnerId });
       const response = await base44.functions.invoke('getPortalData', {
         consultation_id: consultationId,
         partner_id: partnerId,
       });
 
+      console.log('Backend response:', response.data);
+
       const c = response.data.consultation;
-      if (!c) { setError('Case not found.'); setLoading(false); return; }
+      if (!c) { setError('Case not found. ID: ' + consultationId); setLoading(false); return; }
       const blockedStatuses = ['cancelled', 'completed'];
       if (blockedStatuses.includes(c.status)) {
         setError(`This transfer request is no longer active. Current status: ${c.status}`);
