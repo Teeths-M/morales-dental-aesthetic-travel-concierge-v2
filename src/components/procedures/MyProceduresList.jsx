@@ -40,7 +40,6 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
       return;
     }
 
-    // Use doctor prices if available, otherwise calculate from pricing engine
     const totalFromDoctor = items.reduce((sum, item) => {
       if (item.doctor_price_usd) {
         return sum + item.doctor_price_usd;
@@ -63,19 +62,14 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
 
   if (items.length === 0) return null;
 
-  const totalDays = items.reduce((acc, p) => {
-    const n = parseInt(p.downtime) || 0;
-    return acc + n;
-  }, 0);
-
   return (
     <motion.div
-      className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden"
+      className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-800 to-blue-900 px-5 py-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-emerald-800 to-blue-900 px-5 py-4 flex items-center justify-between flex-shrink-0">
         <div>
           <p className="text-white font-bold text-sm">My Procedures</p>
           <p className="text-white/70 text-xs mt-0.5">{items.length} treatment{items.length !== 1 ? 's' : ''} selected</p>
@@ -89,46 +83,49 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
         <button onClick={onClear} className="text-white/60 hover:text-white text-xs underline">Clear all</button>
       </div>
 
-      {/* Items */}
-      <div className="p-4 space-y-2 max-h-72 overflow-y-auto">
-        <AnimatePresence>
-          {items.map((p, i) => (
-            <motion.div
-              key={p.title + i}
-              className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-            >
-              <div className={`w-8 h-8 rounded-lg ${p.categoryColor?.bg || 'bg-slate-100'} flex items-center justify-center flex-shrink-0`}>
-                <span className="text-sm">{p.categoryId?.includes('dental') ? '🦷' : p.categoryId?.includes('breast') ? '🌸' : p.categoryId?.includes('body') ? '💪' : p.categoryId?.includes('face') ? '💆' : '✨'}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-800">{p.title}</p>
-                <p className="text-[10px] text-slate-400">{p.category} · {p.duration}</p>
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                  <Clock className="w-3 h-3" />{p.downtime}
+      {/* Scrollable body: items + firewall */}
+      <div className="overflow-y-auto pb-16">
+        {/* Items */}
+        <div className="p-4 space-y-2">
+          <AnimatePresence>
+            {items.map((p, i) => (
+              <motion.div
+                key={p.title + i}
+                className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+              >
+                <div className={`w-8 h-8 rounded-lg ${p.categoryColor?.bg || 'bg-slate-100'} flex items-center justify-center flex-shrink-0`}>
+                  <span className="text-sm">{p.categoryId?.includes('dental') ? '🦷' : p.categoryId?.includes('breast') ? '🌸' : p.categoryId?.includes('body') ? '💪' : p.categoryId?.includes('face') ? '💆' : '✨'}</span>
                 </div>
-                <button onClick={() => onRemove(p)} className="w-6 h-6 rounded-full bg-slate-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors">
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-800">{p.title}</p>
+                  <p className="text-[10px] text-slate-400">{p.category} · {p.duration}</p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                    <Clock className="w-3 h-3" />{p.downtime}
+                  </div>
+                  <button onClick={() => onRemove(p)} className="w-6 h-6 rounded-full bg-slate-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* SAFE-T4LIFE™ Compatibility Firewall */}
+        {items.length >= 2 && (
+          <div className="px-4 pb-4">
+            <CompatibilityFirewall items={items} compact={false} />
+          </div>
+        )}
       </div>
 
-      {/* SAFE-T4LIFE™ Compatibility Firewall */}
-      {items.length >= 2 && (
-        <div className="px-4 pb-3">
-          <CompatibilityFirewall items={items} compact={false} />
-        </div>
-      )}
-
       {/* Footer CTA */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 pt-2 flex-shrink-0 bg-white border-t border-slate-100">
         <Link to="/booking">
           <button className="w-full py-3 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-95 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
             <Sparkles className="w-4 h-4" />
