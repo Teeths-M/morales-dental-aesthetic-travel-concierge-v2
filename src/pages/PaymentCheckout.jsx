@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard } from 'lucide-react';
+import DeclineDepositDialog from '@/components/checkout/DeclineDepositDialog';
 
 // Fallback mock data for Dr. Rossanna $60 package
 const MOCK_CASE = {
@@ -37,6 +38,8 @@ export default function PaymentCheckout() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('stripe'); // 'stripe' | 'wipay' | 'paypal'
+  const [showDeclineDialog, setShowDeclineDialog] = useState(false);
+  const [declinedAmount, setDeclinedAmount] = useState(null);
 
   // Extract token from URL query param
   const proposalToken = searchParams.get('token');
@@ -162,7 +165,15 @@ export default function PaymentCheckout() {
     },
     onError: (error) => {
       console.error('Payment error:', error.message);
-      // Could add toast notification here
+      // For high-tier transactions ($3,000+), surface the transparent decline dialog
+      const finalCost = paymentPlan?.final_cost || 0;
+      const depositMap = { full_payment: 0.95, deposit_50: 0.50, deposit_25: 0.25 };
+      const multiplier = depositMap[selectedPlan] ?? 1;
+      const attemptedAmount = Math.round(finalCost * multiplier);
+      if (attemptedAmount >= 3000 && paymentMethod === 'stripe') {
+        setDeclinedAmount(attemptedAmount);
+        setShowDeclineDialog(true);
+      }
     },
     onSuccess: (res) => {
       if (!res.redirecting) {
@@ -320,6 +331,7 @@ export default function PaymentCheckout() {
   ];
 
   return (
+    <>
     <div className="min-h-screen bg-secondary/20 px-4 py-8 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
@@ -533,5 +545,12 @@ export default function PaymentCheckout() {
         </div>{/* end two-column */}
       </div>
     </div>
+      <DeclineDepositDialog
+        isOpen={showDeclineDialog}
+        onClose={() => setShowDeclineDialog(false)}
+        caseRecord={caseRecord}
+        originalAmount={declinedAmount}
+      />
+    </>
   );
 }
