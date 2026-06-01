@@ -19,33 +19,51 @@ export default function PortalTestHub() {
       // Test consultation we set up
       const consultationId = '6a1cc4685a599ee5c06fec2d';
       const taxiServiceId = '6a1cbb66f379e616337f22f4';
+      const travelAgencyId = '6a1cb943f379e616337f22f3';
+
+      const links = [];
 
       // Generate chauffeur portal link
-      const response = await base44.functions.invoke('generateChauffeurPortalLink', {
+      const chauffeurResponse = await base44.functions.invoke('generateChauffeurPortalLink', {
         consultation_id: consultationId,
         taxi_service_id: taxiServiceId,
       });
 
-      console.log('Portal link response:', response.data);
-      console.log('Raw token:', response.data.token);
-      console.log('Portal URL:', response.data.portal_url);
-
-      if (response.data.success) {
-        // Convert relative URL to absolute if needed
-        const portalUrl = response.data.portal_url.startsWith('/') 
-          ? `${window.location.origin}${response.data.portal_url}`
-          : response.data.portal_url;
+      if (chauffeurResponse.data.success) {
+        const portalUrl = chauffeurResponse.data.portal_url.startsWith('/') 
+          ? `${window.location.origin}${chauffeurResponse.data.portal_url}`
+          : chauffeurResponse.data.portal_url;
         
-        setPortalLinks([
-          {
-            name: 'Chauffeur Portal (Test Case)',
-            url: portalUrl,
-            patient: 'Test Patient Two',
-            service: 'San José Medical Transport',
-            type: 'chauffeur',
-          },
-        ]);
+        links.push({
+          name: 'Chauffeur Portal (Test Case)',
+          url: portalUrl,
+          patient: 'Test Patient Two',
+          service: 'San José Medical Transport',
+          type: 'chauffeur',
+        });
       }
+
+      // Generate travel agency portal link
+      const travelResponse = await base44.functions.invoke('generateTravelAgencyPortalLink', {
+        consultation_id: consultationId,
+        travel_agency_id: travelAgencyId,
+      });
+
+      if (travelResponse.data.success) {
+        const portalUrl = travelResponse.data.portal_url.startsWith('/') 
+          ? `${window.location.origin}${travelResponse.data.portal_url}`
+          : travelResponse.data.portal_url;
+        
+        links.push({
+          name: 'Travel Agency Portal (Test Case)',
+          url: portalUrl,
+          patient: 'Test Patient Two',
+          service: 'Caribbean Travel Solutions',
+          type: 'travel_agency',
+        });
+      }
+
+      setPortalLinks(links);
     } catch (err) {
       console.error('Error generating link:', err);
       setError(err.message);
@@ -118,9 +136,9 @@ export default function PortalTestHub() {
           <h4 className="font-semibold mb-2 text-sm">How to Test:</h4>
           <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
             <li>Click "Open Portal" button above</li>
-            <li>Enter pricing for the transfer legs</li>
+            <li>For Chauffeur: Enter pricing for transfer legs. For Travel Agency: Enter flight and hotel costs</li>
             <li>Submit the quote</li>
-            <li>Check if the Consultation entity updates with the leg costs</li>
+            <li>Check if the Consultation entity updates with the costs</li>
           </ol>
         </div>
       </div>
