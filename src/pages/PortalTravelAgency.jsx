@@ -5,6 +5,46 @@ import moment from 'moment';
 
 const USD = (val) => `$${(Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const PROCEDURE_LABELS = {
+  dental_implants: 'Dental Implants',
+  all_on_4: 'All-on-4 / All-on-6',
+  porcelain_veneers: 'Porcelain Veneers',
+  smile_makeover: 'Smile Makeover',
+  bone_regeneration: 'Bone Regeneration',
+  teeth_whitening: 'Teeth Whitening & Cosmetic Dentistry',
+  rhinoplasty: 'Rhinoplasty (Nose Reshaping)',
+  breast_surgery: 'Breast Augmentation / Reduction / Lift',
+  liposuction: 'Liposuction',
+  tummy_tuck: 'Abdominoplasty (Tummy Tuck)',
+  facelift: 'Facelift',
+  brow_lift: 'Brow Lift',
+  blepharoplasty: 'Eyelid Surgery (Blepharoplasty)',
+  otoplasty: 'Otoplasty (Ear Reshaping)',
+  thigh_arm_lift: 'Thigh Lift / Arm Lift',
+  laser_resurfacing: 'Skin Rejuvenation (Laser Resurfacing)',
+  mole_removal: 'Mole Removal (Skin Nevus)',
+  lipoma_removal: 'Lipoma Removal',
+  gastric_sleeve: 'Gastric Sleeve (Sleeve Gastrectomy)',
+  gastric_bypass: 'Gastric Bypass (Roux-en-Y)',
+  gastric_band_revision: 'Gastric Band Removal / Revision',
+  gynecological_exams: 'Gynecological Diagnostic Exams',
+  ivf: 'IVF (In Vitro Fertilization)',
+  egg_freezing: 'Fertility Preservation (Egg Freezing)',
+  oncology_surgery: 'Oncological Surgical Procedures',
+  tumor_testing: 'Tumor Marker & Blood Panel Testing',
+  joint_replacement: 'Joint Replacement (Hip & Knee)',
+  spine_surgery: 'Spine Surgery',
+  sports_arthroscopy: 'Sports Injuries & Arthroscopy',
+  fracture_surgery: 'Fracture Management & Trauma Surgery',
+  other: 'General Medical Consultation',
+};
+
+const formatProcedure = (raw) => {
+  if (!raw) return 'Not specified';
+  const normalized = String(raw).toLowerCase().replace(/\s+/g, '_');
+  return PROCEDURE_LABELS[normalized] || raw.replace(/_/g, ' ');
+};
+
 const RISK_COLORS = {
   low: { bg: '#D1FAE5', text: '#065F46', label: 'Low Risk' },
   medium: { bg: '#FEF3C7', text: '#92400E', label: 'Medium Risk' },
@@ -191,7 +231,7 @@ export default function PortalTravelAgency() {
           </div>
           {[
             ['Patient Name', consultation?.patient_name],
-            ['Procedure Type', (consultation?.procedure_interest || '').replace(/_/g, ' ')],
+            ['Procedure Type', formatProcedure(consultation?.procedure_interest)],
             ['Destination', consultation?.destination_country || 'Not specified'],
           ].map(([label, value], i) => (
             <div key={label} style={{ display: 'flex', padding: '12px 20px', background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f3f4f6' }}>

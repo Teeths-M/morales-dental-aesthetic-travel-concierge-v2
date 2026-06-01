@@ -14,10 +14,12 @@ Deno.serve(async (req) => {
 
     const testConsultations = [
       {
-        patient_name: 'John Doe - Low Risk',
-        email: 'john.doe@test.com',
+        patient_name: 'Test Patient Two',
+        email: 'testpatient2@example.com',
         phone: '+1-555-0001',
         procedure_interest: 'dental_implants',
+        destination_country: 'Venezuela',
+        client_country: 'United States',
         preferred_date: '2026-06-15',
         age: '35',
         gender: 'male',
