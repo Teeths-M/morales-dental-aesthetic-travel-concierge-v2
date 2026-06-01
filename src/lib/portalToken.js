@@ -35,5 +35,7 @@ export function decodePortalToken(token) {
 
 export function getTokenFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('token');
+  const token = params.get('token');
+  // URL-decode the token to handle encoded special characters (+, /, =)
+  return token ? decodeURIComponent(token) : null;
 }
