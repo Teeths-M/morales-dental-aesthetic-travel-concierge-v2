@@ -49,6 +49,43 @@ function ScoreRing({ score, label, color }) {
   );
 }
 
+const PROCEDURE_LABELS = {
+  dental_implants: 'Dental Implants',
+  all_on_4: 'All-on-4',
+  porcelain_veneers: 'Porcelain Veneers',
+  smile_makeover: 'Smile Makeover',
+  bone_regeneration: 'Bone Regeneration',
+  teeth_whitening: 'Teeth Whitening',
+  rhinoplasty: 'Rhinoplasty',
+  breast_surgery: 'Breast Surgery',
+  liposuction: 'Liposuction',
+  tummy_tuck: 'Tummy Tuck',
+  facelift: 'Facelift',
+  brow_lift: 'Brow Lift',
+  blepharoplasty: 'Blepharoplasty',
+  otoplasty: 'Otoplasty',
+  thigh_arm_lift: 'Thigh / Arm Lift',
+  laser_resurfacing: 'Laser Resurfacing',
+  mole_removal: 'Mole Removal',
+  lipoma_removal: 'Lipoma Removal',
+  gastric_sleeve: 'Gastric Sleeve',
+  gastric_bypass: 'Gastric Bypass',
+  gastric_band_revision: 'Gastric Band Revision',
+  gynecological_exams: 'Gynecological Exams',
+  ivf: 'IVF',
+  egg_freezing: 'Egg Freezing',
+  oncology_surgery: 'Oncology Surgery',
+  tumor_testing: 'Tumor Testing',
+  joint_replacement: 'Joint Replacement',
+  spine_surgery: 'Spine Surgery',
+  sports_arthroscopy: 'Sports Arthroscopy',
+  fracture_surgery: 'Fracture Surgery',
+  other: 'Other / Not Listed',
+};
+
+const formatProcedure = (val) =>
+  PROCEDURE_LABELS[val] || (val ? val.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'N/A');
+
 export default function OverviewTab() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -111,7 +148,7 @@ export default function OverviewTab() {
           <div className="grid sm:grid-cols-2 gap-3">
             {[
               { icon: User, label: 'Patient', value: safeTProfile.patient_name },
-              { icon: Stethoscope, label: 'Procedure Interest', value: safeTProfile.procedure },
+              { icon: Stethoscope, label: 'Procedure Interest', value: formatProcedure(safeTProfile.procedure || consultation?.procedure_interest) },
               { icon: Star, label: 'Risk Level', value: safeTProfile.risk_level?.toUpperCase() || 'PENDING' },
               { icon: Stethoscope, label: 'Age', value: safeTProfile.health_summary?.age || 'N/A' },
               { icon: MapPin, label: 'Travel Destination', value: safeTProfile.destination || 'TBD' },
