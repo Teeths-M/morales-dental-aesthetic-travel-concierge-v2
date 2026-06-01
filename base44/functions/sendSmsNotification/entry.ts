@@ -75,6 +75,14 @@ Deno.serve(async (req) => {
       }, { status: 503 });
     }
 
+    // Validate that TWILIO_ACCOUNT_SID looks like a real SID (starts with AC)
+    if (!accountSid.startsWith('AC')) {
+      return Response.json({
+        success: false,
+        error: 'Invalid TWILIO_ACCOUNT_SID. It should start with "AC" (e.g. ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx). Please check your app secrets.',
+      }, { status: 400 });
+    }
+
     // Send via Twilio REST API
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const formData = new URLSearchParams();
