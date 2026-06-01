@@ -18,8 +18,21 @@ Deno.serve(async (req) => {
     let partner = null;
     if (partner_id) {
       console.log('Fetching partner:', partner_id);
-      partner = await base44.asServiceRole.entities.TaxiService.get(partner_id);
-      console.log('Partner result:', partner);
+      // Try TaxiService first, then TravelAgency
+      try {
+        partner = await base44.asServiceRole.entities.TaxiService.get(partner_id);
+        console.log('TaxiService result:', partner);
+      } catch (e) {
+        // If not found in TaxiService, try TravelAgency
+        console.log('Not a TaxiService, trying TravelAgency...');
+        try {
+          partner = await base44.asServiceRole.entities.TravelAgency.get(partner_id);
+          console.log('TravelAgency result:', partner);
+        } catch (e2) {
+          console.log('Partner not found in either entity');
+          partner = null;
+        }
+      }
     }
 
     if (!consultation) {
