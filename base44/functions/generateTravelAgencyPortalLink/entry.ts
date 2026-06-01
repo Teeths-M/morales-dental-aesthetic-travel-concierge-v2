@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+function encodePortalToken({ consultation_id, partner_id, portal_type }) {
+  const payload = {
+    consultation_id,
+    partner_id,
+    portal_type,
+    expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
+  };
+  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
+  const base64 = btoa(String.fromCharCode.apply(null, utf8));
+  return encodeURIComponent(base64);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -16,25 +28,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'consultation_id and travel_agency_id are required' }, { status: 400 });
     }
 
-    // Generate portal token
-    const payload = {
+    const token = encodePortalToken({
       consultation_id,
       partner_id: travel_agency_id,
       portal_type: 'travel',
-      expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-    };
-    
-    const token = btoa(JSON.stringify(payload));
-    // URL-encode the token to handle Base64 special characters (+, /, =)
-    const encodedToken = encodeURIComponent(token);
-    // Use relative URL path - will work in any environment
-    const portalUrl = `/portal/travel?token=${encodedToken}`;
+    });
+    const portalUrl = `/portal/travel?token=${token}`;
 
     return Response.json({
       success: true,
       portal_url: portalUrl,
-      token: token,
-      expires_at: new Date(payload.expires_at).toISOString(),
+      token,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -11,13 +11,17 @@ export function encodePortalToken({ consultation_id, partner_id, portal_type }) 
     portal_type,
     expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
   };
+  // Encode to base64, then URL-encode for safe transmission in URLs
   const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, utf8));
+  const base64 = btoa(String.fromCharCode.apply(null, utf8));
+  return encodeURIComponent(base64);
 }
 
 export function decodePortalToken(token) {
   try {
-    const binaryString = atob(token);
+    // URL-decode first, then base64 decode
+    const base64 = decodeURIComponent(token);
+    const binaryString = atob(base64);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {
@@ -28,14 +32,13 @@ export function decodePortalToken(token) {
       return { valid: false, error: 'Token has expired.' };
     }
     return { valid: true, ...decoded };
-  } catch {
-    return { valid: false, error: 'Invalid token.' };
+  } catch (e) {
+    console.error('Token decode error:', e);
+    return { valid: false, error: 'Invalid token format.' };
   }
 }
 
 export function getTokenFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const token = params.get('token');
-  // URL-decode the token to handle encoded special characters (+, /, =)
-  return token ? decodeURIComponent(token) : null;
+  return params.get('token');
 }
