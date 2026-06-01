@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { format, addMonths, isBefore } from 'date-fns';
 import CapacityGate from './CapacityGate';
 import TravelTimelineCard from './TravelTimelineCard';
 import { useCart } from '@/context/CartContext';
+import { base44 } from '@/api/base44Client';
 
 const procedures = [
   { group: '🦷 Dental', value: 'dental_implants', label: 'Dental Implants' },
@@ -179,7 +180,26 @@ export default function SectionProcedure({ form, update }) {
   const [currentMonth, setCurrentMonth] = useState(
     form.preferred_date ? new Date(form.preferred_date + 'T12:00:00') : new Date()
   );
+  const [doctorUnavailableDates, setDoctorUnavailableDates] = useState(new Set());
   const { items } = useCart();
+
+  // Fetch all doctor unavailability records and build a blocked-dates set
+  useEffect(() => {
+    base44.entities.DoctorAvailability.list().then((records) => {
+      const blocked = new Set();
+      records.forEach((r) => {
+        if (r.is_available === false) {
+          blocked.add(r.date);
+        }
+      });
+      setDoctorUnavailableDates(blocked);
+    }).catch(() => {});
+  }, []);
+
+  const isDoctorUnavailable = (date) => {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return doctorUnavailableDates.has(dateStr);
+  };
 
   const isDisabledDate = (date) => {
     const day = date.getDay();
@@ -216,7 +236,7 @@ export default function SectionProcedure({ form, update }) {
         dateObj = new Date(year, month, dayNumber);
         isCurrentMonth = true;
       }
-      cells.push({ day: dayNumber, date: dateObj, isCurrentMonth, isDisabled: isDisabledDate(dateObj), isPast: isPastDate(dateObj) });
+      cells.push({ day: dayNumber, date: dateObj, isCurrentMonth, isDisabled: isDisabledDate(dateObj), isPast: isPastDate(dateObj), isDoctorOff: isDoctorUnavailable(dateObj) });
     }
     return cells;
   };
@@ -227,7 +247,7 @@ export default function SectionProcedure({ form, update }) {
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   const handleDayClick = (cell) => {
-    if (!cell.isCurrentMonth || cell.isPast || cell.isDisabled) return;
+    if (!cell.isCurrentMonth || cell.isPast || cell.isDisabled || cell.isDoctorOff) return;
     update('preferred_date', toDateStr(cell.date));
   };
 
@@ -290,15 +310,16 @@ export default function SectionProcedure({ form, update }) {
           <div className="grid grid-cols-7 p-3 gap-1">
             {calendarDays.map((cell, idx) => {
               const isSelected = form.preferred_date && toDateStr(cell.date) === form.preferred_date;
-              const canSelect = cell.isCurrentMonth && !cell.isPast && !cell.isDisabled;
+              const canSelect = cell.isCurrentMonth && !cell.isPast && !cell.isDisabled && !cell.isDoctorOff;
 
               return (
                 <button
                   key={idx}
                   onClick={() => handleDayClick(cell)}
                   disabled={!canSelect}
+                  title={cell.isDoctorOff ? 'Doctor unavailable on this date' : undefined}
                   className={`
-                    aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all
+                    aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all relative
                     ${!cell.isCurrentMonth
                       ? 'text-muted-foreground/20 cursor-default'
                       : isSelected
@@ -307,6 +328,8 @@ export default function SectionProcedure({ form, update }) {
                       ? 'text-muted-foreground/30 cursor-not-allowed'
                       : cell.isDisabled
                       ? 'text-red-300 cursor-not-allowed line-through'
+                      : cell.isDoctorOff
+                      ? 'bg-orange-50 text-orange-300 cursor-not-allowed line-through'
                       : 'hover:bg-primary/10 hover:text-primary cursor-pointer text-foreground'
                     }
                   `}
@@ -329,8 +352,15 @@ export default function SectionProcedure({ form, update }) {
           </div>
 
           {/* Logistics note */}
-          <div className="mx-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-xs text-yellow-800">
-            ✈️ <strong>Sundays & Thursdays</strong> are reserved for flight logistics and cannot be booked as procedure dates.
+          <div className="mx-4 mb-4 space-y-2">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-xs text-yellow-800">
+              ✈️ <strong>Sundays & Thursdays</strong> are reserved for flight logistics and cannot be booked as procedure dates.
+            </div>
+            {doctorUnavailableDates.size > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-xs text-orange-800">
+                🩺 <strong>Strikethrough dates</strong> are marked unavailable by our doctors and cannot be selected.
+              </div>
+            )}
           </div>
         </div>
       </div>
