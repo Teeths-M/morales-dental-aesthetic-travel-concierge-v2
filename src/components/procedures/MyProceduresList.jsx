@@ -64,7 +64,7 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
 
   return (
     <motion.div
-      className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col"
+      className="bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col"
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
     >
@@ -83,49 +83,39 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
         <button onClick={onClear} className="text-white/60 hover:text-white text-xs underline">Clear all</button>
       </div>
 
-      {/* Scrollable body: items + firewall */}
-      <div className="overflow-y-auto pb-24" style={{ maxHeight: 'calc(100vh - 220px)' }}>
-        {/* Items */}
-        <div className="p-4 space-y-2">
-          <AnimatePresence>
-            {items.map((p, i) => (
-              <motion.div
-                key={p.title + i}
-                className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-              >
-                <div className={`w-8 h-8 rounded-lg ${p.categoryColor?.bg || 'bg-slate-100'} flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-sm">{p.categoryId?.includes('dental') ? '🦷' : p.categoryId?.includes('breast') ? '🌸' : p.categoryId?.includes('body') ? '💪' : p.categoryId?.includes('face') ? '💆' : '✨'}</span>
+      {/* 1. Items list */}
+      <div className="p-4 space-y-2">
+        <AnimatePresence>
+          {items.map((p, i) => (
+            <motion.div
+              key={p.title + i}
+              className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+            >
+              <div className={`w-8 h-8 rounded-lg ${p.categoryColor?.bg || 'bg-slate-100'} flex items-center justify-center flex-shrink-0`}>
+                <span className="text-sm">{p.categoryId?.includes('dental') ? '🦷' : p.categoryId?.includes('breast') ? '🌸' : p.categoryId?.includes('body') ? '💪' : p.categoryId?.includes('face') ? '💆' : '✨'}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-slate-800">{p.title}</p>
+                <p className="text-[10px] text-slate-400">{p.category} · {p.duration}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                  <Clock className="w-3 h-3" />{p.downtime}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800">{p.title}</p>
-                  <p className="text-[10px] text-slate-400">{p.category} · {p.duration}</p>
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                    <Clock className="w-3 h-3" />{p.downtime}
-                  </div>
-                  <button onClick={() => onRemove(p)} className="w-6 h-6 rounded-full bg-slate-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-
-        {/* SAFE-T4LIFE™ Compatibility Firewall */}
-        {items.length >= 2 && (
-          <div className="px-4 pb-20">
-            <CompatibilityFirewall items={items} compact={false} />
-          </div>
-        )}
+                <button onClick={() => onRemove(p)} className="w-6 h-6 rounded-full bg-slate-200 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
-      {/* Footer CTA */}
-      <div className="px-4 pb-4 pt-2 flex-shrink-0 bg-white border-t border-slate-100">
+      {/* 2. Continue to Consultation CTA — flows naturally below treatment list */}
+      <div className="px-4 pb-4">
         <Link to="/booking">
           <button className="w-full py-3 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-95 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
             <Sparkles className="w-4 h-4" />
@@ -134,6 +124,13 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
           </button>
         </Link>
       </div>
+
+      {/* 3. SAFE-T4LIFE™ Compatibility Firewall — informational context below CTA */}
+      {items.length >= 2 && (
+        <div className="px-4 pb-4">
+          <CompatibilityFirewall items={items} compact={false} />
+        </div>
+      )}
     </motion.div>
   );
 }
