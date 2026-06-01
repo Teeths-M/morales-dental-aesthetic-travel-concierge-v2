@@ -11,12 +11,19 @@ export function encodePortalToken({ consultation_id, partner_id, portal_type }) 
     portal_type,
     expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
   };
-  return btoa(JSON.stringify(payload));
+  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
+  return btoa(String.fromCharCode.apply(null, utf8));
 }
 
 export function decodePortalToken(token) {
   try {
-    const decoded = JSON.parse(atob(token));
+    const binaryString = atob(token);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const decoded = JSON.parse(new TextDecoder().decode(bytes));
     if (decoded.expires_at && Date.now() > decoded.expires_at) {
       return { valid: false, error: 'Token has expired.' };
     }
