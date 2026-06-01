@@ -11,17 +11,13 @@ export function encodePortalToken({ consultation_id, partner_id, portal_type }) 
     portal_type,
     expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
   };
-  // Encode to base64, then URL-encode for safe transmission in URLs
   const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  const base64 = btoa(String.fromCharCode.apply(null, utf8));
-  return encodeURIComponent(base64);
+  return btoa(String.fromCharCode.apply(null, utf8));
 }
 
 export function decodePortalToken(token) {
   try {
-    // URL-decode first, then base64 decode
-    const base64 = decodeURIComponent(token);
-    const binaryString = atob(base64);
+    const binaryString = atob(token);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) {

@@ -9,8 +9,7 @@ function encodePortalToken({ consultation_id, partner_id, portal_type }) {
     expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
   };
   const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  const base64 = btoa(String.fromCharCode.apply(null, utf8));
-  return encodeURIComponent(base64);
+  return btoa(String.fromCharCode.apply(null, utf8));
 }
 
 Deno.serve(async (req) => {
