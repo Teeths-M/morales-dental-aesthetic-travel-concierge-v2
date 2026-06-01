@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Import, UserCheck, Eye, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Import, UserCheck, Eye, MessageSquare, Zap } from 'lucide-react';
 import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
+import BroadcastPortalLinksPanel from '@/components/portal/BroadcastPortalLinksPanel';
 
 const adminNavItems = [
   { path: '/admin', label: 'Patient Journey', icon: LayoutDashboard },
@@ -14,6 +15,7 @@ const adminNavItems = [
 
 export default function AdminSms() {
   const location = useLocation();
+  const [activeTab, setActiveTab] = useState('broadcast');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -58,13 +60,38 @@ export default function AdminSms() {
           <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">SMS Notifications</h1>
-                <p className="text-sm text-slate-500">Send appointment reminders, status updates & booking confirmations to patients</p>
+                <h1 className="text-2xl font-bold text-slate-900">Communications Center</h1>
+                <p className="text-sm text-slate-500">Send portal links, SMS alerts & email notifications to partners and patients</p>
               </div>
             </div>
           </div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-            <SmsNotificationPanel />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+            {/* Tab switcher */}
+            <div className="flex gap-2 border-b border-slate-200">
+              <button
+                onClick={() => setActiveTab('broadcast')}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px ${
+                  activeTab === 'broadcast'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Zap className="w-4 h-4" /> Broadcast Portal Links
+              </button>
+              <button
+                onClick={() => setActiveTab('sms')}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px ${
+                  activeTab === 'sms'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" /> Custom SMS
+              </button>
+            </div>
+
+            {activeTab === 'broadcast' && <BroadcastPortalLinksPanel />}
+            {activeTab === 'sms' && <SmsNotificationPanel />}
           </div>
         </main>
       </div>
