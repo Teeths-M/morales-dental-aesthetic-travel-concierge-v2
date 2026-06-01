@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw } from 'lucide-react';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare } from 'lucide-react';
+import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ export default function SimpleAdminDashboard() {
     { path: '/admin/imports', label: 'Data Imports', icon: Import },
     { path: '/admin/doctor-verification', label: 'Doctor Verification', icon: UserCheck },
     { path: '/admin/portal-viewer', label: 'Portal Viewer', icon: Eye },
+    { path: '/admin/sms', label: 'SMS Notifications', icon: MessageSquare },
   ];
 
   // Fetch all cases in a single query for better performance

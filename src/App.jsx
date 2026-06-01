@@ -43,6 +43,7 @@ import ConsultationSuccess from './pages/ConsultationSuccess';
 import PortalDoctor from './pages/PortalDoctor';
 import DoctorLicenseVerification from './pages/DoctorLicenseVerification';
 import AdminPortalViewer from './pages/AdminPortalViewer';
+import AdminSms from './pages/AdminSms';
 import StandalonePayment from './pages/StandalonePayment';
 import TestPortalLink from './pages/TestPortalLink';
 import PortalTestHub from './pages/PortalTestHub';
@@ -143,6 +144,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/imports" element={<AdminImports />} />
         <Route path="/admin/doctor-verification" element={<DoctorLicenseVerification />} />
         <Route path="/admin/portal-viewer" element={<AdminPortalViewer />} />
+        <Route path="/admin/sms" element={<AdminSms />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
