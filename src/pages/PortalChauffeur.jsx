@@ -39,12 +39,12 @@ export default function PortalChauffeur() {
 
   const loadData = async (consultationId, partnerId) => {
     try {
-      const [consultations, taxiServices] = await Promise.all([
-        base44.entities.Consultation.filter({ id: consultationId }),
-        partnerId ? base44.entities.TaxiService.filter({ id: partnerId }) : Promise.resolve([]),
-      ]);
+      const response = await base44.functions.invoke('getPortalData', {
+        consultation_id: consultationId,
+        partner_id: partnerId,
+      });
 
-      const c = consultations[0];
+      const c = response.data.consultation;
       if (!c) { setError('Case not found.'); setLoading(false); return; }
       const blockedStatuses = ['cancelled', 'completed'];
       if (blockedStatuses.includes(c.status)) {
@@ -53,7 +53,7 @@ export default function PortalChauffeur() {
         return;
       }
 
-      const taxi = taxiServices[0] || null;
+      const taxi = response.data.partner || null;
       setConsultation(c);
       setTaxiService(taxi);
 
