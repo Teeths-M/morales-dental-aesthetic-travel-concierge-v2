@@ -30,6 +30,7 @@ import ClientAcknowledgement, { getRequiredAckCount } from '../components/bookin
 import MedicalRiskDisclosure from '../components/booking/MedicalRiskDisclosure';
 import { checkVisaRequirement } from '@/lib/visaMatrix';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
+import { analyseCompatibility } from '@/lib/procedureCompatibility';
 import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
 
 const SLIDE_FACTS = [
@@ -309,8 +310,21 @@ export default function Booking() {
         : 'other';
       // Store full names in notes for reference
       const procedureNames = items.map(item => item.name).join(', ') || '';
+
+      // SAFE-T4LIFE™ compatibility check — append flags for high-risk combinations
+      const compatResult = analyseCompatibility(items);
+      const safeTFlags = (compatResult.level === 'RED' || compatResult.level === 'YELLOW')
+        ? {
+            safeT4LifeReviewRequired: true,
+            anesthesiaTotalHours: compatResult.totalAnesthesiaHrs,
+            safeT4LifeLevel: compatResult.level,
+            safeT4LifeFlags: compatResult.reasons,
+          }
+        : {};
+
       return base44.entities.Consultation.create({
         ...data,
+        ...safeTFlags,
         procedure_interest: procedureEnum,
         notes: items.length > 1
           ? (data.notes ? `${data.notes}\n\nAll procedures requested: ${procedureNames}` : `All procedures requested: ${procedureNames}`)
