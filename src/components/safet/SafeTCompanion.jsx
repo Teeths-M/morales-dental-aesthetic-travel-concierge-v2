@@ -6,6 +6,8 @@ import {
   AlertCircle, CheckCircle2, Clock, Loader2
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useCart } from '@/context/CartContext';
+import { analyseCompatibility } from '@/lib/procedureCompatibility';
 
 const getCompanionLabels = (lang) => ({
   prompt: lang === 'es' ? '¿Cómo puede SAFE-T 4LIFE™ ayudarte hoy?' : lang === 'fr' ? 'Comment SAFE-T 4LIFE™ peut-il vous aider aujourd\'hui ?' : lang === 'pt' ? 'Como o SAFE-T 4LIFE™ pode ajudá-lo hoje?' : 'How can SAFE-T 4LIFE™ help you today?',
@@ -38,13 +40,20 @@ Always remind clients: "SAFE-T 4LIFE™ is an educational and coordination suppo
 
 When greeting, be warm and personal. Ask how they are feeling about their journey. Be their calm, organized, knowledgeable companion.`;
 
-const QUICK_PROMPTS = [
+const DEFAULT_QUICK_PROMPTS = [
   { label: 'How do I prepare?', text: 'What should I do to prepare for my upcoming procedure and travel?' },
   { label: 'Document checklist', text: 'What documents do I need for my medical travel?' },
   { label: 'Recovery guidance', text: 'What should I expect during recovery and how can I take care of myself?' },
   { label: 'I feel anxious', text: 'I am feeling a bit anxious and nervous about my upcoming procedure. Can you help?' },
   { label: 'Visa help', text: 'I need help understanding my visa requirements for medical travel.' },
   { label: 'Talk to a human', text: 'I would like to speak with a human concierge or coordinator.' },
+];
+
+const HIGH_ANESTHESIA_QUICK_PROMPTS = [
+  { label: 'How do we stage recovery?', text: 'Can you explain how staged recovery works for a high-anesthesia procedure combination?' },
+  { label: 'What clearance is needed?', text: 'What medical clearances are required before undergoing multiple procedures with high anesthesia hours?' },
+  { label: 'Talk to my care coordinator', text: 'I would like to speak directly with my care coordinator about my procedure combination.' },
+  { label: 'Is this combination safe?', text: 'Can you reassure me about the safety review process for my selected procedure combination?' },
 ];
 
 const STAGE_MESSAGES = {
@@ -63,10 +72,22 @@ export default function SafeTCompanion() {
   const [isMinimized, setIsMinimized] = useState(false);
   const closeTimeoutRef = useRef(null);
   const labels = getCompanionLabels(appLanguage);
+
+  // Derive alert context from cart
+  const { items } = useCart();
+  const compatResult = items && items.length >= 2 ? analyseCompatibility(items) : null;
+  const isHighAnesthesia = compatResult && (compatResult.level === 'RED' || compatResult.level === 'YELLOW') && compatResult.totalAnesthesiaHrs >= 4;
+
+  const contextualGreeting = isHighAnesthesia
+    ? `I see your selected treatment sequence involves a longer recovery footprint (~${compatResult.totalAnesthesiaHrs.toFixed(1)} hours total anesthesia). I'm here to help walk you through how we safely organize staged recovery plans and medical clearances for this specific combination. 💚\n\nWhat can I clarify for you?`
+    : labels.welcome;
+
+  const activeQuickPrompts = isHighAnesthesia ? HIGH_ANESTHESIA_QUICK_PROMPTS : DEFAULT_QUICK_PROMPTS;
+
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: labels.welcome,
+      content: contextualGreeting,
       id: Date.now(),
     }
   ]);
@@ -86,6 +107,15 @@ export default function SafeTCompanion() {
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
+
+  // Reset greeting when alert context changes (e.g. user adds a high-risk procedure)
+  const prevAlertRef = useRef(isHighAnesthesia);
+  useEffect(() => {
+    if (prevAlertRef.current !== isHighAnesthesia) {
+      prevAlertRef.current = isHighAnesthesia;
+      setMessages([{ role: 'assistant', content: contextualGreeting, id: Date.now() }]);
+    }
+  }, [isHighAnesthesia, contextualGreeting]);
 
   useEffect(() => {
     if (isOpen) {
@@ -114,7 +144,10 @@ export default function SafeTCompanion() {
 
     try {
       const history = messages.slice(-8).map(m => ({ role: m.role, content: m.content }));
-      const prompt = `${SYSTEM_PROMPT}\n\nConversation history:\n${history.map(m => `${m.role === 'user' ? 'Client' : 'SAFE-T 4LIFE™'}: ${m.content}`).join('\n')}\n\nClient: ${userText}\n\nSAFE-T 4LIFE™:`;
+      const contextAddendum = isHighAnesthesia
+        ? `\n\nCURRENT ALERT CONTEXT: HIGH_ANESTHESIA_HOURS. The patient has selected ${items.length} procedures with ~${compatResult.totalAnesthesiaHrs.toFixed(1)} total estimated anesthesia hours (${compatResult.level} risk level). Focus answers on staged recovery, medical clearances, and safety protocols. Remain calm and reassuring.`
+        : '';
+      const prompt = `${SYSTEM_PROMPT}${contextAddendum}\n\nConversation history:\n${history.map(m => `${m.role === 'user' ? 'Client' : 'SAFE-T 4LIFE™'}: ${m.content}`).join('\n')}\n\nClient: ${userText}\n\nSAFE-T 4LIFE™:`;
 
       const response = await base44.integrations.Core.InvokeLLM({ prompt });
       setMessages(prev => [...prev, { role: 'assistant', content: response, id: Date.now() }]);
@@ -299,7 +332,7 @@ export default function SafeTCompanion() {
                 {/* Quick prompts */}
                 {messages.length <= 2 && (
                   <div className="px-4 py-2 flex gap-2 flex-wrap border-t border-slate-100 bg-white">
-                    {QUICK_PROMPTS.slice(0, 4).map(q => (
+                    {activeQuickPrompts.slice(0, 4).map(q => (
                       <button
                         key={q.label}
                         onClick={() => sendMessage(q.text)}
