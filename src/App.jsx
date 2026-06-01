@@ -75,6 +75,18 @@ const AuthenticatedApp = () => {
   return (
     <>
     <Routes>
+      {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
+      <Route path="/portal/travel" element={<PortalTravelAgency />} />
+      <Route path="/portal/transfer" element={<PortalChauffeur />} />
+      <Route path="/portal/doctor/:token" element={
+        <ErrorBoundary>
+          <PortalDoctor />
+        </ErrorBoundary>
+      } />
+      <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
+      {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
+      <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
+
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
@@ -121,17 +133,6 @@ const AuthenticatedApp = () => {
           <Route path="/taxi-service-dashboard" element={<TaxiServiceDashboard />} />
         </Route>
       </Route>
-      {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
-      <Route path="/portal/travel" element={<PortalTravelAgency />} />
-      <Route path="/portal/transfer" element={<PortalChauffeur />} />
-      <Route path="/portal/doctor/:token" element={
-        <ErrorBoundary>
-          <PortalDoctor />
-        </ErrorBoundary>
-      } />
-      <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
-      {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
-      <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
       {/* Standalone payment page - direct link for payments */}
       <Route path="/pay-now" element={<PaymentCheckout />} />
       <Route path="/test-portal-link" element={<TestPortalLink />} />
