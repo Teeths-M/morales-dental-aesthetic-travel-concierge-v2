@@ -84,7 +84,7 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
       </div>
 
       {/* Scrollable body: items + firewall */}
-      <div className="overflow-y-auto pb-16">
+      <div className="overflow-y-auto pb-24" style={{ maxHeight: 'calc(100vh - 220px)' }}>
         {/* Items */}
         <div className="p-4 space-y-2">
           <AnimatePresence>
@@ -118,7 +118,7 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
 
         {/* SAFE-T4LIFE™ Compatibility Firewall */}
         {items.length >= 2 && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-20">
             <CompatibilityFirewall items={items} compact={false} />
           </div>
         )}
