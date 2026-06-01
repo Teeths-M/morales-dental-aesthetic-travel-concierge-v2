@@ -46,37 +46,6 @@ export default function Home() {
 
   return (
     <div>
-      {/* Dev Test Links */}
-      <div className="fixed bottom-4 right-4 z-50 bg-card border border-border rounded-lg p-3 shadow-lg">
-        <h4 className="text-sm font-semibold mb-2">Test Portals</h4>
-        <div className="space-y-1 text-xs">
-          <button 
-            onClick={() => window.open('/portal/doctor/test_token_dr_portal', '_blank')}
-            className="block w-full text-left px-2 py-1 hover:bg-muted rounded"
-          >
-            🏥 Doctor Portal
-          </button>
-          <button 
-            onClick={() => window.open('/portal/travel', '_blank')}
-            className="block w-full text-left px-2 py-1 hover:bg-muted rounded"
-          >
-            ✈️ Travel Agency Portal
-          </button>
-          <button 
-            onClick={() => window.open('/portal/transfer', '_blank')}
-            className="block w-full text-left px-2 py-1 hover:bg-muted rounded"
-          >
-            🚗 Chauffeur Portal
-          </button>
-          <button 
-            onClick={() => window.open('/admin', '_blank')}
-            className="block w-full text-left px-2 py-1 hover:bg-muted rounded"
-          >
-            ⚙️ Admin Dashboard
-          </button>
-        </div>
-      </div>
-      
       <Hero />
       <StatsBar />
       <SlotCounter className="mx-auto mt-6" />
