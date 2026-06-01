@@ -5,6 +5,7 @@
  */
 
 import { retryWithBackoff, CircuitBreaker } from './serviceLayer.js';
+import { useState } from 'react';
 
 const CACHE_PREFIX = 'currency_cache_';
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
@@ -50,8 +51,9 @@ class CurrencyService {
       const rate = await this.circuitBreaker.execute(async () => {
         return await retryWithBackoff(
           async ({ signal }) => {
+            const API_KEY = import.meta.env.VITE_EXCHANGERATE_API_KEY || 'YOUR_FALLBACK_KEY';
             const response = await fetch(
-              `https://v6.exchangerate-api.com/v6/${Deno.env.get('EXCHANGERATE_API_KEY')}/latest/USD`,
+              `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`,
               { signal }
             );
             

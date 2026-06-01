@@ -325,7 +325,7 @@ export default function PortalDoctor() {
                     <p className="text-sm">{consultationData.lifestyle_habits.join(', ')}</p>
                   </div>
                 )}
-                {consultationData?.exercises_regularly !== null && (
+                {consultationData && consultationData.exercises_regularly !== null && consultationData.exercises_regularly !== undefined && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Exercises Regularly</p>
                     <p className="text-sm">{consultationData.exercises_regularly ? 'Yes' : 'No'}</p>
@@ -355,7 +355,7 @@ export default function PortalDoctor() {
                     <p className="text-sm">{consultationData.pregnancy_status}</p>
                   </div>
                 )}
-                {consultationData?.had_surgery !== null && (
+                {consultationData && consultationData.had_surgery !== null && consultationData.had_surgery !== undefined && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Previous Surgery</p>
                     <p className="text-sm">{consultationData.had_surgery ? 'Yes' : 'No'}</p>
