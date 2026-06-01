@@ -20,8 +20,29 @@ export default function PortalTestHub() {
       const consultationId = '6a1cc4685a599ee5c06fec2d';
       const taxiServiceId = '6a1cbb66f379e616337f22f4';
       const travelAgencyId = '6a1cb943f379e616337f22f3';
+      const doctorId = '6a1cb7d8f379e616337f22f2'; // Test doctor
 
       const links = [];
+
+      // Generate doctor portal link
+      const doctorResponse = await base44.functions.invoke('generateDoctorPortalLink', {
+        consultation_id: consultationId,
+        doctor_id: doctorId,
+      });
+
+      if (doctorResponse.data.success) {
+        const portalUrl = doctorResponse.data.portal_url.startsWith('/') 
+          ? `${window.location.origin}${doctorResponse.data.portal_url}`
+          : doctorResponse.data.portal_url;
+        
+        links.push({
+          name: 'Doctor Portal (Test Case)',
+          url: portalUrl,
+          patient: 'Test Patient Two',
+          service: 'Dr. Rossanna',
+          type: 'doctor',
+        });
+      }
 
       // Generate chauffeur portal link
       const chauffeurResponse = await base44.functions.invoke('generateChauffeurPortalLink', {
@@ -136,9 +157,11 @@ export default function PortalTestHub() {
           <h4 className="font-semibold mb-2 text-sm">How to Test:</h4>
           <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
             <li>Click "Open Portal" button above</li>
-            <li>For Chauffeur: Enter pricing for transfer legs. For Travel Agency: Enter flight and hotel costs</li>
+            <li>For Doctor: Review patient case and confirm/decline availability</li>
+            <li>For Chauffeur: Enter pricing for transfer legs</li>
+            <li>For Travel Agency: Enter flight and hotel costs</li>
             <li>Submit the quote</li>
-            <li>Check if the Consultation entity updates with the costs</li>
+            <li>Check if the CaseRecord entity updates with the costs and status</li>
           </ol>
         </div>
       </div>
