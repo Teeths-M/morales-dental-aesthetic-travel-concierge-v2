@@ -336,90 +336,92 @@ export default function PaymentCheckout() {
           </p>
         </motion.div>
 
-        {/* Package Details Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="w-full max-w-2xl mx-auto mb-8"
-        >
-          <Card className="p-6">
-            <h2 className="font-display text-xl text-foreground mb-4">What's Included in Your Package</h2>
-            <div className="space-y-3 text-sm">
-              {caseRecord?.procedures?.length > 0 && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Medical Procedure(s)</p>
-                    <p className="text-muted-foreground">{caseRecord.procedures.join(', ')}</p>
-                  </div>
-                </div>
-              )}
-              {caseRecord?.flight_details && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Flights</p>
-                    <p className="text-muted-foreground">{caseRecord.flight_details}</p>
-                  </div>
-                </div>
-              )}
-              {!caseRecord?.flight_details && caseRecord?.flight_cost > 0 && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Flights</p>
-                    <p className="text-muted-foreground">Round-trip flights included</p>
-                  </div>
-                </div>
-              )}
-              {caseRecord?.hotel_name && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Accommodation</p>
-                    <p className="text-muted-foreground">{caseRecord.hotel_name}{caseRecord.hotel_address ? ` — ${caseRecord.hotel_address}` : ''}</p>
-                  </div>
-                </div>
-              )}
-              {!caseRecord?.hotel_name && caseRecord?.hotel_cost > 0 && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Accommodation</p>
-                    <p className="text-muted-foreground">Hotel stay included</p>
-                  </div>
-                </div>
-              )}
-              {(caseRecord?.pickup_cost > 0 || caseRecord?.dropoff_cost > 0 || caseRecord?.local_transfer_cost > 0) && (
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground">Ground Transfers</p>
-                    <ul className="text-muted-foreground space-y-0.5 mt-0.5">
-                      {caseRecord.pickup_cost > 0 && <li>• Home → Origin airport</li>}
-                      {caseRecord.dropoff_cost > 0 && <li>• Destination airport → Hotel</li>}
-                      {caseRecord.local_transfer_cost > 0 && <li>• Local clinic & hotel transfers</li>}
-                    </ul>
-                  </div>
-                </div>
-              )}
-              {caseRecord?.final_package_price > 0 && (
-                <div className="pt-4 border-t border-border flex items-center justify-between">
-                  <p className="font-bold text-foreground text-base">Total Package Price</p>
-                  <p className="font-bold text-foreground text-xl">${caseRecord.final_package_price.toLocaleString()}</p>
-                </div>
-              )}
-            </div>
-          </Card>
-        </motion.div>
+        {/* Two-column layout: Package Details (left) + Payment Plans (right) */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-        <div className="flex justify-center">
-          {/* Payment Plans */}
+          {/* LEFT: Package Details */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="w-full lg:w-1/2 lg:sticky lg:top-8"
+          >
+            <Card className="p-6">
+              <h2 className="font-display text-xl text-foreground mb-4">What's Included in Your Package</h2>
+              <div className="space-y-3 text-sm">
+                {caseRecord?.procedures?.length > 0 && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Medical Procedure(s)</p>
+                      <p className="text-muted-foreground">{caseRecord.procedures.join(', ')}</p>
+                    </div>
+                  </div>
+                )}
+                {caseRecord?.flight_details && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Flights</p>
+                      <p className="text-muted-foreground">{caseRecord.flight_details}</p>
+                    </div>
+                  </div>
+                )}
+                {!caseRecord?.flight_details && caseRecord?.flight_cost > 0 && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Flights</p>
+                      <p className="text-muted-foreground">Round-trip flights included</p>
+                    </div>
+                  </div>
+                )}
+                {caseRecord?.hotel_name && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Accommodation</p>
+                      <p className="text-muted-foreground">{caseRecord.hotel_name}{caseRecord.hotel_address ? ` — ${caseRecord.hotel_address}` : ''}</p>
+                    </div>
+                  </div>
+                )}
+                {!caseRecord?.hotel_name && caseRecord?.hotel_cost > 0 && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Accommodation</p>
+                      <p className="text-muted-foreground">Hotel stay included</p>
+                    </div>
+                  </div>
+                )}
+                {(caseRecord?.pickup_cost > 0 || caseRecord?.dropoff_cost > 0 || caseRecord?.local_transfer_cost > 0) && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Ground Transfers</p>
+                      <ul className="text-muted-foreground space-y-0.5 mt-0.5">
+                        {caseRecord.pickup_cost > 0 && <li>• Home → Origin airport</li>}
+                        {caseRecord.dropoff_cost > 0 && <li>• Destination airport → Hotel</li>}
+                        {caseRecord.local_transfer_cost > 0 && <li>• Local clinic & hotel transfers</li>}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                {caseRecord?.final_package_price > 0 && (
+                  <div className="pt-4 border-t border-border flex items-center justify-between">
+                    <p className="font-bold text-foreground text-base">Total Package Price</p>
+                    <p className="font-bold text-foreground text-xl">${caseRecord.final_package_price.toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* RIGHT: Payment Plans */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="w-full max-w-2xl space-y-4"
+            className="w-full lg:w-1/2 space-y-4"
           >
             {plans.map((plan, i) => {
               const Icon = plan.icon;
@@ -546,7 +548,7 @@ export default function PaymentCheckout() {
               <span>✓ Verified Provider</span>
             </div>
           </motion.div>
-        </div>
+        </div>{/* end two-column */}
       </div>
     </div>
   );
