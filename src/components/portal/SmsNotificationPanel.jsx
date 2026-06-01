@@ -202,19 +202,13 @@ export default function SmsNotificationPanel() {
           )}
 
           {/* Setup notice */}
-          <Card className="border-amber-200 bg-amber-50">
+          <Card className="border-green-200 bg-green-50">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                <div className="text-xs text-amber-800">
-                  <p className="font-semibold mb-1">Twilio Setup Required</p>
-                  <p>To send real SMS, add these secrets in your app settings:</p>
-                  <ul className="mt-1 space-y-0.5 list-disc list-inside">
-                    <li><code className="bg-amber-100 px-1 rounded">TWILIO_ACCOUNT_SID</code></li>
-                    <li><code className="bg-amber-100 px-1 rounded">TWILIO_AUTH_TOKEN</code></li>
-                    <li><code className="bg-amber-100 px-1 rounded">TWILIO_PHONE_NUMBER</code></li>
-                  </ul>
-                  <p className="mt-1">Until then, use Preview mode to test messages.</p>
+                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                <div className="text-xs text-green-800">
+                  <p className="font-semibold mb-1">Twilio Connected</p>
+                  <p>Your Twilio credentials are configured. Click "Send SMS" to deliver real messages.</p>
                 </div>
               </div>
             </CardContent>
