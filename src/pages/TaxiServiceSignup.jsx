@@ -438,10 +438,20 @@ export default function TaxiServiceSignup() {
               language={language}
               onNext={() => setStep(3)}
               onBack={() => setStep(1)}
-              onComplete={(taxi) => {
+              onComplete={async (taxi) => {
                 setSuccessTaxi(taxi);
                 setStep(3);
                 clearSignupDraft('taxi_service');
+                
+                // Send portal access email
+                try {
+                  await base44.functions.invoke('sendPartnerWelcomeEmail', {
+                    partner_type: 'taxi_service',
+                    partner_id: taxi.id,
+                  });
+                } catch (err) {
+                  console.error('Failed to send welcome email:', err);
+                }
               }}
             />
           )}

@@ -234,10 +234,20 @@ export default function TravelAgencySignup() {
               language={language}
               onNext={() => setStep(3)}
               onBack={() => setStep(1)}
-              onComplete={(agency) => {
+              onComplete={async (agency) => {
                 setSuccessAgency(agency);
                 setStep(3);
                 clearSignupDraft('travel_agency');
+                
+                // Send portal access email
+                try {
+                  await base44.functions.invoke('sendPartnerWelcomeEmail', {
+                    partner_type: 'travel_agency',
+                    partner_id: agency.id,
+                  });
+                } catch (err) {
+                  console.error('Failed to send welcome email:', err);
+                }
               }}
             />
           )}

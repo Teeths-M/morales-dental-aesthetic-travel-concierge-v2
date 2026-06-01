@@ -30,11 +30,11 @@ export default function DoctorSignupSuccess({ doctor, specialties, language = 'e
       </div>
 
       {/* Email Notification */}
-      <div className="bg-secondary/50 border border-secondary rounded-lg p-6 flex gap-4">
-        <Mail className="w-5 h-5 text-foreground flex-shrink-0 mt-1" />
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6 flex gap-4">
+        <Mail className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
         <div>
-          <p className="font-medium text-foreground">{doctor.email}</p>
-          <p className="text-sm text-muted-foreground mt-1">{t.emailNotification}</p>
+          <p className="font-medium text-green-900">Portal access sent to {doctor.email}</p>
+          <p className="text-sm text-green-700 mt-1">Check your inbox for your secure doctor portal link</p>
         </div>
       </div>
 

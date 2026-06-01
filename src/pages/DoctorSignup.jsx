@@ -247,7 +247,7 @@ export default function DoctorSignup() {
              language={language}
              onNext={() => setStep(4)}
              onBack={() => setStep(2)}
-             onComplete={(doctor) => {
+             onComplete={async (doctor) => {
                setSuccessDoctor({
                  ...doctor,
                  specialties: formData.specialties,
@@ -255,6 +255,16 @@ export default function DoctorSignup() {
                });
                setStep(4);
                clearSignupDraft('doctor');
+
+               // Send portal access email
+               try {
+                 await base44.functions.invoke('sendPartnerWelcomeEmail', {
+                   partner_type: 'doctor',
+                   partner_id: doctor.id,
+                 });
+               } catch (err) {
+                 console.error('Failed to send welcome email:', err);
+               }
              }}
            />
           )}

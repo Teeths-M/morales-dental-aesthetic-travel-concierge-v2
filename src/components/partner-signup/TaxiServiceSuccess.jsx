@@ -36,13 +36,13 @@ export default function TaxiServiceSuccess({ taxi, language, onDashboard }) {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-        <p className="text-sm text-blue-900 font-medium">
+      <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+        <p className="text-sm text-green-900 font-medium">
           {language === 'es'
-            ? '✉️ Te hemos enviado un email de confirmación. Verifica tu bandeja de entrada.'
+            ? '✉️ Te hemos enviado un email con acceso a tu portal. Verifica tu bandeja de entrada.'
             : language === 'fr'
-            ? '✉️ Nous vous avons envoyé un email de confirmation. Vérifiez votre boîte de réception.'
-            : '✉️ We sent you a confirmation email. Check your inbox.'}
+            ? '✉️ Nous vous avons envoyé un email avec accès à votre portail. Vérifiez votre boîte de réception.'
+            : '✉️ We sent you a portal access email. Check your inbox.'}
         </p>
       </div>
 
