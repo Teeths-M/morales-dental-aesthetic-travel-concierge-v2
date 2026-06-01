@@ -320,32 +320,23 @@ export default function PaymentCheckout() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background p-8">
+    <div className="min-h-screen bg-secondary/20 px-4 py-8 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="font-display text-4xl text-foreground mb-2">
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="font-display text-3xl md:text-4xl text-foreground mb-2">
             Complete Your Booking
           </h1>
           <p className="text-muted-foreground">
             {caseRecord?.client_name || consultation.patient_name} • {caseRecord?.procedures?.[0] || consultation.procedure_interest}
           </p>
-        </motion.div>
+        </div>
 
         {/* Two-column layout: Package Details (left) + Payment Plans (right) */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* LEFT: Package Details */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="w-full lg:w-1/2 lg:sticky lg:top-8"
-          >
+          <div className="w-full lg:w-1/2 lg:sticky lg:top-8">
             <Card className="p-6">
               <h2 className="font-display text-xl text-foreground mb-4">What's Included in Your Package</h2>
               <div className="space-y-3 text-sm">
@@ -415,25 +406,16 @@ export default function PaymentCheckout() {
                 )}
               </div>
             </Card>
-          </motion.div>
+          </div>
 
           {/* RIGHT: Payment Plans */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="w-full lg:w-1/2 space-y-4"
-          >
-            {plans.map((plan, i) => {
+          <div className="w-full lg:w-1/2 space-y-4">
+            {plans.map((plan) => {
               const Icon = plan.icon;
               const isSelected = selectedPlan === plan.id;
 
               return (
-                <motion.div
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
+                <div key={plan.id}>
                   <Card
                     onClick={() => setSelectedPlan(plan.id)}
                     className={`p-6 cursor-pointer transition-all border-2 ${
@@ -478,7 +460,7 @@ export default function PaymentCheckout() {
                       )}
                     </div>
                   </Card>
-                </motion.div>
+                </div>
               );
             })}
 
@@ -547,7 +529,7 @@ export default function PaymentCheckout() {
               <span>✓ SSL Encrypted</span>
               <span>✓ Verified Provider</span>
             </div>
-          </motion.div>
+          </div>
         </div>{/* end two-column */}
       </div>
     </div>
