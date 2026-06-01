@@ -28,8 +28,10 @@ export default function PortalChauffeur() {
 
   useEffect(() => {
     const token = getTokenFromUrl();
+    console.log('Raw token from URL:', token);
     if (!token) { setTokenError('No access token provided. Please use the link sent to you.'); setLoading(false); return; }
     const decoded = decodePortalToken(token);
+    console.log('Decoded token result:', decoded);
     if (!decoded.valid) { setTokenError(decoded.error || 'Invalid or expired access link.'); setLoading(false); return; }
     setTokenData(decoded);
     loadData(decoded.consultation_id, decoded.partner_id);

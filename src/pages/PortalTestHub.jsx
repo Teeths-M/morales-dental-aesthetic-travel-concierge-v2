@@ -26,6 +26,10 @@ export default function PortalTestHub() {
         taxi_service_id: taxiServiceId,
       });
 
+      console.log('Portal link response:', response.data);
+      console.log('Raw token:', response.data.token);
+      console.log('Portal URL:', response.data.portal_url);
+
       if (response.data.success) {
         setPortalLinks([
           {
@@ -38,6 +42,7 @@ export default function PortalTestHub() {
         ]);
       }
     } catch (err) {
+      console.error('Error generating link:', err);
       setError(err.message);
     } finally {
       setLoading(false);
