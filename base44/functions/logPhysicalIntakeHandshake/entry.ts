@@ -9,29 +9,27 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const user = await base44.auth.me().catch(() => null);
     const body = await req.json();
     const { case_id, token } = body;
 
-    if (!case_id) {
-      return Response.json({ error: 'case_id is required' }, { status: 400 });
-    }
+    // Resolve identity: session user OR token-authenticated doctor
+    let resolvedEmail = user?.email || null;
+    let caseRecord = null;
 
-    // Support token-based access for doctor portal (non-authenticated doctors)
-    let caseRecord;
     if (token) {
       const records = await base44.asServiceRole.entities.CaseRecord.filter({ doctor_portal_token: token });
-      caseRecord = records?.[0];
+      caseRecord = records?.[0] || null;
+      if (!caseRecord) {
+        return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
+      }
+      if (!resolvedEmail) resolvedEmail = caseRecord.doctor_email || 'doctor-via-token';
+    } else if (user && (user.role === 'admin' || user.role === 'platform_admin')) {
+      if (!case_id) return Response.json({ error: 'case_id is required' }, { status: 400 });
+      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
+      if (!caseRecord) return Response.json({ error: 'CaseRecord not found' }, { status: 404 });
     } else {
-      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
-    }
-
-    if (!caseRecord) {
-      return Response.json({ error: 'CaseRecord not found or access denied' }, { status: 404 });
+      return Response.json({ error: 'Unauthorized — provide a valid portal token or admin session' }, { status: 401 });
     }
 
     // Idempotency: already in execution window
@@ -50,8 +48,8 @@ Deno.serve(async (req) => {
       {
         timestamp: now,
         action: 'stage_10_intake_handshake',
-        details: `Physical intake handshake logged by Dr. ${user.email}. Patient confirmed physically present at clinic. Case transitioning to SURGICAL_EXECUTION_WINDOW.`,
-        performed_by: user.email,
+        details: `Physical intake handshake logged by Dr. ${resolvedEmail}. Patient confirmed physically present at clinic. Case transitioning to SURGICAL_EXECUTION_WINDOW.`,
+        performed_by: resolvedEmail,
         non_repudiable: true,
         previous_status: caseRecord.status
       },
@@ -69,7 +67,7 @@ Deno.serve(async (req) => {
       notification_blackout_active: true,
       notification_blackout_started_at: now,
       intake_handshake_logged_at: now,
-      intake_handshake_logged_by: user.email,
+      intake_handshake_logged_by: resolvedEmail,
       timeline_log: updatedTimeline
     });
 
@@ -78,7 +76,7 @@ Deno.serve(async (req) => {
       new_status: 'SURGICAL_EXECUTION_WINDOW',
       blackout_active: true,
       intake_handshake_logged_at: now,
-      logged_by: user.email,
+      logged_by: resolvedEmail,
       message: 'Stage 10 complete. Physical intake handshake logged. Case is now in SURGICAL_EXECUTION_WINDOW. Notification blackout is ACTIVE.'
     });
 

@@ -8,28 +8,27 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const user = await base44.auth.me().catch(() => null);
     const body = await req.json();
     const { case_id, token, outcome_notes } = body;
 
-    if (!case_id && !token) {
-      return Response.json({ error: 'case_id or token is required' }, { status: 400 });
-    }
+    // Resolve identity: session user OR token-authenticated doctor
+    let resolvedEmail = user?.email || null;
+    let caseRecord = null;
 
-    let caseRecord;
     if (token) {
       const records = await base44.asServiceRole.entities.CaseRecord.filter({ doctor_portal_token: token });
-      caseRecord = records?.[0];
+      caseRecord = records?.[0] || null;
+      if (!caseRecord) {
+        return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
+      }
+      if (!resolvedEmail) resolvedEmail = caseRecord.doctor_email || 'doctor-via-token';
+    } else if (user && (user.role === 'admin' || user.role === 'platform_admin')) {
+      if (!case_id) return Response.json({ error: 'case_id is required' }, { status: 400 });
+      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
+      if (!caseRecord) return Response.json({ error: 'CaseRecord not found' }, { status: 404 });
     } else {
-      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
-    }
-
-    if (!caseRecord) {
-      return Response.json({ error: 'CaseRecord not found or access denied' }, { status: 404 });
+      return Response.json({ error: 'Unauthorized — provide a valid portal token or admin session' }, { status: 401 });
     }
 
     if (caseRecord.status !== 'SURGICAL_EXECUTION_WINDOW') {
@@ -44,8 +43,8 @@ Deno.serve(async (req) => {
       {
         timestamp: now,
         action: 'stage_11_procedure_complete',
-        details: `Procedure marked complete by Dr. ${user.email}. Case transitioning to RECOVERY_PHASE_7_DAY (7-Day Recovery Window). Notification blackout LIFTED.${outcome_notes ? ` Notes: ${outcome_notes}` : ''}`,
-        performed_by: user.email,
+        details: `Procedure marked complete by Dr. ${resolvedEmail}. Case transitioning to RECOVERY_PHASE_7_DAY (7-Day Recovery Window). Notification blackout LIFTED.${outcome_notes ? ` Notes: ${outcome_notes}` : ''}`,
+        performed_by: resolvedEmail,
         non_repudiable: true,
         outcome_notes: outcome_notes || null
       },
@@ -80,7 +79,7 @@ Deno.serve(async (req) => {
       blackout_lifted_at: now,
       procedure_complete_logged_at: now,
       suppressed_notifications_pending: suppressedLogs?.length || 0,
-      message: `Stage 11 complete. Procedure logged by ${user.email}. Case moved to 7-Day Recovery. Notification blackout LIFTED. ${suppressedLogs?.length || 0} suppressed notifications are in audit log.`
+      message: `Stage 11 complete. Procedure logged by ${resolvedEmail}. Case moved to 7-Day Recovery. Notification blackout LIFTED. ${suppressedLogs?.length || 0} suppressed notifications are in audit log.`
     });
 
   } catch (error) {
