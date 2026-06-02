@@ -47,15 +47,41 @@ export default function ConsultationForm() {
     setError(null);
 
     try {
-      await base44.entities.CaseRecord.create({
-        ...formData,
-        procedures: formData.procedure_interest ? [formData.procedure_interest] : [],
-        consultation_summary: formData.consultation_summary || '',
+      const newConsultation = await base44.entities.Consultation.create({
+        patient_name: formData.client_name,
+        email: formData.client_email,
+        phone: formData.client_phone,
+        client_country: formData.client_country,
+        emergency_contact_name: formData.emergency_contact,
+        destination_country: formData.procedure_country,
+        procedure_interest: formData.procedure_interest,
+        notes: formData.consultation_summary,
+        passport_number: formData.passport_number,
+        passport_issue_date: formData.passport_issue_date,
+        passport_expiry_date: formData.passport_expiry_date,
+        preferred_date: formData.preferred_date,
+        return_date: formData.return_date,
         number_of_companions: parseInt(formData.number_of_companions) || 0,
-        has_companion: parseInt(formData.number_of_companions) > 0,
-        status: 'Submitted',
-        safe_t_result: 'PENDING'
+        has_companion: (parseInt(formData.number_of_companions) || 0) > 0,
+        medications: formData.medications,
+        allergies: formData.allergies,
+        smoking_status: formData.smoking_status,
+        alcohol_use: formData.alcohol_use,
+        medical_conditions: formData.medical_conditions,
+        anesthesia_history: formData.anesthesia_history,
+        mental_health_notes: formData.mental_health_notes,
+        pregnancy_status: formData.pregnancy_status,
+        activity_level: formData.exercise_level,
       });
+
+      try {
+        await base44.functions.invoke('iq200Pipeline', {
+          action: 'create',
+          consultation_id: newConsultation.id
+        });
+      } catch (pipelineErr) {
+        console.error('IQ200 Pipeline invocation failed:', pipelineErr);
+      }
 
       navigate('/consultation-success');
     } catch (err) {
