@@ -63,6 +63,19 @@ Deno.serve(async (req) => {
     const patientPhone = caseData.client_phone;
     const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
 
+    // Helper: check blackout for a specific notification
+    const isBlackedOut = async (notification_type, recipient_role, recipient_identifier) => {
+      const res = await base44.functions.invoke('checkNotificationBlackout', {
+        case_id: caseRecordId,
+        notification_type,
+        recipient_role,
+        recipient_identifier,
+        event_trigger: 'pipelineOnDoctorConfirmed',
+        payload: body
+      }).catch(() => ({ data: { suppressed: false } }));
+      return res.data?.suppressed === true;
+    };
+
     const sendTasks = [];
     const results = { patient: null, travel_agencies: [], chauffeurs: [] };
 
@@ -83,8 +96,10 @@ Deno.serve(async (req) => {
       ctaUrl: patientDashboard,
     });
 
-    if (patientPhone) sendTasks.push(sendSms(patientPhone, patientSms));
-    if (patientEmail) {
+    if (patientPhone && !await isBlackedOut('sms', 'patient', patientPhone)) {
+      sendTasks.push(sendSms(patientPhone, patientSms));
+    }
+    if (patientEmail && !await isBlackedOut('email', 'patient', patientEmail)) {
       sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,
         to: patientEmail,
@@ -122,8 +137,10 @@ Deno.serve(async (req) => {
         ctaUrl: portalUrl,
       });
 
-      if (agency.phone) sendTasks.push(sendSms(agency.phone, agencySms));
-      if (agency.email) {
+      if (agency.phone && !await isBlackedOut('sms', 'vendor', agency.phone)) {
+        sendTasks.push(sendSms(agency.phone, agencySms));
+      }
+      if (agency.email && !await isBlackedOut('email', 'vendor', agency.email)) {
         sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND,
           to: agency.email,
@@ -159,8 +176,10 @@ Deno.serve(async (req) => {
         ctaUrl: portalUrl,
       });
 
-      if (driver.phone) sendTasks.push(sendSms(driver.phone, driverSms));
-      if (driver.email) {
+      if (driver.phone && !await isBlackedOut('sms', 'vendor', driver.phone)) {
+        sendTasks.push(sendSms(driver.phone, driverSms));
+      }
+      if (driver.email && !await isBlackedOut('email', 'vendor', driver.email)) {
         sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND,
           to: driver.email,

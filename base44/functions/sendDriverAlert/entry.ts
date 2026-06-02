@@ -25,6 +25,27 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'phone and message are required' }, { status: 400 });
   }
 
+  // Blackout guard
+  const caseIdForBlackout = body.case_id || body.consultation_id || null;
+  if (caseIdForBlackout) {
+    const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+      case_id: caseIdForBlackout,
+      notification_type: 'sms',
+      recipient_role: 'vendor',
+      recipient_identifier: phone,
+      event_trigger: 'sendDriverAlert',
+      payload: body
+    }).catch(() => ({ data: { suppressed: false } }));
+
+    if (blackoutRes.data?.suppressed) {
+      return Response.json({
+        suppressed: true,
+        reason: blackoutRes.data.reason,
+        message: 'Notification suppressed — case is in SURGICAL_EXECUTION_WINDOW blackout'
+      });
+    }
+  }
+
   const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
   const results = { sms: null, whatsapp: null };
 

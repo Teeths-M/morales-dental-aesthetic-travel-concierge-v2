@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
-    const { case_id } = await req.json();
+    const body = await req.json();
+    const { case_id } = body;
     
     if (!case_id) {
       return Response.json({ error: 'Case ID required' }, { status: 400 });
@@ -20,6 +21,24 @@ Deno.serve(async (req) => {
     
     if (!caseRecord) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
+    }
+
+    // Blackout guard
+    const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+      case_id,
+      notification_type: 'email',
+      recipient_role: 'patient',
+      recipient_identifier: caseRecord.client_email || '',
+      event_trigger: 'resendPaymentEmail',
+      payload: body
+    }).catch(() => ({ data: { suppressed: false } }));
+
+    if (blackoutRes.data?.suppressed) {
+      return Response.json({
+        suppressed: true,
+        reason: blackoutRes.data.reason,
+        message: 'Notification suppressed — case is in SURGICAL_EXECUTION_WINDOW blackout'
+      });
     }
 
     // Generate standalone payment link (STATIC PATH)
@@ -54,7 +73,6 @@ Deno.serve(async (req) => {
             .package-icon { font-size: 20px; margin-right: 12px; flex-shrink: 0; }
             .cta-container { text-align: center; margin: 32px 0; }
             .cta-button { display: inline-block; background: #0F3A20; color: #FFFFFF; text-decoration: none; padding: 16px 48px; border-radius: 999px; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; transition: all 0.3s ease; border: 2px solid #0F3A20; }
-            .cta-button:hover { background: transparent; color: #0F3A20; }
             .footer { padding: 24px 32px; background: #F9F9F9; border-top: 1px solid #E5E7EB; font-size: 12px; color: #6B7280; line-height: 1.6; }
             .footer-text { margin: 0 0 8px; }
             @media (max-width: 600px) {
@@ -71,24 +89,17 @@ Deno.serve(async (req) => {
         <body>
           <div class="wrapper">
             <div class="container">
-              <!-- Header -->
               <div class="header">
                 <p class="brand">MORALES</p>
                 <p class="subtext">Dental & Aesthetic Travel Concierge</p>
               </div>
-
-              <!-- Content -->
               <div class="content">
                 <p class="greeting">Dear ${caseRecord.client_name},</p>
                 <p style="font-size: 15px; color: #4B5563; margin: 0 0 24px; line-height: 1.6;">Your personalized medical travel package is ready. Complete your booking now to secure your preferred dates.</p>
-
-                <!-- Hero Card -->
                 <div class="hero-card">
                   <p class="price-label">Total Package Investment</p>
                   <p class="price">$${caseRecord.final_package_price.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
                 </div>
-
-                <!-- Package Details -->
                 <p class="section-title">What's Included</p>
                 <div style="margin-bottom: 24px;">
                   <div class="package-item">
@@ -108,16 +119,11 @@ Deno.serve(async (req) => {
                     <span>Private airport transfers and clinic transportation throughout your stay</span>
                   </div>
                 </div>
-
-                <!-- CTA -->
                 <div class="cta-container">
                   <a href="${paymentUrl}" class="cta-button">Complete Your Booking</a>
                 </div>
-
                 <p style="font-size: 13px; color: #6B7280; text-align: center; margin: 20px 0; font-style: italic;">Flexible payment options available: Pay in Full (5% discount), 50% deposit, or 25% deposit.</p>
               </div>
-
-              <!-- Footer -->
               <div class="footer">
                 <p class="footer-text"><strong style="color: #1F2937;">Questions?</strong> Contact us at <strong style="color: #0F3A20;">concierge@morales-dental.com</strong></p>
                 <p class="footer-text" style="margin-top: 16px; border-top: 1px solid #E5E7EB; padding-top: 16px;">Best regards,<br><strong>MORALES Medical Travel Concierge Team</strong></p>
@@ -142,7 +148,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       status: 'EMAIL_RESENT', 
-      case_id: case_id,
+      case_id,
       payment_url: paymentUrl,
       sent_to: caseRecord.client_email,
       message: 'Payment email resent successfully' 

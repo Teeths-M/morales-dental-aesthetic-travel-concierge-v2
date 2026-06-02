@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { consultation_id } = await req.json();
+    const body = await req.json();
+    const { consultation_id } = body;
     if (!consultation_id) {
       return Response.json({ error: 'consultation_id is required' }, { status: 400 });
     }
@@ -79,6 +80,21 @@ Deno.serve(async (req) => {
         expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
       }));
       const portalLink = `${appUrl}/portal/travel?token=${token}`;
+
+      // Blackout guard
+      const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+        case_id: consultation_id,
+        notification_type: 'email',
+        recipient_role: 'vendor',
+        recipient_identifier: agency.email,
+        event_trigger: 'resendTravelAgencyPortalEmail',
+        payload: body
+      }).catch(() => ({ data: { suppressed: false } }));
+
+      if (blackoutRes.data?.suppressed) {
+        console.log(`Notification to ${agency.email} suppressed — blackout active`);
+        continue;
+      }
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,

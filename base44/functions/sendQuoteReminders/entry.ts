@@ -57,10 +57,9 @@ Deno.serve(async (req) => {
       const consultationId = caseRecord.consultation_id;
       if (!consultationId) { results.skipped++; continue; }
 
-      // Determine when this case entered Travel-Coordination (use doctor_confirmed_at or updated_date)
+      // Determine when this case entered Travel-Coordination
       const triggeredAt = new Date(caseRecord.doctor_confirmed_at || caseRecord.updated_date);
       if (triggeredAt > cutoff) {
-        // Less than 48 hours — not yet due for reminder
         results.skipped++;
         continue;
       }
@@ -74,6 +73,22 @@ Deno.serve(async (req) => {
           const agencyName = agency.agency_name || agency.email;
           const token = encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
           const portalUrl = `${appUrl}/portal/travel?token=${token}`;
+
+          // Blackout guard
+          const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+            case_id: caseRecord.id,
+            notification_type: 'email',
+            recipient_role: 'vendor',
+            recipient_identifier: agency.email || agency.phone || '',
+            event_trigger: 'sendQuoteReminders',
+            payload: { case_id: caseRecord.id, consultation_id: consultationId }
+          }).catch(() => ({ data: { suppressed: false } }));
+
+          if (blackoutRes.data?.suppressed) {
+            console.log(`Reminder to agency ${agency.email} suppressed — blackout active`);
+            results.skipped++;
+            continue;
+          }
 
           const smsMsg = `⏰ Reminder ${agencyName}: Quote still pending for patient ${caseRecord.client_name}. Please submit your travel pricing now: ${portalUrl} — Morales Dental & Aesthetics`;
           const emailHtml = emailLayout({
@@ -104,6 +119,22 @@ Deno.serve(async (req) => {
           const driverName = driver.driver_name || driver.company_name || driver.email;
           const token = encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
           const portalUrl = `${appUrl}/portal/transfer?token=${token}`;
+
+          // Blackout guard
+          const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+            case_id: caseRecord.id,
+            notification_type: 'email',
+            recipient_role: 'vendor',
+            recipient_identifier: driver.email || driver.phone || '',
+            event_trigger: 'sendQuoteReminders',
+            payload: { case_id: caseRecord.id, consultation_id: consultationId }
+          }).catch(() => ({ data: { suppressed: false } }));
+
+          if (blackoutRes.data?.suppressed) {
+            console.log(`Reminder to chauffeur ${driver.email} suppressed — blackout active`);
+            results.skipped++;
+            continue;
+          }
 
           const smsMsg = `⏰ Reminder ${driverName}: Transfer pricing still pending for ${caseRecord.client_name}. Submit your leg quotes here: ${portalUrl} — Morales Dental & Aesthetics`;
           const emailHtml = emailLayout({

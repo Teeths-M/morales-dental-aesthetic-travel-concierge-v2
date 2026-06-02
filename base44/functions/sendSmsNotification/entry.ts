@@ -38,6 +38,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields: to, type' }, { status: 400 });
     }
 
+    // Blackout guard
+    const caseIdForBlackout = body.case_id || body.consultation_id || null;
+    if (caseIdForBlackout) {
+      const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+        case_id: caseIdForBlackout,
+        notification_type: 'sms',
+        recipient_role: 'patient',
+        recipient_identifier: body.to || '',
+        event_trigger: 'sendSmsNotification',
+        payload: body
+      }).catch(() => ({ data: { suppressed: false } }));
+
+      if (blackoutRes.data?.suppressed) {
+        return Response.json({
+          suppressed: true,
+          reason: blackoutRes.data.reason,
+          message: 'Notification suppressed — case is in SURGICAL_EXECUTION_WINDOW blackout'
+        });
+      }
+    }
+
     // Build message from template
     let message;
     if (type === 'booking_confirmation') {
@@ -75,7 +96,6 @@ Deno.serve(async (req) => {
       }, { status: 503 });
     }
 
-    // Validate that TWILIO_ACCOUNT_SID looks like a real SID (starts with AC)
     if (!accountSid.startsWith('AC')) {
       return Response.json({
         success: false,
@@ -83,7 +103,6 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Send via Twilio REST API
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const formData = new URLSearchParams();
     formData.append('To', to);

@@ -10,6 +10,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'consultation_id is required' }, { status: 400 });
     }
 
+    // Blackout guard
+    const caseIdForBlackout = body.case_id || consultation_id;
+    if (caseIdForBlackout) {
+      const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+        case_id: caseIdForBlackout,
+        notification_type: 'email',
+        recipient_role: 'vendor',
+        recipient_identifier: '',
+        event_trigger: 'sendChauffeurQuoteAlert',
+        payload: body
+      }).catch(() => ({ data: { suppressed: false } }));
+
+      if (blackoutRes.data?.suppressed) {
+        return Response.json({
+          suppressed: true,
+          reason: blackoutRes.data.reason,
+          message: 'Notification suppressed — case is in SURGICAL_EXECUTION_WINDOW blackout'
+        });
+      }
+    }
+
     const updateData = { status: 'Admin-Review' };
 
     if (driver_type === 'origin') {
