@@ -76,7 +76,8 @@ Deno.serve(async (req) => {
       return res.data?.suppressed === true;
     };
 
-    const sendTasks = [];
+    // ── FAULT-TOLERANT DISPATCH: labeled tasks for granular failure attribution ──
+    const labeledDispatches = [];
     const results = { patient: null, travel_agencies: [], chauffeurs: [] };
 
     // ── 1. NOTIFY PATIENT ────────────────────────────────────────────────────
@@ -97,15 +98,10 @@ Deno.serve(async (req) => {
     });
 
     if (patientPhone && !await isBlackedOut('sms', 'patient', patientPhone)) {
-      sendTasks.push(sendSms(patientPhone, patientSms));
+      labeledDispatches.push({ label: 'Patient SMS', provider_type: 'patient', provider_name: patientName, provider_email: patientPhone, dispatch_type: 'sms', fn: () => sendSms(patientPhone, patientSms) });
     }
     if (patientEmail && !await isBlackedOut('email', 'patient', patientEmail)) {
-      sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: BRAND,
-        to: patientEmail,
-        subject: `Your doctor has confirmed — next steps | ${BRAND}`,
-        body: patientEmailHtml,
-      }));
+      labeledDispatches.push({ label: 'Patient Confirmation Email', provider_type: 'patient', provider_name: patientName, provider_email: patientEmail, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: patientEmail, subject: `Your doctor has confirmed — next steps | ${BRAND}`, body: patientEmailHtml }) });
     }
     results.patient = { email: patientEmail, sms_sent: !!patientPhone };
 
@@ -138,15 +134,10 @@ Deno.serve(async (req) => {
       });
 
       if (agency.phone && !await isBlackedOut('sms', 'vendor', agency.phone)) {
-        sendTasks.push(sendSms(agency.phone, agencySms));
+        labeledDispatches.push({ label: `Travel Agency SMS — ${agencyName}`, provider_type: 'travel_agency', provider_name: agencyName, provider_email: agency.phone, dispatch_type: 'sms', fn: () => sendSms(agency.phone, agencySms) });
       }
       if (agency.email && !await isBlackedOut('email', 'vendor', agency.email)) {
-        sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: BRAND,
-          to: agency.email,
-          subject: `Travel quote needed — ${patientName} | ${BRAND}`,
-          body: agencyEmailHtml,
-        }));
+        labeledDispatches.push({ label: `Travel Agency Email — ${agencyName}`, provider_type: 'travel_agency', provider_name: agencyName, provider_email: agency.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: agency.email, subject: `Travel quote needed — ${patientName} | ${BRAND}`, body: agencyEmailHtml }) });
       }
       results.travel_agencies.push({ name: agencyName, email: agency.email, portal_url: portalUrl });
     }
@@ -177,20 +168,40 @@ Deno.serve(async (req) => {
       });
 
       if (driver.phone && !await isBlackedOut('sms', 'vendor', driver.phone)) {
-        sendTasks.push(sendSms(driver.phone, driverSms));
+        labeledDispatches.push({ label: `Chauffeur SMS — ${driverName}`, provider_type: 'chauffeur', provider_name: driverName, provider_email: driver.phone, dispatch_type: 'sms', fn: () => sendSms(driver.phone, driverSms) });
       }
       if (driver.email && !await isBlackedOut('email', 'vendor', driver.email)) {
-        sendTasks.push(base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: BRAND,
-          to: driver.email,
-          subject: `Transfer quote needed — ${patientName} | ${BRAND}`,
-          body: driverEmailHtml,
-        }));
+        labeledDispatches.push({ label: `Chauffeur Email — ${driverName}`, provider_type: 'chauffeur', provider_name: driverName, provider_email: driver.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: driver.email, subject: `Transfer quote needed — ${patientName} | ${BRAND}`, body: driverEmailHtml }) });
       }
       results.chauffeurs.push({ name: driverName, email: driver.email, portal_url: portalUrl });
     }
 
-    await Promise.allSettled(sendTasks);
+    // ── FAULT-TOLERANT SETTLEMENT: isolate failures, continue all other dispatches ──
+    const settled = await Promise.allSettled(labeledDispatches.map(d => d.fn()));
+    const failureWrites = [];
+    for (let i = 0; i < settled.length; i++) {
+      if (settled[i].status === 'rejected') {
+        const d = labeledDispatches[i];
+        failureWrites.push(
+          base44.asServiceRole.entities.DispatchFailureLog.create({
+            case_id: caseRecordId,
+            case_name: patientName,
+            pipeline_stage: 'pipelineOnDoctorConfirmed',
+            provider_type: d.provider_type,
+            provider_name: d.provider_name,
+            provider_email: d.provider_email,
+            dispatch_type: d.dispatch_type,
+            error_message: `${d.label} — ${settled[i].reason?.message || 'Dispatch connection failed'}`,
+            status: 'pending_intervention',
+            logged_at: new Date().toISOString(),
+          })
+        );
+      }
+    }
+    if (failureWrites.length > 0) {
+      await Promise.allSettled(failureWrites);
+      console.warn(`[FaultTolerance] ${failureWrites.length} dispatch(es) failed and logged for admin intervention`);
+    }
 
     // Update CaseRecord status to Travel-Coordination
     await base44.asServiceRole.entities.CaseRecord.update(caseRecordId, {

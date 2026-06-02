@@ -438,18 +438,57 @@ Deno.serve(async (req) => {
         body: destDriverEmailBody
       }));
 
-      // Execute all 5 emails concurrently
-      await Promise.all(emailPromises);
+      // ── FAULT-TOLERANT DISPATCH: Promise.allSettled — isolated failures, no cascade ──
+      const dispatchLabels = [
+        { label: 'Patient Itinerary Email', provider_type: 'patient', provider_name: caseRecord.client_name, provider_email: caseRecord.client_email },
+        { label: 'Admin Portal Notification', provider_type: 'admin', provider_name: 'Admin Team', provider_email: 'admin@internal' },
+        { label: 'Doctor Portal Confirmation', provider_type: 'doctor', provider_name: caseRecord.doctor_selected || 'Assigned Doctor', provider_email: caseRecord.doctor_email },
+        { label: 'Chauffeur Network — Origin Pickup', provider_type: 'chauffeur_origin', provider_name: originDriver?.company_name || 'Origin Driver', provider_email: originDriver?.email },
+        { label: 'Chauffeur Network — Destination Transfer', provider_type: 'chauffeur_destination', provider_name: destDriver?.company_name || 'Destination Driver', provider_email: destDriver?.email },
+      ];
 
+      const settled = await Promise.allSettled(emailPromises);
+      const failureWrites = [];
+      const notifications_sent = {};
+
+      for (let i = 0; i < settled.length; i++) {
+        const s = settled[i];
+        const d = dispatchLabels[i];
+        if (s.status === 'rejected') {
+          notifications_sent[d.provider_type] = { success: false, error: s.reason?.message };
+          failureWrites.push(
+            base44.asServiceRole.entities.DispatchFailureLog.create({
+              case_id: caseRecord.id,
+              case_name: caseRecord.client_name,
+              pipeline_stage: 'iq200Pipeline.process_payment',
+              provider_type: d.provider_type,
+              provider_name: d.label,
+              provider_email: d.provider_email || 'unknown',
+              dispatch_type: 'email',
+              error_message: `${d.label} offline — ${s.reason?.message || 'Dispatch failed'}`,
+              status: 'pending_intervention',
+              logged_at: new Date().toISOString(),
+            })
+          );
+        } else {
+          notifications_sent[d.provider_type] = { success: true };
+        }
+      }
+
+      if (failureWrites.length > 0) {
+        await Promise.allSettled(failureWrites);
+      }
+
+      const failedCount = failureWrites.length;
       return Response.json({
         success: true,
         case_id: caseRecord.id,
-        notifications_sent: {
-          patient: true,
-          admin: true,
-          doctor: true,
-          origin_driver: true,
-          destination_driver: true
+        notifications_sent,
+        fault_tolerance: {
+          total_dispatches: settled.length,
+          succeeded: settled.filter(s => s.status === 'fulfilled').length,
+          failed: failedCount,
+          admin_action_required: failedCount > 0,
         }
       });
     }

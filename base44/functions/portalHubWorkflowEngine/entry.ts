@@ -181,77 +181,93 @@ Deno.serve(async (req) => {
         }
       };
       
-      // Notify travel agencies
-      if (travelEmails.length > 0) {
-        await sendToPartners(travelEmails, `Travel request — ${consultation.patient_name} | ${BRAND}`, emailLayout({
-          eyebrow: 'Travel request',
-          title: 'Patient travel arrangement needed',
-          intro: 'A patient has been approved by our medical team and now requires travel planning support.',
-          rows: [
-            row('Patient', consultation.patient_name),
-            row('Procedure', formatProcedure(consultation.procedure_interest)),
-            row('Nationality', consultation.nationality || 'Not specified'),
-            row('Preferred date', consultation.preferred_date || 'Flexible'),
-            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-          ],
-          ctaText: 'Review in portal',
-          ctaUrl: portalUrl,
-          footer: 'Please reply with flight options, itinerary details, and pricing.',
-        }));
+      // ── FAULT-TOLERANT DISPATCH: Promise.allSettled — no cascade failures ──
+      const vendorDispatches = [];
+
+      const travelBody = emailLayout({
+        eyebrow: 'Travel request',
+        title: 'Patient travel arrangement needed',
+        intro: 'A patient has been approved by our medical team and now requires travel planning support.',
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Procedure', formatProcedure(consultation.procedure_interest)),
+          row('Nationality', consultation.nationality || 'Not specified'),
+          row('Preferred date', consultation.preferred_date || 'Flexible'),
+          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+        ],
+        ctaText: 'Review in portal',
+        ctaUrl: portalUrl,
+        footer: 'Please reply with flight options, itinerary details, and pricing.',
+      });
+
+      for (const email of travelEmails) {
+        vendorDispatches.push({ label: `Travel Agency Email — ${email}`, provider_type: 'travel_agency', provider_name: email, provider_email: email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: email, subject: `Travel request — ${consultation.patient_name} | ${BRAND}`, body: travelBody }) });
       }
-      
-      // Notify hotels
-      if (hotelEmails.length > 0) {
-        await sendToPartners(hotelEmails, `Recovery lodging request — ${consultation.patient_name} | ${BRAND}`, emailLayout({
-          eyebrow: 'Accommodation request',
-          title: 'Recovery lodging arrangement needed',
-          intro: 'A patient has been approved by our medical team and now requires suitable recovery accommodation.',
-          rows: [
-            row('Patient', consultation.patient_name),
-            row('Procedure', formatProcedure(consultation.procedure_interest)),
-            row('Preferred date', consultation.preferred_date || 'Flexible'),
-            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-          ],
-          ctaText: 'Review in portal',
-          ctaUrl: portalUrl,
-          footer: 'Please reply with room availability, recovery support details, and pricing.',
-        }));
+
+      const hotelBody = emailLayout({
+        eyebrow: 'Accommodation request',
+        title: 'Recovery lodging arrangement needed',
+        intro: 'A patient has been approved by our medical team and now requires suitable recovery accommodation.',
+        rows: [
+          row('Patient', consultation.patient_name),
+          row('Procedure', formatProcedure(consultation.procedure_interest)),
+          row('Preferred date', consultation.preferred_date || 'Flexible'),
+          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+        ],
+        ctaText: 'Review in portal',
+        ctaUrl: portalUrl,
+        footer: 'Please reply with room availability, recovery support details, and pricing.',
+      });
+
+      for (const email of hotelEmails) {
+        vendorDispatches.push({ label: `Hotel Email — ${email}`, provider_type: 'hotel', provider_name: email, provider_email: email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: email, subject: `Recovery lodging request — ${consultation.patient_name} | ${BRAND}`, body: hotelBody }) });
       }
-      
-      // Notify taxi services with unique portal links
+
       for (const cab of taxiServices) {
         const driverName = cab.driver_name || cab.company_name || 'Partner';
-        const token = btoa(JSON.stringify({
-          consultation_id,
-          partner_id: cab.id,
-          portal_type: 'transfer',
-          expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
-        }));
+        const token = btoa(JSON.stringify({ consultation_id, partner_id: cab.id, portal_type: 'transfer', expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
         const portalLink = `${appUrl}/portal/transfer?token=${token}`;
-        
-        try {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            from_name: BRAND,
-            to: cab.email,
-            subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
-            body: emailLayout({
-              eyebrow: 'Transfer request',
-              title: 'Patient transfer quote needed',
-              intro: `Hello ${driverName}, a patient has been approved and will need reliable local transportation support.`,
-              rows: [
-                row('Patient', consultation.patient_name),
-                row('Requested service', 'Airport, clinic, and hotel transfers'),
-                row('Preferred date', consultation.preferred_date || 'Flexible'),
-                row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-              ],
-              ctaText: 'Open Chauffeur Portal & Submit Pricing →',
-              ctaUrl: portalLink,
-              footer: 'Click the button above to access your secure portal and submit your per-leg transfer pricing.',
-            }),
-          });
-        } catch (error) {
-          console.log(`Cab email skipped for ${cab.email}: ${error.message}`);
+        const cabBody = emailLayout({
+          eyebrow: 'Transfer request',
+          title: 'Patient transfer quote needed',
+          intro: `Hello ${driverName}, a patient has been approved and will need reliable local transportation support.`,
+          rows: [
+            row('Patient', consultation.patient_name),
+            row('Requested service', 'Airport, clinic, and hotel transfers'),
+            row('Preferred date', consultation.preferred_date || 'Flexible'),
+            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          ],
+          ctaText: 'Open Chauffeur Portal & Submit Pricing →',
+          ctaUrl: portalLink,
+          footer: 'Click the button above to access your secure portal and submit your per-leg transfer pricing.',
+        });
+        vendorDispatches.push({ label: `Chauffeur Network — ${driverName}`, provider_type: 'chauffeur', provider_name: driverName, provider_email: cab.email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: cab.email, subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`, body: cabBody }) });
+      }
+
+      const vendorSettled = await Promise.allSettled(vendorDispatches.map(d => d.fn()));
+      const vendorFailureWrites = [];
+      for (let i = 0; i < vendorSettled.length; i++) {
+        if (vendorSettled[i].status === 'rejected') {
+          const d = vendorDispatches[i];
+          vendorFailureWrites.push(
+            base44.asServiceRole.entities.DispatchFailureLog.create({
+              case_id: consultation_id,
+              case_name: consultation.patient_name,
+              pipeline_stage: 'portalHubWorkflowEngine.doctor_approved',
+              provider_type: d.provider_type,
+              provider_name: d.label,
+              provider_email: d.provider_email,
+              dispatch_type: d.dispatch_type,
+              error_message: `${d.label} connection offline — ${vendorSettled[i].reason?.message || 'Dispatch failed'}`,
+              status: 'pending_intervention',
+              logged_at: new Date().toISOString(),
+            })
+          );
         }
+      }
+      if (vendorFailureWrites.length > 0) {
+        await Promise.allSettled(vendorFailureWrites);
+        console.warn(`[FaultTolerance] ${vendorFailureWrites.length} vendor dispatch(es) failed and logged`);
       }
       
       // Update workflow status - all partners now notified

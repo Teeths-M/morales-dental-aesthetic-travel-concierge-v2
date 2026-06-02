@@ -1,0 +1,68 @@
+{
+  "name": "DispatchFailureLog",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "case_name": {
+      "type": "string"
+    },
+    "pipeline_stage": {
+      "type": "string",
+      "description": "Which pipeline function/action triggered this"
+    },
+    "provider_type": {
+      "type": "string",
+      "description": "patient | travel_agency | chauffeur_origin | chauffeur_destination | chauffeur | doctor | admin | hotel"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "provider_email": {
+      "type": "string"
+    },
+    "dispatch_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "sms",
+        "webhook",
+        "api"
+      ]
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_intervention",
+        "resolved",
+        "retried"
+      ],
+      "default": "pending_intervention"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "resolution_notes": {
+      "type": "string"
+    },
+    "logged_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "pipeline_stage",
+    "provider_type",
+    "error_message",
+    "logged_at"
+  ]
+}
