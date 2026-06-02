@@ -363,7 +363,7 @@ Deno.serve(async (req) => {
         </html>
       `;
       emailPromises.push(base44.integrations.Core.SendEmail({
-        to: 'theonmorales243+patient@gmail.com',
+        to: caseRecord.client_email,
         subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,
         body: patientEmailBody
       }));
@@ -383,8 +383,9 @@ Deno.serve(async (req) => {
         <p><strong>Doctor:</strong> ${caseRecord.doctor_selected || 'Not assigned'}</p>
         <a href="${adminPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">View Case</a>
       `;
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
       emailPromises.push(base44.integrations.Core.SendEmail({
-        to: 'theonmorales243+admin@gmail.com',
+        to: adminEmail,
         subject: `[Admin] Payment Confirmed - Case ${caseRecord.id}`,
         body: adminEmailBody
       }));
@@ -399,11 +400,13 @@ Deno.serve(async (req) => {
         <a href="${doctorPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Doctor Portal</a>
         <p>Please confirm procedure date.</p>
       `;
-      emailPromises.push(base44.integrations.Core.SendEmail({
-        to: 'theonmorales243+doctor@gmail.com',
-        subject: `Case Confirmation: Smile Makeover - ${caseRecord.client_name}`,
-        body: doctorEmailBody
-      }));
+      if (caseRecord.doctor_email) {
+        emailPromises.push(base44.integrations.Core.SendEmail({
+          to: caseRecord.doctor_email,
+          subject: `Case Confirmation: ${(caseRecord.procedures || ['Procedure']).join(', ')} - ${caseRecord.client_name}`,
+          body: doctorEmailBody
+        }));
+      }
 
       // 4. DRIVER - ORIGIN - Local pickup ticket
       const originDriver = caseRecord.origin_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.origin_driver_id) : null;
@@ -416,11 +419,13 @@ Deno.serve(async (req) => {
         <p><strong>Destination:</strong> Local Airport</p>
         <a href="${originDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
       `;
-      emailPromises.push(base44.integrations.Core.SendEmail({
-        to: 'theonmorales243+driver.origin@gmail.com',
-        subject: `Pickup Request: ${caseRecord.client_name}`,
-        body: originDriverEmailBody
-      }));
+      if (originDriver?.email) {
+        emailPromises.push(base44.integrations.Core.SendEmail({
+          to: originDriver.email,
+          subject: `Pickup Request: ${caseRecord.client_name}`,
+          body: originDriverEmailBody
+        }));
+      }
 
       // 5. DRIVER - DESTINATION - Airport arrival ticket
       const destDriver = caseRecord.destination_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.destination_driver_id) : null;
@@ -432,11 +437,13 @@ Deno.serve(async (req) => {
         <p><strong>Destination:</strong> ${caseRecord.hotel_name || 'Hotel'} - ${caseRecord.hotel_address || 'TBD'}</p>
         <a href="${destDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
       `;
-      emailPromises.push(base44.integrations.Core.SendEmail({
-        to: 'theonmorales243+driver.dest@gmail.com',
-        subject: `Arrival Transfer: ${caseRecord.client_name}`,
-        body: destDriverEmailBody
-      }));
+      if (destDriver?.email) {
+        emailPromises.push(base44.integrations.Core.SendEmail({
+          to: destDriver.email,
+          subject: `Arrival Transfer: ${caseRecord.client_name}`,
+          body: destDriverEmailBody
+        }));
+      }
 
       // ── FAULT-TOLERANT DISPATCH: Promise.allSettled — isolated failures, no cascade ──
       const dispatchLabels = [

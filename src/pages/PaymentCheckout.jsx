@@ -510,7 +510,7 @@ export default function PaymentCheckout() {
             <Button
               size="lg"
               className="w-full gap-2"
-              disabled={!selectedPlan}
+              disabled={!selectedPlan || selectPlanMutation.isPending}
               onClick={() => selectPlanMutation.mutate(selectedPlan)}
             >
               {selectPlanMutation.isPending ? 'Processing...' : `Pay with ${paymentMethod === 'stripe' ? 'Stripe' : paymentMethod === 'wipay' ? 'WiPay' : 'PayPal'}`}

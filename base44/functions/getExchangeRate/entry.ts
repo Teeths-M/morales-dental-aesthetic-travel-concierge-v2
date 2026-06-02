@@ -9,9 +9,10 @@ Deno.serve(async (req) => {
             return Response.json({ error: "EXCHANGERATE_API_KEY not configured" }, { status: 500 });
         }
 
-        const { searchParams } = new URL(req.url);
-        const base = searchParams.get('base') || 'USD';
-        const target = searchParams.get('target');
+        const body = await req.json().catch(() => ({}));
+        // Always enforce USD as the base currency to prevent chain conversion errors
+        const base = 'USD';
+        const target = body.target || new URL(req.url).searchParams.get('target');
 
         if (!target) {
             return Response.json({ error: "Target currency is required" }, { status: 400 });

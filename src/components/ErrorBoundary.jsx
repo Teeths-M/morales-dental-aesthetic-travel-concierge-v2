@@ -25,9 +25,9 @@ class ErrorBoundary extends React.Component {
             <TriangleAlert className="h-4 w-4" />
             <AlertTitle>Something went wrong!</AlertTitle>
             <AlertDescription>
-              <p>We're sorry, an unexpected error occurred.</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {this.state.error && this.state.error.toString()}
+              <p>We're sorry, something went wrong. Our team has been notified and is working on it.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Please try refreshing the page or contact us at concierge@morales-dental.com
               </p>
               {import.meta.env.DEV && this.state.errorInfo && (
                 <details className="mt-2 text-xs text-muted-foreground">
