@@ -228,10 +228,10 @@ export default function Booking() {
         };
 
         if (draftIdRef.current) {
-          // Update known draft — no race condition
           await base44.entities.ConsultationDraft.update(draftIdRef.current, payload);
         } else {
-          // First save: check DB then create (guard against cold-start race)
+          // Idempotency guard: mark intent before async check to prevent duplicate creates
+          draftIdRef.current = 'pending';
           const existing = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
           if (existing.length > 0) {
             draftIdRef.current = existing[0].id;

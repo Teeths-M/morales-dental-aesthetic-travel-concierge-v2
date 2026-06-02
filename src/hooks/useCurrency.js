@@ -1,19 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+
+// Module-level cache with TTL (5 minutes) — shared across hook instances intentionally for dedup
+const RATE_CACHE = {};
+const RATE_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function getCachedRate(currency) {
+  const entry = RATE_CACHE[currency];
+  if (!entry) return null;
+  if (Date.now() - entry.ts > RATE_CACHE_TTL_MS) {
+    delete RATE_CACHE[currency];
+    return null;
+  }
+  return entry.rate;
+}
+
+function setCachedRate(currency, rate) {
+  RATE_CACHE[currency] = { rate, ts: Date.now() };
+}
 
 export function useCurrency() {
   const [currency, setCurrencyState] = useState(() => {
-    return localStorage.getItem('appCurrency') || 'USD';
+    try {
+      return localStorage.getItem('appCurrency') || 'USD';
+    } catch {
+      return 'USD';
+    }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const inflight = useRef({});
 
-  // Detect currency on first load (only if not already set in localStorage)
   useEffect(() => {
-    const savedCurrency = localStorage.getItem('appCurrency');
-    if (!savedCurrency) {
-      detectCurrency();
-    }
+    let saved;
+    try { saved = localStorage.getItem('appCurrency'); } catch {}
+    if (!saved) detectCurrency();
   }, []);
 
   const detectCurrency = async () => {
@@ -21,12 +42,9 @@ export function useCurrency() {
     setError(null);
     try {
       const response = await base44.functions.invoke('getGeolocationAndCurrency', {});
-      const { currency: detectedCurrency } = response.data;
-      setCurrency(detectedCurrency);
+      const detected = response.data?.currency;
+      setCurrency(detected || 'USD');
     } catch (err) {
-      console.error('Failed to detect currency:', err);
-      setError(err.message);
-      // Fallback to USD
       setCurrency('USD');
     } finally {
       setLoading(false);
@@ -34,31 +52,37 @@ export function useCurrency() {
   };
 
   const setCurrency = (curr) => {
-    localStorage.setItem('appCurrency', curr);
+    try { localStorage.setItem('appCurrency', curr); } catch {}
     setCurrencyState(curr);
     window.dispatchEvent(new CustomEvent('currencyChange', { detail: { currency: curr } }));
   };
 
-  const rateCache = {};
-
+  // Always converts FROM USD. Returns 1.0 on any failure so callers never get NaN.
   const getExchangeRate = async (targetCurrency) => {
     if (!targetCurrency || targetCurrency === 'USD') return 1.0;
-    if (rateCache[targetCurrency]) return rateCache[targetCurrency];
-    try {
-      const response = await base44.functions.invoke('getExchangeRate', {
-        target: targetCurrency
-      });
-      const rate = response.data?.rate;
-      if (!rate || typeof rate !== 'number' || rate <= 0) {
-        throw new Error(`Invalid rate received: ${rate}`);
+
+    const cached = getCachedRate(targetCurrency);
+    if (cached) return cached;
+
+    // Deduplicate in-flight requests for same currency
+    if (inflight.current[targetCurrency]) return inflight.current[targetCurrency];
+
+    const promise = (async () => {
+      try {
+        const response = await base44.functions.invoke('getExchangeRate', { target: targetCurrency });
+        const rate = response.data?.rate;
+        if (!rate || typeof rate !== 'number' || rate <= 0) return 1.0;
+        setCachedRate(targetCurrency, rate);
+        return rate;
+      } catch {
+        return 1.0; // safe fallback — never return null/NaN
+      } finally {
+        delete inflight.current[targetCurrency];
       }
-      rateCache[targetCurrency] = rate;
-      return rate;
-    } catch (err) {
-      console.error('Failed to get exchange rate:', err);
-      // Return cached rate if available, otherwise null (callers must handle)
-      return rateCache[targetCurrency] || null;
-    }
+    })();
+
+    inflight.current[targetCurrency] = promise;
+    return promise;
   };
 
   useEffect(() => {

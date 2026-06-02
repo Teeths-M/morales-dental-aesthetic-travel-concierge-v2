@@ -297,13 +297,15 @@ export default function PaymentCheckout() {
     );
   }
 
+  const finalCostSafe = paymentPlan?.final_cost || 0;
+
   const plans = [
     {
       id: 'full_payment',
       title: 'Pay in Full',
       description: 'Complete your booking with full payment',
-      amount: paymentPlan.final_cost * 0.95,
-      originalAmount: paymentPlan.final_cost,
+      amount: finalCostSafe * 0.95,
+      originalAmount: finalCostSafe,
       discount: 5,
       highlight: true,
       icon: Zap
@@ -312,9 +314,9 @@ export default function PaymentCheckout() {
       id: 'deposit_50',
       title: '50% Deposit',
       description: 'Secure your date with 50% upfront',
-      amount: paymentPlan.final_cost * 0.50,
-      originalAmount: paymentPlan.final_cost,
-      remaining: paymentPlan.final_cost * 0.50,
+      amount: finalCostSafe * 0.50,
+      originalAmount: finalCostSafe,
+      remaining: finalCostSafe * 0.50,
       highlight: false,
       icon: Lock
     },
@@ -322,9 +324,9 @@ export default function PaymentCheckout() {
       id: 'deposit_25',
       title: '25% Deposit',
       description: 'Book with 25% deposit',
-      amount: paymentPlan.final_cost * 0.25,
-      originalAmount: paymentPlan.final_cost,
-      remaining: paymentPlan.final_cost * 0.75,
+      amount: finalCostSafe * 0.25,
+      originalAmount: finalCostSafe,
+      remaining: finalCostSafe * 0.75,
       highlight: false,
       icon: Lock
     }

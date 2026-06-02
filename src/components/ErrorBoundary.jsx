@@ -29,14 +29,7 @@ class ErrorBoundary extends React.Component {
               <p className="mt-2 text-sm text-muted-foreground">
                 Please try refreshing the page or contact us at concierge@morales-dental.com
               </p>
-              {import.meta.env.DEV && this.state.errorInfo && (
-                <details className="mt-2 text-xs text-muted-foreground">
-                  <summary>Error details</summary>
-                  <pre className="mt-1 p-2 bg-red-900 text-white rounded-md overflow-x-auto">
-                    {this.state.errorInfo.componentStack}
-                  </pre>
-                </details>
-              )}
+
             </AlertDescription>
           </Alert>
         </div>
