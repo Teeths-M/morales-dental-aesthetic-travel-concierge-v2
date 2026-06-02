@@ -52,7 +52,10 @@ Deno.serve(async (req) => {
     const selectedAgency = travelAgencies[0];
 
     // Generate portal token
-    const portalToken = `travel_${caseId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const randomBytes = new Uint8Array(32);
+    crypto.getRandomValues(randomBytes);
+    const hex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const portalToken = `travel_${caseId}_${hex}`;
 
     // Update case
     await base44.entities.CaseRecord.update(caseId, {

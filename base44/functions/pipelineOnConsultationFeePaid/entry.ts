@@ -1,10 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Inline token encoder (no local imports allowed)
-function encodePortalToken({ consultation_id, partner_id, portal_type }) {
+async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
+  const rawBytes = new Uint8Array(32);
+  crypto.getRandomValues(rawBytes);
+  const randomSuffix = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, utf8));
+  return btoa(String.fromCharCode.apply(null, utf8)) + '.' + randomSuffix;
 }
 
 async function sendSms(to, message) {
@@ -118,7 +121,7 @@ Deno.serve(async (req) => {
       const doctorName = doctor?.full_name || 'Doctor';
       const doctorPhone = doctor?.phone;
 
-      const token = encodePortalToken({ consultation_id: consultationId, partner_id: doctorId, portal_type: 'doctor' });
+      const token = await encodePortalToken({ consultation_id: consultationId, partner_id: doctorId, portal_type: 'doctor' });
       const doctorPortalUrl = `${appUrl}/portal/doctor/${token}`;
 
       const doctorSms = `Hello Dr. ${doctorName}, a new patient (${patientName}) has paid their consultation fee and awaits your review. Open your portal to confirm or decline: ${doctorPortalUrl} — Morales Dental & Aesthetics`;

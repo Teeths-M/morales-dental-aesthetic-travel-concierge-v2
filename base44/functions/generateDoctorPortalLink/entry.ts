@@ -1,15 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Inline token encoding to avoid import issues in Deno
-function encodePortalToken({ consultation_id, partner_id, portal_type }) {
+async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   const payload = {
     consultation_id,
     partner_id,
     portal_type,
     expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
   };
+  const rawBytes = new Uint8Array(32);
+  crypto.getRandomValues(rawBytes);
+  const randomSuffix = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, utf8));
+  return btoa(String.fromCharCode.apply(null, utf8)) + '.' + randomSuffix;
 }
 
 Deno.serve(async (req) => {
@@ -29,7 +31,7 @@ Deno.serve(async (req) => {
     }
 
     // Generate portal token
-    const token = encodePortalToken({
+    const token = await encodePortalToken({
       consultation_id,
       partner_id: doctor_id,
       portal_type: 'doctor',

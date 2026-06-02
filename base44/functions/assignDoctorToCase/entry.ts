@@ -54,6 +54,15 @@ const formatProcedure = (raw) => {
 const escapeHtml = (v) => String(v ?? '')
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+async function generateSecureToken(prefix, caseId) {
+  const randomBytes = new Uint8Array(32);
+  crypto.getRandomValues(randomBytes);
+  const hex = Array.from(randomBytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `${prefix}_${caseId}_${hex}`;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -135,7 +144,7 @@ Deno.serve(async (req) => {
       consultation?.procedure_interest || caseRecord.procedures
     );
 
-    const portalToken = `doc_${caseId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const portalToken = await generateSecureToken('doc', caseId);
     const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
     const portalUrl = `${appUrl}/portal/doctor/${portalToken}`;
 
