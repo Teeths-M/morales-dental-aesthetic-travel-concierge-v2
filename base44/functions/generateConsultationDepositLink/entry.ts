@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 
 const DEPOSIT_AMOUNT = 60;
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey);
-    const appUrl = Deno.env.get('APP_URL') || 'https://app.base44.com';
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
     // Build success/cancel URLs
     const successUrl = case_id

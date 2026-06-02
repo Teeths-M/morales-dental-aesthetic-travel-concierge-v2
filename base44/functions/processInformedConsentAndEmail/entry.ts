@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const DISCLOSURE_TEXT = `
 1. Surgical Risk Acknowledgement: I understand that every medical, dental, and surgical procedure carries inherent biological risks and potential complications including, but not limited to, infection, adverse reactions, and unforeseen surgical events.

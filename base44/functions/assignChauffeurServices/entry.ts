@@ -1,13 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    const isAdmin = user && user.role === 'admin';
-    const isServiceRole = !user;
-
-    if (!isAdmin && !isServiceRole) {
+    if (user?.role !== 'admin') {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
@@ -61,8 +58,9 @@ Deno.serve(async (req) => {
     });
 
     // Send emails to both drivers
-    const originPortalUrl = `${Deno.env.get('APP_URL') || 'http://localhost:5173'}/portal/transfer/${originToken}`;
-    const destPortalUrl = `${Deno.env.get('APP_URL') || 'http://localhost:5173'}/portal/transfer/${destToken}`;
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+    const originPortalUrl = `${appUrl}/portal/transfer/${originToken}`;
+    const destPortalUrl = `${appUrl}/portal/transfer/${destToken}`;
 
     // Origin driver email
     await base44.integrations.Core.SendEmail({

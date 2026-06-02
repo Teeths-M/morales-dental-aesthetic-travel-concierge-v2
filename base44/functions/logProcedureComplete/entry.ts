@@ -3,7 +3,7 @@
  * Called by Doctor Portal. Lifts the notification blackout and
  * transitions the case to RECOVERY_PHASE_7_DAY.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -41,9 +41,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate standalone payment link (STATIC PATH)
-    const appUrl = 'https://sentinel-dental-care.base44.app';
-    const paymentUrl = `${appUrl}/pay-now`;
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+    const paymentUrl = `${appUrl}/pay-now?token=${caseRecord.proposal_token || case_id}`;
 
     // Send payment email
     await base44.asServiceRole.integrations.Core.SendEmail({

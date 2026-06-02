@@ -4,7 +4,7 @@
  * and transitions the case to SURGICAL_EXECUTION_WINDOW status,
  * simultaneously activating the notification blackout (Stage 11).
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
