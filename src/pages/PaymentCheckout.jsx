@@ -76,7 +76,7 @@ export default function PaymentCheckout() {
     },
     retry: 2,
     retryDelay: 1000,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Derive consultation and payment plan from CaseRecord

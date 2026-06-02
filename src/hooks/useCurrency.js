@@ -39,16 +39,25 @@ export function useCurrency() {
     window.dispatchEvent(new CustomEvent('currencyChange', { detail: { currency: curr } }));
   };
 
+  const rateCache = {};
+
   const getExchangeRate = async (targetCurrency) => {
+    if (!targetCurrency || targetCurrency === 'USD') return 1.0;
+    if (rateCache[targetCurrency]) return rateCache[targetCurrency];
     try {
       const response = await base44.functions.invoke('getExchangeRate', {
-        base: currency,
         target: targetCurrency
       });
-      return response.data.rate;
+      const rate = response.data?.rate;
+      if (!rate || typeof rate !== 'number' || rate <= 0) {
+        throw new Error(`Invalid rate received: ${rate}`);
+      }
+      rateCache[targetCurrency] = rate;
+      return rate;
     } catch (err) {
       console.error('Failed to get exchange rate:', err);
-      return 1.0; // Fallback
+      // Return cached rate if available, otherwise null (callers must handle)
+      return rateCache[targetCurrency] || null;
     }
   };
 

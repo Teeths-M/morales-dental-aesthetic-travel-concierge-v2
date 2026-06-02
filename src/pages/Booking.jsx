@@ -76,8 +76,9 @@ export default function Booking() {
   const navigate = useNavigate();
   const { items, clearCart, procedureCountry, procedureCity } = useCart();
 
-  // Auto-save debounce timer
+  // Auto-save debounce timer + draft ID cache to prevent race conditions
   const saveTimerRef = useRef(null);
+  const draftIdRef = useRef(null);
 
   // Get current user email
   const [userEmail, setUserEmail] = useState(null);
@@ -219,24 +220,26 @@ export default function Booking() {
           ...formData,
           acknowledged_statements: Array.from(formData.acknowledged_statements)
         };
-        
-        const existing = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
-        
-        if (existing.length > 0) {
-          // Update existing draft
-          await base44.entities.ConsultationDraft.update(existing[0].id, {
-            form_data: formDataSerializable,
-            step: steps[currentStep]?.label || 'unknown',
-            last_saved_at: new Date().toISOString(),
-          });
+
+        const payload = {
+          form_data: formDataSerializable,
+          step: steps[currentStep]?.label || 'unknown',
+          last_saved_at: new Date().toISOString(),
+        };
+
+        if (draftIdRef.current) {
+          // Update known draft — no race condition
+          await base44.entities.ConsultationDraft.update(draftIdRef.current, payload);
         } else {
-          // Create new draft
-          await base44.entities.ConsultationDraft.create({
-            user_email: userEmail,
-            form_data: formDataSerializable,
-            step: steps[currentStep]?.label || 'unknown',
-            last_saved_at: new Date().toISOString(),
-          });
+          // First save: check DB then create (guard against cold-start race)
+          const existing = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
+          if (existing.length > 0) {
+            draftIdRef.current = existing[0].id;
+            await base44.entities.ConsultationDraft.update(draftIdRef.current, payload);
+          } else {
+            const created = await base44.entities.ConsultationDraft.create({ user_email: userEmail, ...payload });
+            draftIdRef.current = created.id;
+          }
         }
 
         await saveUserOnboardingProfile({
@@ -252,6 +255,13 @@ export default function Booking() {
       }
     }, 1000);
   }, [userEmail, submitted]);
+
+  // Cleanup timer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   // Save draft on form changes
   useEffect(() => {
@@ -284,9 +294,13 @@ export default function Booking() {
   const deleteDraft = useCallback(async () => {
     if (!userEmail) return;
     try {
-      const drafts = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
-      if (drafts.length > 0) {
-        await base44.entities.ConsultationDraft.delete(drafts[0].id);
+      const idToDelete = draftIdRef.current;
+      if (idToDelete) {
+        await base44.entities.ConsultationDraft.delete(idToDelete);
+        draftIdRef.current = null;
+      } else {
+        const drafts = await base44.entities.ConsultationDraft.filter({ user_email: userEmail });
+        if (drafts.length > 0) await base44.entities.ConsultationDraft.delete(drafts[0].id);
       }
     } catch (e) {
       console.error('Failed to delete draft:', e);
