@@ -26,10 +26,9 @@ Deno.serve(async (req) => {
 
     // All other actions require admin authentication
     const user = await base44.auth.me().catch(() => null);
-    const isAdmin = user && user.role === 'admin';
-    const isServiceRole = !user;
+    const isAdmin = user?.role === 'admin';
 
-    if (!isAdmin && !isServiceRole) {
+    if (!isAdmin) {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
@@ -112,7 +111,7 @@ Deno.serve(async (req) => {
         status: 'Proposal-Sent'
       });
 
-      const appUrl = 'https://sentinel-dental-care.base44.app';
+      const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
       const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
 
       return Response.json({ 
@@ -156,7 +155,7 @@ Deno.serve(async (req) => {
       });
 
       // Send proposal email to client with absolute URL - route to NEW standalone payment page with token
-      const appUrl = 'https://sentinel-dental-care.base44.app';
+      const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
       const paymentUrl = `${appUrl}/pay-now?token=${proposalToken}`;
       
       await base44.integrations.Core.SendEmail({
@@ -301,8 +300,13 @@ Deno.serve(async (req) => {
         ]
       });
 
+      // Idempotency guard: prevent double-processing if already paid
+      if (caseRecord.payment_status !== 'Pending') {
+        return Response.json({ success: true, already_processed: true, case_id: caseRecord.id, payment_status: caseRecord.payment_status });
+      }
+
       // AUTO-TRIGGER: 5-way email notifications (concurrent)
-      const appUrl = 'https://sentinel-dental-care.base44.app';
+      const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
       const emailPromises = [];
 
       // 1. PATIENT - Luxury itinerary welcome package

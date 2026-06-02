@@ -57,26 +57,33 @@ export async function encryptFile(file) {
 }
 
 /**
- * Decrypts an encrypted blob using the provided key + IV (both base64).
- * Returns a Blob (original file) for display.
+ * Decrypts an encrypted passport file via secure backend function.
+ * Keys are never sent to the browser — decryption happens server-side.
+ * Pass passport_token (preferred) to use backend decryption.
  */
-export async function decryptFile(encryptedB64, keyB64, ivB64, mimeType = 'image/jpeg') {
+export async function decryptFile(encryptedB64, keyB64, ivB64, mimeType = 'image/jpeg', passportToken = null) {
+  // Preferred: backend decryption (keys stay on server)
+  if (passportToken) {
+    const { base44 } = await import('@/api/base44Client');
+    const res = await base44.functions.invoke('decryptPassportFile', { passport_token: passportToken });
+    const { decryptedB64 } = res.data;
+    const bytes = Uint8Array.from(atob(decryptedB64), c => c.charCodeAt(0));
+    return new Blob([bytes], { type: mimeType });
+  }
+
+  // Fallback: client-side decryption (legacy path, avoid when possible)
   const encryptedBytes = Uint8Array.from(atob(encryptedB64), c => c.charCodeAt(0));
   const keyBytes = Uint8Array.from(atob(keyB64), c => c.charCodeAt(0));
   const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    keyBytes,
+    'raw', keyBytes,
     { name: 'AES-GCM', length: 256 },
-    false,
-    ['decrypt']
+    false, ['decrypt']
   );
 
   const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    cryptoKey,
-    encryptedBytes
+    { name: 'AES-GCM', iv }, cryptoKey, encryptedBytes
   );
 
   return new Blob([decryptedBuffer], { type: mimeType });
