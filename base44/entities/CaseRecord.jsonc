@@ -17,6 +17,8 @@
         "Travel-Coordination",
         "Ready-For-Travel",
         "Procedure-In-Progress",
+        "SURGICAL_EXECUTION_WINDOW",
+        "RECOVERY_PHASE_7_DAY",
         "Recovery",
         "Completed"
       ],
@@ -337,6 +339,102 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp when the informed consent email was dispatched"
+    },
+    "cultural_care_package": {
+      "type": "object",
+      "description": "Stage 7: Post-Operative Cultural Care Package payload",
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "origin_country": {
+          "type": "string"
+        },
+        "procedure_category": {
+          "type": "string"
+        },
+        "translation_routing": {
+          "type": "object",
+          "description": "Companion translation routing instructions",
+          "properties": {
+            "language_primary": {
+              "type": "string"
+            },
+            "language_secondary": {
+              "type": "string"
+            },
+            "companion_type": {
+              "type": "string"
+            },
+            "routing_instructions": {
+              "type": "string"
+            },
+            "cultural_liaison_required": {
+              "type": "boolean"
+            }
+          }
+        },
+        "diet_order": {
+          "type": "object",
+          "description": "Culturally adapted post-op diet plan",
+          "properties": {
+            "phase": {
+              "type": "string"
+            },
+            "caloric_target_kcal": {
+              "type": "number"
+            },
+            "meals": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "avoid": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cultural_notes": {
+              "type": "string"
+            }
+          }
+        },
+        "logistics_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "notification_blackout_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Stage 11: When true, all automated notifications are suppressed and logged to audit trail"
+    },
+    "notification_blackout_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when blackout was activated"
+    },
+    "notification_blackout_lifted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when blackout was lifted after procedure completion"
+    },
+    "intake_handshake_logged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Stage 10: Timestamp when doctor logged the physical intake handshake"
+    },
+    "intake_handshake_logged_by": {
+      "type": "string",
+      "description": "Stage 10: Doctor email/ID who logged the intake handshake"
+    },
+    "procedure_complete_logged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Stage 11 end: Timestamp when doctor logged procedure complete"
     }
   },
   "required": [

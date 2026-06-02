@@ -1,0 +1,79 @@
+{
+  "name": "NotificationLog",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Linked CaseRecord ID"
+    },
+    "notification_type": {
+      "type": "string",
+      "enum": [
+        "sms",
+        "email",
+        "push",
+        "platform_alert"
+      ],
+      "description": "Channel that was suppressed"
+    },
+    "recipient_role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "admin",
+        "doctor",
+        "vendor"
+      ],
+      "description": "Role of the intended recipient"
+    },
+    "recipient_identifier": {
+      "type": "string",
+      "description": "Email, phone, or user ID of recipient"
+    },
+    "event_trigger": {
+      "type": "string",
+      "description": "The pipeline event or function that triggered this notification"
+    },
+    "suppressed_payload": {
+      "type": "object",
+      "description": "Full notification payload that was suppressed (for audit/replay)"
+    },
+    "suppression_reason": {
+      "type": "string",
+      "enum": [
+        "SURGICAL_EXECUTION_WINDOW_BLACKOUT"
+      ],
+      "description": "Reason the notification was suppressed"
+    },
+    "blackout_case_status": {
+      "type": "string",
+      "description": "The CaseRecord status at time of suppression"
+    },
+    "logged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when notification was intercepted and logged"
+    },
+    "replayed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO timestamp when notification was replayed after blackout lifted (if applicable)"
+    },
+    "replay_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "replayed",
+        "discarded"
+      ],
+      "default": "pending",
+      "description": "Whether suppressed notification was later replayed"
+    }
+  },
+  "required": [
+    "case_id",
+    "notification_type",
+    "recipient_role",
+    "event_trigger"
+  ]
+}

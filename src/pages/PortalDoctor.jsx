@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
 
 export default function PortalDoctor() {
   const { token } = useParams();
@@ -400,6 +401,13 @@ export default function PortalDoctor() {
                   />
                 </div>
               </div>
+
+              {/* Stage 10 & 11: Surgical Execution Controls */}
+              <SurgicalExecutionControls
+                caseData={caseData}
+                token={token}
+                onStatusChange={(newStatus) => setCaseData(prev => ({ ...prev, status: newStatus, notification_blackout_active: newStatus === 'SURGICAL_EXECUTION_WINDOW' }))}
+              />
 
               {/* Action Buttons */}
               <div className="flex gap-4">
