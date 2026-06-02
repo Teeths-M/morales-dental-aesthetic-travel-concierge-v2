@@ -47,6 +47,7 @@ import AdminSms from './pages/AdminSms';
 import StandalonePayment from './pages/StandalonePayment';
 import TestPortalLink from './pages/TestPortalLink';
 import PortalTestHub from './pages/PortalTestHub';
+import PassportVault from './pages/PassportVault';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -137,6 +138,7 @@ const AuthenticatedApp = () => {
       {/* Standalone payment page - direct link for payments */}
       <Route path="/pay-now" element={<PaymentCheckout />} />
       <Route path="/test-portal-link" element={<TestPortalLink />} />
+      <Route path="/passport-vault" element={<PassportVault />} />
       <Route path="/portal-test-hub" element={<PortalTestHub />} />
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />

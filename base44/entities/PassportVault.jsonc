@@ -1,0 +1,145 @@
+{
+  "name": "PassportVault",
+  "type": "object",
+  "properties": {
+    "passport_token": {
+      "type": "string",
+      "description": "PASS_<hex> - Immutable unique reference token"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for audit queries"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "passport",
+        "national_id",
+        "travel_permit"
+      ],
+      "default": "passport"
+    },
+    "encrypted_file_uri": {
+      "type": "string",
+      "description": "Private storage URI to AES-256-GCM encrypted file"
+    },
+    "encryption_key_b64": {
+      "type": "string",
+      "description": "Base64 AES-256-GCM key (controlled release only)"
+    },
+    "encryption_iv_b64": {
+      "type": "string",
+      "description": "Base64 initialization vector for decryption"
+    },
+    "redacted_for_display": {
+      "type": "object",
+      "description": "Safe non-sensitive metadata for operational use",
+      "properties": {
+        "last_4_digits": {
+          "type": "string"
+        },
+        "expiry_date": {
+          "type": "string"
+        },
+        "nationality": {
+          "type": "string"
+        },
+        "full_name_redacted": {
+          "type": "string"
+        },
+        "document_type": {
+          "type": "string"
+        }
+      }
+    },
+    "file_size_bytes": {
+      "type": "number",
+      "description": "Original file size before encryption"
+    },
+    "file_hash_sha256": {
+      "type": "string",
+      "description": "SHA-256 hash of original file for integrity"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked",
+        "expired",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "virus_scan_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "quarantined"
+      ],
+      "default": "pending"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Auto-delete after patient-configured retention period"
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "access_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "passport_token",
+    "patient_email",
+    "document_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -150,12 +150,9 @@
             "type": "string",
             "description": "Relationship to patient"
           },
-          "passport_number": {
-            "type": "string"
-          },
-          "passport_issue_date": {
+          "passport_token": {
             "type": "string",
-            "format": "date"
+            "description": "PASS_xxx token from PassportVault (replaces raw passport_number)"
           },
           "passport_expiry_date": {
             "type": "string",
@@ -303,62 +300,46 @@
       "description": "Hotel cost quoted by travel agency (USD)"
     },
     "flight_itinerary_summary": {
-      "type": "string",
-      "description": "e.g. 'Arrives MCO 10:30 AM on 2026-06-15, UA 123 from DEN'"
+      "type": "string"
     },
     "hotel_selection": {
-      "type": "string",
-      "description": "Hotel name and location chosen by travel agency"
+      "type": "string"
     },
     "transfer_notes": {
-      "type": "string",
-      "description": "Special instructions for chauffeur (mobility needs, etc.)"
+      "type": "string"
     },
     "leg_1_cost_usd": {
-      "type": "number",
-      "description": "Origin leg: Client Home \u2192 Local Airport"
+      "type": "number"
     },
     "leg_2_cost_usd": {
-      "type": "number",
-      "description": "Origin leg: Local Airport \u2192 Client Home (return)"
+      "type": "number"
     },
     "leg_3_cost_usd": {
-      "type": "number",
-      "description": "Destination leg: Airport \u2192 Hotel (arrival)"
+      "type": "number"
     },
     "leg_4_cost_usd": {
-      "type": "number",
-      "description": "Destination leg: Hotel \u2192 Clinic"
+      "type": "number"
     },
     "leg_5_cost_usd": {
-      "type": "number",
-      "description": "Destination leg: Clinic \u2192 Hotel (post-op)"
+      "type": "number"
     },
     "leg_6_cost_usd": {
-      "type": "number",
-      "description": "Destination leg: Hotel \u2192 Airport (final departure)"
+      "type": "number"
     },
     "travel_agency_id": {
-      "type": "string",
-      "description": "ID of the assigned travel agency"
+      "type": "string"
     },
     "taxi_service_id": {
-      "type": "string",
-      "description": "ID of the assigned taxi/chauffeur service"
+      "type": "string"
     },
-    "passport_number": {
+    "passport_vault_token": {
       "type": "string",
-      "description": "Client passport number"
-    },
-    "passport_issue_date": {
-      "type": "string",
-      "format": "date",
-      "description": "Passport issue date"
+      "description": "PASS_xxx \u2014 References encrypted passport in PassportVault (replaces raw passport_number)"
     },
     "passport_expiry_date": {
       "type": "string",
       "format": "date",
-      "description": "Passport expiry date (6-month sentinel rule applied)"
+      "description": "Non-sensitive expiry date retained for 6-month sentinel rule validation"
     },
     "ip_country_origin": {
       "type": "string",
