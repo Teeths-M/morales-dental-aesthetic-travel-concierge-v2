@@ -9,6 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard } from 'lucide-react';
 import DeclineDepositDialog from '@/components/checkout/DeclineDepositDialog';
+import { toast } from 'sonner';
+
+// Timeout wrapper — prevents payment UI from hanging forever
+function withTimeout(promise, ms = 15000) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Request timed out — please try again')), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
 
 // Fallback mock data for Dr. Rossanna $60 package
 const MOCK_CASE = {
@@ -104,68 +113,51 @@ export default function PaymentCheckout() {
       const depositOption = plan_type === 'full_payment' ? 'Full' : 
                             plan_type === 'deposit_50' ? '50%' : '25%';
 
-      try {
-        // First, record the payment intent in our system
-        const res = await base44.functions.invoke('iq200Pipeline', {
-          action: 'process_payment',
-          payload: { 
-            token: token,
-            deposit_option: depositOption
-          }
-        });
+      // Record the payment intent with timeout protection
+      const res = await withTimeout(base44.functions.invoke('iq200Pipeline', {
+        action: 'process_payment',
+        payload: { token, deposit_option: depositOption }
+      }));
 
-        if (!res.data?.success) {
-          throw new Error(res.data?.error || 'Payment processing failed');
-        }
+      if (!res.data?.success) {
+        throw new Error(res.data?.error || 'Payment processing failed');
+      }
 
-        // Route to selected payment method
-        if (paymentMethod === 'wipay') {
-          const paymentRes = await base44.functions.invoke('mockWipayPayment', {
-            case_id: caseRecord.id,
-            deposit_option: depositOption,
-            amount: depositOption === 'Full' ? paymentPlan.final_cost * 0.95 :
-                    depositOption === '50%' ? paymentPlan.final_cost * 0.50 :
-                    paymentPlan.final_cost * 0.25
-          });
-          if (!paymentRes.data?.success) throw new Error(paymentRes.data?.error || 'WiPay payment failed');
-          window.location.href = paymentRes.data.payment_url;
-          return { redirecting: true };
-        }
+      const amountValue = depositOption === 'Full' ? (paymentPlan?.final_cost || 0) * 0.95 :
+                          depositOption === '50%' ? (paymentPlan?.final_cost || 0) * 0.50 :
+                          (paymentPlan?.final_cost || 0) * 0.25;
 
-        if (paymentMethod === 'paypal') {
-          const paymentRes = await base44.functions.invoke('mockPaypalPayment', {
-            case_id: caseRecord.id,
-            deposit_option: depositOption,
-            amount: depositOption === 'Full' ? paymentPlan.final_cost * 0.95 :
-                    depositOption === '50%' ? paymentPlan.final_cost * 0.50 :
-                    paymentPlan.final_cost * 0.25
-          });
-          if (!paymentRes.data?.success) throw new Error(paymentRes.data?.error || 'PayPal payment failed');
-          window.location.href = paymentRes.data.payment_url;
-          return { redirecting: true };
-        }
-
-        // Default: Stripe
-        const paymentRes = await base44.functions.invoke('generateStripePaymentLink', {
-          case_id: caseRecord.id,
-          deposit_option: depositOption
-        });
-
-        if (!paymentRes.data?.success) {
-          throw new Error(paymentRes.data?.error || 'Failed to create payment session');
-        }
-
-        // Redirect to Stripe
+      if (paymentMethod === 'wipay') {
+        const paymentRes = await withTimeout(base44.functions.invoke('mockWipayPayment', {
+          case_id: caseRecord.id, deposit_option: depositOption, amount: amountValue
+        }));
+        if (!paymentRes.data?.success) throw new Error(paymentRes.data?.error || 'WiPay payment failed');
         window.location.href = paymentRes.data.payment_url;
         return { redirecting: true };
-      } catch (error) {
-        console.error('Payment flow failed:', error.message);
-        throw new Error(error.message || 'Payment processing failed');
       }
+
+      if (paymentMethod === 'paypal') {
+        const paymentRes = await withTimeout(base44.functions.invoke('mockPaypalPayment', {
+          case_id: caseRecord.id, deposit_option: depositOption, amount: amountValue
+        }));
+        if (!paymentRes.data?.success) throw new Error(paymentRes.data?.error || 'PayPal payment failed');
+        window.location.href = paymentRes.data.payment_url;
+        return { redirecting: true };
+      }
+
+      // Default: Stripe
+      const paymentRes = await withTimeout(base44.functions.invoke('generateStripePaymentLink', {
+        case_id: caseRecord.id, deposit_option: depositOption
+      }));
+
+      if (!paymentRes.data?.success) {
+        throw new Error(paymentRes.data?.error || 'Failed to create payment session');
+      }
+
+      window.location.href = paymentRes.data.payment_url;
+      return { redirecting: true };
     },
     onError: (error) => {
-      console.error('Payment error:', error.message);
-      // For high-tier transactions ($3,000+), surface the transparent decline dialog
       const finalCost = paymentPlan?.final_cost || 0;
       const depositMap = { full_payment: 0.95, deposit_50: 0.50, deposit_25: 0.25 };
       const multiplier = depositMap[selectedPlan] ?? 1;
@@ -173,6 +165,8 @@ export default function PaymentCheckout() {
       if (attemptedAmount >= 3000 && paymentMethod === 'stripe') {
         setDeclinedAmount(attemptedAmount);
         setShowDeclineDialog(true);
+      } else {
+        toast.error(error.message || 'Payment failed. Please try again or contact support.');
       }
     },
     onSuccess: (res) => {
@@ -342,7 +336,7 @@ export default function PaymentCheckout() {
             Complete Your Booking
           </h1>
           <p className="text-muted-foreground">
-            {caseRecord?.client_name || consultation.patient_name} • {caseRecord?.procedures?.[0] || consultation.procedure_interest}
+            {caseRecord?.client_name || consultation?.patient_name || 'Your Package'} • {caseRecord?.procedures?.[0] || consultation?.procedure_interest || 'Medical Procedure'}
           </p>
         </div>
 
