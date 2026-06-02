@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 
 // Inline utilities
@@ -73,13 +73,10 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Validate authentication
+    // Allow authenticated users (patients checking out) or admins
     const user = await base44.auth.me().catch(() => null);
-    const isAdmin = user && user.role === 'admin';
-    const isServiceRole = !user;
-
-    if (!isAdmin && !isServiceRole) {
-      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { case_id, deposit_option } = await req.json();
@@ -180,8 +177,8 @@ Deno.serve(async (req) => {
                 },
               ],
               mode: 'payment',
-              success_url: `${Deno.env.get('APP_URL')}/portal/proposal/${caseRecord.proposal_token}?payment=success`,
-              cancel_url: `${Deno.env.get('APP_URL')}/portal/proposal/${caseRecord.proposal_token}?payment=cancelled`,
+              success_url: `${(Deno.env.get('APP_URL') || '').replace(/\/$/, '')}/portal/proposal/${caseRecord.proposal_token}?payment=success`,
+              cancel_url: `${(Deno.env.get('APP_URL') || '').replace(/\/$/, '')}/portal/proposal/${caseRecord.proposal_token}?payment=cancelled`,
               customer_email: caseRecord.client_email,
               metadata: {
                 case_id: caseRecord.id,

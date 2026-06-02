@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Inline token encoder (no local imports allowed)
 async function encodePortalToken({ consultation_id, partner_id, portal_type }) {

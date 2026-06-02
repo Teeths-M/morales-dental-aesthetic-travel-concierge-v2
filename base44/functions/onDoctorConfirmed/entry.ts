@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const BRAND = 'Morales Dental & Aesthetics';
 const TEAM = 'Morales Concierge Team';
@@ -79,8 +79,8 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
     ]);
 
-    const appUrl = Deno.env.get('APP_URL') || 'https://your-portal-url.com';
-    const portalLink = `${appUrl}/portal-hub`;
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+    const portalLink = `${appUrl}/admin`;
 
     const results = { travel: [], hotel: [], cab: [], patient: null, doctor: null };
 

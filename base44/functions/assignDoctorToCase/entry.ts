@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const BRAND = 'Morales Dental & Aesthetics';
 const TEAM = 'Morales Concierge Team';
@@ -67,10 +67,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    const isAdmin = user && user.role === 'admin';
-    const isServiceRole = !user;
-
-    if (!isAdmin && !isServiceRole) {
+    if (user?.role !== 'admin') {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
@@ -145,7 +142,7 @@ Deno.serve(async (req) => {
     );
 
     const portalToken = await generateSecureToken('doc', caseId);
-    const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173';
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const portalUrl = `${appUrl}/portal/doctor/${portalToken}`;
 
     await base44.entities.CaseRecord.update(caseId, {

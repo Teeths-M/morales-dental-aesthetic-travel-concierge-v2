@@ -1,13 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
-    const isAdmin = user && user.role === 'admin';
-    const isServiceRole = !user;
-
-    if (!isAdmin && !isServiceRole) {
+    if (user?.role !== 'admin') {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 

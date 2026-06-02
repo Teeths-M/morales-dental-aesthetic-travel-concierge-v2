@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -115,8 +115,8 @@ Deno.serve(async (req) => {
         base44.entities.TaxiService.filter({ status: 'active' }),
       ]);
       
-      const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
-      const portalUrl = `${appUrl}/portal-hub/admin`;
+      const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+      const portalUrl = `${appUrl}/admin`;
       
       const getPartnerEmails = (type) => partners.filter(p => p.type === type).map(p => p.email);
       const travelEmails = getPartnerEmails('travel');
