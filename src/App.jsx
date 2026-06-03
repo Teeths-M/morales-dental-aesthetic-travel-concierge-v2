@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
 
   return (
     <>
+    <ScrollToTop />
     <Routes>
       {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
       <Route path="/portal/travel" element={<ErrorBoundary><PortalTravelAgency /></ErrorBoundary>} />
