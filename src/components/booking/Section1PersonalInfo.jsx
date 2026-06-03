@@ -24,7 +24,8 @@ function kgToLbs(kg) {
   return `${lbs}lbs`;
 }
 
-export default function Section1PersonalInfo({ form, update, language = 'en' }) {
+export default function Section1PersonalInfo({ form, update, language = 'en', showValidation = false, setShowValidation }) {
+  const resetValidation = () => { if (setShowValidation) setShowValidation(false); };
   const [weightUnit, setWeightUnit] = useState('kg');
   const [nationalitySearch, setNationalitySearch] = useState('');
   const { country: ipCountry } = useIpGeolocation();
@@ -47,7 +48,8 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <Label>{translations[language].fullName} <span className="text-destructive">*</span></Label>
-          <Input value={form.patient_name} onChange={e => update('patient_name', e.target.value)} placeholder={translations[language].yourFullName} className="mt-1.5" />
+          <Input value={form.patient_name} onChange={e => { update('patient_name', e.target.value); resetValidation(); }} placeholder={translations[language].yourFullName} className={`mt-1.5 ${showValidation && !form.patient_name ? 'border-red-400' : ''}`} />
+          {showValidation && !form.patient_name && <p className="text-xs text-red-500 mt-1">Full name is required</p>}
         </div>
 
         <div>
@@ -145,22 +147,26 @@ export default function Section1PersonalInfo({ form, update, language = 'en' }) 
 
         <div>
           <Label>{translations[language].emergencyContactName} <span className="text-destructive">*</span></Label>
-          <Input value={form.emergency_contact_name} onChange={e => update('emergency_contact_name', e.target.value)} placeholder={translations[language].contactName} className="mt-1.5" />
+          <Input value={form.emergency_contact_name} onChange={e => { update('emergency_contact_name', e.target.value); resetValidation(); }} placeholder={translations[language].contactName} className={`mt-1.5 ${showValidation && !form.emergency_contact_name ? 'border-red-400' : ''}`} />
+          {showValidation && !form.emergency_contact_name && <p className="text-xs text-red-500 mt-1">Emergency contact name is required</p>}
         </div>
 
         <div>
           <Label>{translations[language].emergencyContactNumber} <span className="text-destructive">*</span></Label>
-          <Input value={form.emergency_contact_number} onChange={e => update('emergency_contact_number', e.target.value)} placeholder={translations[language].phoneNumber} className="mt-1.5" />
+          <Input value={form.emergency_contact_number} onChange={e => { update('emergency_contact_number', e.target.value); resetValidation(); }} placeholder={translations[language].phoneNumber} className={`mt-1.5 ${showValidation && !form.emergency_contact_number ? 'border-red-400' : ''}`} />
+          {showValidation && !form.emergency_contact_number && <p className="text-xs text-red-500 mt-1">Emergency contact number is required</p>}
         </div>
 
         <div className="sm:col-span-2">
           <Label>{translations[language].email} <span className="text-destructive">*</span></Label>
-          <Input type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder={translations[language].yourEmail} className="mt-1.5" />
+          <Input type="email" value={form.email} onChange={e => { update('email', e.target.value); resetValidation(); }} placeholder={translations[language].yourEmail} className={`mt-1.5 ${showValidation && !form.email ? 'border-red-400' : ''}`} />
+          {showValidation && !form.email && <p className="text-xs text-red-500 mt-1">Email is required</p>}
         </div>
 
         <div className="sm:col-span-2">
           <Label>{translations[language].phone} <span className="text-destructive">*</span></Label>
-          <Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder={translations[language].phoneNumber} className="mt-1.5" />
+          <Input value={form.phone} onChange={e => { update('phone', e.target.value); resetValidation(); }} placeholder={translations[language].phoneNumber} className={`mt-1.5 ${showValidation && !form.phone ? 'border-red-400' : ''}`} />
+          {showValidation && !form.phone && <p className="text-xs text-red-500 mt-1">Phone number is required</p>}
         </div>
       </div>
 

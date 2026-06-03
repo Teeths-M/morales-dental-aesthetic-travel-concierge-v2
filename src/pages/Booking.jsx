@@ -67,6 +67,7 @@ const steps = [
 export default function Booking() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showFeeModal, setShowFeeModal] = useState(false);
   const [consultationId, setConsultationId] = useState(null);
@@ -473,7 +474,7 @@ export default function Booking() {
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.18 }}
               >
-                {step === 0  && <Section1PersonalInfo form={form} update={update} language={language} />}
+                {step === 0  && <Section1PersonalInfo form={form} update={update} language={language} showValidation={showValidation} setShowValidation={setShowValidation} />}
                  {step === 1  && <Section2Travel form={form} update={update} language={language} />}
                  {step === 2  && <Section3Cultural form={form} update={update} language={language} />}
                  {step === 3  && <Section4MedicalHistory form={form} update={update} language={language} />}
@@ -513,9 +514,17 @@ export default function Booking() {
 
             {step < steps.length - 1 ? (
               <Button
-                onClick={() => setStep(s => s + 1)}
-                disabled={!canNext()}
-                className="gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
+                onClick={() => {
+                  if (!canNext()) {
+                    setShowValidation(true);
+                    toast.error('Please complete all required fields before continuing.');
+                    return;
+                  }
+                  setShowValidation(false);
+                  setStep(s => s + 1);
+                  window.scrollTo(0, 0);
+                }}
+                className={`gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0 ${!canNext() ? 'opacity-70' : ''}`}
               >
                 {translations[language].continueBtn} <ArrowRight className="w-4 h-4" />
               </Button>
