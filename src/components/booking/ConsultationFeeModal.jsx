@@ -50,6 +50,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       }
     } catch (err) {
       setError(err.message);
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -101,6 +102,7 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
       }
     } catch (err) {
       setError(err.message);
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -152,6 +154,7 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
       }
     } catch (err) {
       setError(err.message);
+    } finally {
       setIsProcessing(false);
     }
   };
