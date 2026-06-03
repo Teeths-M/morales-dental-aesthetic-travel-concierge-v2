@@ -96,8 +96,8 @@ export default function Navbar() {
       {/* ── TOP NAV ── */}
       <nav className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-4 md:px-8 lg:px-12 flex items-center justify-between py-3 bg-[#020B0D]/90 backdrop-blur-md border-b border-white/[0.06]">
 
-        {/* Brand */}
-        <div className="flex-shrink-0">
+        {/* Brand — desktop only (mobile uses combined hamburger button) */}
+        <div className="flex-shrink-0 hidden lg:flex">
         <Link to="/" className="flex items-center gap-2.5">
           <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] flex items-center justify-center rounded-lg shrink-0 overflow-hidden">
             <img
@@ -287,13 +287,21 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Mobile/Tablet Hamburger */}
+        {/* Mobile/Tablet Combined Brand + Hamburger */}
         <div className="flex lg:hidden items-center">
           <button
-            className="lg:hidden p-2 rounded-md bg-transparent hover:bg-white/10 transition-colors text-white border-0 outline-none"
+            className="flex items-center gap-2 p-1.5 rounded-xl bg-transparent hover:bg-white/[0.06] transition-colors border-0 outline-none"
             onClick={() => setMobileOpen(!mobileOpen)}
+            onDoubleClick={(e) => { e.preventDefault(); setMobileOpen(false); navigate('/'); }}
           >
-            {mobileOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
+            <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] rounded-lg overflow-hidden flex-shrink-0">
+              <img
+                src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
+                alt="Morales"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {mobileOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white/70" />}
           </button>
         </div>
       </nav>
