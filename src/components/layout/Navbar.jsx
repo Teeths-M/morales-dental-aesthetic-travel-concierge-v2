@@ -259,57 +259,59 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {/* Language Dropdown */}
-              <div 
-                className="relative hidden sm:block" 
-                onMouseLeave={handleLanguageMouseLeave} 
-                onMouseEnter={() => {
-                  handleLanguageMouseEnter();
-                  setLanguageDropdownOpen(true);
-                }}
+            {/* Language Dropdown — desktop only */}
+            <div 
+              className="relative hidden xl:block" 
+              onMouseLeave={handleLanguageMouseLeave} 
+              onMouseEnter={() => {
+                handleLanguageMouseEnter();
+                setLanguageDropdownOpen(true);
+              }}
+            >
+              <button
+                className="p-2 hover:bg-secondary rounded-md transition-colors"
+                title="Select Language"
               >
-                <button
-                  className="p-2 hover:bg-secondary rounded-md transition-colors"
-                  title="Select Language"
-                >
-                  <Globe className="w-4 h-4" />
-                </button>
-                <AnimatePresence>
-                  {languageDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50"
-                    >
-                      {allLanguages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            handleLanguageChange(lang.code);
-                            setLanguageDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0 ${
-                            language === lang.code
-                              ? 'bg-secondary text-foreground'
-                              : 'text-foreground hover:bg-secondary/50'
-                          }`}
-                        >
-                          {lang.flag} {lang.name}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                <Globe className="w-4 h-4" />
+              </button>
+              <AnimatePresence>
+                {languageDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50"
+                  >
+                    {allLanguages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          handleLanguageChange(lang.code);
+                          setLanguageDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0 ${
+                          language === lang.code
+                            ? 'bg-secondary text-foreground'
+                            : 'text-foreground hover:bg-secondary/50'
+                        }`}
+                      >
+                        {lang.flag} {lang.name}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Auth buttons — desktop only */}
             {isAuthenticated ? (
               <>
-                <Link to={rolePrimaryAction.path}>
+                <Link to={rolePrimaryAction.path} className="hidden xl:inline-flex">
                   <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
                     {rolePrimaryAction.label}
                   </Button>
                 </Link>
-                <Button variant="outline" className="hidden sm:inline-flex text-sm" onClick={() => logout()}>
+                <Button variant="outline" className="hidden xl:inline-flex text-sm" onClick={() => logout()}>
                   Logout
                 </Button>
               </>
@@ -317,16 +319,21 @@ export default function Navbar() {
               <>
                 <Button
                   variant="outline"
-                  className="hidden sm:inline-flex text-sm font-semibold px-5"
+                  className="hidden xl:inline-flex text-sm font-semibold px-5"
                   onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
                 >
                   Register
                 </Button>
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5" onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}>
+                <Button
+                  className="hidden xl:inline-flex bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5"
+                  onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
+                >
                   Login
                 </Button>
               </>
             )}
+
+            {/* Hamburger — mobile/tablet only */}
             <button
               className="xl:hidden shrink-0 p-2 rounded-lg hover:bg-secondary transition-colors"
               onClick={() => setMobileOpen(!mobileOpen)}
