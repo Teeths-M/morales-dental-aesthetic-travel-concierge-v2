@@ -40,7 +40,18 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Consultation not found' }, { status: 404 });
       }
 
-      // Create CaseRecord
+      // IDEMPOTENCY: return existing CaseRecord if already created
+      const existing = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id });
+      if (existing && existing.length > 0) {
+        return Response.json({
+          success: true,
+          case_record: existing[0],
+          already_exists: true,
+          message: 'CaseRecord already exists for this consultation',
+        });
+      }
+
+      // Safe to create — no existing record
       const caseRecord = await base44.entities.CaseRecord.create({
         consultation_id: consultation.id,
         client_name: consultation.patient_name,
