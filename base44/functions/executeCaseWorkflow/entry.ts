@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
@@ -55,6 +55,29 @@ Deno.serve(async (req) => {
 
       case 'Admin-Review':
         result = { status: 'ADMIN_REVIEW', message: 'Case requires manual admin review' };
+        break;
+
+      case 'Proposal-Sent':
+      case 'PMP-25':
+      case 'PMP-50':
+        result = { status: 'AWAITING_PAYMENT', message: `Case is awaiting client payment (${caseRecord.status})` };
+        break;
+
+      case 'Deposit-Paid':
+      case 'Travel-Coordination':
+      case 'Ready-For-Travel':
+        result = { status: 'IN_TRAVEL_COORDINATION', message: `Case is in travel coordination (${caseRecord.status})` };
+        break;
+
+      case 'Procedure-In-Progress':
+      case 'SURGICAL_EXECUTION_WINDOW':
+      case 'RECOVERY_PHASE_7_DAY':
+      case 'Recovery':
+        result = { status: 'IN_PROGRESS', message: `Case is active — no automated step (${caseRecord.status})` };
+        break;
+
+      case 'Completed':
+        result = { status: 'COMPLETED', message: 'Case is already completed' };
         break;
 
       default:
