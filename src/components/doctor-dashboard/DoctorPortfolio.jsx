@@ -119,7 +119,12 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
               {/* Thumbnail */}
               <div className="relative w-full h-48 bg-secondary/50 flex items-center justify-center overflow-hidden group">
                 {item.type === 'image' ? (
-                  <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                    onError={e => { e.target.onerror = null; e.target.src = '/placeholder-image.png'; }}
+                  />
                 ) : (
                   <>
                     <video src={item.url} className="w-full h-full object-cover" />
