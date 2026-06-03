@@ -18,72 +18,80 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Twilio credentials not configured. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in environment secrets.' }, { status: 500 });
   }
 
-  const body = await req.json();
-  const { phone, message, channels = ['sms', 'whatsapp'] } = body;
+  try {
+    const body = await req.json();
+    const { phone, message, channels = ['sms', 'whatsapp'] } = body;
 
-  if (!phone || !message) {
-    return Response.json({ error: 'phone and message are required' }, { status: 400 });
-  }
-
-  // Blackout guard
-  const caseIdForBlackout = body.case_id || body.consultation_id || null;
-  if (caseIdForBlackout) {
-    const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
-      case_id: caseIdForBlackout,
-      notification_type: 'sms',
-      recipient_role: 'vendor',
-      recipient_identifier: phone,
-      event_trigger: 'sendDriverAlert',
-      payload: body
-    }).catch(() => ({ data: { suppressed: false } }));
-
-    if (blackoutRes.data?.suppressed) {
-      return Response.json({
-        suppressed: true,
-        reason: blackoutRes.data.reason,
-        message: 'Notification suppressed — case is in SURGICAL_EXECUTION_WINDOW blackout'
-      });
+    if (!phone || !message) {
+      return Response.json({ error: 'phone and message are required' }, { status: 400 });
     }
-  }
 
-  const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-  const results = { sms: null, whatsapp: null };
+    // Blackout guard
+    const caseIdForBlackout = body.case_id || body.consultation_id || null;
+    if (caseIdForBlackout) {
+      const blackoutRes = await base44.functions.invoke('checkNotificationBlackout', {
+        case_id: caseIdForBlackout,
+        notification_type: 'sms',
+        recipient_role: 'vendor',
+        recipient_identifier: phone,
+        event_trigger: 'sendDriverAlert',
+        payload: body
+      }).catch(() => ({ data: { suppressed: false } }));
 
-  const sendTwilio = async (from, to, msg) => {
-    const res = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${twilioAuth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ From: from, To: to, Body: msg }),
+      if (blackoutRes.data?.suppressed) {
+        return Response.json({
+          suppressed: true,
+          reason: blackoutRes.data.reason,
+          message: 'Notification suppressed — case is in SURGICAL_EXECUTION_WINDOW blackout'
+        });
       }
-    );
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Twilio error');
-    return { sid: data.sid, status: data.status };
-  };
-
-  // Send SMS
-  if (channels.includes('sms')) {
-    try {
-      results.sms = await sendTwilio(TWILIO_PHONE_NUMBER, phone, message);
-    } catch (e) {
-      results.sms = { error: e.message };
     }
-  }
 
-  // Send WhatsApp
-  if (channels.includes('whatsapp') && TWILIO_WHATSAPP_NUMBER) {
-    try {
-      const waPhone = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`;
-      results.whatsapp = await sendTwilio(TWILIO_WHATSAPP_NUMBER, waPhone, message);
-    } catch (e) {
-      results.whatsapp = { error: e.message };
+    const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    const results = { sms: null, whatsapp: null };
+
+    const sendTwilio = async (from, to, msg) => {
+      const res = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${twilioAuth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ From: from, To: to, Body: msg }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Twilio error');
+      return { sid: data.sid, status: data.status };
+    };
+
+    // Send SMS
+    if (channels.includes('sms')) {
+      try {
+        results.sms = await sendTwilio(TWILIO_PHONE_NUMBER, phone, message);
+      } catch (e) {
+        results.sms = { error: e.message };
+      }
     }
-  }
 
-  return Response.json({ status: 'done', results });
+    // Send WhatsApp
+    if (channels.includes('whatsapp') && TWILIO_WHATSAPP_NUMBER) {
+      try {
+        const waPhone = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`;
+        results.whatsapp = await sendTwilio(TWILIO_WHATSAPP_NUMBER, waPhone, message);
+      } catch (e) {
+        results.whatsapp = { error: e.message };
+      }
+    }
+
+    return Response.json({ status: 'done', results });
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    console.error('sendDriverAlert error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });
