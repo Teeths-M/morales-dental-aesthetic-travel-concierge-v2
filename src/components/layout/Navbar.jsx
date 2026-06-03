@@ -290,18 +290,30 @@ export default function Navbar() {
         {/* Mobile/Tablet Combined Brand + Hamburger */}
         <div className="flex lg:hidden items-center">
           <button
-            className="flex items-center gap-2 p-1.5 rounded-xl bg-transparent hover:bg-white/[0.06] transition-colors border-0 outline-none"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-xl transition-all duration-200 hover:bg-white/[0.05] active:scale-95 focus:outline-none"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
             onClick={() => setMobileOpen(!mobileOpen)}
             onDoubleClick={(e) => { e.preventDefault(); setMobileOpen(false); navigate('/'); }}
           >
-            <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-white/[0.15]">
               <img
                 src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
                 alt="Morales"
                 className="w-full h-full object-cover"
               />
             </div>
-            {mobileOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white/70" />}
+            <motion.div
+              key={mobileOpen ? 'close' : 'open'}
+              initial={{ opacity: 0, rotate: -15 }}
+              animate={{ opacity: 1, rotate: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center justify-center"
+            >
+              {mobileOpen
+                ? <X className="w-[18px] h-[18px] text-white" strokeWidth={1.75} />
+                : <Menu className="w-[18px] h-[18px] text-white/75" strokeWidth={1.75} />
+              }
+            </motion.div>
           </button>
         </div>
       </nav>
