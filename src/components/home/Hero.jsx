@@ -133,9 +133,9 @@ export default function Hero() {
       </div>
 
       {/* ── Left column ── */}
-      <div className="relative z-10 w-full lg:w-[54%] flex items-center py-20 px-6 sm:px-10 lg:px-14 xl:px-20">
+      <div className="relative z-10 w-full lg:w-[54%] flex items-center py-12 lg:py-20 px-4 sm:px-6 lg:px-10 xl:px-16">
         <motion.div
-          className="w-full max-w-lg rounded-[2rem] border border-white/10 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
+          className="w-full max-w-lg rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl"
           style={{ background: 'rgba(255,255,255,0.04)' }}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -287,16 +287,16 @@ export default function Hero() {
       </div>
 
       {/* ── Right cinematic panel ── */}
-      <div className="hidden lg:block flex-1 relative">
+      <div className="absolute lg:static inset-0 lg:flex-1 lg:block">
         {/* Sentinel photograph */}
         <img
           src={SENTINEL_IMAGE}
           alt="Sentinel Care Journey"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover lg:object-cover"
           style={{ objectPosition: '55% center' }}
         />
         {/* Left-edge fade — blends into left panel seamlessly */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent lg:from-[#070F0B]" />
         {/* Cinematic top + bottom vignette */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
 
