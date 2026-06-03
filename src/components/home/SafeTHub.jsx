@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import AssessmentFlow from './AssessmentFlow';
+import { motion, useInView, useAnimation } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, Brain, UserCheck, HeartPulse, Stethoscope, Globe, ArrowRight, CheckCircle, Activity, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -175,39 +176,7 @@ export default function SafeTHub() {
         </div>
 
         {/* Process Timeline */}
-        <motion.div
-          className="mb-16"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="text-center mb-8">
-            <p className="text-xs font-bold text-white/40 uppercase tracking-[0.25em]">The Assessment Flow</p>
-          </div>
-          <div className="relative">
-            <div className="hidden lg:block absolute top-8 left-0 right-0 h-px bg-white/10" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {STEPS.map(({ num, icon: Icon, label, detail }, i) => (
-                <motion.div
-                  key={num}
-                  className="text-center relative"
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07 }}
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 mx-auto flex items-center justify-center relative z-10 mb-3 backdrop-blur-sm">
-                    <Icon className="w-6 h-6 text-white/70" />
-                  </div>
-                  <div className="text-[10px] font-black text-accent/70 tracking-widest mb-1">{num}</div>
-                  <p className="text-xs font-bold text-white/80">{label}</p>
-                  <p className="text-[11px] text-white/40 mt-0.5">{detail}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+        <AssessmentFlow />
 
         {/* Trust Bar + CTA */}
         <motion.div
