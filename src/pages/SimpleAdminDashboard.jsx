@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare, ShieldAlert } from 'lucide-react';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare, ShieldAlert, Download } from 'lucide-react';
 import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -47,6 +47,27 @@ export default function SimpleAdminDashboard() {
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
     refetch();
+  };
+
+  const handleExport = () => {
+    const rows = allCases.map(c => ({
+      name: c.client_name,
+      email: c.client_email,
+      status: c.status,
+      procedures: c.procedures?.join(' | '),
+      country: c.procedure_country,
+      price: c.final_package_price,
+      created: c.created_date ? new Date(c.created_date).toLocaleDateString() : '',
+    }));
+    const headers = Object.keys(rows[0]).join(',');
+    const csv = [headers, ...rows.map(r => Object.values(r).map(v => `"${v ?? ''}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cases-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Derive active and completed cases from the single query
@@ -168,14 +189,14 @@ export default function SimpleAdminDashboard() {
                   <h1 className="text-2xl font-bold text-slate-900">Patient Journey Dashboard</h1>
                   <p className="text-sm text-slate-500">Monitor active medical travel cases</p>
                 </div>
-                <Button
-                  onClick={handleRefresh}
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Refresh
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={handleExport} variant="outline" className="gap-2" disabled={allCases.length === 0}>
+                    <Download className="w-4 h-4" /> Export CSV
+                  </Button>
+                  <Button onClick={handleRefresh} variant="outline" className="gap-2">
+                    <RefreshCw className="w-4 h-4" /> Refresh
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
