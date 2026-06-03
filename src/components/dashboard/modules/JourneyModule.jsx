@@ -39,6 +39,16 @@ const destTips = [
 
 export default function JourneyModule() {
   const [activePhase, setActivePhase] = useState('Pre-Travel');
+  const [loadError, setLoadError] = useState(null);
+
+  if (loadError) return (
+    <div className="text-center py-12 text-slate-500">
+      <p className="text-sm">Unable to load your journey. Please refresh the page.</p>
+      <button onClick={() => window.location.reload()} className="mt-3 text-xs underline">
+        Refresh
+      </button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">

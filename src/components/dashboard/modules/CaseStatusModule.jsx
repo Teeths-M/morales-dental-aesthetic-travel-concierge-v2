@@ -34,6 +34,7 @@ const PAYMENT_LABELS = {
 export default function CaseStatusModule({ userEmail }) {
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   useEffect(() => {
@@ -49,10 +50,20 @@ export default function CaseStatusModule({ userEmail }) {
       if (cases.length > 0) setCaseData(cases[0]);
     } catch (e) {
       console.error('Case fetch failed:', e);
+      setLoadError(e.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (loadError) return (
+    <div className="text-center py-12 text-slate-500">
+      <p className="text-sm">Unable to load your journey. Please refresh the page.</p>
+      <button onClick={() => window.location.reload()} className="mt-3 text-xs underline">
+        Refresh
+      </button>
+    </div>
+  );
 
   if (loading) return (
     <div className="flex justify-center py-12">
