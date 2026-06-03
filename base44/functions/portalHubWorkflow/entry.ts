@@ -327,7 +327,7 @@ Return a JSON with:
 
     return Response.json({
       status: 'approved',
-      message: 'Risk approved. All partners notified. Customer email sent.',
+      message: `Risk approved (${riskLevel} risk). Doctors notified and awaiting confirmation. Travel, hotel, and transfer partners will be notified after doctor confirms availability.`,
       risk: riskAssessment,
       workflow_id: workflow.id,
     });
