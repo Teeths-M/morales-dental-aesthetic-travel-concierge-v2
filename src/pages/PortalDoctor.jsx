@@ -191,7 +191,7 @@ export default function PortalDoctor() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-6">
+    <div className="min-h-screen bg-background py-6 px-4 sm:py-12 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <Card>
           <CardHeader>
@@ -206,7 +206,7 @@ export default function PortalDoctor() {
               {/* Patient Information */}
               <div className="space-y-4 p-4 bg-muted rounded-lg">
                 <h3 className="font-semibold">Patient Information</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Age</p>
                     <p className="font-medium">{consultationData?.age || 'N/A'}</p>
@@ -408,7 +408,7 @@ export default function PortalDoctor() {
               />
 
               {/* Action Buttons */}
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   onClick={handleConfirm} 
                   className="flex-1 bg-primary hover:bg-primary/90" 

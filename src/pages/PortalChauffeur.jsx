@@ -175,8 +175,15 @@ export default function PortalChauffeur() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8faf8', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <style>{`
+        @media (max-width: 600px) {
+          .ch-header { padding: 20px 16px !important; }
+          .ch-driver-badge { flex-wrap: wrap !important; }
+          .ch-driver-badge-text { min-width: 0 !important; }
+        }
+      `}</style>
       {/* Header */}
-      <div style={{ background: '#0F3A20', padding: '24px 32px' }}>
+      <div style={{ background: '#0F3A20', padding: '24px 32px' }} className="ch-header">
         <p style={{ margin: 0, fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: '#C5A059', marginBottom: 6 }}>
           Morales Dental & Aesthetics | TRANSIT LOGISTICS REQUEST
         </p>
@@ -211,7 +218,7 @@ export default function PortalChauffeur() {
 
         {/* Driver Region Badge */}
         {driverType && driverType !== 'unknown' && (
-          <div style={{ background: driverType === 'origin' ? '#EFF6FF' : '#F0FDF4', border: `1px solid ${driverType === 'origin' ? '#BFDBFE' : '#BBF7D0'}`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ background: driverType === 'origin' ? '#EFF6FF' : '#F0FDF4', border: `1px solid ${driverType === 'origin' ? '#BFDBFE' : '#BBF7D0'}`, borderRadius: 8, padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }} className="ch-driver-badge">
             <span style={{ fontSize: 20 }}>{driverType === 'origin' ? '🏠' : '✈️'}</span>
             <div>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: driverType === 'origin' ? '#1D4ED8' : '#166534', textTransform: 'uppercase', letterSpacing: '0.5px' }}>

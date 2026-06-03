@@ -185,8 +185,16 @@ export default function PortalTravelAgency() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8faf8', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <style>{`
+        @media (max-width: 600px) {
+          .ta-header { padding: 20px 16px !important; }
+          .ta-dates-grid { grid-template-columns: 1fr !important; }
+          .ta-dates-col-bordered { border-left: none !important; padding-left: 0 !important; }
+          .ta-costs-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       {/* Header */}
-      <div style={{ background: '#0F3A20', padding: '24px 32px' }}>
+      <div style={{ background: '#0F3A20', padding: '24px 32px' }} className="ta-header">
         <p style={{ margin: 0, fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: '#C5A059', marginBottom: 6 }}>
           Morales Dental & Aesthetics | TRAVEL REQUEST
         </p>
@@ -246,18 +254,18 @@ export default function PortalTravelAgency() {
               <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#166534', marginBottom: 12 }}>
                 📅 RECOMMENDED TRAVEL ITINERARY
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }} className="ta-dates-grid">
                 <div>
                   <p style={{ fontSize: 11, color: '#166534', fontWeight: 600, marginBottom: 4 }}>ARRIVAL DATE</p>
                   <p style={{ fontSize: 15, fontWeight: 700, color: '#0F3A20' }}>{travelDates.arrivalShort}</p>
                   <p style={{ fontSize: 12, color: '#666' }}>{travelDates.arrival}</p>
                 </div>
-                <div style={{ borderLeft: '1px solid #bbf7d0', paddingLeft: 16 }}>
+                <div style={{ borderLeft: '1px solid #bbf7d0', paddingLeft: 16 }} className="ta-dates-col-bordered">
                   <p style={{ fontSize: 11, color: '#166534', fontWeight: 600, marginBottom: 4 }}>DURATION</p>
                   <p style={{ fontSize: 15, fontWeight: 700, color: '#0F3A20' }}>{travelDates.days} days / {travelDates.nights} nights</p>
                   <p style={{ fontSize: 12, color: '#666' }}>Hotel stay period</p>
                 </div>
-                <div style={{ borderLeft: '1px solid #bbf7d0', paddingLeft: 16 }}>
+                <div style={{ borderLeft: '1px solid #bbf7d0', paddingLeft: 16 }} className="ta-dates-col-bordered">
                   <p style={{ fontSize: 11, color: '#166534', fontWeight: 600, marginBottom: 4 }}>RETURN DATE</p>
                   <p style={{ fontSize: 15, fontWeight: 700, color: '#0F3A20' }}>{travelDates.returnShort}</p>
                   <p style={{ fontSize: 12, color: '#666' }}>{travelDates.return}</p>
@@ -273,7 +281,7 @@ export default function PortalTravelAgency() {
             <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#888' }}>Travel Package Quote</span>
           </div>
           <div style={{ padding: 20 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }} className="ta-costs-grid">
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>FLIGHT COST (USD)</label>
                 <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
