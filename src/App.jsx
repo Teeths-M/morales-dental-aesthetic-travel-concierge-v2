@@ -141,8 +141,9 @@ const AuthenticatedApp = () => {
         <Route path="/pay-now" element={<PaymentCheckout />} />
         <Route path="/passport-vault" element={<PassportVault />} />
       </Route>
-      <Route path="/test-portal-link" element={<TestPortalLink />} />
+      {/* Dev/test tools — admin only */}
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
+        <Route path="/test-portal-link" element={<TestPortalLink />} />
         <Route path="/portal-test-hub" element={<PortalTestHub />} />
       </Route>
       <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={["platform_admin", "admin"]} /></ErrorBoundary>}>
