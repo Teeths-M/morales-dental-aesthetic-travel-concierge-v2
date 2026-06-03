@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
       return Response.json({ 
         status: 'quotes_initiated',
         quote_count: quoteRequests.length,
-        workflow_stage: 'awaiting_quotes',
+        workflow_stage: 'travel',
         message: 'Doctor confirmed. All partners (travel, hotel, taxi) notified.',
       });
     }

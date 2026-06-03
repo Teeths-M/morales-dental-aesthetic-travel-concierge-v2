@@ -11,6 +11,7 @@ const stageColors = {
   'doctor': 'bg-purple-50 border-purple-200',
   'travel': 'bg-green-50 border-green-200',
   'blocked': 'bg-red-50 border-red-200',
+  'completed': 'bg-gray-50 border-gray-200',
 };
 
 const statusIcons = {
