@@ -15,11 +15,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import CaseDetailDrawer from '@/components/admin/CaseDetailDrawer';
 
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedCase, setSelectedCase] = useState(null);
   const location = useLocation();
 
   const adminNavItems = [
@@ -299,6 +301,7 @@ export default function SimpleAdminDashboard() {
                         key={caseRecord.id} 
                         caseRecord={caseRecord}
                         getStatusBadge={getStatusBadge}
+                        onSelect={setSelectedCase}
                       />
                     ))}
                   </div>
@@ -326,6 +329,7 @@ export default function SimpleAdminDashboard() {
                         key={caseRecord.id} 
                         caseRecord={caseRecord}
                         getStatusBadge={getStatusBadge}
+                        onSelect={setSelectedCase}
                       />
                     ))}
                   </div>
@@ -335,17 +339,25 @@ export default function SimpleAdminDashboard() {
           </div>
         </main>
       </div>
+
+      <CaseDetailDrawer
+        caseRecord={selectedCase}
+        onClose={() => setSelectedCase(null)}
+        onStatusUpdated={() => handleRefresh()}
+      />
     </div>
   );
 }
 
-function CaseCard({ caseRecord, getStatusBadge }) {
+function CaseCard({ caseRecord, getStatusBadge, onSelect }) {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
+      onClick={() => onSelect(caseRecord)}
+      className="cursor-pointer"
     >
-      <Card className="border-2 border-slate-200 hover:border-slate-300 hover:shadow-lg transition-all rounded-xl">
+      <Card className="border-2 border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all rounded-xl">
         <CardContent className="pt-5">
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
