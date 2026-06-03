@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare, ShieldAlert, Download } from 'lucide-react';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare, ShieldAlert, Download, DollarSign } from 'lucide-react';
 import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,6 +33,7 @@ export default function SimpleAdminDashboard() {
     { path: '/admin/sms', label: 'SMS Notifications', icon: MessageSquare },
     { path: '/admin/dispatch-monitor', label: 'Dispatch Failures', icon: ShieldAlert },
     { path: '/admin/iq200', label: 'IQ-200 Intelligence', icon: Activity },
+    { path: '/admin/pricing', label: 'Pricing Catalog', icon: DollarSign },
   ];
 
   // Fetch all cases in a single query for better performance

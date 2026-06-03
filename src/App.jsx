@@ -50,6 +50,7 @@ import PortalTestHub from './pages/PortalTestHub';
 import PassportVault from './pages/PassportVault';
 import AdminDispatchMonitor from './pages/AdminDispatchMonitor';
 import IQ200AdminCenter from './pages/IQ200AdminCenter';
+import AdminPricingDashboard from './pages/AdminPricingDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -155,6 +156,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/sms" element={<AdminSms />} />
         <Route path="/admin/dispatch-monitor" element={<AdminDispatchMonitor />} />
         <Route path="/admin/iq200" element={<IQ200AdminCenter />} />
+        <Route path="/admin/pricing" element={<AdminPricingDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
