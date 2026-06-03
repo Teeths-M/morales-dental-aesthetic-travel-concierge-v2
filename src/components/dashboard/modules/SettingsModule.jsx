@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Bell, Lock, Globe, Shield, User, Eye, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 const languages = ['English', 'Español', 'Français', 'Português'];
 
@@ -51,6 +52,7 @@ export default function SettingsModule() {
     safeTEducational: false,
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -83,6 +85,7 @@ export default function SettingsModule() {
   const toggleConsent = (key) => setConsents(prev => ({ ...prev, [key]: !prev[key] }));
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       await base44.auth.updateMe({
         full_name: fullName,
@@ -92,6 +95,9 @@ export default function SettingsModule() {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save settings:', err);
+      toast.error('Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -285,9 +291,9 @@ export default function SettingsModule() {
         <Button
           className="bg-emerald-700 hover:bg-emerald-800 text-white px-8"
           onClick={handleSave}
-          disabled={loading}
+          disabled={loading || saving}
         >
-          {saved ? <><CheckCircle2 className="w-4 h-4 mr-2" /> {labels.saved}</> : labels.saveSettings}
+          {saving ? 'Saving...' : saved ? <><CheckCircle2 className="w-4 h-4 mr-2" /> {labels.saved}</> : labels.saveSettings}
         </Button>
       </div>
     </div>
