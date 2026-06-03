@@ -127,6 +127,7 @@ export default function Navbar() {
   }[user?.role] || { path: '/booking', label: language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation' };
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
@@ -332,21 +333,45 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu — full-screen slide-down tray */}
+    </header>
+
+      {/* Mobile Menu — true full-screen overlay, outside header so it covers everything */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="xl:hidden fixed inset-0 top-16 z-40 bg-[#020B0D]/98 backdrop-blur-2xl overflow-y-auto flex flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="xl:hidden fixed inset-0 z-[9998] bg-[#070F0B] overflow-y-auto flex flex-col"
           >
-            <div className="flex flex-col flex-1 px-6 pt-8 pb-10 gap-8">
+            {/* Tray header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+              <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3">
+                <img
+                  src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
+                  alt="Morales Logo"
+                  className="h-9 w-auto object-contain"
+                />
+                <div className="border-l border-white/20 pl-3">
+                  <p className="font-['Instrument_Serif'] text-xs leading-tight text-white tracking-wide">MORALES DENTAL &amp; AESTHETIC</p>
+                  <p className="text-[8px] tracking-[0.2em] text-accent uppercase font-semibold">TRAVEL CONCIERGE</p>
+                </div>
+              </Link>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-9 h-9 rounded-full bg-white/[0.06] flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-white/70" />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex flex-col flex-1 px-6 pt-6 pb-10 gap-8 overflow-y-auto">
 
               {/* Nav Links */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-mono tracking-[0.25em] text-accent uppercase font-bold mb-3">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-mono tracking-[0.25em] text-accent uppercase font-bold mb-4">
                   Navigation
                 </span>
                 {visibleNavLinks.map(link => (
@@ -354,10 +379,8 @@ export default function Navbar() {
                     key={link.path}
                     to={link.path}
                     onClick={() => setMobileOpen(false)}
-                    className={`py-3 text-xl font-serif font-medium border-b border-white/[0.05] transition-colors ${
-                      location.pathname === link.path
-                        ? 'text-accent'
-                        : 'text-white/80 hover:text-white'
+                    className={`py-3.5 text-xl font-serif font-medium border-b border-white/[0.05] transition-colors ${
+                      location.pathname === link.path ? 'text-accent' : 'text-white/80 hover:text-white'
                     }`}
                   >
                     {link.label}
@@ -365,7 +388,7 @@ export default function Navbar() {
                 ))}
               </div>
 
-              {/* Secure Portals — only shown when authenticated and has portal links */}
+              {/* Secure Portals */}
               {isAuthenticated && portalLinks.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-[10px] font-mono tracking-[0.25em] text-white/30 uppercase font-bold mb-1">
@@ -376,7 +399,7 @@ export default function Navbar() {
                       key={link.path}
                       to={link.path}
                       onClick={() => setMobileOpen(false)}
-                      className="px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm text-white/80 hover:bg-white/[0.06] transition-colors"
+                      className="px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm text-white/70 hover:bg-white/[0.06] transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -385,19 +408,15 @@ export default function Navbar() {
               )}
 
               {/* Bottom Actions */}
-              <div className="mt-auto flex flex-col gap-4 pt-4 border-t border-white/[0.06]">
-                {/* Language selector */}
+              <div className="mt-auto flex flex-col gap-4 pt-6 border-t border-white/[0.06]">
+                {/* Language */}
                 <div className="flex items-center gap-1.5 self-end bg-white/[0.03] border border-white/[0.08] p-1 rounded-lg">
-                  {[
-                    { code: 'en', label: 'EN' },
-                    { code: 'es', label: 'ES' },
-                    { code: 'fr', label: 'FR' },
-                  ].map(({ code, label }) => (
+                  {[{ code: 'en', label: 'EN' }, { code: 'es', label: 'ES' }, { code: 'fr', label: 'FR' }].map(({ code, label }) => (
                     <button
                       key={code}
                       onClick={() => handleLanguageChange(code)}
                       className={`px-2.5 py-1 font-mono text-xs font-bold rounded transition-all ${
-                        language === code ? 'bg-accent text-[#020B0D]' : 'text-white/40 hover:text-white/70'
+                        language === code ? 'bg-accent text-[#070F0B]' : 'text-white/40 hover:text-white/70'
                       }`}
                     >
                       {label}
@@ -410,13 +429,13 @@ export default function Navbar() {
                     <Link
                       to={rolePrimaryAction.path}
                       onClick={() => setMobileOpen(false)}
-                      className="w-full py-3.5 text-center text-sm font-semibold text-[#020B0D] bg-gradient-to-r from-accent to-accent/70 rounded-xl tracking-wide shadow-xl"
+                      className="w-full py-3.5 text-center text-sm font-semibold text-[#070F0B] bg-gradient-to-r from-accent to-accent/80 rounded-xl tracking-wide shadow-xl"
                     >
                       {rolePrimaryAction.label}
                     </Link>
                     <button
                       onClick={() => { logout(); setMobileOpen(false); }}
-                      className="w-full py-3 text-center text-sm font-medium text-white/50 hover:text-white/80 transition-colors"
+                      className="w-full py-2 text-center text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
                     >
                       Log Out
                     </button>
@@ -426,11 +445,11 @@ export default function Navbar() {
                     <Link
                       to="/consultation"
                       onClick={() => setMobileOpen(false)}
-                      className="w-full py-3.5 text-center text-sm font-semibold text-[#020B0D] bg-gradient-to-r from-accent to-accent/70 rounded-xl tracking-wide shadow-xl"
+                      className="w-full py-3.5 text-center text-sm font-semibold text-[#070F0B] bg-gradient-to-r from-accent to-accent/80 rounded-xl tracking-wide shadow-xl"
                     >
                       {language === 'es' ? 'Comenzar Viaje' : language === 'fr' ? 'Commencer le Voyage' : 'Begin Journey'}
                     </Link>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between px-1">
                       <button
                         onClick={() => { setMobileOpen(false); navigateToLogin(`${window.location.origin}/register-role`); }}
                         className="text-sm font-medium text-white/50 hover:text-white/80 transition-colors"
@@ -447,19 +466,17 @@ export default function Navbar() {
                   </>
                 )}
 
-                {/* Safe Exit */}
                 <button
                   onClick={() => { handleSafeExit(); setMobileOpen(false); }}
-                  className="w-full border border-emerald-600/40 text-emerald-300 bg-emerald-950/60 rounded-full py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-emerald-900/60 transition-all"
+                  className="w-full border border-emerald-600/40 text-emerald-300 bg-emerald-950/50 rounded-full py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-emerald-900/50 transition-all"
                 >
                   🔒 Safe Exit
                 </button>
               </div>
-
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 }
