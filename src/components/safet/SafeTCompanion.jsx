@@ -182,12 +182,18 @@ export default function SafeTCompanion() {
     rec.onend = () => setIsListening(false);
   };
 
+  const formatContent = (text) =>
+    text.split('\n').map((line, i, arr) => (
+      <React.Fragment key={i}>
+        {line.split(/\*\*(.*?)\*\*/).map((part, j) =>
+          j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+        )}
+        {i < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+
   const renderMessage = (msg) => {
     const isUser = msg.role === 'user';
-    // Simple markdown: **bold**, newlines
-    const formatted = msg.content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br/>');
     return (
       <motion.div
         key={msg.id}
@@ -205,10 +211,7 @@ export default function SafeTCompanion() {
             ? 'bg-slate-800 text-white rounded-br-sm'
             : 'bg-white border border-slate-100 text-slate-700 shadow-sm rounded-bl-sm'
         }`}>
-          {isUser
-            ? <p>{msg.content}</p>
-            : <p dangerouslySetInnerHTML={{ __html: formatted }} />
-          }
+          <p>{isUser ? msg.content : formatContent(msg.content)}</p>
         </div>
       </motion.div>
     );
