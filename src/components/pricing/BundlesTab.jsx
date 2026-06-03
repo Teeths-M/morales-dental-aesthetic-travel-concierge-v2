@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const EMPTY_FORM = { bundle_name: '', bundle_description: '', procedures_included: [], individual_total_usd: '', bundle_price_usd: '', bundle_discount_pct: '', savings_message: '', is_active: true };
 
@@ -30,9 +30,9 @@ export default function BundlesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-bundles'] });
       setEditing(null);
-      toast({ title: editing?.id ? 'Bundle updated' : 'Bundle created' });
+      toast.success(editing?.id ? 'Bundle updated' : 'Bundle created');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
@@ -40,9 +40,9 @@ export default function BundlesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-bundles'] });
       setDeleting(null);
-      toast({ title: 'Bundle deleted' });
+      toast.success('Bundle deleted');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setProcInput(''); setEditing({}); };
@@ -60,7 +60,7 @@ export default function BundlesTab() {
 
   const handleSave = () => {
     if (!form.bundle_name || !form.bundle_price_usd) {
-      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
+      toast.error('Required fields missing'); return;
     }
     saveMutation.mutate({
       ...form,

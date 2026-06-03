@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const EMPTY_FORM = { procedure_id: '', procedure_name: '', country: '', country_price_usd: '', price_adjustment_pct: '', is_available: true, notes: '' };
 
@@ -34,9 +34,9 @@ export default function CountriesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['country-pricing'] });
       setEditing(null);
-      toast({ title: editing?.id ? 'Country pricing updated' : 'Country pricing created' });
+      toast.success(editing?.id ? 'Country pricing updated' : 'Country pricing created');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
@@ -44,9 +44,9 @@ export default function CountriesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['country-pricing'] });
       setDeleting(null);
-      toast({ title: 'Entry deleted' });
+      toast.success('Entry deleted');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -60,7 +60,7 @@ export default function CountriesTab() {
 
   const handleSave = () => {
     if (!form.procedure_id || !form.country || !form.country_price_usd) {
-      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
+      toast.error('Required fields missing'); return;
     }
     saveMutation.mutate({
       ...form,

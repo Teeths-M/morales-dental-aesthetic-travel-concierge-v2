@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const EMPTY_FORM = {
   procedure_name: '', category: '', subcategory: '', base_price_usd: '',
@@ -33,9 +33,9 @@ export default function ProceduresTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-pricing'] });
       setEditing(null);
-      toast({ title: editing?.id ? 'Procedure updated' : 'Procedure created' });
+      toast.success(editing?.id ? 'Procedure updated' : 'Procedure created');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
@@ -43,9 +43,9 @@ export default function ProceduresTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-pricing'] });
       setDeleting(null);
-      toast({ title: 'Procedure deleted' });
+      toast.success('Procedure deleted');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -54,7 +54,7 @@ export default function ProceduresTab() {
 
   const handleSave = () => {
     if (!form.procedure_name || !form.category || !form.base_price_usd) {
-      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
+      toast.error('Required fields missing'); return;
     }
     saveMutation.mutate({
       ...form,

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const RULE_TYPES = ['quantity', 'bundle', 'promotion', 'seasonal', 'referral', 'volume'];
 const EMPTY_FORM = { rule_name: '', rule_type: 'promotion', discount_pct: '', start_date: '', end_date: '', is_active: true };
@@ -30,9 +30,9 @@ export default function MarkupTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pricing-rules'] });
       setEditing(null);
-      toast({ title: editing?.id ? 'Rule updated' : 'Rule created' });
+      toast.success(editing?.id ? 'Rule updated' : 'Rule created');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
@@ -40,15 +40,15 @@ export default function MarkupTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pricing-rules'] });
       setDeleting(null);
-      toast({ title: 'Rule deleted' });
+      toast.success('Rule deleted');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, is_active }) => base44.entities.PricingRule.update(id, { is_active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pricing-rules'] }),
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -57,7 +57,7 @@ export default function MarkupTab() {
 
   const handleSave = () => {
     if (!form.rule_name || !form.rule_type || !form.discount_pct) {
-      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
+      toast.error('Required fields missing'); return;
     }
     saveMutation.mutate({ ...form, discount_pct: Number(form.discount_pct) });
   };

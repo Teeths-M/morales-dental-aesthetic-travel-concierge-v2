@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const EMPTY_FORM = { doctor_id: '', doctor_name: '', procedure_id: '', procedure_name: '', doctor_price_usd: '', specialty_expertise_level: 'intermediate', promotional_discount_pct: '', approved_by_admin: false, notes: '' };
 
@@ -40,9 +40,9 @@ export default function DoctorPricingTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['doctor-pricing'] });
       setEditing(null);
-      toast({ title: editing?.id ? 'Doctor pricing updated' : 'Doctor pricing created' });
+      toast.success(editing?.id ? 'Doctor pricing updated' : 'Doctor pricing created');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
@@ -50,18 +50,18 @@ export default function DoctorPricingTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['doctor-pricing'] });
       setDeleting(null);
-      toast({ title: 'Entry deleted' });
+      toast.success('Entry deleted');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const approveMutation = useMutation({
     mutationFn: ({ id, approved }) => base44.entities.DoctorPricing.update(id, { approved_by_admin: approved }),
     onSuccess: (_, { approved }) => {
       qc.invalidateQueries({ queryKey: ['doctor-pricing'] });
-      toast({ title: approved ? 'Pricing approved' : 'Approval revoked' });
+      toast.success(approved ? 'Pricing approved' : 'Approval revoked');
     },
-    onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+    onError: (e) => toast.error(e.message),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -79,7 +79,7 @@ export default function DoctorPricingTab() {
 
   const handleSave = () => {
     if (!form.doctor_id || !form.procedure_id || !form.doctor_price_usd) {
-      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
+      toast.error('Required fields missing'); return;
     }
     saveMutation.mutate({
       ...form,
