@@ -317,7 +317,7 @@ Return a JSON with:
 
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, partnerUpdates);
   try {
-    await base44.asServiceRole.entities.Consultation.update(consultation_id, { status: 'in_progress', journey_stage: 'planning' });
+    await base44.asServiceRole.entities.Consultation.update(consultation_id, { status: 'active', journey_stage: 'doctor' });
   } catch (error) {
     console.log(`Consultation status update skipped for ${consultation_id}: ${error.message}`);
   }
