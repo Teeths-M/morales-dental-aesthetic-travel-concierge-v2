@@ -37,6 +37,10 @@ export default function Navbar() {
     setNavLinks(getNavLinks(language));
   }, [language]);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   const handlePortalHubMouseLeave = () => {
     portalHubTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 1000);
   };
