@@ -26,11 +26,9 @@ export default function PortalDoctor() {
 
   useEffect(() => {
     const loadCase = async () => {
-      // Fallback Injector: If in development or using test token, inject Dr. Rossanna's data
       const isDev = import.meta.env.DEV;
-      const isTestToken = token === 'dr_rossanna_test_token' || token?.includes('test');
 
-      if (isDev || isTestToken) {
+      if (isDev) {
         setCaseData({
           id: 'mock_case_dr_rossanna',
           doctor_portal_token: token,
