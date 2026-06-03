@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Clock, AlertCircle, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 
 const stageColors = {
   'risk_check': 'bg-blue-50 border-blue-200',
@@ -38,6 +39,7 @@ export default function WorkflowStatusDashboard() {
       setConsultations(cons);
     } catch (error) {
       console.error('Failed to load workflow data:', error);
+      toast.error('Failed to load workflow data. Please refresh.');
     } finally {
       setLoading(false);
     }
@@ -46,9 +48,11 @@ export default function WorkflowStatusDashboard() {
   const triggerWorkflow = async (consultationId) => {
     try {
       await base44.functions.invoke('portalHubWorkflow', { consultation_id: consultationId });
+      toast.success('Workflow triggered successfully');
       setTimeout(loadData, 1000);
     } catch (error) {
       console.error('Workflow trigger failed:', error);
+      toast.error('Workflow trigger failed: ' + error.message);
     }
   };
 
