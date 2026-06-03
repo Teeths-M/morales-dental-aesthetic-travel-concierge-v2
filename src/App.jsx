@@ -136,11 +136,15 @@ const AuthenticatedApp = () => {
           <Route path="/taxi-service-dashboard" element={<TaxiServiceDashboard />} />
         </Route>
       </Route>
-      {/* Standalone payment page - direct link for payments */}
-      <Route path="/pay-now" element={<PaymentCheckout />} />
+      {/* Standalone payment page - requires auth same as /portal-hub/checkout */}
+      <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user", "travel_agency", "doctor", "taxi_service"]} />}>
+        <Route path="/pay-now" element={<PaymentCheckout />} />
+        <Route path="/passport-vault" element={<PassportVault />} />
+      </Route>
       <Route path="/test-portal-link" element={<TestPortalLink />} />
-      <Route path="/passport-vault" element={<PassportVault />} />
-      <Route path="/portal-test-hub" element={<PortalTestHub />} />
+      <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
+        <Route path="/portal-test-hub" element={<PortalTestHub />} />
+      </Route>
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
