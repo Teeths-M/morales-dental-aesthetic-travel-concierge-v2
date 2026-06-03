@@ -49,6 +49,7 @@ import TestPortalLink from './pages/TestPortalLink';
 import PortalTestHub from './pages/PortalTestHub';
 import PassportVault from './pages/PassportVault';
 import AdminDispatchMonitor from './pages/AdminDispatchMonitor';
+import IQ200AdminCenter from './pages/IQ200AdminCenter';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -153,6 +154,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/portal-viewer" element={<AdminPortalViewer />} />
         <Route path="/admin/sms" element={<AdminSms />} />
         <Route path="/admin/dispatch-monitor" element={<AdminDispatchMonitor />} />
+        <Route path="/admin/iq200" element={<IQ200AdminCenter />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

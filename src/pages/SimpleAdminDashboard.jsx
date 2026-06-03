@@ -32,6 +32,7 @@ export default function SimpleAdminDashboard() {
     { path: '/admin/portal-viewer', label: 'Portal Viewer', icon: Eye },
     { path: '/admin/sms', label: 'SMS Notifications', icon: MessageSquare },
     { path: '/admin/dispatch-monitor', label: 'Dispatch Failures', icon: ShieldAlert },
+    { path: '/admin/iq200', label: 'IQ-200 Intelligence', icon: Activity },
   ];
 
   // Fetch all cases in a single query for better performance
