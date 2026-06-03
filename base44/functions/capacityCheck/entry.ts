@@ -127,6 +127,8 @@ If you have any questions, contact our concierge team directly.
 
   // ── action: confirm_booking (increment count — optimistic concurrency) ──────
   if (action === 'confirm_booking') {
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (!year_month) return Response.json({ error: 'year_month required' }, { status: 400 });
 
     // Retry loop to guard against concurrent increments
@@ -161,6 +163,10 @@ If you have any questions, contact our concierge team directly.
 
   // ── action: cancel_booking (decrement + notify next waiter) ───────────────
   if (action === 'cancel_booking') {
+    const user = await base44.auth.me();
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
     if (!year_month) return Response.json({ error: 'year_month required' }, { status: 400 });
     const cap = await getCapacity(year_month);
     const newCount = Math.max(0, cap.confirmed_count - 1);
