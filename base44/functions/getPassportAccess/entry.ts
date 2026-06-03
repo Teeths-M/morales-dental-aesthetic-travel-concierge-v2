@@ -1,4 +1,20 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+async function decryptAesGcm(encryptedBytes, keyB64, ivB64) {
+  const keyBytes = Uint8Array.from(atob(keyB64), c => c.charCodeAt(0));
+  const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw', keyBytes,
+    { name: 'AES-GCM', length: 256 },
+    false, ['decrypt']
+  );
+  const decryptedBuffer = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    cryptoKey,
+    encryptedBytes
+  );
+  return new Uint8Array(decryptedBuffer);
+}
 
 const ALLOWED_FIELDS_BY_LEVEL = {
   full_document: ['last_4_digits', 'expiry_date', 'nationality', 'full_name_redacted', 'document_type'],
@@ -68,20 +84,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    // For full_document: return signed URL + decryption materials (patient or admin only)
-    let encrypted_file_url = null;
-    let encryption_key_b64 = null;
-    let encryption_iv_b64 = null;
+    // For full_document: decrypt server-side and return a short-lived signed URL of the plaintext file.
+    // Keys are NEVER transmitted to the client.
+    let decrypted_file_url = null;
 
-    const canDecrypt = access_level === 'full_document' && vault.encrypted_file_uri;
+    const canDecrypt = access_level === 'full_document' && vault.encrypted_file_uri
+      && vault.encryption_key_b64 && vault.encryption_iv_b64;
+
     if (canDecrypt) {
-      const { signed_url } = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({
+      // 1. Download the encrypted file via a short-lived signed URL
+      const { signed_url: encSignedUrl } = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({
         file_uri: vault.encrypted_file_uri,
-        expires_in: 3600
+        expires_in: 60
       });
-      encrypted_file_url = signed_url;
-      encryption_key_b64 = vault.encryption_key_b64;
-      encryption_iv_b64 = vault.encryption_iv_b64;
+      const encRes = await fetch(encSignedUrl);
+      if (!encRes.ok) throw new Error('Failed to fetch encrypted file from storage');
+      const encryptedBytes = new Uint8Array(await encRes.arrayBuffer());
+
+      // 2. Decrypt server-side — keys stay on the server
+      const decryptedBytes = await decryptAesGcm(encryptedBytes, vault.encryption_key_b64, vault.encryption_iv_b64);
+
+      // 3. Upload decrypted bytes to private storage as a temp file
+      const blob = new Blob([decryptedBytes], { type: 'application/octet-stream' });
+      const { file_uri: tempUri } = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file: blob });
+
+      // 4. Return a 5-minute signed URL to the decrypted file
+      const { signed_url: decSignedUrl } = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({
+        file_uri: tempUri,
+        expires_in: 300
+      });
+      decrypted_file_url = decSignedUrl;
     }
 
     // Update vault access tracking
@@ -102,7 +134,7 @@ Deno.serve(async (req) => {
       grant_token: grant?.grant_token || null,
       status: 'success',
       timestamp: new Date().toISOString(),
-      metadata: { access_level, fields_exposed: allowedFields, can_decrypt: canDecrypt }
+      metadata: { access_level, fields_exposed: allowedFields, can_decrypt: canDecrypt, decrypted_url_issued: !!decrypted_file_url }
     });
 
     return Response.json({
@@ -110,9 +142,7 @@ Deno.serve(async (req) => {
       access_level,
       passport_token: vault.passport_token,
       redacted_data,
-      encrypted_file_url,
-      encryption_key_b64,
-      encryption_iv_b64,
+      decrypted_file_url,   // short-lived 5-min signed URL to plaintext file (null if access_level < full_document)
       expires_at: vault.expires_at
     });
 
