@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare, ShieldAlert, Download, DollarSign } from 'lucide-react';
+import { Users, Plane, Car, Search, CheckCircle, Clock, XCircle, Archive, Activity, LayoutDashboard, Import, UserCheck, Eye, RefreshCw, MessageSquare, ShieldAlert, Download, DollarSign, Menu, X } from 'lucide-react';
 import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +23,7 @@ export default function SimpleAdminDashboard() {
   const [activeTab, setActiveTab] = useState('active');
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
   const adminNavItems = [
@@ -143,61 +144,90 @@ export default function SimpleAdminDashboard() {
     );
   }
 
+  const SidebarContent = () => (
+    <div className="p-6">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+          <Users className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h2 className="font-bold text-slate-900 text-sm">Admin Portal</h2>
+          <p className="text-xs text-slate-500">Management Console</p>
+        </div>
+      </div>
+      <nav className="space-y-2">
+        {adminNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                isActive
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="flex">
-        {/* Sidebar Navigation */}
-        <aside className="w-64 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 overflow-y-auto">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="font-bold text-slate-900 text-sm">Admin Portal</h2>
-                <p className="text-xs text-slate-500">Management Console</p>
-              </div>
-            </div>
-            
-            <nav className="space-y-2">
-              {adminNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+        {/* Sidebar — desktop fixed, mobile overlay */}
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:block w-64 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 overflow-y-auto z-20">
+          <SidebarContent />
         </aside>
 
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            <div className="w-64 bg-white shadow-xl overflow-y-auto relative">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-4 right-4 p-1 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+              <SidebarContent />
+            </div>
+            <div className="flex-1 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="flex-1 ml-64">
+        <main className="flex-1 lg:ml-64 min-w-0">
           {/* Header */}
           <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900">Patient Journey Dashboard</h1>
-                  <p className="text-sm text-slate-500">Monitor active medical travel cases</p>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="lg:hidden p-2 rounded-lg hover:bg-slate-100 shrink-0"
+                  >
+                    <Menu className="w-5 h-5 text-slate-600" />
+                  </button>
+                  <div className="min-w-0">
+                    <h1 className="text-lg sm:text-2xl font-bold text-slate-900 truncate">Patient Journey Dashboard</h1>
+                    <p className="text-xs sm:text-sm text-slate-500">Monitor active medical travel cases</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button onClick={handleExport} variant="outline" className="gap-2" disabled={allCases.length === 0}>
-                    <Download className="w-4 h-4" /> Export CSV
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" disabled={allCases.length === 0}>
+                    <Download className="w-4 h-4" /> <span className="hidden md:inline">Export CSV</span>
                   </Button>
-                  <Button onClick={handleRefresh} variant="outline" className="gap-2">
-                    <RefreshCw className="w-4 h-4" /> Refresh
+                  <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1.5">
+                    <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
                   </Button>
                 </div>
               </div>
