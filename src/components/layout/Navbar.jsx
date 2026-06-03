@@ -94,10 +94,11 @@ export default function Navbar() {
   return (
     <>
       {/* ── TOP NAV ── */}
-      <nav className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-4 md:px-8 lg:px-12 flex items-center py-3 bg-[#020B0D]/90 backdrop-blur-md border-b border-white/[0.06]">
+      <nav className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-4 md:px-8 lg:px-12 flex items-center justify-between py-3 bg-[#020B0D]/90 backdrop-blur-md border-b border-white/[0.06]">
 
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0">
+        <div className="flex-shrink-0">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] flex items-center justify-center rounded-lg shrink-0 overflow-hidden">
             <img
               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
@@ -114,6 +115,7 @@ export default function Navbar() {
             </span>
           </div>
         </Link>
+        </div>
 
         {/* Desktop Nav Links */}
         <div className="hidden lg:flex items-center space-x-1 text-sm font-medium ml-6">
@@ -286,10 +288,10 @@ export default function Navbar() {
         </div>
 
         {/* Mobile/Tablet Hamburger */}
-        <div className="flex lg:hidden items-center ml-auto">
+        <div className="flex lg:hidden items-center">
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2.5 text-white bg-[#051A1D] border border-white/[0.1] rounded-xl hover:bg-white/[0.06] transition-all focus:outline-none"
+            className="p-2.5 text-white bg-[#0A3A38]/60 border border-emerald-700/30 rounded-xl hover:bg-[#0A3A38]/80 transition-all focus:outline-none backdrop-blur-sm"
             aria-label="Toggle Menu"
           >
             <div className="w-5 h-4 flex flex-col justify-between items-end">
