@@ -132,8 +132,8 @@ export default function Hero() {
         </Button>
       </div>
 
-      {/* ── Right column (flipped) ── */}
-      <div className="relative z-10 w-full lg:w-[54%] flex items-center py-20 px-6 sm:px-10 lg:px-14 xl:px-20 lg:order-2">
+      {/* ── Left column ── */}
+      <div className="relative z-10 w-full lg:w-[54%] flex items-center py-20 px-6 sm:px-10 lg:px-14 xl:px-20">
         <motion.div
           className="w-full max-w-lg rounded-[2rem] border border-white/10 p-6 sm:p-8 lg:p-10 backdrop-blur-md shadow-2xl"
           style={{ background: 'rgba(255,255,255,0.04)' }}
@@ -286,8 +286,8 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* ── Left cinematic panel (flipped) ── */}
-      <div className="hidden lg:block flex-1 relative lg:order-1">
+      {/* ── Right cinematic panel ── */}
+      <div className="hidden lg:block flex-1 relative">
         {/* Sentinel photograph */}
         <img
           src={SENTINEL_IMAGE}
