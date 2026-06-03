@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Header() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
@@ -7,6 +8,8 @@ export default function Header() {
   const [currentLang, setCurrentLang] = useState('EN');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -122,6 +125,14 @@ export default function Header() {
           <Link to="/register-role" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
             Register
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
+            >
+              ⚙️ Admin
+            </Link>
+          )}
           <Link 
             to="/dashboard" 
             className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
@@ -176,6 +187,11 @@ export default function Header() {
             <Link to="/travel-agency-dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-white/70">Travel Agency Portal</Link>
             <Link to="/taxi-service-dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-white/70">Chauffeur Portal</Link>
           </div>
+          {isAdmin && (
+            <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-4 py-3 bg-[#1a3a3a] border border-[#D4AF37]/40 rounded-xl text-[#D4AF37] font-semibold text-sm">
+              ⚙️ Admin Portal
+            </Link>
+          )}
           <div className="pt-6 flex items-center justify-between border-t border-white/[0.06]">
             <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-white/80">Log In to Dashboard</Link>
             <div className="flex gap-2">
