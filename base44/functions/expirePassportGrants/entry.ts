@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Scheduled function: runs every hour to auto-expire stale access grants
 Deno.serve(async (req) => {

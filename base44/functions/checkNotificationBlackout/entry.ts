@@ -11,7 +11,7 @@
  *   });
  *   if (res.data?.suppressed) return; // skip sending
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {

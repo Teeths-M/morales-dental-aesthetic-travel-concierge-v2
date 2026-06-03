@@ -3,7 +3,7 @@
  * Generates a Post-Operative Cultural Care Package payload based on
  * patient origin country and procedure type, then persists it to CaseRecord.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Caribbean origin countries that trigger cultural calibration
 const CARIBBEAN_ORIGINS = [
