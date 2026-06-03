@@ -1,17 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
-  const payload = {
-    consultation_id,
-    partner_id,
-    portal_type,
-    expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  };
-  const rawBytes = new Uint8Array(32);
-  crypto.getRandomValues(rawBytes);
-  const randomSuffix = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, utf8)) + '.' + randomSuffix;
+  const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 Deno.serve(async (req) => {

@@ -1,10 +1,32 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function verifyPortalToken(token) {
+  const [b64, sigHex] = token.split('.');
+  if (!b64 || !sigHex) return null;
+  const data = atob(b64);
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const sigBytes = Uint8Array.from(sigHex.match(/.{2}/g).map(h => parseInt(h, 16)));
+  const valid = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(data));
+  if (!valid) return null;
+  const payload = JSON.parse(data);
+  if (Date.now() > payload.expires_at) return null;
+  return payload;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { consultation_id, partner_id, portal_type } = body;
+    const { consultation_id, partner_id, portal_type, token } = body;
+
+    // If a token is provided, verify its HMAC signature first
+    if (token) {
+      const verified = await verifyPortalToken(token);
+      if (!verified) {
+        return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
+      }
+    }
 
     if (!consultation_id || !partner_id) {
       return Response.json({ error: 'consultation_id and partner_id required' }, { status: 400 });
