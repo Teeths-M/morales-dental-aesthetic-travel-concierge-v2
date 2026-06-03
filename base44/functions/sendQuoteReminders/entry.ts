@@ -44,7 +44,7 @@ const emailLayout = ({ title, intro, ctaText, ctaUrl, note }) => `<!doctype html
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const now = new Date();
     const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
 

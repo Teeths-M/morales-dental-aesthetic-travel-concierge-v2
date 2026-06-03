@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });
     }
 
-    const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const results = { patient: null, doctor: null };
 
     // ── 1. NOTIFY PATIENT ────────────────────────────────────────────────────

@@ -177,8 +177,8 @@ Deno.serve(async (req) => {
                 },
               ],
               mode: 'payment',
-              success_url: `${(Deno.env.get('APP_URL') || '').replace(/\/$/, '')}/portal/proposal/${caseRecord.proposal_token}?payment=success`,
-              cancel_url: `${(Deno.env.get('APP_URL') || '').replace(/\/$/, '')}/portal/proposal/${caseRecord.proposal_token}?payment=cancelled`,
+              success_url: `${(Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '')}/portal/proposal/${caseRecord.proposal_token}?payment=success`,
+              cancel_url: `${(Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '')}/portal/proposal/${caseRecord.proposal_token}?payment=cancelled`,
               customer_email: caseRecord.client_email,
               metadata: {
                 case_id: caseRecord.id,
