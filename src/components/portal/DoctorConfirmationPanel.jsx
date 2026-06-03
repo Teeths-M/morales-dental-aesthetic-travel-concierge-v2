@@ -20,44 +20,50 @@ export default function DoctorConfirmationPanel({ workflow }) {
   const [localQuotedPrice, setLocalQuotedPrice] = useState(workflow.doctor_quoted_price);
   const [localNotes, setLocalNotes] = useState(workflow.doctor_notes);
   const [localDate, setLocalDate] = useState(workflow.doctor_confirmed_date);
+  const [error, setError] = useState(null);
 
   const isConfirmed = localStatus === 'confirmed';
   const isUnavailable = localStatus === 'unavailable';
 
   const handleConfirm = async (status) => {
     setSaving(true);
-    const price = status === 'confirmed' ? Number(quotedPrice) : null;
-    const date = new Date().toISOString();
+    setError(null);
+    try {
+      const price = status === 'confirmed' ? Number(quotedPrice) : null;
+      const date = new Date().toISOString();
 
-    // 1. Save doctor confirmation to WorkflowEvent
-    await base44.entities.WorkflowEvent.update(workflow.id, {
-      doctor_status: status,
-      doctor_quoted_price: price,
-      doctor_notes: notes,
-      doctor_confirmed_date: date,
-      stage: status === 'confirmed' ? 'travel' : 'doctor',
-      last_update_summary: status === 'confirmed'
-        ? `Doctor confirmed. Quoted price: $${quotedPrice}. ${notes ? 'Notes: ' + notes : ''}`
-        : `Doctor marked as unavailable. ${notes ? 'Notes: ' + notes : ''}`,
-    });
-
-    // 2. If confirmed, call backend to notify all partners and patient
-    if (status === 'confirmed') {
-      await base44.functions.invoke('onDoctorConfirmed', {
-        workflow_id: workflow.id,
-        quoted_price: price,
-        notes,
+      await base44.entities.WorkflowEvent.update(workflow.id, {
+        doctor_status: status,
+        doctor_quoted_price: price,
+        doctor_notes: notes,
+        doctor_confirmed_date: date,
+        stage: status === 'confirmed' ? 'travel' : 'doctor',
+        last_update_summary: status === 'confirmed'
+          ? `Doctor confirmed. Quoted price: $${quotedPrice}. ${notes ? 'Notes: ' + notes : ''}`
+          : `Doctor marked as unavailable. ${notes ? 'Notes: ' + notes : ''}`,
       });
-    }
 
-    // Update local state immediately so UI reflects the change without waiting for refetch
-    setLocalStatus(status);
-    setLocalQuotedPrice(price);
-    setLocalNotes(notes);
-    setLocalDate(date);
-    qc.invalidateQueries({ queryKey: ['portal_workflows'] });
-    setSaved(true);
-    setSaving(false);
+      if (status === 'confirmed') {
+        await base44.functions.invoke('onDoctorConfirmed', {
+          workflow_id: workflow.id,
+          quoted_price: price,
+          notes,
+        });
+      }
+
+      setLocalStatus(status);
+      setLocalQuotedPrice(price);
+      setLocalNotes(notes);
+      setLocalDate(date);
+      qc.invalidateQueries({ queryKey: ['portal_workflows'] });
+      setSaved(true);
+
+    } catch (err) {
+      console.error('Doctor confirmation failed:', err);
+      setError('Confirmation failed. Please try again or contact support.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleResend = async () => {
@@ -205,6 +211,7 @@ export default function DoctorConfirmationPanel({ workflow }) {
           Unavailable
         </Button>
       </div>
+      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
     </div>
   );
 }
