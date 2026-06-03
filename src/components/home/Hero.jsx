@@ -99,10 +99,7 @@ export default function Hero() {
   ];
 
   return (
-    <section
-      className="relative overflow-hidden flex min-h-screen"
-      style={{ background: '#070F0B' }}
-    >
+    <section className="relative overflow-hidden min-h-screen bg-[#070F0B]">
       {/* Subtle dot-grid texture */}
       <div
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
@@ -112,7 +109,7 @@ export default function Hero() {
           backgroundSize: '40px 40px',
         }}
       />
-      {/* Left-side emerald ambient */}
+      {/* Ambient glows */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent pointer-events-none" />
 
       {/* Register / Login pill — frosted glass with backdrop blur */}
@@ -132,11 +129,31 @@ export default function Hero() {
         </Button>
       </div>
 
-      {/* ── Left column ── */}
-      <div className="relative z-10 w-full lg:w-[54%] flex items-center py-12 lg:py-20 px-4 sm:px-6 lg:px-10 xl:px-16">
+      {/* Mobile-first: Image section first for visual impact */}
+      <div className="relative w-full h-[55vh] lg:hidden">
+        <img
+          src={SENTINEL_IMAGE}
+          alt="Sentinel Care Journey"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: '55% center' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/30 via-[#070F0B]/10 to-[#070F0B]" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.72 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+          >
+            <SentinelOrbit />
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="relative z-10 w-full lg:w-[54%] px-4 sm:px-6 lg:px-10 xl:px-16 lg:py-20">
+        <div className="w-full max-w-lg mx-auto lg:mx-0 rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl lg:mt-20"
+          style={{ background: 'rgba(255,255,255,0.04)' }}>
         <motion.div
-          className="w-full max-w-lg rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl"
-          style={{ background: 'rgba(255,255,255,0.04)' }}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -284,23 +301,19 @@ export default function Hero() {
             </div>
           )}
         </motion.div>
+        </div>
       </div>
 
-      {/* ── Right cinematic panel ── */}
-      <div className="absolute lg:static inset-0 lg:flex-1 lg:block">
-        {/* Sentinel photograph */}
+      {/* Desktop: Side-by-side cinematic panel */}
+      <div className="hidden lg:block absolute right-0 top-0 w-[46%] h-full">
         <img
           src={SENTINEL_IMAGE}
           alt="Sentinel Care Journey"
-          className="absolute inset-0 w-full h-full object-cover lg:object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '55% center' }}
         />
-        {/* Left-edge fade — blends into left panel seamlessly */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent lg:from-[#070F0B]" />
-        {/* Cinematic top + bottom vignette */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
-
-        {/* Orbit — floats over the photo */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <motion.div
             initial={{ opacity: 0, scale: 0.72 }}
