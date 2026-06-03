@@ -9,10 +9,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Guard all required env vars BEFORE touching any data
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeKey) {
+      return Response.json({
+        error: 'Payment system not configured. Contact support.',
+        code: 'MISSING_STRIPE_KEY'
+      }, { status: 503 });
+    }
+
     const { consultation_id, email, procedure, destination, method = 'stripe', payment_token } = await req.json();
 
     if (!email || !method) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+      return Response.json({ error: 'email and method are required' }, { status: 400 });
     }
 
     let charge_id = null;
