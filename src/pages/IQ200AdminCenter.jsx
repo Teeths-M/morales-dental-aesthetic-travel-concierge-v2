@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, AlertTriangle, CheckCircle2, DollarSign, Send,
   RefreshCw, ChevronDown, ChevronUp, Zap, TrendingUp,
-  XCircle, BarChart2, FileText, Database
+  XCircle, BarChart2, FileText, Database, ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const PIPELINE_STAGES = [
   'Submitted', 'Safe-T-Reviewed', 'Doctor-Pending', 'Vendor-Pending',
@@ -395,6 +396,9 @@ export default function IQ200AdminCenter() {
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" className="rounded-full" asChild>
+              <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
+            </Button>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0F3A20, #1a4f2e)' }}>
               <Shield className="w-5 h-5 text-white" />
             </div>

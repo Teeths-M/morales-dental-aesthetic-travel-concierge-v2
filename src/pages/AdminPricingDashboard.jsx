@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, DollarSign, Globe, Users, Package, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
+import { Settings, DollarSign, Globe, Users, Package, TrendingUp, Plus, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const AdminTabs = [
   { id: 'procedures', label: 'Procedures', icon: DollarSign },
@@ -39,6 +40,9 @@ export default function AdminPricingDashboard() {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" className="rounded-full" asChild>
+                <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
+              </Button>
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-blue-600 rounded-lg flex items-center justify-center">
                 <Settings className="w-6 h-6 text-white" />
               </div>

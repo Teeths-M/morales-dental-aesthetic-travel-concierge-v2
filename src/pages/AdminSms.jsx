@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Import, UserCheck, Eye, MessageSquare, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, Import, UserCheck, Eye, MessageSquare, Zap, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
 import BroadcastPortalLinksPanel from '@/components/portal/BroadcastPortalLinksPanel';
 
@@ -59,9 +60,14 @@ export default function AdminSms() {
         <main className="flex-1 ml-64">
           <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">Communications Center</h1>
-                <p className="text-sm text-slate-500">Send portal links, SMS alerts & email notifications to partners and patients</p>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="icon" className="rounded-full" asChild>
+                  <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900">Communications Center</h1>
+                  <p className="text-sm text-slate-500">Send portal links, SMS alerts & email notifications to partners and patients</p>
+                </div>
               </div>
             </div>
           </div>
