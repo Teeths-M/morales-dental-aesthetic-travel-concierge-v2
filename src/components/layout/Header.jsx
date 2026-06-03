@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
@@ -7,6 +7,10 @@ export default function Header() {
   const [currentLang, setCurrentLang] = useState('EN');
   const [isLangOpen, setIsLangOpen] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const navLinks = [
     { name: 'Discover', path: '/discover' },
@@ -21,6 +25,7 @@ export default function Header() {
   };
 
   return (
+    <>
     <nav className="w-full min-h-[92px] border-b border-white/[0.06] bg-[#020B0D]/90 backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-12 flex items-center justify-between py-4">
       
       {/* 1. VERBATIM BRANDING IDENTITY */}
@@ -144,9 +149,20 @@ export default function Header() {
         </button>
       </div>
 
-      {/* 5. RESPONSIVE MOBILE SLIDE-OUT TRAY */}
+    </nav>
+
+      {/* Mobile Slide-Out Tray — outside <nav> so it's not trapped in its stacking context */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-[#020B0D] z-40 pt-32 px-8 flex flex-col space-y-6 animate-fade-in lg:hidden">
+        <div className="fixed inset-0 bg-[#020B0D] z-[9999] pt-28 px-8 flex flex-col space-y-6 lg:hidden overflow-y-auto">
+          {/* Close button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute top-6 right-6 p-2 text-white/60 hover:text-white"
+            aria-label="Close Menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+
           <div className="flex flex-col space-y-4 text-xl font-medium border-b border-white/[0.06] pb-6">
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-[#D4AF37]">Home</Link>
             {navLinks.map((link) => (
@@ -180,6 +196,6 @@ export default function Header() {
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 };
