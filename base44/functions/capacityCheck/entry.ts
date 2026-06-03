@@ -131,6 +131,27 @@ If you have any questions, contact our concierge team directly.
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (!year_month) return Response.json({ error: 'year_month required' }, { status: 400 });
 
+    // If booking comes from a waiting list offer, validate it has not expired
+    if (consultation_id) {
+      const waiterEntry = await base44.asServiceRole.entities.WaitingList.filter({
+        consultation_id,
+        status: 'notified',
+      });
+      if (waiterEntry.length > 0) {
+        const offer = waiterEntry[0];
+        const now = new Date();
+        if (offer.offer_expires_at && new Date(offer.offer_expires_at) < now) {
+          await base44.asServiceRole.entities.WaitingList.update(offer.id, { status: 'expired' });
+          return Response.json({
+            error: 'Your slot offer has expired. Please rejoin the waiting list.',
+            code: 'OFFER_EXPIRED',
+          }, { status: 409 });
+        }
+        // Offer valid — mark as confirmed
+        await base44.asServiceRole.entities.WaitingList.update(offer.id, { status: 'confirmed' });
+      }
+    }
+
     // Retry loop to guard against concurrent increments
     for (let attempt = 0; attempt < 3; attempt++) {
       const cap = await getCapacity(year_month);
