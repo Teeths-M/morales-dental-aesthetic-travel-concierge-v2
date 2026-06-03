@@ -24,6 +24,40 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'email and method are required' }, { status: 400 });
     }
 
+    // IDEMPOTENCY CHECK: return existing paid record if already charged
+    if (consultation_id) {
+      const existing = await base44.asServiceRole.entities.ConsultationFee.filter({
+        consultation_id,
+        fee_paid: true,
+      });
+      if (existing.length > 0) {
+        return Response.json({
+          success: true,
+          charge_id: existing[0].stripe_charge_id,
+          consultation_fee_id: existing[0].id,
+          amount: existing[0].consultation_fee_amount,
+          method: existing[0].payment_method || method,
+          already_paid: true,
+        });
+      }
+    }
+
+    // Fallback: check by user_id if no consultation_id provided
+    const existingByUser = await base44.asServiceRole.entities.ConsultationFee.filter({
+      user_id: user.id,
+      fee_paid: true,
+    });
+    if (existingByUser.length > 0) {
+      return Response.json({
+        success: true,
+        charge_id: existingByUser[0].stripe_charge_id,
+        consultation_fee_id: existingByUser[0].id,
+        amount: existingByUser[0].consultation_fee_amount,
+        already_paid: true,
+      });
+    }
+
+    // Only reach here if genuinely not yet paid — proceed with charge
     let charge_id = null;
     let payment_method_used = method;
 
