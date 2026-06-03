@@ -13,20 +13,31 @@ const STEPS = [
 
 export default function AssessmentFlow() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const isInView = useInView(ref, { once: false, margin: '-100px' });
   const [activeStep, setActiveStep] = useState(-1);
   const lineControls = useAnimation();
+  const timeoutRefs = useRef([]);
 
   useEffect(() => {
-    if (!isInView) return;
+    // Clear any running timeouts on re-trigger or exit
+    timeoutRefs.current.forEach(clearTimeout);
+    timeoutRefs.current = [];
 
-    // Animate the line first, then light up each step
+    if (!isInView) {
+      // Reset everything when scrolled out
+      setActiveStep(-1);
+      lineControls.set({ scaleX: 0 });
+      return;
+    }
+
+    // Replay animation sequence
     lineControls.start({ scaleX: 1, transition: { duration: 1.4, ease: 'easeInOut' } });
 
     STEPS.forEach((_, i) => {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         setActiveStep(i);
       }, 300 + i * 220);
+      timeoutRefs.current.push(t);
     });
   }, [isInView]);
 
