@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
 
     // Allow both admin and scheduled execution (no user for scheduled)
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
