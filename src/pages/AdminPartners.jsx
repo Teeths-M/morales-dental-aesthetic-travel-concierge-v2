@@ -248,6 +248,9 @@ export default function AdminPartners() {
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
               </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/">🏠 Home</Link>
+              </Button>
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <Users className="w-6 h-6 text-white" />
               </div>

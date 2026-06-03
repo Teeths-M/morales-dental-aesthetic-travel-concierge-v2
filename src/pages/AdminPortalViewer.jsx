@@ -283,6 +283,9 @@ export default function AdminPortalViewer() {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/admin"><ArrowLeft className="w-4 h-4 mr-1" /> Admin</Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/">🏠 Home</Link>
+          </Button>
           <h1 className="text-lg font-bold text-slate-900">Partner Portal Viewer</h1>
           <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Admin Override — No Token Required</span>
         </div>

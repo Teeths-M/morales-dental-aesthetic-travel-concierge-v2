@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   FileText, CheckCircle, AlertCircle, Clock, Shield, Eye, 
   Search, Filter, RefreshCw, UserCheck, XCircle, ArrowLeft
@@ -107,6 +107,9 @@ export default function DoctorLicenseVerification() {
                 onClick={() => navigate('/admin')}
               >
                 <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/">🏠 Home</Link>
               </Button>
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Shield className="w-6 h-6 text-white" />

@@ -39,6 +39,9 @@ export default function AdminPricingDashboard() {
             <Button variant="outline" size="icon" className="rounded-full" asChild>
               <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">🏠 Home</Link>
+            </Button>
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-blue-600 rounded-lg flex items-center justify-center">
               <Settings className="w-6 h-6 text-white" />
             </div>

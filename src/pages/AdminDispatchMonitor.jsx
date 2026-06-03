@@ -8,9 +8,14 @@ export default function AdminDispatchMonitor() {
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-            <ChevronLeft className="w-4 h-4" /> Back to Admin
-          </Link>
+          <div className="flex items-center gap-3 mb-4">
+            <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+              <ChevronLeft className="w-4 h-4" /> Back to Admin
+            </Link>
+            <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-white bg-primary px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity">
+              🏠 Home
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
               <ShieldAlert className="w-5 h-5 text-red-600" />

@@ -399,6 +399,9 @@ export default function IQ200AdminCenter() {
             <Button variant="outline" size="icon" className="rounded-full" asChild>
               <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">🏠 Home</Link>
+            </Button>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0F3A20, #1a4f2e)' }}>
               <Shield className="w-5 h-5 text-white" />
             </div>

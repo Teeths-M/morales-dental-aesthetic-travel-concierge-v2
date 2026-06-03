@@ -231,6 +231,9 @@ export default function SimpleAdminDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                    <Link to="/">🏠 <span className="hidden sm:inline">Home</span></Link>
+                  </Button>
                   <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" disabled={allCases.length === 0}>
                     <Download className="w-4 h-4" /> <span className="hidden md:inline">Export CSV</span>
                   </Button>
