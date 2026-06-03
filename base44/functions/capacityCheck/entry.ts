@@ -125,13 +125,38 @@ If you have any questions, contact our concierge team directly.
     return Response.json({ success: true, already_listed: false, entry });
   }
 
-  // ── action: confirm_booking (increment count) ─────────────────────────────
+  // ── action: confirm_booking (increment count — optimistic concurrency) ──────
   if (action === 'confirm_booking') {
     if (!year_month) return Response.json({ error: 'year_month required' }, { status: 400 });
-    const cap = await getCapacity(year_month);
-    const newCount = cap.confirmed_count + 1;
-    await base44.asServiceRole.entities.MonthlyCapacity.update(cap.id, { confirmed_count: newCount });
-    return Response.json({ success: true, confirmed_count: newCount });
+
+    // Retry loop to guard against concurrent increments
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const cap = await getCapacity(year_month);
+
+      // Capacity guard — reject before incrementing
+      if (cap.confirmed_count >= cap.capacity_limit) {
+        return Response.json({
+          error: 'Month is fully booked',
+          year_month,
+          capacity_limit: cap.capacity_limit,
+          confirmed_count: cap.confirmed_count
+        }, { status: 409 });
+      }
+
+      const expectedCount = cap.confirmed_count;
+      const newCount = expectedCount + 1;
+
+      await base44.asServiceRole.entities.MonthlyCapacity.update(cap.id, { confirmed_count: newCount });
+
+      // Optimistic concurrency check: re-read and verify the write took effect
+      const verify = await base44.asServiceRole.entities.MonthlyCapacity.filter({ year_month });
+      if (verify[0]?.confirmed_count === newCount) {
+        return Response.json({ success: true, confirmed_count: newCount });
+      }
+      // Value differs — another writer raced us; retry
+    }
+
+    return Response.json({ error: 'Failed to increment capacity after retries — please try again' }, { status: 503 });
   }
 
   // ── action: cancel_booking (decrement + notify next waiter) ───────────────

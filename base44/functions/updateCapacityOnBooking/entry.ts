@@ -14,32 +14,56 @@ Deno.serve(async (req) => {
     // Extract year-month from preferred_date
     const yearMonth = data.preferred_date.slice(0, 7); // "2025-05"
 
-    // Get or create capacity record
-    const existing = await base44.asServiceRole.entities.MonthlyCapacity.filter({ year_month: yearMonth });
-    let cap;
-    if (existing.length > 0) {
-      cap = existing[0];
-    } else {
-      cap = await base44.asServiceRole.entities.MonthlyCapacity.create({
-        year_month: yearMonth,
-        capacity_limit: 40,
-        confirmed_count: 0,
-        scarcity_markup_threshold: 10,
-        base_markup_pct: 25,
-        scarcity_markup_pct: 35,
-      });
+    // Get or create capacity record — retry loop for optimistic concurrency
+    let finalCount = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const existing = await base44.asServiceRole.entities.MonthlyCapacity.filter({ year_month: yearMonth });
+      let cap;
+      if (existing.length > 0) {
+        cap = existing[0];
+      } else {
+        cap = await base44.asServiceRole.entities.MonthlyCapacity.create({
+          year_month: yearMonth,
+          capacity_limit: 40,
+          confirmed_count: 0,
+          scarcity_markup_threshold: 10,
+          base_markup_pct: 25,
+          scarcity_markup_pct: 35,
+        });
+      }
+
+      // Capacity guard — do not increment beyond limit
+      if (cap.confirmed_count >= cap.capacity_limit) {
+        console.warn(`Capacity full for ${yearMonth}: ${cap.confirmed_count}/${cap.capacity_limit}`);
+        return Response.json({
+          success: false,
+          error: 'Month is fully booked',
+          year_month: yearMonth,
+          confirmed_count: cap.confirmed_count
+        }, { status: 409 });
+      }
+
+      const newCount = cap.confirmed_count + 1;
+      await base44.asServiceRole.entities.MonthlyCapacity.update(cap.id, { confirmed_count: newCount });
+
+      // Optimistic concurrency check: verify the write landed
+      const verify = await base44.asServiceRole.entities.MonthlyCapacity.filter({ year_month: yearMonth });
+      if (verify[0]?.confirmed_count === newCount) {
+        finalCount = newCount;
+        console.log(`Updated capacity for ${yearMonth}: ${cap.confirmed_count} -> ${newCount}`);
+        break;
+      }
+      // Another writer raced us — retry
     }
 
-    // Increment the count
-    const newCount = cap.confirmed_count + 1;
-    await base44.asServiceRole.entities.MonthlyCapacity.update(cap.id, { confirmed_count: newCount });
+    if (finalCount === null) {
+      return Response.json({ success: false, error: 'Capacity update failed after retries' }, { status: 503 });
+    }
 
-    console.log(`Updated capacity for ${yearMonth}: ${cap.confirmed_count} -> ${newCount}`);
-
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       year_month: yearMonth,
-      updated_count: newCount 
+      updated_count: finalCount
     });
   } catch (error) {
     console.error('Error updating capacity:', error);
