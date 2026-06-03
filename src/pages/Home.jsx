@@ -10,6 +10,7 @@ import BrandSlideshow from '../components/home/BrandSlideshow';
 import SlotCounter from '../components/home/SlotCounter';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 import SafeTHub from '../components/home/SafeTHub';
+import HomeProceduresSection from '../components/home/HomeProceduresSection';
 
 
 export default function Home() {
@@ -52,6 +53,7 @@ export default function Home() {
       <SlotCounter className="mx-auto mt-6" />
       <HeroSlideshow />
       <OurExpertsTeaser />
+      <HomeProceduresSection />
       <SafeTHub />
       <WhyChooseUs />
       <BrandSlideshow />
