@@ -156,6 +156,14 @@ export default function SimpleAdminDashboard() {
         </div>
       </div>
       <nav className="space-y-2">
+        <Link
+          to="/"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100 transition-all mb-4 border border-slate-200"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Back to Website
+        </Link>
         {adminNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
