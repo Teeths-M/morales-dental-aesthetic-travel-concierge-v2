@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, DollarSign, TrendingUp } from 'lucide-react';
+import { ChevronRight, DollarSign, TrendingUp, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
 
 const paymentStatusConfig = {
   awaiting_selection: { label: 'Awaiting Selection', color: 'bg-slate-50 text-slate-700', icon: '⏳' },
@@ -14,6 +16,26 @@ const paymentStatusConfig = {
 };
 
 export default function PaymentDashboard({ paymentPlans = [] }) {
+  const [sendingInvoiceId, setSendingInvoiceId] = useState(null);
+
+  const handleSendInvoice = async (plan) => {
+    setSendingInvoiceId(plan.id);
+    try {
+      await base44.functions.invoke('sendInvoiceEmail', {
+        consultation_id: plan.consultation_id,
+        amount_due: plan.amount_due_today,
+        final_cost: plan.final_cost,
+        plan_type: plan.plan_type,
+        payment_status: plan.payment_status,
+      });
+      toast.success('Invoice sent successfully');
+    } catch (err) {
+      toast.error('Failed to send invoice: ' + err.message);
+    } finally {
+      setSendingInvoiceId(null);
+    }
+  };
+
   const stats = {
     total_revenue: paymentPlans.reduce((sum, p) => sum + (p.final_cost || 0), 0),
     fully_paid: paymentPlans.filter(p => p.payment_status === 'fully_paid').length,
@@ -89,7 +111,16 @@ export default function PaymentDashboard({ paymentPlans = [] }) {
 
                   <div className="flex gap-2 mt-3">
                     <Button size="sm" variant="outline">View Details</Button>
-                    <Button size="sm" variant="ghost">Send Invoice</Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={sendingInvoiceId === plan.id}
+                      onClick={() => handleSendInvoice(plan)}
+                    >
+                      {sendingInvoiceId === plan.id
+                        ? <><Loader2 className="w-3 h-3 animate-spin mr-1" />Sending...</>
+                        : 'Send Invoice'}
+                    </Button>
                   </div>
                 </Card>
               </motion.div>
