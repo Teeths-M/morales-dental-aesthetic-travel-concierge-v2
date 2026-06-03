@@ -161,8 +161,21 @@ Deno.serve(async (req) => {
 
         if (caseRecord.client_email) {
           try {
-            await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
-            results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'email' });
+            // Blackout guard for patient emails
+            const blackoutRes = await base44.asServiceRole.functions.invoke('checkNotificationBlackout', {
+              case_id: caseRecord.id,
+              notification_type: 'email',
+              recipient_role: 'patient',
+              recipient_identifier: caseRecord.client_email,
+              event_trigger: 'broadcastPortalLinks',
+              payload: { subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A' }
+            }).catch(() => ({ suppressed: false }));
+            if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
+              results.skipped.push({ name: caseRecord.client_name, reason: 'Blackout active' });
+            } else {
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'email' });
+            }
           } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'email', error: e.message }); }
         }
 

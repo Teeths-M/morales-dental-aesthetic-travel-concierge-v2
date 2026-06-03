@@ -117,9 +117,8 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'No valid E.164 phone number on record' });
     }
 
-    // Guard: Stage 11 blackout check
+    // Guard: Stage 11 blackout check (inline flag + checkNotificationBlackout function)
     if (caseData?.notification_blackout_active) {
-      // Log suppressed notification for audit
       await base44.asServiceRole.entities.NotificationLog.create({
         case_id: caseId,
         notification_type: 'sms',
@@ -133,6 +132,20 @@ Deno.serve(async (req) => {
         replay_status: 'pending',
       });
       return Response.json({ skipped: true, reason: 'Notification blackout active (Stage 11)', logged: true });
+    }
+
+    // Guard: checkNotificationBlackout function (catches cases where flag may not yet be set)
+    const blackoutRes = await base44.asServiceRole.functions.invoke('checkNotificationBlackout', {
+      case_id: caseId,
+      notification_type: 'sms',
+      recipient_role: 'patient',
+      recipient_identifier: patientPhone,
+      event_trigger: 'sendWhatsAppCaseUpdate',
+      payload: { status: newStatus }
+    }).catch(() => ({ suppressed: false }));
+
+    if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
+      return Response.json({ skipped: true, reason: 'Notification suppressed by checkNotificationBlackout', logged: true });
     }
 
     // Choose language
