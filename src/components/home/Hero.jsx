@@ -115,12 +115,12 @@ export default function Hero() {
       {/* Left-side emerald ambient */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent pointer-events-none" />
 
-      {/* Register / Login pill — absolute to section */}
-      <div className="absolute right-4 top-5 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-black/50 p-1.5 shadow-2xl backdrop-blur-md sm:right-6 lg:right-10">
+      {/* Register / Login pill — frosted glass with backdrop blur */}
+      <div className="absolute right-4 top-5 z-50 flex items-center gap-2 rounded-full border border-white/25 bg-white/10 p-1.5 shadow-2xl backdrop-blur-xl sm:right-6 lg:right-10">
         <Button
           variant="outline"
           onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
-          className="h-9 rounded-full border-white bg-white px-4 text-xs font-bold text-primary shadow-lg hover:bg-white sm:text-sm"
+          className="h-9 rounded-full border-white/60 bg-white/90 px-4 text-xs font-bold text-primary shadow-lg hover:bg-white sm:text-sm"
         >
           Register
         </Button>
