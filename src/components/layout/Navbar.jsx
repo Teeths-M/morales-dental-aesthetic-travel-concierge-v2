@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
-import { Menu, X, Globe, ChevronDown, Stethoscope } from 'lucide-react';
+import { Globe, ChevronDown, Stethoscope, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getNavLinks = (language) => [
@@ -17,14 +16,21 @@ const getNavLinks = (language) => [
   { label: language === 'es' ? 'Panel de Control' : language === 'fr' ? 'Tableau de Bord' : 'Dashboard', path: '/dashboard' },
 ];
 
+const allLanguages = [
+  { code: 'en', flag: '🇬🇧', name: 'English' },
+  { code: 'es', flag: '🇪🇸', name: 'Español' },
+  { code: 'fr', flag: '🇫🇷', name: 'Français' },
+  { code: 'pt', flag: '🇵🇹', name: 'Português' },
+  { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+  { code: 'it', flag: '🇮🇹', name: 'Italiano' },
+];
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [portalHubOpen, setPortalHubOpen] = useState(false);
   const [partnerDropdownOpen, setPartnerDropdownOpen] = useState(false);
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('appLanguage') || 'en';
-  });
+  const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
   const { user, isAuthenticated, navigateToLogin, logout } = useAuth();
@@ -33,48 +39,8 @@ export default function Navbar() {
   const languageTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setNavLinks(getNavLinks(language));
-  }, [language]);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
-
-  const handlePortalHubMouseLeave = () => {
-    portalHubTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 1000);
-  };
-
-  const handlePortalHubMouseEnter = () => {
-    if (portalHubTimeoutRef.current) clearTimeout(portalHubTimeoutRef.current);
-    setPortalHubOpen(true);
-  };
-
-  const handlePartnerMouseLeave = () => {
-    partnerTimeoutRef.current = setTimeout(() => setPartnerDropdownOpen(false), 1000);
-  };
-
-  const handlePartnerMouseEnter = () => {
-    if (partnerTimeoutRef.current) clearTimeout(partnerTimeoutRef.current);
-    setPartnerDropdownOpen(true);
-  };
-
-  const handleLanguageMouseLeave = () => {
-    languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 1000);
-  };
-
-  const handleLanguageMouseEnter = () => {
-    if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current);
-  };
-
-  const allLanguages = [
-    { code: 'en', flag: '🇬🇧', name: 'English' },
-    { code: 'es', flag: '🇪🇸', name: 'Español' },
-    { code: 'fr', flag: '🇫🇷', name: 'Français' },
-    { code: 'pt', flag: '🇵🇹', name: 'Português' },
-    { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
-    { code: 'it', flag: '🇮🇹', name: 'Italiano' },
-  ];
+  useEffect(() => { setNavLinks(getNavLinks(language)); }, [language]);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const handleLanguageChange = (langCode) => {
     setLanguage(langCode);
@@ -88,33 +54,27 @@ export default function Navbar() {
   const isHome = location.pathname === '/';
 
   const handleBack = () => {
-    if (isSensitive) {
-      navigate('/', { replace: true });
-    } else if (window.history.length <= 1) {
-      navigate('/');
-    } else {
-      navigate(-1);
-    }
+    if (isSensitive) navigate('/', { replace: true });
+    else if (window.history.length <= 1) navigate('/');
+    else navigate(-1);
   };
 
-  const handleSafeExit = () => {
-    navigate('/', { replace: true });
-  };
+  const handleSafeExit = () => navigate('/', { replace: true });
 
   const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
   const portalLinks = [
     ...(isAdmin ? [
-      { label: language === 'es' ? 'Acceso al Portal' : language === 'fr' ? 'Accès au Portail' : 'Portal Access', path: '/portal-hub' },
-      { label: language === 'es' ? 'Administración' : language === 'fr' ? 'Administration' : 'Admin Dashboard', path: '/portal-hub/admin' },
+      { label: language === 'es' ? 'Acceso al Portal' : 'Portal Access', path: '/portal-hub' },
+      { label: language === 'es' ? 'Administración' : 'Admin Dashboard', path: '/portal-hub/admin' },
     ] : []),
     ...(['doctor'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau de Bord Docteur' : 'Doctor Dashboard', path: '/doctor-dashboard' },
+      { label: language === 'es' ? 'Panel de Doctor' : 'Doctor Dashboard', path: '/doctor-dashboard' },
     ] : []),
     ...(['travel_agency'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
+      { label: language === 'es' ? 'Panel de Agencia' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
     ] : []),
     ...(['taxi_service'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
+      { label: language === 'es' ? 'Panel de Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
     ] : []),
   ];
 
@@ -124,230 +84,224 @@ export default function Navbar() {
     if (!clientOnlyPaths.includes(link.path)) return true;
     return isAuthenticated && canUseClientPortal;
   });
+
   const rolePrimaryAction = {
-    doctor: { path: '/doctor-dashboard', label: language === 'es' ? 'Panel de Doctor' : language === 'fr' ? 'Tableau Docteur' : 'Doctor Dashboard' },
-    travel_agency: { path: '/travel-agency-dashboard', label: language === 'es' ? 'Panel de Agencia' : language === 'fr' ? 'Tableau Agence' : 'Travel Agency Dashboard' },
-    taxi_service: { path: '/taxi-service-dashboard', label: language === 'es' ? 'Panel de Taxi' : language === 'fr' ? 'Tableau Taxi' : 'Taxi Dashboard' },
-  }[user?.role] || { path: '/booking', label: language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book Consultation' };
+    doctor: { path: '/doctor-dashboard', label: language === 'es' ? 'Panel de Doctor' : 'Doctor Dashboard' },
+    travel_agency: { path: '/travel-agency-dashboard', label: language === 'es' ? 'Panel de Agencia' : 'Travel Agency Dashboard' },
+    taxi_service: { path: '/taxi-service-dashboard', label: language === 'es' ? 'Panel de Taxi' : 'Taxi Dashboard' },
+  }[user?.role] || { path: '/booking', label: language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver' : 'Book Consultation' };
 
   return (
     <>
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-card/80 border-b border-border/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 shrink-0">
-            <img 
-              src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg" 
-              alt="Morales Logo" 
-              className="h-9 sm:h-10 w-auto object-contain"
+      {/* ── TOP NAV ── */}
+      <nav className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-4 md:px-8 lg:px-12 flex items-center justify-between py-3 bg-[#020B0D]/90 backdrop-blur-md border-b border-white/[0.06]">
+
+        {/* Brand */}
+        <Link to="/" className="flex items-center space-x-3 min-w-0 z-50 shrink-0">
+          <div className="w-10 h-10 md:w-11 md:h-11 bg-[#051A1D] border border-white/[0.12] flex items-center justify-center rounded-lg flex-shrink-0 overflow-hidden">
+            <img
+              src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
+              alt="Morales"
+              className="w-full h-full object-cover"
             />
-            <div className="hidden xl:block border-l border-border/30 pl-3">
-              <p className="font-['Instrument_Serif'] text-base leading-tight text-foreground tracking-wide">MORALES DENTAL & AESTHETIC TRAVEL CONCIERGE</p>
-              <p className="text-[9px] tracking-[0.25em] text-accent uppercase font-semibold">SAFE-T4LIFE™</p>
-            </div>
-          </Link>
+          </div>
+          <div className="flex flex-col py-1 min-w-0">
+            <span className="font-['Instrument_Serif'] text-sm md:text-base tracking-widest text-white uppercase font-medium leading-tight truncate">
+              Morales
+            </span>
+            <span className="text-[8px] md:text-[9px] tracking-[0.12em] text-[#D4AF37] uppercase font-sans mt-0.5 font-light truncate">
+              Dental &amp; Aesthetic Travel Concierge
+            </span>
+          </div>
+        </Link>
 
-          {/* Context-Aware Back Button */}
-          {!isHome && (
-            <button
-              onClick={handleBack}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-accent/60 hover:bg-accent/5 transition-all duration-200"
-              title="Go back"
+        {/* Desktop Nav Links */}
+        <div className="hidden lg:flex items-center space-x-1 text-sm font-medium">
+          {visibleNavLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`px-3 py-2 rounded-md transition-colors whitespace-nowrap ${
+                location.pathname === link.path
+                  ? 'text-[#D4AF37] bg-white/[0.06]'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+              }`}
             >
-              <span className="text-accent font-bold">←</span>
-              <span>Back</span>
+              {link.label}
+            </Link>
+          ))}
+
+          {/* Partner Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => { if (partnerTimeoutRef.current) clearTimeout(partnerTimeoutRef.current); setPartnerDropdownOpen(true); }}
+            onMouseLeave={() => { partnerTimeoutRef.current = setTimeout(() => setPartnerDropdownOpen(false), 800); }}
+          >
+            <button className="px-3 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors rounded-md flex items-center gap-1 whitespace-nowrap">
+              {language === 'es' ? 'Únete' : 'Join as Partner'}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-          )}
-
-          {/* Desktop Nav */}
-          <nav className="hidden xl:flex items-center gap-1">
-            {visibleNavLinks.map(link => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
-                  location.pathname === link.path
-                    ? 'text-foreground bg-secondary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {/* Partner Dropdown */}
-            <div 
-              className="relative" 
-              onMouseLeave={handlePartnerMouseLeave} 
-              onMouseEnter={handlePartnerMouseEnter}
-            >
-              <button
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
-              >
-                {language === 'es' ? 'Únete Como Socio' : language === 'fr' ? 'Rejoindre en tant que Partenaire' : 'Join as Partner'}
-                <ChevronDown className={`w-4 h-4 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {partnerDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute top-full right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50"
-                  >
-                    <Link
-                      to="/register-role"
-                      onClick={() => setPartnerDropdownOpen(false)}
-                      className="block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
-                    >
-                      {language === 'es' ? 'Elegir Rol' : language === 'fr' ? 'Choisir un Rôle' : 'Choose Role'}
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Portal Hub Dropdown */}
-            {isAuthenticated && portalLinks.length > 0 && (
-              <div 
-                className="relative" 
-                onMouseLeave={handlePortalHubMouseLeave} 
-                onMouseEnter={handlePortalHubMouseEnter}
-              >
-                <button
-                  className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md flex items-center gap-1"
+            <AnimatePresence>
+              {partnerDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="absolute top-full right-0 mt-2 w-44 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
                 >
-                  <Stethoscope className="w-4 h-4" />
-                  {language === 'es' ? 'Portal Hub' : language === 'fr' ? 'Portail Hub' : 'Portal Hub'}
-                  <ChevronDown className={`w-4 h-4 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
-                </button>
+                  <Link
+                    to="/register-role"
+                    onClick={() => setPartnerDropdownOpen(false)}
+                    className="block px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
+                  >
+                    {language === 'es' ? 'Elegir Rol' : 'Choose Role'}
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-                <AnimatePresence>
-                  {portalHubOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50"
-                    >
-                      {portalLinks.map((link, index) => (
-                        <Link
-                          key={link.path}
-                          to={link.path}
-                          onClick={() => setPortalHubOpen(false)}
-                          className={`block px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition-colors ${index === 0 ? 'rounded-t-lg' : 'border-t border-border'} ${index === portalLinks.length - 1 ? 'rounded-b-lg' : ''}`}
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-
-            {/* SAFE EXIT Button */}
-            <button
-              onClick={handleSafeExit}
-              className="border border-emerald-600/40 text-emerald-100 bg-emerald-950/80 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-[0_0_15px_rgba(15,58,32,0.1)] hover:bg-emerald-900 hover:border-emerald-500 hover:text-white hover:scale-105"
+          {/* Portal Hub Dropdown */}
+          {isAuthenticated && portalLinks.length > 0 && (
+            <div
+              className="relative"
+              onMouseEnter={() => { if (portalHubTimeoutRef.current) clearTimeout(portalHubTimeoutRef.current); setPortalHubOpen(true); }}
+              onMouseLeave={() => { portalHubTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 800); }}
             >
-              🔒 SAFE EXIT
-            </button>
-          </nav>
-
-          {/* Right Actions */}
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {/* Language Dropdown — desktop only */}
-            <div 
-              className="relative hidden xl:block" 
-              onMouseLeave={handleLanguageMouseLeave} 
-              onMouseEnter={() => {
-                handleLanguageMouseEnter();
-                setLanguageDropdownOpen(true);
-              }}
-            >
-              <button
-                className="p-2 hover:bg-secondary rounded-md transition-colors"
-                title="Select Language"
-              >
-                <Globe className="w-4 h-4" />
+              <button className="px-3 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors rounded-md flex items-center gap-1">
+                <Stethoscope className="w-3.5 h-3.5" />
+                Portal Hub
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
               </button>
               <AnimatePresence>
-                {languageDropdownOpen && (
+                {portalHubOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: -8 }}
+                    initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute top-full right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50"
+                    exit={{ opacity: 0, y: -6 }}
+                    className="absolute top-full left-0 mt-2 w-56 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
                   >
-                    {allLanguages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => {
-                          handleLanguageChange(lang.code);
-                          setLanguageDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-border/50 last:border-b-0 ${
-                          language === lang.code
-                            ? 'bg-secondary text-foreground'
-                            : 'text-foreground hover:bg-secondary/50'
-                        }`}
+                    {portalLinks.map((link, i) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        onClick={() => setPortalHubOpen(false)}
+                        className={`block px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] transition-colors ${i === 0 ? 'rounded-t-lg' : 'border-t border-white/[0.06]'} ${i === portalLinks.length - 1 ? 'rounded-b-lg' : ''}`}
                       >
-                        {lang.flag} {lang.name}
-                      </button>
+                        {link.label}
+                      </Link>
                     ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Auth buttons — desktop only */}
-            {isAuthenticated ? (
-              <>
-                <Link to={rolePrimaryAction.path} className="hidden xl:inline-flex">
-                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5">
-                    {rolePrimaryAction.label}
-                  </Button>
-                </Link>
-                <Button variant="outline" className="hidden xl:inline-flex text-sm" onClick={() => logout()}>
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  className="hidden xl:inline-flex text-sm font-semibold px-5"
-                  onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
-                >
-                  Register
-                </Button>
-                <Button
-                  className="hidden xl:inline-flex bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-semibold px-5"
-                  onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
-                >
-                  Login
-                </Button>
-              </>
-            )}
-
-            {/* Hamburger — mobile/tablet only */}
-            <button
-              className="xl:hidden shrink-0 p-2 rounded-lg hover:bg-secondary transition-colors"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
+          )}
         </div>
-      </div>
 
-    </header>
+        {/* Desktop Right Actions */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          {/* Back button */}
+          {!isHome && (
+            <button
+              onClick={handleBack}
+              className="px-3 py-1.5 rounded-md text-xs font-medium border border-white/[0.1] text-white/50 hover:text-white hover:border-[#D4AF37]/50 transition-all"
+            >
+              ← Back
+            </button>
+          )}
 
-      {/* Mobile Menu — true full-screen overlay, outside header so it covers everything */}
+          {/* Language */}
+          <div
+            className="relative"
+            onMouseEnter={() => { if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current); setLanguageDropdownOpen(true); }}
+            onMouseLeave={() => { languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 800); }}
+          >
+            <button className="p-2 hover:bg-white/[0.05] rounded-md transition-colors text-white/50 hover:text-white">
+              <Globe className="w-4 h-4" />
+            </button>
+            <AnimatePresence>
+              {languageDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="absolute top-full right-0 mt-2 w-40 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
+                >
+                  {allLanguages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-white/[0.06] last:border-b-0 ${
+                        language === lang.code ? 'text-[#D4AF37] bg-white/[0.05]' : 'text-white/70 hover:text-white hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      {lang.flag} {lang.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Auth */}
+          {isAuthenticated ? (
+            <>
+              <Link
+                to={rolePrimaryAction.path}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-[#D4AF37] text-[#020B0D] hover:bg-[#D4AF37]/90 transition-colors"
+              >
+                {rolePrimaryAction.label}
+              </Link>
+              <button
+                onClick={() => logout()}
+                className="px-3 py-2 text-sm text-white/50 hover:text-white transition-colors border border-white/[0.1] rounded-lg hover:border-white/30"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
+                className="px-3 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors border border-white/[0.1] rounded-lg hover:border-white/30"
+              >
+                Register
+              </button>
+              <button
+                onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-[#D4AF37] text-[#020B0D] hover:bg-[#D4AF37]/90 transition-colors"
+              >
+                Login
+              </button>
+            </>
+          )}
+
+          {/* Safe Exit */}
+          <button
+            onClick={handleSafeExit}
+            className="border border-emerald-600/40 text-emerald-300 bg-emerald-950/60 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-widest hover:bg-emerald-900/60 transition-all"
+          >
+            🔒 Safe Exit
+          </button>
+        </div>
+
+        {/* Mobile/Tablet Hamburger */}
+        <div className="flex lg:hidden items-center z-50 ml-auto">
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2.5 text-white bg-[#051A1D] border border-white/[0.1] rounded-xl hover:bg-white/[0.06] transition-all focus:outline-none"
+            aria-label="Toggle Menu"
+          >
+            <div className="w-5 h-4 flex flex-col justify-between items-end">
+              <span className={`h-[2px] bg-white transform transition-all duration-300 ${mobileOpen ? 'w-5 rotate-45 translate-y-[9px]' : 'w-5'}`} />
+              <span className={`h-[2px] bg-white transition-all duration-200 ${mobileOpen ? 'w-0 opacity-0' : 'w-3.5'}`} />
+              <span className={`h-[2px] bg-white transform transition-all duration-300 ${mobileOpen ? 'w-5 -rotate-45 -translate-y-[9px]' : 'w-4'}`} />
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      {/* ── MOBILE MENU OVERLAY ── */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -355,19 +309,21 @@ export default function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="xl:hidden fixed inset-0 z-[9998] bg-[#070F0B] overflow-y-auto flex flex-col"
+            className="lg:hidden fixed inset-0 z-[9998] bg-[#020B0D] overflow-y-auto flex flex-col"
           >
-            {/* Tray header */}
+            {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
               <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3">
-                <img
-                  src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
-                  alt="Morales Logo"
-                  className="h-9 w-auto object-contain"
-                />
-                <div className="border-l border-white/20 pl-3">
-                  <p className="font-['Instrument_Serif'] text-xs leading-tight text-white tracking-wide">MORALES DENTAL &amp; AESTHETIC</p>
-                  <p className="text-[8px] tracking-[0.2em] text-accent uppercase font-semibold">TRAVEL CONCIERGE</p>
+                <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] rounded-lg overflow-hidden flex-shrink-0">
+                  <img
+                    src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
+                    alt="Morales"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-['Instrument_Serif'] text-sm tracking-widest text-white uppercase leading-tight">Morales</span>
+                  <span className="text-[8px] tracking-[0.12em] text-[#D4AF37] uppercase font-light">Dental &amp; Aesthetic Travel</span>
                 </div>
               </Link>
               <button
@@ -378,34 +334,39 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Scrollable content */}
+            {/* Content */}
             <div className="flex flex-col flex-1 px-6 pt-6 pb-10 gap-8 overflow-y-auto">
 
               {/* Nav Links */}
               <div className="flex flex-col">
-                <span className="text-[10px] font-mono tracking-[0.25em] text-accent uppercase font-bold mb-4">
-                  Navigation
-                </span>
+                <span className="text-[10px] font-mono tracking-[0.25em] text-[#D4AF37] uppercase font-bold mb-4">Navigation</span>
                 {visibleNavLinks.map(link => (
                   <Link
                     key={link.path}
                     to={link.path}
                     onClick={() => setMobileOpen(false)}
-                    className={`py-3.5 text-xl font-serif font-medium border-b border-white/[0.05] transition-colors ${
-                      location.pathname === link.path ? 'text-accent' : 'text-white/80 hover:text-white'
+                    className={`py-3.5 text-xl font-['Instrument_Serif'] border-b border-white/[0.05] transition-colors ${
+                      location.pathname === link.path ? 'text-[#D4AF37]' : 'text-white/80 hover:text-white'
                     }`}
                   >
                     {link.label}
                   </Link>
                 ))}
+
+                {/* Partner link */}
+                <Link
+                  to="/register-role"
+                  onClick={() => setMobileOpen(false)}
+                  className="py-3.5 text-xl font-['Instrument_Serif'] border-b border-white/[0.05] text-white/80 hover:text-white transition-colors"
+                >
+                  {language === 'es' ? 'Únete Como Socio' : 'Join as Partner'}
+                </Link>
               </div>
 
-              {/* Secure Portals */}
+              {/* Portal Links */}
               {isAuthenticated && portalLinks.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-mono tracking-[0.25em] text-white/30 uppercase font-bold mb-1">
-                    Secure Access Portals
-                  </span>
+                  <span className="text-[10px] font-mono tracking-[0.25em] text-white/30 uppercase font-bold mb-1">Secure Access</span>
                   {portalLinks.map(link => (
                     <Link
                       key={link.path}
@@ -428,7 +389,7 @@ export default function Navbar() {
                       key={code}
                       onClick={() => handleLanguageChange(code)}
                       className={`px-2.5 py-1 font-mono text-xs font-bold rounded transition-all ${
-                        language === code ? 'bg-accent text-[#070F0B]' : 'text-white/40 hover:text-white/70'
+                        language === code ? 'bg-[#D4AF37] text-[#020B0D]' : 'text-white/40 hover:text-white/70'
                       }`}
                     >
                       {label}
@@ -441,7 +402,7 @@ export default function Navbar() {
                     <Link
                       to={rolePrimaryAction.path}
                       onClick={() => setMobileOpen(false)}
-                      className="w-full py-3.5 text-center text-sm font-semibold text-[#070F0B] bg-gradient-to-r from-accent to-accent/80 rounded-xl tracking-wide shadow-xl"
+                      className="w-full py-3.5 text-center text-sm font-semibold text-[#020B0D] bg-[#D4AF37] hover:bg-[#D4AF37]/90 rounded-xl tracking-wide"
                     >
                       {rolePrimaryAction.label}
                     </Link>
@@ -457,9 +418,9 @@ export default function Navbar() {
                     <Link
                       to="/consultation"
                       onClick={() => setMobileOpen(false)}
-                      className="w-full py-3.5 text-center text-sm font-semibold text-[#070F0B] bg-gradient-to-r from-accent to-accent/80 rounded-xl tracking-wide shadow-xl"
+                      className="w-full py-3.5 text-center text-sm font-semibold text-[#020B0D] bg-[#D4AF37] hover:bg-[#D4AF37]/90 rounded-xl tracking-wide"
                     >
-                      {language === 'es' ? 'Comenzar Viaje' : language === 'fr' ? 'Commencer le Voyage' : 'Begin Journey'}
+                      {language === 'es' ? 'Comenzar Viaje' : 'Begin Journey'}
                     </Link>
                     <div className="flex items-center justify-between px-1">
                       <button
