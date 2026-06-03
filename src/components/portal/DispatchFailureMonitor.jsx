@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle2, RefreshCw, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 
 const TYPE_LABELS = {
   patient: { label: 'Patient', color: 'bg-blue-100 text-blue-800' },
@@ -19,6 +20,7 @@ export default function DispatchFailureMonitor() {
   const [failures, setFailures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState(null);
+  const [retryingId, setRetryingId] = useState(null);
 
   const fetchFailures = async () => {
     setLoading(true);
@@ -32,6 +34,25 @@ export default function DispatchFailureMonitor() {
   };
 
   useEffect(() => { fetchFailures(); }, []);
+
+  const handleRetry = async (failure) => {
+    setRetryingId(failure.id);
+    try {
+      await base44.functions.invoke('portalHubWorkflow', {
+        consultation_id: failure.consultation_id,
+      });
+      await base44.entities.DispatchFailureLog.update(failure.id, {
+        status: 'retried',
+        retried_at: new Date().toISOString(),
+      });
+      setFailures(prev => prev.filter(f => f.id !== failure.id));
+      toast.success('Dispatch retried for ' + failure.case_name);
+    } catch (err) {
+      toast.error('Retry failed: ' + err.message);
+    } finally {
+      setRetryingId(null);
+    }
+  };
 
   const handleResolve = async (failure) => {
     setResolvingId(failure.id);
@@ -96,6 +117,12 @@ export default function DispatchFailureMonitor() {
                   )}
                 </div>
               </div>
+              <Button size="sm" variant="outline"
+                className="h-7 text-xs shrink-0 border-blue-300 text-blue-700 hover:bg-blue-50"
+                disabled={retryingId === f.id}
+                onClick={() => handleRetry(f)}>
+                {retryingId === f.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : 'Retry'}
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
