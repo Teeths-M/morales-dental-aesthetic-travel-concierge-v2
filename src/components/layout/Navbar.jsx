@@ -98,19 +98,20 @@ export default function Navbar() {
 
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 z-50 flex-shrink-0">
-          <div className="w-9 h-9 md:w-10 md:h-10 bg-[#051A1D] border border-white/[0.12] flex items-center justify-center rounded-lg flex-shrink-0 overflow-hidden">
+          <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] flex items-center justify-center rounded-lg flex-shrink-0 overflow-hidden">
             <img
               src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
               alt="Morales"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-['Instrument_Serif'] text-sm md:text-base tracking-widest text-white uppercase font-medium leading-tight">
+          {/* Text only on desktop */}
+          <div className="hidden lg:flex flex-col">
+            <span className="font-['Instrument_Serif'] text-base tracking-widest text-white uppercase font-medium leading-tight">
               Morales
             </span>
-            <span className="hidden sm:block text-[8px] md:text-[9px] tracking-[0.10em] text-[#D4AF37] uppercase font-sans mt-0.5 font-light">
-              Dental &amp; Aesthetic Travel
+            <span className="text-[9px] tracking-[0.10em] text-[#D4AF37] uppercase font-sans mt-0.5 font-light">
+              Dental &amp; Aesthetic Travel Concierge
             </span>
           </div>
         </Link>
