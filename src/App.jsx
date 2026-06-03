@@ -81,18 +81,14 @@ const AuthenticatedApp = () => {
     <>
     <Routes>
       {/* Standalone vendor portals — no AppLayout, no auth wrapper */}
-      <Route path="/portal/travel" element={<PortalTravelAgency />} />
-      <Route path="/portal/transfer" element={<PortalChauffeur />} />
-      <Route path="/portal/doctor/:token" element={
-        <ErrorBoundary>
-          <PortalDoctor />
-        </ErrorBoundary>
-      } />
-      <Route path="/portal/proposal/:token" element={<ClientProposalPortal />} />
+      <Route path="/portal/travel" element={<ErrorBoundary><PortalTravelAgency /></ErrorBoundary>} />
+      <Route path="/portal/transfer" element={<ErrorBoundary><PortalChauffeur /></ErrorBoundary>} />
+      <Route path="/portal/doctor/:token" element={<ErrorBoundary><PortalDoctor /></ErrorBoundary>} />
+      <Route path="/portal/proposal/:token" element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
       {/* Wildcard catch-all for proposal routes with trailing hashes/timestamps */}
-      <Route path="/portal/proposal/*" element={<ClientProposalPortal />} />
+      <Route path="/portal/proposal/*" element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
 
-      <Route element={<AppLayout />}>
+      <Route element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
         <Route path="/" element={<Home />} />
         <Route path="/discover" element={<Discover />} />
         <Route path="/providers" element={<Providers />} />
@@ -147,7 +143,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
         <Route path="/portal-test-hub" element={<PortalTestHub />} />
       </Route>
-      <Route element={<ProtectedRoute allowedRoles={["platform_admin", "admin"]} />}>
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={["platform_admin", "admin"]} /></ErrorBoundary>}>
         <Route path="/admin" element={<SimpleAdminDashboard />} />
         <Route path="/admin/partners" element={<AdminPartners />} />
         <Route path="/admin/imports" element={<AdminImports />} />
