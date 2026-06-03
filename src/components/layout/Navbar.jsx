@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { Globe, ChevronDown, Stethoscope, X } from 'lucide-react';
+import { Globe, ChevronDown, Stethoscope, X, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getNavLinks = (language) => [
@@ -290,15 +290,10 @@ export default function Navbar() {
         {/* Mobile/Tablet Hamburger */}
         <div className="flex lg:hidden items-center">
           <button
+            className="lg:hidden p-2 rounded-md bg-transparent hover:bg-white/10 transition-colors text-white border-0 outline-none"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2.5 text-white bg-[#0A3A38]/60 border border-emerald-700/30 rounded-xl hover:bg-[#0A3A38]/80 transition-all focus:outline-none backdrop-blur-sm"
-            aria-label="Toggle Menu"
           >
-            <div className="w-5 h-4 flex flex-col justify-between items-end">
-              <span className={`h-[2px] bg-white transform transition-all duration-300 ${mobileOpen ? 'w-5 rotate-45 translate-y-[9px]' : 'w-5'}`} />
-              <span className={`h-[2px] bg-white transition-all duration-200 ${mobileOpen ? 'w-0 opacity-0' : 'w-3.5'}`} />
-              <span className={`h-[2px] bg-white transform transition-all duration-300 ${mobileOpen ? 'w-5 -rotate-45 -translate-y-[9px]' : 'w-4'}`} />
-            </div>
+            {mobileOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
           </button>
         </div>
       </nav>
