@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SafeTOverrideModal from '@/components/safet/SafeTOverrideModal';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, Clock, AlertCircle, Sparkles, Shield, RefreshCw } from 'lucide-react';
@@ -36,6 +37,7 @@ export default function CaseStatusModule({ userEmail }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [showOverride, setShowOverride] = useState(false);
 
   useEffect(() => {
     fetchCase();
@@ -138,6 +140,37 @@ export default function CaseStatusModule({ userEmail }) {
         </div>
       </motion.div>
 
+      {/* SAFE-T blocked state */}
+      {caseData.workflow_stage === 'blocked' && (
+        <div style={{ background: '#fef2f2', border: '2px solid #fecaca', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '2px' }}>SAFE-T Risk Block</span>
+          </div>
+          <p style={{ fontSize: '14px', color: '#7f1d1d', marginBottom: '12px', lineHeight: 1.6 }}>
+            Our SAFE-T 4LIFE™ system has identified risk factors that require attention before proceeding. A member of our concierge team will reach out within 24 hours.
+          </p>
+          {caseData.risk_flags?.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              {caseData.risk_flags.map((flag, i) => (
+                <p key={i} style={{ fontSize: '13px', color: '#991b1b', margin: '4px 0' }}>• {flag}</p>
+              ))}
+            </div>
+          )}
+          <div style={{ borderTop: '1px solid #fecaca', paddingTop: '16px', marginTop: '4px' }}>
+            <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '12px' }}>
+              You may choose to proceed by accepting full personal liability. This requires reading and signing a legal waiver.
+            </p>
+            <Button
+              onClick={() => setShowOverride(true)}
+              style={{ background: '#7f1d1d', color: 'white', fontSize: '13px' }}
+            >
+              I understand the risks — I wish to proceed
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* $49 credit badge */}
       {creditAmount > 0 && (caseData.status === 'Proposal-Sent' || caseData.consultation_credit_applied) && (
         <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #0F3A20, #1a4f2e)', border: '1px solid rgba(197,160,89,0.3)' }}>
@@ -199,6 +232,14 @@ export default function CaseStatusModule({ userEmail }) {
           })}
         </div>
       </div>
+      <SafeTOverrideModal
+        isOpen={showOverride}
+        onClose={() => setShowOverride(false)}
+        onSuccess={() => { setShowOverride(false); fetchCase(); }}
+        workflowData={caseData}
+        consultationId={caseData.consultation_id}
+        caseRecordId={caseData.case_record_id}
+      />
     </div>
   );
 }
