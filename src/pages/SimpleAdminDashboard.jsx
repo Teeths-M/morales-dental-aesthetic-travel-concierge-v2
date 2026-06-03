@@ -16,6 +16,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import CaseDetailDrawer from '@/components/admin/CaseDetailDrawer';
+import JourneyStageSummary from '@/components/admin/JourneyStageSummary';
 
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -276,6 +277,9 @@ export default function SimpleAdminDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Journey Stage Summary */}
+            <JourneyStageSummary cases={allCases} />
 
             {/* Search Bar */}
             <div className="bg-white rounded-2xl shadow-md p-4 border border-slate-100">
