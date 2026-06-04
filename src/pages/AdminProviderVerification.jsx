@@ -31,10 +31,9 @@ import {
   AlertTriangle, 
   Clock, 
   RefreshCw,
-  Eye,
-  ArrowLeft
+  Eye
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import AdminLayout from '@/components/layout/AdminLayout';
 import ProviderVerificationOverride from '@/components/admin/ProviderVerificationOverride';
 
 export default function AdminProviderVerification() {
@@ -135,22 +134,15 @@ export default function AdminProviderVerification() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" asChild className="rounded-full">
-            <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/">🏠 Home</Link>
-          </Button>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold font-display">Provider Verification Dashboard</h1>
             <p className="text-muted-foreground mt-1">
               Monitor and manage provider trust & safety verifications
             </p>
           </div>
-        </div>
         <Button onClick={() => queryClient.invalidateQueries(['provider-verifications'])}>
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
@@ -327,6 +319,7 @@ export default function AdminProviderVerification() {
           }}
         />
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

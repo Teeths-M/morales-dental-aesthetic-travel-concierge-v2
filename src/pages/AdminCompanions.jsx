@@ -13,8 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, User, CheckCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, User, CheckCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function AdminCompanions() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,22 +57,15 @@ export default function AdminCompanions() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" asChild className="rounded-full">
-            <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/">🏠 Home</Link>
-          </Button>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold font-display">Companion Management</h1>
             <p className="text-muted-foreground mt-1">
               Manage travel companions and their verification status
             </p>
           </div>
-        </div>
         <Button onClick={() => refetch()}>
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
@@ -205,6 +198,7 @@ export default function AdminCompanions() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
