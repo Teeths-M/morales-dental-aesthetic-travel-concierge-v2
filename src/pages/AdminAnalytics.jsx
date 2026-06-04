@@ -280,8 +280,6 @@ export default function AdminAnalyticsDashboard() {
             </table>
           </div>
         </motion.div>
-
-      </div>
       </div>
     </AdminLayout>
   );
