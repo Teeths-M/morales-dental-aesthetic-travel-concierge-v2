@@ -43,7 +43,6 @@ export default function AdminSms() {
 
         {activeTab === 'broadcast' && <BroadcastPortalLinksPanel />}
         {activeTab === 'sms' && <SmsNotificationPanel />}
-        </div>
       </div>
     </AdminLayout>
   );

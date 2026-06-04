@@ -543,6 +543,7 @@ export default function IQ200AdminCenter() {
             {filtered.map(c => (
               <CaseCard key={c.id} caseRecord={c} onRefresh={refetch} />
             ))}
+          </div>
         )}
       </div>
     </AdminLayout>
