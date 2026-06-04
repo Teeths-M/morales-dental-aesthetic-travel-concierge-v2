@@ -58,7 +58,7 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail }) {
         ? (procedureNames ? `${procedureNames}, ${customRequest.trim()}` : customRequest.trim())
         : procedureNames;
 
-      await base44.entities.Consultation.create({
+      const consultation = await base44.entities.Consultation.create({
         patient_name: userEmail?.split('@')[0],
         email: userEmail,
         procedure_interest: 'other',
@@ -67,7 +67,22 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail }) {
         journey_stage: 'consultation'
       });
 
-      toast.success('Great! We\'ll match you with specialists');
+      // Trigger smart doctor matching for first procedure
+      const firstProcedure = selected[0]?.en_name || customRequest.trim();
+      if (firstProcedure) {
+        const matchResult = await base44.functions.invoke('matchDoctorsForProcedure', {
+          procedure_interest: firstProcedure,
+          client_email: userEmail,
+          client_id: consultation.id
+        });
+
+        if (matchResult.data.outreach_sent) {
+          toast.info(matchResult.data.message);
+        } else {
+          toast.success(`${matchResult.data.message} - Check your dashboard!`);
+        }
+      }
+
       onClose();
       navigate('/dashboard');
     } catch (e) {

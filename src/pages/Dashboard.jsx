@@ -48,6 +48,23 @@ const colorMap = {
 function DashboardHome({ user, consultations, language }) {
   const displayName = user?.full_name?.split(' ')[0] || 'there';
   const latestConsultation = consultations[0];
+  const [matchedDoctors, setMatchedDoctors] = useState([]);
+  const [outreachSent, setOutreachSent] = useState(false);
+
+  useEffect(() => {
+    if (latestConsultation?.procedure_interest) {
+      base44.functions.invoke('matchDoctorsForProcedure', {
+        procedure_interest: latestConsultation.procedure_interest,
+        client_email: user?.email,
+        client_id: user?.id
+      }).then(result => {
+        if (result.data?.matched_doctors) {
+          setMatchedDoctors(result.data.matched_doctors);
+          setOutreachSent(result.data.outreach_sent || false);
+        }
+      }).catch(console.error);
+    }
+  }, [latestConsultation?.procedure_interest, user?.email, user?.id]);
 
   // Countdown to procedure
   const procedureDate = new Date('2026-06-14');
@@ -83,6 +100,62 @@ function DashboardHome({ user, consultations, language }) {
           </div>
         </div>
       </motion.div>
+
+      {/* Matched Doctors Banner */}
+      {matchedDoctors.length > 0 && (
+        <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-emerald-700" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-emerald-800">We Found {matchedDoctors.length} Specialist{matchedDoctors.length > 1 ? 's' : ''}</p>
+              <p className="text-xs text-emerald-600 mt-0.5">Based on your interest in {latestConsultation?.procedure_interest}</p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {matchedDoctors.slice(0, 3).map(doc => (
+              <div key={doc.id} className="bg-white rounded-xl border border-emerald-100 p-3">
+                <div className="flex items-center gap-2">
+                  {doc.photo_url ? (
+                    <img src={doc.photo_url} alt={doc.name} className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <span className="text-emerald-700 font-bold text-xs">{doc.name?.charAt(0)}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate">{doc.name}</p>
+                    <p className="text-[10px] text-slate-500">{doc.clinic_city}, {doc.clinic_country}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link to="/providers">
+            <Button size="sm" className="w-full mt-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-8">
+              View All Specialists <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {outreachSent && matchedDoctors.length === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl shadow-sm p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-800">We're Finding Specialists for You</p>
+              <p className="text-xs text-amber-700 mt-1">
+                We've notified our doctor network about your interest in <strong>{latestConsultation?.procedure_interest}</strong>. 
+                You'll receive an email when a specialist joins.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Coordinator Card */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
