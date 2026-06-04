@@ -78,6 +78,8 @@ export default function AdminProviderVerification() {
   });
 
   const getStatusBadge = (status) => {
+    if (!status) return null;
+    
     const config = {
       pending_verification: { color: 'bg-gray-100 text-gray-800', icon: Clock },
       verifying: { color: 'bg-blue-100 text-blue-800', icon: RefreshCw },
@@ -263,7 +265,7 @@ export default function AdminProviderVerification() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
-                        {provider.provider_type.replace('_', ' ')}
+                        {provider.provider_type?.replace('_', ' ') || 'Unknown'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
