@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Search, ArrowRight, Sparkles, Shield } from 'lucide-react';
+import { motion, useInView, useAnimation } from 'framer-motion';
+import { Search, ArrowRight, Sparkles, Shield, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,25 +22,38 @@ const categoryEmojis = {
   Other: '🏥',
 };
 
-function ProcedureCard({ procedure, onClick }) {
+function ProcedureCard({ procedure, onClick, index, isActive }) {
   const category = procedure.category || 'Other';
   const emoji = categoryEmojis[category] || '🏥';
+  const cardRef = useRef(null);
+  const isInView = useInView(cardRef, { once: true, margin: '-50px' });
 
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      ref={cardRef}
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ delay: index * 0.08, duration: 0.6 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       onClick={() => onClick(procedure)}
-      className="group bg-white border border-slate-200 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300"
+      className="group bg-white border border-slate-200 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-2xl hover:border-emerald-200 transition-all duration-500"
     >
       <div className="flex items-start justify-between mb-4">
-        <span className="text-3xl">{emoji}</span>
-        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={isInView ? { scale: 1, opacity: 1 } : {}}
+          transition={{ delay: index * 0.08 + 0.3, duration: 0.4 }}
+          className="text-4xl"
+        >
+          {emoji}
+        </motion.div>
+        <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-600 transition-colors duration-300" />
       </div>
-      <h3 className="font-display text-xl font-semibold text-slate-800 mb-2">
+      <h3 className="font-display text-xl font-semibold text-slate-800 mb-2 group-hover:text-emerald-800 transition-colors duration-300">
         {procedure.en_name}
       </h3>
-      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 group-hover:text-emerald-600 transition-colors duration-300">
         {category}
       </p>
       {procedure.cpt_code && (
@@ -61,12 +74,22 @@ function ProcedureModal({ procedure, onClose }) {
   return (
     <Dialog open={!!procedure} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white rounded-3xl p-0 overflow-hidden border-slate-200">
-        <div className="bg-slate-50 p-8 border-b border-slate-100">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="bg-slate-50 p-8 border-b border-slate-100"
+        >
           <DialogHeader>
             <div className="flex items-center gap-4 mb-2">
-              <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center"
+              >
                 <span className="text-3xl">{emoji}</span>
-              </div>
+              </motion.div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
                   {category} Procedure
@@ -77,52 +100,87 @@ function ProcedureModal({ procedure, onClose }) {
               </div>
             </div>
           </DialogHeader>
-        </div>
+        </motion.div>
         
-        <div className="p-8 space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="p-8 space-y-6"
+        >
           <div className="grid sm:grid-cols-2 gap-4">
             {procedure.es_name && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+              >
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Spanish</p>
                 <p className="text-sm font-semibold text-slate-700">{procedure.es_name}</p>
-              </div>
+              </motion.div>
             )}
             {procedure.fr_name && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.45 }}
+                className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+              >
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">French</p>
                 <p className="text-sm font-semibold text-slate-700">{procedure.fr_name}</p>
-              </div>
+              </motion.div>
             )}
             {procedure.pt_name && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+              >
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Portuguese</p>
                 <p className="text-sm font-semibold text-slate-700">{procedure.pt_name}</p>
-              </div>
+              </motion.div>
             )}
             {procedure.de_name && (
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.55 }}
+                className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+              >
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">German</p>
                 <p className="text-sm font-semibold text-slate-700">{procedure.de_name}</p>
-              </div>
+              </motion.div>
             )}
           </div>
 
           {procedure.cpt_code && (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+            >
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">CPT Code</p>
               <p className="text-sm font-mono font-semibold text-slate-700">{procedure.cpt_code}</p>
-            </div>
+            </motion.div>
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-slate-100">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="flex gap-3 pt-4 border-t border-slate-100"
+          >
             <Button className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white" onClick={onClose}>
               Start Consultation
             </Button>
             <Button variant="outline" onClick={onClose} className="border-slate-200">
               Close
             </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );
@@ -131,6 +189,9 @@ function ProcedureModal({ procedure, onClose }) {
 export default function ProceduresLibrary() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProcedure, setSelectedProcedure] = useState(null);
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: false, margin: '-100px' });
+  const lineControls = useAnimation();
 
   const { data: procedures = [], isLoading } = useQuery({
     queryKey: ['master-procedures'],
@@ -146,22 +207,35 @@ export default function ProceduresLibrary() {
     return matchesSearch && matchesCategory;
   });
 
+  useEffect(() => {
+    if (isInView) {
+      lineControls.start({ scaleX: 1, transition: { duration: 1.2, ease: 'easeInOut' } });
+    } else {
+      lineControls.set({ scaleX: 0 });
+    }
+  }, [isInView]);
+
   return (
-    <section className="py-24 bg-white">
+    <section ref={sectionRef} className="py-24 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 mb-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 mb-6"
+          >
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             <span className="text-xs font-bold text-slate-600 uppercase tracking-[0.2em]">
               Explore Options
             </span>
-          </div>
+          </motion.div>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl text-slate-800 leading-tight mb-4">
             Procedure Library
           </h2>
@@ -170,12 +244,27 @@ export default function ProceduresLibrary() {
           </p>
         </motion.div>
 
+        {/* Animated Line */}
+        <div className="relative mb-12">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-20 bg-gradient-to-b from-transparent via-emerald-200 to-transparent" />
+          <div className="hidden lg:block absolute top-1/2 left-[20%] right-[20%] h-px overflow-hidden">
+            <motion.div
+              className="h-full origin-left"
+              style={{
+                background: 'linear-gradient(90deg, transparent, hsl(156,28%,24%), transparent)',
+                boxShadow: '0 0 8px 2px hsl(156,28%,24%,0.3)',
+              }}
+              initial={{ scaleX: 0 }}
+              animate={lineControls}
+            />
+          </div>
+        </div>
+
         {/* Search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.3, duration: 0.6 }}
           className="mb-12"
         >
           <div className="relative max-w-2xl mx-auto">
@@ -192,34 +281,36 @@ export default function ProceduresLibrary() {
         {/* Category Pills */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.15 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.4, duration: 0.6 }}
           className="flex flex-wrap justify-center gap-3 mb-12"
         >
           <button
             onClick={() => setSelectedProcedure('all')}
             className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all border ${
               selectedProcedure === 'all' || !selectedProcedure
-                ? 'bg-emerald-700 text-white border-emerald-700'
+                ? 'bg-emerald-700 text-white border-emerald-700 shadow-lg shadow-emerald-200'
                 : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'
             }`}
           >
             All Procedures
           </button>
-          {categories.filter(c => c !== 'all').map(cat => (
-            <button
+          {categories.filter(c => c !== 'all').map((cat, idx) => (
+            <motion.button
               key={cat}
               onClick={() => setSelectedProcedure(cat)}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ delay: 0.5 + idx * 0.05 }}
               className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all border flex items-center gap-2 ${
                 selectedProcedure === cat
-                  ? 'bg-emerald-700 text-white border-emerald-700'
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-lg shadow-emerald-200'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'
               }`}
             >
               <span>{categoryEmojis[cat] || '🏥'}</span>
               <span>{cat}</span>
-            </button>
+            </motion.button>
           ))}
         </motion.div>
 
@@ -231,27 +322,29 @@ export default function ProceduresLibrary() {
             ))}
           </div>
         ) : filteredProcedures.length === 0 ? (
-          <div className="text-center py-20 bg-slate-50 rounded-3xl border border-slate-100">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20 bg-slate-50 rounded-3xl border border-slate-100"
+          >
             <Shield className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-500 text-lg">No procedures found matching your search.</p>
-          </div>
+          </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.6, duration: 0.7 }}
             className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           >
             {filteredProcedures.map((procedure, index) => (
-              <motion.div
+              <ProcedureCard
                 key={procedure.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <ProcedureCard procedure={procedure} onClick={setSelectedProcedure} />
-              </motion.div>
+                procedure={procedure}
+                onClick={setSelectedProcedure}
+                index={index}
+                isActive={isInView}
+              />
             ))}
           </motion.div>
         )}
@@ -259,12 +352,12 @@ export default function ProceduresLibrary() {
         {/* Stats */}
         {!isLoading && procedures.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.8, duration: 0.7 }}
             className="mt-20 text-center"
           >
-            <div className="inline-flex items-center gap-12 bg-slate-50 border border-slate-200 rounded-3xl px-12 py-8">
+            <div className="inline-flex items-center gap-12 bg-slate-50 border border-slate-200 rounded-3xl px-12 py-8 shadow-sm">
               <div>
                 <p className="font-display text-4xl font-bold text-slate-800">{procedures.length}</p>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">Procedures</p>
