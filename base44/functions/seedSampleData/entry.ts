@@ -245,6 +245,80 @@ Deno.serve(async (req) => {
                     quality_score: 4.7,
                     total_trips: 189
                 }
+            ],
+            companions: [
+                {
+                    full_name: "Maria Lopez",
+                    email: "maria.lopez@companions.com",
+                    phone: "+34-91-555-0123",
+                    country: "Spain",
+                    city: "Madrid",
+                    languages: ["Spanish", "English", "French"],
+                    primary_language: "es",
+                    certifications: ["First Aid", "Medical Assistant"],
+                    specializations: ["Medical Tourism", "Cultural Tours"],
+                    years_experience: 8,
+                    bio: "Experienced medical travel companion with expertise in supporting international patients",
+                    hourly_rate_usd: 35,
+                    daily_rate_usd: 250,
+                    service_regions: ["Europe", "North Africa"],
+                    available_for_medical_procedures: true,
+                    medical_training: "Certified Medical Assistant",
+                    payout_method: "stripe",
+                    status: "active",
+                    rating: 4.9,
+                    review_count: 24,
+                    total_bookings: 45,
+                    is_available: true
+                },
+                {
+                    full_name: "James Mitchell",
+                    email: "james.mitchell@companions.com",
+                    phone: "+44-20-7946-0124",
+                    country: "United Kingdom",
+                    city: "London",
+                    languages: ["English", "German"],
+                    primary_language: "en",
+                    certifications: ["Tour Guide", "First Aid"],
+                    specializations: ["Cultural Tours", "Adventure"],
+                    years_experience: 6,
+                    bio: "Cultural guide and medical companion for European destinations",
+                    hourly_rate_usd: 40,
+                    daily_rate_usd: 280,
+                    service_regions: ["Europe"],
+                    available_for_medical_procedures: false,
+                    medical_training: "Basic First Aid Certified",
+                    payout_method: "stripe",
+                    status: "active",
+                    rating: 4.8,
+                    review_count: 18,
+                    total_bookings: 32,
+                    is_available: true
+                },
+                {
+                    full_name: "Sophie Dubois",
+                    email: "sophie.dubois@companions.com",
+                    phone: "+33-1-5555-0125",
+                    country: "France",
+                    city: "Paris",
+                    languages: ["French", "English", "Spanish"],
+                    primary_language: "fr",
+                    certifications: ["Nursing Assistant", "Tour Guide"],
+                    specializations: ["Medical Tourism", "Wellness Retreats"],
+                    years_experience: 10,
+                    bio: "Former nurse specializing in post-operative care and medical tourism support",
+                    hourly_rate_usd: 45,
+                    daily_rate_usd: 320,
+                    service_regions: ["Europe", "Caribbean"],
+                    available_for_medical_procedures: true,
+                    medical_training: "Licensed Nursing Assistant",
+                    payout_method: "stripe",
+                    status: "active",
+                    rating: 5.0,
+                    review_count: 31,
+                    total_bookings: 58,
+                    is_available: true
+                }
             ]
         };
 
@@ -259,6 +333,9 @@ Deno.serve(async (req) => {
         
         // Create taxi services
         const createdTaxiServices = await base44.asServiceRole.entities.TaxiService.bulkCreate(mockData.taxiServices);
+        
+        // Create companions
+        const createdCompanions = await base44.asServiceRole.entities.Companion.bulkCreate(mockData.companions);
 
         return Response.json({
             success: true,
@@ -267,7 +344,8 @@ Deno.serve(async (req) => {
                 consultations: createdConsultations.length,
                 doctors: createdDoctors.length,
                 travelAgencies: createdTravelAgencies.length,
-                taxiServices: createdTaxiServices.length
+                taxiServices: createdTaxiServices.length,
+                companions: createdCompanions.length
             }
         });
     } catch (error) {
