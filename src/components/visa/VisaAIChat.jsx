@@ -43,6 +43,8 @@ export default function VisaAIChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [lastSentAt, setLastSentAt] = useState(0);
+  const MAX_MESSAGES = 20;
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -53,11 +55,25 @@ export default function VisaAIChat() {
   const sendMessage = async (text) => {
     const userMsg = text || input.trim();
     if (!userMsg) return;
+
+    if (messages.filter(m => m.role === 'user').length >= MAX_MESSAGES) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'You have reached the session limit. Please contact our concierge team directly for further assistance.'
+      }]);
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastSentAt < 3000) return;
+    setLastSentAt(now);
+
     setInput('');
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setLoading(true);
 
-    const history = messages.map(m => `${m.role === 'user' ? 'Patient' : 'VISA ASSIST™'}: ${m.content}`).join('\n\n');
+    const recentMessages = messages.slice(-6);
+    const history = recentMessages.map(m => `${m.role === 'user' ? 'Patient' : 'VISA ASSIST™'}: ${m.content}`).join('\n\n');
 
     try {
       const response = await base44.integrations.Core.InvokeLLM({
