@@ -7,11 +7,14 @@ import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ProcedureWelcomeModal from '@/components/welcome/ProcedureWelcomeModal';
 
 export default function ClientSignup() {
   const navigate = useNavigate();
   const { checkUserAuth } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -29,6 +32,9 @@ export default function ClientSignup() {
         full_name: user.full_name || prev.full_name,
         email: user.email || prev.email
       }));
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
     });
     
     // Auto-detect nationality using IP geolocation
@@ -121,7 +127,7 @@ export default function ClientSignup() {
 
     localStorage.setItem('signupRole', 'client');
     await checkUserAuth();
-    navigate('/dashboard');
+    setShowWelcomeModal(true);
   };
 
   return (
@@ -207,6 +213,12 @@ export default function ClientSignup() {
           </div>
         </form>
       </div>
+
+      <ProcedureWelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+        userEmail={userEmail}
+      />
     </div>
   );
 }
