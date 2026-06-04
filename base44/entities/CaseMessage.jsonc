@@ -25,6 +25,13 @@
       ],
       "default": "patient"
     },
+    "file_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of uploaded file URLs (lab results, documents, images)"
+    },
     "sent_at": {
       "type": "string",
       "format": "date-time"

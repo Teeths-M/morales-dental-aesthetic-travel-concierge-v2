@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2, Loader2, Paperclip, X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
@@ -33,7 +33,10 @@ export default function MessagesModule() {
   const [sending, setSending] = useState(false);
   const [consultationId, setConsultationId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const labels = getMessagesLabels(appLanguage);
 
   const loadMessages = useCallback(async (consultId, userId) => {
@@ -111,24 +114,58 @@ export default function MessagesModule() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, activeContact]);
 
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    setUploading(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const fileData = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(fileData);
+        const blob = new Blob([uint8Array], { type: file.type });
+        const uploaded = await base44.integrations.Core.UploadFile({ file: blob });
+        uploadedUrls.push(uploaded.file_url);
+      }
+      setAttachments(prev => [...prev, ...uploadedUrls.map(url => ({ url, name: files.find(f => true)?.name || 'File' }))]);
+    } catch (e) {
+      console.error('Failed to upload file', e);
+    } finally {
+      setUploading(false);
+    }
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const send = async () => {
-    if (!input.trim() || !consultationId || !currentUser) return;
+    if ((!input.trim() && attachments.length === 0) || !consultationId || !currentUser) return;
     const text = input.trim();
+    const currentAttachments = [...attachments];
+    
     setInput('');
+    setAttachments([]);
+    
     // Optimistic update
     setMessages(prev => ({
       ...prev,
-      [activeContact]: [...(prev[activeContact] || []), { from: 'me', text, time: 'Now' }],
+      [activeContact]: [...(prev[activeContact] || []), { from: 'me', text, time: 'Now', files: currentAttachments }],
     }));
+    
     setSending(true);
     try {
       await base44.entities.CaseMessage.create({
         consultation_id: consultationId,
         from_user_id: currentUser.id,
         to_contact_id: activeContact,
-        message: text,
+        message: text || 'Sent a file',
         from_role: 'patient',
         sent_at: new Date().toISOString(),
+        file_urls: currentAttachments.map(a => a.url),
       });
     } catch (e) {
       console.error('Failed to send message', e);
@@ -239,6 +276,22 @@ export default function MessagesModule() {
                       : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'
                   }`}>
                     <p className="leading-relaxed">{msg.text}</p>
+                    {msg.files?.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {msg.files.map((file, idx) => (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1.5 hover:bg-white/30 transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span className="text-xs truncate max-w-[200px]">{file.name || 'Attachment'}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <p className={`text-[10px] mt-1 ${msg.from === 'me' ? 'text-white/60 text-right' : 'text-slate-400'}`}>{msg.time}</p>
                   </div>
                 </div>
@@ -247,22 +300,55 @@ export default function MessagesModule() {
             </div>
 
             {/* Input */}
-            <div className="px-4 py-3 border-t border-slate-100 flex items-center gap-3">
-              <input
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && send()}
-                placeholder={labels.typing}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400"
-              />
-              <Button
-                size="icon"
-                className="bg-emerald-700 hover:bg-emerald-800 h-10 w-10 rounded-xl flex-shrink-0"
-                onClick={send}
-                disabled={sending || !input.trim()}
-              >
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
+            <div className="px-4 py-3 border-t border-slate-100">
+              {/* Attachment preview */}
+              {attachments.length > 0 && (
+                <div className="flex gap-2 mb-3 overflow-x-auto">
+                  {attachments.map((att, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 shrink-0">
+                      <FileText className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs text-slate-700 max-w-[150px] truncate">{att.name}</span>
+                      <button onClick={() => removeAttachment(idx)} className="text-slate-400 hover:text-red-500">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl flex-shrink-0 border-slate-200"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+                </Button>
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && send()}
+                  placeholder={labels.typing}
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400"
+                />
+                <Button
+                  size="icon"
+                  className="bg-emerald-700 hover:bg-emerald-800 h-10 w-10 rounded-xl flex-shrink-0"
+                  onClick={send}
+                  disabled={sending || (!input.trim() && attachments.length === 0)}
+                >
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
