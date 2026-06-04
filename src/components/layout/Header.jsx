@@ -5,8 +5,6 @@ import { useAuth } from '@/lib/AuthContext';
 export default function Header() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState('EN');
-  const [isLangOpen, setIsLangOpen] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
@@ -20,12 +18,6 @@ export default function Header() {
     { name: 'Procedures', path: '/procedures' },
     { name: 'How It Works', path: '/how-it-works' },
   ];
-
-  const handleLanguageChange = (lang) => {
-    setCurrentLang(lang);
-    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: lang.toLowerCase() } }));
-    localStorage.setItem('appLanguage', lang.toLowerCase());
-  };
 
   return (
     <>
@@ -77,7 +69,7 @@ export default function Header() {
         {/* Unified Portal Dropdown */}
         <div className="relative">
           <button 
-            onClick={() => { setIsPortalOpen(!isPortalOpen); setIsLangOpen(false); }}
+            onClick={() => setIsPortalOpen(!isPortalOpen)}
             className="text-sm font-medium text-white/80 hover:text-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/[0.04] transition-all"
           >
             Portal Hub
@@ -91,31 +83,6 @@ export default function Header() {
               <Link to="/taxi-service-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Chauffeur Portal</Link>
               <div className="h-[1px] bg-white/[0.08] my-1.5" />
               <Link to="/partner-signup" className="px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/[0.05] rounded-lg transition-colors font-medium">Join as Provider Partner</Link>
-            </div>
-          )}
-        </div>
-
-        {/* Dynamic Multi-Language Selector */}
-        <div className="relative">
-          <button 
-            onClick={() => { setIsLangOpen(!isLangOpen); setIsPortalOpen(false); }}
-            className="p-2 text-white/60 hover:text-white rounded-full hover:bg-white/[0.04] transition-colors flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9h18" /></svg>
-            <span className="text-xs font-mono font-bold tracking-wider text-white/80">{currentLang}</span>
-          </button>
-
-          {isLangOpen && (
-            <div className="absolute right-0 mt-2 w-24 rounded-lg bg-[#030E10] border border-white/[0.08] p-1 flex flex-col space-y-0.5 shadow-xl">
-              {['EN', 'ES', 'FR'].map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={`px-3 py-1.5 text-xs font-mono rounded text-left transition-colors ${currentLang === lang ? 'text-[#D4AF37] bg-white/[0.05]' : 'text-white/60 hover:text-white hover:bg-white/[0.02]'}`}
-                >
-                  {lang}
-                </button>
-              ))}
             </div>
           )}
         </div>
@@ -192,23 +159,8 @@ export default function Header() {
               ⚙️ Admin Portal
             </Link>
           )}
-          <div className="pt-6 flex items-center justify-between border-t border-white/[0.06]">
-            <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-white/80">Log In to Dashboard</Link>
-            <div className="flex gap-2">
-              {['EN', 'ES', 'FR'].map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => {
-                    setCurrentLang(lang);
-                    setIsMobileMenuOpen(false);
-                    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: lang.toLowerCase() } }));
-                  }}
-                  className={`px-2 py-1 font-mono text-xs rounded ${currentLang === lang ? 'bg-[#D4AF37] text-black font-bold' : 'text-white/40'}`}
-                >
-                  {lang}
-                </button>
-              ))}
-            </div>
+          <div className="pt-6 border-t border-white/[0.06]">
+           <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-white/80">Log In to Dashboard</Link>
           </div>
         </div>
       )}
