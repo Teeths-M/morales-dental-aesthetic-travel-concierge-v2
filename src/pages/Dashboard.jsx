@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import JourneyProgress from '@/components/dashboard/JourneyProgress';
+import RecoveryMilestoneTracker from '@/components/dashboard/RecoveryMilestoneTracker';
+import PreparationChecklist from '@/components/dashboard/PreparationChecklist';
 import ConsultationsModule from '@/components/dashboard/modules/ConsultationsModule';
 import MedicalProfileModule from '@/components/dashboard/modules/MedicalProfileModule';
 import DocumentsModule from '@/components/dashboard/modules/DocumentsModule';
@@ -144,6 +146,15 @@ function DashboardHome({ user, consultations, language }) {
 
       {/* Journey Progress */}
       <JourneyProgress currentStage={latestConsultation?.journey_stage || 'consultation'} />
+
+      {/* Recovery Milestone Tracker */}
+      <RecoveryMilestoneTracker
+        caseStatus={latestConsultation?.status}
+        doctorConfirmed={latestConsultation?.status === 'confirmed' || latestConsultation?.journey_stage === 'procedure' || latestConsultation?.journey_stage === 'recovery'}
+      />
+
+      {/* Preparation Checklist */}
+      <PreparationChecklist userEmail={user?.email} />
 
       {/* Quick Actions */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
