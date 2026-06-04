@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/tabs";
 import CaseDetailDrawer from '@/components/admin/CaseDetailDrawer';
 import JourneyStageSummary from '@/components/admin/JourneyStageSummary';
+import FallbackCrisisAlert from '@/components/admin/FallbackCrisisAlert';
 
 export default function SimpleAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -250,6 +251,9 @@ export default function SimpleAdminDashboard() {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+            {/* In-Flux Crisis Alert Panel — always rendered first, hidden when no crises */}
+            <FallbackCrisisAlert cases={allCases} onRefresh={handleRefresh} />
+
             {/* Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <Card className="bg-white border-0 shadow-md rounded-2xl">

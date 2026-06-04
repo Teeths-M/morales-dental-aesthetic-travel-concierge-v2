@@ -34,8 +34,7 @@
       "default": "Normal"
     },
     "consultation_id": {
-      "type": "string",
-      "description": "Linked Consultation entity ID"
+      "type": "string"
     },
     "client_name": {
       "type": "string"
@@ -219,8 +218,7 @@
     },
     "base_cost": {
       "type": "number",
-      "default": 0,
-      "description": "Auto-computed: sum of all vendor costs"
+      "default": 0
     },
     "markup_percentage": {
       "type": "number",
@@ -314,35 +312,28 @@
       }
     },
     "signature_data": {
-      "type": "string",
-      "description": "Base64 DataURI of the client's drawn digital signature"
+      "type": "string"
     },
     "signature_timestamp": {
       "type": "string",
-      "format": "date-time",
-      "description": "ISO timestamp when the signature was captured"
+      "format": "date-time"
     },
     "signature_ip_address": {
-      "type": "string",
-      "description": "Client IP address at the moment of signature"
+      "type": "string"
     },
     "accepted_arbitration_clause": {
       "type": "boolean",
-      "default": false,
-      "description": "Explicit client acceptance of the Cross-Border Arbitration Agreement"
+      "default": false
     },
     "informed_consent_email_html": {
-      "type": "string",
-      "description": "Archived full HTML of the informed consent confirmation email"
+      "type": "string"
     },
     "informed_consent_email_sent_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp when the informed consent email was dispatched"
+      "format": "date-time"
     },
     "cultural_care_package": {
       "type": "object",
-      "description": "Stage 7: Post-Operative Cultural Care Package payload",
       "properties": {
         "generated_at": {
           "type": "string",
@@ -356,7 +347,6 @@
         },
         "translation_routing": {
           "type": "object",
-          "description": "Companion translation routing instructions",
           "properties": {
             "language_primary": {
               "type": "string"
@@ -377,7 +367,6 @@
         },
         "diet_order": {
           "type": "object",
-          "description": "Culturally adapted post-op diet plan",
           "properties": {
             "phase": {
               "type": "string"
@@ -409,32 +398,168 @@
     },
     "notification_blackout_active": {
       "type": "boolean",
-      "default": false,
-      "description": "Stage 11: When true, all automated notifications are suppressed and logged to audit trail"
+      "default": false
     },
     "notification_blackout_started_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp when blackout was activated"
+      "format": "date-time"
     },
     "notification_blackout_lifted_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Timestamp when blackout was lifted after procedure completion"
+      "format": "date-time"
     },
     "intake_handshake_logged_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Stage 10: Timestamp when doctor logged the physical intake handshake"
+      "format": "date-time"
     },
     "intake_handshake_logged_by": {
-      "type": "string",
-      "description": "Stage 10: Doctor email/ID who logged the intake handshake"
+      "type": "string"
     },
     "procedure_complete_logged_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Stage 11 end: Timestamp when doctor logged procedure complete"
+      "format": "date-time"
+    },
+    "fallback_state": {
+      "type": "object",
+      "description": "In-flux routing state when a primary partner misses their confirmation window",
+      "properties": {
+        "in_flux": {
+          "type": "boolean",
+          "default": false,
+          "description": "True when a confirmation window has been missed and fallback routing is active"
+        },
+        "in_flux_triggered_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the in-flux state was triggered"
+        },
+        "resolved_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when fallback routing was resolved"
+        },
+        "primary_partner_type": {
+          "type": "string",
+          "enum": [
+            "doctor",
+            "taxi_service",
+            "travel_agency"
+          ],
+          "description": "Which partner type missed their window"
+        },
+        "primary_partner_id": {
+          "type": "string"
+        },
+        "primary_partner_name": {
+          "type": "string"
+        },
+        "primary_partner_contact_phone": {
+          "type": "string"
+        },
+        "confirmation_deadline": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the primary partner was supposed to confirm by"
+        },
+        "current_escalation_level": {
+          "type": "number",
+          "default": 1,
+          "description": "1 = Backup A, 2 = Backup B, 3 = Human Required"
+        },
+        "escalation_reason": {
+          "type": "string",
+          "enum": [
+            "DOCTOR_MISSED_CONFIRMATION_WINDOW",
+            "TRANSFER_MISSED_WINDOW",
+            "BACKUP_A_DECLINED",
+            "BACKUP_B_TIMEOUT",
+            "MANUAL_ESCALATION"
+          ]
+        },
+        "human_intervention_required": {
+          "type": "boolean",
+          "default": false
+        },
+        "human_intervention_triggered_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "human_intervention_triggered_by": {
+          "type": "string",
+          "description": "Admin user ID or name who triggered the intervention"
+        },
+        "fallback_sequence": {
+          "type": "array",
+          "description": "Ordered list of backup partners to contact",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rank": {
+                "type": "number"
+              },
+              "partner_id": {
+                "type": "string"
+              },
+              "partner_name": {
+                "type": "string"
+              },
+              "partner_type": {
+                "type": "string"
+              },
+              "dispatch_phone": {
+                "type": "string"
+              },
+              "clinical_director_phone": {
+                "type": "string"
+              },
+              "confirmation_status": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "CONFIRMED",
+                  "DECLINED",
+                  "TIMED_OUT"
+                ],
+                "default": "PENDING"
+              },
+              "notified_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "confirmation_deadline": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "confirmed_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "audit_trail": {
+          "type": "array",
+          "description": "Full timestamped log of every fallback action for legal review",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "action": {
+                "type": "string"
+              },
+              "actor": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "required": [
