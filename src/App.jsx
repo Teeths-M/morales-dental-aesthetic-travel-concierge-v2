@@ -54,6 +54,7 @@ import AdminDispatchMonitor from './pages/AdminDispatchMonitor';
 import IQ200AdminCenter from './pages/IQ200AdminCenter';
 import AdminPricingDashboard from './pages/AdminPricingDashboard';
 import DoctorCasesDashboard from './pages/DoctorCasesDashboard';
+import AdminAnalyticsDashboard from './pages/AdminAnalytics';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -161,6 +162,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/dispatch-monitor" element={<AdminDispatchMonitor />} />
         <Route path="/admin/iq200" element={<IQ200AdminCenter />} />
         <Route path="/admin/pricing" element={<AdminPricingDashboard />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
