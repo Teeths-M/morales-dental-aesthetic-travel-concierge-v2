@@ -10,6 +10,7 @@ import BrandSlideshow from '../components/home/BrandSlideshow';
 import SlotCounter from '../components/home/SlotCounter';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 import SafeTHub from '../components/home/SafeTHub';
+import PartnerSignupTeaser from '../components/home/PartnerSignupTeaser';
 
 
 export default function Home() {
@@ -54,6 +55,7 @@ export default function Home() {
       <OurExpertsTeaser />
       <SafeTHub />
       <WhyChooseUs />
+      <PartnerSignupTeaser />
       <BrandSlideshow />
       <HowItWorks />
     </div>
