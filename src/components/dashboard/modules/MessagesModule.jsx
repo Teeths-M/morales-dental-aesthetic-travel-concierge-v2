@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 
 const getMessagesLabels = (lang) => ({
   title: lang === 'es' ? 'Mensajes' : lang === 'fr' ? 'Messages' : lang === 'pt' ? 'Mensagens' : 'Messages',
@@ -22,32 +23,124 @@ const getMessagesLabels = (lang) => ({
   paymentNotifications: lang === 'es' ? 'Notificaciones de Pago' : lang === 'fr' ? 'Notifications de Paiement' : lang === 'pt' ? 'Notificações de Pagamento' : 'Payment Notifications',
 });
 
-const contacts = [];
-
-const initialMessages = {};
-
 export default function MessagesModule() {
   const [appLanguage, setAppLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
-  const [activeContact, setActiveContact] = useState(1);
-  const [messages, setMessages] = useState(initialMessages);
+  const [contacts, setContacts] = useState([]);
+  const [activeContact, setActiveContact] = useState(null);
+  const [messages, setMessages] = useState({});
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [consultationId, setConsultationId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const messagesEndRef = useRef(null);
   const labels = getMessagesLabels(appLanguage);
 
-  const send = () => {
-    if (!input.trim()) return;
+  const loadMessages = useCallback(async (consultId, userId) => {
+    if (!consultId || !userId) return;
+    try {
+      const msgs = await base44.entities.CaseMessage.filter({ consultation_id: consultId });
+      const grouped = {};
+      for (const m of msgs) {
+        const key = m.from_user_id === userId ? m.to_contact_id : m.from_user_id;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push({
+          from: m.from_user_id === userId ? 'me' : 'them',
+          text: m.message,
+          time: m.sent_at ? new Date(m.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        });
+      }
+      setMessages(grouped);
+    } catch (e) { console.error('Failed to load messages', e); }
+  }, []);
+
+  useEffect(() => {
+    const loadCareTeam = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+        const consultations = await base44.entities.Consultation.filter({ email: user.email });
+        if (!consultations.length) { setLoading(false); return; }
+
+        const consultation = consultations[0];
+        setConsultationId(consultation.id);
+
+        const workflows = await base44.entities.WorkflowEvent.filter({ consultation_id: consultation.id });
+        const wf = workflows[0];
+
+        const careContacts = [];
+        if (wf?.assigned_doctor_id) {
+          try {
+            const doc = await base44.entities.Doctor.get(wf.assigned_doctor_id);
+            if (doc) careContacts.push({
+              id: doc.id,
+              name: doc.full_name,
+              role: 'Doctor',
+              avatar: doc.full_name?.charAt(0) || 'D',
+              photo_url: doc.photo_url,
+              online: true,
+            });
+          } catch (_) {}
+        }
+        careContacts.push({
+          id: 'coordinator',
+          name: 'Your Concierge Coordinator',
+          role: 'Coordinator',
+          avatar: 'C',
+          online: true,
+        });
+
+        setContacts(careContacts);
+        setActiveContact(careContacts[0]?.id);
+        await loadMessages(consultation.id, user.id);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    };
+    loadCareTeam();
+  }, [loadMessages]);
+
+  // Poll every 30s
+  useEffect(() => {
+    if (!consultationId || !currentUser) return;
+    const interval = setInterval(() => loadMessages(consultationId, currentUser.id), 30000);
+    return () => clearInterval(interval);
+  }, [consultationId, currentUser, loadMessages]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, activeContact]);
+
+  const send = async () => {
+    if (!input.trim() || !consultationId || !currentUser) return;
+    const text = input.trim();
+    setInput('');
+    // Optimistic update
     setMessages(prev => ({
       ...prev,
-      [activeContact]: [...(prev[activeContact] || []), { from: 'me', text: input, time: 'Now' }]
+      [activeContact]: [...(prev[activeContact] || []), { from: 'me', text, time: 'Now' }],
     }));
-    setInput('');
+    setSending(true);
+    try {
+      await base44.entities.CaseMessage.create({
+        consultation_id: consultationId,
+        from_user_id: currentUser.id,
+        to_contact_id: activeContact,
+        message: text,
+        from_role: 'patient',
+        sent_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('Failed to send message', e);
+    } finally {
+      setSending(false);
+    }
   };
 
   const contact = contacts.find(c => c.id === activeContact);
 
   useEffect(() => {
-    const handleLanguageChange = (event) => {
-      setAppLanguage(event.detail.language);
-    };
+    const handleLanguageChange = (event) => setAppLanguage(event.detail.language);
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
@@ -59,7 +152,11 @@ export default function MessagesModule() {
         <p className="text-xs text-slate-400 mt-0.5">{labels.subtitle}</p>
       </div>
 
-      {contacts.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+        </div>
+      ) : contacts.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-12 text-center">
           <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-600 font-medium mb-1">{labels.noConversations}</p>
@@ -81,8 +178,10 @@ export default function MessagesModule() {
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 ${activeContact === c.id ? 'bg-emerald-50' : ''}`}
                 >
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-sm">{c.avatar}</span>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {c.photo_url
+                        ? <img src={c.photo_url} alt={c.name} className="w-full h-full object-cover" />
+                        : <span className="text-white font-bold text-sm">{c.avatar}</span>}
                     </div>
                     {c.online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />}
                   </div>
@@ -96,10 +195,16 @@ export default function MessagesModule() {
             </div>
             {/* Channel links */}
             <div className="p-3 border-t border-slate-100 space-y-1">
-              <button className="w-full flex items-center gap-2 text-xs text-green-700 bg-green-50 hover:bg-green-100 rounded-xl px-3 py-2 font-semibold">
+              <button
+                onClick={() => window.open('https://wa.me/18001MRLCARE?text=Hi, I need support with my case', '_blank')}
+                className="w-full flex items-center gap-2 text-xs text-green-700 bg-green-50 hover:bg-green-100 rounded-xl px-3 py-2 font-semibold"
+              >
                 <Phone className="w-3.5 h-3.5" /> {labels.whatsapp}
               </button>
-              <button className="w-full flex items-center gap-2 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl px-3 py-2 font-semibold">
+              <button
+                onClick={() => window.location.href = 'mailto:support@moralesdentalandaesthetics.com'}
+                className="w-full flex items-center gap-2 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl px-3 py-2 font-semibold"
+              >
                 <Mail className="w-3.5 h-3.5" /> {labels.email}
               </button>
             </div>
@@ -109,17 +214,23 @@ export default function MessagesModule() {
           <div className="flex-1 flex flex-col">
             {/* Header */}
             <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 bg-slate-50">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center">
-                <span className="text-white font-bold text-xs">{contact?.avatar}</span>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center overflow-hidden">
+                {contact?.photo_url
+                  ? <img src={contact.photo_url} alt={contact.name} className="w-full h-full object-cover" />
+                  : <span className="text-white font-bold text-xs">{contact?.avatar}</span>}
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">{contact?.name}</p>
                 <p className="text-[11px] text-slate-400">{contact?.role} · {contact?.online ? labels.online : labels.offline}</p>
+                {sending && <p className="text-[10px] text-slate-400 italic">Sending…</p>}
               </div>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {(messages[activeContact] || []).length === 0 && (
+                <p className="text-center text-xs text-slate-400 mt-8">No messages yet. Say hello!</p>
+              )}
               {(messages[activeContact] || []).map((msg, i) => (
                 <div key={i} className={`flex ${msg.from === 'me' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[75%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
@@ -132,6 +243,7 @@ export default function MessagesModule() {
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
@@ -147,8 +259,9 @@ export default function MessagesModule() {
                 size="icon"
                 className="bg-emerald-700 hover:bg-emerald-800 h-10 w-10 rounded-xl flex-shrink-0"
                 onClick={send}
+                disabled={sending || !input.trim()}
               >
-                <Send className="w-4 h-4" />
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
           </div>

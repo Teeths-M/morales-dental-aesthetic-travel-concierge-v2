@@ -1,0 +1,62 @@
+{
+  "name": "CaseMessage",
+  "type": "object",
+  "properties": {
+    "consultation_id": {
+      "type": "string"
+    },
+    "from_user_id": {
+      "type": "string"
+    },
+    "to_contact_id": {
+      "type": "string",
+      "description": "Doctor ID, 'coordinator', etc."
+    },
+    "message": {
+      "type": "string"
+    },
+    "from_role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "doctor",
+        "coordinator",
+        "admin"
+      ],
+      "default": "patient"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "consultation_id",
+    "from_user_id",
+    "message",
+    "sent_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.from_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    }
+  }
+}
