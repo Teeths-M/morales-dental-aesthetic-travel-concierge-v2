@@ -45,7 +45,7 @@ export default function AdminProviderVerification() {
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: providers, isLoading } = useQuery({
+  const { data: providers, isLoading, refetch } = useQuery({
     queryKey: ['provider-verifications'],
     queryFn: async () => {
       const [doctors, travelAgencies, taxiServices, companions] = await Promise.all([
@@ -147,7 +147,7 @@ export default function AdminProviderVerification() {
               Monitor and manage provider trust & safety verifications
             </p>
           </div>
-          <Button onClick={() => queryClient.invalidateQueries(['provider-verifications'])}>
+          <Button onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
