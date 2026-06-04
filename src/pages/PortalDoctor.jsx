@@ -23,6 +23,9 @@ export default function PortalDoctor() {
   const [formData, setFormData] = useState({
     doctor_notes: ''
   });
+  const [showInfoRequest, setShowInfoRequest] = useState(false);
+  const [infoRequest, setInfoRequest] = useState('');
+  const [infoRequestSent, setInfoRequestSent] = useState(false);
 
   useEffect(() => {
     const loadCase = async () => {
@@ -110,6 +113,34 @@ export default function PortalDoctor() {
       setSuccess(true);
     } catch (err) {
       setError('Failed to confirm case');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInfoRequest = async () => {
+    if (!infoRequest.trim()) return;
+    setSubmitting(true);
+    try {
+      // Find the linked WorkflowEvent
+      const workflows = await base44.entities.WorkflowEvent.filter({ consultation_id: caseData?.consultation_id });
+      const workflow = workflows?.[0];
+      if (workflow) {
+        await base44.entities.WorkflowEvent.update(workflow.id, {
+          stage: 'info_requested',
+          doctor_notes: infoRequest,
+          last_update_summary: 'Doctor has requested additional information before confirming.',
+        });
+      }
+      await base44.functions.invoke('notifyPatientInfoRequest', {
+        consultation_id: caseData?.consultation_id,
+        doctor_question: infoRequest,
+      });
+      setInfoRequestSent(true);
+      setShowInfoRequest(false);
+    } catch (err) {
+      setError('Failed to send information request');
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -426,7 +457,36 @@ export default function PortalDoctor() {
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {submitting ? 'Processing...' : 'Not Available'}
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInfoRequest(true)}
+                  className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50"
+                  disabled={submitting || infoRequestSent}
+                >
+                  {infoRequestSent ? '✓ Request Sent' : 'Request More Info'}
+                </Button>
               </div>
+
+              {showInfoRequest && (
+                <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                  <p className="text-sm font-medium text-amber-800 mb-2">What information do you need?</p>
+                  <Textarea
+                    value={infoRequest}
+                    onChange={e => setInfoRequest(e.target.value)}
+                    className="w-full text-sm border rounded-lg p-2 h-24"
+                    placeholder="Describe what additional information you need from the patient..."
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <Button onClick={handleInfoRequest} className="text-sm" disabled={submitting || !infoRequest.trim()}>
+                      {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Send Request
+                    </Button>
+                    <Button variant="ghost" className="text-sm text-slate-500" onClick={() => setShowInfoRequest(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
