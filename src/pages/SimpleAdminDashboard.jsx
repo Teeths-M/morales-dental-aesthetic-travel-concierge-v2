@@ -311,8 +311,7 @@ export default function SimpleAdminDashboard() {
                 )}
               </TabsContent>
             </Tabs>
-          </div>
-        </main>
+        </div>
       </div>
 
       <CaseDetailDrawer
