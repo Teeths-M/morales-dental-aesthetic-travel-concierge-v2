@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -12,7 +10,7 @@ function urlBase64ToUint8Array(base64String) {
 
 export function usePushNotifications(user) {
   useEffect(() => {
-    if (!user || !VAPID_PUBLIC_KEY) return;
+    if (!user) return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
     async function registerPush() {
@@ -22,10 +20,14 @@ export function usePushNotifications(user) {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') return;
 
+        // Fetch the VAPID public key from backend
+        const { data: keyData } = await base44.functions.invoke('getVapidPublicKey', {});
+        if (!keyData?.publicKey) return;
+
         const existingSub = await reg.pushManager.getSubscription();
         const sub = existingSub || await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
         });
 
         // Upsert subscription — find existing record for this user and update, or create new
