@@ -165,7 +165,7 @@ export default function AdminProcedureRequests() {
           {reviewedRequests.slice(0, 5).map(req => {
             const StatusIcon = statusIcons[req.status];
             return (
-              <Card key={req.id} className={`border-opacity-50 ${statusColors[req.status].replace('text-', 'border-').split(' ')[0]}`}>
+              <Card key={req.id} className={`${req.status === 'approved' ? 'border-emerald-200 bg-emerald-50/50' : 'border-red-200 bg-red-50/50'}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
