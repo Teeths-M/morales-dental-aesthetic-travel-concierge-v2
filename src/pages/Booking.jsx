@@ -428,7 +428,7 @@ export default function Booking() {
     }
     if (step === 13) {
       if (!form.safet_risk_level) return false;
-      if (form.safet_risk_level === 'elevated' || form.safet_risk_level === 'review') return false;
+      // Allow proceeding even with elevated/review risk - admin will review
       return true;
     }
     return true;
@@ -478,11 +478,11 @@ export default function Booking() {
           </div>
 
           {/* Auto-save indicator */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 justify-end px-6 py-1 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 text-xs justify-end px-6 py-2 border-b border-slate-100 bg-emerald-50/50">
             {isSaving ? (
-              <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>
+              <span className="flex items-center gap-1.5 text-emerald-700 font-medium"><Loader2 className="w-3 h-3 animate-spin" /> Saving...</span>
             ) : draftData?.last_saved_at || draftIdRef.current ? (
-              <><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Progress saved — you can safely close and return</>
+              <span className="flex items-center gap-1.5 text-emerald-700 font-medium"><CheckCircle2 className="w-3 h-3" /> Progress saved — you can safely close and return</span>
             ) : null}
           </div>
 

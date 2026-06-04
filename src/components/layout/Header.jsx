@@ -149,7 +149,7 @@ export default function Header() {
         </Link>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-white/80 hover:text-white z-50 relative"
+          className="p-2 text-white/80 hover:text-white z-50 relative bg-transparent"
           aria-label="Toggle Menu"
         >
           <div className="w-6 h-5 flex flex-col justify-between">
