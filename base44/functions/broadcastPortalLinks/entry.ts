@@ -56,8 +56,21 @@ Deno.serve(async (req) => {
 
         if (doctor.email) {
           try {
-            await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
-            results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'email' });
+            const blackoutRes = await base44.asServiceRole.functions.invoke('checkNotificationBlackout', {
+              case_id: null,
+              notification_type: 'email',
+              recipient_role: 'partner',
+              recipient_identifier: doctor.email,
+              event_trigger: 'portal_broadcast',
+              payload: { subject: '🔗 Your Doctor Portal Link - Morales D&A' }
+            }).catch(() => ({ suppressed: false }));
+            if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
+              console.log(`Portal broadcast to ${doctor.email} suppressed — blackout active`);
+              results.skipped.push({ name: doctor.full_name, reason: 'Blackout active' });
+            } else {
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'email' });
+            }
           } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'email', error: e.message }); }
         }
 
@@ -91,8 +104,21 @@ Deno.serve(async (req) => {
 
         if (agency.email) {
           try {
-            await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
-            results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email' });
+            const blackoutRes = await base44.asServiceRole.functions.invoke('checkNotificationBlackout', {
+              case_id: null,
+              notification_type: 'email',
+              recipient_role: 'partner',
+              recipient_identifier: agency.email,
+              event_trigger: 'portal_broadcast',
+              payload: { subject: '🔗 Your Travel Agency Portal Link - Morales D&A' }
+            }).catch(() => ({ suppressed: false }));
+            if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
+              console.log(`Portal broadcast to ${agency.email} suppressed — blackout active`);
+              results.skipped.push({ name: agency.agency_name, reason: 'Blackout active' });
+            } else {
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email' });
+            }
           } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email', error: e.message }); }
         }
 
@@ -128,8 +154,21 @@ Deno.serve(async (req) => {
 
         if (driver.email) {
           try {
-            await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
-            results.sent.push({ name, type: 'taxi_service', channel: 'email' });
+            const blackoutRes = await base44.asServiceRole.functions.invoke('checkNotificationBlackout', {
+              case_id: null,
+              notification_type: 'email',
+              recipient_role: 'partner',
+              recipient_identifier: driver.email,
+              event_trigger: 'portal_broadcast',
+              payload: { subject: '🔗 Your Chauffeur Portal Link - Morales D&A' }
+            }).catch(() => ({ suppressed: false }));
+            if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
+              console.log(`Portal broadcast to ${driver.email} suppressed — blackout active`);
+              results.skipped.push({ name, reason: 'Blackout active' });
+            } else {
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              results.sent.push({ name, type: 'taxi_service', channel: 'email' });
+            }
           } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'email', error: e.message }); }
         }
 
