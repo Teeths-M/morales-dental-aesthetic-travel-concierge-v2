@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail }) {
+export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail, isFirstTimeSignup = false }) {
   const navigate = useNavigate();
   const [procedures, setProcedures] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -84,7 +84,9 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail }) {
       }
 
       onClose();
-      navigate('/dashboard');
+      if (isFirstTimeSignup) {
+        navigate('/dashboard');
+      }
     } catch (e) {
       console.error('Failed to save procedure interest:', e);
       toast.error('Failed to save your preferences');
@@ -94,8 +96,10 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail }) {
   };
 
   const handleSkip = () => {
+    if (isFirstTimeSignup) {
+      navigate('/dashboard');
+    }
     onClose();
-    navigate('/dashboard');
   };
 
   // Group procedures by category

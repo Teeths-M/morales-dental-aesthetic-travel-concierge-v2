@@ -218,6 +218,7 @@ export default function ClientSignup() {
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
         userEmail={userEmail}
+        isFirstTimeSignup={true}
       />
     </div>
   );
