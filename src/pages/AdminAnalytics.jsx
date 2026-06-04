@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { Activity, Clock, Users, TrendingUp, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+
+const COLORS = ['#047857', '#1d4ed8', '#7c3aed', '#db2777', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#7c2d12', '#9d174d'];
 
 export default function AdminAnalyticsDashboard() {
   const [analytics, setAnalytics] = useState(null);
@@ -30,8 +33,8 @@ export default function AdminAnalyticsDashboard() {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 animate-pulse space-y-6">
+      <div className="min-h-screen bg-slate-50 p-8">
+        <div className="animate-pulse space-y-6">
           <div className="h-8 bg-slate-200 rounded w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
@@ -40,36 +43,39 @@ export default function AdminAnalyticsDashboard() {
           </div>
           <div className="h-96 bg-slate-200 rounded-2xl"></div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AdminLayout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-center">
-          <div className="text-center">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <p className="text-lg font-semibold text-slate-800 mb-2">Failed to load analytics</p>
-            <p className="text-sm text-slate-500 mb-4">{error}</p>
-            <Button onClick={loadAnalytics}>Retry</Button>
-          </div>
+      <div className="min-h-screen bg-slate-50 p-8 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-semibold text-slate-800 mb-2">Failed to load analytics</p>
+          <p className="text-sm text-slate-500 mb-4">{error}</p>
+          <Button onClick={loadAnalytics}>Retry</Button>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   const { summary, pipeline_funnel, avg_time_per_stage, doctor_performance } = analytics;
+
+  // Filter stages with cases for funnel
   const activePipeline = pipeline_funnel.filter(s => s.count > 0);
+  
+  // Find bottlenecks (stages with avg time > 3 days)
   const bottlenecks = avg_time_per_stage.filter(s => s.avgDays > 3).sort((a, b) => b.avgDays - a.avgDays);
 
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Analytics Dashboard</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Analytics Dashboard</h1>
             <p className="text-sm text-slate-500 mt-1">Real-time insights into case pipeline and performance</p>
           </div>
           <Button onClick={loadAnalytics} variant="outline" size="sm" className="gap-2">
@@ -79,14 +85,42 @@ export default function AdminAnalyticsDashboard() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SummaryCard title="Total Cases" value={summary.total_cases} icon={Activity} color="emerald" subtext={`${summary.active_cases} active`} />
-          <SummaryCard title="Completion Rate" value={`${summary.completion_rate}%`} icon={TrendingUp} color="blue" subtext={`${summary.completed_cases} completed`} />
-          <SummaryCard title="Avg Doctor Response" value={summary.overall_avg_doctor_response_hours ? `${summary.overall_avg_doctor_response_hours}h` : 'N/A'} icon={Clock} color="violet" subtext="Time to confirm/decline" />
-          <SummaryCard title="Active Doctors" value={doctor_performance.length} icon={Users} color="pink" subtext="Assigned to cases" />
+          <SummaryCard
+            title="Total Cases"
+            value={summary.total_cases}
+            icon={Activity}
+            color="emerald"
+            subtext={`${summary.active_cases} active`}
+          />
+          <SummaryCard
+            title="Completion Rate"
+            value={`${summary.completion_rate}%`}
+            icon={TrendingUp}
+            color="blue"
+            subtext={`${summary.completed_cases} completed`}
+          />
+          <SummaryCard
+            title="Avg Doctor Response"
+            value={summary.overall_avg_doctor_response_hours ? `${summary.overall_avg_doctor_response_hours}h` : 'N/A'}
+            icon={Clock}
+            color="violet"
+            subtext="Time to confirm/decline"
+          />
+          <SummaryCard
+            title="Active Doctors"
+            value={doctor_performance.length}
+            icon={Users}
+            color="pink"
+            subtext="Assigned to cases"
+          />
         </div>
 
         {/* Pipeline Funnel Chart */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6"
+        >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
               <Activity className="w-4 h-4 text-emerald-700" />
@@ -96,13 +130,21 @@ export default function AdminAnalyticsDashboard() {
               <p className="text-xs text-slate-400">Cases at each stage</p>
             </div>
           </div>
+          
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={activePipeline} layout="vertical" margin={{ left: 100 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis type="number" allowDecimals={false} />
-                <YAxis type="category" dataKey="stage" width={120} tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <YAxis 
+                  type="category" 
+                  dataKey="stage" 
+                  width={120}
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
                 <Bar dataKey="count" fill="#047857" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
@@ -111,7 +153,12 @@ export default function AdminAnalyticsDashboard() {
 
         {/* Bottleneck Detection */}
         {bottlenecks.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6"
+          >
             <div className="flex items-center gap-3 mb-6">
               <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
@@ -121,9 +168,13 @@ export default function AdminAnalyticsDashboard() {
                 <p className="text-xs text-slate-400">Stages where cases get stuck (avg &gt; 3 days)</p>
               </div>
             </div>
+
             <div className="space-y-3">
-              {bottlenecks.map((stage) => (
-                <div key={stage.stage} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-100 rounded-xl">
+              {bottlenecks.map((stage, i) => (
+                <div
+                  key={stage.stage}
+                  className="flex items-center justify-between p-3 bg-amber-50 border border-amber-100 rounded-xl"
+                >
                   <div className="flex items-center gap-3">
                     <AlertTriangle className="w-4 h-4 text-amber-600" />
                     <div>
@@ -142,7 +193,12 @@ export default function AdminAnalyticsDashboard() {
         )}
 
         {/* Doctor Performance Table */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden"
+        >
           <div className="px-6 py-5 border-b border-slate-100">
             <h3 className="font-bold text-slate-800 text-sm">Doctor Performance</h3>
             <p className="text-xs text-slate-400 mt-0.5">Response rates and turnaround times</p>
@@ -161,20 +217,60 @@ export default function AdminAnalyticsDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {doctor_performance.map((doc) => {
-                  const responseRate = doc.total_cases_assigned > 0 ? Math.round(((doc.confirmed_count + doc.declined_count) / doc.total_cases_assigned) * 100) : 0;
+                {doctor_performance.map((doc, i) => {
+                  const responseRate = doc.total_cases_assigned > 0
+                    ? Math.round(((doc.confirmed_count + doc.declined_count) / doc.total_cases_assigned) * 100)
+                    : 0;
+                  
                   return (
                     <tr key={doc.doctor_id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4"><p className="text-sm font-semibold text-slate-800">{doc.doctor_name}</p></td>
-                      <td className="px-6 py-4 text-center"><span className="text-sm font-medium text-slate-700">{doc.total_cases_assigned}</span></td>
-                      <td className="px-6 py-4 text-center"><span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full"><CheckCircle2 className="w-3 h-3" />{doc.confirmed_count}</span></td>
-                      <td className="px-6 py-4 text-center"><span className="text-sm font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full">{doc.declined_count}</span></td>
-                      <td className="px-6 py-4 text-center"><span className="text-sm font-medium text-slate-500">{doc.pending_count}</span></td>
-                      <td className="px-6 py-4 text-center">{doc.avg_response_time_hours !== null ? <span className={`text-sm font-bold ${doc.avg_response_time_hours < 24 ? 'text-emerald-700' : doc.avg_response_time_hours < 48 ? 'text-amber-700' : 'text-red-700'}`}>{doc.avg_response_time_hours}h</span> : <span className="text-xs text-slate-400">No data</span>}</td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-semibold text-slate-800">{doc.doctor_name}</p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-sm font-medium text-slate-700">{doc.total_cases_assigned}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {doc.confirmed_count}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-sm font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full">
+                          {doc.declined_count}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-sm font-medium text-slate-500">{doc.pending_count}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {doc.avg_response_time_hours !== null ? (
+                          <span className={`text-sm font-bold ${
+                            doc.avg_response_time_hours < 24 ? 'text-emerald-700' :
+                            doc.avg_response_time_hours < 48 ? 'text-amber-700' : 'text-red-700'
+                          }`}>
+                            {doc.avg_response_time_hours}h
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">No data</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          {responseRate >= 80 ? <ArrowUp className="w-3 h-3 text-emerald-600" /> : responseRate >= 50 ? <ArrowUp className="w-3 h-3 text-amber-600 rotate-45" /> : <ArrowDown className="w-3 h-3 text-red-600" />}
-                          <span className={`text-sm font-bold ${responseRate >= 80 ? 'text-emerald-700' : responseRate >= 50 ? 'text-amber-700' : 'text-red-700'}`}>{responseRate}%</span>
+                          {responseRate >= 80 ? (
+                            <ArrowUp className="w-3 h-3 text-emerald-600" />
+                          ) : responseRate >= 50 ? (
+                            <ArrowUp className="w-3 h-3 text-amber-600 rotate-45" />
+                          ) : (
+                            <ArrowDown className="w-3 h-3 text-red-600" />
+                          )}
+                          <span className={`text-sm font-bold ${
+                            responseRate >= 80 ? 'text-emerald-700' :
+                            responseRate >= 50 ? 'text-amber-700' : 'text-red-700'
+                          }`}>
+                            {responseRate}%
+                          </span>
                         </div>
                       </td>
                     </tr>
@@ -184,6 +280,8 @@ export default function AdminAnalyticsDashboard() {
             </table>
           </div>
         </motion.div>
+
+      </div>
       </div>
     </AdminLayout>
   );
@@ -198,7 +296,11 @@ function SummaryCard({ title, value, icon: Icon, color, subtext }) {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5"
+    >
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{title}</p>
