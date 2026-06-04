@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plane, Car, Globe } from 'lucide-react';
+import { Plane, Car, Globe, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { translations } from '@/lib/translations';
 
@@ -77,7 +77,7 @@ export default function PartnerSignup() {
         </div>
 
         {/* Partner Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-3 gap-8 mb-12">
           {/* Travel Agency Card */}
           <motion.div
             className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all overflow-hidden"
@@ -143,6 +143,41 @@ export default function PartnerSignup() {
                 className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white font-semibold py-3 rounded-xl gap-2 text-base"
               >
                 <Car className="w-5 h-5" />
+                {language === 'es' ? 'Registrarse' : language === 'fr' ? 'S\'inscrire' : 'Sign up'}
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Companion Card */}
+          <motion.div
+            className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="h-56 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-600">
+              <img 
+                src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&h=400&fit=crop"
+                alt="Tour guide companion"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-8 text-center">
+              <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+                {language === 'es' ? 'Acompañante' : language === 'fr' ? 'Accompagnateur' : 'Companion'}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                {language === 'es'
+                  ? 'Guía pacientes en su viaje médico. Ofrece apoyo personal y cultural.'
+                  : language === 'fr'
+                  ? 'Guidez les patients dans leur voyage médical. Offrez un soutien personnel et culturel.'
+                  : 'Guide patients through their medical journey. Provide personal and cultural support.'}
+              </p>
+              <Button
+                onClick={() => navigate('/companion-signup', { state: { language } })}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-semibold py-3 rounded-xl gap-2 text-base"
+              >
+                <User className="w-5 h-5" />
                 {language === 'es' ? 'Registrarse' : language === 'fr' ? 'S\'inscrire' : 'Sign up'}
               </Button>
             </div>

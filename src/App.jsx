@@ -57,6 +57,9 @@ import DoctorCasesDashboard from './pages/DoctorCasesDashboard';
 import AdminAnalyticsDashboard from './pages/AdminAnalytics';
 import AdminProcedureRequests from './pages/AdminProcedureRequests';
 import AdminProviderVerification from './pages/AdminProviderVerification';
+import AdminCompanions from './pages/AdminCompanions';
+import CompanionSignup from './pages/CompanionSignup';
+import CompanionDashboard from './pages/CompanionDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -131,6 +134,7 @@ const AuthenticatedApp = () => {
         <Route path="/partner-signup" element={<PartnerSignup />} />
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
         <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
+        <Route path="/companion-signup" element={<CompanionSignup />} />
       <Route path="/consultation" element={<ConsultationForm />} />
       <Route path="/consultation-success" element={<ConsultationSuccess />} />
         <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
@@ -142,6 +146,9 @@ const AuthenticatedApp = () => {
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["taxi_service", "platform_admin", "admin"]} />}>
           <Route path="/taxi-service-dashboard" element={<TaxiServiceDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["companion", "platform_admin", "admin"]} />}>
+          <Route path="/companion-dashboard" element={<CompanionDashboard />} />
         </Route>
       </Route>
       {/* Standalone payment page - requires auth same as /portal-hub/checkout */}
@@ -167,6 +174,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/pricing" element={<AdminPricingDashboard />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
         <Route path="/admin/provider-verification" element={<AdminProviderVerification />} />
+        <Route path="/admin/companions" element={<AdminCompanions />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

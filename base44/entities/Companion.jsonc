@@ -1,0 +1,192 @@
+{
+  "name": "Companion",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Companion's full name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country of residence"
+    },
+    "city": {
+      "type": "string",
+      "description": "City of residence"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Languages spoken (e.g., English, Spanish, French)"
+    },
+    "primary_language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Professional certifications (First Aid, Tour Guide, etc.)"
+    },
+    "specializations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Areas of expertise (Medical Tourism, Cultural Tours, Adventure, etc.)"
+    },
+    "years_experience": {
+      "type": "number",
+      "default": 0
+    },
+    "bio": {
+      "type": "string",
+      "description": "Professional biography"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Profile photo"
+    },
+    "hourly_rate_usd": {
+      "type": "number",
+      "description": "Hourly rate in USD"
+    },
+    "daily_rate_usd": {
+      "type": "number",
+      "description": "Daily rate in USD"
+    },
+    "service_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Geographic regions where companion offers services"
+    },
+    "available_for_medical_procedures": {
+      "type": "boolean",
+      "default": false,
+      "description": "Willing to assist patients during medical procedures"
+    },
+    "medical_training": {
+      "type": "string",
+      "description": "Any medical training or healthcare background"
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ],
+      "description": "Preferred payout method"
+    },
+    "payout_account": {
+      "type": "string",
+      "description": "Bank account or PayPal email"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "verifying",
+        "verified",
+        "failed",
+        "manually_approved"
+      ],
+      "default": "pending_verification"
+    },
+    "identity_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "verification_can_be_activated": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "rating": {
+      "type": "number",
+      "default": 5.0
+    },
+    "review_count": {
+      "type": "number",
+      "default": 0
+    },
+    "total_bookings": {
+      "type": "number",
+      "default": 0
+    },
+    "earnings_this_month": {
+      "type": "number",
+      "default": 0
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true
+    },
+    "sign_up_completed_at": {
+      "type": "string",
+      "description": "ISO timestamp"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "phone",
+    "country",
+    "languages"
+  ]
+}
