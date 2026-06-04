@@ -484,7 +484,6 @@ export default function IQ200AdminCenter() {
         </div>
 
         {/* Pending ingestion */}
-        <div className="max-w-7xl mx-auto space-y-6">
         {pendingConsultations.length > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
