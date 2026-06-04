@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Star, MapPin } from 'lucide-react';
+import { Shield, BadgeCheck, Plane, Star, MapPin, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SlotCounter from './SlotCounter';
 import SentinelOrbit from './SentinelOrbit';
@@ -95,6 +95,16 @@ export default function Hero() {
           : 'Taxi Service',
       path: '/partner-signup/taxi-service',
       icon: Shield,
+    },
+    {
+      label:
+        language === 'es'
+          ? 'Acompañante'
+          : language === 'fr'
+          ? 'Accompagnateur'
+          : 'Companion',
+      path: '/companion-signup',
+      icon: User,
     },
   ];
 
