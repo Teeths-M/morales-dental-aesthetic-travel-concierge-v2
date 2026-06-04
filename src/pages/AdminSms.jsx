@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Import, UserCheck, Eye, MessageSquare, Zap, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Users, Import, UserCheck, Eye, MessageSquare, Zap, ArrowLeft, FilePlus, ShieldAlert, Activity, DollarSign, User, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SmsNotificationPanel from '@/components/portal/SmsNotificationPanel';
 import BroadcastPortalLinksPanel from '@/components/portal/BroadcastPortalLinksPanel';
@@ -10,8 +10,15 @@ const adminNavItems = [
   { path: '/admin/partners', label: 'Partner Management', icon: Users },
   { path: '/admin/imports', label: 'Data Imports', icon: Import },
   { path: '/admin/doctor-verification', label: 'Doctor Verification', icon: UserCheck },
+  { path: '/admin/procedure-requests', label: 'Procedure Requests', icon: FilePlus },
   { path: '/admin/portal-viewer', label: 'Portal Viewer', icon: Eye },
   { path: '/admin/sms', label: 'SMS Notifications', icon: MessageSquare },
+  { path: '/admin/dispatch-monitor', label: 'Dispatch Failures', icon: ShieldAlert },
+  { path: '/admin/iq200', label: 'IQ-200 Intelligence', icon: Activity },
+  { path: '/admin/pricing', label: 'Pricing Catalog', icon: DollarSign },
+  { path: '/admin/provider-verification', label: 'Provider Verification', icon: ShieldAlert },
+  { path: '/admin/companions', label: 'Companions', icon: User },
+  { path: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
 ];
 
 export default function AdminSms() {
