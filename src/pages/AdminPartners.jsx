@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, Trash2, Square, SquareCheck } from 'lucide-react';
+import { Users, Plane, Car, User, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, Trash2, Square, SquareCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +58,15 @@ export default function AdminPartners() {
     queryFn: async () => {
       const result = await base44.entities.TaxiService.list('-created_date', 200);
       console.log('Fetched taxi services:', result);
+      return result;
+    },
+  });
+
+  const { data: companions = [], isLoading: loadingCompanions } = useQuery({
+    queryKey: ['admin_companions'],
+    queryFn: async () => {
+      const result = await base44.entities.Companion.list('-created_date', 200);
+      console.log('Fetched companions:', result);
       return result;
     },
   });
@@ -176,6 +185,25 @@ export default function AdminPartners() {
     }
   };
 
+  const handleApproveCompanion = async (companionId) => {
+    setIsApproving(true);
+    try {
+      console.log('Approving companion:', companionId);
+      await base44.entities.Companion.update(companionId, { 
+        status: 'active',
+        verification_status: 'verified'
+      });
+      console.log('Companion approved successfully');
+      toast.success('Companion approved successfully');
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error('Failed to approve companion:', error);
+      toast.error('Failed to approve companion: ' + error.message);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
   const toggleSelectId = (id) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(id_ => id_ !== id) : [...prev, id]
@@ -199,7 +227,7 @@ export default function AdminPartners() {
     setIsDeleting(true);
     try {
       // Determine type of each selected ID and delete using appropriate function
-      const allPartners = [...doctors, ...travelAgencies, ...taxiServices];
+      const allPartners = [...doctors, ...travelAgencies, ...taxiServices, ...companions];
       const selectedPartners = allPartners.filter(p => selectedIds.includes(p.id));
 
       for (const partner of selectedPartners) {
@@ -212,6 +240,9 @@ export default function AdminPartners() {
         } else if (partner.company_name || partner.driver_name) {
           // Taxi Service - use deleteTaxiServiceCompletely
           await base44.functions.invoke('deleteTaxiServiceCompletely', { service_id: partner.id });
+        } else if (partner.companion_id || (partner.full_name && partner.languages)) {
+          // Companion - delete entity directly
+          await base44.entities.Companion.delete(partner.id);
         }
       }
 
@@ -230,10 +261,12 @@ export default function AdminPartners() {
     doctors: doctors.length,
     travelAgencies: travelAgencies.length,
     taxiServices: taxiServices.length,
+    companions: companions.length,
     active: [
       ...doctors.filter(d => d.status === 'active'),
       ...travelAgencies.filter(t => t.status === 'active'),
       ...taxiServices.filter(t => t.status === 'active'),
+      ...companions.filter(c => c.status === 'active'),
     ].length,
   };
 
@@ -305,6 +338,20 @@ export default function AdminPartners() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-white border-0 shadow-md rounded-2xl">
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <User className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stats.companions}</p>
+                  <p className="text-xs text-slate-500">Companions</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search Bar */}
@@ -363,6 +410,7 @@ export default function AdminPartners() {
             <TabsTrigger value="doctors" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-xl">Doctors</TabsTrigger>
             <TabsTrigger value="travel" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white rounded-xl">Travel Agencies</TabsTrigger>
             <TabsTrigger value="taxi" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white rounded-xl">Taxi Services</TabsTrigger>
+            <TabsTrigger value="companions" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-xl">Companions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -398,6 +446,19 @@ export default function AdminPartners() {
               partners={taxiServices} 
               isLoading={loadingTaxi}
               type="taxi"
+              searchTerm={searchTerm}
+              getStatusBadge={getStatusBadge}
+              getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
+            />
+            <PartnerSection 
+              title="Companions" 
+              icon={User} 
+              partners={companions} 
+              isLoading={loadingCompanions}
+              type="companion"
               searchTerm={searchTerm}
               getStatusBadge={getStatusBadge}
               getRatingBadge={getRatingBadge}
@@ -454,6 +515,22 @@ export default function AdminPartners() {
               toggleSelectId={toggleSelectId}
             />
           </TabsContent>
+
+          <TabsContent value="companions" className="space-y-4">
+            <PartnerSection 
+              title="Companions" 
+              icon={User} 
+              partners={companions} 
+              isLoading={loadingCompanions}
+              type="companion"
+              searchTerm={searchTerm}
+              getStatusBadge={getStatusBadge}
+              getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails}
+              selectedIds={selectedIds}
+              toggleSelectId={toggleSelectId}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -467,6 +544,7 @@ export default function AdminPartners() {
           onRejectDoctor={handleRejectDoctor}
           onApproveTaxiService={handleApproveTaxiService}
           onApproveTravelAgency={handleApproveTravelAgency}
+          onApproveCompanion={handleApproveCompanion}
           isApproving={isApproving}
         />
       )}
@@ -504,6 +582,15 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
         partner.driver_name?.toLowerCase().includes(searchLower) ||
         partner.email?.toLowerCase().includes(searchLower) ||
         partner.operating_country?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (type === 'companion' || type === 'all') {
+      return (
+        partner.full_name?.toLowerCase().includes(searchLower) ||
+        partner.email?.toLowerCase().includes(searchLower) ||
+        partner.country?.toLowerCase().includes(searchLower) ||
+        partner.city?.toLowerCase().includes(searchLower)
       );
     }
     
@@ -572,6 +659,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, i
     if (type === 'doctor') return partner.full_name || 'Unnamed Doctor';
     if (type === 'travel') return partner.agency_name || 'Unnamed Agency';
     if (type === 'taxi') return partner.company_name || partner.driver_name || 'Unnamed Service';
+    if (type === 'companion') return partner.full_name || 'Unnamed Companion';
     return partner.name || 'Unnamed Partner';
   };
 
@@ -579,6 +667,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, i
     if (type === 'doctor') return `${partner.clinic_city || ''}, ${partner.clinic_country || ''}`.trim();
     if (type === 'travel') return partner.headquarters_country || 'Location unknown';
     if (type === 'taxi') return `${partner.operating_city || ''}, ${partner.operating_country || ''}`.trim();
+    if (type === 'companion') return `${partner.city || ''}, ${partner.country || ''}`.trim();
     return 'Location unknown';
   };
 
@@ -655,7 +744,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, i
   );
 }
 
-function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, onRejectDoctor, onApproveTaxiService, onApproveTravelAgency, isApproving }) {
+function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, onRejectDoctor, onApproveTaxiService, onApproveTravelAgency, onApproveCompanion, isApproving }) {
   if (!partner) return null;
 
   const renderDetails = () => {
@@ -867,6 +956,105 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
       );
     }
 
+    if (partner._type === 'companion' || (partner.full_name && partner.languages)) {
+      return (
+        <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Full Name</label>
+              <p className="text-slate-900">{partner.full_name}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Email</label>
+              <p className="text-slate-900">{partner.email}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Phone</label>
+              <p className="text-slate-900">{partner.phone}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Location</label>
+              <p className="text-slate-900">{partner.city}, {partner.country}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Years of Experience</label>
+              <p className="text-slate-900">{partner.years_experience || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Language Preference</label>
+              <p className="text-slate-900">{partner.primary_language?.toUpperCase() || 'EN'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Payout Method</label>
+              <p className="text-slate-900">{partner.payout_method || 'Not set'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Hourly Rate</label>
+              <p className="text-slate-900">${partner.hourly_rate_usd || 'N/A'} USD</p>
+            </div>
+          </div>
+          
+          {partner.languages && partner.languages.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-slate-700">Languages Spoken</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {partner.languages.map((lang, idx) => (
+                  <Badge key={idx} variant="outline">{lang}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {partner.certifications && partner.certifications.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-slate-700">Certifications</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {partner.certifications.map((cert, idx) => (
+                  <Badge key={idx} className="bg-purple-50 text-purple-700">{cert}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {partner.specializations && partner.specializations.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-slate-700">Specializations</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {partner.specializations.map((spec, idx) => (
+                  <Badge key={idx} variant="outline">{spec}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {partner.service_regions && partner.service_regions.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-slate-700">Service Regions</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {partner.service_regions.map((region, idx) => (
+                  <Badge key={idx} variant="outline">{region}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {partner.bio && (
+            <div>
+              <label className="text-sm font-medium text-slate-700">Bio</label>
+              <p className="text-slate-900 mt-1">{partner.bio}</p>
+            </div>
+          )}
+          
+          {partner.medical_training && (
+            <div>
+              <label className="text-sm font-medium text-slate-700">Medical Training</label>
+              <p className="text-slate-900 mt-1">{partner.medical_training}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return <p className="text-slate-600">No additional details available</p>;
   };
 
@@ -927,6 +1115,14 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
                     className="w-full bg-emerald-600 hover:bg-emerald-700"
                   >
                     {isApproving ? 'Processing...' : 'Approve Travel Agency'}
+                  </Button>
+                ) : (partner._type === 'companion' || (partner.full_name && partner.languages)) ? (
+                  <Button
+                    onClick={() => onApproveCompanion(partner.id)}
+                    disabled={isApproving}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {isApproving ? 'Processing...' : 'Approve Companion'}
                   </Button>
                 ) : null}
               </div>
