@@ -89,6 +89,53 @@
       ],
       "default": "en"
     },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "verifying",
+        "verified",
+        "failed",
+        "manually_approved"
+      ],
+      "default": "pending_verification",
+      "description": "Overall verification state (blocks 'active' status)"
+    },
+    "identity_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "verification_can_be_activated": {
+      "type": "boolean",
+      "description": "Computed: true only if all three checks are passed OR manually overridden",
+      "default": false
+    },
     "status": {
       "type": "string",
       "enum": [

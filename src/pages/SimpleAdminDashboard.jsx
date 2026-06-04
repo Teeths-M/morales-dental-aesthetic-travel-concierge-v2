@@ -38,6 +38,7 @@ export default function SimpleAdminDashboard() {
     { path: '/admin/dispatch-monitor', label: 'Dispatch Failures', icon: ShieldAlert },
     { path: '/admin/iq200', label: 'IQ-200 Intelligence', icon: Activity },
     { path: '/admin/pricing', label: 'Pricing Catalog', icon: DollarSign },
+    { path: '/admin/provider-verification', label: 'Provider Verification', icon: ShieldAlert },
   ];
 
   // Fetch all cases in a single query for better performance

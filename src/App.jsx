@@ -56,6 +56,7 @@ import AdminPricingDashboard from './pages/AdminPricingDashboard';
 import DoctorCasesDashboard from './pages/DoctorCasesDashboard';
 import AdminAnalyticsDashboard from './pages/AdminAnalytics';
 import AdminProcedureRequests from './pages/AdminProcedureRequests';
+import AdminProviderVerification from './pages/AdminProviderVerification';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -165,6 +166,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/iq200" element={<IQ200AdminCenter />} />
         <Route path="/admin/pricing" element={<AdminPricingDashboard />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
+        <Route path="/admin/provider-verification" element={<AdminProviderVerification />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

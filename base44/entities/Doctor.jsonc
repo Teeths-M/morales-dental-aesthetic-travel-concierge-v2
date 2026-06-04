@@ -49,14 +49,14 @@
     "verification_status": {
       "type": "string",
       "enum": [
-        "pending",
-        "ai_verified",
-        "manual_review",
+        "pending_verification",
+        "verifying",
         "verified",
-        "rejected"
+        "failed",
+        "manually_approved"
       ],
-      "default": "pending",
-      "description": "AI verification status: pending, ai_verified (high confidence), manual_review (low confidence), verified (admin approved), rejected"
+      "default": "pending_verification",
+      "description": "Overall verification state (blocks 'active' status)"
     },
     "verification_confidence": {
       "type": "number",
@@ -65,6 +65,41 @@
     "verification_notes": {
       "type": "string",
       "description": "AI or admin notes about verification"
+    },
+    "identity_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "verification_can_be_activated": {
+      "type": "boolean",
+      "description": "Computed: true only if all three checks are passed OR manually overridden",
+      "default": false
     },
     "payout_method": {
       "type": "string",
