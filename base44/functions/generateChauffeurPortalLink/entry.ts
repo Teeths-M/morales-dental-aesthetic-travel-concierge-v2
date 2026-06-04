@@ -27,13 +27,6 @@ Deno.serve(async (req) => {
     }
 
     // Generate portal token
-    const payload = {
-      consultation_id,
-      partner_id: taxi_service_id,
-      portal_type: 'chauffeur',
-      expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-    };
-    
     const token = await encodePortalToken({
       consultation_id,
       partner_id: taxi_service_id,
