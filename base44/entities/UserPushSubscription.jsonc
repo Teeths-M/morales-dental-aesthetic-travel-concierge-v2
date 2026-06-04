@@ -1,0 +1,27 @@
+{
+  "name": "UserPushSubscription",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "The user's ID"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for lookup by email"
+    },
+    "subscription": {
+      "type": "string",
+      "description": "JSON-stringified PushSubscription object"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser/device info at time of subscription"
+    }
+  },
+  "required": [
+    "user_id",
+    "subscription"
+  ]
+}

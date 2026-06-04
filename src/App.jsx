@@ -9,6 +9,7 @@ import { CartProvider } from '@/context/CartContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
@@ -54,7 +55,9 @@ import IQ200AdminCenter from './pages/IQ200AdminCenter';
 import AdminPricingDashboard from './pages/AdminPricingDashboard';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+
+  usePushNotifications(user);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
