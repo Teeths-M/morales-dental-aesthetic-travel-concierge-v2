@@ -6,7 +6,7 @@ import TaxiServiceSignupStep1 from '@/components/partner-signup/TaxiServiceSignu
 import TaxiServiceSignupStep2 from '@/components/partner-signup/TaxiServiceSignupStep2';
 import TaxiServiceSignupStep3 from '@/components/partner-signup/TaxiServiceSignupStep3';
 import TaxiServiceSuccess from '@/components/partner-signup/TaxiServiceSuccess';
-import { Globe, MapPin, Save } from 'lucide-react';
+import { MapPin, Save } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
@@ -324,27 +324,6 @@ export default function TaxiServiceSignup() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
-      {/* Language Selector */}
-      <div className="fixed top-20 left-4 z-50 flex items-center gap-2 bg-white/30 backdrop-blur rounded-full px-2 py-2 border border-border/20 opacity-30 shadow-none hover:opacity-100 hover:bg-white/95 hover:shadow-md hover:border-border/50 transition-all duration-300">
-        <Globe className="w-4 h-4 text-muted-foreground ml-2" />
-        <div className="flex gap-1">
-          {allLanguages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => setLanguage(lang.code)}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                language === lang.code
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-transparent text-foreground hover:bg-secondary/50'
-              }`}
-              title={lang.name}
-            >
-              {lang.flag} {lang.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Main Content - Split Layout */}
       <div className="max-w-6xl mx-auto px-4 py-12 grid md:grid-cols-2 gap-8 items-center min-h-screen">
         {/* Auto-detection indicator */}
