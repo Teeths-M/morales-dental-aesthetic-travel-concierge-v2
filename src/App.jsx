@@ -53,6 +53,7 @@ import PassportVault from './pages/PassportVault';
 import AdminDispatchMonitor from './pages/AdminDispatchMonitor';
 import IQ200AdminCenter from './pages/IQ200AdminCenter';
 import AdminPricingDashboard from './pages/AdminPricingDashboard';
+import DoctorCasesDashboard from './pages/DoctorCasesDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -131,6 +132,7 @@ const AuthenticatedApp = () => {
       <Route path="/consultation-success" element={<ConsultationSuccess />} />
         <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/portal/doctor/dashboard" element={<DoctorCasesDashboard />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["travel_agency", "platform_admin", "admin"]} />}>
           <Route path="/travel-agency-dashboard" element={<TravelAgencyDashboard />} />
