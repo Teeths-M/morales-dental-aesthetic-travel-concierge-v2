@@ -48,16 +48,18 @@ export default function AdminProviderVerification() {
   const { data: providers, isLoading } = useQuery({
     queryKey: ['provider-verifications'],
     queryFn: async () => {
-      const [doctors, travelAgencies, taxiServices] = await Promise.all([
+      const [doctors, travelAgencies, taxiServices, companions] = await Promise.all([
         base44.entities.Doctor.list(),
         base44.entities.TravelAgency.list(),
-        base44.entities.TaxiService.list()
+        base44.entities.TaxiService.list(),
+        base44.entities.Companion.list()
       ]);
 
       return [
         ...doctors.map(d => ({ ...d, provider_type: 'doctor' })),
         ...travelAgencies.map(t => ({ ...t, provider_type: 'travel_agency' })),
-        ...taxiServices.map(t => ({ ...t, provider_type: 'taxi_service' }))
+        ...taxiServices.map(t => ({ ...t, provider_type: 'taxi_service' })),
+        ...companions.map(c => ({ ...c, provider_type: 'companion' }))
       ];
     }
   });
@@ -145,11 +147,11 @@ export default function AdminProviderVerification() {
               Monitor and manage provider trust & safety verifications
             </p>
           </div>
-        <Button onClick={() => queryClient.invalidateQueries(['provider-verifications'])}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+          <Button onClick={() => queryClient.invalidateQueries(['provider-verifications'])}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5">
@@ -217,6 +219,7 @@ export default function AdminProviderVerification() {
                 <SelectItem value="doctor">Doctors</SelectItem>
                 <SelectItem value="travel_agency">Travel Agencies</SelectItem>
                 <SelectItem value="taxi_service">Taxi Services</SelectItem>
+                <SelectItem value="companion">Companions</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
