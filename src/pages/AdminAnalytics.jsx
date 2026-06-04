@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { Activity, Clock, Users, TrendingUp, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
+import { Activity, Clock, Users, TrendingUp, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, RefreshCw, ArrowLeft } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const COLORS = ['#047857', '#1d4ed8', '#7c3aed', '#db2777', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#7c2d12', '#9d174d'];
 
@@ -72,9 +73,17 @@ export default function AdminAnalyticsDashboard() {
         
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Analytics Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">Real-time insights into case pipeline and performance</p>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" asChild className="rounded-full">
+              <Link to="/admin"><ArrowLeft className="w-4 h-4" /></Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">🏠 Home</Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">Analytics Dashboard</h1>
+              <p className="text-sm text-slate-500 mt-1">Real-time insights into case pipeline and performance</p>
+            </div>
           </div>
           <Button onClick={loadAnalytics} variant="outline" size="sm" className="gap-2">
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
