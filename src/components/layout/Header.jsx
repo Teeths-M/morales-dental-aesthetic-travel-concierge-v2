@@ -33,7 +33,7 @@ export default function Header() {
     <nav className="w-full min-h-[92px] border-b border-white/[0.06] bg-[#020B0D]/90 backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-12 flex items-center justify-between py-4">
       
       {/* 1. VERBATIM BRANDING IDENTITY */}
-      <Link to="/" className="flex items-center space-x-4 group z-50">
+      <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-4 group z-50">
         <div className="w-12 h-12 bg-[#051A1D] border border-white/[0.1] flex items-center justify-center rounded-lg shadow-inner">
           <span className="font-serif text-xl text-[#D4AF37] tracking-wider group-hover:scale-105 transition-transform">M</span>
         </div>
