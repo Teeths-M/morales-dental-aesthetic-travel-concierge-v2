@@ -74,14 +74,6 @@ export default function Header() {
 
       {/* 3. CORE UTILITIES, PORTALS, & LANGUAGE SELECTOR */}
       <div className="hidden lg:flex items-center space-x-6">
-      {user && (
-        <Link
-          to="/dashboard"
-          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
-        >
-          Dashboard
-        </Link>
-      )}
 
         {/* Unified Portal Dropdown */}
         <div className="relative">
