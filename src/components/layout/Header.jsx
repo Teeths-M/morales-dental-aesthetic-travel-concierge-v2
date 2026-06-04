@@ -125,6 +125,14 @@ export default function Header() {
         <div className="flex items-center space-x-4 pl-2 border-l border-white/[0.08]">
           {user ? (
             <>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
+                >
+                  ⚙️ Admin
+                </Link>
+              )}
               <Link 
                 to="/dashboard" 
                 className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
@@ -143,14 +151,6 @@ export default function Header() {
               <Link to="/register-role" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
                 Register
               </Link>
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
-                >
-                  ⚙️ Admin
-                </Link>
-              )}
               <Link 
                 to="/dashboard" 
                 className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
