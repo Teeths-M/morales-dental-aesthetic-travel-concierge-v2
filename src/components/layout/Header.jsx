@@ -50,8 +50,8 @@ export default function Header() {
       {/* 2. PRODUCTION REACT ROUTER LINKS (Desktop) */}
       <div className="hidden lg:flex items-center space-x-8 text-sm font-medium text-white/70">
         <Link 
-          to={user ? "/dashboard" : "/"} 
-          className={`transition-colors duration-200 ${location.pathname === '/' ? 'text-[#D4AF37] font-semibold' : 'hover:text-white'}`}
+          to={!user ? "/" : user.role === 'admin' || user.role === 'platform_admin' ? "/admin" : "/dashboard"} 
+          className={`transition-colors duration-200 ${location.pathname === '/' || location.pathname === '/admin' ? 'text-[#D4AF37] font-semibold' : 'hover:text-white'}`}
         >
           Home
         </Link>
