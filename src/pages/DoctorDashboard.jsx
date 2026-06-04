@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock, Upload, Trash2, AlertCircle } from 'lucide-react';
+import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
+import ProcedureRequestForm from '@/components/doctor-dashboard/ProcedureRequestForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -146,6 +147,7 @@ export default function DoctorDashboard() {
                 <TabsTrigger value="availability">Availability Calendar</TabsTrigger>
                 <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
                 <TabsTrigger value="pricing">My Pricing</TabsTrigger>
+                <TabsTrigger value="requests">Request Procedure</TabsTrigger>
               </TabsList>
             </div>
 
@@ -398,6 +400,10 @@ export default function DoctorDashboard() {
 
             <TabsContent value="pricing" className="p-8">
               <DoctorPricingManager doctorId={doctor.id} language={doctor.language_preference || 'en'} />
+            </TabsContent>
+
+            <TabsContent value="requests" className="p-8">
+              <ProcedureRequestForm onSuccess={() => setActiveTab('profile')} />
             </TabsContent>
           </Tabs>
         </div>
