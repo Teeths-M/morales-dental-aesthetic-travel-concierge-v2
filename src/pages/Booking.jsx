@@ -32,6 +32,7 @@ import { checkVisaRequirement } from '@/lib/visaMatrix';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
 import { analyseCompatibility } from '@/lib/procedureCompatibility';
 import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
+import SafeTScan from '../components/booking/SafeTScan';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -62,6 +63,7 @@ const steps = [
    { label: 'Procedure & Date', emoji: '🏥', short: 'Procedure' },
    { label: 'Consent & Signature', emoji: '⚖️', short: 'Consent'    },
    { label: 'Acknowledgement',    emoji: '📋', short: 'Acknowledge' },
+   { label: 'SAFE-T Scan',        emoji: '🛡️', short: 'SAFE-T'      },
 ];
 
 export default function Booking() {
@@ -155,6 +157,8 @@ export default function Booking() {
     accepted_arbitration_clause: false,
     signature_timestamp: '',
     signature_ip_address: '',
+    safet_risk_level: null,
+    safet_risk_flags: [],
   });
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -418,6 +422,11 @@ export default function Booking() {
       const required = getRequiredAckCount(visaStatus);
       return form.acknowledged_statements.size >= required;
     }
+    if (step === 13) {
+      if (!form.safet_risk_level) return false;
+      if (form.safet_risk_level === 'elevated' || form.safet_risk_level === 'review') return false;
+      return true;
+    }
     return true;
   };
 
@@ -497,12 +506,30 @@ export default function Booking() {
                    />
                  )}
                  {step === 12 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={checkVisaRequirement(form.nationality, form.procedure_country)} />}
+                 {step === 13 && (
+                   <SafeTScan
+                     form={form}
+                     items={items}
+                     onResult={(result) => {
+                       update('safet_risk_level', result.risk_level);
+                       update('safet_risk_flags', result.flags || []);
+                     }}
+                   />
+                 )}
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <div className="border-t border-slate-200 bg-slate-50">
+          {step === 13 && showValidation &&
+           (form.safet_risk_level === 'elevated' || form.safet_risk_level === 'review') && (
+            <p className="text-sm text-red-600 px-6 pt-4">
+              Your SAFE-T assessment requires review before proceeding.
+              A member of our team will contact you within 24 hours.
+            </p>
+          )}
+          <div className="flex items-center justify-between px-6 py-4">
             <Button
               variant="outline"
               onClick={() => setStep(s => s - 1)}
@@ -537,6 +564,7 @@ export default function Booking() {
                 <CheckCircle className="w-4 h-4" /> {translations[language].reviewSubmit}
               </Button>
             )}
+          </div>
           </div>
           </div>
           </div>

@@ -54,7 +54,7 @@ const RISK_CONFIG = {
   },
 };
 
-export default function SafeTScan({ form, items, onScanComplete }) {
+export default function SafeTScan({ form, items, onResult, onScanComplete }) {
   const [status, setStatus] = useState('idle'); // idle | scanning | done
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(false);
@@ -130,6 +130,7 @@ Be calm, professional, and supportive. Never cause alarm beyond what is clinical
       setResult(parsed);
       setStatus('done');
       setExpanded(true);
+      onResult && onResult(parsed);
       onScanComplete && onScanComplete(parsed);
     } catch {
       const fallback = {
@@ -142,6 +143,7 @@ Be calm, professional, and supportive. Never cause alarm beyond what is clinical
       setResult(fallback);
       setStatus('done');
       setExpanded(true);
+      onResult && onResult(fallback);
       onScanComplete && onScanComplete(fallback);
     }
   };
