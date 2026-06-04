@@ -128,18 +128,18 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail }) {
             <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto">
               
               {/* Header */}
-              <div className="sticky top-0 bg-gradient-to-br from-emerald-700 to-blue-800 text-white p-8 rounded-t-3xl">
+              <div className="sticky top-0 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100 p-8 rounded-t-3xl">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Sparkles className="w-6 h-6" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center shadow-sm">
+                    <Sparkles className="w-6 h-6 text-emerald-700" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-emerald-200 uppercase tracking-widest">Welcome</p>
-                    <h2 className="font-display text-2xl font-bold">Hi there! 👋</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Welcome to SAFE-T 4LIFE™</p>
+                    <h2 className="font-display text-2xl font-medium text-slate-800">Let's begin your journey</h2>
                   </div>
                 </div>
-                <p className="text-white/90 text-sm leading-relaxed">
-                  What procedure are you interested in today? Select one or more options below, or tell us what you're looking for.
+                <p className="text-slate-600 text-sm leading-relaxed max-w-xl">
+                  Tell us what brings you here. Select from our specialized procedures below, or share what you're looking for — we'll match you with the right specialist.
                 </p>
               </div>
 
