@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import { base44 } from '@/api/base44Client';
 
 export default function Header() {
   const [isPortalOpen, setIsPortalOpen] = useState(false);
@@ -73,7 +74,15 @@ export default function Header() {
 
       {/* 3. CORE UTILITIES, PORTALS, & LANGUAGE SELECTOR */}
       <div className="hidden lg:flex items-center space-x-6">
-        
+      {user && (
+        <Link
+          to="/dashboard"
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
+        >
+          Dashboard
+        </Link>
+      )}
+
         {/* Unified Portal Dropdown */}
         <div className="relative">
           <button 
@@ -122,23 +131,42 @@ export default function Header() {
 
         {/* Refined Luxury CTAs */}
         <div className="flex items-center space-x-4 pl-2 border-l border-white/[0.08]">
-          <Link to="/register-role" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
-            Register
-          </Link>
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
-            >
-              ⚙️ Admin
-            </Link>
+          {user ? (
+            <>
+              <Link 
+                to="/dashboard" 
+                className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={() => base44.auth.logout()}
+                className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/register-role" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+                Register
+              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
+                >
+                  ⚙️ Admin
+                </Link>
+              )}
+              <Link 
+                to="/dashboard" 
+                className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
+              >
+                Log In
+              </Link>
+            </>
           )}
-          <Link 
-            to="/dashboard" 
-            className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
-          >
-            Log In
-          </Link>
         </div>
       </div>
 
@@ -192,8 +220,24 @@ export default function Header() {
               ⚙️ Admin Portal
             </Link>
           )}
-          <div className="pt-6 flex items-center justify-between border-t border-white/[0.06]">
-            <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-white/80">Log In to Dashboard</Link>
+          <div className="pt-6 flex flex-col gap-4 border-t border-white/[0.06]">
+            {user ? (
+              <>
+                <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-white/80">Dashboard</Link>
+                <button
+                  onClick={async () => {
+                    await base44.auth.logout();
+                    setIsMobileMenuOpen(false);
+                    window.location.reload();
+                  }}
+                  className="text-base font-medium text-white/70 hover:text-white"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-base font-medium text-white/80">Log In to Dashboard</Link>
+            )}
             <div className="flex gap-2">
               {['EN', 'ES', 'FR'].map((lang) => (
                 <button
