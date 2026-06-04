@@ -107,13 +107,16 @@ export default function VisaWizard({ onResult }) {
   const handleEvaluate = async () => {
     setIsEvaluating(true);
     await new Promise(r => setTimeout(r, 2400));
-    const rule = getVisaRule(passport?.code, destination?.code);
+    const rule = getVisaRule(passport?.code, destination?.code) || {
+      status: 'unknown',
+      notes: 'Visa requirements for this passport and destination combination are not in our current database. Please verify directly with the embassy or consulate.',
+    };
     let aiSummary = '';
     try {
       const resp = await base44.integrations.Core.InvokeLLM({
         prompt: `You are a friendly, reassuring medical travel visa consultant for SAFE-T VISA ASSIST™.
         A patient from ${passport?.name} wants to travel to ${destination?.name} for ${purpose?.label}.
-        Visa status: ${rule.status}. Stay: ${stayDuration} days. Notes: ${rule.notes}.
+        Visa status: ${rule?.status || 'unknown — not in database'}. Stay: ${stayDuration} days. Notes: ${rule?.notes || 'Please advise the patient to check with their embassy directly.'}.
         Write 2–3 sentences in a warm, calm, non-intimidating tone explaining their situation and next steps.
         Keep it simple — like explaining to a nervous traveler. No bullet points, just flowing friendly text.`
       });
