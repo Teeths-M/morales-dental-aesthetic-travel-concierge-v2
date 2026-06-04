@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Stethoscope, Plane, Car } from 'lucide-react';
+import { Loader2, Stethoscope, Plane, Car } from 'lucide-react';
 import moment from 'moment';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const USD = (val) => `$${(Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -277,23 +278,15 @@ export default function AdminPortalViewer() {
   }, [selectedCaseId]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin"><ArrowLeft className="w-4 h-4 mr-1" /> Admin</Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/">🏠 Home</Link>
-          </Button>
-          <h1 className="text-lg font-bold text-slate-900">Partner Portal Viewer</h1>
-          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Admin Override — No Token Required</span>
+    <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold font-display">Partner Portal Viewer</h1>
+          <p className="text-muted-foreground mt-1">View all partner portals for any case — admin override mode</p>
         </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+        <div className="max-w-5xl mx-auto space-y-5">
         {/* Case Selector */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 flex-wrap">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3 flex-wrap">
           <label className="text-sm font-medium text-slate-700">Select Case:</label>
           <select
             className="flex-1 min-w-[200px] border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary"
@@ -368,7 +361,8 @@ export default function AdminPortalViewer() {
             </Tabs>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

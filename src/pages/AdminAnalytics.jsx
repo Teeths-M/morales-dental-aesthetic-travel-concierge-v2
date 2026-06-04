@@ -70,13 +70,11 @@ export default function AdminAnalyticsDashboard() {
 
   return (
     <AdminLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        
-        {/* Header */}
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Analytics Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">Real-time insights into case pipeline and performance</p>
+            <h1 className="text-3xl font-bold font-display">Analytics Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Real-time insights into case pipeline and performance</p>
           </div>
           <Button onClick={loadAnalytics} variant="outline" size="sm" className="gap-2">
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
@@ -114,6 +112,8 @@ export default function AdminAnalyticsDashboard() {
             subtext="Assigned to cases"
           />
         </div>
+
+        <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Pipeline Funnel Chart */}
         <motion.div
@@ -280,6 +280,7 @@ export default function AdminAnalyticsDashboard() {
             </table>
           </div>
         </motion.div>
+        </div>
       </div>
     </AdminLayout>
   );
