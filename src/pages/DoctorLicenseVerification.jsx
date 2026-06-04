@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+
 import { 
   FileText, CheckCircle, AlertCircle, Clock, Shield, Eye, 
   Search, Filter, RefreshCw, UserCheck, XCircle, ArrowLeft
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const STATUS_CONFIG = {
   pending: { color: 'bg-slate-100 text-slate-700', icon: Clock, label: 'Pending' },
@@ -37,7 +38,6 @@ const STATUS_CONFIG = {
 };
 
 export default function DoctorLicenseVerification() {
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -94,38 +94,22 @@ export default function DoctorLicenseVerification() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="rounded-full"
-                onClick={() => navigate('/admin')}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/">🏠 Home</Link>
-              </Button>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-display font-bold text-slate-900">Doctor License Verification</h1>
-                <p className="text-slate-500">AI-powered document verification with manual review</p>
-              </div>
-            </div>
-            <Button onClick={() => refetch()} variant="outline" className="rounded-full">
-              <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-            </Button>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold font-display">Doctor License Verification</h1>
+            <p className="text-muted-foreground mt-1">
+              AI-powered document verification with manual review
+            </p>
           </div>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+          </Button>
+        </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <Card className="border-0 shadow-md">
               <CardContent className="pt-4">
                 <div className="text-center">
@@ -421,7 +405,6 @@ export default function DoctorLicenseVerification() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

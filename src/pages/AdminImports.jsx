@@ -4,13 +4,14 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { 
   Upload, Users, Plane, Car, FileText, DollarSign, Calendar,
-  Download, CheckCircle, AlertCircle, Loader2, ArrowLeft
+  Download, CheckCircle, AlertCircle, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const IMPORT_TEMPLATES = {
   doctors: [
@@ -147,33 +148,16 @@ export default function AdminImports() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" asChild className="rounded-full">
-                <Link to="/admin">
-                  <ArrowLeft className="w-5 h-5" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/">🏠 Home</Link>
-              </Button>
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <Upload className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">Data Import</h1>
-                <p className="text-sm text-slate-500">Bulk upload partners, procedures, and pricing data</p>
-              </div>
-            </div>
+    <AdminLayout>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold font-display">Data Import</h1>
+            <p className="text-muted-foreground mt-1">
+              Bulk upload partners, procedures, and pricing data
+            </p>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Import Options Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(IMPORT_CONFIGS).map(([key, config]) => {
@@ -360,6 +344,6 @@ export default function AdminImports() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
