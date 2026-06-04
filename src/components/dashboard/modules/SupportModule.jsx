@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Headphones, Phone, MessageCircle, HelpCircle, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 
 const faqs = [
   { q: 'How do I reschedule my consultation?', a: 'Contact your assigned coordinator via the Messages section or call our concierge line. Rescheduling is free up to 48 hours before your appointment.' },
@@ -11,10 +13,30 @@ const faqs = [
 ];
 
 export default function SupportModule() {
+  const { user } = useAuth();
   const [activeTicket, setActiveTicket] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [ticketMsg, setTicketMsg] = useState('');
+  const [ticketCategory, setTicketCategory] = useState('General Inquiry');
   const [ticketSent, setTicketSent] = useState(false);
+  const [ticketLoading, setTicketLoading] = useState(false);
+
+  const handleTicketSubmit = async () => {
+    if (!ticketMsg.trim()) return;
+    setTicketLoading(true);
+    try {
+      await base44.functions.invoke('sendSupportTicket', {
+        message: ticketMsg,
+        category: ticketCategory,
+        submitted_at: new Date().toISOString(),
+      });
+      setTicketSent(true);
+    } catch (e) {
+      alert('Failed to send ticket. Please try WhatsApp or email directly.');
+    } finally {
+      setTicketLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -26,10 +48,19 @@ export default function SupportModule() {
       {/* Contact channels */}
       <div className="grid sm:grid-cols-3 gap-4">
         {[
-          { icon: MessageCircle, label: 'Live Chat', sub: 'Available 24/7', color: 'emerald', action: 'Start Chat' },
-          { icon: Phone, label: 'WhatsApp Support', sub: '+1 (800) MRL-CARE', color: 'green', action: 'Open WhatsApp' },
-          { icon: AlertTriangle, label: 'Emergency Hotline', sub: 'Critical situations only', color: 'red', action: 'Call Now' },
-        ].map(({ icon: Icon, label, sub, color, action }) => (
+          {
+            icon: MessageCircle, label: 'Live Chat', sub: 'Available 24/7', color: 'emerald', action: 'Start Chat',
+            onClick: () => document.querySelector('[data-chat-trigger]')?.click(),
+          },
+          {
+            icon: Phone, label: 'WhatsApp Support', sub: '+1 (800) MRL-CARE', color: 'green', action: 'Open WhatsApp',
+            onClick: () => window.open('https://wa.me/18001MRLCARE?text=Hi, I need support with my case', '_blank'),
+          },
+          {
+            icon: AlertTriangle, label: 'Emergency Hotline', sub: 'Critical situations only', color: 'red', action: 'Call Now',
+            onClick: () => { window.location.href = 'tel:+18001MRLCARE'; },
+          },
+        ].map(({ icon: Icon, label, sub, color, action, onClick }) => (
           <div key={label} className={`bg-white border rounded-2xl shadow-sm p-5 text-center
             ${color === 'red' ? 'border-red-100' : color === 'green' ? 'border-green-100' : 'border-slate-100'}`}>
             <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center
@@ -38,7 +69,9 @@ export default function SupportModule() {
             </div>
             <p className="text-sm font-semibold text-slate-800">{label}</p>
             <p className="text-xs text-slate-400 mt-0.5 mb-3">{sub}</p>
-            <button className={`w-full text-xs font-semibold py-2 rounded-xl transition-all
+            <button
+              onClick={onClick}
+              className={`w-full text-xs font-semibold py-2 rounded-xl transition-all
               ${color === 'red' ? 'bg-red-600 hover:bg-red-700 text-white' :
                 color === 'green' ? 'bg-green-600 hover:bg-green-700 text-white' :
                 'bg-emerald-700 hover:bg-emerald-800 text-white'}`}>
@@ -61,7 +94,11 @@ export default function SupportModule() {
         </div>
         {!ticketSent ? (
           <div className="space-y-3">
-            <select className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+            <select
+              value={ticketCategory}
+              onChange={e => setTicketCategory(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            >
               <option>General Inquiry</option>
               <option>Booking Issue</option>
               <option>Document Problem</option>
@@ -78,9 +115,10 @@ export default function SupportModule() {
             />
             <Button
               className="bg-emerald-700 hover:bg-emerald-800 text-white"
-              onClick={() => ticketMsg.trim() && setTicketSent(true)}
+              onClick={handleTicketSubmit}
+              disabled={ticketLoading || !ticketMsg.trim()}
             >
-              Submit Ticket
+              {ticketLoading ? 'Sending…' : 'Submit Ticket'}
             </Button>
           </div>
         ) : (
