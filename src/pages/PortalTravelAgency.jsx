@@ -67,6 +67,9 @@ export default function PortalTravelAgency() {
   const [flightItinerary, setFlightItinerary] = useState('');
   const [hotelSelection, setHotelSelection] = useState('');
   const [taxiServiceId, setTaxiServiceId] = useState('');
+  const [lastSubmitted, setLastSubmitted] = useState(null);
+  const [workflowId, setWorkflowId] = useState(null);
+  const [revisionCount, setRevisionCount] = useState(0);
 
   useEffect(() => {
     const token = getTokenFromUrl();
@@ -109,19 +112,62 @@ export default function PortalTravelAgency() {
     setError(null);
     setSubmitting(true);
     try {
-      await base44.functions.invoke('sendTravelQuoteEmail', {
-        consultation_id: tokenData.consultation_id,
+      const isRevision = !!workflowId;
+      const newRevisionCount = revisionCount + 1;
+
+      if (isRevision) {
+        // Update existing WorkflowEvent record
+        await base44.asServiceRole.entities.WorkflowEvent.update(workflowId, {
+          travel_quote_flight_cost: parseFloat(flightCost),
+          travel_quote_hotel_cost: parseFloat(hotelCost),
+          flight_itinerary_summary: flightItinerary,
+          hotel_selection: hotelSelection,
+          travel_quote_revised_at: new Date().toISOString(),
+          travel_revision_count: newRevisionCount,
+        });
+        // Notify admin of the revision
+        await base44.functions.invoke('notifyAdminQuoteRevised', {
+          consultation_id: tokenData.consultation_id,
+          patient_name: consultation?.patient_name,
+          revision_count: newRevisionCount,
+          flight_cost_usd: parseFloat(flightCost),
+          hotel_cost_usd: parseFloat(hotelCost),
+        });
+        setRevisionCount(newRevisionCount);
+      } else {
+        const result = await base44.functions.invoke('sendTravelQuoteEmail', {
+          consultation_id: tokenData.consultation_id,
+          flight_cost_usd: parseFloat(flightCost),
+          hotel_cost_usd: parseFloat(hotelCost),
+          flight_itinerary_summary: flightItinerary,
+          hotel_selection: hotelSelection,
+          taxi_service_id: taxiServiceId,
+        });
+        // Store the workflow ID returned for future revisions
+        if (result?.data?.workflow_id) setWorkflowId(result.data.workflow_id);
+      }
+
+      setLastSubmitted({
         flight_cost_usd: parseFloat(flightCost),
         hotel_cost_usd: parseFloat(hotelCost),
         flight_itinerary_summary: flightItinerary,
         hotel_selection: hotelSelection,
-        taxi_service_id: taxiServiceId,
       });
       setSubmitted(true);
     } catch (e) {
       setError(e.message || 'Submission failed. Please try again.');
     }
     setSubmitting(false);
+  };
+
+  const handleRevise = () => {
+    if (lastSubmitted) {
+      setFlightCost(lastSubmitted.flight_cost_usd?.toString() || '');
+      setHotelCost(lastSubmitted.hotel_cost_usd?.toString() || '');
+      setFlightItinerary(lastSubmitted.flight_itinerary_summary || '');
+      setHotelSelection(lastSubmitted.hotel_selection || '');
+    }
+    setSubmitted(false);
   };
 
   const risk = RISK_COLORS[consultation?.risk_level] || RISK_COLORS.low;
@@ -179,6 +225,14 @@ export default function PortalTravelAgency() {
           <p style={{ margin: 0, fontSize: 12, color: '#888' }}>CASE REFERENCE</p>
           <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#0F3A20' }}>{consultation?.patient_name}</p>
         </div>
+        {revisionCount > 0 && (
+          <p style={{ marginTop: 12, fontSize: 12, color: '#C5A059' }}>Revision #{revisionCount} submitted</p>
+        )}
+        <button onClick={handleRevise}
+          className="mt-4 text-sm text-slate-500 underline hover:text-slate-700"
+          style={{ display: 'block', margin: '16px auto 0', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#6b7280', textDecoration: 'underline' }}>
+          Need to revise this quote? Click here
+        </button>
       </div>
     </div>
   );
