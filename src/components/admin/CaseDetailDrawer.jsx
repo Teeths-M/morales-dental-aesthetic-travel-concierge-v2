@@ -45,9 +45,17 @@ function Row({ label, children }) {
 export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated }) {
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState(caseRecord?.status || '');
+  const [doctors, setDoctors] = useState([]);
+  const [assigningDoctor, setAssigningDoctor] = useState(false);
 
   useEffect(() => {
     setSelectedStatus(caseRecord?.status || '');
+  }, [caseRecord?.id]);
+
+  useEffect(() => {
+    if (caseRecord) {
+      base44.asServiceRole.entities.Doctor.filter({ status: 'active' }).then(setDoctors).catch(() => {});
+    }
   }, [caseRecord?.id]);
 
   // Fetch linked WorkflowEvent for risk info
@@ -76,6 +84,29 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
     : null;
 
   const isStatusDirty = selectedStatus !== caseRecord?.status;
+
+  const handleAssignDoctor = async (doctorId) => {
+    setAssigningDoctor(true);
+    try {
+      if (workflow) {
+        await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
+          assigned_doctor_id: doctorId,
+          stage: 'doctor',
+          last_update_summary: `Doctor manually reassigned by admin on ${new Date().toISOString()}`,
+        });
+      }
+      await base44.functions.invoke('generateDoctorPortalLink', {
+        workflow_id: workflow?.id,
+        doctor_id: doctorId,
+        consultation_id: caseRecord.consultation_id,
+      });
+      toast.success('Doctor assigned and portal link sent');
+    } catch (e) {
+      toast.error('Failed to assign doctor');
+    } finally {
+      setAssigningDoctor(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -135,6 +166,23 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
                     {updateStatusMutation.isPending ? 'Saving…' : 'Save Status Change'}
                   </Button>
                 )}
+              </div>
+
+              {/* Doctor Assignment */}
+              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Assign Doctor</p>
+                <select
+                  className="w-full text-sm border border-slate-200 rounded-lg p-2 bg-white disabled:opacity-50"
+                  value={workflow?.assigned_doctor_id || ''}
+                  onChange={e => handleAssignDoctor(e.target.value)}
+                  disabled={assigningDoctor}
+                >
+                  <option value="">— Unassigned —</option>
+                  {doctors.map(d => (
+                    <option key={d.id} value={d.id}>{d.full_name} · {d.clinic_city || d.clinic_country}</option>
+                  ))}
+                </select>
+                {assigningDoctor && <p className="text-xs text-slate-400">Assigning…</p>}
               </div>
 
               {/* Patient info */}
