@@ -30,18 +30,37 @@ Deno.serve(async (req) => {
       );
     });
 
-    // If no doctors found, trigger email outreach
+    // If no doctors found, trigger targeted email outreach
     if (matchedDoctors.length === 0) {
-      // Find doctors with related specialties
-      const relatedSpecialties = await base44.entities.DoctorSpecialty.filter({});
+      // Get procedure category from MasterProcedure
+      const masterProcedures = await base44.entities.MasterProcedure.filter({
+        en_name: { $regex: procedure_interest }
+      });
       
-      // Get unique doctor emails to notify
+      const procedureCategory = masterProcedures[0]?.category || null;
+      
+      // Find doctors with matching category specialties
+      const doctorSpecialties = await base44.entities.DoctorSpecialty.filter({});
+      
+      // Filter doctors by category match
       const doctorsToNotify = new Set();
-      relatedSpecialties.forEach(spec => {
-        if (spec.specialty && !doctorsToNotify.has(spec.doctor_email)) {
+      doctorSpecialties.forEach(spec => {
+        // Match by category or by procedure name similarity
+        const matchesCategory = procedureCategory && spec.specialty?.toLowerCase().includes(procedureCategory.toLowerCase());
+        const matchesProcedure = spec.procedure_name?.toLowerCase().includes(procedure_interest.toLowerCase());
+        
+        if ((matchesCategory || matchesProcedure) && spec.doctor_email && !doctorsToNotify.has(spec.doctor_email)) {
           doctorsToNotify.add(spec.doctor_email);
         }
       });
+
+      // If still no targeted matches, fall back to all active doctors
+      if (doctorsToNotify.size === 0) {
+        const allDoctors = await base44.entities.Doctor.filter({ status: 'active' });
+        allDoctors.forEach(doc => {
+          if (doc.email) doctorsToNotify.add(doc.email);
+        });
+      }
 
       // Send outreach emails
       const emailPromises = Array.from(doctorsToNotify).map(async (doctorEmail) => {
@@ -68,7 +87,7 @@ SAFE-T 4LIFE™ Team`
             doctor_email: doctorEmail,
             email_sent_at: new Date().toISOString(),
             status: 'pending'
-          }).catch(() => {}); // Ignore if entity doesn't exist yet
+          }).catch(() => {});
           
         } catch (e) {
           console.error('Failed to send outreach email:', e.message);
@@ -80,7 +99,7 @@ SAFE-T 4LIFE™ Team`
       return Response.json({
         matched_doctors: [],
         outreach_sent: true,
-        message: `No doctors found for ${procedure_interest}. We've notified our network and will update you when a specialist joins.`
+        message: `No doctors found for ${procedure_interest}. We've notified ${doctorsToNotify.size} specialist(s) in our network.`
       });
     }
 
