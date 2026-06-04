@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Lock, FileText, X, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Lock, FileText, X, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
@@ -76,6 +76,7 @@ export default function Booking() {
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [draftData, setDraftData] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   const { items, clearCart, procedureCountry, procedureCity } = useCart();
 
@@ -219,6 +220,7 @@ export default function Booking() {
     }
     
     saveTimerRef.current = setTimeout(async () => {
+      setIsSaving(true);
       try {
         // Convert Set to array for JSON serialization
         const formDataSerializable = {
@@ -257,6 +259,8 @@ export default function Booking() {
         });
       } catch (e) {
         console.error('Auto-save failed:', e);
+      } finally {
+        setIsSaving(false);
       }
     }, 1000);
   }, [userEmail, submitted]);
@@ -471,6 +475,15 @@ export default function Booking() {
               <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Step {step + 1} {translations[language].stepOf} {steps.length}</p>
               <h2 className="font-bold text-slate-800 text-base">{steps[step].label}</h2>
             </div>
+          </div>
+
+          {/* Auto-save indicator */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 justify-end px-6 py-1 border-b border-slate-100">
+            {isSaving ? (
+              <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>
+            ) : draftData?.last_saved_at || draftIdRef.current ? (
+              <><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Progress saved — you can safely close and return</>
+            ) : null}
           </div>
 
           {/* Form content */}
