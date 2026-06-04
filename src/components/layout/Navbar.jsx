@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { ChevronDown, Stethoscope, X, Menu } from 'lucide-react';
+import { Globe, ChevronDown, Stethoscope, X, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getNavLinks = (language) => [
@@ -16,22 +16,38 @@ const getNavLinks = (language) => [
   { label: language === 'es' ? 'Panel de Control' : language === 'fr' ? 'Tableau de Bord' : 'Dashboard', path: '/dashboard' },
 ];
 
-
+const allLanguages = [
+  { code: 'en', flag: '🇬🇧', name: 'English' },
+  { code: 'es', flag: '🇪🇸', name: 'Español' },
+  { code: 'fr', flag: '🇫🇷', name: 'Français' },
+  { code: 'pt', flag: '🇵🇹', name: 'Português' },
+  { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+  { code: 'it', flag: '🇮🇹', name: 'Italiano' },
+];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [portalHubOpen, setPortalHubOpen] = useState(false);
   const [partnerDropdownOpen, setPartnerDropdownOpen] = useState(false);
+  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
   const { user, isAuthenticated, navigateToLogin, logout } = useAuth();
   const portalHubTimeoutRef = useRef(null);
   const partnerTimeoutRef = useRef(null);
+  const languageTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => { setNavLinks(getNavLinks(language)); }, [language]);
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  const handleLanguageChange = (langCode) => {
+    setLanguage(langCode);
+    localStorage.setItem('appLanguage', langCode);
+    setLanguageDropdownOpen(false);
+    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
+  };
 
   const SENSITIVE_PATHS = ['/checkout', '/payment', '/signup', '/register-role', '/doctor-signup', '/partner-signup', '/travel-agency-signup', '/taxi-service-signup', '/client-signup'];
   const isSensitive = SENSITIVE_PATHS.some(p => location.pathname.includes(p));
@@ -196,6 +212,39 @@ export default function Navbar() {
             </button>
           )}
 
+          {/* Language */}
+          <div
+            className="relative"
+            onMouseEnter={() => { if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current); setLanguageDropdownOpen(true); }}
+            onMouseLeave={() => { languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 800); }}
+          >
+            <button className="p-2 hover:bg-white/[0.05] rounded-md transition-colors text-white/50 hover:text-white">
+              <Globe className="w-4 h-4" />
+            </button>
+            <AnimatePresence>
+              {languageDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="absolute top-full right-0 mt-2 w-40 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
+                >
+                  {allLanguages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code)}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-white/[0.06] last:border-b-0 ${
+                        language === lang.code ? 'text-[#D4AF37] bg-white/[0.05]' : 'text-white/70 hover:text-white hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      {lang.flag} {lang.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {/* Auth */}
           {isAuthenticated ? (
             <>
@@ -350,6 +399,21 @@ export default function Navbar() {
 
               {/* Bottom Actions */}
               <div className="mt-auto flex flex-col gap-4 pt-6 border-t border-white/[0.06]">
+                {/* Language */}
+                <div className="flex items-center gap-1.5 self-end bg-white/[0.03] border border-white/[0.08] p-1 rounded-lg">
+                  {[{ code: 'en', label: 'EN' }, { code: 'es', label: 'ES' }, { code: 'fr', label: 'FR' }].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => handleLanguageChange(code)}
+                      className={`px-2.5 py-1 font-mono text-xs font-bold rounded transition-all ${
+                        language === code ? 'bg-[#D4AF37] text-[#020B0D]' : 'text-white/40 hover:text-white/70'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 {isAuthenticated ? (
                   <>
                     <Link
