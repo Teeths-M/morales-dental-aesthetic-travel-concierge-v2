@@ -1,338 +1,366 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Star, MapPin, User } from 'lucide-react';
-import { motion } from 'framer-motion';
-import SlotCounter from './SlotCounter';
-import SentinelOrbit from './SentinelOrbit';
-import { translations } from '@/lib/translations';
+import { Shield, BadgeCheck, Plane, HeartPulse } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import SafeTGlobe from './SafeTGlobe';
 import { useAuth } from '@/lib/AuthContext';
 
-const SENTINEL_IMAGE =
-  'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7b4ea635d_ChatGPTImageJun1202608_35_37PM.png';
+const GOLD = '#C5A059';
 
-const getTestimonials = () => [];
+const TRUST_INDICATORS = [
+  { icon: BadgeCheck, label: 'Verified Specialists' },
+  { icon: Plane, label: 'Travel Coordinated' },
+  { icon: HeartPulse, label: 'Recovery Support' },
+  { icon: Shield, label: 'SAFE-T4LIFE Guidance' },
+];
 
-const getBadges = (language) => [
+const JOURNEY_STAGES = [
   {
-    icon: Shield,
-    label: 'SAFE-T 4LIFE™',
-    sub:
-      language === 'es'
-        ? 'Seguridad Impulsada por IA'
-        : language === 'fr'
-        ? 'Sécurité Alimentée par IA'
-        : 'AI-Powered Safety',
+    label: 'Concern',
+    icon: '💭',
+    desc: 'You have questions. You need guidance. We listen and understand your goals before anything else.',
   },
   {
-    icon: BadgeCheck,
-    label:
-      language === 'es'
-        ? 'Especialistas Verificados'
-        : language === 'fr'
-        ? 'Spécialistes Vérifiés'
-        : 'Verified Specialists',
-    sub:
-      language === 'es'
-        ? 'Con Licencia y Confiables'
-        : language === 'fr'
-        ? 'Autorisé et de Confiance'
-        : 'Licensed & Trusted',
+    label: 'Guidance',
+    icon: '🤝',
+    desc: 'Our care coordinators match you with verified specialists and build your personal care plan.',
   },
   {
-    icon: Plane,
-    label:
-      language === 'es'
-        ? 'Cuidado Puerta a Puerta'
-        : language === 'fr'
-        ? 'Soins de Porte à Porte'
-        : 'Door-to-Door Care',
-    sub:
-      language === 'es'
-        ? 'Viaje. Cuidado. Recuperación.'
-        : language === 'fr'
-        ? 'Voyage. Soins. Récupération.'
-        : 'Travel. Care. Recover.',
+    label: 'Treatment',
+    icon: '🏥',
+    desc: 'You meet your specialist with full support. Every detail is prepared for your comfort and safety.',
+  },
+  {
+    label: 'Recovery',
+    icon: '🌿',
+    desc: 'Post-procedure care is as important as the procedure. We stay with you through every recovery milestone.',
+  },
+  {
+    label: 'Confidence',
+    icon: '✨',
+    desc: 'You return home with clarity, support, and a care team still behind you.',
   },
 ];
 
 export default function Hero() {
-  const [language, setLanguage] = useState('en');
   const { navigateToLogin } = useAuth();
+  const [activeStage, setActiveStage] = useState(0);
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('appLanguage') || 'en';
-    setLanguage(savedLang);
-    const handleLanguageChange = (e) => setLanguage(e.detail.language);
-    window.addEventListener('languageChange', handleLanguageChange);
-    return () => window.removeEventListener('languageChange', handleLanguageChange);
+    const t = setInterval(() => setActiveStage(p => (p + 1) % JOURNEY_STAGES.length), 3200);
+    return () => clearInterval(t);
   }, []);
 
-  const testimonials = getTestimonials();
-  const badges = getBadges(language);
-  const signupRoles = [
-    {
-      label: language === 'es' ? 'Doctor' : language === 'fr' ? 'Médecin' : 'Doctor',
-      path: '/doctor-signup',
-      icon: BadgeCheck,
-    },
-    {
-      label:
-        language === 'es'
-          ? 'Agencia de Viajes'
-          : language === 'fr'
-          ? 'Agence de Voyage'
-          : 'Travel Agency',
-      path: '/partner-signup/travel-agency',
-      icon: Plane,
-    },
-    {
-      label:
-        language === 'es'
-          ? 'Servicio de Taxi'
-          : language === 'fr'
-          ? 'Service Taxi'
-          : 'Taxi Service',
-      path: '/partner-signup/taxi-service',
-      icon: Shield,
-    },
-    {
-      label:
-        language === 'es'
-          ? 'Acompañante'
-          : language === 'fr'
-          ? 'Accompagnateur'
-          : 'Companion',
-      path: '/companion-signup',
-      icon: User,
-    },
-  ];
-
   return (
-    <section className="relative overflow-hidden min-h-screen bg-[#070F0B]">
-      {/* Subtle dot-grid texture */}
+    <section className="relative overflow-hidden bg-[#060e18] min-h-screen">
+      {/* Dot grid texture */}
       <div
-        className="absolute inset-0 opacity-[0.025] pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
-          backgroundImage:
-            'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-          backgroundSize: '40px 40px',
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '36px 36px',
         }}
       />
-      {/* Ambient glows */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent pointer-events-none" />
+      {/* Left ambient */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#0A1628]/70 via-[#0A1628]/10 to-transparent" />
 
-      {/* Register / Login pill — frosted glass with backdrop blur */}
-      <div className="absolute right-4 top-5 z-50 flex items-center gap-2 rounded-full border border-white/25 bg-white/10 p-1.5 shadow-2xl backdrop-blur-xl sm:right-6 lg:right-10">
+      {/* Auth pill */}
+      <div className="absolute right-4 top-5 z-50 flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] p-1.5 shadow-2xl backdrop-blur-xl sm:right-6 lg:right-10">
         <Button
           variant="outline"
           onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
-          className="h-9 rounded-full border-white/60 bg-white/90 px-4 text-xs font-bold text-primary shadow-lg hover:bg-white sm:text-sm"
+          className="h-8 rounded-full border-white/50 bg-white/90 px-3 text-xs font-bold text-primary shadow hover:bg-white"
         >
           Register
         </Button>
         <Button
           onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
-          className="h-9 rounded-full bg-accent px-4 text-xs font-bold text-accent-foreground shadow-lg hover:bg-accent/90 sm:text-sm"
+          className="h-8 rounded-full bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:bg-accent/90"
         >
           Login
         </Button>
       </div>
 
-      {/* Mobile-first: Image section first for visual impact */}
-      <div className="relative w-full h-[55vh] lg:hidden">
-        <img
-          src={SENTINEL_IMAGE}
-          alt="Sentinel Care Journey"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '55% center' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/30 via-[#070F0B]/10 to-[#070F0B]" />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.72 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          >
-            <SentinelOrbit />
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="relative z-10 w-full lg:w-[54%] px-4 sm:px-6 lg:px-10 xl:px-16 lg:py-20">
-        <div className="w-full max-w-lg mx-auto lg:mx-0 rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl lg:mt-20"
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+      {/* ============================
+          MOBILE LAYOUT (< lg)
+          ============================ */}
+      <div className="lg:hidden flex flex-col pt-24 pb-16 px-5 gap-10 max-w-xl mx-auto">
+        {/* Headline + CTAs */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.85 }}
         >
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-5xl xl:text-6xl text-white leading-[1.05] mb-5 drop-shadow-md">
-            {language === 'es'
-              ? 'Tu cuidado seguro comienza aquí.'
-              : language === 'fr'
-              ? 'Vos soins sûrs commencent ici.'
-              : 'Your safe care journey starts here.'}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-5 h-px bg-accent" />
+            <span className="text-[10px] font-bold text-accent uppercase tracking-[0.22em]">
+              Premium Care Concierge
+            </span>
+          </div>
+          <h1 className="font-display text-[2.4rem] sm:text-5xl text-white leading-[1.05] mb-4">
+            Trusted Care<br />Beyond Borders.
           </h1>
-
-          <p className="mb-5 leading-relaxed text-white/75 text-base sm:text-lg font-medium">
-            {language === 'es'
-              ? 'Especialistas verificados, coordinación de viaje y apoyo de recuperación en un solo plan claro y humano.'
-              : language === 'fr'
-              ? 'Des spécialistes vérifiés, une coordination de voyage et un soutien de récupération dans un plan clair et humain.'
-              : 'Verified specialists, travel coordination, and recovery support in one clear, human care plan.'}
+          <p className="text-white/62 text-base sm:text-lg leading-relaxed mb-7">
+            We coordinate verified specialists, travel, accommodation, and recovery support so your care journey feels safe, simple, and fully supported.
           </p>
-
-          <p className="text-sm font-semibold text-accent italic mb-8 drop-shadow-sm">
-            {language === 'es'
-              ? '"Desde la consulta hasta la costa — tu seguridad viaja contigo."'
-              : language === 'fr'
-              ? '"De la consultation à la côte — votre sécurité voyage avec vous."'
-              : '"From consultation to the coast — your safety travels with you."'}
-          </p>
-
-          <SlotCounter className="mb-4" />
-
-          <div className="flex flex-wrap gap-3 mb-10">
-            <Link to="/booking">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link to="/booking" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 h-12 shadow-lg"
+                className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-12 px-6 shadow-lg shadow-accent/20"
               >
-                {language === 'es'
-                  ? 'Comienza Tu Viaje'
-                  : language === 'fr'
-                  ? 'Commencez Votre Voyage'
-                  : 'Begin Your Journey'}
+                Begin Your Care Journey
               </Button>
             </Link>
-            <Link to="/procedures">
+            <Link to="/procedures" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 px-8 font-semibold border-white/40 bg-white/5 text-white hover:bg-white hover:text-foreground"
+                className="w-full sm:w-auto h-12 px-6 font-semibold border-white/30 bg-white/[0.05] text-white hover:bg-white hover:text-foreground"
               >
-                {language === 'es'
-                  ? 'Explorar Procedimientos'
-                  : language === 'fr'
-                  ? 'Explorer les Procédures'
-                  : 'Explore Procedures'}
+                Explore Treatments
               </Button>
             </Link>
           </div>
+        </motion.div>
 
-          {/* Trust Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            {badges.map(({ icon: Icon, label, sub }) => (
-              <div
-                key={label}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
-              >
-                <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white leading-tight">{label}</p>
-                  <p className="text-[11px] text-white/55 leading-tight mt-0.5">{sub}</p>
-                </div>
+        {/* SAFE-T Globe */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.88 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.1, delay: 0.4, ease: 'easeOut' }}
+          className="flex justify-center"
+          style={{ transform: 'scale(0.92)', transformOrigin: 'center top' }}
+        >
+          <SafeTGlobe />
+        </motion.div>
+
+        {/* Trust indicators */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.6 }}
+          className="grid grid-cols-2 gap-2"
+        >
+          {TRUST_INDICATORS.map(({ icon: Icon, label }) => (
+            <div
+              key={label}
+              className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-3"
+            >
+              <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
+                <Icon className="w-3.5 h-3.5 text-accent" />
               </div>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-accent">
-              <Shield className="h-3.5 w-3.5" />
-              {language === 'es'
-                ? 'Únete a nuestra red'
-                : language === 'fr'
-                ? 'Rejoignez notre réseau'
-                : 'Join our network'}
+              <span className="text-xs font-semibold text-white/72">{label}</span>
             </div>
-            <p className="mb-3 text-sm font-semibold text-white">
-              {language === 'es'
-                ? 'Regístrate como proveedor:'
-                : language === 'fr'
-                ? 'Inscrivez-vous comme partenaire :'
-                : 'Sign up as a provider:'}
+          ))}
+        </motion.div>
+      </div>
+
+      {/* ============================
+          DESKTOP LAYOUT (lg+)
+          ============================ */}
+      <div className="hidden lg:grid min-h-screen" style={{ gridTemplateColumns: '42% 32% 26%' }}>
+
+        {/* ── LEFT: Trust Panel ── */}
+        <motion.div
+          initial={{ opacity: 0, x: -28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9 }}
+          className="flex items-center px-8 xl:px-14 py-24"
+        >
+          <div
+            className="w-full max-w-md rounded-[2rem] border border-white/[0.09] p-8 xl:p-10"
+            style={{
+              background: 'rgba(10,22,40,0.72)',
+              backdropFilter: 'blur(24px)',
+              boxShadow: '0 32px 64px rgba(0,0,0,0.38), inset 0 1px 0 rgba(197,160,89,0.07)',
+            }}
+          >
+            {/* Eyebrow */}
+            <div className="flex items-center gap-2.5 mb-6">
+              <div className="w-7 h-px" style={{ background: GOLD }} />
+              <span
+                className="text-[10px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: GOLD }}
+              >
+                Premium Care Concierge
+              </span>
+            </div>
+
+            <h1 className="font-display text-4xl xl:text-[2.8rem] text-white leading-[1.05] mb-5">
+              Trusted Care<br />Beyond Borders.
+            </h1>
+
+            <p className="text-white/62 text-base xl:text-[1.05rem] leading-relaxed mb-8">
+              We coordinate verified specialists, travel, accommodation, and recovery support so your care journey feels safe, simple, and fully supported.
             </p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {signupRoles.map(({ label, path, icon: Icon }) => (
-                <Link
-                  key={label}
-                  to={path}
-                  className="group flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-primary transition-all hover:bg-accent hover:text-accent-foreground"
+
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-3 mb-8">
+              <Link to="/booking">
+                <Button
+                  size="lg"
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-12 px-7 shadow-lg shadow-accent/20"
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-xs font-bold leading-tight">{label}</span>
-                </Link>
+                  Begin Your Care Journey
+                </Button>
+              </Link>
+              <Link to="/procedures">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 px-7 font-semibold border-white/28 bg-white/[0.04] text-white hover:bg-white hover:text-foreground"
+                >
+                  Explore Treatments
+                </Button>
+              </Link>
+            </div>
+
+            {/* Trust indicators */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {TRUST_INDICATORS.map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-2.5 rounded-xl border border-white/[0.09] bg-white/[0.04] p-3"
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(197,160,89,0.14)' }}>
+                    <Icon className="w-3.5 h-3.5 text-accent" />
+                  </div>
+                  <span className="text-xs font-semibold text-white/72 leading-tight">{label}</span>
+                </div>
               ))}
             </div>
           </div>
-
-          {testimonials.length > 0 && (
-            <div className="border-t border-white/10 pt-6 mt-4">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
-                {language === 'es'
-                  ? 'Qué Dicen Nuestros Clientes'
-                  : language === 'fr'
-                  ? 'Ce Que Disent Nos Clients'
-                  : 'What Our Clients Say'}
-              </p>
-              <div className="flex flex-col gap-3">
-                {testimonials.map((t) => (
-                  <div
-                    key={t.name}
-                    className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl p-3"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-primary">{t.name[0]}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs font-semibold text-white">{t.name}</span>
-                        <span className="text-[10px] text-white/40 flex items-center gap-1">
-                          <MapPin className="w-2.5 h-2.5" />
-                          {t.country}
-                        </span>
-                        <div className="flex ml-auto">
-                          {[...Array(t.rating)].map((_, i) => (
-                            <Star key={i} className="w-2.5 h-2.5 fill-accent text-accent" />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-white/50 italic leading-relaxed">
-                        "{t.quote}"
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </motion.div>
-        </div>
-      </div>
 
-      {/* Desktop: Side-by-side cinematic panel */}
-      <div className="hidden lg:block absolute right-0 top-0 w-[46%] h-full">
-        <img
-          src={SENTINEL_IMAGE}
-          alt="Sentinel Care Journey"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '55% center' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* ── CENTER: SAFE-T Globe ── */}
+        <div className="flex items-center justify-center py-24">
           <motion.div
-            initial={{ opacity: 0, scale: 0.72 }}
+            initial={{ opacity: 0, scale: 0.82 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+            transition={{ duration: 1.3, delay: 0.5, ease: 'easeOut' }}
           >
-            <SentinelOrbit />
+            <SafeTGlobe />
           </motion.div>
         </div>
+
+        {/* ── RIGHT: Storytelling Visual ── */}
+        <motion.div
+          initial={{ opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, delay: 0.35 }}
+          className="flex items-center py-24 pr-8 xl:pr-12"
+        >
+          <div
+            className="w-full rounded-[2rem] border border-white/[0.09] overflow-hidden flex flex-col"
+            style={{
+              background: 'rgba(10,22,40,0.65)',
+              backdropFilter: 'blur(14px)',
+              minHeight: 500,
+              boxShadow: '0 24px 56px rgba(0,0,0,0.35)',
+            }}
+          >
+            {/* Cinematic image/scene area */}
+            <div className="relative flex-1 min-h-[260px] overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80&auto=format&fit=crop"
+                alt="Premium healthcare travel care"
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={e => { e.currentTarget.style.display = 'none'; }}
+              />
+              {/* Gradient scene fallback + overlay */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(180,120,30,0.22) 0%, rgba(10,22,40,0.55) 50%, rgba(15,40,70,0.40) 100%)',
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#060e18]/90" />
+              {/* Subtle warm overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-900/15 via-transparent to-transparent" />
+              {/* Label */}
+              <div className="absolute bottom-4 left-4">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                  style={{ color: 'rgba(197,160,89,0.75)' }}
+                >
+                  Your Journey
+                </span>
+              </div>
+            </div>
+
+            {/* Journey stages */}
+            <div className="p-4 flex flex-col gap-3">
+              {/* Stage tabs */}
+              <div className="flex items-stretch gap-1">
+                {JOURNEY_STAGES.map((stage, i) => (
+                  <button
+                    key={stage.label}
+                    onClick={() => setActiveStage(i)}
+                    className="flex flex-col items-center gap-1 flex-1 rounded-xl py-2 px-1 transition-all duration-300"
+                    style={{
+                      background: activeStage === i ? 'rgba(197,160,89,0.14)' : 'transparent',
+                      border: `1px solid ${activeStage === i ? 'rgba(197,160,89,0.32)' : 'transparent'}`,
+                    }}
+                    aria-label={stage.label}
+                    aria-pressed={activeStage === i}
+                  >
+                    <span style={{ fontSize: 14 }}>{stage.icon}</span>
+                    <span
+                      style={{
+                        fontSize: 7.5,
+                        fontWeight: 700,
+                        color: activeStage === i ? GOLD : 'rgba(255,255,255,0.30)',
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        lineHeight: 1.2,
+                        transition: 'color 0.3s ease',
+                      }}
+                    >
+                      {stage.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Stage description */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeStage}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.38 }}
+                  className="rounded-xl p-3.5"
+                  style={{
+                    background: 'rgba(197,160,89,0.06)',
+                    border: '1px solid rgba(197,160,89,0.11)',
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span style={{ fontSize: 13 }}>{JOURNEY_STAGES[activeStage].icon}</span>
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: GOLD,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {JOURNEY_STAGES[activeStage].label}
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/58 leading-relaxed">
+                    {JOURNEY_STAGES[activeStage].desc}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
