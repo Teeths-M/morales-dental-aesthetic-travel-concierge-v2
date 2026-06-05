@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Users, Heart, Star, Phone, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Shield, BadgeCheck, Plane, Users, Heart, Star, Phone, MessageCircle } from 'lucide-react';
 import HeroGlobe from './HeroGlobe';
 import { useAuth } from '@/lib/AuthContext';
 
 const GOLD = '#C5A059';
 
-// Journey pipeline steps
 const STEPS = [
   { icon: '📋', label: 'Consultation' },
   { icon: '✈️', label: 'Travel' },
@@ -17,329 +15,291 @@ const STEPS = [
   { icon: '🏡', label: 'Return Home' },
 ];
 
-// Right panel benefit cards
-const BENEFITS = [
-  { icon: Users,     title: 'Human Care',             desc: 'Real people, real support, when you need it most.' },
-  { icon: Shield,    title: 'Safe Connections',        desc: 'Vetted specialists and trusted global partners.' },
-  { icon: Heart,     title: 'Better Outcomes',         desc: 'Care designed around your safety and recovery.' },
-  { icon: Plane,     title: 'Travel With Confidence',  desc: "From arrival to recovery, you're never alone." },
-];
-
-const TRUST_BADGES = [
+const BADGES = [
   { icon: Shield,     label: 'SAFE-T 4LIFE™',       sub: 'AI-Powered Safety' },
   { icon: BadgeCheck, label: 'Verified Specialists', sub: 'Licensed & Trusted' },
   { icon: Plane,      label: 'Door-to-Door Care',    sub: 'Travel. Care. Recover.' },
 ];
 
-// Stable Unsplash golden-hour image
-const GOLDEN_IMAGE = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=85&auto=format&fit=crop';
+const BENEFITS = [
+  { icon: Users,  label: 'Human Care',            desc: 'Real people, real support, when you need it most.' },
+  { icon: Shield, label: 'Safe Connections',       desc: 'Vetted specialists and trusted global partners.' },
+  { icon: Heart,  label: 'Better Outcomes',        desc: 'Care designed around your safety and recovery.' },
+  { icon: Plane,  label: 'Travel With Confidence', desc: "From arrival to recovery, you're never alone." },
+];
 
-const fadeUp   = { hidden: { opacity: 0, y: 22 },  show: { opacity: 1, y: 0  } };
-const fadeLeft = { hidden: { opacity: 0, x: -24 }, show: { opacity: 1, x: 0  } };
-const fadeRight= { hidden: { opacity: 0, x:  24 }, show: { opacity: 1, x: 0  } };
+const AVATARS = [
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=56&q=80&auto=format&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=56&q=80&auto=format&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=56&q=80&auto=format&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=56&q=80&auto=format&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=56&q=80&auto=format&fit=crop&crop=face',
+];
 
 export default function Hero() {
   const { navigateToLogin } = useAuth();
-  const [activeStep, setActiveStep] = useState(0);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setActiveStep(p => (p + 1) % STEPS.length), 1900);
+    const t = setInterval(() => setStep(p => (p + 1) % STEPS.length), 1900);
     return () => clearInterval(t);
   }, []);
 
   return (
-    <section className="relative flex flex-col min-h-screen bg-[#060c17] overflow-hidden">
-      {/* Subtle dot-grid texture */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        opacity: 0.022,
-        backgroundImage: 'radial-gradient(circle at 2px 2px, #fff 1px, transparent 0)',
-        backgroundSize: '30px 30px',
-      }} />
+    <section style={{ background: '#080f1c', minHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
-      {/* ════════════════════════════════════
-          TOP NAVIGATION BAR
-          ════════════════════════════════════ */}
-      <header className="relative z-50 flex items-center justify-between px-4 sm:px-6 lg:px-10 py-3.5"
-        style={{ background: 'rgba(6,12,23,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <button className="lg:hidden p-1 text-white/50" aria-label="Menu">
-            <div className="flex flex-col gap-1">
-              <div className="w-5 h-0.5 bg-white/50 rounded" />
-              <div className="w-5 h-0.5 bg-white/50 rounded" />
-              <div className="w-5 h-0.5 bg-white/50 rounded" />
-            </div>
+      {/* ── NAV BAR ── */}
+      <header style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 28px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(8,15,28,0.90)', backdropFilter: 'blur(12px)',
+        position: 'relative', zIndex: 50,
+      }}>
+        {/* Left: hamburger + brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexDirection: 'column', gap: 4 }} aria-label="Menu">
+            <div style={{ width: 18, height: 1.5, background: 'rgba(255,255,255,0.55)', borderRadius: 2 }} />
+            <div style={{ width: 18, height: 1.5, background: 'rgba(255,255,255,0.55)', borderRadius: 2 }} />
+            <div style={{ width: 18, height: 1.5, background: 'rgba(255,255,255,0.55)', borderRadius: 2 }} />
           </button>
           <div>
-            <p className="text-[11px] font-black text-white tracking-[0.14em] uppercase leading-none">Morales</p>
-            <p className="text-[7.5px] font-semibold uppercase tracking-[0.12em] leading-tight mt-0.5" style={{ color: GOLD }}>
-              Dental &amp; Aesthetic Travel Concierge
-            </p>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#fff', letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1 }}>MORALES</div>
+            <div style={{ fontSize: 7.5, fontWeight: 600, color: GOLD, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2, lineHeight: 1 }}>Dental &amp; Aesthetic Travel Concierge</div>
           </div>
         </div>
 
-        {/* Center — SAFE-T branding (hidden on mobile) */}
-        <div className="hidden md:flex flex-col items-center absolute left-1/2 -translate-x-1/2">
-          <span className="text-[11px] font-black tracking-[0.28em] uppercase" style={{ color: GOLD }}>SAFE-T4LIFE™</span>
-          <span className="text-[8px] tracking-[0.16em] uppercase font-semibold" style={{ color: 'rgba(197,160,89,0.38)' }}>
-            Safety Intelligence Engine
-          </span>
+        {/* Center: SAFE-T brand */}
+        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.28em', color: GOLD, textTransform: 'uppercase' }}>SAFE-T4LIFE™</div>
+          <div style={{ fontSize: 8.5, letterSpacing: '0.18em', color: 'rgba(197,160,89,0.50)', textTransform: 'uppercase', fontWeight: 600, marginTop: 1 }}>Safety Intelligence Engine</div>
         </div>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-2">
-          <button className="hidden sm:flex w-9 h-9 rounded-full items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }} aria-label="Call">
-            <Phone className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.55)' }} />
-          </button>
-          <button className="hidden sm:flex w-9 h-9 rounded-full items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }} aria-label="WhatsApp">
-            <MessageCircle className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.55)' }} />
-          </button>
+        {/* Right: icons + CTA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {[Phone, MessageCircle].map((Icon, i) => (
+            <button key={i} style={{
+              width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon size={14} color="rgba(255,255,255,0.60)" />
+            </button>
+          ))}
           <Link to="/booking">
-            <Button className="h-9 px-4 text-xs font-bold rounded-lg shadow-lg" style={{ background: GOLD, color: '#060c17' }}>
+            <button style={{
+              background: GOLD, color: '#080f1c', border: 'none', borderRadius: 8,
+              padding: '9px 18px', fontWeight: 700, fontSize: 12, cursor: 'pointer', letterSpacing: '0.02em',
+            }}>
               Book a Consultation
-            </Button>
+            </button>
           </Link>
         </div>
       </header>
 
-      {/* ════════════════════════════════════
-          MAIN HERO BODY
-          ════════════════════════════════════ */}
-      <div className="relative z-10 flex-1 flex flex-col lg:flex-row">
+      {/* ── MAIN 3-COLUMN BODY ── */}
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '320px 1fr 300px', gap: 0, overflow: 'hidden' }}>
 
         {/* ── LEFT PANEL ── */}
         <motion.div
-          variants={fadeLeft} initial="hidden" animate="show"
-          transition={{ duration: 0.8 }}
-          className="flex items-center lg:w-[34%] xl:w-[32%] px-5 sm:px-7 lg:px-8 xl:px-10 py-8 lg:py-0"
+          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}
+          style={{ padding: '24px 20px', display: 'flex', alignItems: 'center' }}
         >
-          <div className="w-full max-w-sm mx-auto lg:mx-0 rounded-[1.75rem] flex flex-col gap-5 p-6 xl:p-7"
-            style={{
-              background: 'rgba(10,22,40,0.70)',
-              border: '1px solid rgba(197,160,89,0.10)',
-              backdropFilter: 'blur(22px)',
-              boxShadow: '0 28px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(197,160,89,0.07)',
-            }}>
-
+          <div style={{
+            width: '100%',
+            background: 'rgba(12,22,40,0.75)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 20,
+            padding: '24px 22px',
+            display: 'flex', flexDirection: 'column', gap: 20,
+          }}>
             {/* Headline */}
             <div>
-              <h1 className="font-display text-[2.1rem] xl:text-[2.35rem] text-white leading-[1.06] mb-3">
+              <h1 style={{ fontSize: 36, fontWeight: 800, color: '#fff', lineHeight: 1.08, fontFamily: 'var(--font-display)', margin: 0, marginBottom: 16 }}>
                 Your safe care<br />journey starts here.
               </h1>
-              <p className="text-white/58 text-sm xl:text-[0.92rem] leading-relaxed mb-2">
+              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.58)', lineHeight: 1.6, margin: 0, marginBottom: 10 }}>
                 Verified specialists, travel coordination, and recovery support in one clear, human care plan.
               </p>
-              <p className="text-sm font-medium italic" style={{ color: GOLD }}>
+              <p style={{ fontSize: 13, color: GOLD, fontStyle: 'italic', margin: 0 }}>
                 "From consultation to the coast — your safety travels with you."
               </p>
             </div>
 
-            {/* CTA buttons */}
-            <div className="flex flex-wrap gap-2.5">
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <Link to="/booking">
-                <Button size="lg" className="h-11 px-5 font-semibold text-sm shadow-lg"
-                  style={{ background: GOLD, color: '#060c17' }}>
+                <button style={{
+                  background: GOLD, color: '#080f1c', border: 'none', borderRadius: 8,
+                  padding: '11px 20px', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                }}>
                   Begin Your Journey →
-                </Button>
+                </button>
               </Link>
               <Link to="/procedures">
-                <Button size="lg" variant="outline"
-                  className="h-11 px-5 font-semibold text-sm text-white hover:bg-white hover:text-foreground"
-                  style={{ borderColor: 'rgba(255,255,255,0.22)', background: 'rgba(255,255,255,0.04)' }}>
+                <button style={{
+                  background: 'transparent', color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.28)',
+                  borderRadius: 8, padding: '11px 20px', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                }}>
                   Explore Treatments
-                </Button>
+                </button>
               </Link>
             </div>
 
-            {/* Trust badges — 3 columns */}
-            <div className="grid grid-cols-3 gap-2">
-              {TRUST_BADGES.map(({ icon: Icon, label, sub }) => (
-                <div key={label} className="flex flex-col items-center text-center gap-1.5 rounded-xl p-2.5"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(197,160,89,0.09)' }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                    style={{ background: 'rgba(197,160,89,0.12)' }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color: GOLD }} />
+            {/* Trust badges */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              {BADGES.map(({ icon: Icon, label, sub }) => (
+                <div key={label} style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(197,160,89,0.12)',
+                  borderRadius: 12, padding: '10px 8px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center',
+                }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(197,160,89,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={13} color={GOLD} />
                   </div>
-                  <p className="text-[8.5px] font-bold text-white leading-tight">{label}</p>
-                  <p className="text-[7.5px] leading-tight" style={{ color: 'rgba(255,255,255,0.38)' }}>{sub}</p>
+                  <div style={{ fontSize: 8, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{label}</div>
+                  <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.40)', lineHeight: 1.3 }}>{sub}</div>
                 </div>
               ))}
             </div>
 
-            {/* Journey pipeline */}
+            {/* Care pipeline */}
             <div>
-              <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(255,255,255,0.32)' }}>
-                Care, Coordinated For You
-              </p>
-              <p className="text-[10.5px] mb-3" style={{ color: 'rgba(255,255,255,0.42)' }}>
-                Every detail handled. Every step supported.
-              </p>
-              <div className="flex items-center gap-1">
+              <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', marginBottom: 4 }}>Care, Coordinated For You</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 10 }}>Every detail handled. Every step supported.</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                 {STEPS.map((s, i) => (
                   <React.Fragment key={s.label}>
-                    <div className="flex flex-col items-center gap-1 transition-all duration-400"
-                      style={{ opacity: activeStep === i ? 1 : 0.38, flexShrink: 0 }}>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-all"
-                        style={{
-                          background: activeStep === i ? 'rgba(197,160,89,0.16)' : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${activeStep === i ? 'rgba(197,160,89,0.42)' : 'rgba(255,255,255,0.07)'}`,
-                        }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: step === i ? 1 : 0.38, transition: 'opacity 0.4s', flexShrink: 0 }}>
+                      <div style={{
+                        width: 30, height: 30, borderRadius: 8, fontSize: 13,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: step === i ? 'rgba(197,160,89,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${step === i ? 'rgba(197,160,89,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        transition: 'all 0.4s',
+                      }}>
                         {s.icon}
                       </div>
-                      <span style={{ fontSize: 6, fontWeight: 700, color: activeStep === i ? GOLD : 'rgba(255,255,255,0.30)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 6, fontWeight: 700, color: step === i ? GOLD : 'rgba(255,255,255,0.30)', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                         {s.label}
                       </span>
                     </div>
-                    {i < STEPS.length - 1 && (
-                      <div style={{ flex: 1, height: 1, background: 'rgba(197,160,89,0.18)', minWidth: 4 }} />
-                    )}
+                    {i < STEPS.length - 1 && <div style={{ flex: 1, height: 1, background: 'rgba(197,160,89,0.15)', minWidth: 4 }} />}
                   </React.Fragment>
                 ))}
               </div>
             </div>
 
-            {/* Care Concierge widget */}
-            <div className="flex items-center gap-3 rounded-2xl p-3"
-              style={{ background: 'rgba(6,12,23,0.75)', border: '1px solid rgba(197,160,89,0.10)' }}>
-              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden"
-                style={{ border: `2px solid ${GOLD}` }}>
-                <img
-                  src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&q=80&auto=format&fit=crop&crop=face"
-                  alt="Care Concierge"
-                  className="w-full h-full object-cover"
-                  onError={e => { e.currentTarget.style.background = 'rgba(197,160,89,0.2)'; e.currentTarget.style.display='none'; }}
-                />
+            {/* Care Concierge */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'rgba(6,12,22,0.80)', border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 14, padding: '10px 12px',
+            }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', border: `2px solid ${GOLD}`, overflow: 'hidden', flexShrink: 0 }}>
+                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&q=80&auto=format&fit=crop&crop=face"
+                  alt="Care Concierge" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={e => { e.currentTarget.style.display = 'none'; }} />
               </div>
               <div>
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[10px] font-bold text-white">Care Concierge</span>
-                  <span className="flex items-center gap-1" style={{ fontSize: 8.5, fontWeight: 600, color: '#4ade80' }}>
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>Care Concierge</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 8.5, fontWeight: 600, color: '#4ade80' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
                     Online
                   </span>
                 </div>
-                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
                   We're here for you 24/7. Need help planning your perfect care journey?
-                </p>
+                </div>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* ── CENTER — Globe ── */}
-        <div className="flex items-center justify-center lg:flex-1 py-8 lg:py-6 px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.82 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.25, delay: 0.45, ease: 'easeOut' }}
-          >
-            <HeroGlobe />
-          </motion.div>
-        </div>
-
-        {/* ── RIGHT — Storytelling ── */}
+        {/* ── CENTER: Globe ── */}
         <motion.div
-          variants={fadeRight} initial="hidden" animate="show"
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex flex-col justify-center lg:w-[30%] xl:w-[28%] px-5 sm:px-7 lg:px-0 lg:pr-8 xl:pr-10 py-8 lg:py-6 gap-4"
+          initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.0, delay: 0.4, ease: 'easeOut' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}
         >
-          {/* Cinematic golden-hour image */}
-          <div className="relative rounded-[1.5rem] overflow-hidden flex-shrink-0"
-            style={{ height: 200 }}>
+          <HeroGlobe />
+        </motion.div>
+
+        {/* ── RIGHT PANEL ── */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.3 }}
+          style={{ padding: '24px 20px 24px 8px', display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'center' }}
+        >
+          {/* Mountain photo */}
+          <div style={{ borderRadius: 16, overflow: 'hidden', height: 185, position: 'relative', flexShrink: 0 }}>
             <img
-              src={GOLDEN_IMAGE}
-              alt="Premium healthcare travel — golden hour"
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ objectPosition: 'center 30%' }}
+              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=85&auto=format&fit=crop"
+              alt="Golden hour mountains"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%' }}
               onError={e => { e.currentTarget.style.display = 'none'; }}
             />
-            {/* Cinematic overlays */}
-            <div className="absolute inset-0"
-              style={{ background: 'linear-gradient(135deg, rgba(180,110,20,0.25) 0%, rgba(10,22,40,0.35) 55%, rgba(10,22,40,0.70) 100%)' }} />
-            <div className="absolute inset-0"
-              style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(6,12,23,0.85) 100%)' }} />
-            {/* Subtle gradient fallback in case image fails */}
-            <div className="absolute inset-0 -z-10"
-              style={{ background: 'linear-gradient(135deg, #2d1a05 0%, #0b1e3a 50%, #06111f 100%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(8,15,28,0.65) 100%)' }} />
           </div>
 
           {/* Benefit cards */}
-          <div className="flex flex-col gap-2">
-            {BENEFITS.map(({ icon: Icon, title, desc }, i) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, x: 18 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 + i * 0.09 }}
-                className="flex items-center gap-3 rounded-2xl px-4 py-2.5"
-                style={{
-                  background: 'rgba(10,22,40,0.70)',
-                  border: '1px solid rgba(197,160,89,0.09)',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(197,160,89,0.11)', border: '1px solid rgba(197,160,89,0.20)' }}>
-                  <Icon className="w-4 h-4" style={{ color: GOLD }} />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-white leading-tight">{title}</p>
-                  <p className="text-[9.5px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.42)' }}>{desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {BENEFITS.map(({ icon: Icon, label, desc }) => (
+            <div key={label} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: 'rgba(12,22,40,0.75)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 12, padding: '10px 14px',
+            }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(197,160,89,0.10)', border: '1px solid rgba(197,160,89,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon size={15} color={GOLD} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{label}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
 
           {/* Social proof */}
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.0 }}
-            className="flex items-center justify-between rounded-2xl px-4 py-3"
-            style={{ background: 'rgba(10,22,40,0.70)', border: '1px solid rgba(197,160,89,0.09)', backdropFilter: 'blur(12px)' }}
-          >
+          <div style={{
+            background: 'rgba(12,22,40,0.75)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 12, padding: '12px 14px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
             <div>
-              <p className="text-[8px] font-semibold uppercase tracking-[0.12em] mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                Trusted by Patients Worldwide
-              </p>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
-                <span className="text-xs font-bold text-white ml-1.5">4.9</span>
+              <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', marginBottom: 5 }}>Trusted by Patients Worldwide</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
+                {[...Array(5)].map((_,i) => <Star key={i} size={11} fill="#f59e0b" color="#f59e0b" />)}
+                <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginLeft: 4 }}>4.9</span>
               </div>
-              <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.30)', marginTop: 2 }}>Based on 1,200+ journeys</p>
+              <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.32)' }}>Based on 1,200+ journeys</div>
             </div>
-            {/* Avatar stack */}
-            <div className="flex -space-x-2 flex-shrink-0">
-              {[
-                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=56&q=80&auto=format&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=56&q=80&auto=format&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=56&q=80&auto=format&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=56&q=80&auto=format&fit=crop&crop=face',
-                'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=56&q=80&auto=format&fit=crop&crop=face',
-              ].map((src, i) => (
-                <div key={i} className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
-                  style={{ border: '2px solid #060c17' }}>
-                  <img src={src} alt="" className="w-full h-full object-cover"
+            <div style={{ display: 'flex', marginLeft: 8 }}>
+              {AVATARS.map((src, i) => (
+                <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #080f1c', overflow: 'hidden', marginLeft: i === 0 ? 0 : -8, flexShrink: 0, zIndex: AVATARS.length - i }}>
+                  <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={e => { e.currentTarget.style.display = 'none'; }} />
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
 
-      {/* ════════════════════════════════════
-          BOTTOM ANCHOR BAND
-          ════════════════════════════════════ */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center py-6 px-4"
-        style={{ background: 'rgba(6,12,23,0.80)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="w-6 h-6 rounded-full flex items-center justify-center mb-2.5"
-          style={{ background: 'rgba(197,160,89,0.12)', border: '1px solid rgba(197,160,89,0.28)' }}>
-          <Heart className="w-3 h-3" style={{ color: GOLD }} />
+      {/* ── BOTTOM BAND ── */}
+      <div style={{
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(6,12,22,0.80)',
+        padding: '20px 28px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+      }}>
+        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(197,160,89,0.10)', border: '1px solid rgba(197,160,89,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+          <Heart size={11} color={GOLD} />
         </div>
-        <h2 className="font-display text-lg sm:text-xl lg:text-2xl text-white mb-1">
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)', margin: '0 0 4px' }}>
           More Than a Journey — It's Peace of Mind
         </h2>
-        <p className="text-sm max-w-md" style={{ color: 'rgba(255,255,255,0.42)' }}>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.42)', margin: 0 }}>
           Real people. Real care. Real support — before, during, and after your trip.
         </p>
       </div>
