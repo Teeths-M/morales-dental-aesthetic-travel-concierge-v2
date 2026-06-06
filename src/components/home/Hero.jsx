@@ -732,7 +732,7 @@ export default function Hero() {
             </AnimatePresence>
 
             {/* Social proof */}
-            <div className="hidden lg:block pt-4">
+            <div className="pt-4">
               <p className="text-xs text-slate-400 mb-2">Trusted by Patients Worldwide</p>
               <div className="flex items-center mb-2">
                 {Array.from({ length: 8 }).map((_, i) => (
