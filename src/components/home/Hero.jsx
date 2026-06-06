@@ -151,8 +151,8 @@ export default function Hero() {
       </div>
 
       {/* Content Section */}
-      <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-2 items-center gap-8 px-4 sm:px-6 lg:px-10 xl:px-16 py-16 lg:py-24">
-        <div className="rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl"
+      <div className="relative z-10 w-full lg:w-[54%] px-4 sm:px-6 lg:px-10 xl:px-16 lg:py-20">
+        <div className="w-full max-w-lg mx-auto lg:mx-0 rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl lg:mt-20"
           style={{ background: 'rgba(255,255,255,0.04)' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -275,20 +275,8 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Globe — inline next to text */}
-      <div className="hidden lg:flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.72 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          style={{ mixBlendMode: 'screen' }}
-        >
-          <SentinelOrbit size={460} />
-        </motion.div>
-      </div>
-
-      {/* Desktop background image — full right side */}
-      <div className="hidden lg:block absolute right-0 top-0 w-[46%] h-full pointer-events-none">
+      {/* Desktop: Side-by-side cinematic panel */}
+      <div className="hidden lg:flex absolute right-0 top-0 w-[46%] h-full items-center justify-center">
         <img
           src={SENTINEL_IMAGE}
           alt="Sentinel Care Journey"
@@ -297,6 +285,17 @@ export default function Hero() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
+        <div className="flex items-center justify-center w-full h-full relative z-10">
+          <motion.div
+            className="pointer-events-none"
+            initial={{ opacity: 0, scale: 0.72 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+            style={{ width: 550, height: 550, mixBlendMode: 'screen' }}
+          >
+            <SentinelOrbit size={550} />
+          </motion.div>
+        </div>
       </div>
     </section>
   );
