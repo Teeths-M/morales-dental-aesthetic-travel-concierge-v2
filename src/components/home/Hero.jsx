@@ -730,7 +730,7 @@ export default function Hero() {
                       <Car className="w-4 h-4" style={{ color: '#22c55e' }} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Taxi Service</p>
+                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Taxi Service Agency</p>
                       <p className="text-[9px] text-slate-400">Patient transportation</p>
                     </div>
                     <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
@@ -742,7 +742,7 @@ export default function Hero() {
                       <HeartHandshake className="w-4 h-4" style={{ color: '#ec4899' }} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Companion</p>
+                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Companion Agency</p>
                       <p className="text-[9px] text-slate-400">Support patient journeys</p>
                     </div>
                     <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
