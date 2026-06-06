@@ -499,11 +499,15 @@ export default function Hero() {
 
             {/* Feature pills */}
             <div className="mt-6 grid grid-cols-3 gap-2">
-              {badges.map(({ icon: Icon, label, sub, gold }) => (
-                <div key={label} className="rounded-xl border border-white/10 p-3 text-center"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}>
-                  <Icon className="w-4 h-4 mx-auto mb-1.5" style={{ color: gold ? GOLD : 'white' }} />
-                  <p className="text-[10px] font-bold leading-tight" style={{ color: gold ? GOLD : 'white' }}>{label}</p>
+              {badges.map(({ icon: Icon, label, sub }) => (
+                <div key={label}
+                  className="rounded-xl border border-white/10 p-3 text-center transition-all duration-200 cursor-default group"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 18px rgba(212,175,55,0.35)'; e.currentTarget.style.borderColor = 'rgba(212,175,55,0.45)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
+                >
+                  <Icon className="w-4 h-4 mx-auto mb-1.5 transition-colors duration-200 group-hover:drop-shadow-[0_0_6px_rgba(212,175,55,0.8)]" style={{ color: GOLD }} />
+                  <p className="text-[10px] font-bold leading-tight transition-colors duration-200" style={{ color: GOLD }}>{label}</p>
                   <p className="text-[9px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
                 </div>
               ))}
@@ -522,11 +526,11 @@ export default function Hero() {
                   const Icon = step.icon;
                   return (
                     <React.Fragment key={step.label}>
-                      <div className="flex flex-col items-center" style={{ minWidth: 0, flex: '0 0 auto' }}>
-                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1">
-                          <Icon className="w-3 h-3 text-slate-300" />
+                      <div className="flex flex-col items-center group cursor-default" style={{ minWidth: 0, flex: '0 0 auto' }}>
+                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1 transition-all duration-200 group-hover:bg-white/20 group-hover:shadow-[0_0_12px_rgba(212,175,55,0.45)]">
+                          <Icon className="w-3 h-3 transition-colors duration-200 group-hover:text-yellow-300" style={{ color: GOLD }} />
                         </div>
-                        <span className="text-[8px] text-slate-400 text-center leading-tight" style={{ maxWidth: 42 }}>{step.label}</span>
+                        <span className="text-[8px] text-center leading-tight transition-colors duration-200 group-hover:text-yellow-300" style={{ maxWidth: 42, color: GOLD }}>{step.label}</span>
                       </div>
                       {i < journeySteps.length - 1 && (
                         <span className="text-slate-500 text-[10px] flex-shrink-0 pb-4 mx-0.5">›</span>
@@ -550,7 +554,7 @@ export default function Hero() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-xs font-semibold text-white">Care Concierge</p>
+                  <p className="text-xs font-semibold" style={{ color: GOLD }}>Care Concierge</p>
                   <span className="text-[9px] font-medium text-green-400">● Online</span>
                 </div>
                 <p className="text-[10px] text-slate-300 leading-snug">
