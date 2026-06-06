@@ -373,10 +373,10 @@ function SafeTGlobe({ shieldState }) {
           />
         </g>
 
-        {/* Green jumping dot - stays at each country, bounces, then jumps to shield */}
+        {/* Green jumping dot - cycles through countries continuously */}
         <motion.circle
-          cx={activeCountryIndex < COUNTRIES.length ? COUNTRIES[activeCountryIndex].cx : 250}
-          cy={activeCountryIndex < COUNTRIES.length ? COUNTRIES[activeCountryIndex].cy : 244}
+          cx={COUNTRIES[activeCountryIndex].cx}
+          cy={COUNTRIES[activeCountryIndex].cy}
           r="6"
           fill="#22c55e"
           opacity="0.95"
