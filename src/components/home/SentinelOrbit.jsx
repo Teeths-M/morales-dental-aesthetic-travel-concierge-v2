@@ -92,6 +92,10 @@ export default function SentinelOrbit({ size = 370 }) {
               from { transform: rotateY(0deg); }
               to   { transform: rotateY(360deg); }
             }
+            @keyframes flowLine {
+              from { stroke-dashoffset: 0; }
+              to   { stroke-dashoffset: -24; }
+            }
             @keyframes markerPulse {
               0%, 100% { transform: scale(1); opacity: 0.7; }
               50%       { transform: scale(2.2); opacity: 0; }
@@ -142,6 +146,38 @@ export default function SentinelOrbit({ size = 370 }) {
             <circle key={i} cx={x} cy={y} r="1.8" fill={GOLD} opacity="0.55" />
           ))}
         </g>
+
+        {/* Golden network lines from country markers to globe center */}
+        {[
+          { x: 160, y: 100 },  // Turkey
+          { x: 350, y:  90 },  // South Korea
+          { x: 340, y: 170 },  // Thailand
+          { x: 370, y: 220 },  // Colombia
+          { x: 320, y: 310 },  // Brazil
+          { x: 110, y: 280 },  // Costa Rica
+          { x:  90, y: 190 },  // Mexico
+        ].map(({ x, y }, i) => (
+          <g key={`net-${i}`}>
+            {/* Static base line */}
+            <line x1={x} y1={y} x2="250" y2="250"
+              stroke={GOLD} strokeWidth="0.6" strokeOpacity="0.25" />
+            {/* Animated flowing dash */}
+            <line x1={x} y1={y} x2="250" y2="250"
+              stroke={GOLD} strokeWidth="1.2" strokeOpacity="0.7"
+              strokeDasharray="6 18"
+              style={{
+                animation: `flowLine 2.4s linear infinite`,
+                animationDelay: `${i * 0.34}s`,
+              }}
+            />
+            {/* Endpoint glow dot at marker position */}
+            <circle cx={x} cy={y} r="3" fill={GOLD} opacity="0.8" />
+            <circle cx={x} cy={y} r="6" fill="none" stroke={GOLD} strokeWidth="0.8"
+              opacity="0.4"
+              style={{ animation: `markerPulse 2.2s ease-out infinite`, animationDelay: `${i * 0.34}s` }}
+            />
+          </g>
+        ))}
 
         {/* Ambient glow overlay */}
         <circle cx="250" cy="250" r="195" fill="url(#glowGrad)" />
