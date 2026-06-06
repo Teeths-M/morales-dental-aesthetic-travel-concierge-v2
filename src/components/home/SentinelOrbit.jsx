@@ -1,250 +1,221 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const GOLD = '#d4a843';
 
-const CONTINENT_DOTS = [
+const ALL_DOTS = [
   // North America
-  [82,148],[88,140],[95,133],[100,142],[108,135],[115,128],[122,132],[130,126],[138,120],[142,130],
-  [88,158],[95,152],[102,160],[110,155],[118,148],[125,155],[132,162],[140,158],[128,168],[118,172],
-  [95,178],[105,175],[115,182],[125,178],[135,185],[142,190],[108,188],[98,195],[90,202],[100,208],
-  [110,200],[122,205],[132,198],[140,205],[148,212],[138,220],
-
+  [88,145],[95,155],[105,148],[112,158],[98,165],[108,172],[118,165],[125,158],[132,168],[105,178],
+  [115,185],[125,175],[135,162],[142,172],[130,180],[120,190],[110,195],[128,192],[138,182],[100,188],
   // South America
-  [122,238],[130,232],[138,240],[128,250],[135,258],[125,265],[132,272],[122,278],[128,285],
-  [135,292],[128,300],[133,310],[128,318],[122,310],[118,298],[115,285],[118,272],[120,260],
-
+  [128,210],[135,220],[125,228],[132,235],[140,225],[130,242],[138,250],[145,240],[135,258],[128,265],
+  [140,268],[132,278],[142,285],[138,295],[145,302],[135,312],[148,318],[142,308],
   // Europe
-  [218,118],[225,112],[232,108],[240,112],[248,108],[218,128],[226,122],[234,118],[242,122],
-  [220,138],[228,132],[236,128],[244,132],[252,128],[222,148],[230,142],[238,138],[246,142],[254,136],
-  [226,158],[234,152],[242,148],[250,152],[220,168],[228,162],[236,158],[244,162],
-
+  [220,118],[228,125],[235,118],[242,125],[225,132],[232,138],[240,132],[248,138],[235,145],
+  [242,152],[228,145],[250,128],[238,122],
   // Africa
-  [222,192],[230,188],[238,185],[246,188],[254,185],[228,202],[236,198],[244,195],[252,198],[260,195],
-  [224,215],[232,210],[240,208],[248,212],[256,208],[264,210],[228,228],[236,222],[244,218],[252,222],
-  [260,218],[268,222],[232,242],[240,238],[248,235],[256,238],[264,235],[238,255],[246,252],[254,248],
-  [262,252],[242,268],[250,265],[258,262],[246,280],[254,278],
-
+  [225,175],[232,182],[240,175],[228,190],[235,198],[242,188],[230,205],[238,212],[245,202],
+  [235,218],[242,225],[230,232],[238,240],[245,248],[235,255],[242,262],[238,270],[245,278],[232,265],
   // Asia
-  [262,115],[270,110],[278,108],[286,112],[294,108],[302,112],[310,108],[318,112],[326,108],[334,112],
-  [268,128],[276,122],[284,118],[292,122],[300,118],[308,122],[316,118],[324,122],[332,118],[340,122],
-  [348,118],[356,122],[364,118],[372,122],[378,128],[270,142],[278,138],[286,135],[294,138],[302,135],
-  [310,138],[318,135],[326,138],[334,135],[342,138],[350,135],[358,138],[366,135],[374,138],[380,142],
-  [272,158],[280,152],[288,148],[296,152],[304,148],[312,152],[320,148],[328,152],[336,148],[344,152],
-  [352,148],[360,152],[368,148],[376,152],[274,172],[282,168],[290,165],[298,168],[306,165],[314,168],
-  [322,165],[330,168],[338,165],[346,168],[354,165],[362,168],[370,165],[278,185],[286,182],[294,178],
-  [302,182],[310,178],[318,182],[326,178],[334,182],[342,178],[350,182],[358,178],[364,185],[370,192],
-  [280,198],[288,195],[296,192],[304,195],[312,192],[320,195],[328,192],[336,195],[344,192],[352,195],
-  [358,200],[362,208],[280,212],[288,208],[296,205],[304,208],[312,205],[320,208],[328,205],[335,210],
-  [285,225],[292,220],[300,218],[308,222],[316,218],[322,225],[330,220],[336,228],
-
+  [265,118],[272,112],[280,118],[288,112],[295,118],[272,125],[280,132],[288,125],[295,132],[302,125],
+  [310,118],[318,125],[325,118],[308,132],[315,138],[322,132],[330,125],[338,118],[295,140],[302,145],
+  [310,138],[318,145],[325,138],[335,132],[342,125],[350,132],[358,125],[365,132],[305,152],[315,145],
+  [325,152],[335,145],[345,138],[355,145],[362,138],[370,145],[360,152],[350,158],[340,152],[330,158],
+  [320,165],[310,158],[298,158],[308,165],[318,172],[330,165],[342,158],[355,165],[365,158],[372,152],
   // Australia
-  [342,275],[350,270],[358,268],[366,272],[374,270],[348,285],[356,282],[364,278],[372,282],[380,278],
-  [352,295],[360,292],[368,288],[376,292],[358,305],[366,302],[374,298],
+  [348,275],[355,268],[362,275],[355,282],[348,288],[355,295],[362,288],[370,282],[362,268],[370,275],
+  [358,302],[365,295],[372,302],[378,288],[372,268],
 ];
 
 const MARKERS = [
-  { name: 'TURKEY',      left: '32%', top: '20%' },
-  { name: 'SOUTH KOREA', left: '70%', top: '18%' },
-  { name: 'THAILAND',    left: '68%', top: '34%' },
-  { name: 'COLOMBIA',    left: '74%', top: '44%' },
-  { name: 'BRAZIL',      left: '64%', top: '62%' },
-  { name: 'COSTA RICA',  left: '22%', top: '56%' },
-  { name: 'MEXICO',      left: '18%', top: '38%' },
+  { name: 'TURKEY',      left: '32%', top: '20%', sx: 160, sy: 100 },
+  { name: 'SOUTH KOREA', left: '70%', top: '18%', sx: 350, sy:  90 },
+  { name: 'THAILAND',    left: '68%', top: '34%', sx: 340, sy: 170 },
+  { name: 'COLOMBIA',    left: '74%', top: '44%', sx: 370, sy: 220 },
+  { name: 'BRAZIL',      left: '64%', top: '62%', sx: 320, sy: 310 },
+  { name: 'COSTA RICA',  left: '22%', top: '56%', sx: 110, sy: 280 },
+  { name: 'MEXICO',      left: '18%', top: '38%', sx:  90, sy: 190 },
 ];
 
-function insideGlobe(x, y) {
-  return Math.sqrt((x - 250) ** 2 + (y - 250) ** 2) < 190;
-}
+const VISIBLE_DOTS = ALL_DOTS.filter(([cx, cy]) => Math.sqrt((cx - 250) ** 2 + (cy - 250) ** 2) < 188);
 
 export default function SentinelOrbit({ size = 370 }) {
-  const visibleDots = CONTINENT_DOTS.filter(([x, y]) => insideGlobe(x, y));
-
   return (
-    <div style={{ position: 'relative', width: size, height: size }}>
-      {/* SVG Globe */}
-      <svg
-        viewBox="0 0 500 500"
-        width={size}
-        height={size}
-        style={{ display: 'block' }}
-      >
+    <motion.div
+      style={{ position: 'relative', width: size, height: size }}
+      animate={{ scale: [1, 1.06, 1] }}
+      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+    >
+      <svg viewBox="0 0 500 500" width={size} height={size} style={{ display: 'block', overflow: 'visible' }}>
         <defs>
           <radialGradient id="globeGrad" cx="38%" cy="32%" r="70%">
-            <stop offset="0%" stopColor="#1e3a70" />
-            <stop offset="55%" stopColor="#0b1635" />
-            <stop offset="100%" stopColor="#030b18" />
+            <stop offset="0%"   stopColor="#1c3a6e" />
+            <stop offset="50%"  stopColor="#0a1530" />
+            <stop offset="100%" stopColor="#020810" />
           </radialGradient>
-          <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={GOLD} stopOpacity="0" />
-            <stop offset="70%" stopColor={GOLD} stopOpacity="0" />
-            <stop offset="100%" stopColor={GOLD} stopOpacity="0.08" />
+          <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor={GOLD} stopOpacity="0.4" />
+            <stop offset="55%"  stopColor={GOLD} stopOpacity="0.1" />
+            <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
           </radialGradient>
-          <radialGradient id="atmosphereGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="transparent" />
-            <stop offset="80%" stopColor="transparent" />
+          <radialGradient id="edgeGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor={GOLD} stopOpacity="0" />
+            <stop offset="78%"  stopColor={GOLD} stopOpacity="0" />
             <stop offset="100%" stopColor={GOLD} stopOpacity="0.12" />
           </radialGradient>
+          <filter id="dotGlow" x="-100%" y="-100%" width="400%" height="400%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="shieldGlow" x="-80%" y="-80%" width="360%" height="360%">
+            <feGaussianBlur stdDeviation="14" result="b1" />
+            <feGaussianBlur stdDeviation="5"  result="b2" in="SourceGraphic" />
+            <feMerge><feMergeNode in="b1" /><feMergeNode in="b2" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="lineGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
           <clipPath id="globeClip">
-            <circle cx="250" cy="250" r="195" />
+            <circle cx="250" cy="250" r="193" />
           </clipPath>
           <style>{`
-            @keyframes rotateLon {
-              from { transform: rotateY(0deg); }
-              to   { transform: rotateY(360deg); }
-            }
-            @keyframes flowLine {
+            @keyframes soFlowLine {
               from { stroke-dashoffset: 0; }
               to   { stroke-dashoffset: -24; }
             }
-            @keyframes markerPulse {
-              0%, 100% { transform: scale(1); opacity: 0.7; }
-              50%       { transform: scale(2.2); opacity: 0; }
+            @keyframes soPulseRing {
+              0%,100% { transform: scale(1);   opacity: 0.75; }
+              50%     { transform: scale(2.8);  opacity: 0; }
             }
-            @keyframes globeSpin {
+            @keyframes soLonSpin {
               from { transform-origin: 250px 250px; transform: rotate(0deg); }
               to   { transform-origin: 250px 250px; transform: rotate(360deg); }
             }
-            .lon-group {
-              transform-box: fill-box;
-              transform-origin: center;
-              animation: globeSpin 24s linear infinite;
-            }
+            .so-lon { animation: soLonSpin 30s linear infinite; }
           `}</style>
         </defs>
 
-        {/* Atmosphere outer glow */}
-        <circle cx="250" cy="250" r="210" fill="none" stroke={GOLD} strokeWidth="1" strokeOpacity="0.08" />
-        <circle cx="250" cy="250" r="202" fill="none" stroke={GOLD} strokeWidth="0.5" strokeOpacity="0.06" />
+        {/* Atmosphere halos */}
+        <circle cx="250" cy="250" r="216" fill="none" stroke={GOLD} strokeWidth="0.6" strokeOpacity="0.08" />
+        <circle cx="250" cy="250" r="207" fill="none" stroke={GOLD} strokeWidth="0.4" strokeOpacity="0.05" />
 
-        {/* Globe base sphere */}
-        <circle cx="250" cy="250" r="195"
-          fill="url(#globeGrad)"
-          stroke={GOLD} strokeWidth="0.5" strokeOpacity="0.3"
-        />
+        {/* Globe base */}
+        <circle cx="250" cy="250" r="195" fill="url(#globeGrad)" stroke={GOLD} strokeWidth="0.8" strokeOpacity="0.35" />
 
         {/* Latitude lines */}
-        {[30, 70, 110, 150, 110, 70, 30].map((ry, i) => (
-          <ellipse key={`lat-${i}`}
-            cx="250" cy="250" rx="195" ry={ry}
-            stroke={GOLD} strokeOpacity="0.12" strokeWidth="0.6" fill="none"
-          />
+        {[28, 65, 108, 152, 108, 65, 28].map((ry, i) => (
+          <ellipse key={`lat-${i}`} cx="250" cy="250" rx="195" ry={ry}
+            stroke={GOLD} strokeOpacity="0.09" strokeWidth="0.5" fill="none" />
         ))}
 
-        {/* Longitude lines (rotating group) */}
-        <g className="lon-group">
-          {[40, 90, 140, 195, 140, 90].map((rx, i) => (
-            <ellipse key={`lon-${i}`}
-              cx="250" cy="250" rx={rx} ry="195"
-              stroke={GOLD} strokeOpacity="0.12" strokeWidth="0.6" fill="none"
-            />
+        {/* Longitude lines (rotating) */}
+        <g className="so-lon">
+          {[38, 88, 138, 195, 138, 88].map((rx, i) => (
+            <ellipse key={`lon-${i}`} cx="250" cy="250" rx={rx} ry="195"
+              stroke={GOLD} strokeOpacity="0.09" strokeWidth="0.5" fill="none" />
           ))}
         </g>
 
         {/* Continent dot matrix */}
-        <g clipPath="url(#globeClip)">
-          {visibleDots.map(([x, y], i) => (
-            <circle key={i} cx={x} cy={y} r="1.8" fill={GOLD} opacity="0.55" />
+        <g clipPath="url(#globeClip)" filter="url(#dotGlow)">
+          {VISIBLE_DOTS.map(([cx, cy], i) => (
+            <circle key={i} cx={cx} cy={cy} r="2.2" fill={GOLD} fillOpacity="0.65" />
           ))}
         </g>
 
-        {/* Golden network lines from country markers to globe center */}
-        {[
-          { x: 160, y: 100 },  // Turkey
-          { x: 350, y:  90 },  // South Korea
-          { x: 340, y: 170 },  // Thailand
-          { x: 370, y: 220 },  // Colombia
-          { x: 320, y: 310 },  // Brazil
-          { x: 110, y: 280 },  // Costa Rica
-          { x:  90, y: 190 },  // Mexico
-        ].map(({ x, y }, i) => (
-          <g key={`net-${i}`}>
-            {/* Static base line */}
-            <line x1={x} y1={y} x2="250" y2="250"
-              stroke={GOLD} strokeWidth="0.6" strokeOpacity="0.25" />
-            {/* Animated flowing dash */}
-            <line x1={x} y1={y} x2="250" y2="250"
-              stroke={GOLD} strokeWidth="1.2" strokeOpacity="0.7"
-              strokeDasharray="6 18"
-              style={{
-                animation: `flowLine 2.4s linear infinite`,
-                animationDelay: `${i * 0.34}s`,
-              }}
-            />
-            {/* Endpoint glow dot at marker position */}
-            <circle cx={x} cy={y} r="3" fill={GOLD} opacity="0.8" />
-            <circle cx={x} cy={y} r="6" fill="none" stroke={GOLD} strokeWidth="0.8"
-              opacity="0.4"
-              style={{ animation: `markerPulse 2.2s ease-out infinite`, animationDelay: `${i * 0.34}s` }}
-            />
-          </g>
+        {/* Network lines — base (static) */}
+        {MARKERS.map(({ sx, sy, name }) => (
+          <line key={`base-${name}`}
+            x1={sx} y1={sy} x2="250" y2="250"
+            stroke={GOLD} strokeWidth="0.6" strokeOpacity="0.18" />
         ))}
 
-        {/* Ambient glow overlay */}
-        <circle cx="250" cy="250" r="195" fill="url(#glowGrad)" />
+        {/* Network lines — animated dash */}
+        <g filter="url(#lineGlow)">
+          {MARKERS.map(({ sx, sy, name }, i) => (
+            <line key={`flow-${name}`}
+              x1={sx} y1={sy} x2="250" y2="250"
+              stroke={GOLD} strokeWidth="1.5" strokeOpacity="0.7"
+              strokeDasharray="7 15"
+              style={{ animation: `soFlowLine 2s linear infinite`, animationDelay: `${i * 0.28}s` }}
+            />
+          ))}
+        </g>
 
+        {/* Center warm glow */}
+        <circle cx="250" cy="250" r="88" fill="url(#centerGlow)" />
+
+        {/* Central Shield */}
+        <g filter="url(#shieldGlow)">
+          {/* Aura rings */}
+          <circle cx="250" cy="248" r="66" fill={GOLD} fillOpacity="0.06" />
+          <circle cx="250" cy="248" r="54" fill={GOLD} fillOpacity="0.07" />
+          {/* Shield body */}
+          <path
+            d="M250,175 L308,202 L308,254 C308,287 283,307 250,320 C217,307 192,287 192,254 L192,202 Z"
+            fill={GOLD}
+          />
+          {/* Shield depth overlay */}
+          <path
+            d="M250,184 L301,209 L301,254 C301,283 279,300 250,312 C221,300 199,283 199,254 L199,209 Z"
+            fill="#1a0d00" fillOpacity="0.45"
+          />
+          {/* Shield inner rim */}
+          <path
+            d="M250,184 L301,209 L301,254 C301,283 279,300 250,312 C221,300 199,283 199,254 L199,209 Z"
+            fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8"
+          />
+          {/* Heart */}
+          <path
+            d="M250,263 C250,250 239,242 229,242 C219,242 213,251 213,259 C213,271 226,282 250,297 C274,282 287,271 287,259 C287,251 281,242 271,242 C261,242 250,250 250,263 Z"
+            fill="white" fillOpacity="0.95"
+          />
+          {/* Cupped hands arc */}
+          <path d="M226,280 Q250,296 274,280"
+            fill="none" stroke="white" strokeWidth="2.8" strokeOpacity="0.85" strokeLinecap="round" />
+        </g>
+
+        {/* Edge glow */}
+        <circle cx="250" cy="250" r="195" fill="url(#edgeGlow)" />
         {/* Globe rim */}
-        <circle cx="250" cy="250" r="195"
-          fill="none" stroke={GOLD} strokeWidth="1" strokeOpacity="0.35"
-        />
-
-        {/* Center label */}
-        <text x="250" y="478" textAnchor="middle"
-          fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="bold"
-          fill={GOLD} fillOpacity="0.65" letterSpacing="2">
-          SAFE‑T 4LIFE™
-        </text>
+        <circle cx="250" cy="250" r="195" fill="none" stroke={GOLD} strokeWidth="1.2" strokeOpacity="0.45" />
       </svg>
 
-      {/* Country Markers */}
-      {MARKERS.map(({ name, left, top }) => (
-        <div
-          key={name}
-          style={{
-            position: 'absolute',
-            left,
-            top,
-            transform: 'translate(-50%, -50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          {/* Pulsing ring */}
+      {/* Country markers */}
+      {MARKERS.map(({ name, left, top }, i) => (
+        <div key={name} style={{
+          position: 'absolute', left, top,
+          transform: 'translate(-50%, -50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          pointerEvents: 'none',
+        }}>
+          {/* Pulse ring */}
           <div style={{
             position: 'absolute',
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
+            width: 10, height: 10, borderRadius: '50%',
             border: `1.5px solid ${GOLD}`,
-            animation: 'markerPulse 2.2s ease-out infinite',
+            animation: `soPulseRing 2.4s ease-out infinite`,
+            animationDelay: `${i * 0.32}s`,
           }} />
           {/* Core dot */}
           <div style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
+            width: 9, height: 9, borderRadius: '50%',
             background: GOLD,
-            boxShadow: `0 0 8px 3px rgba(212,168,67,0.6)`,
-            position: 'relative',
-            zIndex: 1,
+            boxShadow: `0 0 10px 4px rgba(212,168,67,0.75)`,
+            position: 'relative', zIndex: 1,
           }} />
-          {/* Label */}
+          {/* Name */}
           <span style={{
-            marginTop: 5,
-            fontSize: 8,
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            color: 'rgba(255,255,255,0.82)',
-            fontFamily: 'system-ui,sans-serif',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-            textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+            marginTop: 5, fontSize: 8, fontWeight: 700, letterSpacing: '0.1em',
+            color: 'rgba(255,255,255,0.9)', fontFamily: 'system-ui,sans-serif',
+            textTransform: 'uppercase', whiteSpace: 'nowrap',
+            textShadow: '0 1px 6px rgba(0,0,0,0.95)',
           }}>
             {name}
           </span>
         </div>
       ))}
-    </div>
+    </motion.div>
   );
 }
