@@ -220,10 +220,10 @@ async function handlePackagePaymentSuccess(base44, {
     console.warn(`[handlePackagePaymentSuccess] Rejected — missing case_id in metadata. event_id=${event_id}`);
     await base44.asServiceRole.entities.PaymentTransaction.create({
       event_id, event_type,
-      status: 'failed',
+      status: 'failed_validation',
       raw_amount: amount_total || 0,
       currency: currency || 'usd',
-      metadata: { rejection_reason: 'missing_case_id', raw_metadata },
+      metadata: { validation_error: 'missing_case_id', workflow_advanced: false, raw_metadata },
       processed_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
     });
@@ -241,10 +241,10 @@ async function handlePackagePaymentSuccess(base44, {
       stripe_session_id,
       stripe_payment_intent_id,
       event_id, event_type,
-      status: 'failed',
+      status: 'failed_validation',
       raw_amount: amount_total || 0,
       currency: currency || 'usd',
-      metadata: { rejection_reason: 'unrecognized_plan_or_deposit_type', plan_type, deposit_option, raw_metadata },
+      metadata: { validation_error: 'unrecognized_plan_or_deposit_type', workflow_advanced: false, plan_type, deposit_option, raw_metadata },
       processed_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
     });
@@ -253,18 +253,25 @@ async function handlePackagePaymentSuccess(base44, {
 
   // VALIDATION 3: Demo/test metadata must never update production CaseRecord
   if (isDemoPayment(raw_metadata)) {
-    console.warn(`[handlePackagePaymentSuccess] Rejected — demo/test metadata detected, will not advance CaseRecord. case_id=${case_id} event_id=${event_id}`);
+    console.warn(`[handlePackagePaymentSuccess] Skipped — demo/test metadata detected, will not advance CaseRecord. case_id=${case_id} event_id=${event_id}`);
     await base44.asServiceRole.entities.PaymentTransaction.create({
       case_id,
       client_email: client_email || '',
       stripe_session_id,
       stripe_payment_intent_id,
       event_id, event_type,
-      status: 'succeeded',
+      status: 'succeeded_skipped_demo',
       deposit_option,
       raw_amount: amount_total,
       currency,
-      metadata: { plan_type, is_demo: true, exclude_from_revenue_reporting: true, rejection_reason: 'demo_payment_blocked_from_case_update', raw_metadata },
+      metadata: {
+        plan_type,
+        is_demo: true,
+        exclude_from_revenue_reporting: true,
+        workflow_advanced: false,
+        skip_reason: 'demo_or_test_metadata',
+        raw_metadata,
+      },
       processed_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
     });
@@ -357,7 +364,7 @@ async function handleConsultationFeePaid(base44, {
 }) {
   // VALIDATION 3 (consultation): Demo/test metadata must never mark ConsultationFee as paid
   if (isDemoPayment(raw_metadata)) {
-    console.warn(`[handleConsultationFeePaid] Rejected — demo/test metadata detected, will not mark fee as paid. event_id=${event_id}`);
+    console.warn(`[handleConsultationFeePaid] Skipped — demo/test metadata detected, will not mark fee as paid. event_id=${event_id}`);
     await base44.asServiceRole.entities.PaymentTransaction.create({
       case_id: consultation_id || null,
       client_email: client_email || '',
@@ -365,10 +372,17 @@ async function handleConsultationFeePaid(base44, {
       stripe_session_id,
       stripe_payment_intent_id,
       event_id, event_type,
-      status: 'succeeded',
+      status: 'succeeded_skipped_demo',
       raw_amount: amount_total,
       currency: 'usd',
-      metadata: { fee_type: 'consultation_fee_49', is_demo: true, exclude_from_revenue_reporting: true, rejection_reason: 'demo_payment_blocked_from_fee_update', raw_metadata },
+      metadata: {
+        fee_type: 'consultation_fee_49',
+        is_demo: true,
+        exclude_from_revenue_reporting: true,
+        workflow_advanced: false,
+        skip_reason: 'demo_or_test_metadata',
+        raw_metadata,
+      },
       processed_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
     });
@@ -383,7 +397,7 @@ async function handleConsultationFeePaid(base44, {
   if (feesToCheck.length > 0) {
     const fee = feesToCheck[0];
     if (fee.is_demo === true || fee.exclude_from_revenue_reporting === true) {
-      console.warn(`[handleConsultationFeePaid] Rejected — ConsultationFee record is tagged as demo/excluded. fee_id=${fee.id} event_id=${event_id}`);
+      console.warn(`[handleConsultationFeePaid] Skipped — ConsultationFee record is tagged as demo/excluded. fee_id=${fee.id} event_id=${event_id}`);
       await base44.asServiceRole.entities.PaymentTransaction.create({
         case_id: consultation_id || null,
         client_email: client_email || '',
@@ -391,10 +405,17 @@ async function handleConsultationFeePaid(base44, {
         stripe_session_id,
         stripe_payment_intent_id,
         event_id, event_type,
-        status: 'succeeded',
+        status: 'succeeded_skipped_demo',
         raw_amount: amount_total,
         currency: 'usd',
-        metadata: { fee_type: 'consultation_fee_49', is_demo: true, exclude_from_revenue_reporting: true, rejection_reason: 'demo_fee_record_blocked_from_workflow', fee_record_id: fee.id },
+        metadata: {
+          fee_type: 'consultation_fee_49',
+          is_demo: true,
+          exclude_from_revenue_reporting: true,
+          workflow_advanced: false,
+          skip_reason: 'demo_or_test_metadata',
+          fee_record_id: fee.id,
+        },
         processed_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
       });
