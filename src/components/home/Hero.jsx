@@ -151,8 +151,8 @@ export default function Hero() {
       </div>
 
       {/* Content Section */}
-      <div className="relative z-10 w-full flex flex-col lg:flex-row items-center gap-8 px-4 sm:px-6 lg:px-10 xl:px-16 lg:py-20">
-        <div className="w-full max-w-lg mx-auto lg:mx-0 rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl lg:mt-20"
+      <div className="relative z-10 w-full flex flex-col lg:flex-row items-center gap-8 px-4 sm:px-6 lg:px-10 xl:px-16 lg:py-20 min-h-screen">
+        <div className="w-full lg:w-1/2 lg:flex-shrink-0 max-w-lg mx-auto lg:mx-0 rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl lg:mt-20"
           style={{ background: 'rgba(255,255,255,0.04)' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -276,7 +276,7 @@ export default function Hero() {
       </div>
 
       {/* Globe — desktop: inline next to text; hidden on mobile */}
-      <div className="hidden lg:flex items-center justify-center flex-shrink-0 relative z-10">
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center flex-shrink-0 relative z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.72 }}
           animate={{ opacity: 1, scale: 1 }}
