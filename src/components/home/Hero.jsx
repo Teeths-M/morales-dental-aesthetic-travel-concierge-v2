@@ -321,29 +321,11 @@ function SafeTGlobe({ shieldState }) {
             fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
           />
 
-          {/* Hands-and-heart icon: clean cupped hands with heart */}
-          {/* Left hand curve */}
+          {/* Clean checkmark */}
           <path
-            d="M224 270 Q218 264 218 256 Q218 248 225 246 Q228 245 230 248 Q232 252 230 260 Q228 268 224 270 Z"
-            fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
+            d="M218 252 L242 276 L282 218"
+            fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
           />
-          {/* Right hand curve */}
-          <path
-            d="M276 270 Q282 264 282 256 Q282 248 275 246 Q272 245 270 248 Q268 252 270 260 Q272 268 276 270 Z"
-            fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
-          />
-          {/* Cupped palm base */}
-          <path
-            d="M224 270 Q240 282 250 285 Q260 282 276 270"
-            fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
-          />
-          {/* Heart */}
-          <path
-            d="M250 232 C250 232 236 221 236 211 C236 201 242 195 249 195 C251.5 195 253 196.5 253 196.5 C253 196.5 254.5 195 257 195 C264 195 270 201 270 211 C270 221 250 232 250 232 Z"
-            fill="white" opacity="0.96"
-          />
-          {/* Heart shine */}
-          <ellipse cx="246" cy="208" rx="2.5" ry="3.5" fill={GOLD} opacity="0.5" />
         </motion.g>
 
         {/* Globe rim */}
