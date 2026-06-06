@@ -29,7 +29,12 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     // SECURITY: Authentication required — all actor fields derived from session, never from request body
-    const user = await base44.auth.me();
+    let user;
+    try {
+      user = await base44.auth.me();
+    } catch (_) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
