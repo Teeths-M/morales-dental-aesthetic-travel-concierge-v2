@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase } from 'lucide-react';
-import { motion } from 'framer-motion';
-import GlobeVisualization from './GlobeVisualization';
+import { motion, AnimatePresence } from 'framer-motion';
+import GlobeVisualization, { SHIELD_STATES } from './GlobeVisualization';
 
 const GOLD = '#c9a84c';
 
@@ -38,6 +38,7 @@ const BADGES = [
 
 export default function Hero() {
   const [language, setLanguage] = useState('en');
+  const [shieldState, setShieldState] = useState(SHIELD_STATES[0]);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -134,12 +135,64 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.3 }}
-          className="w-full lg:w-[40%] relative flex items-center justify-center"
+          className="w-full lg:w-[40%] relative flex flex-col items-center justify-center"
           style={{ minHeight: 552 }}
         >
           <div style={{ width: '100%', height: '100%', minHeight: 580, maxHeight: 910, position: 'relative' }}>
-            <GlobeVisualization />
+            <GlobeVisualization onStateChange={setShieldState} />
           </div>
+
+          {/* Shield status card */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={shieldState.key}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              style={{
+                position: 'absolute',
+                bottom: 18,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '80%',
+                maxWidth: 340,
+                background: 'rgba(8,8,12,0.72)',
+                backdropFilter: 'blur(18px)',
+                WebkitBackdropFilter: 'blur(18px)',
+                border: `1px solid ${shieldState.color}35`,
+                borderRadius: 14,
+                padding: '14px 18px',
+                zIndex: 20,
+                boxShadow: `0 0 32px ${shieldState.color}20, 0 4px 24px rgba(0,0,0,0.5)`,
+              }}
+            >
+              <div className="flex items-start gap-3">
+                {/* Color indicator dot */}
+                <motion.div
+                  animate={{ scale: [1, 1.25, 1], opacity: [0.9, 1, 0.9] }}
+                  transition={{ duration: 1.8, repeat: Infinity }}
+                  style={{
+                    width: 10, height: 10, borderRadius: '50%',
+                    background: shieldState.color,
+                    flexShrink: 0, marginTop: 4,
+                    boxShadow: `0 0 8px ${shieldState.color}`,
+                  }}
+                />
+                <div>
+                  <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
+                    {shieldState.title}
+                  </p>
+                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, margin: '4px 0 6px', lineHeight: 1.4 }}>
+                    {shieldState.sub}
+                  </p>
+                  <p style={{ color: shieldState.color, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', margin: 0 }}>
+                    ● {shieldState.badge}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
 
         {/* ── RIGHT: Feature cards (25%) ── */}

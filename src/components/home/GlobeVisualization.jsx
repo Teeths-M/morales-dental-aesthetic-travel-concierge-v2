@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const GOLD = '#c9a84c';
 
@@ -18,7 +19,6 @@ const ARCS = [
   [0, 5], [5, 6], [5, 7], [6, 7], [1, 5],
 ];
 
-// Positions for floating labels around the globe edge (% from center)
 const LABEL_POSITIONS = [
   { name: 'Mexico',      x: -38, y: -25, side: 'left'  },
   { name: 'Brazil',      x:  38, y:  30, side: 'right' },
@@ -30,17 +30,41 @@ const LABEL_POSITIONS = [
   { name: 'South Korea', x:  46, y: -20, side: 'right' },
 ];
 
-const STATUS_CYCLE = [
-  { color: '#ef4444', glow: 'rgba(239,68,68,0.85)', label: 'SCANNING' },
-  { color: '#eab308', glow: 'rgba(234,179,8,0.85)',  label: 'ASSESSING' },
-  { color: '#22c55e', glow: 'rgba(34,197,94,0.85)',  label: 'CLEARED'  },
+export const SHIELD_STATES = [
+  {
+    key: 'green',
+    color: '#10b981',
+    glow: 'rgba(16,185,129,0.9)',
+    title: "You're Protected",
+    sub: 'Your care journey appears compatible.',
+    badge: 'Scan complete • All systems safe',
+  },
+  {
+    key: 'yellow',
+    color: '#f59e0b',
+    glow: 'rgba(245,158,11,0.9)',
+    title: 'Enhanced Review',
+    sub: 'Recovery compatibility may require provider review.',
+    badge: 'Advisory active • Review recommended',
+  },
+  {
+    key: 'red',
+    color: '#ef4444',
+    glow: 'rgba(239,68,68,0.9)',
+    title: 'Attention Required',
+    sub: 'Please consult with our care team before proceeding.',
+    badge: 'Consultation required • Care team notified',
+  },
 ];
 
-// Heart-with-hands SVG icon
+// Random duration between 8-15 seconds
+function randDuration() {
+  return 8000 + Math.random() * 7000;
+}
+
 function HeartHandsIcon({ color }) {
   return (
     <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
-      {/* Shield outline */}
       <path
         d="M24 4L6 11v11c0 10.5 7.5 20.3 18 22.5C34.5 42.3 42 32.5 42 22V11L24 4Z"
         fill={`${color}22`}
@@ -48,16 +72,8 @@ function HeartHandsIcon({ color }) {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      {/* Hands */}
-      <path
-        d="M16 28c0 0 1-2 3-2s2.5 1 3 2"
-        stroke={color} strokeWidth="1.6" strokeLinecap="round"
-      />
-      <path
-        d="M26 28c0 0 1-2 3-2s2.5 1 3 2"
-        stroke={color} strokeWidth="1.6" strokeLinecap="round"
-      />
-      {/* Heart */}
+      <path d="M16 28c0 0 1-2 3-2s2.5 1 3 2" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M26 28c0 0 1-2 3-2s2.5 1 3 2" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
       <path
         d="M24 32s-6-4-6-8.5C18 21 19.5 20 21 20c1 0 2 .7 3 1.5C25 20.7 26 20 27 20c1.5 0 3 1 3 3.5C30 28 24 32 24 32z"
         fill={color}
@@ -67,17 +83,37 @@ function HeartHandsIcon({ color }) {
   );
 }
 
-export default function GlobeVisualization() {
+export default function GlobeVisualization({ onStateChange }) {
   const containerRef = useRef(null);
   const mountRef = useRef(null);
   const rootRef = useRef(null);
-  const [statusIdx, setStatusIdx] = useState(0);
+  const [stateIdx, setStateIdx] = useState(0);
+  const [scanning, setScanning] = useState(false);
+  const timerRef = useRef(null);
 
-  // Cycle status every 2s
+  const advanceState = useCallback(() => {
+    setScanning(true);
+    setTimeout(() => {
+      setStateIdx(i => {
+        const next = (i + 1) % SHIELD_STATES.length;
+        onStateChange && onStateChange(SHIELD_STATES[next]);
+        return next;
+      });
+      setScanning(false);
+    }, 900);
+  }, [onStateChange]);
+
   useEffect(() => {
-    const t = setInterval(() => setStatusIdx(i => (i + 1) % STATUS_CYCLE.length), 2000);
-    return () => clearInterval(t);
-  }, []);
+    onStateChange && onStateChange(SHIELD_STATES[0]);
+    const schedule = () => {
+      timerRef.current = setTimeout(() => {
+        advanceState();
+        schedule();
+      }, randDuration());
+    };
+    schedule();
+    return () => clearTimeout(timerRef.current);
+  }, [advanceState, onStateChange]);
 
   useEffect(() => {
     let destroyed = false;
@@ -134,7 +170,6 @@ export default function GlobeVisualization() {
         arcDashGap: 0.2,
         arcDashAnimateTime: 2800,
 
-        // Keep globe's own labels as fallback
         labelsData: LOCATIONS,
         labelLat: 'lat',
         labelLng: 'lng',
@@ -167,7 +202,7 @@ export default function GlobeVisualization() {
     };
   }, []);
 
-  const status = STATUS_CYCLE[statusIdx];
+  const state = SHIELD_STATES[stateIdx];
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -179,58 +214,67 @@ export default function GlobeVisualization() {
         pointerEvents: 'none', zIndex: 1,
       }} />
 
+      {/* Cinematic scan sweep on transition */}
+      <AnimatePresence>
+        {scanning && (
+          <motion.div
+            key="scan"
+            initial={{ top: '-5%', opacity: 0.9 }}
+            animate={{ top: '105%', opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.85, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', left: 0, right: 0, height: '12%',
+              background: `linear-gradient(to bottom, transparent, ${state.color}30, transparent)`,
+              pointerEvents: 'none', zIndex: 15,
+              boxShadow: `0 0 40px 10px ${state.color}25`,
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Floating country labels with pointer lines */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 12 }}>
-        {LABEL_POSITIONS.map(({ name, x, y, side }) => {
-          const cx = 50 + x;
-          const cy = 50 + y;
-          const edgeX = side === 'left' ? cx - 8 : cx + 8;
-          const labelX = side === 'left' ? cx - 14 : cx + 14;
-
-          return (
-            <div key={name} style={{ position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%, -50%)' }}>
-              {/* SVG pointer line */}
-              <svg
-                style={{
-                  position: 'absolute',
-                  overflow: 'visible',
-                  left: 0, top: 0,
-                  pointerEvents: 'none',
-                }}
-                width="0" height="0"
-              >
-                <line
-                  x1="0" y1="0"
-                  x2={side === 'left' ? '-28px' : '28px'} y2="0"
-                  stroke={GOLD} strokeWidth="1" strokeDasharray="3,2" opacity="0.6"
-                />
-                <circle cx="0" cy="0" r="3" fill={GOLD} opacity="0.8" />
-              </svg>
-              {/* Label pill */}
-              <div style={{
-                position: 'absolute',
-                [side]: side === 'left' ? 'auto' : 'auto',
-                left: side === 'left' ? 'auto' : '100%',
-                right: side === 'left' ? '100%' : 'auto',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                marginLeft: side === 'right' ? 6 : 0,
-                marginRight: side === 'left' ? 6 : 0,
-                whiteSpace: 'nowrap',
-                background: 'rgba(10,10,10,0.75)',
-                border: `1px solid ${GOLD}55`,
-                borderRadius: 4,
-                padding: '2px 7px',
-                fontSize: 10,
-                fontWeight: 700,
-                color: '#fff',
-                letterSpacing: '0.08em',
-              }}>
-                {name}
-              </div>
+        {LABEL_POSITIONS.map(({ name, x, y, side }) => (
+          <div
+            key={name}
+            style={{
+              position: 'absolute',
+              left: `${50 + x}%`,
+              top: `${50 + y}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <svg style={{ position: 'absolute', overflow: 'visible', left: 0, top: 0, pointerEvents: 'none' }} width="0" height="0">
+              <line
+                x1="0" y1="0"
+                x2={side === 'left' ? '-28' : '28'} y2="0"
+                stroke={GOLD} strokeWidth="1" strokeDasharray="3,2" opacity="0.6"
+              />
+              <circle cx="0" cy="0" r="3" fill={GOLD} opacity="0.8" />
+            </svg>
+            <div style={{
+              position: 'absolute',
+              left: side === 'right' ? '100%' : 'auto',
+              right: side === 'left' ? '100%' : 'auto',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              marginLeft: side === 'right' ? 8 : 0,
+              marginRight: side === 'left' ? 8 : 0,
+              whiteSpace: 'nowrap',
+              background: 'rgba(10,10,10,0.75)',
+              border: `1px solid ${GOLD}55`,
+              borderRadius: 4,
+              padding: '2px 7px',
+              fontSize: 10,
+              fontWeight: 700,
+              color: '#fff',
+              letterSpacing: '0.08em',
+            }}>
+              {name}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* Animated shield overlay */}
@@ -239,32 +283,55 @@ export default function GlobeVisualization() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         pointerEvents: 'none', zIndex: 10,
       }}>
-        <div style={{
-          position: 'relative',
-          width: 140, height: 140,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {/* Pulsing glow ring */}
-          <div style={{
-            position: 'absolute', inset: 0, borderRadius: '50%',
-            background: `radial-gradient(circle, ${status.color}30 0%, transparent 70%)`,
-            filter: `drop-shadow(0 0 28px ${status.glow}) drop-shadow(0 0 60px ${status.color}55)`,
-            transition: 'background 0.6s ease, filter 0.6s ease',
-          }} />
-          {/* Shield icon with heart-hands */}
-          <div style={{ transition: 'filter 0.6s ease', filter: `drop-shadow(0 0 12px ${status.color})` }}>
-            <HeartHandsIcon color={status.color} />
-          </div>
-          {/* Status label */}
-          <div style={{
-            position: 'absolute', bottom: 12,
-            fontSize: 8, fontWeight: 800, letterSpacing: '0.2em',
-            color: status.color,
-            transition: 'color 0.6s ease',
-          }}>
-            {status.label}
-          </div>
-        </div>
+        <motion.div
+          animate={{
+            filter: [
+              `drop-shadow(0 0 18px ${state.glow}) drop-shadow(0 0 40px ${state.color}55)`,
+              `drop-shadow(0 0 30px ${state.glow}) drop-shadow(0 0 64px ${state.color}80)`,
+              `drop-shadow(0 0 18px ${state.glow}) drop-shadow(0 0 40px ${state.color}55)`,
+            ],
+          }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'relative', width: 140, height: 140,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          {/* Pulsing color ring */}
+          <motion.div
+            key={state.key}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              background: `radial-gradient(circle, ${state.color}28 0%, transparent 70%)`,
+            }}
+          />
+          {/* Icon — gold shield, outer glow color changes */}
+          <motion.div
+            key={`icon-${state.key}`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            <HeartHandsIcon color={GOLD} />
+          </motion.div>
+          {/* Status micro-label */}
+          <motion.div
+            key={`label-${state.key}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            style={{
+              position: 'absolute', bottom: 10,
+              fontSize: 8, fontWeight: 800, letterSpacing: '0.2em',
+              color: state.color,
+            }}
+          >
+            {state.key.toUpperCase()}
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* SAFE-T4LIFE header */}
