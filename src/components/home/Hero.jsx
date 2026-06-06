@@ -285,15 +285,17 @@ export default function Hero() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
-        <motion.div
-          className="relative z-10 pointer-events-none"
-          initial={{ opacity: 0, scale: 0.72 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          style={{ width: 550, height: 550 }}
-        >
-          <SentinelOrbit size={550} />
-        </motion.div>
+        <div className="flex items-center justify-center w-full h-full relative z-10">
+          <motion.div
+            className="pointer-events-none"
+            initial={{ opacity: 0, scale: 0.72 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+            style={{ width: 550, height: 550, mixBlendMode: 'screen' }}
+          >
+            <SentinelOrbit size={550} />
+          </motion.div>
+        </div>
       </div>
     </section>
   );
