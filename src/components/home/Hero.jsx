@@ -512,41 +512,40 @@ export default function Hero() {
               <p className="text-xs text-slate-400 mt-1 mb-4">
                 {language === 'es' ? 'Cada detalle atendido. Cada paso apoyado.' : 'Every detail handled. Every step supported.'}
               </p>
-              <div className="relative flex items-end justify-between w-full">
-                {/* Static background line */}
-                <div className="absolute bottom-8 left-0 right-0 h-px" style={{ background: 'rgba(212,168,67,0.15)' }} />
-                {/* Animated gold line - left to right */}
-                <motion.div
-                  className="absolute bottom-8 left-0 h-px"
-                  style={{
-                    background: `linear-gradient(90deg, ${GOLD}, rgba(212,168,67,0.3))`,
-                    boxShadow: `0 0 8px ${GOLD}66`,
-                  }}
-                  initial={{ width: '0%' }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.5 }}
-                />
-                {/* Traveling glow dot */}
-                <motion.div
-                  className="absolute bottom-[10px] w-2 h-2 rounded-full"
-                  style={{
-                    background: GOLD,
-                    boxShadow: `0 0 12px ${GOLD}`,
-                  }}
-                  initial={{ left: '0%' }}
-                  animate={{ left: '100%' }}
-                  transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.5 }}
-                />
+              <div className="flex items-end justify-between w-full">
                 {journeySteps.map((step, i) => {
                   const Icon = step.icon;
                   return (
                     <React.Fragment key={step.label}>
-                      <div className="flex flex-col items-center relative z-10" style={{ minWidth: 0, flex: '0 0 auto' }}>
-                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1">
-                          <Icon className="w-3 h-3 text-slate-300" />
-                        </div>
-                        <span className="text-[8px] text-slate-400 text-center leading-tight" style={{ maxWidth: 42 }}>{step.label}</span>
-                      </div>
+                      <motion.div
+                        className="flex flex-col items-center cursor-pointer relative z-10"
+                        style={{ minWidth: 0, flex: '0 0 auto' }}
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        <motion.div
+                          className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1"
+                          whileHover={{
+                            background: 'rgba(212,168,67,0.25)',
+                            boxShadow: `0 0 16px ${GOLD}66`,
+                          }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <motion.Icon
+                            className="w-3 h-3"
+                            animate={{ color: '#94a3b8' }}
+                            whileHover={{ color: GOLD }}
+                            transition={{ duration: 0.2 }}
+                          />
+                        </motion.div>
+                        <motion.span
+                          className="text-[8px] text-slate-400 text-center leading-tight"
+                          style={{ maxWidth: 42 }}
+                          whileHover={{ color: GOLD }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          {step.label}
+                        </motion.span>
+                      </motion.div>
                       {i < journeySteps.length - 1 && (
                         <span className="text-slate-500 text-[10px] flex-shrink-0 pb-4 mx-0.5 relative z-10">›</span>
                       )}
