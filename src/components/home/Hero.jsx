@@ -1,60 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Star, MapPin, User } from 'lucide-react';
+import { Shield, BadgeCheck, Plane, Users, Link2, Heart, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
-import SlotCounter from './SlotCounter';
-import SentinelOrbit from './SentinelOrbit';
-import SafeTLifeShield from './SafeTLifeShield';
-import { translations } from '@/lib/translations';
 import { useAuth } from '@/lib/AuthContext';
+import GlobeVisualization from './GlobeVisualization';
 
-const SENTINEL_IMAGE =
-  'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7b4ea635d_ChatGPTImageJun1202608_35_37PM.png';
+const GOLD = '#c9a84c';
 
-const getTestimonials = () => [];
-
-const getBadges = (language) => [
+const FEATURES = [
+  {
+    icon: Users,
+    title: 'Human Care',
+    sub: 'Real people, real support when you need it most.',
+  },
   {
     icon: Shield,
-    label: 'SAFE-T 4LIFE™',
-    sub:
-      language === 'es'
-        ? 'Seguridad Impulsada por IA'
-        : language === 'fr'
-        ? 'Sécurité Alimentée par IA'
-        : 'AI-Powered Safety',
+    title: 'Safe Connections',
+    sub: 'Vetted specialists and trusted global partners.',
   },
   {
-    icon: BadgeCheck,
-    label:
-      language === 'es'
-        ? 'Especialistas Verificados'
-        : language === 'fr'
-        ? 'Spécialistes Vérifiés'
-        : 'Verified Specialists',
-    sub:
-      language === 'es'
-        ? 'Con Licencia y Confiables'
-        : language === 'fr'
-        ? 'Autorisé et de Confiance'
-        : 'Licensed & Trusted',
+    icon: Heart,
+    title: 'Better Outcomes',
+    sub: 'Care designed around your safety and recovery.',
   },
   {
-    icon: Plane,
-    label:
-      language === 'es'
-        ? 'Cuidado Puerta a Puerta'
-        : language === 'fr'
-        ? 'Soins de Porte à Porte'
-        : 'Door-to-Door Care',
-    sub:
-      language === 'es'
-        ? 'Viaje. Cuidado. Recuperación.'
-        : language === 'fr'
-        ? 'Voyage. Soins. Récupération.'
-        : 'Travel. Care. Recover.',
+    icon: Briefcase,
+    title: 'Travel With Confidence',
+    sub: "From arrival to recovery, you're never alone.",
   },
+];
+
+const BADGES = [
+  { icon: Shield,    label: 'SAFE-T 4LIFE™',        sub: 'AI-Powered Safety' },
+  { icon: BadgeCheck,label: 'Verified Specialists',  sub: 'Licensed & Trusted' },
+  { icon: Plane,     label: 'Door-to-Door Care',     sub: 'Travel. Care. Recover.' },
 ];
 
 export default function Hero() {
@@ -69,107 +49,59 @@ export default function Hero() {
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
-  const testimonials = getTestimonials();
-  const badges = getBadges(language);
-  const signupRoles = [
-    {
-      label: language === 'es' ? 'Doctor' : language === 'fr' ? 'Médecin' : 'Doctor',
-      path: '/doctor-signup',
-      icon: BadgeCheck,
-    },
-    {
-      label:
-        language === 'es'
-          ? 'Agencia de Viajes'
-          : language === 'fr'
-          ? 'Agence de Voyage'
-          : 'Travel Agency',
-      path: '/partner-signup/travel-agency',
-      icon: Plane,
-    },
-    {
-      label:
-        language === 'es'
-          ? 'Servicio de Taxi'
-          : language === 'fr'
-          ? 'Service Taxi'
-          : 'Taxi Service',
-      path: '/partner-signup/taxi-service',
-      icon: Shield,
-    },
-    {
-      label:
-        language === 'es'
-          ? 'Acompañante'
-          : language === 'fr'
-          ? 'Accompagnateur'
-          : 'Companion',
-      path: '/companion-signup',
-      icon: User,
-    },
-  ];
-
   return (
-    <section className="relative overflow-hidden min-h-screen bg-[#070F0B]">
-      {/* Subtle dot-grid texture */}
-      <div
-        className="absolute inset-0 opacity-[0.025] pointer-events-none"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-      {/* Ambient glows */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent pointer-events-none" />
+    <section
+      style={{ background: '#0a0a0a', minHeight: '100vh' }}
+      className="relative overflow-hidden flex flex-col"
+    >
+      {/* Top bar */}
+      <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/10">
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-sm flex items-center justify-center" style={{ background: GOLD }}>
+            <span className="text-black font-bold text-sm">M</span>
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm leading-none">MORALES</p>
+            <p style={{ color: GOLD }} className="text-[9px] font-semibold tracking-widest leading-tight">
+              DENTAL & AESTHETIC<br />TRAVEL CONCIERGE
+            </p>
+          </div>
+        </div>
 
-      {/* Register / Login pill — frosted glass with backdrop blur */}
-      <div className="absolute right-4 top-5 z-50 flex items-center gap-2 rounded-full border border-white/25 bg-white/10 p-1.5 shadow-2xl backdrop-blur-xl sm:right-6 lg:right-10">
-        <Button
-          variant="outline"
-          onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
-          className="h-9 rounded-full border-white/60 bg-white/90 px-4 text-xs font-bold text-primary shadow-lg hover:bg-white sm:text-sm"
-        >
-          Register
-        </Button>
-        <Button
-          onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
-          className="h-9 rounded-full bg-accent px-4 text-xs font-bold text-accent-foreground shadow-lg hover:bg-accent/90 sm:text-sm"
-        >
-          Login
-        </Button>
-      </div>
-
-      {/* Mobile-first: Image section first for visual impact */}
-      <div className="relative w-full h-[55vh] lg:hidden">
-        <img
-          src={SENTINEL_IMAGE}
-          alt="Sentinel Care Journey"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '55% center' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/30 via-[#070F0B]/10 to-[#070F0B]" />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.72 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+        {/* Action buttons */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
+            className="hidden sm:flex h-9 rounded-full border-white/30 bg-transparent text-white text-xs font-semibold hover:bg-white/10"
           >
-            <SentinelOrbit />
-          </motion.div>
+            Register
+          </Button>
+          <Button
+            onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
+            className="h-9 rounded-full px-5 text-xs font-bold"
+            style={{ background: GOLD, color: '#0a0a0a' }}
+          >
+            Book a Consultation
+          </Button>
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="relative z-10 w-full lg:w-[54%] px-4 sm:px-6 lg:px-10 xl:px-16 lg:py-20">
-        <div className="w-full max-w-lg mx-auto lg:mx-0 rounded-[2rem] border border-white/10 p-5 sm:p-6 lg:p-8 backdrop-blur-md shadow-2xl lg:mt-20"
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+      {/* Main hero body */}
+      <div className="relative z-10 flex flex-col lg:flex-row flex-1">
+
+        {/* ── LEFT: Text content ── */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9 }}
+          className="w-full lg:w-[40%] flex flex-col justify-center px-6 sm:px-10 py-12 lg:py-16"
         >
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-5xl xl:text-6xl text-white leading-[1.05] mb-5 drop-shadow-md">
+          <h1
+            className="font-display text-4xl sm:text-5xl lg:text-5xl text-white leading-[1.05] mb-5"
+            style={{ letterSpacing: '-0.02em' }}
+          >
             {language === 'es'
               ? 'Tu cuidado seguro comienza aquí.'
               : language === 'fr'
@@ -177,7 +109,7 @@ export default function Hero() {
               : 'Your safe care journey starts here.'}
           </h1>
 
-          <p className="mb-5 leading-relaxed text-white/75 text-base sm:text-lg font-medium">
+          <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-4">
             {language === 'es'
               ? 'Especialistas verificados, coordinación de viaje y apoyo de recuperación en un solo plan claro y humano.'
               : language === 'fr'
@@ -185,7 +117,7 @@ export default function Hero() {
               : 'Verified specialists, travel coordination, and recovery support in one clear, human care plan.'}
           </p>
 
-          <p className="text-sm font-semibold text-accent italic mb-8 drop-shadow-sm">
+          <p className="text-base italic mb-8" style={{ color: GOLD }}>
             {language === 'es'
               ? '"Desde la consulta hasta la costa — tu seguridad viaja contigo."'
               : language === 'fr'
@@ -193,162 +125,112 @@ export default function Hero() {
               : '"From consultation to the coast — your safety travels with you."'}
           </p>
 
-          <SlotCounter className="mb-4" />
-
-          <div className="flex flex-wrap gap-3 mb-10">
-            <Link to="/booking">
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            <Link to="/consultation">
               <Button
                 size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 h-12 shadow-lg"
+                className="h-11 px-7 rounded-md font-semibold text-sm"
+                style={{ background: '#0d9488', color: '#fff' }}
               >
-                {language === 'es'
-                  ? 'Comienza Tu Viaje'
-                  : language === 'fr'
-                  ? 'Commencez Votre Voyage'
-                  : 'Begin Your Journey'}
+                {language === 'es' ? 'Comienza Tu Viaje →' : language === 'fr' ? 'Commencez Votre Voyage →' : 'Begin Your Journey →'}
               </Button>
             </Link>
             <Link to="/procedures">
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 px-8 font-semibold border-white/40 bg-white/5 text-white hover:bg-white hover:text-foreground"
+                className="h-11 px-7 rounded-md font-semibold text-sm border-white/30 bg-transparent text-white hover:bg-white/10"
               >
-                {language === 'es'
-                  ? 'Explorar Procedimientos'
-                  : language === 'fr'
-                  ? 'Explorer les Procédures'
-                  : 'Explore Procedures'}
+                {language === 'es' ? 'Explorar Procedimientos' : language === 'fr' ? 'Explorer les Procédures' : 'Explore Treatments'}
               </Button>
             </Link>
           </div>
 
-          {/* Trust Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            {badges.map(({ icon: Icon, label, sub }) => (
+          {/* Trust badges row */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            {BADGES.map(({ icon: Icon, label, sub }) => (
               <div
                 key={label}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
+                className="flex items-center gap-2 rounded-lg px-3 py-2"
+                style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.18)' }}
               >
-                <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white leading-tight">{label}</p>
-                  <p className="text-[11px] text-white/55 leading-tight mt-0.5">{sub}</p>
+                <Icon className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />
+                <div>
+                  <p className="text-white text-[11px] font-bold leading-none">{label}</p>
+                  <p className="text-white/45 text-[10px] mt-0.5">{sub}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-accent">
-              <Shield className="h-3.5 w-3.5" />
-              {language === 'es'
-                ? 'Únete a nuestra red'
-                : language === 'fr'
-                ? 'Rejoignez notre réseau'
-                : 'Join our network'}
-            </div>
-            <p className="mb-3 text-sm font-semibold text-white">
-              {language === 'es'
-                ? 'Regístrate como proveedor:'
-                : language === 'fr'
-                ? 'Inscrivez-vous comme partenaire :'
-                : 'Sign up as a provider:'}
-            </p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {signupRoles.map(({ label, path, icon: Icon }) => (
-                <Link
-                  key={label}
-                  to={path}
-                  className="group flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-primary transition-all hover:bg-accent hover:text-accent-foreground"
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {FEATURES.map(({ icon: Icon, title, sub }) => (
+              <div
+                key={title}
+                className="flex items-start gap-3 rounded-xl p-3"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(201,168,76,0.12)', border: `1px solid ${GOLD}30` }}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-xs font-bold leading-tight">{label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {testimonials.length > 0 && (
-            <div className="border-t border-white/10 pt-6 mt-4">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
-                {language === 'es'
-                  ? 'Qué Dicen Nuestros Clientes'
-                  : language === 'fr'
-                  ? 'Ce Que Disent Nos Clients'
-                  : 'What Our Clients Say'}
-              </p>
-              <div className="flex flex-col gap-3">
-                {testimonials.map((t) => (
-                  <div
-                    key={t.name}
-                    className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl p-3"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-primary">{t.name[0]}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs font-semibold text-white">{t.name}</span>
-                        <span className="text-[10px] text-white/40 flex items-center gap-1">
-                          <MapPin className="w-2.5 h-2.5" />
-                          {t.country}
-                        </span>
-                        <div className="flex ml-auto">
-                          {[...Array(t.rating)].map((_, i) => (
-                            <Star key={i} className="w-2.5 h-2.5 fill-accent text-accent" />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-white/50 italic leading-relaxed">
-                        "{t.quote}"
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  <Icon className="w-4 h-4" style={{ color: GOLD }} />
+                </div>
+                <div>
+                  <p className="text-white text-sm font-semibold leading-tight">{title}</p>
+                  <p className="text-white/50 text-xs mt-0.5 leading-relaxed">{sub}</p>
+                </div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </motion.div>
-        </div>
+
+        {/* ── CENTER / RIGHT: Globe ── */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, delay: 0.3 }}
+          className="w-full lg:w-[60%] relative flex items-center justify-center"
+          style={{ minHeight: 420 }}
+        >
+          {/* Ambient glow behind globe */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(ellipse at center, rgba(201,168,76,0.09) 0%, transparent 68%)',
+              pointerEvents: 'none',
+            }}
+          />
+          <div style={{ width: '100%', height: '100%', minHeight: 420, maxHeight: 680, position: 'relative' }}>
+            <GlobeVisualization />
+          </div>
+        </motion.div>
       </div>
 
-      {/* Desktop: SAFE-T4LIFE™ shield — center bridge */}
+      {/* Bottom strip */}
       <div
-        className="hidden lg:flex absolute"
-        style={{
-          left: '52%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 20,
-          pointerEvents: 'none',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className="relative z-10 px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-white/10"
+        style={{ background: 'rgba(0,0,0,0.4)' }}
       >
-        <SafeTLifeShield />
-      </div>
-
-      {/* Desktop: Side-by-side cinematic panel */}
-      <div className="hidden lg:block absolute right-0 top-0 w-[46%] h-full">
-        <img
-          src={SENTINEL_IMAGE}
-          alt="Sentinel Care Journey"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '55% center' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.72 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          >
-            <SentinelOrbit />
-          </motion.div>
+        <p className="text-white/30 text-xs">
+          More Than a Journey — <span className="text-white/55">It's Peace of Mind</span>
+        </p>
+        <p className="text-white/30 text-xs">
+          Real people. Real care. Real support — before, during, and after your trip.
+        </p>
+        <div className="flex items-center gap-2">
+          <div className="flex -space-x-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="w-7 h-7 rounded-full border-2 border-black bg-gradient-to-br from-amber-300 to-amber-600" />
+            ))}
+          </div>
+          <div>
+            <p className="text-white text-xs font-bold">4.9 ★★★★★</p>
+            <p className="text-white/40 text-[10px]">Based on 1,200+ journeys</p>
+          </div>
         </div>
       </div>
     </section>
