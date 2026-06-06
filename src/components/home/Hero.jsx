@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User, X } from 'lucide-react';
+import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User, X, Stethoscope, Car } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SlotCounter from './SlotCounter';
 import { translations } from '@/lib/translations';
@@ -694,6 +694,48 @@ export default function Hero() {
               <div className="flex items-baseline gap-2">
                 <span className="font-bold text-sm" style={{ color: GOLD }}>4.9 ★★★★★</span>
                 <span className="text-xs text-slate-400">Based on 1,200+ journeys</span>
+              </div>
+
+              {/* JOIN OUR NETWORK - Provider signup cards */}
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: GOLD }}>JOIN OUR NETWORK</p>
+                <div className="space-y-2">
+                  {/* Doctor */}
+                  <Link to="/doctor-signup" className="group flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-yellow-500/40 transition-all duration-200 cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:shadow-[0_0_10px_rgba(212,175,55,0.3)]" style={{ background: 'rgba(14,165,233,0.15)' }}>
+                      <Stethoscope className="w-4 h-4" style={{ color: '#0ea5e9' }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Doctor</p>
+                      <p className="text-[9px] text-slate-400">Join our specialist network</p>
+                    </div>
+                    <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
+                  </Link>
+
+                  {/* Travel Agency */}
+                  <Link to="/partner-signup/travel-agency" className="group flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-yellow-500/40 transition-all duration-200 cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:shadow-[0_0_10px_rgba(212,175,55,0.3)]" style={{ background: 'rgba(139,92,246,0.15)' }}>
+                      <Plane className="w-4 h-4" style={{ color: '#8b5cf6' }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Travel Agency</p>
+                      <p className="text-[9px] text-slate-400">Coordinate medical travel</p>
+                    </div>
+                    <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
+                  </Link>
+
+                  {/* Taxi Service */}
+                  <Link to="/partner-signup/taxi-service" className="group flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-yellow-500/40 transition-all duration-200 cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:shadow-[0_0_10px_rgba(212,175,55,0.3)]" style={{ background: 'rgba(34,197,94,0.15)' }}>
+                      <Car className="w-4 h-4" style={{ color: '#22c55e' }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Taxi Service</p>
+                      <p className="text-[9px] text-slate-400">Patient transportation</p>
+                    </div>
+                    <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>
