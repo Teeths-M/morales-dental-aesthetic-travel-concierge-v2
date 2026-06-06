@@ -603,6 +603,13 @@ export default function Hero() {
               <motion.div
                 key={title}
                 variants={{ hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0 } }}
+                whileHover={{
+                  scale: 1.02,
+                  y: -4,
+                  boxShadow: "0px 10px 30px rgba(212, 175, 55, 0.15)",
+                  borderColor: "rgba(212, 175, 55, 0.4)"
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 className={`rounded-2xl p-4 flex items-start gap-4 border border-white/[0.12]${i >= 2 ? ' hidden lg:flex' : ''}`}
                 style={{ background: 'rgba(18,20,34,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
               >
@@ -610,7 +617,15 @@ export default function Hero() {
                   <Icon className="w-5 h-5 text-slate-300" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white font-semibold text-sm">{title}</p>
+                  <motion.p
+                    className="font-semibold text-sm"
+                    style={{ color: '#FFFFFF' }}
+                    animate={{ color: '#FFFFFF' }}
+                    whileHover={{ color: '#D4AF37' }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {title}
+                  </motion.p>
                   <p className="text-slate-400 text-xs leading-relaxed mt-1">{body}</p>
                 </div>
               </motion.div>
