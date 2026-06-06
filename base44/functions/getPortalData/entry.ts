@@ -18,19 +18,28 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { consultation_id, partner_id, portal_type, token } = body;
+    const { token } = body;
 
-    // If a token is provided, verify its HMAC signature first
-    if (token) {
-      const verified = await verifyPortalToken(token);
-      if (!verified) {
-        return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
-      }
+    // SECURITY: Token is REQUIRED — no fallback to raw consultation_id/partner_id from body.
+    // The token must be HMAC-signed and contain role, partner_id, case/consultation_id, and expiry.
+    if (!token) {
+      return Response.json({ error: 'Portal token required' }, { status: 401 });
     }
 
-    if (!consultation_id || !partner_id) {
-      return Response.json({ error: 'consultation_id and partner_id required' }, { status: 400 });
+    const verified = await verifyPortalToken(token);
+    if (!verified) {
+      return Response.json({ error: 'Invalid or expired portal token' }, { status: 403 });
     }
+
+    // Extract identity from the verified token — never trust request body for these
+    const { role: tokenRole, partner_id: tokenPartnerId, consultation_id: tokenConsultationId, case_id: tokenCaseId } = verified;
+
+    if (!tokenPartnerId || (!tokenConsultationId && !tokenCaseId)) {
+      return Response.json({ error: 'Malformed portal token: missing required claims' }, { status: 403 });
+    }
+
+    const consultation_id = tokenConsultationId;
+    const partner_id = tokenPartnerId;
 
     // Verify this partner is authorised for this consultation via WorkflowEvent
     const workflows = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });

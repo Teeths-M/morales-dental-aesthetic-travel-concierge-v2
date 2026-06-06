@@ -34,6 +34,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'passport_token, access_reason, and requester_role are required' }, { status: 400 });
     }
 
+    if (!case_id) {
+      return Response.json({ error: 'case_id is required to bind passport access to a case' }, { status: 400 });
+    }
+
     // Verify vault exists and is active
     const vaults = await base44.asServiceRole.entities.PassportVault.filter({ passport_token, status: 'active' });
     if (!vaults.length) {
@@ -41,13 +45,68 @@ Deno.serve(async (req) => {
     }
     const vault = vaults[0];
 
+    const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
+
+    // SECURITY: Bind passport_token to case_id and verify requester is assigned to that case.
+    // Prevents any provider/vendor from accessing an unrelated patient's passport.
+    if (!isAdmin) {
+      let caseRecord;
+      try {
+        caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+      } catch (_) { /* not found */ }
+
+      if (!caseRecord) {
+        // Audit denied attempt
+        await base44.asServiceRole.entities.PassportAuditLog.create({
+          passport_token,
+          actor_id: user.id,
+          actor_role: user.role,
+          actor_name: user.full_name || '',
+          action: 'request_access_denied',
+          status: 'denied',
+          timestamp: new Date().toISOString(),
+          metadata: { reason: 'case_not_found', case_id }
+        });
+        return Response.json({ error: 'Case not found' }, { status: 404 });
+      }
+
+      // Verify the passport_token in the vault actually belongs to this case
+      // (consultation's passport_vault_token must match, or case must reference this vault)
+      const consultationId = caseRecord.consultation_id;
+      let tokenBound = false;
+      if (consultationId) {
+        try {
+          const consultation = await base44.asServiceRole.entities.Consultation.get(consultationId);
+          if (consultation && consultation.passport_vault_token === passport_token) {
+            tokenBound = true;
+          }
+        } catch (_) { /* consultation not found */ }
+      }
+      // Also accept if requester is the patient (case owner)
+      const isPatient = caseRecord.client_email === user.email;
+
+      if (!tokenBound && !isPatient) {
+        await base44.asServiceRole.entities.PassportAuditLog.create({
+          passport_token,
+          patient_id: vault.created_by_id,
+          patient_email: vault.patient_email,
+          actor_id: user.id,
+          actor_role: user.role,
+          actor_name: user.full_name || '',
+          action: 'request_access_denied',
+          status: 'denied',
+          timestamp: new Date().toISOString(),
+          metadata: { reason: 'passport_not_bound_to_case', case_id }
+        });
+        return Response.json({ error: 'Access denied: passport not associated with this case' }, { status: 403 });
+      }
+    }
+
     const access_level = ACCESS_LEVEL_BY_ROLE[requester_role] || 'redacted_metadata';
     const hours = duration_hours || DEFAULT_HOURS_BY_ROLE[requester_role] || 24;
     const expires_at = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
     const grant_token = await generateGrantToken();
 
-    // Auto-approve for admin, or if requester IS the patient
-    const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
     const auto_approve = isAdmin;
 
     const grant = await base44.asServiceRole.entities.PassportAccessGrant.create({

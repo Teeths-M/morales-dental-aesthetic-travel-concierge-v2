@@ -9,10 +9,10 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { case_id, client_email, client_name, original_amount } = await req.json();
+    const { case_id, client_name, original_amount, proposal_token } = await req.json();
 
-    if (!client_email) {
-      return Response.json({ error: 'client_email required' }, { status: 400 });
+    if (!case_id) {
+      return Response.json({ error: 'case_id required' }, { status: 400 });
     }
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
@@ -20,17 +20,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Payment system not configured' }, { status: 500 });
     }
 
-    // Authorization: caller must be the case owner or admin
-    if (case_id) {
-      const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
-      if (caseRecord) {
-        const isAdmin = ['admin', 'platform_admin', 'coordinator'].includes(user.role);
-        const isOwner = caseRecord.client_email === user.email;
-        if (!isAdmin && !isOwner) {
-          return Response.json({ error: 'Forbidden: not authorized for this case' }, { status: 403 });
-        }
-      }
+    // Fetch case first — required for ownership check
+    let caseRecord;
+    try {
+      caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+    } catch (_) { /* not found */ }
+
+    // SECURITY: Return identical 404 for both not-found and unauthorized to prevent enumeration
+    if (!caseRecord) {
+      return Response.json({ error: 'Case not found' }, { status: 404 });
     }
+
+    const isAdmin = ['admin', 'platform_admin', 'coordinator'].includes(user.role);
+    const isOwner = caseRecord.client_email === user.email;
+    const tokenMatch = proposal_token && caseRecord.proposal_token &&
+                       proposal_token === caseRecord.proposal_token;
+
+    if (!isAdmin && !isOwner && !tokenMatch) {
+      return Response.json({ error: 'Case not found' }, { status: 404 });
+    }
+
+    // Derive client_email from the case record — never trust caller-supplied value
+    const client_email = caseRecord.client_email;
 
     const stripe = new Stripe(stripeKey);
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
