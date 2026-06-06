@@ -237,7 +237,16 @@ export default function VisaWizard({ onResult }) {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3"
                   >
-                    <span className="text-2xl">{passport.flag}</span>
+                    {passport.code === 'OTHER' ? (
+                      <span className="text-2xl">🌍</span>
+                    ) : (
+                      <img
+                        src={`https://flagcdn.com/w40/${passport.code.toLowerCase()}.png`}
+                        width="32"
+                        alt={passport.name}
+                        className="rounded-sm"
+                      />
+                    )}
                     <div className="flex-1">
                        <p className="font-semibold text-slate-800 text-sm">{passport.name}</p>
                        <p className="text-xs text-emerald-600 font-medium">
@@ -258,7 +267,17 @@ export default function VisaWizard({ onResult }) {
                           : 'border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-300 text-slate-700'
                       }`}
                     >
-                      <span className="text-base">{c.flag}</span>
+                      {c.code === 'OTHER' ? (
+                        <span className="text-base">🌍</span>
+                      ) : (
+                        <img
+                          src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                          srcSet={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png 2x`}
+                          width="20"
+                          alt={c.name}
+                          className="rounded-sm flex-shrink-0"
+                        />
+                      )}
                       <span className="truncate">{c.name}</span>
                     </button>
                   ))}
