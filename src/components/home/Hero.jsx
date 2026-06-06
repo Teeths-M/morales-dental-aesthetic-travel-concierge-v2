@@ -286,11 +286,10 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
         <motion.div
-          className="relative z-10 pointer-events-none"
           initial={{ opacity: 0, scale: 0.72 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          style={{ width: 550, height: 550 }}
+          style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '45%', width: 550, height: 550, zIndex: 10, pointerEvents: 'none' }}
         >
           <SentinelOrbit size={550} />
         </motion.div>
