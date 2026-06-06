@@ -448,8 +448,8 @@ export default function Hero() {
             style={{ background: 'rgba(255,255,255,0.05)' }}
           >
             {/* Headline */}
-            <h1 className="font-bold text-white leading-[1.15] mb-3"
-              style={{ fontSize: 'clamp(1.8rem, 2.8vw, 2.5rem)' }}>
+            <h1 className="font-bold leading-[1.15] mb-3"
+              style={{ fontSize: 'clamp(1.8rem, 2.8vw, 2.5rem)', color: GOLD }}>
               {language === 'es' ? 'Tu cuidado seguro comienza aquí.'
                : language === 'fr' ? 'Vos soins sûrs commencent ici.'
                : 'Your safe care journey starts here.'}
@@ -545,7 +545,7 @@ export default function Hero() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-xs font-semibold text-white">Care Concierge</p>
+                  <p className="text-xs font-semibold" style={{ color: GOLD }}>Care Concierge</p>
                   <span className="text-[9px] font-medium text-green-400">● Online</span>
                 </div>
                 <p className="text-[10px] text-slate-300 leading-snug">
@@ -576,13 +576,13 @@ export default function Hero() {
               style={{ background: 'rgba(13,26,46,0.92)', borderColor: `${shieldState.shieldColor}55` }}
             >
               <div className="flex items-center gap-3 mb-2">
-                <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: shieldState.titleColor }} />
-                <p className="font-bold text-base" style={{ color: shieldState.titleColor }}>{shieldState.title}</p>
+                <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: GOLD }} />
+                <p className="font-bold text-base" style={{ color: GOLD }}>{shieldState.title}</p>
               </div>
-              <p className="text-slate-300 text-sm mb-3">Your care plan is verified and secure.</p>
+              <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.7)' }}>Your care plan is verified and secure.</p>
               <div className="border-t border-white/10 pt-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: shieldState.dotColor }} />
-                <span className="text-xs text-slate-400">Scan complete • All systems safe</span>
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Scan complete • All systems safe</span>
               </div>
               <div className="flex items-center justify-center gap-2 mt-3">
                 <span className="rounded-full w-3 h-3" style={{ background: shieldState.dotColor }} />

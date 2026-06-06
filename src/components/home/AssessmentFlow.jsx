@@ -44,7 +44,7 @@ export default function AssessmentFlow() {
   return (
     <div className="mb-16" ref={ref}>
       <div className="text-center mb-10">
-        <p className="text-xs font-bold text-white/40 uppercase tracking-[0.25em]">The Assessment Flow</p>
+        <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: 'hsl(30,35%,60%)' }}>The Assessment Flow</p>
       </div>
 
       <div className="relative">
@@ -161,13 +161,13 @@ export default function AssessmentFlow() {
                 </motion.div>
                 <motion.p
                   className="text-xs font-bold transition-colors duration-500"
-                  animate={{ color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)' }}
+                  animate={{ color: isActive ? 'hsl(30,35%,65%)' : 'hsl(30,35%,35%)' }}
                 >
                   {label}
                 </motion.p>
                 <motion.p
                   className="text-[11px] mt-0.5 transition-colors duration-500"
-                  animate={{ color: isActive ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)' }}
+                  animate={{ color: isActive ? 'hsl(30,35%,55%)' : 'hsl(30,35%,25%)' }}
                 >
                   {detail}
                 </motion.p>
