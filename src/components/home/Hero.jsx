@@ -41,8 +41,7 @@ const COUNTRIES = [
   { name: 'BRAZIL',            cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start', flag: '🇧🇷', city: 'São Paulo',         treatments: ['Body Contouring', 'Aesthetic Surgery'] },
   { name: 'COSTA RICA',        cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end',   flag: '🇨🇷', city: 'San José',          treatments: ['Full Mouth Restoration', 'Crowns'] },
   { name: 'MEXICO',            cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end',   flag: '🇲🇽', city: 'Cancún',            treatments: ['Dental Implants', 'Veneers'] },
-  { name: 'TRINIDAD & TOBAGO', cx: 310, cy: 282, lx: 318, ly: 273, anchor: 'start', flag: '🇹🇹', city: 'Port of Spain',     treatments: ['Cosmetic Surgery', 'Dental Care'] },
-  { name: 'JAMAICA',           cx: 192, cy: 252, lx: 184, ly: 243, anchor: 'end',   flag: '🇯🇲', city: 'Kingston',          treatments: ['Wellness Retreats', 'Aesthetic Treatments'] },
+  { name: 'VENEZUELA',          cx: 282, cy: 268, lx: 290, ly: 259, anchor: 'start', flag: '🇻🇪', city: 'Caracas',           treatments: ['Cosmetic Surgery', 'Dental Care'] },
   { name: 'DOMINICAN REP.',    cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start', flag: '🇩🇴', city: 'Santo Domingo',     treatments: ['Plastic Surgery', 'Dental Implants'] },
 ];
 
