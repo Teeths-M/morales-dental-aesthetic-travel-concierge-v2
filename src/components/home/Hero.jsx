@@ -43,7 +43,10 @@ const COUNTRIES = [
   { name: 'MEXICO',      cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end'   },
 ];
 
-function SafeTGlobe() {
+function SafeTGlobe({ shieldState }) {
+  const sColor = shieldState?.shieldColor || GOLD;
+  const sGlow  = shieldState?.glowColor  || 'rgba(212,168,67,0.45)';
+  const sRing  = shieldState?.ringColor  || 'rgba(212,168,67,0.2)';
   return (
     <div className="relative w-full" style={{ maxWidth: 480, margin: '0 auto' }}>
       <svg viewBox="0 0 500 500" width="100%" style={{ overflow: 'visible' }}>
@@ -63,8 +66,8 @@ function SafeTGlobe() {
             </feMerge>
           </filter>
           <radialGradient id="shieldAura" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#d4a843" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#d4a843" stopOpacity="0" />
+            <stop offset="0%" stopColor={sColor} stopOpacity="0.38" />
+            <stop offset="100%" stopColor={sColor} stopOpacity="0" />
           </radialGradient>
           <filter id="dotGlow" x="-120%" y="-120%" width="340%" height="340%">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -74,9 +77,9 @@ function SafeTGlobe() {
             </feMerge>
           </filter>
           <linearGradient id="shieldGold" x1="15%" y1="0%" x2="85%" y2="100%">
-            <stop offset="0%" stopColor="#f0c84a" />
-            <stop offset="60%" stopColor="#d4a843" />
-            <stop offset="100%" stopColor="#9a7020" />
+            <stop offset="0%" stopColor={sColor} stopOpacity="0.95" />
+            <stop offset="60%" stopColor={sColor} stopOpacity="0.8" />
+            <stop offset="100%" stopColor={sColor} stopOpacity="0.55" />
           </linearGradient>
           <style>{`
             @keyframes globeSpin {
@@ -232,9 +235,50 @@ function SafeTGlobe() {
   );
 }
 
+const SHIELD_STATES = [
+  {
+    key: 'green',
+    shieldColor: '#22c55e',
+    glowColor: 'rgba(34,197,94,0.45)',
+    ringColor: 'rgba(34,197,94,0.2)',
+    title: "YOU'RE PROTECTED",
+    titleColor: '#22c55e',
+    subtext: 'Your care journey appears compatible.',
+    dotColor: '#22c55e',
+  },
+  {
+    key: 'yellow',
+    shieldColor: '#d4a843',
+    glowColor: 'rgba(212,168,67,0.45)',
+    ringColor: 'rgba(212,168,67,0.2)',
+    title: 'ENHANCED REVIEW',
+    titleColor: '#d4a843',
+    subtext: 'Recovery compatibility may require provider review.',
+    dotColor: '#d4a843',
+  },
+  {
+    key: 'red',
+    shieldColor: '#f87171',
+    glowColor: 'rgba(248,113,113,0.4)',
+    ringColor: 'rgba(248,113,113,0.18)',
+    title: 'ATTENTION REQUIRED',
+    titleColor: '#f87171',
+    subtext: 'Please consult with our care team before proceeding.',
+    dotColor: '#f87171',
+  },
+];
+
 export default function Hero() {
   const [language, setLanguage] = useState('en');
+  const [shieldStateIdx, setShieldStateIdx] = useState(0);
   const { navigateToLogin } = useAuth();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShieldStateIdx(i => (i + 1) % SHIELD_STATES.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -425,31 +469,40 @@ export default function Hero() {
             className="flex flex-col items-center"
           >
             <div className="w-full max-w-sm lg:max-w-none mx-auto">
-              <SafeTGlobe />
+              <SafeTGlobe shieldState={SHIELD_STATES[shieldStateIdx]} />
             </div>
 
-            {/* YOU'RE PROTECTED card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2, duration: 0.6 }}
-              className="w-full max-w-xs mt-3 mx-auto rounded-2xl p-5 border"
-              style={{ background: 'rgba(13,26,46,0.92)', borderColor: 'rgba(212,168,67,0.3)' }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                <p className="font-bold text-lg" style={{ color: GOLD }}>YOU'RE PROTECTED</p>
-              </div>
-              <p className="text-slate-300 text-sm mb-3">Your care plan is verified and secure.</p>
-              <div className="border-t border-white/10 pt-3 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
-                <span className="text-xs text-slate-400">Scan complete • All systems safe</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 mt-3">
-                <span className="w-3 h-3 rounded-full" style={{ background: GOLD }} />
-                {[0, 1, 2, 3].map(i => <span key={i} className="w-2 h-2 rounded-full bg-slate-600" />)}
-              </div>
-            </motion.div>
+            {/* YOU'RE PROTECTED card — cycles with shield state */}
+            {(() => {
+              const s = SHIELD_STATES[shieldStateIdx];
+              return (
+                <motion.div
+                  key={s.key}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1 }}
+                  className="w-full max-w-xs mt-3 mx-auto rounded-2xl p-5 border"
+                  style={{ background: 'rgba(13,26,46,0.92)', borderColor: `${s.shieldColor}55` }}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: s.titleColor }} />
+                    <p className="font-bold text-base" style={{ color: s.titleColor }}>{s.title}</p>
+                  </div>
+                  <p className="text-slate-300 text-sm mb-3">{s.subtext}</p>
+                  <div className="border-t border-white/10 pt-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: s.dotColor }} />
+                    <span className="text-xs text-slate-400">Scan complete • All systems safe</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    {SHIELD_STATES.map((st, i) => (
+                      <span key={i} className="rounded-full transition-all duration-500"
+                        style={{ width: i === shieldStateIdx ? 12 : 8, height: i === shieldStateIdx ? 12 : 8, background: i === shieldStateIdx ? s.shieldColor : '#334155' }} />
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })()}
           </motion.div>
 
           {/* ═══ COLUMN 3 — RIGHT FEATURES ═══ */}
