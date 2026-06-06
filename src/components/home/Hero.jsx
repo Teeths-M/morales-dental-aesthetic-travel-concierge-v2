@@ -517,37 +517,14 @@ export default function Hero() {
                   const Icon = step.icon;
                   return (
                     <React.Fragment key={step.label}>
-                      <motion.div
-                        className="flex flex-col items-center cursor-pointer relative z-10"
-                        style={{ minWidth: 0, flex: '0 0 auto' }}
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        <motion.div
-                          className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1"
-                          whileHover={{
-                            background: 'rgba(212,168,67,0.25)',
-                            boxShadow: `0 0 16px ${GOLD}66`,
-                          }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <motion.Icon
-                            className="w-3 h-3"
-                            animate={{ color: '#94a3b8' }}
-                            whileHover={{ color: GOLD }}
-                            transition={{ duration: 0.2 }}
-                          />
-                        </motion.div>
-                        <motion.span
-                          className="text-[8px] text-slate-400 text-center leading-tight"
-                          style={{ maxWidth: 42 }}
-                          whileHover={{ color: GOLD }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          {step.label}
-                        </motion.span>
-                      </motion.div>
+                      <div className="flex flex-col items-center" style={{ minWidth: 0, flex: '0 0 auto' }}>
+                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1">
+                          <Icon className="w-3 h-3 text-slate-300" />
+                        </div>
+                        <span className="text-[8px] text-slate-400 text-center leading-tight" style={{ maxWidth: 42 }}>{step.label}</span>
+                      </div>
                       {i < journeySteps.length - 1 && (
-                        <span className="text-slate-500 text-[10px] flex-shrink-0 pb-4 mx-0.5 relative z-10">›</span>
+                        <span className="text-slate-500 text-[10px] flex-shrink-0 pb-4 mx-0.5">›</span>
                       )}
                     </React.Fragment>
                   );
