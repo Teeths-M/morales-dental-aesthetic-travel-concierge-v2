@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import SlotCounter from './SlotCounter';
 import { translations } from '@/lib/translations';
 import { useAuth } from '@/lib/AuthContext';
@@ -371,6 +371,7 @@ const SHIELD_STATES = [
 
 export default function Hero() {
   const [language, setLanguage] = useState('en');
+  const [activeCard, setActiveCard] = useState(null);
   const { navigateToLogin } = useAuth();
 
   // Fixed on green state only
@@ -387,10 +388,14 @@ export default function Hero() {
   const badges = getBadges(language);
 
   const featureCards = [
-    { icon: Users,     title: 'Human Care',            body: 'Real people, real support, when you need it most.' },
-    { icon: Shield,    title: 'Safe Connections',       body: 'Vetted specialists and trusted global partners.' },
-    { icon: Heart,     title: 'Better Outcomes',        body: 'Care designed around your safety and recovery.' },
-    { icon: Briefcase, title: 'Travel With Confidence', body: "From arrival to recovery, you're never alone." },
+    { icon: Users,     title: 'Human Care',            body: 'Real people, real support, when you need it most.',
+      details: 'Our dedicated care coordinators are available 24/7 via WhatsApp, phone, or email. You\'ll have a named human contact assigned to your journey — not a chatbot — who knows your case from day one through recovery.' },
+    { icon: Shield,    title: 'Safe Connections',       body: 'Vetted specialists and trusted global partners.',
+      details: 'Every doctor, clinic, and travel partner in our network passes a multi-step verification: license validation, credential cross-referencing, AI document analysis, and ongoing performance monitoring. We never assign unverified providers.' },
+    { icon: Heart,     title: 'Better Outcomes',        body: 'Care designed around your safety and recovery.',
+      details: 'Our SAFE-T 4LIFE™ system analyzes 40+ health markers before your trip. Post-procedure, you receive a 7-day monitored recovery protocol, dietary planning, and follow-up check-ins to ensure a smooth and safe recovery.' },
+    { icon: Briefcase, title: 'Travel With Confidence', body: "From arrival to recovery, you're never alone.",
+      details: 'We coordinate every logistics detail: airport pickup, hotel booking, clinic transfers, local transport, and return travel. Our concierge handles it all so you can focus entirely on your health and healing.' },
   ];
 
   const journeySteps = [
@@ -610,13 +615,14 @@ export default function Hero() {
                   borderColor: "rgba(212, 175, 55, 0.4)"
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className={`rounded-2xl p-4 flex items-start gap-4 border border-white/[0.12]${i >= 2 ? ' hidden lg:flex' : ''}`}
+                onClick={() => setActiveCard(featureCards[i])}
+                className={`rounded-2xl p-4 flex items-start gap-4 border border-white/[0.12] cursor-pointer${i >= 2 ? ' hidden lg:flex' : ''}`}
                 style={{ background: 'rgba(18,20,34,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
               >
                 <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                   <Icon className="w-5 h-5 text-slate-300" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <motion.p
                     className="font-semibold text-sm"
                     style={{ color: '#D4AF37' }}
@@ -628,8 +634,46 @@ export default function Hero() {
                   </motion.p>
                   <p className="text-slate-400 text-xs leading-relaxed mt-1">{body}</p>
                 </div>
+                <span className="text-white/30 text-xs flex-shrink-0 mt-0.5">›</span>
               </motion.div>
             ))}
+
+            {/* Info modal */}
+            <AnimatePresence>
+              {activeCard && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+                  style={{ background: 'rgba(0,0,0,0.7)' }}
+                  onClick={() => setActiveCard(null)}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: 16 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: 16 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded-2xl p-6 border max-w-sm w-full"
+                    style={{ background: 'rgba(10,15,30,0.97)', borderColor: 'rgba(212,168,67,0.35)' }}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                          <activeCard.icon className="w-5 h-5 text-slate-300" />
+                        </div>
+                        <p className="font-bold text-sm" style={{ color: GOLD }}>{activeCard.title}</p>
+                      </div>
+                      <button onClick={() => setActiveCard(null)} className="text-slate-500 hover:text-white transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-slate-300 text-sm leading-relaxed">{activeCard.details}</p>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Social proof */}
             <div className="hidden lg:block pt-4">
