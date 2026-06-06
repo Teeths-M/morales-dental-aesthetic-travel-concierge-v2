@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, Award, MapPin, DollarSign, CheckCircle, ArrowRight, Upload } from 'lucide-react';
+import { Users, BookOpen, Award, MapPin, DollarSign, CheckCircle, ArrowRight, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CompanionSignup() {
@@ -18,7 +18,8 @@ export default function CompanionSignup() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: '',
+    agency_name: '',
+    contact_person: '',
     email: '',
     phone: '',
     country: '',
@@ -66,7 +67,11 @@ export default function CompanionSignup() {
         sign_up_completed_at: new Date().toISOString()
       };
 
-      const companion = await base44.entities.Companion.create(companionData);
+      const companion = await base44.entities.Companion.create({
+        ...companionData,
+        full_name: companionData.agency_name, // Store agency name as full_name for compatibility
+        is_agency: true,
+      });
 
       // Initiate identity verification
       try {
@@ -80,11 +85,11 @@ export default function CompanionSignup() {
         console.error('Failed to initiate verification:', error);
       }
 
-      toast.success('Companion profile created! Verification process initiated.');
+      toast.success('Companion agency profile created! Verification process initiated.');
       navigate('/companion-dashboard');
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error('Failed to create companion profile. Please try again.');
+      toast.error('Failed to create companion agency profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,55 +100,67 @@ export default function CompanionSignup() {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name *</Label>
+                <Label htmlFor="agency_name">Agency Name *</Label>
                 <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => handleInputChange('full_name', e.target.value)}
-                  placeholder="John Doe"
+                  id="agency_name"
+                  value={formData.agency_name}
+                  onChange={(e) => handleInputChange('agency_name', e.target.value)}
+                  placeholder="e.g., Care Companions International"
                 />
+                <p className="text-xs text-muted-foreground">Must be a registered agency, not individuals</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact_person">Contact Person *</Label>
+                  <Input
+                    id="contact_person"
+                    value={formData.contact_person}
+                    onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                    placeholder="Agency representative"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Agency Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="agency@example.com"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Agency Phone *</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country *</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="United States"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="city">City</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="john@example.com"
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="New York"
                 />
               </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone *</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">Country *</Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  placeholder="United States"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
-                placeholder="New York"
-              />
             </div>
           </div>
         );
@@ -370,13 +387,13 @@ export default function CompanionSignup() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 border border-primary/40 mb-4">
-            <User className="w-8 h-8 text-primary" />
+            <Users className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-4xl font-display font-bold text-foreground mb-2">
-            Become a Companion
+            Become a Companion Agency
           </h1>
           <p className="text-lg text-muted-foreground">
-            Guide patients through their medical travel journey
+            Registered agencies only — provide reliable companion services for medical travelers
           </p>
         </div>
 
@@ -399,7 +416,7 @@ export default function CompanionSignup() {
             ))}
           </div>
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>Personal Info</span>
+            <span>Agency Info</span>
             <span>Languages</span>
             <span>Qualifications</span>
             <span>Services</span>
@@ -411,7 +428,7 @@ export default function CompanionSignup() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {step === 1 && 'Personal Information'}
+              {step === 1 && 'Agency Information'}
               {step === 2 && 'Languages & Experience'}
               {step === 3 && 'Certifications & Bio'}
               {step === 4 && 'Services & Availability'}
@@ -443,7 +460,7 @@ export default function CompanionSignup() {
               ) : (
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={isSubmitting || !formData.full_name || !formData.email || !formData.phone || !formData.country || formData.languages.length === 0}
+                  disabled={isSubmitting || !formData.agency_name || !formData.contact_person || !formData.email || !formData.phone || !formData.country || formData.languages.length === 0}
                 >
                   {isSubmitting ? 'Creating Profile...' : 'Complete Signup'}
                 </Button>

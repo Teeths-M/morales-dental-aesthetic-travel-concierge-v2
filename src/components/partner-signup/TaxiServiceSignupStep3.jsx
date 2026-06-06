@@ -59,7 +59,9 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
     setIsSubmitting(true);
     try {
       const taxiData = {
-        company_name: formData.company_name,
+        agency_name: formData.agency_name,
+        company_name: formData.agency_name,
+        contact_person: formData.driver_name,
         driver_name: formData.driver_name,
         email: formData.email,
         phone: formData.phone,
@@ -78,6 +80,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
         language_preference: language,
         license_verified: licenseConfirmed,
         insurance_verified: insuranceConfirmed,
+        is_agency: true,
         status: 'pending_verification',
         sign_up_completed_at: new Date().toISOString()
       };

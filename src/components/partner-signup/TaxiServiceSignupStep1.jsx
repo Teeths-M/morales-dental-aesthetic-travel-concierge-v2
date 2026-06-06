@@ -91,7 +91,9 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
   const handleNext = () => {
     setFormData(prev => ({
       ...prev,
-      company_name: formData.company_name,
+      agency_name: formData.agency_name,
+      company_name: formData.agency_name,
+      contact_person: formData.driver_name,
       driver_name: formData.driver_name,
       email: formData.email,
       phone: formData.phone,
@@ -104,34 +106,37 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
     onNext();
   };
 
-  const canContinue = formData.email && formData.phone && formData.operating_country && formData.operating_city && vehicles.length > 0 && assistance.length > 0;
+  const canContinue = formData.agency_name && formData.driver_name && formData.email && formData.phone && formData.operating_country && formData.operating_city && vehicles.length > 0 && assistance.length > 0;
 
   return (
     <div className="space-y-8">
       <div>
         <h2 className="text-3xl font-display font-bold text-foreground mb-2">
-          {language === 'es' ? 'Información Básica' : language === 'fr' ? 'Informations de Base' : 'Basic Information'}
+          {language === 'es' ? 'Información de la Agencia' : language === 'fr' ? 'Informations de l\'Agence' : 'Agency Information'}
         </h2>
         <p className="text-muted-foreground text-sm">
-          {language === 'es' ? 'Cuéntanos sobre ti y tu servicio.' : language === 'fr' ? 'Parlez-nous de vous et de votre service.' : 'Tell us about you and your service.'}
+          {language === 'es' ? 'Solo agencias registradas. Cuéntanos sobre tu empresa de transporte.' : language === 'fr' ? 'Agences enregistrées uniquement. Parlez-nous de votre entreprise de transport.' : 'Registered agencies only. Tell us about your transportation company.'}
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-foreground block mb-2">🚕 {language === 'es' ? 'Nombre de Empresa/Conductor' : language === 'fr' ? 'Nom de l\'Entreprise/Conducteur' : 'Company/Driver Name'}</label>
+          <label className="text-sm font-medium text-foreground block mb-2">🏢 {language === 'es' ? 'Nombre de la Agencia' : language === 'fr' ? 'Nom de l\'Agence' : 'Agency Name'} *</label>
           <Input
-            placeholder={language === 'es' ? 'Ej: Carlos Taxis' : 'e.g., Carlos Taxis'}
-            value={formData.company_name || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
+            placeholder={language === 'es' ? 'Ej: Servicios de Transporte XYZ' : 'e.g., XYZ Transportation Services'}
+            value={formData.agency_name || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, agency_name: e.target.value }))}
             className="h-12"
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            {language === 'es' ? 'Debe ser una empresa registrada, no conductores individuales.' : language === 'fr' ? 'Doit être une entreprise enregistrée, pas des conducteurs individuels.' : 'Must be a registered company, not individual drivers.'}
+          </p>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-foreground block mb-2">👤 {language === 'es' ? 'Nombre del Conductor' : language === 'fr' ? 'Nom du Conducteur' : 'Driver Name'}</label>
+          <label className="text-sm font-medium text-foreground block mb-2">👤 {language === 'es' ? 'Persona de Contacto' : language === 'fr' ? 'Personne de Contact' : 'Contact Person'} *</label>
           <Input
-            placeholder={language === 'es' ? 'Tu nombre completo' : 'Your full name'}
+            placeholder={language === 'es' ? 'Nombre del representante de la agencia' : 'Agency representative name'}
             value={formData.driver_name || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, driver_name: e.target.value }))}
             className="h-12"
@@ -139,10 +144,10 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
         </div>
 
         <div>
-          <label className="text-sm font-medium text-foreground block mb-2">📧 {language === 'es' ? 'Correo Electrónico' : language === 'fr' ? 'Email' : 'Email'}</label>
+          <label className="text-sm font-medium text-foreground block mb-2">📧 {language === 'es' ? 'Correo Electrónico de la Agencia' : language === 'fr' ? 'Email de l\'Agence' : 'Agency Email'} *</label>
           <Input
             type="email"
-            placeholder="your@email.com"
+            placeholder="dispatch@agency.com"
             value={formData.email || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             className="h-12"

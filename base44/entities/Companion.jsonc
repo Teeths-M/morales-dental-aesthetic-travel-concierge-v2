@@ -2,9 +2,17 @@
   "name": "Companion",
   "type": "object",
   "properties": {
+    "agency_name": {
+      "type": "string",
+      "description": "Name of the companion agency (required for agency signup)"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person for the agency"
+    },
     "full_name": {
       "type": "string",
-      "description": "Companion's full name"
+      "description": "Companion's full name (or agency name for agencies)"
     },
     "email": {
       "type": "string",
@@ -177,13 +185,19 @@
       "type": "boolean",
       "default": true
     },
+    "is_agency": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this is an agency, false if individual companion"
+    },
     "sign_up_completed_at": {
       "type": "string",
       "description": "ISO timestamp"
     }
   },
   "required": [
-    "full_name",
+    "agency_name",
+    "contact_person",
     "email",
     "phone",
     "country",

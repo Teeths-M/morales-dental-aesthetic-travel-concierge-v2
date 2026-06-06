@@ -73,6 +73,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
         payout_account: formData.payout_account,
         business_license_url: formData.business_license_url || '',
         language_preference: language,
+        is_agency: true,
         status: 'pending_verification',
         sign_up_completed_at: new Date().toISOString()
       };
