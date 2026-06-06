@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User } from 'lucide-react';
@@ -34,25 +34,79 @@ function getBadges(language) {
 }
 
 const COUNTRIES = [
-  { name: 'TURKEY',             cx: 155, cy: 105, lx: 148, ly: 96,  anchor: 'end'   },
-  { name: 'SOUTH KOREA',        cx: 362, cy: 105, lx: 370, ly: 96,  anchor: 'start' },
-  { name: 'THAILAND',           cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start' },
-  { name: 'COLOMBIA',           cx: 375, cy: 242, lx: 383, ly: 234, anchor: 'start' },
-  { name: 'BRAZIL',             cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start' },
-  { name: 'COSTA RICA',         cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end'   },
-  { name: 'MEXICO',             cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end'   },
-  { name: 'TRINIDAD & TOBAGO',  cx: 310, cy: 282, lx: 318, ly: 273, anchor: 'start' },
-  { name: 'JAMAICA',            cx: 192, cy: 252, lx: 184, ly: 243, anchor: 'end'   },
-  { name: 'DOMINICAN REP.',     cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start' },
+  { name: 'TURKEY',            cx: 155, cy: 105, lx: 148, ly: 96,  anchor: 'end',   flag: '🇹🇷', city: 'Istanbul',          treatments: ['Hair Transplant', 'Dental Veneers'] },
+  { name: 'SOUTH KOREA',       cx: 362, cy: 105, lx: 370, ly: 96,  anchor: 'start', flag: '🇰🇷', city: 'Seoul',             treatments: ['Facial Aesthetics', 'Skin Treatments'] },
+  { name: 'THAILAND',          cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start', flag: '🇹🇭', city: 'Bangkok',           treatments: ['Orthopedic Surgery', 'Recovery Retreats'] },
+  { name: 'COLOMBIA',          cx: 375, cy: 242, lx: 383, ly: 234, anchor: 'start', flag: '🇨🇴', city: 'Medellín',          treatments: ['Rhinoplasty', 'Liposuction'] },
+  { name: 'BRAZIL',            cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start', flag: '🇧🇷', city: 'São Paulo',         treatments: ['Body Contouring', 'Aesthetic Surgery'] },
+  { name: 'COSTA RICA',        cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end',   flag: '🇨🇷', city: 'San José',          treatments: ['Full Mouth Restoration', 'Crowns'] },
+  { name: 'MEXICO',            cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end',   flag: '🇲🇽', city: 'Cancún',            treatments: ['Dental Implants', 'Veneers'] },
+  { name: 'TRINIDAD & TOBAGO', cx: 310, cy: 282, lx: 318, ly: 273, anchor: 'start', flag: '🇹🇹', city: 'Port of Spain',     treatments: ['Cosmetic Surgery', 'Dental Care'] },
+  { name: 'JAMAICA',           cx: 192, cy: 252, lx: 184, ly: 243, anchor: 'end',   flag: '🇯🇲', city: 'Kingston',          treatments: ['Wellness Retreats', 'Aesthetic Treatments'] },
+  { name: 'DOMINICAN REP.',    cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start', flag: '🇩🇴', city: 'Santo Domingo',     treatments: ['Plastic Surgery', 'Dental Implants'] },
 ];
 
 function SafeTGlobe({ shieldState }) {
   const sColor = shieldState?.shieldColor || GOLD;
-  const sGlow  = shieldState?.glowColor  || 'rgba(212,168,67,0.45)';
-  const sRing  = shieldState?.ringColor  || 'rgba(212,168,67,0.2)';
+  const [hoveredCountry, setHoveredCountry] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const svgRef = React.useRef(null);
+
+  const handleDotEnter = (c, e) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = rect.width / 500;
+    const scaleY = rect.height / 500;
+    setTooltipPos({ x: c.cx * scaleX, y: c.cy * scaleY });
+    setHoveredCountry(c);
+  };
+
   return (
     <div className="relative w-full" style={{ maxWidth: 480, margin: '0 auto' }}>
-      <svg viewBox="0 0 500 500" width="100%" style={{ overflow: 'visible' }}>
+      {/* Tooltip overlay */}
+      {hoveredCountry && (
+        <motion.div
+          key={hoveredCountry.name}
+          initial={{ opacity: 0, scale: 0.9, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="absolute z-50 pointer-events-none"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            transform: hoveredCountry.anchor === 'end'
+              ? 'translate(-100%, -110%)'
+              : 'translate(8px, -110%)',
+          }}
+        >
+          <div style={{
+            background: 'rgba(8, 14, 32, 0.97)',
+            border: `1px solid ${GOLD}66`,
+            borderRadius: 10,
+            padding: '8px 12px',
+            minWidth: 148,
+            boxShadow: `0 0 18px rgba(212,168,67,0.18)`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{hoveredCountry.flag}</span>
+              <span style={{ color: GOLD, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                {hoveredCountry.city}
+              </span>
+            </div>
+            <div style={{ borderTop: '1px solid rgba(212,168,67,0.15)', paddingTop: 5, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {hoveredCountry.treatments.map((t, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: GOLD, flexShrink: 0, display: 'inline-block' }} />
+                  <span style={{ color: 'rgba(255,255,255,0.82)', fontSize: 10, fontWeight: 500 }}>{t}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+      <svg ref={svgRef} viewBox="0 0 500 500" width="100%" style={{ overflow: 'visible' }}>
         <defs>
           <radialGradient id="globeBase" cx="38%" cy="32%" r="70%">
             <stop offset="0%" stopColor="#1e3a70" />
@@ -140,8 +194,11 @@ function SafeTGlobe({ shieldState }) {
           <motion.g key={i} filter="url(#dotGlow)"
             animate={{ scale: [1, 1.4, 1] }}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
-            style={{ transformOrigin: `${c.cx}px ${c.cy}px`, transformBox: 'fill-box' }}
+            style={{ transformOrigin: `${c.cx}px ${c.cy}px`, transformBox: 'fill-box', cursor: 'pointer' }}
+            onMouseEnter={(e) => handleDotEnter(c, e)}
+            onMouseLeave={() => setHoveredCountry(null)}
           >
+            <circle cx={c.cx} cy={c.cy} r="16" fill="transparent" />
             <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} opacity="0.12" />
             <circle cx={c.cx} cy={c.cy} r="5"   fill={GOLD} opacity="0.92" />
             <circle cx={c.cx} cy={c.cy} r="2.5" fill="#f8e690" opacity="0.95" />
@@ -223,6 +280,7 @@ function SafeTGlobe({ shieldState }) {
     </div>
   );
 }
+
 
 const SHIELD_STATES = [
   {
