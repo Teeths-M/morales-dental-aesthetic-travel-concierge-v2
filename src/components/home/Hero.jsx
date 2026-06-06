@@ -49,7 +49,16 @@ function SafeTGlobe({ shieldState }) {
   const sColor = shieldState?.shieldColor || GOLD;
   const [hoveredCountry, setHoveredCountry] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [activeCountryIndex, setActiveCountryIndex] = useState(0);
   const svgRef = React.useRef(null);
+
+  // Cycle through countries every 0.5s (8 countries = 4s total), then jump to shield
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveCountryIndex((prev) => (prev + 1) % COUNTRIES.length);
+    }, 500);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleDotEnter = (c, e) => {
     const svg = svgRef.current;
@@ -363,30 +372,24 @@ function SafeTGlobe({ shieldState }) {
           />
         </g>
 
-        {/* Green jumping dot - visits each country in sequence */}
-        {COUNTRIES.map((c, i) => (
-          <motion.circle
-            key={`hop-${i}`}
-            cx={c.cx}
-            cy={c.cy}
-            r="5"
-            fill="#22c55e"
-            opacity="0.95"
-            filter="url(#greenGlow)"
-            initial={{ scale: 1, opacity: 0.3 }}
-            animate={{
-              scale: [1, 1.4, 1],
-              opacity: [0.3, 1, 0.3],
-              r: [5, 7, 5]
-            }}
-            transition={{
-              duration: 0.5,
-              repeat: Infinity,
-              delay: i * 0.5,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
+        {/* Green jumping dot - stays at each country, bounces, then jumps to shield */}
+        <motion.circle
+          cx={activeCountryIndex < COUNTRIES.length ? COUNTRIES[activeCountryIndex].cx : 250}
+          cy={activeCountryIndex < COUNTRIES.length ? COUNTRIES[activeCountryIndex].cy : 244}
+          r="6"
+          fill="#22c55e"
+          opacity="0.95"
+          filter="url(#greenGlow)"
+          animate={{
+            scale: [1, 1.25, 1],
+            r: [6, 8, 6]
+          }}
+          transition={{
+            duration: 0.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
       </svg>
     </div>
   );
