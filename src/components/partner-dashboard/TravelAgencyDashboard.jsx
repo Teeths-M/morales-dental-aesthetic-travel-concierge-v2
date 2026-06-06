@@ -60,6 +60,9 @@ export default function TravelAgencyDashboard({ agency, language }) {
         <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white font-semibold h-12">
           👀 {language === 'es' ? 'Ver Solicitudes de Pacientes' : language === 'fr' ? 'Voir Demandes de Patients' : 'View Patient Requests'}
         </Button>
+        <Button variant="outline" className="w-full h-12" onClick={() => window.location.href = '/partner-portal'}>
+          📊 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
+        </Button>
         <Button variant="outline" className="w-full h-12">
           ✏️ {language === 'es' ? 'Editar Perfil' : language === 'fr' ? 'Modifier le Profil' : 'Edit Profile'}
         </Button>

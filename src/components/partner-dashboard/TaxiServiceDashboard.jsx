@@ -122,16 +122,16 @@ export default function TaxiServiceDashboard({ taxi, language }) {
         <Button 
           variant="outline" 
           className="w-full h-12"
-          onClick={() => alert(language === 'es' ? 'Próximamente: Actualizar Disponibilidad' : language === 'fr' ? 'Bientôt: Mettre à jour la disponibilité' : 'Coming Soon: Update Availability')}
+          onClick={() => window.location.href = '/partner-portal'}
         >
-          📅 {language === 'es' ? 'Actualizar Disponibilidad' : language === 'fr' ? 'Mettre à Jour la Disponibilité' : 'Update Availability'}
+          🏢 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
         </Button>
         <Button 
           variant="outline" 
           className="w-full h-12"
-          onClick={() => alert(language === 'es' ? 'Próximamente: Ver Historial de Viajes' : language === 'fr' ? 'Bientôt: Afficher l\'historique des trajets' : 'Coming Soon: View Trip History')}
+          onClick={() => alert(language === 'es' ? 'Próximamente: Actualizar Disponibilidad' : language === 'fr' ? 'Bientôt: Mettre à jour la disponibilité' : 'Coming Soon: Update Availability')}
         >
-          📊 {language === 'es' ? 'Ver Historial' : language === 'fr' ? 'Afficher l\'Historique' : 'View Trip History'}
+          📅 {language === 'es' ? 'Actualizar Disponibilidad' : language === 'fr' ? 'Mettre à Jour la Disponibilité' : 'Update Availability'}
         </Button>
       </div>
 

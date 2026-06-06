@@ -59,6 +59,7 @@ import AdminProcedureRequests from './pages/AdminProcedureRequests';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AdminCompanions from './pages/AdminCompanions';
 import CompanionSignup from './pages/CompanionSignup';
+import PartnerPortal from './pages/PartnerPortal';
 import CompanionDashboard from './pages/CompanionDashboard';
 
 const AuthenticatedApp = () => {
@@ -149,6 +150,9 @@ const AuthenticatedApp = () => {
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["companion", "platform_admin", "admin"]} />}>
           <Route path="/companion-dashboard" element={<CompanionDashboard />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["travel_agency", "taxi_service", "companion", "doctor", "platform_admin", "admin"]} />}>
+          <Route path="/partner-portal" element={<PartnerPortal />} />
         </Route>
       </Route>
       {/* Standalone payment page - requires auth same as /portal-hub/checkout */}
