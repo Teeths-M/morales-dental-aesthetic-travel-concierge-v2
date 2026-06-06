@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SlotCounter from './SlotCounter';
-import GlobeCanvas from './GlobeCanvas';
 import { translations } from '@/lib/translations';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -12,8 +11,6 @@ const SENTINEL_IMAGE =
   'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7b4ea635d_ChatGPTImageJun1202608_35_37PM.png';
 
 const GOLD = '#d4a843';
-
-// Country labels are now handled inside GlobeCanvas
 
 function getBadges(language) {
   return [
@@ -36,8 +33,250 @@ function getBadges(language) {
   ];
 }
 
+const COUNTRIES = [
+  { name: 'TURKEY',             cx: 155, cy: 105, lx: 148, ly: 96,  anchor: 'end'   },
+  { name: 'SOUTH KOREA',        cx: 362, cy: 105, lx: 370, ly: 96,  anchor: 'start' },
+  { name: 'THAILAND',           cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start' },
+  { name: 'COLOMBIA',           cx: 375, cy: 242, lx: 383, ly: 234, anchor: 'start' },
+  { name: 'BRAZIL',             cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start' },
+  { name: 'COSTA RICA',         cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end'   },
+  { name: 'MEXICO',             cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end'   },
+  { name: 'TRINIDAD & TOBAGO',  cx: 310, cy: 282, lx: 318, ly: 273, anchor: 'start' },
+  { name: 'JAMAICA',            cx: 192, cy: 252, lx: 184, ly: 243, anchor: 'end'   },
+  { name: 'DOMINICAN REP.',     cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start' },
+];
 
+// ── LANDMASS DOT MATRIX (orthographic projection, center lat=15°N lon=-20°W) ──
+const _R = Math.PI / 180;
+const _LC = 15 * _R, _LOC = -20 * _R;
+const _SLC = Math.sin(_LC), _CLC = Math.cos(_LC);
 
+function _grid(la0, la1, lo0, lo1, s) {
+  const p = [];
+  for (let la = la0; la <= la1; la += s)
+    for (let lo = lo0; lo <= lo1; lo += s)
+      p.push([la, lo]);
+  return p;
+}
+
+const _LAND_LL = [
+  ..._grid(18, 30, -118, -88, 3),    // Mexico
+  ..._grid(8,  18, -92,  -78, 2.5),  // Central America
+  ..._grid(10, 24, -85,  -64, 3.5),  // Caribbean
+  ..._grid(0,  12, -80,  -62, 3),    // Colombia / Venezuela
+  ..._grid(-35, 5, -75,  -34, 3.5),  // South America
+  ..._grid(36, 62,  -9,   28, 3.5),  // Western Europe
+  ..._grid(45, 65,  28,   58, 3.5),  // E Europe / W Russia
+  ..._grid(36, 42,  26,   46, 3),    // Turkey / Caucasus
+  ..._grid(14, 38,  35,   62, 3.5),  // Middle East
+  ..._grid(-5, 38, -18,   16, 3),    // West Africa
+  ..._grid(-30,14,  12,   50, 3.5),  // Central / East Africa
+  ..._grid(-35,-22, 16,   33, 3),    // Southern Africa
+  ..._grid(8,  30,  68,   88, 3),    // India
+  ..._grid(0,  24,  97,  120, 3),    // SE Asia
+  ..._grid(26, 46, 120,  145, 3),    // Korea / Japan
+  ..._grid(20, 42, 100,  122, 3.5),  // China
+];
+
+const LAND_DOTS = _LAND_LL.map(([la, lo]) => {
+  const φ = la * _R, λ = lo * _R;
+  const cosC = _SLC * Math.sin(φ) + _CLC * Math.cos(φ) * Math.cos(λ - _LOC);
+  if (cosC < 0.06) return null;
+  const x = 250 + 190 * Math.cos(φ) * Math.sin(λ - _LOC);
+  const y = 250 - 190 * (_CLC * Math.sin(φ) - _SLC * Math.cos(φ) * Math.cos(λ - _LOC));
+  const dx = x - 250, dy = y - 250;
+  if (dx * dx + dy * dy > 190 * 190) return null;
+  return { x, y, a: Math.min(0.62, cosC * 0.68 + 0.07) };
+}).filter(Boolean);
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SafeTGlobe({ shieldState }) {
+  const sColor = shieldState?.shieldColor || GOLD;
+  const sGlow  = shieldState?.glowColor  || 'rgba(212,168,67,0.45)';
+  const sRing  = shieldState?.ringColor  || 'rgba(212,168,67,0.2)';
+  return (
+    <div className="relative w-full" style={{ maxWidth: 480, margin: '0 auto' }}>
+      <svg viewBox="0 0 500 500" width="100%" style={{ overflow: 'visible' }}>
+        <defs>
+          <radialGradient id="globeBase" cx="38%" cy="32%" r="70%">
+            <stop offset="0%" stopColor="#1e3a70" />
+            <stop offset="55%" stopColor="#0b1635" />
+            <stop offset="100%" stopColor="#030b18" />
+          </radialGradient>
+          <filter id="shieldGlow" x="-80%" y="-80%" width="360%" height="360%">
+            <feGaussianBlur stdDeviation="22" result="blur1" />
+            <feGaussianBlur stdDeviation="8"  result="blur2" in="SourceGraphic" />
+            <feMerge>
+              <feMergeNode in="blur1" />
+              <feMergeNode in="blur2" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <radialGradient id="shieldAura" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={sColor} stopOpacity="0.38" />
+            <stop offset="100%" stopColor={sColor} stopOpacity="0" />
+          </radialGradient>
+          <filter id="dotGlow" x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <linearGradient id="shieldGold" x1="15%" y1="0%" x2="85%" y2="100%">
+            <stop offset="0%" stopColor={sColor} stopOpacity="0.95" />
+            <stop offset="60%" stopColor={sColor} stopOpacity="0.8" />
+            <stop offset="100%" stopColor={sColor} stopOpacity="0.55" />
+          </linearGradient>
+          <style>{`
+            @keyframes globeSpin {
+              from { transform: rotate(0deg); }
+              to   { transform: rotate(360deg); }
+            }
+            @keyframes dataFlow {
+              0%   { stroke-dashoffset: 340; }
+              100% { stroke-dashoffset: 0; }
+            }
+            .globe-grid {
+              transform-origin: 250px 250px;
+              animation: globeSpin 50s linear infinite;
+            }
+            .flow-line {
+              stroke-dasharray: 16 324;
+              animation: dataFlow 3.5s linear infinite;
+            }
+          `}</style>
+        </defs>
+
+        {/* Atmosphere rings */}
+        <circle cx="250" cy="250" r="222" fill="none" stroke="#D4AF37" strokeWidth="1"   opacity="0.14" />
+        <circle cx="250" cy="250" r="208" fill="none" stroke="#D4AF37" strokeWidth="0.6" opacity="0.09" />
+
+        {/* Globe body — transparent so sunset bleeds through */}
+        <circle cx="250" cy="250" r="190" fill="transparent" stroke="#D4AF37" strokeWidth="1" strokeOpacity="0.35" />
+
+        {/* 0) Landmass golden dot matrix */}
+        <g opacity="0.85">
+          {LAND_DOTS.map((d, i) => (
+            <circle key={i} cx={d.x} cy={d.y} r="1.5"
+              fill="#D4AF37" fillOpacity={d.a}
+              style={{ filter: 'drop-shadow(0 0 1.5px rgba(212,175,55,0.7))' }}
+            />
+          ))}
+        </g>
+
+        {/* 1) Rotating gold grid */}
+        <g className="globe-grid">
+          {[-132, -76, 0, 76, 132].map((dy, i) => {
+            const rx = Math.sqrt(Math.max(0, 190 * 190 - dy * dy));
+            return (
+              <ellipse key={i} cx="250" cy={250 + dy} rx={rx} ry={rx * 0.28}
+                stroke="#D4AF37" strokeWidth="0.7" fill="none" opacity="0.38" />
+            );
+          })}
+          {[0.12, 0.44, 0.8, 0.8, 0.44, 0.12].map((f, i) => (
+            <ellipse key={i} cx="250" cy="250" rx={f * 190} ry="190"
+              stroke="#D4AF37" strokeWidth="0.7" fill="none" opacity="0.28" />
+          ))}
+        </g>
+
+        {/* 3) Data-flow connection lines */}
+        {COUNTRIES.map((c, i) => (
+          <line key={i} className="flow-line"
+            x1={c.cx} y1={c.cy} x2="250" y2="250"
+            stroke={GOLD} strokeWidth="1.1" opacity="0.55"
+            style={{ animationDelay: `${i * 0.5}s` }}
+          />
+        ))}
+
+        {/* 2) Pulsing country dots */}
+        {COUNTRIES.map((c, i) => (
+          <motion.g key={i} filter="url(#dotGlow)"
+            animate={{ scale: [1, 1.4, 1] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
+            style={{ transformOrigin: `${c.cx}px ${c.cy}px`, transformBox: 'fill-box' }}
+          >
+            <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} opacity="0.12" />
+            <circle cx={c.cx} cy={c.cy} r="5"   fill={GOLD} opacity="0.92" />
+            <circle cx={c.cx} cy={c.cy} r="2.5" fill="#f8e690" opacity="0.95" />
+          </motion.g>
+        ))}
+
+        {/* Country labels */}
+        {COUNTRIES.map((c, i) => (
+          <text key={i} x={c.lx} y={c.ly}
+            fontSize="9" fill="rgba(255,255,255,0.82)"
+            fontFamily="system-ui,-apple-system,sans-serif"
+            fontWeight="600" letterSpacing="1.1" textAnchor={c.anchor}>
+            {c.name}
+          </text>
+        ))}
+
+        {/* Shield aura glow rings */}
+        <circle cx="250" cy="244" r="95"  fill="url(#shieldAura)" opacity="0.9" />
+        <circle cx="250" cy="244" r="76"  fill="none" stroke={GOLD} strokeWidth="0.6" opacity="0.18" />
+
+        {/* Center shield — framer-motion pulse */}
+        <motion.g
+          filter="url(#shieldGlow)"
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ transformOrigin: 'center', transformBox: 'fill-box' }}
+        >
+          {/* Outer glow rings */}
+          <circle cx="250" cy="244" r="68" fill={GOLD} opacity="0.07" />
+          <circle cx="250" cy="244" r="54" fill={GOLD} opacity="0.06" />
+
+          {/* Shield body */}
+          <path
+            d="M250 166 L314 196 L314 250 C314 286 286 310 250 324 C214 310 186 286 186 250 L186 196 Z"
+            fill="url(#shieldGold)"
+          />
+          {/* Shield inner dark overlay for depth */}
+          <path
+            d="M250 176 L307 204 L307 250 C307 282 282 303 250 315 C218 303 193 282 193 250 L193 204 Z"
+            fill="#07111e" opacity="0.38"
+          />
+          {/* Shield inner gold border */}
+          <path
+            d="M250 176 L307 204 L307 250 C307 282 282 303 250 315 C218 303 193 282 193 250 L193 204 Z"
+            fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
+          />
+
+          {/* Hands-and-heart icon: two cupped hands holding a heart */}
+          {/* Left hand */}
+          <path
+            d="M222 268 C218 264 216 256 218 249 C219 244 222 241 226 240 C228 239 230 240 231 242 L233 248 C234 250 235 250 236 249 L237 244 C238 241 240 239 243 240 C245 241 246 243 246 246 L246 254"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          {/* Right hand */}
+          <path
+            d="M278 268 C282 264 284 256 282 249 C281 244 278 241 274 240 C272 239 270 240 269 242 L267 248 C266 250 265 250 264 249 L263 244 C262 241 260 239 257 240 C255 241 254 243 254 246 L254 254"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          {/* Palms cupped */}
+          <path
+            d="M222 268 C220 274 221 280 226 283 L250 290 L274 283 C279 280 280 274 278 268"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          {/* Heart above hands */}
+          <path
+            d="M250 262 C250 262 234 251 234 240 C234 232 240 226 247 226 C248.8 226 250 227.5 250 227.5 C250 227.5 251.2 226 253 226 C260 226 266 232 266 240 C266 251 250 262 250 262 Z"
+            fill="white" opacity="0.96"
+          />
+          {/* Heart highlight */}
+          <path
+            d="M243 233 C241 236 241 240 243 243"
+            fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" opacity="0.6"
+          />
+        </motion.g>
+
+        {/* Globe rim */}
+        <circle cx="250" cy="250" r="190" fill="none" stroke="#D4AF37" strokeWidth="1.5" opacity="0.45" />
+      </svg>
+    </div>
+  );
+}
 
 const SHIELD_STATES = [
   {
@@ -273,7 +512,7 @@ export default function Hero() {
             className="flex flex-col items-center"
           >
             <div className="w-full max-w-sm lg:max-w-none mx-auto">
-              <GlobeCanvas shieldState={SHIELD_STATES[shieldStateIdx]} size={480} />
+              <SafeTGlobe shieldState={SHIELD_STATES[shieldStateIdx]} />
             </div>
 
             {/* YOU'RE PROTECTED card — cycles with shield state */}
