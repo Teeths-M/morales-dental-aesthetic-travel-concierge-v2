@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, MessageCircle, HomeIcon, Activity } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import GlobeVisualization, { SHIELD_STATES } from './GlobeVisualization';
+import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase } from 'lucide-react';
+import { motion } from 'framer-motion';
+import GlobeVisualization from './GlobeVisualization';
 
 const GOLD = '#c9a84c';
 
@@ -38,7 +38,6 @@ const BADGES = [
 
 export default function Hero() {
   const [language, setLanguage] = useState('en');
-  const [shieldState, setShieldState] = useState(SHIELD_STATES[0]);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -50,23 +49,11 @@ export default function Hero() {
 
   return (
     <section
-      style={{ minHeight: '100vh', position: 'relative' }}
+      style={{ background: '#0a0a0a', minHeight: '100vh' }}
       className="relative overflow-hidden flex flex-col pt-[72px]"
     >
-      {/* Warm sunset background */}
-      <div style={{
-        position: 'absolute', inset: 0, zIndex: 0,
-        backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1800&q=80)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center 40%',
-      }} />
-      {/* Dark overlay */}
-      <div style={{
-        position: 'absolute', inset: 0, zIndex: 0,
-        background: 'rgba(4,6,8,0.78)',
-      }} />
       {/* Main layout: LEFT text | CENTER globe | RIGHT feature cards */}
-      <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0" style={{ position: 'relative', zIndex: 1 }}>
+      <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0">
 
         {/* ── LEFT: Text content (35%) ── */}
         <motion.div
@@ -76,8 +63,8 @@ export default function Hero() {
           className="w-full lg:w-[35%] flex flex-col justify-center px-6 sm:px-10 py-10 lg:py-14"
         >
           <h1
-            className="font-display text-5xl sm:text-6xl lg:text-7xl text-white leading-[1.02] mb-5"
-            style={{ letterSpacing: '-0.03em' }}
+            className="font-display text-4xl sm:text-5xl text-white leading-[1.05] mb-5"
+            style={{ letterSpacing: '-0.02em' }}
           >
             {language === 'es'
               ? 'Tu cuidado seguro comienza aquí.'
@@ -124,37 +111,6 @@ export default function Hero() {
             </Link>
           </div>
 
-          {/* Journey steps */}
-          <div className="mb-7">
-            <p className="text-[10px] font-mono tracking-[0.22em] uppercase mb-3" style={{ color: GOLD }}>
-              Care, Coordinated For You
-            </p>
-            <div className="flex items-center flex-wrap gap-y-2">
-              {[
-                { icon: MessageCircle, label: 'Consultation' },
-                { icon: Plane,         label: 'Travel'       },
-                { icon: Activity,      label: 'Treatment'    },
-                { icon: Heart,         label: 'Recovery'     },
-                { icon: HomeIcon,      label: 'Return Home'  },
-              ].map(({ icon: StepIcon, label }, i, arr) => (
-                <React.Fragment key={label}>
-                  <div className="flex flex-col items-center gap-1">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(201,168,76,0.12)', border: `1px solid ${GOLD}40` }}
-                    >
-                      <StepIcon className="w-3.5 h-3.5" style={{ color: GOLD }} />
-                    </div>
-                    <span className="text-white/60 text-[9px] font-medium whitespace-nowrap">{label}</span>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <div className="flex-1 min-w-[10px] max-w-[18px] h-px mx-1" style={{ background: `${GOLD}40` }} />
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-
           {/* Trust badges */}
           <div className="flex flex-col gap-2">
             {BADGES.map(({ icon: Icon, label, sub }) => (
@@ -178,64 +134,12 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.3 }}
-          className="w-full lg:w-[40%] relative flex flex-col items-center justify-center"
-          style={{ minHeight: 660 }}
+          className="w-full lg:w-[40%] relative flex items-center justify-center"
+          style={{ minHeight: 552 }}
         >
-          <div style={{ width: '100%', height: '100%', minHeight: 696, maxHeight: 1090, position: 'relative' }}>
-            <GlobeVisualization onStateChange={setShieldState} />
+          <div style={{ width: '100%', height: '100%', minHeight: 580, maxHeight: 910, position: 'relative' }}>
+            <GlobeVisualization />
           </div>
-
-          {/* Shield status card */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={shieldState.key}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.55, ease: 'easeOut' }}
-              style={{
-                position: 'absolute',
-                bottom: 18,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '80%',
-                maxWidth: 340,
-                background: 'rgba(8,8,12,0.72)',
-                backdropFilter: 'blur(18px)',
-                WebkitBackdropFilter: 'blur(18px)',
-                border: `1px solid ${shieldState.color}35`,
-                borderRadius: 14,
-                padding: '14px 18px',
-                zIndex: 20,
-                boxShadow: `0 0 32px ${shieldState.color}20, 0 4px 24px rgba(0,0,0,0.5)`,
-              }}
-            >
-              <div className="flex items-start gap-3">
-                {/* Color indicator dot */}
-                <motion.div
-                  animate={{ scale: [1, 1.25, 1], opacity: [0.9, 1, 0.9] }}
-                  transition={{ duration: 1.8, repeat: Infinity }}
-                  style={{
-                    width: 10, height: 10, borderRadius: '50%',
-                    background: shieldState.color,
-                    flexShrink: 0, marginTop: 4,
-                    boxShadow: `0 0 8px ${shieldState.color}`,
-                  }}
-                />
-                <div>
-                  <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
-                    {shieldState.title}
-                  </p>
-                  <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, margin: '4px 0 6px', lineHeight: 1.4 }}>
-                    {shieldState.sub}
-                  </p>
-                  <p style={{ color: shieldState.color, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', margin: 0 }}>
-                    ● {shieldState.badge}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
         </motion.div>
 
         {/* ── RIGHT: Feature cards (25%) ── */}
