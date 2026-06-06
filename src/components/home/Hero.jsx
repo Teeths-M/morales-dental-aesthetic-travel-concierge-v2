@@ -519,11 +519,11 @@ export default function Hero() {
                   style={{
                     background: 'linear-gradient(90deg, ' + GOLD + ', rgba(212,168,67,0.4), ' + GOLD + ')',
                     boxShadow: `0 0 6px ${GOLD}88`,
+                    transformOrigin: 'left',
                   }}
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
                   transition={{ duration: 1.8, ease: 'easeInOut' }}
-                  style={{ transformOrigin: 'left' }}
                 />
                 {/* Animated return line - right to left */}
                 <motion.div
@@ -531,11 +531,11 @@ export default function Hero() {
                   style={{
                     background: 'linear-gradient(90deg, ' + GOLD + ', rgba(212,168,67,0.4), ' + GOLD + ')',
                     boxShadow: `0 0 6px ${GOLD}88`,
+                    transformOrigin: 'right',
                   }}
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
                   transition={{ duration: 1.8, ease: 'easeInOut', delay: 1.8 }}
-                  style={{ transformOrigin: 'right' }}
                 />
                 {journeySteps.map((step, i) => {
                   const Icon = step.icon;
