@@ -1,205 +1,341 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
+import * as THREE from 'three';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { useNavigate } from 'react-router-dom';
 
-// Country label positions within 500x500 viewBox
-// Coordinates based on Mercator-like projection clipped to globe circle
+// ── Geographic data ────────────────────────────────────────────────────────────
 const COUNTRIES = [
-  { name: 'Turkey',      x: 263, y: 152 },
-  { name: 'South Korea', x: 370, y: 148 },
-  { name: 'Thailand',    x: 358, y: 195 },
-  { name: 'Mexico',      x: 108, y: 188 },
-  { name: 'Colombia',    x: 168, y: 240 },
-  { name: 'Costa Rica',  x: 148, y: 255 },
-  { name: 'Brazil',      x: 208, y: 278 },
+  { name: 'Turkey',      lat: 39.0,  lng: 35.0   },
+  { name: 'South Korea', lat: 35.9,  lng: 127.8  },
+  { name: 'Thailand',    lat: 15.0,  lng: 100.0  },
+  { name: 'Mexico',      lat: 23.6,  lng: -102.6 },
+  { name: 'Colombia',    lat: 4.6,   lng: -74.3  },
+  { name: 'Costa Rica',  lat: 9.7,   lng: -83.8  },
+  { name: 'Brazil',      lat: -14.2, lng: -51.9  },
 ];
 
-// Simplified but recognizable continent SVG paths (Mercator, clipped to globe)
-// ViewBox 500x500, globe center (250,250), radius 190
-const LAND_PATHS = [
+// lat/lng → unit sphere position (Three.js Y-up, equirectangular-compatible)
+function latLngToVec3(lat, lng, r = 1) {
+  const phi   = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+// ── Canvas globe texture (equirectangular projection) ─────────────────────────
+function buildGlobeTexture() {
+  const W = 2048, H = 1024;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // project [lng, lat] → canvas [x, y]
+  const p = (lng, lat) => [((lng + 180) / 360) * W, ((90 - lat) / 180) * H];
+
+  // Ocean
+  const og = ctx.createLinearGradient(0, 0, 0, H);
+  og.addColorStop(0,   '#12305e');
+  og.addColorStop(0.45,'#1a5fa0');
+  og.addColorStop(1,   '#0c2040');
+  ctx.fillStyle = og;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(80,140,230,0.14)';
+  ctx.lineWidth = 1.5;
+  for (let ln = -180; ln <= 180; ln += 30) {
+    const [x] = p(ln, 0);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let lt = -90; lt <= 90; lt += 30) {
+    const [, y] = p(0, lt);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  const fill = (pts) => {
+    ctx.beginPath();
+    const [x0, y0] = p(...pts[0]); ctx.moveTo(x0, y0);
+    for (let i = 1; i < pts.length; i++) { const [x, y] = p(...pts[i]); ctx.lineTo(x, y); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  };
+
+  ctx.fillStyle   = '#5d8f45';
+  ctx.strokeStyle = '#4a7436';
+  ctx.lineWidth   = 2;
+
   // North America
-  `M 112,90 C 125,78 148,72 165,74 C 180,76 192,84 196,98
-     C 200,112 194,128 185,140 C 174,154 162,164 152,178
-     C 140,194 130,212 122,230 C 114,248 110,265 112,278
-     C 116,292 128,300 136,306 C 128,318 118,322 108,316
-     C 96,308 88,292 86,274 C 84,254 88,232 93,214
-     C 98,196 103,178 106,160 C 109,142 110,118 112,100 Z`,
-
-  // Central America (connecting strip)
-  `M 136,306 C 138,316 140,328 138,336 C 136,342 130,344 126,340
-     C 122,334 120,322 122,312 C 126,306 132,304 136,306 Z`,
-
-  // South America
-  `M 148,340 C 162,326 180,318 198,318 C 216,318 232,328 240,344
-     C 248,360 246,380 240,398 C 232,418 220,435 206,448
-     C 192,460 176,466 164,460 C 152,452 144,436 140,416
-     C 136,396 138,374 142,356 C 145,348 146,344 148,340 Z`,
-
-  // Europe
-  `M 218,100 C 228,88 244,82 258,82 C 270,82 278,90 276,104
-     C 274,116 264,124 252,130 C 242,134 230,136 222,142
-     C 216,136 214,122 216,110 Z`,
-
-  // Africa
-  `M 216,154 C 228,140 246,132 264,132 C 280,132 294,142 300,158
-     C 306,174 304,194 298,212 C 290,234 278,254 266,272
-     C 254,288 242,298 232,302 C 222,304 214,298 210,286
-     C 206,272 206,254 208,236 C 210,218 212,196 214,176
-     C 215,168 215,160 216,154 Z`,
-
-  // Middle East + Arabian Peninsula
-  `M 278,144 C 290,136 304,136 314,146 C 322,156 320,172 312,182
-     C 302,190 288,192 278,184 C 268,176 266,160 272,150 Z`,
-
-  // Asia (main landmass)
-  `M 270,82 C 290,66 318,58 348,58 C 376,58 400,68 414,84
-     C 426,98 428,116 420,132 C 410,148 392,158 372,164
-     C 352,170 330,168 312,160 C 294,152 280,140 274,126
-     C 268,112 268,96 270,82 Z`,
-
-  // Southeast Asia
-  `M 356,164 C 368,158 382,162 388,174 C 392,184 388,196 378,200
-     C 368,204 356,198 352,187 C 348,176 350,168 356,164 Z`,
-
-  // Indonesia hint
-  `M 372,210 C 380,206 390,208 394,216 C 396,222 392,228 384,228
-     C 376,228 370,222 370,215 Z
-   M 396,212 C 402,208 410,210 412,218 C 414,224 410,228 404,226
-     C 398,224 394,218 396,212 Z`,
-
-  // Australia
-  `M 376,296 C 390,280 410,274 428,280 C 444,286 452,302 448,320
-     C 444,336 430,346 414,346 C 398,346 384,336 378,320
-     C 372,308 373,304 376,296 Z`,
-
-  // Japan (small island)
-  `M 390,128 C 396,122 404,124 406,132 C 408,140 402,146 394,144
-     C 386,142 384,134 390,128 Z`,
-
-  // UK / British Isles hint
-  `M 208,98 C 212,92 218,92 220,98 C 222,104 218,110 212,110
-     C 208,108 205,104 208,98 Z`,
+  fill([[-168,70],[-158,72],[-140,70],[-126,72],[-100,74],[-80,78],[-65,82],[-58,80],
+        [-64,72],[-66,60],[-64,46],[-68,44],[-70,42],[-74,38],[-78,34],[-82,30],
+        [-88,30],[-90,32],[-92,30],[-96,24],[-104,18],[-85,12],[-79,8],[-85,14],
+        [-88,18],[-90,16],[-94,20],[-100,24],[-104,22],[-110,24],[-116,30],
+        [-120,34],[-124,40],[-126,48],[-132,56],[-140,60],[-150,60],[-158,58],
+        [-164,62],[-168,66]]);
 
   // Greenland
-  `M 148,54 C 158,44 172,42 180,50 C 186,58 182,70 172,74
-     C 162,78 150,74 146,64 Z`,
-];
+  fill([[-46,83],[-20,84],[-16,78],[-20,70],[-30,68],[-42,68],[-50,74]]);
 
+  // South America
+  fill([[-80,10],[-76,8],[-62,10],[-52,6],[-50,2],[-52,-2],[-44,-4],[-36,-8],
+        [-36,-18],[-40,-22],[-44,-26],[-48,-30],[-52,-34],[-58,-38],[-62,-44],
+        [-66,-48],[-68,-54],[-66,-56],[-60,-52],[-56,-46],[-52,-40],[-48,-34],
+        [-44,-26],[-40,-20],[-38,-12],[-40,-4],[-44,0],[-50,2],[-58,4],
+        [-68,0],[-74,4],[-80,6]]);
+
+  // Europe
+  fill([[-10,36],[-8,38],[-2,36],[0,44],[4,50],[8,54],[12,56],[18,58],[24,60],
+        [28,62],[26,70],[20,70],[16,66],[12,62],[8,58],[4,54],[0,48],[-2,44],[-8,44]]);
+
+  // British Isles
+  fill([[-6,50],[-2,50],[2,52],[0,56],[-4,58],[-6,56],[-8,52]]);
+
+  // Africa
+  fill([[-18,16],[-16,20],[-18,26],[-8,26],[0,28],[10,30],[20,30],[32,26],[36,20],
+        [40,14],[44,10],[44,4],[42,-2],[40,-8],[36,-14],[30,-22],[26,-28],[20,-34],
+        [18,-36],[20,-34],[26,-28],[30,-24],[34,-18],[36,-12],[34,-4],[30,2],
+        [26,8],[22,14],[16,18],[10,18],[4,12],[-2,8],[-8,8],[-14,10],[-18,14]]);
+
+  // Arabian peninsula
+  fill([[26,38],[36,38],[44,36],[50,30],[56,26],[58,20],[56,16],[50,14],
+        [44,14],[38,16],[34,18],[32,24],[28,30],[26,36]]);
+
+  // Asia main
+  fill([[26,42],[30,46],[36,50],[46,54],[58,56],[70,58],[80,62],[90,66],
+        [100,68],[110,70],[120,68],[130,62],[140,58],[144,50],[140,44],
+        [136,38],[128,34],[122,28],[120,22],[110,18],[106,14],[100,10],
+        [104,6],[108,2],[112,-4],[108,-6],[104,-2],[100,4],[98,8],[96,14],
+        [92,20],[88,22],[84,28],[80,28],[74,22],[68,20],[60,22],[56,28],
+        [54,32],[52,36],[48,40],[44,40],[40,42],[36,44],[32,44],[28,44]]);
+
+  // Japan
+  fill([[130,32],[132,34],[134,36],[136,38],[138,40],[140,42],[142,44],
+        [140,46],[138,44],[136,42],[134,40],[132,36]]);
+
+  // SE Asia peninsula + Malay
+  fill([[98,20],[100,18],[102,16],[104,14],[106,12],[106,10],[104,6],
+        [102,2],[104,0],[108,2],[112,0],[114,2],[114,6],[108,8],
+        [104,10],[100,4],[98,8],[96,14]]);
+
+  // Sumatra
+  fill([[96,6],[100,4],[104,2],[106,-2],[106,-4],[104,-4],[100,-2],[96,4]]);
+
+  // Australia
+  fill([[114,-22],[120,-18],[128,-16],[136,-14],[140,-14],[146,-18],
+        [152,-24],[154,-28],[152,-36],[148,-40],[144,-38],[138,-36],
+        [132,-34],[126,-32],[120,-32],[114,-28],[112,-24]]);
+
+  // Ice caps
+  ctx.fillStyle = 'rgba(215,232,255,0.65)';
+  ctx.strokeStyle = 'rgba(190,215,255,0.35)';
+  ctx.lineWidth = 1;
+  fill([[-180,72],[0,72],[180,72],[180,90],[-180,90]]);
+  fill([[-180,-68],[0,-68],[180,-68],[180,-90],[-180,-90]]);
+
+  return c;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function SentinelOrbit({ size = 420 }) {
+  const mountRef   = useRef(null);
+  const navigateRef = useRef(null);
+  const nav = useNavigate();
+  navigateRef.current = nav;
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+
+    const W = mount.clientWidth  || size;
+    const H = mount.clientHeight || size;
+
+    // ── Scene
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+    camera.position.z = 2.65;
+
+    // ── WebGL renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.setClearColor(0, 0);
+    mount.appendChild(renderer.domElement);
+
+    // ── CSS2D label renderer
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(W, H);
+    labelRenderer.domElement.style.cssText =
+      'position:absolute;top:0;left:0;pointer-events:none;overflow:hidden;border-radius:50%;';
+    mount.appendChild(labelRenderer.domElement);
+
+    // ── Globe
+    const texture = new THREE.CanvasTexture(buildGlobeTexture());
+    const globe = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 64, 64),
+      new THREE.MeshPhongMaterial({ map: texture, specular: new THREE.Color(0x1a3a6b), shininess: 18 })
+    );
+    scene.add(globe);
+
+    // ── Atmosphere
+    scene.add(new THREE.Mesh(
+      new THREE.SphereGeometry(1.028, 32, 32),
+      new THREE.MeshPhongMaterial({ color: 0x2255cc, transparent: true, opacity: 0.07, side: THREE.FrontSide, depthWrite: false })
+    ));
+
+    // ── Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+    sun.position.set(3, 2, 4);
+    scene.add(sun);
+
+    // ── Markers + labels
+    const labelItems = [];
+    COUNTRIES.forEach(({ name, lat, lng }) => {
+      const localPos = latLngToVec3(lat, lng, 1.0);
+
+      // Gold pin dot
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.016, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffd700 })
+      );
+      dot.position.copy(localPos);
+      dot.userData.country = name;
+      globe.add(dot);
+
+      // HTML label
+      const div = document.createElement('div');
+      div.innerHTML = `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd700;margin-right:4px;flex-shrink:0;"></span>${name}`;
+      div.style.cssText = [
+        'display:flex','align-items:center',
+        'background:rgba(5,12,30,0.88)',
+        'color:#fff',
+        'font-size:9.5px',
+        'font-family:system-ui,-apple-system,sans-serif',
+        'font-weight:700',
+        'letter-spacing:0.4px',
+        'padding:3px 7px 3px 5px',
+        'border-radius:4px',
+        'border:1px solid rgba(255,215,0,0.55)',
+        'white-space:nowrap',
+        'cursor:pointer',
+        'pointer-events:auto',
+        'transform:translate(-50%,-190%)',
+        'transition:background .12s,color .12s',
+        'user-select:none',
+        'box-shadow:0 1px 8px rgba(0,0,0,0.55)',
+      ].join(';');
+
+      div.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigateRef.current(`/discover?country=${encodeURIComponent(name)}`);
+      });
+      div.addEventListener('mouseenter', () => {
+        div.style.background = 'rgba(255,215,0,0.95)';
+        div.style.color = '#0a0f1e';
+      });
+      div.addEventListener('mouseleave', () => {
+        div.style.background = 'rgba(5,12,30,0.88)';
+        div.style.color = '#fff';
+      });
+
+      const label = new CSS2DObject(div);
+      label.position.copy(localPos);
+      globe.add(label);
+      labelItems.push({ label, localPos: localPos.clone() });
+    });
+
+    // ── Rotation state
+    let rotY = 0.5, rotX = 0;
+    let isDragging = false, lastX = 0, lastY = 0;
+
+    const onMouseDown  = (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; mount.style.cursor = 'grabbing'; };
+    const onMouseMove  = (e) => { if (!isDragging) return; rotY += (e.clientX - lastX) * 0.005; rotX = Math.max(-0.8, Math.min(0.8, rotX + (e.clientY - lastY) * 0.005)); lastX = e.clientX; lastY = e.clientY; };
+    const onMouseUp    = () => { isDragging = false; mount.style.cursor = 'grab'; };
+    const onTouchStart = (e) => { isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; };
+    const onTouchMove  = (e) => { if (!isDragging) return; rotY += (e.touches[0].clientX - lastX) * 0.006; rotX = Math.max(-0.8, Math.min(0.8, rotX + (e.touches[0].clientY - lastY) * 0.006)); lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; };
+
+    mount.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    mount.addEventListener('touchstart', onTouchStart, { passive: true });
+    mount.addEventListener('touchmove',  onTouchMove,  { passive: true });
+    mount.addEventListener('touchend',   onMouseUp);
+
+    // ── Click on dot markers
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const dots = globe.children.filter(c => c.userData.country);
+    const onGlobeClick = (e) => {
+      const r = mount.getBoundingClientRect();
+      mouse.x =  ((e.clientX - r.left) / W) * 2 - 1;
+      mouse.y = -((e.clientY - r.top)  / H) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(dots);
+      if (hits.length) navigateRef.current(`/discover?country=${encodeURIComponent(hits[0].object.userData.country)}`);
+    };
+    mount.addEventListener('click', onGlobeClick);
+
+    // ── Helpers for visibility check
+    const _euler    = new THREE.Euler();
+    const _worldPos = new THREE.Vector3();
+    const _camNorm  = camera.position.clone().normalize();
+
+    // ── Animation loop
+    let frameId;
+    const animate = () => {
+      frameId = requestAnimationFrame(animate);
+      if (!isDragging) rotY += 0.0035;
+      globe.rotation.y = rotY;
+      globe.rotation.x = rotX;
+      _euler.copy(globe.rotation);
+
+      // Hide labels on the back hemisphere
+      labelItems.forEach(({ label, localPos }) => {
+        _worldPos.copy(localPos).applyEuler(_euler);
+        const facing = _worldPos.dot(_camNorm) > 0.06;
+        label.element.style.opacity       = facing ? '1' : '0';
+        label.element.style.pointerEvents = facing ? 'auto' : 'none';
+      });
+
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    };
+    animate();
+
+    // ── Resize
+    const onResize = () => {
+      const w = mount.clientWidth, h = mount.clientHeight;
+      if (!w || !h) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      labelRenderer.setSize(w, h);
+    };
+    window.addEventListener('resize', onResize);
+
+    // ── Cleanup
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('resize', onResize);
+      mount.removeEventListener('mousedown', onMouseDown);
+      mount.removeEventListener('click', onGlobeClick);
+      mount.removeEventListener('touchstart', onTouchStart);
+      mount.removeEventListener('touchmove', onTouchMove);
+      mount.removeEventListener('touchend', onMouseUp);
+      texture.dispose();
+      renderer.dispose();
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      if (mount.contains(labelRenderer.domElement)) mount.removeChild(labelRenderer.domElement);
+    };
+  }, []);
+
   return (
-    <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-      <svg
-        viewBox="0 0 500 500"
-        width={size}
-        height={size}
-        style={{ display: 'block', overflow: 'visible' }}
-      >
-        <defs>
-          {/* Ocean gradient */}
-          <radialGradient id="so-ocean" cx="38%" cy="30%" r="75%">
-            <stop offset="0%"   stopColor="#3b82f6" />
-            <stop offset="45%"  stopColor="#1d4ed8" />
-            <stop offset="100%" stopColor="#1e3a8a" />
-          </radialGradient>
-
-          {/* Land gradient */}
-          <linearGradient id="so-land" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%"   stopColor="#6ab04c" />
-            <stop offset="55%"  stopColor="#78a832" />
-            <stop offset="100%" stopColor="#a0784a" />
-          </linearGradient>
-
-          {/* Atmosphere glow */}
-          <radialGradient id="so-atm" cx="50%" cy="50%" r="50%">
-            <stop offset="75%"  stopColor="transparent" />
-            <stop offset="94%"  stopColor="#93c5fd" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#bfdbfe" stopOpacity="0.35" />
-          </radialGradient>
-
-          {/* Globe shadow overlay for 3D feel */}
-          <radialGradient id="so-shadow" cx="68%" cy="65%" r="55%">
-            <stop offset="0%"   stopColor="#0f172a" stopOpacity="0.40" />
-            <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
-          </radialGradient>
-
-          {/* Globe highlight */}
-          <radialGradient id="so-shine" cx="28%" cy="22%" r="45%">
-            <stop offset="0%"   stopColor="white" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </radialGradient>
-
-          {/* Clip to globe circle */}
-          <clipPath id="so-clip">
-            <circle cx="250" cy="250" r="190" />
-          </clipPath>
-
-          {/* Subtle grid */}
-          <pattern id="so-grid" x="0" y="0" width="38" height="38" patternUnits="userSpaceOnUse">
-            <path d="M 38 0 L 0 0 0 38" fill="none" stroke="white" strokeWidth="0.25" strokeOpacity="0.07" />
-          </pattern>
-        </defs>
-
-        {/* ── Drop shadow */}
-        <circle cx="255" cy="258" r="188" fill="#0f172a" fillOpacity="0.30" />
-
-        {/* ── Ocean */}
-        <circle cx="250" cy="250" r="190" fill="url(#so-ocean)" />
-
-        {/* ── Grid overlay (lat/lon feel) */}
-        <circle cx="250" cy="250" r="190" fill="url(#so-grid)" clipPath="url(#so-clip)" />
-
-        {/* ── Land masses */}
-        <g clipPath="url(#so-clip)" fill="url(#so-land)" stroke="#4a7c35" strokeWidth="0.6" strokeOpacity="0.7">
-          {LAND_PATHS.map((d, i) => (
-            <path key={i} d={d} />
-          ))}
-        </g>
-
-        {/* ── 3D shadow overlay */}
-        <circle cx="250" cy="250" r="190" fill="url(#so-shadow)" clipPath="url(#so-clip)" />
-
-        {/* ── Atmosphere glow ring */}
-        <circle cx="250" cy="250" r="190" fill="url(#so-atm)" />
-
-        {/* ── Highlight (top-left sheen) */}
-        <circle cx="250" cy="250" r="190" fill="url(#so-shine)" clipPath="url(#so-clip)" />
-
-        {/* ── Globe rim */}
-        <circle cx="250" cy="250" r="190" fill="none" stroke="#93c5fd" strokeWidth="1.2" strokeOpacity="0.55" />
-
-        {/* ── Country labels embedded on map */}
-        {COUNTRIES.map(({ name, x, y }) => {
-          const charW = 5.8;
-          const pad = 4;
-          const w = name.length * charW + pad * 2;
-          const h = 14;
-          return (
-            <g key={name}>
-              {/* Pin dot */}
-              <circle cx={x} cy={y} r="3" fill="#f59e0b" stroke="white" strokeWidth="1" />
-              {/* Label box */}
-              <rect
-                x={x - w / 2} y={y - h - 6}
-                width={w} height={h} rx="3"
-                fill="rgba(10, 20, 40, 0.82)"
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth="0.6"
-              />
-              {/* Label text */}
-              <text
-                x={x} y={y - h/2 - 6 + 4.5}
-                fontSize="7.2"
-                fill="white"
-                fontFamily="system-ui, -apple-system, sans-serif"
-                fontWeight="600"
-                textAnchor="middle"
-                letterSpacing="0.3"
-              >
-                {name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
+    <div
+      ref={mountRef}
+      style={{ position: 'relative', width: size, height: size, cursor: 'grab', borderRadius: '50%' }}
+    />
   );
 }
