@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
 const GOLD = '#c9a84c';
-const GOLD_ARC = '#c9a84c';
 
 const LOCATIONS = [
   { name: 'Mexico',      lat: 23.6,  lng: -102.5 },
@@ -46,8 +45,8 @@ export default function GlobeVisualization() {
         endLng:   LOCATIONS[j].lng,
       }));
 
-      const w = containerRef.current.offsetWidth  || 520;
-      const h = containerRef.current.offsetHeight || 520;
+      const w = containerRef.current.offsetWidth  || 624;
+      const h = containerRef.current.offsetHeight || 624;
 
       const root = ReactDOM.createRoot(mount);
       rootRef.current = root;
@@ -60,33 +59,39 @@ export default function GlobeVisualization() {
           globeImageUrl: 'https://unpkg.com/three-globe@2.31.2/example/img/earth-night.jpg',
           bumpImageUrl:  'https://unpkg.com/three-globe@2.31.2/example/img/earth-topology.png',
           atmosphereColor: GOLD,
-          atmosphereAltitude: 0.20,
-          // Points (glowing dots)
+          atmosphereAltitude: 0.28,
+
+          // Glowing gold point markers
           pointsData: LOCATIONS,
           pointLat: 'lat',
           pointLng: 'lng',
           pointColor: () => GOLD,
-          pointAltitude: 0.02,
-          pointRadius: 0.7,
+          pointAltitude: 0.03,
+          pointRadius: 1.1,
           pointsMerge: false,
-          // Arcs (gold lines)
+          pointResolution: 16,
+
+          // Gold arc lines
           arcsData,
-          arcColor: () => GOLD_ARC,
+          arcColor: () => GOLD,
           arcAltitude: 0.25,
-          arcStroke: 0.55,
+          arcStroke: 0.6,
           arcDashLength: 0.55,
           arcDashGap: 0.2,
           arcDashAnimateTime: 2800,
-          // Labels
+
+          // Floating white country labels
           labelsData: LOCATIONS,
           labelLat: 'lat',
           labelLng: 'lng',
           labelText: 'name',
-          labelSize: 1.3,
-          labelColor: () => GOLD,
-          labelAltitude: 0.035,
-          labelDotRadius: 0.45,
+          labelSize: 1.6,
+          labelColor: () => 'rgba(255,255,255,0.92)',
+          labelAltitude: 0.055,
+          labelDotRadius: 0.55,
           labelDotOrientation: () => 'bottom',
+          labelResolution: 3,
+
           // Rotation
           autoRotate: true,
           autoRotateSpeed: 0.35,
@@ -100,9 +105,7 @@ export default function GlobeVisualization() {
     return () => {
       destroyed = true;
       if (rootRef.current) {
-        setTimeout(() => {
-          try { rootRef.current.unmount(); } catch (_) {}
-        }, 0);
+        setTimeout(() => { try { rootRef.current.unmount(); } catch (_) {} }, 0);
       }
       if (mountRef.current && containerRef.current) {
         try { containerRef.current.removeChild(mountRef.current); } catch (_) {}
@@ -112,6 +115,15 @@ export default function GlobeVisualization() {
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
+
+      {/* Gold radial glow behind the globe */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse 55% 55% at 50% 50%, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.06) 45%, transparent 70%)',
+        pointerEvents: 'none',
+        zIndex: 1,
+      }} />
+
       {/* Gold shield overlay */}
       <div style={{
         position: 'absolute', inset: 0,
@@ -119,15 +131,15 @@ export default function GlobeVisualization() {
         pointerEvents: 'none', zIndex: 10,
       }}>
         <div style={{
-          width: 88, height: 88, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(201,168,76,0.22) 0%, transparent 70%)',
+          width: 96, height: 96, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(201,168,76,0.25) 0%, transparent 70%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          filter: 'drop-shadow(0 0 32px rgba(201,168,76,0.85))',
+          filter: 'drop-shadow(0 0 40px rgba(201,168,76,0.95))',
         }}>
-          <svg width="54" height="54" viewBox="0 0 24 24" fill="none">
+          <svg width="58" height="58" viewBox="0 0 24 24" fill="none">
             <path
               d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V6L12 2Z"
-              fill="rgba(201,168,76,0.18)"
+              fill="rgba(201,168,76,0.2)"
               stroke={GOLD}
               strokeWidth="1.3"
             />
@@ -140,7 +152,7 @@ export default function GlobeVisualization() {
         </div>
       </div>
 
-      {/* SAFE-T4LIFE top label */}
+      {/* SAFE-T4LIFE header */}
       <div style={{
         position: 'absolute', top: 14, left: 0, right: 0,
         textAlign: 'center', zIndex: 11, pointerEvents: 'none',

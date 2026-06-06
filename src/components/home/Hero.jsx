@@ -168,16 +168,9 @@ export default function Hero() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.3 }}
           className="w-full lg:w-[40%] relative flex items-center justify-center"
-          style={{ minHeight: 400 }}
+          style={{ minHeight: 480 }}
         >
-          <div
-            style={{
-              position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at center, rgba(201,168,76,0.10) 0%, transparent 68%)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div style={{ width: '100%', height: '100%', minHeight: 420, maxHeight: 660, position: 'relative' }}>
+          <div style={{ width: '100%', height: '100%', minHeight: 504, maxHeight: 792, position: 'relative' }}>
             <GlobeVisualization />
           </div>
         </motion.div>
