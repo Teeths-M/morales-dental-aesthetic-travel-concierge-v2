@@ -51,22 +51,36 @@ export default function AssessmentFlow() {
         {/* Background static line */}
         <div className="hidden lg:block absolute top-8 left-[8%] right-[8%] h-px bg-white/10" />
 
-        {/* Animated glowing line */}
+        {/* Animated glowing lines - forward and return (door-to-door) */}
         <div className="hidden lg:block absolute top-8 left-[8%] right-[8%] h-px overflow-hidden">
+          {/* Forward line - left to right */}
           <motion.div
-            className="h-full origin-left"
+            className="absolute h-full origin-left"
             style={{
               background: 'linear-gradient(90deg, hsl(30,35%,49%), hsl(156,28%,40%), hsl(30,35%,49%))',
               boxShadow: '0 0 8px 2px hsl(30,35%,49%,0.6)',
             }}
             initial={{ scaleX: 0 }}
-            animate={lineControls}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1.4, ease: 'easeInOut' }}
+          />
+          {/* Return line - right to left (door-to-door experience) */}
+          <motion.div
+            className="absolute h-full origin-right"
+            style={{
+              background: 'linear-gradient(90deg, hsl(30,35%,49%), hsl(156,28%,40%), hsl(30,35%,49%))',
+              boxShadow: '0 0 8px 2px hsl(30,35%,49%,0.6)',
+            }}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1.4, ease: 'easeInOut', delay: 1.4 }}
           />
         </div>
 
-        {/* Traveling pulse dot */}
+        {/* Traveling pulse dot - forward and return journey */}
         {isInView && (
           <div className="hidden lg:block absolute top-[26px] left-[8%] right-[8%] h-4 pointer-events-none">
+            {/* Forward journey */}
             <motion.div
               className="absolute w-4 h-4 -translate-y-1/2 top-1/2 rounded-full"
               style={{
@@ -76,6 +90,17 @@ export default function AssessmentFlow() {
               initial={{ left: '0%' }}
               animate={{ left: '100%' }}
               transition={{ duration: 1.4, ease: 'easeInOut', delay: 0 }}
+            />
+            {/* Return journey - door-to-door */}
+            <motion.div
+              className="absolute w-4 h-4 -translate-y-1/2 top-1/2 rounded-full"
+              style={{
+                background: 'hsl(30,35%,60%)',
+                boxShadow: '0 0 12px 4px hsl(30,35%,49%,0.8)',
+              }}
+              initial={{ left: '100%' }}
+              animate={{ left: '0%' }}
+              transition={{ duration: 1.4, ease: 'easeInOut', delay: 1.4 }}
             />
           </div>
         )}
