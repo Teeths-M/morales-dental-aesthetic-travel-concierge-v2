@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/lib/AuthContext';
 import GlobeVisualization from './GlobeVisualization';
 
 const GOLD = '#c9a84c';
@@ -39,7 +38,6 @@ const BADGES = [
 
 export default function Hero() {
   const [language, setLanguage] = useState('en');
-  const { navigateToLogin } = useAuth();
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -52,39 +50,8 @@ export default function Hero() {
   return (
     <section
       style={{ background: '#0a0a0a', minHeight: '100vh' }}
-      className="relative overflow-hidden flex flex-col"
+      className="relative overflow-hidden flex flex-col pt-[72px]"
     >
-      {/* Top nav bar */}
-      <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-sm flex items-center justify-center" style={{ background: GOLD }}>
-            <span className="text-black font-bold text-sm">M</span>
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm leading-none">MORALES</p>
-            <p style={{ color: GOLD }} className="text-[9px] font-semibold tracking-widest leading-tight">
-              DENTAL & AESTHETIC<br />TRAVEL CONCIERGE
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
-            className="hidden sm:flex h-9 rounded-full border-white/30 bg-transparent text-white text-xs font-semibold hover:bg-white/10"
-          >
-            Register
-          </Button>
-          <Button
-            onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
-            className="h-9 rounded-full px-5 text-xs font-bold"
-            style={{ background: GOLD, color: '#0a0a0a' }}
-          >
-            Book a Consultation
-          </Button>
-        </div>
-      </div>
-
       {/* Main layout: LEFT text | CENTER globe | RIGHT feature cards */}
       <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0">
 

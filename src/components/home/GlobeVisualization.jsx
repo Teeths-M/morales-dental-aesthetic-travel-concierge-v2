@@ -58,7 +58,7 @@ export default function GlobeVisualization() {
         globeImageUrl: 'https://unpkg.com/three-globe@2.31.2/example/img/earth-night.jpg',
         bumpImageUrl:  'https://unpkg.com/three-globe@2.31.2/example/img/earth-topology.png',
         atmosphereColor: GOLD,
-        atmosphereAltitude: 0.28,
+        atmosphereAltitude: 0.35,
 
         // Start centered on the Americas/Atlantic
         pointOfView: { lat: 5, lng: -60, altitude: 1.8 },
@@ -68,10 +68,10 @@ export default function GlobeVisualization() {
         pointLat: 'lat',
         pointLng: 'lng',
         pointColor: () => GOLD,
-        pointAltitude: 0.03,
-        pointRadius: 1.2,
-        pointsMerge: false,
-        pointResolution: 16,
+          pointAltitude: 0.04,
+          pointRadius: 1.5,
+          pointsMerge: false,
+          pointResolution: 24,
 
         // Gold arc lines
         arcsData,
@@ -138,7 +138,7 @@ export default function GlobeVisualization() {
           width: 96, height: 96, borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(201,168,76,0.25) 0%, transparent 70%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          filter: 'drop-shadow(0 0 40px rgba(201,168,76,0.95))',
+          filter: 'drop-shadow(0 0 56px rgba(201,168,76,1)) drop-shadow(0 0 20px rgba(201,168,76,0.6))',
         }}>
           <svg width="58" height="58" viewBox="0 0 24 24" fill="none">
             <path
