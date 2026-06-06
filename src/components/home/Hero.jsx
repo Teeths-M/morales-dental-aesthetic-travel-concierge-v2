@@ -60,33 +60,61 @@ function _grid(la0, la1, lo0, lo1, s) {
 }
 
 const _LAND_LL = [
-  ..._grid(18, 30, -118, -88, 3),    // Mexico
-  ..._grid(8,  18, -92,  -78, 2.5),  // Central America
-  ..._grid(10, 24, -85,  -64, 3.5),  // Caribbean
-  ..._grid(0,  12, -80,  -62, 3),    // Colombia / Venezuela
-  ..._grid(-35, 5, -75,  -34, 3.5),  // South America
-  ..._grid(36, 62,  -9,   28, 3.5),  // Western Europe
-  ..._grid(45, 65,  28,   58, 3.5),  // E Europe / W Russia
-  ..._grid(36, 42,  26,   46, 3),    // Turkey / Caucasus
-  ..._grid(14, 38,  35,   62, 3.5),  // Middle East
-  ..._grid(-5, 38, -18,   16, 3),    // West Africa
-  ..._grid(-30,14,  12,   50, 3.5),  // Central / East Africa
-  ..._grid(-35,-22, 16,   33, 3),    // Southern Africa
-  ..._grid(8,  30,  68,   88, 3),    // India
-  ..._grid(0,  24,  97,  120, 3),    // SE Asia
-  ..._grid(26, 46, 120,  145, 3),    // Korea / Japan
-  ..._grid(20, 42, 100,  122, 3.5),  // China
+  // ── North America ──
+  ..._grid(14, 32, -119, -87, 1.3),   // Mexico (dense)
+  ..._grid(7,  15, -92,  -77, 1.2),   // Central America
+  ..._grid(25, 37, -98,  -74, 1.8),   // S USA / Gulf Coast
+  // ── Caribbean ──
+  ..._grid(19.5,23,  -85, -73.5, 1.0), // Cuba
+  ..._grid(18,  20,  -74, -68,   1.0), // Hispaniola
+  ..._grid(17.7,18.5,-78, -75.8, 0.8), // Jamaica
+  ..._grid(17.9,18.5,-67.5,-64.9,0.8), // Puerto Rico
+  ..._grid(10,  11.5,-62, -60,   0.8), // Trinidad & Tobago
+  ..._grid(12,  18,  -62, -59,   1.0), // Lesser Antilles chain
+  ..._grid(12.5,13.5,-61.5,-60.5,0.7), // Barbados / St Lucia
+  // ── South America ──
+  ..._grid(0,   12, -82, -60, 1.4),    // Colombia / Venezuela
+  ..._grid(-5,   0, -82, -48, 1.5),    // Ecuador / N Brazil
+  ..._grid(-22,  -5,-76, -34, 1.5),    // Brazil
+  ..._grid(-35, -22,-73, -42, 1.5),    // Argentina / Chile N
+  ..._grid(-55, -35,-70, -54, 1.7),    // Patagonia / S tip
+  ..._grid(-22,  -5,-76, -60, 1.5),    // Bolivia / Peru
+  // ── Europe ──
+  ..._grid(36, 44, -10,  4,  1.3),     // Iberian Peninsula
+  ..._grid(43, 52,  -5, 15,  1.5),     // France / Germany / Benelux
+  ..._grid(50, 62,  -6, 10,  1.5),     // UK / Ireland
+  ..._grid(55, 71,   4, 30,  1.7),     // Scandinavia
+  ..._grid(37, 48,  11, 28,  1.3),     // Italy / Balkans
+  ..._grid(46, 58,  14, 35,  1.5),     // Central / Eastern Europe
+  ..._grid(55, 65,  28, 60,  1.8),     // W Russia
+  ..._grid(60, 68,  25, 48,  1.8),     // Finland / Baltic region
+  // ── Africa ──
+  ..._grid(15, 37, -17,  12, 1.5),     // NW Africa (Morocco → Algeria)
+  ..._grid(15, 32,   8,  38, 1.7),     // NE Africa / Sudan
+  ..._grid(-5, 15, -17,  15, 1.3),     // West Africa (dense coastline)
+  ..._grid(-5, 15,   8,  42, 1.5),     // Central / East Africa
+  ..._grid(-35, -5,  14, 38, 1.5),     // Southern Africa
+  ..._grid(-26,-12,  43, 51, 1.2),     // Madagascar
+  // ── Middle East ──
+  ..._grid(36, 42,  26, 45, 1.3),      // Turkey / Caucasus
+  ..._grid(29, 42,  34, 65, 1.5),      // Levant / Iraq / Iran
+  ..._grid(12, 29,  36, 58, 1.5),      // Arabian Peninsula
+  // ── Asia (visible portion) ──
+  ..._grid(8,  35,  60, 90, 1.5),      // India / Pakistan
+  ..._grid(-5, 25,  90,110, 1.7),      // SE Asia W (Myanmar / Thailand)
+  ..._grid(0,  20,  95,120, 1.7),      // Indochina / Malaysia
+  ..._grid(18, 45,  70,105, 1.8),      // China W / Central Asia
 ];
 
 const LAND_DOTS = _LAND_LL.map(([la, lo]) => {
   const φ = la * _R, λ = lo * _R;
   const cosC = _SLC * Math.sin(φ) + _CLC * Math.cos(φ) * Math.cos(λ - _LOC);
-  if (cosC < 0.06) return null;
+  if (cosC < 0.04) return null;
   const x = 250 + 190 * Math.cos(φ) * Math.sin(λ - _LOC);
   const y = 250 - 190 * (_CLC * Math.sin(φ) - _SLC * Math.cos(φ) * Math.cos(λ - _LOC));
   const dx = x - 250, dy = y - 250;
-  if (dx * dx + dy * dy > 190 * 190) return null;
-  return { x, y, a: Math.min(0.62, cosC * 0.68 + 0.07) };
+  if (dx * dx + dy * dy > 187 * 187) return null;
+  return { x, y, a: Math.min(0.82, cosC * 0.9 + 0.12), b: cosC > 0.5 };
 }).filter(Boolean);
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -98,10 +126,10 @@ function SafeTGlobe({ shieldState }) {
     <div className="relative w-full" style={{ maxWidth: 480, margin: '0 auto' }}>
       <svg viewBox="0 0 500 500" width="100%" style={{ overflow: 'visible' }}>
         <defs>
-          <radialGradient id="globeBase" cx="38%" cy="32%" r="70%">
-            <stop offset="0%" stopColor="#1e3a70" />
-            <stop offset="55%" stopColor="#0b1635" />
-            <stop offset="100%" stopColor="#030b18" />
+          <radialGradient id="globeBase" cx="35%" cy="28%" r="75%">
+            <stop offset="0%" stopColor="#1a3060" />
+            <stop offset="45%" stopColor="#081228" />
+            <stop offset="100%" stopColor="#020810" />
           </radialGradient>
           <filter id="shieldGlow" x="-80%" y="-80%" width="360%" height="360%">
             <feGaussianBlur stdDeviation="22" result="blur1" />
@@ -148,19 +176,29 @@ function SafeTGlobe({ shieldState }) {
           `}</style>
         </defs>
 
+        {/* Outer atmosphere glow */}
+        <circle cx="250" cy="250" r="196" fill="none" stroke="#D4AF37" strokeWidth="8" strokeOpacity="0.04" />
         {/* Atmosphere rings */}
-        <circle cx="250" cy="250" r="222" fill="none" stroke="#D4AF37" strokeWidth="1"   opacity="0.14" />
-        <circle cx="250" cy="250" r="208" fill="none" stroke="#D4AF37" strokeWidth="0.6" opacity="0.09" />
+        <circle cx="250" cy="250" r="222" fill="none" stroke="#D4AF37" strokeWidth="1"   opacity="0.16" />
+        <circle cx="250" cy="250" r="208" fill="none" stroke="#D4AF37" strokeWidth="0.7" opacity="0.1" />
 
-        {/* Globe body — transparent so sunset bleeds through */}
-        <circle cx="250" cy="250" r="190" fill="transparent" stroke="#D4AF37" strokeWidth="1" strokeOpacity="0.35" />
+        {/* Globe body — deep dark navy fill */}
+        <circle cx="250" cy="250" r="190" fill="url(#globeBase)" stroke="#D4AF37" strokeWidth="1" strokeOpacity="0.35" />
 
-        {/* 0) Landmass golden dot matrix */}
-        <g opacity="0.85">
+        {/* 0) Landmass golden dot matrix — dense continental fill */}
+        <g>
           {LAND_DOTS.map((d, i) => (
-            <circle key={i} cx={d.x} cy={d.y} r="1.5"
-              fill="#D4AF37" fillOpacity={d.a}
-              style={{ filter: 'drop-shadow(0 0 1.5px rgba(212,175,55,0.7))' }}
+            <circle key={i} cx={d.x} cy={d.y} r={d.b ? 1.8 : 1.2}
+              fill={d.b ? '#FFD96A' : '#D4AF37'}
+              fillOpacity={d.a}
+            />
+          ))}
+        </g>
+        {/* Bright highlight dots on forward-facing landmass */}
+        <g opacity="0.6">
+          {LAND_DOTS.filter(d => d.b && Math.random() > 0.65).map((d, i) => (
+            <circle key={i} cx={d.x} cy={d.y} r="2.8"
+              fill="#FFE08A" fillOpacity="0.22"
             />
           ))}
         </g>
@@ -180,25 +218,45 @@ function SafeTGlobe({ shieldState }) {
           ))}
         </g>
 
-        {/* 3) Data-flow connection lines */}
+        {/* 3a) Country-to-country mesh lines */}
+        {COUNTRIES.map((a, i) =>
+          COUNTRIES.slice(i + 1).map((b, j) => {
+            const dist = Math.hypot(a.cx - b.cx, a.cy - b.cy);
+            if (dist > 220) return null;
+            return (
+              <line key={`${i}-${j}`}
+                x1={a.cx} y1={a.cy} x2={b.cx} y2={b.cy}
+                stroke={GOLD} strokeWidth="0.5" opacity="0.18"
+              />
+            );
+          })
+        )}
+        {/* 3b) Data-flow lines to center shield */}
         {COUNTRIES.map((c, i) => (
           <line key={i} className="flow-line"
-            x1={c.cx} y1={c.cy} x2="250" y2="250"
-            stroke={GOLD} strokeWidth="1.1" opacity="0.55"
-            style={{ animationDelay: `${i * 0.5}s` }}
+            x1={c.cx} y1={c.cy} x2="250" y2="244"
+            stroke={GOLD} strokeWidth="1.2" opacity="0.6"
+            style={{ animationDelay: `${i * 0.45}s` }}
           />
         ))}
 
-        {/* 2) Pulsing country dots */}
+        {/* 2) Pulsing country dots — large glowing nodes */}
         {COUNTRIES.map((c, i) => (
-          <motion.g key={i} filter="url(#dotGlow)"
-            animate={{ scale: [1, 1.4, 1] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
+          <motion.g key={i}
+            animate={{ scale: [1, 1.45, 1] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.28 }}
             style={{ transformOrigin: `${c.cx}px ${c.cy}px`, transformBox: 'fill-box' }}
           >
-            <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} opacity="0.12" />
-            <circle cx={c.cx} cy={c.cy} r="5"   fill={GOLD} opacity="0.92" />
-            <circle cx={c.cx} cy={c.cy} r="2.5" fill="#f8e690" opacity="0.95" />
+            {/* Outer halo */}
+            <circle cx={c.cx} cy={c.cy} r="18" fill={GOLD} fillOpacity="0.07" />
+            {/* Mid glow ring */}
+            <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} fillOpacity="0.18" />
+            {/* Inner bright ring */}
+            <circle cx={c.cx} cy={c.cy} r="6.5" fill={GOLD} fillOpacity="0.55" />
+            {/* Core */}
+            <circle cx={c.cx} cy={c.cy} r="3.2" fill="#FFE999" fillOpacity="1" />
+            {/* Specular */}
+            <circle cx={c.cx - 1} cy={c.cy - 1} r="1.2" fill="white" fillOpacity="0.9" />
           </motion.g>
         ))}
 
