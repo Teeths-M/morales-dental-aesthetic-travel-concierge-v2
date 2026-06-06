@@ -321,9 +321,9 @@ function SafeTGlobe({ shieldState }) {
             fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
           />
 
-          {/* Simple heart */}
+          {/* Simple cross */}
           <path
-            d="M250 268 C250 268 228 250 228 232 C228 220 238 212 250 212 C262 212 272 220 272 232 C272 250 250 268 250 268 Z"
+            d="M242 228 L258 228 L258 244 L274 244 L274 260 L258 260 L258 276 L242 276 L242 260 L226 260 L226 244 L242 244 Z"
             fill="white" opacity="0.96"
           />
         </motion.g>
