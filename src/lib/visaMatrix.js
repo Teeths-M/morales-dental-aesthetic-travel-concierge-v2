@@ -17,7 +17,7 @@ const EU_WESTERN = [
 
 const CARICOM = [
   // T&T stored as country name since nationality list update
-  'Trinidad and Tobago', 'Trinidadian',
+  'Trinidad and Tobago', 'Trinidadian', 'Republic of Trinidad and Tobago',
   'Jamaican', 'Barbadian', 'Grenadian',
   // Both forms for Antigua
   'Antiguans', 'Antiguan',
@@ -198,10 +198,39 @@ function matchesList(value, list) {
   return list.some(item => item.toLowerCase() === v);
 }
 
+// ── Official name → short name normalizer ────────────────────────────────────
+// Passport OCR and form inputs may return full official country names.
+// Normalize them to the short names used in the matrix above.
+const OFFICIAL_NAME_MAP = {
+  'republic of trinidad and tobago': 'Trinidad and Tobago',
+  'bolivarian republic of venezuela': 'Venezuela',
+  'republic of venezuela': 'Venezuela',
+  'republic of colombia': 'Colombia',
+  'united states of america': 'American',
+  'united kingdom of great britain and northern ireland': 'British',
+  'republic of india': 'Indian',
+  'people\'s republic of china': 'Chinese',
+  'republic of south africa': 'South African',
+  'federal republic of nigeria': 'Nigerian',
+  'republic of kenya': 'Kenyan',
+  'republic of ghana': 'Ghanaian',
+  'republic of the philippines': 'Filipino',
+  'republic of indonesia': 'Indonesian',
+  'kingdom of thailand': 'Thai',
+  'socialist republic of viet nam': 'Vietnamese',
+  'islamic republic of pakistan': 'Pakistani',
+  'people\'s republic of bangladesh': 'Bangladeshi',
+};
+
+function normalizeOrigin(value) {
+  const lower = value.trim().toLowerCase();
+  return OFFICIAL_NAME_MAP[lower] || value.trim();
+}
+
 // ── Main export ─────────────────────────────────────────────────────────────
 export function checkVisaRequirement(originNationality, procedureCountry) {
   if (!originNationality || !procedureCountry) return 'unknown';
-  const origin = originNationality.trim();
+  const origin = normalizeOrigin(originNationality);
   const dest = procedureCountry.trim();
 
   // Same country → always exempt (e.g. Venezuelan going to Venezuela)
