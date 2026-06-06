@@ -50,11 +50,23 @@ export default function Hero() {
 
   return (
     <section
-      style={{ background: '#0a0a0a', minHeight: '100vh' }}
+      style={{ minHeight: '100vh', position: 'relative' }}
       className="relative overflow-hidden flex flex-col pt-[72px]"
     >
+      {/* Warm sunset background */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1800&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center 40%',
+      }} />
+      {/* Dark overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        background: 'rgba(4,6,8,0.78)',
+      }} />
       {/* Main layout: LEFT text | CENTER globe | RIGHT feature cards */}
-      <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0">
+      <div className="relative z-10 flex flex-col lg:flex-row flex-1 min-h-0" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── LEFT: Text content (35%) ── */}
         <motion.div
@@ -64,8 +76,8 @@ export default function Hero() {
           className="w-full lg:w-[35%] flex flex-col justify-center px-6 sm:px-10 py-10 lg:py-14"
         >
           <h1
-            className="font-display text-4xl sm:text-5xl text-white leading-[1.05] mb-5"
-            style={{ letterSpacing: '-0.02em' }}
+            className="font-display text-5xl sm:text-6xl lg:text-7xl text-white leading-[1.02] mb-5"
+            style={{ letterSpacing: '-0.03em' }}
           >
             {language === 'es'
               ? 'Tu cuidado seguro comienza aquí.'
