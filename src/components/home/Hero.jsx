@@ -134,6 +134,13 @@ function SafeTGlobe({ shieldState }) {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          <filter id="greenGlow" x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
           <linearGradient id="shieldGold" x1="15%" y1="0%" x2="85%" y2="100%">
             <stop offset="0%" stopColor={sColor} stopOpacity="0.95" />
             <stop offset="60%" stopColor={sColor} stopOpacity="0.8" />
@@ -162,6 +169,14 @@ function SafeTGlobe({ shieldState }) {
               0%, 100% { opacity: 0.55; }
               50%       { opacity: 1; }
             }
+            @keyframes scanRotate {
+              from { transform: rotate(0deg); }
+              to   { transform: rotate(360deg); }
+            }
+            @keyframes countryHop {
+              0%, 100% { opacity: 0.3; }
+              50% { opacity: 1; }
+            }
             .globe-grid {
               transform-origin: 250px 250px;
               animation: globeSpin 50s linear infinite;
@@ -179,6 +194,10 @@ function SafeTGlobe({ shieldState }) {
             }
             .shield-bloom {
               animation: shieldBloom 2.4s ease-in-out infinite;
+            }
+            .scan-line {
+              transform-origin: 250px 250px;
+              animation: scanRotate 4s linear infinite;
             }
           `}</style>
         </defs>
@@ -330,6 +349,44 @@ function SafeTGlobe({ shieldState }) {
 
         {/* Globe rim */}
         <circle cx="250" cy="250" r="190" fill="none" stroke="#D4AF37" strokeWidth="1.5" opacity="0.45" />
+
+        {/* Green scanning line - rotates 360° every 4 seconds */}
+        <g className="scan-line">
+          <line
+            x1="250" y1="250"
+            x2="430" y2="250"
+            stroke="#22c55e"
+            strokeWidth="2.5"
+            opacity="0.7"
+            strokeLinecap="round"
+            filter="url(#greenGlow)"
+          />
+        </g>
+
+        {/* Green jumping dot - visits each country in sequence */}
+        {COUNTRIES.map((c, i) => (
+          <motion.circle
+            key={`hop-${i}`}
+            cx={c.cx}
+            cy={c.cy}
+            r="5"
+            fill="#22c55e"
+            opacity="0.95"
+            filter="url(#greenGlow)"
+            initial={{ scale: 1, opacity: 0.3 }}
+            animate={{
+              scale: [1, 1.4, 1],
+              opacity: [0.3, 1, 0.3],
+              r: [5, 7, 5]
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: Infinity,
+              delay: i * 0.5,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
       </svg>
     </div>
   );
