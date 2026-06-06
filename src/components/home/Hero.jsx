@@ -619,9 +619,9 @@ export default function Hero() {
                 <div className="min-w-0">
                   <motion.p
                     className="font-semibold text-sm"
-                    style={{ color: '#FFFFFF' }}
-                    animate={{ color: '#FFFFFF' }}
-                    whileHover={{ color: '#D4AF37' }}
+                    style={{ color: '#D4AF37' }}
+                    animate={{ color: '#D4AF37' }}
+                    whileHover={{ color: '#F5D85F' }}
                     transition={{ duration: 0.2 }}
                   >
                     {title}
