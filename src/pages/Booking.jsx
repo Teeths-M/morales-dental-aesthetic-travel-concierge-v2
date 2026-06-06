@@ -651,7 +651,7 @@ export default function Booking() {
       />
 
       <ConsultationFeeModal
-        form={form}
+        form={{ ...form, consultation_id: consultationId }}
         isOpen={showFeeModal}
         onSuccess={async (feeData) => {
           await saveUserOnboardingProfile({
