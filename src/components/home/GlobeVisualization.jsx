@@ -20,14 +20,14 @@ const ARCS = [
 ];
 
 const LABEL_POSITIONS = [
-  { name: 'Mexico',      x: -38, y: -25, side: 'left'  },
-  { name: 'Brazil',      x:  38, y:  30, side: 'right' },
-  { name: 'Colombia',    x: -42, y:   5, side: 'left'  },
-  { name: 'Costa Rica',  x: -46, y:  10, side: 'left'  },
-  { name: 'Venezuela',   x:  40, y:  -5, side: 'right' },
-  { name: 'Turkey',      x:  42, y: -28, side: 'right' },
-  { name: 'Thailand',    x:  44, y:   0, side: 'right' },
-  { name: 'South Korea', x:  46, y: -20, side: 'right' },
+  { name: 'Mexico',      x: -40, y: -26, side: 'left'  },
+  { name: 'Brazil',      x:  40, y:  32, side: 'right' },
+  { name: 'Colombia',    x: -44, y:   5, side: 'left'  },
+  { name: 'Costa Rica',  x: -48, y:  12, side: 'left'  },
+  { name: 'Venezuela',   x:  42, y:  -4, side: 'right' },
+  { name: 'Turkey',      x:  44, y: -30, side: 'right' },
+  { name: 'Thailand',    x:  46, y:   2, side: 'right' },
+  { name: 'South Korea', x:  48, y: -22, side: 'right' },
 ];
 
 export const SHIELD_STATES = [
@@ -57,27 +57,26 @@ export const SHIELD_STATES = [
   },
 ];
 
-// Random duration between 8-15 seconds
 function randDuration() {
   return 8000 + Math.random() * 7000;
 }
 
-function HeartHandsIcon({ color }) {
+function HeartHandsIcon({ color, size = 90 }) {
   return (
-    <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
       <path
         d="M24 4L6 11v11c0 10.5 7.5 20.3 18 22.5C34.5 42.3 42 32.5 42 22V11L24 4Z"
-        fill={`${color}22`}
+        fill={`${color}1a`}
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="1.8"
         strokeLinejoin="round"
       />
-      <path d="M16 28c0 0 1-2 3-2s2.5 1 3 2" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M26 28c0 0 1-2 3-2s2.5 1 3 2" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M16 28c0 0 1-2 3-2s2.5 1 3 2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M26 28c0 0 1-2 3-2s2.5 1 3 2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
       <path
         d="M24 32s-6-4-6-8.5C18 21 19.5 20 21 20c1 0 2 .7 3 1.5C25 20.7 26 20 27 20c1.5 0 3 1 3 3.5C30 28 24 32 24 32z"
         fill={color}
-        opacity="0.92"
+        opacity="0.95"
       />
     </svg>
   );
@@ -137,8 +136,8 @@ export default function GlobeVisualization({ onStateChange }) {
         endLng:   LOCATIONS[j].lng,
       }));
 
-      const w = containerRef.current.offsetWidth  || 718;
-      const h = containerRef.current.offsetHeight || 718;
+      const w = containerRef.current.offsetWidth  || 860;
+      const h = containerRef.current.offsetHeight || 860;
 
       const root = ReactDOM.createRoot(mount);
       rootRef.current = root;
@@ -150,39 +149,40 @@ export default function GlobeVisualization({ onStateChange }) {
         globeImageUrl: 'https://unpkg.com/three-globe@2.31.2/example/img/earth-night.jpg',
         bumpImageUrl:  'https://unpkg.com/three-globe@2.31.2/example/img/earth-topology.png',
         atmosphereColor: GOLD,
-        atmosphereAltitude: 0.35,
-        pointOfView: { lat: 5, lng: -60, altitude: 1.8 },
+        atmosphereAltitude: 0.38,
+        pointOfView: { lat: 5, lng: -60, altitude: 1.7 },
 
         pointsData: LOCATIONS,
         pointLat: 'lat',
         pointLng: 'lng',
         pointColor: () => GOLD,
-        pointAltitude: 0.04,
-        pointRadius: 1.5,
+        pointAltitude: 0.05,
+        pointRadius: 1.8,
         pointsMerge: false,
         pointResolution: 24,
 
         arcsData,
         arcColor: () => GOLD,
         arcAltitude: 0.25,
-        arcStroke: 0.65,
+        arcStroke: 0.7,
         arcDashLength: 0.55,
         arcDashGap: 0.2,
         arcDashAnimateTime: 2800,
 
+        // Gold labels on globe itself
         labelsData: LOCATIONS,
         labelLat: 'lat',
         labelLng: 'lng',
         labelText: 'name',
-        labelSize: 1.6,
-        labelColor: () => 'rgba(255,255,255,0.7)',
-        labelAltitude: 0.06,
-        labelDotRadius: 0.5,
+        labelSize: 1.8,
+        labelColor: () => GOLD,
+        labelAltitude: 0.07,
+        labelDotRadius: 0.7,
         labelDotOrientation: () => 'bottom',
         labelResolution: 4,
 
         autoRotate: true,
-        autoRotateSpeed: 0.35,
+        autoRotateSpeed: 0.32,
         enablePointerInteraction: false,
       });
 
@@ -207,33 +207,38 @@ export default function GlobeVisualization({ onStateChange }) {
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
 
-      {/* Gold radial glow */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 55% 55% at 50% 50%, rgba(201,168,76,0.18) 0%, rgba(201,168,76,0.06) 45%, transparent 70%)',
-        pointerEvents: 'none', zIndex: 1,
-      }} />
+      {/* Dynamic globe glow — changes with state */}
+      <motion.div
+        key={`glow-${state.key}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+          background: `radial-gradient(ellipse 60% 60% at 50% 50%, ${state.color}18 0%, ${state.color}06 40%, transparent 70%)`,
+        }}
+      />
 
-      {/* Cinematic scan sweep on transition */}
+      {/* Cinematic scan sweep */}
       <AnimatePresence>
         {scanning && (
           <motion.div
             key="scan"
-            initial={{ top: '-5%', opacity: 0.9 }}
-            animate={{ top: '105%', opacity: 0 }}
+            initial={{ top: '-5%', opacity: 1 }}
+            animate={{ top: '108%', opacity: 0.2 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.85, ease: 'easeInOut' }}
+            transition={{ duration: 0.9, ease: 'easeInOut' }}
             style={{
-              position: 'absolute', left: 0, right: 0, height: '12%',
-              background: `linear-gradient(to bottom, transparent, ${state.color}30, transparent)`,
+              position: 'absolute', left: 0, right: 0, height: '14%',
+              background: `linear-gradient(to bottom, transparent, ${state.color}40, ${state.color}20, transparent)`,
               pointerEvents: 'none', zIndex: 15,
-              boxShadow: `0 0 40px 10px ${state.color}25`,
+              boxShadow: `0 0 60px 16px ${state.color}30`,
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* Floating country labels with pointer lines */}
+      {/* Floating country labels with gold dot + pointer lines */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 12 }}>
         {LABEL_POSITIONS.map(({ name, x, y, side }) => (
           <div
@@ -248,10 +253,12 @@ export default function GlobeVisualization({ onStateChange }) {
             <svg style={{ position: 'absolute', overflow: 'visible', left: 0, top: 0, pointerEvents: 'none' }} width="0" height="0">
               <line
                 x1="0" y1="0"
-                x2={side === 'left' ? '-28' : '28'} y2="0"
-                stroke={GOLD} strokeWidth="1" strokeDasharray="3,2" opacity="0.6"
+                x2={side === 'left' ? '-32' : '32'} y2="0"
+                stroke={GOLD} strokeWidth="1.2" strokeDasharray="4,2.5" opacity="0.7"
               />
-              <circle cx="0" cy="0" r="3" fill={GOLD} opacity="0.8" />
+              {/* Gold dot indicator */}
+              <circle cx="0" cy="0" r="3.5" fill={GOLD} opacity="0.9" />
+              <circle cx="0" cy="0" r="6" fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.4" />
             </svg>
             <div style={{
               position: 'absolute',
@@ -259,17 +266,17 @@ export default function GlobeVisualization({ onStateChange }) {
               right: side === 'left' ? '100%' : 'auto',
               top: '50%',
               transform: 'translateY(-50%)',
-              marginLeft: side === 'right' ? 8 : 0,
-              marginRight: side === 'left' ? 8 : 0,
+              marginLeft: side === 'right' ? 10 : 0,
+              marginRight: side === 'left' ? 10 : 0,
               whiteSpace: 'nowrap',
-              background: 'rgba(10,10,10,0.75)',
-              border: `1px solid ${GOLD}55`,
-              borderRadius: 4,
-              padding: '2px 7px',
-              fontSize: 10,
+              background: 'rgba(8,8,10,0.82)',
+              border: `1px solid ${GOLD}66`,
+              borderRadius: 5,
+              padding: '3px 9px',
+              fontSize: 11,
               fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '0.08em',
+              color: GOLD,
+              letterSpacing: '0.1em',
             }}>
               {name}
             </div>
@@ -277,72 +284,95 @@ export default function GlobeVisualization({ onStateChange }) {
         ))}
       </div>
 
-      {/* Animated shield overlay */}
+      {/* 3x Larger Shield overlay */}
       <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         pointerEvents: 'none', zIndex: 10,
       }}>
-        <motion.div
-          animate={{
-            filter: [
-              `drop-shadow(0 0 18px ${state.glow}) drop-shadow(0 0 40px ${state.color}55)`,
-              `drop-shadow(0 0 30px ${state.glow}) drop-shadow(0 0 64px ${state.color}80)`,
-              `drop-shadow(0 0 18px ${state.glow}) drop-shadow(0 0 40px ${state.color}55)`,
-            ],
-          }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'relative', width: 140, height: 140,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          {/* Pulsing color ring */}
+        <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+          {/* Outer pulsing ring 1 */}
           <motion.div
-            key={state.key}
+            key={`ring1-${state.key}`}
+            animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0.15, 0.5] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: `2px solid ${state.color}`,
+              boxShadow: `0 0 32px 8px ${state.color}50`,
+            }}
+          />
+
+          {/* Outer pulsing ring 2 — offset timing */}
+          <motion.div
+            key={`ring2-${state.key}`}
+            animate={{ scale: [1, 1.32, 1], opacity: [0.3, 0.05, 0.3] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+            style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: `1px solid ${state.color}`,
+              boxShadow: `0 0 50px 12px ${state.color}30`,
+            }}
+          />
+
+          {/* Core glow disc */}
+          <motion.div
+            key={`disc-${state.key}`}
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: [0.6, 1, 0.6],
+              scale: [0.95, 1.05, 0.95],
+            }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', inset: '15%', borderRadius: '50%',
+              background: `radial-gradient(circle, ${state.color}35 0%, ${state.color}10 50%, transparent 75%)`,
+              filter: `blur(6px)`,
+            }}
+          />
+
+          {/* Shield icon — large, gold */}
+          <motion.div
+            key={`icon-${state.key}`}
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
             style={{
-              position: 'absolute', inset: 0, borderRadius: '50%',
-              background: `radial-gradient(circle, ${state.color}28 0%, transparent 70%)`,
+              filter: `drop-shadow(0 0 20px ${state.glow}) drop-shadow(0 0 48px ${state.color}70)`,
+              zIndex: 2,
             }}
-          />
-          {/* Icon — gold shield, outer glow color changes */}
-          <motion.div
-            key={`icon-${state.key}`}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
           >
-            <HeartHandsIcon color={GOLD} />
+            <HeartHandsIcon color={GOLD} size={110} />
           </motion.div>
-          {/* Status micro-label */}
+
+          {/* State label below icon */}
           <motion.div
-            key={`label-${state.key}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            key={`micro-${state.key}`}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
             style={{
-              position: 'absolute', bottom: 10,
-              fontSize: 8, fontWeight: 800, letterSpacing: '0.2em',
+              position: 'absolute', bottom: 14,
+              fontSize: 9, fontWeight: 900, letterSpacing: '0.25em',
               color: state.color,
+              textShadow: `0 0 10px ${state.color}`,
             }}
           >
             {state.key.toUpperCase()}
           </motion.div>
-        </motion.div>
+        </div>
       </div>
 
       {/* SAFE-T4LIFE header */}
       <div style={{
-        position: 'absolute', top: 14, left: 0, right: 0,
+        position: 'absolute', top: 16, left: 0, right: 0,
         textAlign: 'center', zIndex: 11, pointerEvents: 'none',
       }}>
-        <p style={{ color: GOLD, fontSize: 13, fontWeight: 800, letterSpacing: '0.25em', margin: 0 }}>
+        <p style={{ color: GOLD, fontSize: 14, fontWeight: 900, letterSpacing: '0.28em', margin: 0, textShadow: `0 0 20px ${GOLD}80` }}>
           SAFE‑T4LIFE™
         </p>
-        <p style={{ color: 'rgba(201,168,76,0.5)', fontSize: 9, letterSpacing: '0.2em', margin: '2px 0 0' }}>
+        <p style={{ color: 'rgba(201,168,76,0.55)', fontSize: 9, letterSpacing: '0.22em', margin: '3px 0 0' }}>
           SAFETY INTELLIGENCE ENGINE
         </p>
       </div>
