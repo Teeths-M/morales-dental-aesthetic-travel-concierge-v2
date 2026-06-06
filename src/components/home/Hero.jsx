@@ -57,7 +57,7 @@ function SafeTGlobe({ shieldState }) {
   React.useEffect(() => {
     const timer = setInterval(() => {
       setActiveCountryIndex((prev) => (prev + 1) % COUNTRIES.length);
-    }, 250);
+    }, 400);
     return () => clearInterval(timer);
   }, []);
 
