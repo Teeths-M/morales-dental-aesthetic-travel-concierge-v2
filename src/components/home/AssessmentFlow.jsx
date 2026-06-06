@@ -61,7 +61,7 @@ export default function AssessmentFlow() {
               boxShadow: '0 0 8px 2px hsl(30,35%,49%,0.6)',
             }}
             initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
+            animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
             transition={{ duration: 1.4, ease: 'easeInOut' }}
           />
           {/* Return line - right to left (door-to-door experience) */}
@@ -72,7 +72,7 @@ export default function AssessmentFlow() {
               boxShadow: '0 0 8px 2px hsl(30,35%,49%,0.6)',
             }}
             initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
+            animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
             transition={{ duration: 1.4, ease: 'easeInOut', delay: 1.4 }}
           />
         </div>
@@ -88,8 +88,8 @@ export default function AssessmentFlow() {
                 boxShadow: '0 0 12px 4px hsl(30,35%,49%,0.8)',
               }}
               initial={{ left: '0%' }}
-              animate={{ left: '100%' }}
-              transition={{ duration: 1.4, ease: 'easeInOut', delay: 0 }}
+              animate={{ left: ['0%', '100%'] }}
+              transition={{ duration: 1.4, ease: 'easeInOut', repeat: Infinity, repeatDelay: 1.4 }}
             />
             {/* Return journey - door-to-door */}
             <motion.div
@@ -99,8 +99,8 @@ export default function AssessmentFlow() {
                 boxShadow: '0 0 12px 4px hsl(30,35%,49%,0.8)',
               }}
               initial={{ left: '100%' }}
-              animate={{ left: '0%' }}
-              transition={{ duration: 1.4, ease: 'easeInOut', delay: 1.4 }}
+              animate={{ left: ['100%', '0%'] }}
+              transition={{ duration: 1.4, ease: 'easeInOut', repeat: Infinity, repeatDelay: 1.4, delay: 1.4 }}
             />
           </div>
         )}
