@@ -284,15 +284,15 @@ function SafeTGlobe({ shieldState }) {
           </text>
         ))}
 
-        {/* Shield aura glow rings — stronger bloom */}
-        <circle cx="250" cy="244" r="110" fill="url(#shieldAura)" opacity="0.7" />
-        <circle cx="250" cy="244" r="95"  fill="url(#shieldAura)" opacity="1" />
-        <motion.circle cx="250" cy="244" r="82"
-          fill="none" stroke={sColor} strokeWidth="1.5"
-          animate={{ opacity: [0.15, 0.55, 0.15], r: [82, 88, 82] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        {/* Shield aura glow rings — soft premium green glow */}
+        <circle cx="250" cy="244" r="105" fill="url(#shieldAura)" opacity="0.55" />
+        <circle cx="250" cy="244" r="88"  fill="url(#shieldAura)" opacity="0.75" />
+        <motion.circle cx="250" cy="244" r="78"
+          fill="none" stroke={sColor} strokeWidth="2"
+          animate={{ opacity: [0.35, 0.65, 0.35] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <circle cx="250" cy="244" r="76"  fill="none" stroke={sColor} strokeWidth="0.8" opacity="0.3" />
+        <circle cx="250" cy="244" r="72"  fill="none" stroke={sColor} strokeWidth="1" opacity="0.4" />
 
         {/* Center shield — framer-motion pulse */}
         <motion.g
@@ -321,22 +321,10 @@ function SafeTGlobe({ shieldState }) {
             fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
           />
 
-          {/* Hands-and-heart icon */}
+          {/* Clean medical cross - white, centered */}
           <path
-            d="M224 268 Q218 262 218 254 Q218 246 225 244 Q228 243 230 246 Q232 250 230 258 Q228 266 224 268 Z"
-            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
-          />
-          <path
-            d="M276 268 Q282 262 282 254 Q282 246 275 244 Q272 243 270 246 Q268 250 270 258 Q272 266 276 268 Z"
-            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
-          />
-          <path
-            d="M224 268 Q240 280 250 283 Q260 280 276 268"
-            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
-          />
-          <path
-            d="M250 230 C250 230 236 219 236 209 C236 199 242 193 249 193 C251.5 193 253 194.5 253 194.5 C253 194.5 254.5 193 257 193 C264 193 270 199 270 209 C270 219 250 230 250 230 Z"
-            fill="white" opacity="0.96"
+            d="M244 218 L256 218 L256 240 L278 240 L278 252 L256 252 L256 274 L244 274 L244 252 L222 252 L222 240 L244 240 Z"
+            fill="#FFFFFF"
           />
         </motion.g>
 
