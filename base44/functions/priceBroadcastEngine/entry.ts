@@ -172,23 +172,61 @@ Deno.serve(async (req) => {
     }
 
     // Action: initiate_consultation_fee
+    // SECURITY: This action may NEVER mark a fee as paid. Paid state is set ONLY by stripePaymentWebhook.
+    // Mock/demo mode is gated behind MOCK_PAYMENTS_ENABLED=true.
     if (action === 'initiate_consultation_fee') {
-      const { user_email, procedure, destination, stripe_charge_id } = data;
+      const mockEnabled = Deno.env.get('MOCK_PAYMENTS_ENABLED') === 'true';
 
-      const fee = await base44.entities.ConsultationFee.create({
+      if (!mockEnabled) {
+        return Response.json({
+          error: 'Mock payment flow is disabled. Use chargeConsultationFee to initiate a real Stripe checkout session.',
+          code: 'MOCK_PAYMENTS_DISABLED',
+        }, { status: 403 });
+      }
+
+      // MOCK MODE ONLY: Creates a pending (unpaid) ConsultationFee record tagged as demo.
+      // Paid state must only be set by stripePaymentWebhook on a verified Stripe event.
+      const { user_email, procedure, destination } = data;
+      if (!user_email || !procedure || !destination) {
+        return Response.json({ error: 'user_email, procedure, and destination are required' }, { status: 400 });
+      }
+
+      const mockSessionId = `mock_session_${Date.now()}`;
+
+      const fee = await base44.asServiceRole.entities.ConsultationFee.create({
         email: user_email,
         procedure,
         destination,
         consultation_fee_amount: 49,
-        fee_paid: true,
-        fee_paid_at: new Date().toISOString(),
-        stripe_charge_id,
-        status: 'paid'
+        fee_paid: false,
+        status: 'pending',
+        is_demo: true,
+        exclude_from_revenue_reporting: true,
+        admin_notes: 'Created by priceBroadcastEngine mock mode — pending only, never auto-paid',
+      });
+
+      await base44.asServiceRole.entities.PaymentTransaction.create({
+        client_email: user_email,
+        stripe_session_id: mockSessionId,
+        event_type: 'consultation_fee.session_created',
+        status: 'session_created',
+        raw_amount: 49,
+        currency: 'usd',
+        metadata: {
+          fee_record_id: fee.id,
+          fee_type: 'consultation_fee_49',
+          is_demo: true,
+          mock_mode: true,
+        },
+        created_at: new Date().toISOString(),
       });
 
       return Response.json({
-        status: 'consultation_fee_created',
-        fee_id: fee.id
+        status: 'consultation_fee_pending',
+        fee_id: fee.id,
+        fee_paid: false,
+        mock_mode: true,
+        note: 'Fee is pending. Paid state is set only by stripePaymentWebhook after verified Stripe confirmation.',
       });
     }
 
