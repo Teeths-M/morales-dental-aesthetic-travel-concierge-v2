@@ -373,30 +373,14 @@ function SafeTGlobe({ shieldState }) {
           />
         </g>
 
-        {/* Green jumping dot - cycles through countries continuously */}
-        <motion.circle
+        {/* Green jumping dot - cycles through countries continuously (snaps instantly) */}
+        <circle
           cx={COUNTRIES[activeCountryIndex].cx}
           cy={COUNTRIES[activeCountryIndex].cy}
           r="6"
           fill="#22c55e"
           opacity="0.95"
           filter="url(#greenGlow)"
-          animate={{
-            scale: [1, 1.25, 1],
-            r: [6, 8, 6]
-          }}
-          transition={{
-            scale: {
-              duration: 0.5,
-              repeat: Infinity,
-              ease: "easeInOut"
-            },
-            r: {
-              duration: 0.5,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }
-          }}
         />
       </svg>
     </div>
