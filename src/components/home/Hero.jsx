@@ -102,8 +102,22 @@ function SafeTGlobe() {
         <circle cx="250" cy="250" r="222" fill="none" stroke={GOLD} strokeWidth="1"   opacity="0.08" />
         <circle cx="250" cy="250" r="208" fill="none" stroke={GOLD} strokeWidth="0.6" opacity="0.05" />
 
-        {/* Globe body */}
-        <circle cx="250" cy="250" r="190" fill="url(#globeBase)" stroke="#1e3a5f" strokeWidth="1.5" />
+        {/* Globe body — deep radial with warm core glow */}
+        <defs>
+          <radialGradient id="globeDeep" cx="42%" cy="36%" r="72%">
+            <stop offset="0%"   stopColor="#2a4a8a" />
+            <stop offset="30%"  stopColor="#112050" />
+            <stop offset="65%"  stopColor="#070f28" />
+            <stop offset="100%" stopColor="#020814" />
+          </radialGradient>
+          <radialGradient id="globeWarmCore" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="#c89030" stopOpacity="0.22" />
+            <stop offset="55%"  stopColor="#8a5a10" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="250" cy="250" r="190" fill="url(#globeDeep)" stroke="#1e3a5f" strokeWidth="1.5" />
+        <circle cx="250" cy="250" r="190" fill="url(#globeWarmCore)" />
 
         {/* 1) Rotating grid */}
         <g className="globe-grid">
@@ -290,7 +304,7 @@ export default function Hero() {
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7 }}
-            className="rounded-2xl border border-white/10 p-6 lg:p-8 backdrop-blur-md"
+            className="rounded-2xl border border-white/10 p-6 lg:p-7 pb-7 backdrop-blur-md overflow-visible"
             style={{ background: 'rgba(255,255,255,0.05)' }}
           >
             {/* Headline */}
@@ -450,7 +464,7 @@ export default function Hero() {
                 key={title}
                 variants={{ hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0 } }}
                 className={`rounded-2xl p-4 flex items-start gap-4 border border-white/[0.12]${i >= 2 ? ' hidden lg:flex' : ''}`}
-                style={{ background: 'rgba(10,15,30,0.55)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
+                style={{ background: 'rgba(18,20,34,0.45)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
               >
                 <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                   <Icon className="w-5 h-5 text-slate-300" />
