@@ -386,9 +386,16 @@ function SafeTGlobe({ shieldState }) {
             r: [6, 8, 6]
           }}
           transition={{
-            duration: 0.5,
-            repeat: Infinity,
-            ease: "easeInOut"
+            scale: {
+              duration: 0.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            },
+            r: {
+              duration: 0.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }
           }}
         />
       </svg>
