@@ -285,22 +285,20 @@ export default function Hero() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
-        <motion.div
+        {/* Centering wrapper — keeps translate(-50%,-50%) untouched by framer-motion */}
+        <div
           className="pointer-events-none absolute"
-          initial={{ opacity: 0, scale: 0.72 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          style={{
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 480,
-            height: 480,
-            mixBlendMode: 'screen',
-          }}
+          style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 480, height: 480 }}
         >
-          <SentinelOrbit size={480} />
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.72 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+            style={{ width: 480, height: 480, mixBlendMode: 'screen' }}
+          >
+            <SentinelOrbit size={480} />
+          </motion.div>
+        </div>
       </div>
     </section>
   );
