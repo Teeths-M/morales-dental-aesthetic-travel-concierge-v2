@@ -34,6 +34,7 @@ function getBadges(language) {
 }
 
 const COUNTRIES = [
+  { name: 'Venezuela', cx: 155, cy: 295, lx: 155, ly: 310, anchor: 'start', flag: '🇻🇪', city: 'Caracas', treatments: ['Dental Implants', 'Veneers', 'Liposuction'] },
   { name: 'TURKEY',            cx: 155, cy: 105, lx: 148, ly: 96,  anchor: 'end',   flag: '🇹🇷', city: 'Istanbul',          treatments: ['Hair Transplant', 'Dental Veneers'] },
   { name: 'SOUTH KOREA',       cx: 362, cy: 105, lx: 370, ly: 96,  anchor: 'start', flag: '🇰🇷', city: 'Seoul',             treatments: ['Facial Aesthetics', 'Skin Treatments'] },
   { name: 'THAILAND',          cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start', flag: '🇹🇭', city: 'Bangkok',           treatments: ['Orthopedic Surgery', 'Recovery Retreats'] },
@@ -56,7 +57,7 @@ function SafeTGlobe({ shieldState }) {
   React.useEffect(() => {
     const timer = setInterval(() => {
       setActiveCountryIndex((prev) => (prev + 1) % COUNTRIES.length);
-    }, 500);
+    }, 250);
     return () => clearInterval(timer);
   }, []);
 
