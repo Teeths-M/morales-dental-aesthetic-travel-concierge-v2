@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User, X, Stethoscope, Car } from 'lucide-react';
+import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User, X, Stethoscope, Car, HeartHandshake } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SlotCounter from './SlotCounter';
 import { translations } from '@/lib/translations';
@@ -732,6 +732,18 @@ export default function Hero() {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Taxi Service</p>
                       <p className="text-[9px] text-slate-400">Patient transportation</p>
+                    </div>
+                    <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
+                  </Link>
+
+                  {/* Companion */}
+                  <Link to="/companion-signup" className="group flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-yellow-500/40 transition-all duration-200 cursor-pointer">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:shadow-[0_0_10px_rgba(212,175,55,0.3)]" style={{ background: 'rgba(236,72,153,0.15)' }}>
+                      <HeartHandshake className="w-4 h-4" style={{ color: '#ec4899' }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white group-hover:text-yellow-300 transition-colors">Companion</p>
+                      <p className="text-[9px] text-slate-400">Support patient journeys</p>
                     </div>
                     <span className="text-white/30 text-xs group-hover:translate-x-0.5 transition-transform">›</span>
                   </Link>
