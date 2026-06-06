@@ -102,38 +102,24 @@ function SafeTGlobe({ shieldState }) {
         </defs>
 
         {/* Atmosphere rings */}
-        <circle cx="250" cy="250" r="222" fill="none" stroke={GOLD} strokeWidth="1"   opacity="0.08" />
-        <circle cx="250" cy="250" r="208" fill="none" stroke={GOLD} strokeWidth="0.6" opacity="0.05" />
+        <circle cx="250" cy="250" r="222" fill="none" stroke="#D4AF37" strokeWidth="1"   opacity="0.14" />
+        <circle cx="250" cy="250" r="208" fill="none" stroke="#D4AF37" strokeWidth="0.6" opacity="0.09" />
 
-        {/* Globe body — deep radial with warm core glow */}
-        <defs>
-          <radialGradient id="globeDeep" cx="42%" cy="36%" r="72%">
-            <stop offset="0%"   stopColor="#2a4a8a" />
-            <stop offset="30%"  stopColor="#112050" />
-            <stop offset="65%"  stopColor="#070f28" />
-            <stop offset="100%" stopColor="#020814" />
-          </radialGradient>
-          <radialGradient id="globeWarmCore" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stopColor="#c89030" stopOpacity="0.22" />
-            <stop offset="55%"  stopColor="#8a5a10" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <circle cx="250" cy="250" r="190" fill="url(#globeDeep)" stroke="#1e3a5f" strokeWidth="1.5" />
-        <circle cx="250" cy="250" r="190" fill="url(#globeWarmCore)" />
+        {/* Globe body — transparent so sunset bleeds through */}
+        <circle cx="250" cy="250" r="190" fill="transparent" stroke="#D4AF37" strokeWidth="1" strokeOpacity="0.35" />
 
-        {/* 1) Rotating grid */}
+        {/* 1) Rotating gold grid */}
         <g className="globe-grid">
           {[-132, -76, 0, 76, 132].map((dy, i) => {
             const rx = Math.sqrt(Math.max(0, 190 * 190 - dy * dy));
             return (
               <ellipse key={i} cx="250" cy={250 + dy} rx={rx} ry={rx * 0.28}
-                stroke="#1e3a5f" strokeWidth="0.6" fill="none" opacity="0.5" />
+                stroke="#D4AF37" strokeWidth="0.7" fill="none" opacity="0.38" />
             );
           })}
           {[0.12, 0.44, 0.8, 0.8, 0.44, 0.12].map((f, i) => (
             <ellipse key={i} cx="250" cy="250" rx={f * 190} ry="190"
-              stroke="#1e3a5f" strokeWidth="0.6" fill="none" opacity="0.38" />
+              stroke="#D4AF37" strokeWidth="0.7" fill="none" opacity="0.28" />
           ))}
         </g>
 
@@ -229,7 +215,7 @@ function SafeTGlobe({ shieldState }) {
         </motion.g>
 
         {/* Globe rim */}
-        <circle cx="250" cy="250" r="190" fill="none" stroke={GOLD} strokeWidth="1.5" opacity="0.28" />
+        <circle cx="250" cy="250" r="190" fill="none" stroke="#D4AF37" strokeWidth="1.5" opacity="0.45" />
       </svg>
     </div>
   );
