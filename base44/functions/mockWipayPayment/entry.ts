@@ -30,11 +30,25 @@ Deno.serve(async (req) => {
     if (case_id && case_id !== 'mock_dr_rossanna_60') {
       const paymentStatus = deposit_option === 'Full' ? 'Paid In Full' :
                             deposit_option === '50%' ? '50% Paid' : '25% Paid';
+      const mockPaymentId = `wipay_mock_${Date.now()}`;
       await base44.asServiceRole.entities.CaseRecord.update(case_id, {
         payment_status: paymentStatus,
         amount_paid: amount,
         deposit_option,
-        stripe_payment_id: `wipay_mock_${Date.now()}`,
+        stripe_payment_id: mockPaymentId,
+      });
+      // Audit trail: log mock payment as a PaymentTransaction so it's distinguishable from real Stripe events
+      await base44.asServiceRole.entities.PaymentTransaction.create({
+        case_id,
+        stripe_payment_intent_id: mockPaymentId,
+        event_type: 'mock.wipay.payment',
+        status: 'succeeded',
+        deposit_option,
+        raw_amount: amount || 0,
+        currency: 'usd',
+        metadata: { is_demo: true, exclude_from_revenue_reporting: true, provider: 'wipay_mock', mock_mode: true },
+        processed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
     }
 
