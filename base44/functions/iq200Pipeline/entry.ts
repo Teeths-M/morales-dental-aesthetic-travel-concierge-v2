@@ -21,7 +21,37 @@ Deno.serve(async (req) => {
       }
 
       const caseRecord = cases[0];
-      return Response.json({ case: caseRecord });
+      // SECURITY: Return only client-safe proposal fields.
+      // NEVER expose PHI, medical history, passport tokens, signatures, or internal data.
+      const proposalDTO = {
+        id: caseRecord.id,
+        status: caseRecord.status,
+        client_name: caseRecord.client_name,
+        procedures: caseRecord.procedures,
+        procedure_country: caseRecord.procedure_country,
+        final_package_price: caseRecord.final_package_price,
+        deposit_option: caseRecord.deposit_option,
+        payment_status: caseRecord.payment_status,
+        amount_paid: caseRecord.amount_paid,
+        amount_remaining: caseRecord.amount_remaining,
+        treatment_duration: caseRecord.treatment_duration,
+        recovery_days: caseRecord.recovery_days,
+        hotel_name: caseRecord.hotel_name,
+        hotel_address: caseRecord.hotel_address,
+        flight_details: caseRecord.flight_details,
+        proposal_sent_at: caseRecord.proposal_sent_at,
+        doctor_selected: caseRecord.doctor_selected,
+        clinic_selected: caseRecord.clinic_selected,
+        base_cost: caseRecord.base_cost,
+        markup_percentage: caseRecord.markup_percentage,
+        consultation_fee_paid: caseRecord.consultation_fee_paid,
+        consultation_fee_amount: caseRecord.consultation_fee_amount,
+        // Explicitly excluded: medications, allergies, medical_conditions, anesthesia_history,
+        // mental_health_notes, signature_data, doctor_portal_token, admin_notes, timeline_log,
+        // safe_t_result, safe_t_flags, risk_score, client_email, client_phone, client_country,
+        // stripe_payment_id, consultation_id, informed_consent_email_html, passport tokens
+      };
+      return Response.json({ case: proposalDTO });
     }
 
     // All other actions require admin authentication
@@ -279,7 +309,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // PROCESS_PAYMENT: Handle deposit payment and trigger partner notifications
+    // PROCESS_PAYMENT: Dispatch post-payment partner notifications (admin only).
+    // SECURITY: This action NEVER sets payment_status or case status.
+    // Payment state transitions are EXCLUSIVELY controlled by stripePaymentWebhook.
     if (action === 'process_payment') {
       const { token, deposit_option } = payload;
       
@@ -296,23 +328,19 @@ Deno.serve(async (req) => {
 
       const caseRecord = cases[0];
 
-      // Update payment status
-      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-        deposit_option: deposit_option,
-        payment_status: deposit_option === 'Full' ? 'Paid In Full' : deposit_option === '50%' ? '50% Paid' : '25% Paid',
-        status: 'Travel-Coordination',
-        timeline_log: [
-          ...(caseRecord.timeline_log || []),
-          {
-            timestamp: new Date().toISOString(),
-            action: 'payment_received',
-            details: `Deposit payment received: ${deposit_option}`
-          }
-        ]
-      });
+      // SECURITY: Verify Stripe webhook has already confirmed payment before dispatching notifications.
+      // This function MUST NOT update payment_status — only stripePaymentWebhook may do that.
+      const paidStatuses = ['Paid In Full', '50% Paid', '25% Paid'];
+      if (!paidStatuses.includes(caseRecord.payment_status)) {
+        return Response.json({
+          error: 'Payment not confirmed by Stripe webhook. Cannot dispatch notifications until payment is verified.',
+          current_payment_status: caseRecord.payment_status,
+          code: 'PAYMENT_NOT_VERIFIED',
+        }, { status: 402 });
+      }
 
-      // Idempotency guard: prevent double-processing if already paid
-      if (caseRecord.payment_status !== 'Pending') {
+      // Idempotency guard: prevent duplicate notification dispatch
+      if (caseRecord.final_confirmation_sent) {
         return Response.json({ success: true, already_processed: true, case_id: caseRecord.id, payment_status: caseRecord.payment_status });
       }
 

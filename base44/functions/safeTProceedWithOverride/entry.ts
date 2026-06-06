@@ -43,6 +43,14 @@ Deno.serve(async (req) => {
 
     // Archive on the CaseRecord if provided
     if (case_record_id) {
+      // SECURITY: Bind case_record_id to the verified consultation — prevent cross-patient SAFE-T override.
+      // The CaseRecord's consultation_id must match the consultation we already verified belongs to this user.
+      const caseToUpdate = await base44.asServiceRole.entities.CaseRecord.get(case_record_id);
+      if (!caseToUpdate || caseToUpdate.consultation_id !== consultation.id) {
+        return Response.json({
+          error: 'case_record_id does not belong to your consultation. SAFE-T override denied.',
+        }, { status: 403 });
+      }
       await base44.asServiceRole.entities.CaseRecord.update(case_record_id, {
         signature_data,
         signature_timestamp: signature_timestamp || now,

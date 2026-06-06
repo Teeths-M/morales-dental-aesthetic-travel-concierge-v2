@@ -34,13 +34,14 @@ Deno.serve(async (req) => {
     const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
     if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
 
-    // Authorization check
+    // Authorization check — return identical 404 for both not-found AND forbidden
+    // to prevent case existence enumeration by unauthorized callers.
     const isAdmin = ['admin', 'platform_admin'].includes(user.role);
     const isOwner = caseRecord.client_email === user.email;
     const tokenMatch = proposal_token && caseRecord.proposal_token &&
                        proposal_token === caseRecord.proposal_token;
     if (!isAdmin && !isOwner && !tokenMatch) {
-      return Response.json({ error: 'Forbidden: not authorized for this case' }, { status: 403 });
+      return Response.json({ error: 'Case not found' }, { status: 404 });
     }
 
     // DB idempotency: re-use open session for this case+option

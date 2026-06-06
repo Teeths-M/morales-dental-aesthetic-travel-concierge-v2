@@ -197,6 +197,19 @@ async function handlePackagePaymentSuccess(base44, {
   stripe_session_id, stripe_payment_intent_id,
   amount_total, currency, plan_type, deposit_option
 }) {
+  // Secondary idempotency guard: both checkout.session.completed and payment_intent.succeeded
+  // can reference the same payment_intent_id. Check PI before processing to prevent double-update.
+  if (stripe_payment_intent_id) {
+    const existingPI = await base44.asServiceRole.entities.PaymentTransaction.filter({
+      stripe_payment_intent_id,
+      status: 'succeeded',
+    });
+    if (existingPI.length > 0) {
+      console.log(`[handlePackagePaymentSuccess] PI ${stripe_payment_intent_id} already succeeded — skipping duplicate event.`);
+      return;
+    }
+  }
+
   const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
   if (!caseRecord) {
     console.warn(`[handlePackagePaymentSuccess] Case ${case_id} not found`);

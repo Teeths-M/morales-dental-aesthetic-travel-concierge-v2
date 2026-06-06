@@ -168,6 +168,16 @@ Deno.serve(async (req) => {
 
     // Archive HTML snapshot + consent metadata back to CaseRecord (if ID provided)
     if (case_record_id) {
+      // SECURITY: Verify caller owns this CaseRecord (or is admin) before writing consent data.
+      const isAdmin = user.role === 'admin' || user.role === 'platform_admin';
+      if (!isAdmin) {
+        const caseOwnerCheck = await base44.asServiceRole.entities.CaseRecord.get(case_record_id);
+        if (!caseOwnerCheck || caseOwnerCheck.client_email !== user.email) {
+          return Response.json({
+            error: 'Forbidden: you are not authorized to archive consent for this case record.',
+          }, { status: 403 });
+        }
+      }
       await base44.asServiceRole.entities.CaseRecord.update(case_record_id, {
         signature_data: signature_data || '',
         signature_timestamp: signature_timestamp || now,
