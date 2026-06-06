@@ -5,13 +5,13 @@ import { useNavigate } from 'react-router-dom';
 
 // ── Geographic data ────────────────────────────────────────────────────────────
 const COUNTRIES = [
-  { name: 'Turkey',      lat: 39.0,  lng: 35.0   },
-  { name: 'South Korea', lat: 35.9,  lng: 127.8  },
-  { name: 'Thailand',    lat: 15.0,  lng: 100.0  },
-  { name: 'Mexico',      lat: 23.6,  lng: -102.6 },
-  { name: 'Colombia',    lat: 4.6,   lng: -74.3  },
-  { name: 'Costa Rica',  lat: 9.7,   lng: -83.8  },
-  { name: 'Brazil',      lat: -14.2, lng: -51.9  },
+  { name: 'Turkey',      code: 'tr', lat: 39.0,  lng: 35.0   },
+  { name: 'South Korea', code: 'kr', lat: 35.9,  lng: 127.8  },
+  { name: 'Thailand',    code: 'th', lat: 15.0,  lng: 100.0  },
+  { name: 'Mexico',      code: 'mx', lat: 23.6,  lng: -102.6 },
+  { name: 'Colombia',    code: 'co', lat: 4.6,   lng: -74.3  },
+  { name: 'Costa Rica',  code: 'cr', lat: 9.7,   lng: -83.8  },
+  { name: 'Brazil',      code: 'br', lat: -14.2, lng: -51.9  },
 ];
 
 // lat/lng → unit sphere position (Three.js Y-up, equirectangular-compatible)
@@ -191,7 +191,7 @@ export default function SentinelOrbit({ size = 420 }) {
 
     // ── Markers + labels
     const labelItems = [];
-    COUNTRIES.forEach(({ name, lat, lng }) => {
+    COUNTRIES.forEach(({ name, code, lat, lng }) => {
       const localPos = latLngToVec3(lat, lng, 1.0);
 
       // Gold pin dot
@@ -205,7 +205,7 @@ export default function SentinelOrbit({ size = 420 }) {
 
       // HTML label
       const div = document.createElement('div');
-      div.innerHTML = `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ffd700;margin-right:4px;flex-shrink:0;"></span>${name}`;
+      div.innerHTML = `<img src="https://flagcdn.com/w20/${code}.png" width="14" height="10" style="border-radius:2px;margin-right:5px;flex-shrink:0;object-fit:cover;" alt="${name}" />${name}`;
       div.style.cssText = [
         'display:flex','align-items:center',
         'background:rgba(5,12,30,0.88)',
