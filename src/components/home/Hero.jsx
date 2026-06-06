@@ -73,13 +73,21 @@ function SafeTGlobe() {
             <stop offset="100%" stopColor="#9a7020" />
           </linearGradient>
           <style>{`
-            @keyframes netLine {
-              from { stroke-dashoffset: 320; }
-              to   { stroke-dashoffset: 0; }
+            @keyframes globeSpin {
+              from { transform: rotate(0deg); }
+              to   { transform: rotate(360deg); }
             }
-            .net-line {
-              stroke-dasharray: 320;
-              animation: netLine 2.2s ease-in-out forwards;
+            @keyframes dataFlow {
+              0%   { stroke-dashoffset: 340; }
+              100% { stroke-dashoffset: 0; }
+            }
+            .globe-grid {
+              transform-origin: 250px 250px;
+              animation: globeSpin 50s linear infinite;
+            }
+            .flow-line {
+              stroke-dasharray: 16 324;
+              animation: dataFlow 3.5s linear infinite;
             }
           `}</style>
         </defs>
@@ -91,37 +99,41 @@ function SafeTGlobe() {
         {/* Globe body */}
         <circle cx="250" cy="250" r="190" fill="url(#globeBase)" stroke="#1e3a5f" strokeWidth="1.5" />
 
-        {/* Latitude lines */}
-        {[-132, -76, 0, 76, 132].map((dy, i) => {
-          const rx = Math.sqrt(Math.max(0, 190 * 190 - dy * dy));
-          return (
-            <ellipse key={i} cx="250" cy={250 + dy} rx={rx} ry={rx * 0.28}
-              stroke="#1e3a5f" strokeWidth="0.6" fill="none" opacity="0.5" />
-          );
-        })}
+        {/* 1) Rotating grid */}
+        <g className="globe-grid">
+          {[-132, -76, 0, 76, 132].map((dy, i) => {
+            const rx = Math.sqrt(Math.max(0, 190 * 190 - dy * dy));
+            return (
+              <ellipse key={i} cx="250" cy={250 + dy} rx={rx} ry={rx * 0.28}
+                stroke="#1e3a5f" strokeWidth="0.6" fill="none" opacity="0.5" />
+            );
+          })}
+          {[0.12, 0.44, 0.8, 0.8, 0.44, 0.12].map((f, i) => (
+            <ellipse key={i} cx="250" cy="250" rx={f * 190} ry="190"
+              stroke="#1e3a5f" strokeWidth="0.6" fill="none" opacity="0.38" />
+          ))}
+        </g>
 
-        {/* Longitude lines */}
-        {[0.12, 0.44, 0.8, 0.8, 0.44, 0.12].map((f, i) => (
-          <ellipse key={i} cx="250" cy="250" rx={f * 190} ry="190"
-            stroke="#1e3a5f" strokeWidth="0.6" fill="none" opacity="0.38" />
-        ))}
-
-        {/* Network lines */}
+        {/* 3) Data-flow connection lines */}
         {COUNTRIES.map((c, i) => (
-          <line key={i} className="net-line"
+          <line key={i} className="flow-line"
             x1={c.cx} y1={c.cy} x2="250" y2="250"
-            stroke={GOLD} strokeWidth="0.9" opacity="0.4"
-            style={{ animationDelay: `${i * 0.12}s` }}
+            stroke={GOLD} strokeWidth="1.1" opacity="0.55"
+            style={{ animationDelay: `${i * 0.5}s` }}
           />
         ))}
 
-        {/* Country dots */}
+        {/* 2) Pulsing country dots */}
         {COUNTRIES.map((c, i) => (
-          <g key={i} filter="url(#dotGlow)">
-            <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} opacity="0.1" />
+          <motion.g key={i} filter="url(#dotGlow)"
+            animate={{ scale: [1, 1.4, 1] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
+            style={{ transformOrigin: `${c.cx}px ${c.cy}px`, transformBox: 'fill-box' }}
+          >
+            <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} opacity="0.12" />
             <circle cx={c.cx} cy={c.cy} r="5"   fill={GOLD} opacity="0.92" />
             <circle cx={c.cx} cy={c.cy} r="2.5" fill="#f8e690" opacity="0.95" />
-          </g>
+          </motion.g>
         ))}
 
         {/* Country labels */}
@@ -151,7 +163,6 @@ function SafeTGlobe() {
             d="M250 180 L303 206 L303 248 C303 276 280 296 250 307 C220 296 197 276 197 248 L197 206 Z"
             fill="#06101e" opacity="0.42"
           />
-          {/* Heart */}
           <path
             d="M250 278 C250 278 226 261 226 245 C226 236 233 229 241 229 C245.5 229 249 232 250 233.5 C251 232 254.5 229 259 229 C267 229 274 236 274 245 C274 261 250 278 250 278 Z"
             fill="white" opacity="0.95"
