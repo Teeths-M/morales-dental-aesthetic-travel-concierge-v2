@@ -10,6 +10,7 @@ import BrandSlideshow from '../components/home/BrandSlideshow';
 import SlotCounter from '../components/home/SlotCounter';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 import SafeTHub from '../components/home/SafeTHub';
+import PartnerShowcase from '../components/home/PartnerShowcase';
 import PartnerSignupTeaser from '../components/home/PartnerSignupTeaser';
 
 
@@ -54,6 +55,7 @@ export default function Home() {
       <HeroSlideshow />
       <OurExpertsTeaser />
       <SafeTHub />
+      <PartnerShowcase />
       <WhyChooseUs />
       <PartnerSignupTeaser />
       <BrandSlideshow />
