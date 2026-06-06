@@ -276,7 +276,7 @@ export default function Hero() {
       </div>
 
       {/* Desktop: Side-by-side cinematic panel */}
-      <div className="hidden lg:block absolute right-0 top-0 w-[46%] h-full">
+      <div className="hidden lg:flex absolute right-0 top-0 w-[46%] h-full items-center justify-center">
         <img
           src={SENTINEL_IMAGE}
           alt="Sentinel Care Journey"
@@ -285,16 +285,15 @@ export default function Hero() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#070F0B] via-[#070F0B]/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/45 via-transparent to-[#070F0B]/55" />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.72 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-            style={{ width: 550, height: 550 }}
-          >
-            <SentinelOrbit size={550} />
-          </motion.div>
-        </div>
+        <motion.div
+          className="relative z-10 pointer-events-none"
+          initial={{ opacity: 0, scale: 0.72 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+          style={{ width: 550, height: 550 }}
+        >
+          <SentinelOrbit size={550} />
+        </motion.div>
       </div>
     </section>
   );
