@@ -513,29 +513,29 @@ export default function Hero() {
                 {language === 'es' ? 'Cada detalle atendido. Cada paso apoyado.' : 'Every detail handled. Every step supported.'}
               </p>
               <div className="relative flex items-end justify-between w-full">
-                {/* Animated forward line - left to right */}
+                {/* Static background line */}
+                <div className="absolute bottom-8 left-0 right-0 h-px" style={{ background: 'rgba(212,168,67,0.15)' }} />
+                {/* Animated gold line - left to right */}
                 <motion.div
-                  className="absolute bottom-8 left-0 right-0 h-px"
+                  className="absolute bottom-8 left-0 h-px"
                   style={{
-                    background: 'linear-gradient(90deg, ' + GOLD + ', rgba(212,168,67,0.4), ' + GOLD + ')',
-                    boxShadow: `0 0 6px ${GOLD}88`,
-                    transformOrigin: 'left',
+                    background: `linear-gradient(90deg, ${GOLD}, rgba(212,168,67,0.3))`,
+                    boxShadow: `0 0 8px ${GOLD}66`,
                   }}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1.8, ease: 'easeInOut' }}
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.5 }}
                 />
-                {/* Animated return line - right to left */}
+                {/* Traveling glow dot */}
                 <motion.div
-                  className="absolute bottom-8 left-0 right-0 h-px"
+                  className="absolute bottom-[10px] w-2 h-2 rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, ' + GOLD + ', rgba(212,168,67,0.4), ' + GOLD + ')',
-                    boxShadow: `0 0 6px ${GOLD}88`,
-                    transformOrigin: 'right',
+                    background: GOLD,
+                    boxShadow: `0 0 12px ${GOLD}`,
                   }}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1.8, ease: 'easeInOut', delay: 1.8 }}
+                  initial={{ left: '0%' }}
+                  animate={{ left: '100%' }}
+                  transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.5 }}
                 />
                 {journeySteps.map((step, i) => {
                   const Icon = step.icon;
