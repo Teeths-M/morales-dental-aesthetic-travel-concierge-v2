@@ -30,6 +30,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
   const handleStripePayment = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
+    setError(null);
     try {
       const response = await base44.functions.invoke('chargeConsultationFee', {
         consultation_id: form.consultation_id,
@@ -38,19 +39,30 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
         destination: form.preferred_date,
         method: 'stripe'
       });
-      
-      if (response.data.success) {
-        await fireConsentEmail(form, response.data);
-        if (handlePaymentSuccess) {
-          await handlePaymentSuccess(response.data);
-        } else {
-          onSuccess(response.data);
-        }
+
+      const data = response.data;
+
+      // Already paid — skip Stripe and proceed
+      if (data.already_paid) {
+        await fireConsentEmail(form, data);
         clearCart();
+        if (handlePaymentSuccess) {
+          await handlePaymentSuccess(data);
+        } else {
+          onSuccess(data);
+        }
+        return;
       }
+
+      // Redirect to Stripe hosted checkout page
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+
+      throw new Error('No checkout URL returned from payment service.');
     } catch (err) {
       setError(err.message);
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -71,7 +83,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
           Cancel
         </Button>
         <Button type="submit" disabled={isProcessing} className="flex-1">
-          {isProcessing ? 'Processing...' : 'Pay $49'}
+          {isProcessing ? 'Redirecting...' : 'Pay $49 — Secure Checkout →'}
         </Button>
       </div>
     </form>
