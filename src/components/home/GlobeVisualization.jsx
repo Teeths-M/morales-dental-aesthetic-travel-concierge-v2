@@ -45,58 +45,62 @@ export default function GlobeVisualization() {
         endLng:   LOCATIONS[j].lng,
       }));
 
-      const w = containerRef.current.offsetWidth  || 624;
-      const h = containerRef.current.offsetHeight || 624;
+      const w = containerRef.current.offsetWidth  || 718;
+      const h = containerRef.current.offsetHeight || 718;
 
       const root = ReactDOM.createRoot(mount);
       rootRef.current = root;
 
-      root.render(
-        ReactLib.createElement(GlobeGL, {
-          width: w,
-          height: h,
-          backgroundColor: 'rgba(0,0,0,0)',
-          globeImageUrl: 'https://unpkg.com/three-globe@2.31.2/example/img/earth-night.jpg',
-          bumpImageUrl:  'https://unpkg.com/three-globe@2.31.2/example/img/earth-topology.png',
-          atmosphereColor: GOLD,
-          atmosphereAltitude: 0.28,
+      const globeEl = ReactLib.createElement(GlobeGL, {
+        width: w,
+        height: h,
+        backgroundColor: 'rgba(0,0,0,0)',
+        globeImageUrl: 'https://unpkg.com/three-globe@2.31.2/example/img/earth-night.jpg',
+        bumpImageUrl:  'https://unpkg.com/three-globe@2.31.2/example/img/earth-topology.png',
+        atmosphereColor: GOLD,
+        atmosphereAltitude: 0.28,
 
-          // Glowing gold point markers
-          pointsData: LOCATIONS,
-          pointLat: 'lat',
-          pointLng: 'lng',
-          pointColor: () => GOLD,
-          pointAltitude: 0.03,
-          pointRadius: 1.1,
-          pointsMerge: false,
-          pointResolution: 16,
+        // Start centered on the Americas/Atlantic
+        pointOfView: { lat: 5, lng: -60, altitude: 1.8 },
 
-          // Gold arc lines
-          arcsData,
-          arcColor: () => GOLD,
-          arcAltitude: 0.25,
-          arcStroke: 0.6,
-          arcDashLength: 0.55,
-          arcDashGap: 0.2,
-          arcDashAnimateTime: 2800,
+        // Glowing gold point markers
+        pointsData: LOCATIONS,
+        pointLat: 'lat',
+        pointLng: 'lng',
+        pointColor: () => GOLD,
+        pointAltitude: 0.03,
+        pointRadius: 1.2,
+        pointsMerge: false,
+        pointResolution: 16,
 
-          // Floating white country labels
-          labelsData: LOCATIONS,
-          labelLat: 'lat',
-          labelLng: 'lng',
-          labelText: 'name',
-          labelSize: 1.6,
-          labelColor: () => 'rgba(255,255,255,0.92)',
-          labelAltitude: 0.055,
-          labelDotRadius: 0.55,
-          labelDotOrientation: () => 'bottom',
-          labelResolution: 3,
+        // Gold arc lines
+        arcsData,
+        arcColor: () => GOLD,
+        arcAltitude: 0.25,
+        arcStroke: 0.65,
+        arcDashLength: 0.55,
+        arcDashGap: 0.2,
+        arcDashAnimateTime: 2800,
 
-          // Rotation
-          autoRotate: true,
-          autoRotateSpeed: 0.35,
-          enablePointerInteraction: false,
-        })
+        // Floating white country labels — larger & fully opaque
+        labelsData: LOCATIONS,
+        labelLat: 'lat',
+        labelLng: 'lng',
+        labelText: 'name',
+        labelSize: 2.0,
+        labelColor: () => 'rgba(255,255,255,1)',
+        labelAltitude: 0.06,
+        labelDotRadius: 0.6,
+        labelDotOrientation: () => 'bottom',
+        labelResolution: 4,
+
+        // Rotation
+        autoRotate: true,
+        autoRotateSpeed: 0.35,
+        enablePointerInteraction: false,
+      });
+
+      root.render(globeEl
       );
     };
 
