@@ -321,32 +321,29 @@ function SafeTGlobe({ shieldState }) {
             fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
           />
 
-          {/* Hands-and-heart icon: two cupped hands holding a heart */}
-          {/* Left hand */}
+          {/* Hands-and-heart icon: clean cupped hands with heart */}
+          {/* Left hand curve */}
           <path
-            d="M222 268 C218 264 216 256 218 249 C219 244 222 241 226 240 C228 239 230 240 231 242 L233 248 C234 250 235 250 236 249 L237 244 C238 241 240 239 243 240 C245 241 246 243 246 246 L246 254"
-            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+            d="M224 270 Q218 264 218 256 Q218 248 225 246 Q228 245 230 248 Q232 252 230 260 Q228 268 224 270 Z"
+            fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
           />
-          {/* Right hand */}
+          {/* Right hand curve */}
           <path
-            d="M278 268 C282 264 284 256 282 249 C281 244 278 241 274 240 C272 239 270 240 269 242 L267 248 C266 250 265 250 264 249 L263 244 C262 241 260 239 257 240 C255 241 254 243 254 246 L254 254"
-            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+            d="M276 270 Q282 264 282 256 Q282 248 275 246 Q272 245 270 248 Q268 252 270 260 Q272 268 276 270 Z"
+            fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
           />
-          {/* Palms cupped */}
+          {/* Cupped palm base */}
           <path
-            d="M222 268 C220 274 221 280 226 283 L250 290 L274 283 C279 280 280 274 278 268"
-            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+            d="M224 270 Q240 282 250 285 Q260 282 276 270"
+            fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.96"
           />
-          {/* Heart above hands */}
+          {/* Heart */}
           <path
-            d="M250 262 C250 262 234 251 234 240 C234 232 240 226 247 226 C248.8 226 250 227.5 250 227.5 C250 227.5 251.2 226 253 226 C260 226 266 232 266 240 C266 251 250 262 250 262 Z"
+            d="M250 232 C250 232 236 221 236 211 C236 201 242 195 249 195 C251.5 195 253 196.5 253 196.5 C253 196.5 254.5 195 257 195 C264 195 270 201 270 211 C270 221 250 232 250 232 Z"
             fill="white" opacity="0.96"
           />
-          {/* Heart highlight */}
-          <path
-            d="M243 233 C241 236 241 240 243 243"
-            fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" opacity="0.6"
-          />
+          {/* Heart shine */}
+          <ellipse cx="246" cy="208" rx="2.5" ry="3.5" fill={GOLD} opacity="0.5" />
         </motion.g>
 
         {/* Globe rim */}
