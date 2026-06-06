@@ -112,12 +112,14 @@ function SafeTGlobe({ shieldState }) {
             <stop offset="55%" stopColor="#0b1635" />
             <stop offset="100%" stopColor="#030b18" />
           </radialGradient>
-          <filter id="shieldGlow" x="-80%" y="-80%" width="360%" height="360%">
-            <feGaussianBlur stdDeviation="22" result="blur1" />
-            <feGaussianBlur stdDeviation="8"  result="blur2" in="SourceGraphic" />
+          <filter id="shieldGlow" x="-100%" y="-100%" width="400%" height="400%">
+            <feGaussianBlur stdDeviation="32" result="blur1" />
+            <feGaussianBlur stdDeviation="12" result="blur2" in="SourceGraphic" />
+            <feGaussianBlur stdDeviation="4"  result="blur3" in="SourceGraphic" />
             <feMerge>
               <feMergeNode in="blur1" />
               <feMergeNode in="blur2" />
+              <feMergeNode in="blur3" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
@@ -146,6 +148,20 @@ function SafeTGlobe({ shieldState }) {
               0%   { stroke-dashoffset: 340; }
               100% { stroke-dashoffset: 0; }
             }
+            @keyframes dataPulse {
+              0%   { stroke-dashoffset: 340; opacity: 0; }
+              10%  { opacity: 1; }
+              80%  { opacity: 0.9; }
+              100% { stroke-dashoffset: 0; opacity: 0; }
+            }
+            @keyframes outerRingPulse {
+              0%, 100% { opacity: 0.08; r: 228; }
+              50%       { opacity: 0.22; r: 232; }
+            }
+            @keyframes shieldBloom {
+              0%, 100% { opacity: 0.55; }
+              50%       { opacity: 1; }
+            }
             .globe-grid {
               transform-origin: 250px 250px;
               animation: globeSpin 50s linear infinite;
@@ -154,8 +170,21 @@ function SafeTGlobe({ shieldState }) {
               stroke-dasharray: 16 324;
               animation: dataFlow 3.5s linear infinite;
             }
+            .data-pulse {
+              stroke-dasharray: 8 332;
+              animation: dataPulse 3.5s linear infinite;
+            }
+            .outer-ring-pulse {
+              animation: outerRingPulse 3s ease-in-out infinite;
+            }
+            .shield-bloom {
+              animation: shieldBloom 2.4s ease-in-out infinite;
+            }
           `}</style>
         </defs>
+
+        {/* Outer pulsing ring */}
+        <circle cx="250" cy="250" r="228" fill="none" stroke="#D4AF37" strokeWidth="2" className="outer-ring-pulse" />
 
         {/* Atmosphere rings */}
         <circle cx="250" cy="250" r="222" fill="none" stroke="#D4AF37" strokeWidth="1"   opacity="0.14" />
@@ -208,19 +237,31 @@ function SafeTGlobe({ shieldState }) {
           />
         ))}
 
-        {/* 2) Pulsing country dots */}
+        {/* Animated gold data pulses — travel from each country TO the shield center */}
+        {COUNTRIES.map((c, i) => (
+          <line key={`pulse-${i}`} className="data-pulse"
+            x1={c.cx} y1={c.cy} x2="250" y2="250"
+            stroke="#f8e690" strokeWidth="2.5"
+            strokeLinecap="round"
+            style={{ animationDelay: `${i * 0.44}s` }}
+          />
+        ))}
+
+        {/* 2) Pulsing country dots — brighter with larger halo */}
         {COUNTRIES.map((c, i) => (
           <motion.g key={i} filter="url(#dotGlow)"
-            animate={{ scale: [1, 1.4, 1] }}
+            animate={{ scale: [1, 1.5, 1] }}
             transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
             style={{ transformOrigin: `${c.cx}px ${c.cy}px`, transformBox: 'fill-box', cursor: 'pointer' }}
             onMouseEnter={(e) => handleDotEnter(c, e)}
             onMouseLeave={() => setHoveredCountry(null)}
           >
+            <circle cx={c.cx} cy={c.cy} r="22" fill={GOLD} opacity="0.07" />
             <circle cx={c.cx} cy={c.cy} r="16" fill="transparent" />
-            <circle cx={c.cx} cy={c.cy} r="11" fill={GOLD} opacity="0.12" />
-            <circle cx={c.cx} cy={c.cy} r="5"   fill={GOLD} opacity="0.92" />
-            <circle cx={c.cx} cy={c.cy} r="2.5" fill="#f8e690" opacity="0.95" />
+            <circle cx={c.cx} cy={c.cy} r="14" fill={GOLD} opacity="0.14" />
+            <circle cx={c.cx} cy={c.cy} r="8"  fill={GOLD} opacity="0.28" />
+            <circle cx={c.cx} cy={c.cy} r="5"  fill={GOLD} opacity="0.95" />
+            <circle cx={c.cx} cy={c.cy} r="2.5" fill="#fff8c0" opacity="1" />
           </motion.g>
         ))}
 
@@ -243,9 +284,15 @@ function SafeTGlobe({ shieldState }) {
           </text>
         ))}
 
-        {/* Shield aura glow rings */}
-        <circle cx="250" cy="244" r="95"  fill="url(#shieldAura)" opacity="0.9" />
-        <circle cx="250" cy="244" r="76"  fill="none" stroke={GOLD} strokeWidth="0.6" opacity="0.18" />
+        {/* Shield aura glow rings — stronger bloom */}
+        <circle cx="250" cy="244" r="110" fill="url(#shieldAura)" opacity="0.7" />
+        <circle cx="250" cy="244" r="95"  fill="url(#shieldAura)" opacity="1" />
+        <motion.circle cx="250" cy="244" r="82"
+          fill="none" stroke={sColor} strokeWidth="1.5"
+          animate={{ opacity: [0.15, 0.55, 0.15], r: [82, 88, 82] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <circle cx="250" cy="244" r="76"  fill="none" stroke={sColor} strokeWidth="0.8" opacity="0.3" />
 
         {/* Center shield — framer-motion pulse */}
         <motion.g
