@@ -34,13 +34,16 @@ function getBadges(language) {
 }
 
 const COUNTRIES = [
-  { name: 'TURKEY',      cx: 155, cy: 105, lx: 148, ly: 96,  anchor: 'end'   },
-  { name: 'SOUTH KOREA', cx: 362, cy: 105, lx: 370, ly: 96,  anchor: 'start' },
-  { name: 'THAILAND',    cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start' },
-  { name: 'COLOMBIA',    cx: 375, cy: 242, lx: 383, ly: 234, anchor: 'start' },
-  { name: 'BRAZIL',      cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start' },
-  { name: 'COSTA RICA',  cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end'   },
-  { name: 'MEXICO',      cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end'   },
+  { name: 'TURKEY',             cx: 155, cy: 105, lx: 148, ly: 96,  anchor: 'end'   },
+  { name: 'SOUTH KOREA',        cx: 362, cy: 105, lx: 370, ly: 96,  anchor: 'start' },
+  { name: 'THAILAND',           cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start' },
+  { name: 'COLOMBIA',           cx: 375, cy: 242, lx: 383, ly: 234, anchor: 'start' },
+  { name: 'BRAZIL',             cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start' },
+  { name: 'COSTA RICA',         cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end'   },
+  { name: 'MEXICO',             cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end'   },
+  { name: 'TRINIDAD & TOBAGO',  cx: 310, cy: 282, lx: 318, ly: 273, anchor: 'start' },
+  { name: 'JAMAICA',            cx: 192, cy: 252, lx: 184, ly: 243, anchor: 'end'   },
+  { name: 'DOMINICAN REP.',     cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start' },
 ];
 
 function SafeTGlobe({ shieldState }) {
