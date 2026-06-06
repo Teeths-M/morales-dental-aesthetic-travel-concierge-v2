@@ -53,13 +53,19 @@ function SafeTGlobe() {
             <stop offset="55%" stopColor="#0b1635" />
             <stop offset="100%" stopColor="#030b18" />
           </radialGradient>
-          <filter id="shieldGlow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="14" result="blur" />
+          <filter id="shieldGlow" x="-80%" y="-80%" width="360%" height="360%">
+            <feGaussianBlur stdDeviation="22" result="blur1" />
+            <feGaussianBlur stdDeviation="8"  result="blur2" in="SourceGraphic" />
             <feMerge>
-              <feMergeNode in="blur" />
+              <feMergeNode in="blur1" />
+              <feMergeNode in="blur2" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          <radialGradient id="shieldAura" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#d4a843" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#d4a843" stopOpacity="0" />
+          </radialGradient>
           <filter id="dotGlow" x="-120%" y="-120%" width="340%" height="340%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
@@ -146,26 +152,62 @@ function SafeTGlobe() {
           </text>
         ))}
 
+        {/* Shield aura glow rings */}
+        <circle cx="250" cy="244" r="95"  fill="url(#shieldAura)" opacity="0.9" />
+        <circle cx="250" cy="244" r="76"  fill="none" stroke={GOLD} strokeWidth="0.6" opacity="0.18" />
+
         {/* Center shield — framer-motion pulse */}
         <motion.g
           filter="url(#shieldGlow)"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           style={{ transformOrigin: 'center', transformBox: 'fill-box' }}
         >
-          <circle cx="250" cy="242" r="72" fill={GOLD} opacity="0.06" />
-          <circle cx="250" cy="242" r="55" fill={GOLD} opacity="0.05" />
+          {/* Outer glow rings */}
+          <circle cx="250" cy="244" r="68" fill={GOLD} opacity="0.07" />
+          <circle cx="250" cy="244" r="54" fill={GOLD} opacity="0.06" />
+
+          {/* Shield body */}
           <path
-            d="M250 170 L310 198 L310 248 C310 280 284 304 250 316 C216 304 190 280 190 248 L190 198 Z"
+            d="M250 166 L314 196 L314 250 C314 286 286 310 250 324 C214 310 186 286 186 250 L186 196 Z"
             fill="url(#shieldGold)"
           />
+          {/* Shield inner dark overlay for depth */}
           <path
-            d="M250 180 L303 206 L303 248 C303 276 280 296 250 307 C220 296 197 276 197 248 L197 206 Z"
-            fill="#06101e" opacity="0.42"
+            d="M250 176 L307 204 L307 250 C307 282 282 303 250 315 C218 303 193 282 193 250 L193 204 Z"
+            fill="#07111e" opacity="0.38"
           />
+          {/* Shield inner gold border */}
           <path
-            d="M250 278 C250 278 226 261 226 245 C226 236 233 229 241 229 C245.5 229 249 232 250 233.5 C251 232 254.5 229 259 229 C267 229 274 236 274 245 C274 261 250 278 250 278 Z"
-            fill="white" opacity="0.95"
+            d="M250 176 L307 204 L307 250 C307 282 282 303 250 315 C218 303 193 282 193 250 L193 204 Z"
+            fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
+          />
+
+          {/* Hands-and-heart icon: two cupped hands holding a heart */}
+          {/* Left hand */}
+          <path
+            d="M222 268 C218 264 216 256 218 249 C219 244 222 241 226 240 C228 239 230 240 231 242 L233 248 C234 250 235 250 236 249 L237 244 C238 241 240 239 243 240 C245 241 246 243 246 246 L246 254"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          {/* Right hand */}
+          <path
+            d="M278 268 C282 264 284 256 282 249 C281 244 278 241 274 240 C272 239 270 240 269 242 L267 248 C266 250 265 250 264 249 L263 244 C262 241 260 239 257 240 C255 241 254 243 254 246 L254 254"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          {/* Palms cupped */}
+          <path
+            d="M222 268 C220 274 221 280 226 283 L250 290 L274 283 C279 280 280 274 278 268"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          {/* Heart above hands */}
+          <path
+            d="M250 262 C250 262 234 251 234 240 C234 232 240 226 247 226 C248.8 226 250 227.5 250 227.5 C250 227.5 251.2 226 253 226 C260 226 266 232 266 240 C266 251 250 262 250 262 Z"
+            fill="white" opacity="0.96"
+          />
+          {/* Heart highlight */}
+          <path
+            d="M243 233 C241 236 241 240 243 243"
+            fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" opacity="0.6"
           />
         </motion.g>
 
@@ -211,15 +253,23 @@ export default function Hero() {
       {/* Background image + dark overlays */}
       <div className="absolute inset-0 pointer-events-none">
         <img src={SENTINEL_IMAGE} alt="" className="w-full h-full object-cover"
-          style={{ opacity: 0.22, objectPosition: '72% center' }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0f1e 35%, rgba(10,15,30,0.75) 65%, rgba(10,15,30,0.15))' }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,15,30,0.4), transparent 40%, rgba(10,15,30,0.85))' }} />
+          style={{ opacity: 0.55, objectPosition: '72% center' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0f1e 28%, rgba(10,15,30,0.72) 52%, rgba(10,15,30,0.18) 75%, rgba(10,15,30,0.5))' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,15,30,0.55), transparent 35%, rgba(10,15,30,0.75))' }} />
       </div>
 
       {/* Radial golden glow behind globe */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <div style={{ width: 640, height: 640, borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(212,168,67,0.07) 0%, transparent 68%)' }} />
+      </div>
+
+      {/* MORALES branding — top left */}
+      <div className="absolute left-5 top-5 z-50 hidden lg:block">
+        <p className="font-bold text-white tracking-[0.12em]" style={{ fontSize: '1.05rem', letterSpacing: '0.15em' }}>MORALES</p>
+        <p className="text-[9px] font-semibold tracking-[0.08em] leading-[1.5]" style={{ color: GOLD }}>
+          DENTAL &amp; AESTHETIC<br />TRAVEL CONCIERGE
+        </p>
       </div>
 
       {/* ── CONTENT ── */}
@@ -308,19 +358,19 @@ export default function Hero() {
               <p className="text-xs text-slate-400 mt-1 mb-4">
                 {language === 'es' ? 'Cada detalle atendido. Cada paso apoyado.' : 'Every detail handled. Every step supported.'}
               </p>
-              <div className="flex items-center gap-1 overflow-x-auto pb-1">
+              <div className="flex items-end justify-between w-full">
                 {journeySteps.map((step, i) => {
                   const Icon = step.icon;
                   return (
                     <React.Fragment key={step.label}>
-                      <div className="flex flex-col items-center flex-shrink-0">
-                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center mb-1">
-                          <Icon className="w-3.5 h-3.5 text-slate-300" />
+                      <div className="flex flex-col items-center" style={{ minWidth: 0, flex: '0 0 auto' }}>
+                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center mb-1">
+                          <Icon className="w-3 h-3 text-slate-300" />
                         </div>
-                        <span className="text-[9px] text-slate-400 text-center whitespace-nowrap">{step.label}</span>
+                        <span className="text-[8px] text-slate-400 text-center leading-tight" style={{ maxWidth: 42 }}>{step.label}</span>
                       </div>
                       {i < journeySteps.length - 1 && (
-                        <span className="text-slate-500 text-xs flex-shrink-0 mx-0.5 mb-4">→</span>
+                        <span className="text-slate-500 text-[10px] flex-shrink-0 pb-4 mx-0.5">›</span>
                       )}
                     </React.Fragment>
                   );
@@ -376,7 +426,7 @@ export default function Hero() {
                 <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
                 <p className="font-bold text-lg" style={{ color: GOLD }}>YOU'RE PROTECTED</p>
               </div>
-              <p className="text-slate-300 text-sm mb-3">Your care journey appears compatible.</p>
+              <p className="text-slate-300 text-sm mb-3">Your care plan is verified and secure.</p>
               <div className="border-t border-white/10 pt-3 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
                 <span className="text-xs text-slate-400">Scan complete • All systems safe</span>
@@ -399,8 +449,8 @@ export default function Hero() {
               <motion.div
                 key={title}
                 variants={{ hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0 } }}
-                className={`rounded-2xl p-4 flex items-start gap-4 border border-white/[0.08]${i >= 2 ? ' hidden lg:flex' : ''}`}
-                style={{ background: 'rgba(255,255,255,0.05)' }}
+                className={`rounded-2xl p-4 flex items-start gap-4 border border-white/[0.12]${i >= 2 ? ' hidden lg:flex' : ''}`}
+                style={{ background: 'rgba(10,15,30,0.55)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
               >
                 <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                   <Icon className="w-5 h-5 text-slate-300" />
