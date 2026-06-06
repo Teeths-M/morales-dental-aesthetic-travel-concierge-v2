@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SlotCounter from './SlotCounter';
-import SentinelOrbit from './SentinelOrbit';
 import { translations } from '@/lib/translations';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -565,8 +564,8 @@ export default function Hero() {
             transition={{ duration: 1.0, delay: 0.2 }}
             className="flex flex-col items-center"
           >
-            <div className="w-full max-w-sm lg:max-w-none mx-auto flex justify-center">
-              <SentinelOrbit size={420} />
+            <div className="w-full max-w-sm lg:max-w-none mx-auto">
+              <SafeTGlobe shieldState={shieldState} />
             </div>
 
             {/* YOU'RE PROTECTED card — fixed green state */}
