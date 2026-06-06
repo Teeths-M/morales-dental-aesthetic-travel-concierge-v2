@@ -56,6 +56,20 @@
         "forfeited"
       ],
       "default": "pending"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal admin notes \u2014 used for demo/legacy tagging, audit flags, etc."
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this record was created by pre-production demo payment logic"
+    },
+    "exclude_from_revenue_reporting": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this record should be excluded from revenue calculations"
     }
   },
   "required": [
