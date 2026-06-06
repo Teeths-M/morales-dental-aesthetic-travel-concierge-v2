@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase } from 'lucide-react';
+import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, MessageCircle, HomeIcon, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlobeVisualization, { SHIELD_STATES } from './GlobeVisualization';
 
@@ -110,6 +110,37 @@ export default function Hero() {
                 {language === 'es' ? 'Explorar' : language === 'fr' ? 'Explorer' : 'Explore Treatments'}
               </Button>
             </Link>
+          </div>
+
+          {/* Journey steps */}
+          <div className="mb-7">
+            <p className="text-[10px] font-mono tracking-[0.22em] uppercase mb-3" style={{ color: GOLD }}>
+              Care, Coordinated For You
+            </p>
+            <div className="flex items-center flex-wrap gap-y-2">
+              {[
+                { icon: MessageCircle, label: 'Consultation' },
+                { icon: Plane,         label: 'Travel'       },
+                { icon: Activity,      label: 'Treatment'    },
+                { icon: Heart,         label: 'Recovery'     },
+                { icon: HomeIcon,      label: 'Return Home'  },
+              ].map(({ icon: StepIcon, label }, i, arr) => (
+                <React.Fragment key={label}>
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ background: 'rgba(201,168,76,0.12)', border: `1px solid ${GOLD}40` }}
+                    >
+                      <StepIcon className="w-3.5 h-3.5" style={{ color: GOLD }} />
+                    </div>
+                    <span className="text-white/60 text-[9px] font-medium whitespace-nowrap">{label}</span>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <div className="flex-1 min-w-[10px] max-w-[18px] h-px mx-1" style={{ background: `${GOLD}40` }} />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
 
           {/* Trust badges */}

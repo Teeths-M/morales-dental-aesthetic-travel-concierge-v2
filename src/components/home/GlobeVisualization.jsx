@@ -152,7 +152,24 @@ export default function GlobeVisualization({ onStateChange }) {
         atmosphereAltitude: 0.38,
         pointOfView: { lat: 5, lng: -60, altitude: 1.7 },
 
-        pointsData: LOCATIONS,
+        pointsData: [
+          ...LOCATIONS,
+          { lat: 51.5,  lng: -0.1   },
+          { lat: 48.8,  lng:  2.3   },
+          { lat: 40.7,  lng: -74.0  },
+          { lat: 34.0,  lng: -118.2 },
+          { lat: -33.9, lng:  18.4  },
+          { lat: 28.6,  lng:  77.2  },
+          { lat: 35.7,  lng: 139.7  },
+          { lat: -23.5, lng: -46.6  },
+          { lat: 19.4,  lng: -99.1  },
+          { lat: 25.2,  lng:  55.3  },
+          { lat: 55.7,  lng:  37.6  },
+          { lat: -34.6, lng: -58.4  },
+          { lat: 37.6,  lng: 126.9  },
+          { lat: 13.8,  lng: 100.5  },
+          { lat: 41.0,  lng:  28.9  },
+        ],
         pointLat: 'lat',
         pointLng: 'lng',
         pointColor: () => GOLD,
@@ -346,21 +363,18 @@ export default function GlobeVisualization({ onStateChange }) {
             <HeartHandsIcon color={GOLD} size={110} />
           </motion.div>
 
-          {/* State label below icon */}
+          {/* Pulsing dot indicator only — no text label */}
           <motion.div
-            key={`micro-${state.key}`}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
+            key={`dot-${state.key}`}
+            animate={{ scale: [1, 1.4, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
             style={{
-              position: 'absolute', bottom: 14,
-              fontSize: 9, fontWeight: 900, letterSpacing: '0.25em',
-              color: state.color,
-              textShadow: `0 0 10px ${state.color}`,
+              position: 'absolute', bottom: 18,
+              width: 10, height: 10, borderRadius: '50%',
+              background: state.color,
+              boxShadow: `0 0 14px 4px ${state.color}`,
             }}
-          >
-            {state.key.toUpperCase()}
-          </motion.div>
+          />
         </div>
       </div>
 
