@@ -46,6 +46,50 @@ const COUNTRIES = [
   { name: 'DOMINICAN REP.',     cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start' },
 ];
 
+// ── LANDMASS DOT MATRIX (orthographic projection, center lat=15°N lon=-20°W) ──
+const _R = Math.PI / 180;
+const _LC = 15 * _R, _LOC = -20 * _R;
+const _SLC = Math.sin(_LC), _CLC = Math.cos(_LC);
+
+function _grid(la0, la1, lo0, lo1, s) {
+  const p = [];
+  for (let la = la0; la <= la1; la += s)
+    for (let lo = lo0; lo <= lo1; lo += s)
+      p.push([la, lo]);
+  return p;
+}
+
+const _LAND_LL = [
+  ..._grid(18, 30, -118, -88, 3),    // Mexico
+  ..._grid(8,  18, -92,  -78, 2.5),  // Central America
+  ..._grid(10, 24, -85,  -64, 3.5),  // Caribbean
+  ..._grid(0,  12, -80,  -62, 3),    // Colombia / Venezuela
+  ..._grid(-35, 5, -75,  -34, 3.5),  // South America
+  ..._grid(36, 62,  -9,   28, 3.5),  // Western Europe
+  ..._grid(45, 65,  28,   58, 3.5),  // E Europe / W Russia
+  ..._grid(36, 42,  26,   46, 3),    // Turkey / Caucasus
+  ..._grid(14, 38,  35,   62, 3.5),  // Middle East
+  ..._grid(-5, 38, -18,   16, 3),    // West Africa
+  ..._grid(-30,14,  12,   50, 3.5),  // Central / East Africa
+  ..._grid(-35,-22, 16,   33, 3),    // Southern Africa
+  ..._grid(8,  30,  68,   88, 3),    // India
+  ..._grid(0,  24,  97,  120, 3),    // SE Asia
+  ..._grid(26, 46, 120,  145, 3),    // Korea / Japan
+  ..._grid(20, 42, 100,  122, 3.5),  // China
+];
+
+const LAND_DOTS = _LAND_LL.map(([la, lo]) => {
+  const φ = la * _R, λ = lo * _R;
+  const cosC = _SLC * Math.sin(φ) + _CLC * Math.cos(φ) * Math.cos(λ - _LOC);
+  if (cosC < 0.06) return null;
+  const x = 250 + 190 * Math.cos(φ) * Math.sin(λ - _LOC);
+  const y = 250 - 190 * (_CLC * Math.sin(φ) - _SLC * Math.cos(φ) * Math.cos(λ - _LOC));
+  const dx = x - 250, dy = y - 250;
+  if (dx * dx + dy * dy > 190 * 190) return null;
+  return { x, y, a: Math.min(0.62, cosC * 0.68 + 0.07) };
+}).filter(Boolean);
+// ─────────────────────────────────────────────────────────────────────────────
+
 function SafeTGlobe({ shieldState }) {
   const sColor = shieldState?.shieldColor || GOLD;
   const sGlow  = shieldState?.glowColor  || 'rgba(212,168,67,0.45)';
@@ -110,6 +154,16 @@ function SafeTGlobe({ shieldState }) {
 
         {/* Globe body — transparent so sunset bleeds through */}
         <circle cx="250" cy="250" r="190" fill="transparent" stroke="#D4AF37" strokeWidth="1" strokeOpacity="0.35" />
+
+        {/* 0) Landmass golden dot matrix */}
+        <g opacity="0.85">
+          {LAND_DOTS.map((d, i) => (
+            <circle key={i} cx={d.x} cy={d.y} r="1.5"
+              fill="#D4AF37" fillOpacity={d.a}
+              style={{ filter: 'drop-shadow(0 0 1.5px rgba(212,175,55,0.7))' }}
+            />
+          ))}
+        </g>
 
         {/* 1) Rotating gold grid */}
         <g className="globe-grid">
