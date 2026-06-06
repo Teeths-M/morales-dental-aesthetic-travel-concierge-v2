@@ -41,41 +41,9 @@ const COUNTRIES = [
   { name: 'BRAZIL',            cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start', flag: '🇧🇷', city: 'São Paulo',         treatments: ['Body Contouring', 'Aesthetic Surgery'] },
   { name: 'COSTA RICA',        cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end',   flag: '🇨🇷', city: 'San José',          treatments: ['Full Mouth Restoration', 'Crowns'] },
   { name: 'MEXICO',            cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end',   flag: '🇲🇽', city: 'Cancún',            treatments: ['Dental Implants', 'Veneers'] },
-  { name: 'VENEZUELA',          cx: 282, cy: 268, lx: 290, ly: 259, anchor: 'start', flag: '🇻🇪', city: 'Caracas',           treatments: ['Cosmetic Surgery', 'Dental Care'] },
-  { name: 'DOMINICAN REP.',    cx: 228, cy: 238, lx: 236, ly: 229, anchor: 'start', flag: '🇩🇴', city: 'Santo Domingo',     treatments: ['Plastic Surgery', 'Dental Implants'] },
+  { name: 'VENEZUELA',          cx: 282, cy: 268, lx: 272, ly: 280, anchor: 'middle', flag: '🇻🇪', city: 'Caracas',           treatments: ['Cosmetic Surgery', 'Dental Care'] },
 ];
 
-// Landmark silhouette paths (14x14 viewBox, centered at 0,0 for easy transform positioning)
-const LANDMARKS = {
-  'MEXICO': (
-    // Chichen Itza stepped pyramid
-    <path d="M0 5 L-6 5 L-4 2 L-2 -1 L0 -4 L2 -1 L4 2 L6 5 Z M-3 5 L-3 2 L3 2 L3 5 Z M-1.5 2 L-1.5 -0.5 L1.5 -0.5 L1.5 2 Z" fill={GOLD} />
-  ),
-  'COLOMBIA': (
-    // Mountain outline
-    <path d="M-7 5 L-3 -3 L0 -5 L3 -3 L7 5 Z M-2 5 L0 1 L2 5 Z" fill={GOLD} />
-  ),
-  'COSTA RICA': (
-    // Volcano outline
-    <path d="M-7 5 L-1.5 -5 L1.5 -5 L7 5 Z M-1 -5 Q0 -7 1 -5 Z M0 -6 L0 -8 L0.3 -7 L0.6 -8.5" fill={GOLD} stroke={GOLD} strokeWidth="0.4" />
-  ),
-  'THAILAND': (
-    // Temple/wat outline
-    <path d="M0 -6 L0 -6 M-1 -5 L1 -5 L1.5 -3 L2 -1 L3 1 L3 5 L-3 5 L-3 1 L-2 -1 L-1.5 -3 Z M-1 -5 L0 -7 L1 -5 Z M0 -7 L0 -9" fill={GOLD} stroke={GOLD} strokeWidth="0.3" />
-  ),
-  'TURKEY': (
-    // Mosque dome + minaret
-    <path d="M-4 5 L-4 1 Q-4 -3 0 -3 Q4 -3 4 1 L4 5 Z M0 -3 Q0 -6 0 -6 A3 3 0 0 1 0 -3 Z M4.5 5 L4.5 -4 L5.5 -5 L5.5 5 Z M4.8 -4.5 L5.2 -5.5 L5.2 -4.5 Z" fill={GOLD} />
-  ),
-  'SOUTH KOREA': (
-    // Pagoda outline (3 tiers)
-    <path d="M-5 5 L-3 3 L-2 3 L-2 1 L-4 1 L-2 -1 L-1 -1 L-1 -3 L-3 -3 L0 -6 L3 -3 L1 -3 L1 -1 L2 -1 L4 1 L2 1 L2 3 L3 3 L5 5 Z" fill={GOLD} />
-  ),
-  'BRAZIL': (
-    // Christ the Redeemer silhouette
-    <path d="M0 -7 L0 4 M-5 -2 L5 -2 M-1 -5 Q-1.5 -7 0 -8 Q1.5 -7 1 -5 Z" fill="none" stroke={GOLD} strokeWidth="1.2" strokeLinecap="round" />
-  ),
-};
 
 function SafeTGlobe({ shieldState }) {
   const sColor = shieldState?.shieldColor || GOLD;
@@ -256,16 +224,14 @@ function SafeTGlobe({ shieldState }) {
           </motion.g>
         ))}
 
-        {/* Landmark silhouettes above each dot */}
-        {COUNTRIES.map((c, i) => {
-          const landmark = LANDMARKS[c.name];
-          if (!landmark) return null;
-          return (
-            <g key={i} transform={`translate(${c.cx}, ${c.cy - 18})`} opacity="0.6">
-              {landmark}
-            </g>
-          );
-        })}
+        {/* Gold star landmarks above each dot */}
+        {COUNTRIES.map((c, i) => (
+          <text key={i} x={c.cx} y={c.cy - 12}
+            fontSize="10" fill={GOLD} opacity="0.75"
+            textAnchor="middle" fontFamily="system-ui,sans-serif">
+            ★
+          </text>
+        ))}
 
         {/* Country labels */}
         {COUNTRIES.map((c, i) => (
