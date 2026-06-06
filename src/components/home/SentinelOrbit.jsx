@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 
-const SIZE = 370;
 const GOLD = '#C9A84C';
 
 // Destinations with approximate lat/lon
@@ -69,7 +68,8 @@ function drawArc(ctx, a, b, steps = 40) {
   }
 }
 
-export default function SentinelOrbit() {
+export default function SentinelOrbit({ size = 370 }) {
+  const SIZE = size;
   const canvasRef = useRef(null);
   const rafRef    = useRef(null);
   const angleRef  = useRef(0);
@@ -85,7 +85,7 @@ export default function SentinelOrbit() {
 
     const cx = SIZE / 2;
     const cy = SIZE / 2;
-    const R  = 128;           // globe radius px
+    const R  = SIZE * 0.346; // scales with size (128/370 ≈ 0.346)           // globe radius px
 
     // Dot-grid for globe surface
     const DOTS = [];
@@ -300,7 +300,7 @@ export default function SentinelOrbit() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [SIZE]);
 
   return (
     <canvas

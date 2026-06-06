@@ -148,15 +148,6 @@ export default function Hero() {
           style={{ objectPosition: '55% center' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#070F0B]/30 via-[#070F0B]/10 to-[#070F0B]" />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.72 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
-          >
-            <SentinelOrbit />
-          </motion.div>
-        </div>
       </div>
 
       {/* Content Section */}
@@ -240,36 +231,6 @@ export default function Hero() {
             ))}
           </div>
 
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-accent">
-              <Shield className="h-3.5 w-3.5" />
-              {language === 'es'
-                ? 'Únete a nuestra red'
-                : language === 'fr'
-                ? 'Rejoignez notre réseau'
-                : 'Join our network'}
-            </div>
-            <p className="mb-3 text-sm font-semibold text-white">
-              {language === 'es'
-                ? 'Regístrate como proveedor:'
-                : language === 'fr'
-                ? 'Inscrivez-vous comme partenaire :'
-                : 'Sign up as a provider:'}
-            </p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {signupRoles.map(({ label, path, icon: Icon }) => (
-                <Link
-                  key={label}
-                  to={path}
-                  className="group flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-primary transition-all hover:bg-accent hover:text-accent-foreground"
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-xs font-bold leading-tight">{label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
           {testimonials.length > 0 && (
             <div className="border-t border-white/10 pt-6 mt-4">
               <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
@@ -329,8 +290,9 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.72 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.4, delay: 0.7, ease: 'easeOut' }}
+            style={{ width: 550, height: 550 }}
           >
-            <SentinelOrbit />
+            <SentinelOrbit size={550} />
           </motion.div>
         </div>
       </div>
