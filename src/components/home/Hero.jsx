@@ -39,7 +39,7 @@ const COUNTRIES = [
   { name: 'THAILAND',          cx: 372, cy: 178, lx: 380, ly: 170, anchor: 'start', flag: '🇹🇭', city: 'Bangkok',           treatments: ['Orthopedic Surgery', 'Recovery Retreats'] },
   { name: 'COLOMBIA',          cx: 375, cy: 242, lx: 383, ly: 234, anchor: 'start', flag: '🇨🇴', city: 'Medellín',          treatments: ['Rhinoplasty', 'Liposuction'] },
   { name: 'BRAZIL',            cx: 348, cy: 358, lx: 356, ly: 372, anchor: 'start', flag: '🇧🇷', city: 'São Paulo',         treatments: ['Body Contouring', 'Aesthetic Surgery'] },
-  { name: 'COSTA RICA',        cx: 108, cy: 325, lx: 100, ly: 340, anchor: 'end',   flag: '🇨🇷', city: 'San José',          treatments: ['Full Mouth Restoration', 'Crowns'] },
+  { name: 'COSTA RICA',        cx: 108, cy: 325, lx: 92,  ly: 340, anchor: 'end',   flag: '🇨🇷', city: 'San José',          treatments: ['Full Mouth Restoration', 'Crowns'] },
   { name: 'MEXICO',            cx: 102, cy: 195, lx: 94,  ly: 187, anchor: 'end',   flag: '🇲🇽', city: 'Cancún',            treatments: ['Dental Implants', 'Veneers'] },
   { name: 'VENEZUELA',          cx: 282, cy: 268, lx: 272, ly: 280, anchor: 'middle', flag: '🇻🇪', city: 'Caracas',           treatments: ['Cosmetic Surgery', 'Dental Care'] },
 ];
@@ -321,9 +321,21 @@ function SafeTGlobe({ shieldState }) {
             fill="none" stroke={GOLD} strokeWidth="1" opacity="0.4"
           />
 
-          {/* Simple cross */}
+          {/* Hands-and-heart icon */}
           <path
-            d="M242 228 L258 228 L258 244 L274 244 L274 260 L258 260 L258 276 L242 276 L242 260 L226 260 L226 244 L242 244 Z"
+            d="M224 268 Q218 262 218 254 Q218 246 225 244 Q228 243 230 246 Q232 250 230 258 Q228 266 224 268 Z"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          <path
+            d="M276 268 Q282 262 282 254 Q282 246 275 244 Q272 243 270 246 Q268 250 270 258 Q272 266 276 268 Z"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          <path
+            d="M224 268 Q240 280 250 283 Q260 280 276 268"
+            fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.95"
+          />
+          <path
+            d="M250 230 C250 230 236 219 236 209 C236 199 242 193 249 193 C251.5 193 253 194.5 253 194.5 C253 194.5 254.5 193 257 193 C264 193 270 199 270 209 C270 219 250 230 250 230 Z"
             fill="white" opacity="0.96"
           />
         </motion.g>
@@ -371,15 +383,10 @@ const SHIELD_STATES = [
 
 export default function Hero() {
   const [language, setLanguage] = useState('en');
-  const [shieldStateIdx, setShieldStateIdx] = useState(0);
   const { navigateToLogin } = useAuth();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShieldStateIdx(i => (i + 1) % SHIELD_STATES.length);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  // Fixed on green state only
+  const shieldState = SHIELD_STATES[0];
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
@@ -570,40 +577,31 @@ export default function Hero() {
             className="flex flex-col items-center"
           >
             <div className="w-full max-w-sm lg:max-w-none mx-auto">
-              <SafeTGlobe shieldState={SHIELD_STATES[shieldStateIdx]} />
+              <SafeTGlobe shieldState={shieldState} />
             </div>
 
-            {/* YOU'RE PROTECTED card — cycles with shield state */}
-            {(() => {
-              const s = SHIELD_STATES[shieldStateIdx];
-              return (
-                <motion.div
-                  key={s.key}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1 }}
-                  className="w-full max-w-xs mt-3 mx-auto rounded-2xl p-5 border"
-                  style={{ background: 'rgba(13,26,46,0.92)', borderColor: `${s.shieldColor}55` }}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: s.titleColor }} />
-                    <p className="font-bold text-base" style={{ color: s.titleColor }}>{s.title}</p>
-                  </div>
-                  <p className="text-slate-300 text-sm mb-3">{s.subtext}</p>
-                  <div className="border-t border-white/10 pt-3 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: s.dotColor }} />
-                    <span className="text-xs text-slate-400">Scan complete • All systems safe</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 mt-3">
-                    {SHIELD_STATES.map((st, i) => (
-                      <span key={i} className="rounded-full transition-all duration-500"
-                        style={{ width: i === shieldStateIdx ? 12 : 8, height: i === shieldStateIdx ? 12 : 8, background: i === shieldStateIdx ? s.shieldColor : '#334155' }} />
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })()}
+            {/* YOU'RE PROTECTED card — fixed green state */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="w-full max-w-xs mt-3 mx-auto rounded-2xl p-5 border"
+              style={{ background: 'rgba(13,26,46,0.92)', borderColor: `${shieldState.shieldColor}55` }}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: shieldState.titleColor }} />
+                <p className="font-bold text-base" style={{ color: shieldState.titleColor }}>{shieldState.title}</p>
+              </div>
+              <p className="text-slate-300 text-sm mb-3">Your care plan is verified and secure.</p>
+              <div className="border-t border-white/10 pt-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: shieldState.dotColor }} />
+                <span className="text-xs text-slate-400">Scan complete • All systems safe</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 mt-3">
+                <span className="rounded-full w-3 h-3" style={{ background: shieldState.dotColor }} />
+                <span className="rounded-full w-2 h-2" style={{ background: '#334155' }} />
+                <span className="rounded-full w-2 h-2" style={{ background: '#334155' }} />
+              </div>
+            </motion.div>
           </motion.div>
 
           {/* ═══ COLUMN 3 — RIGHT FEATURES ═══ */}
