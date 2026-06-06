@@ -5,6 +5,7 @@ import { Shield, BadgeCheck, Plane, Star, MapPin, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SlotCounter from './SlotCounter';
 import SentinelOrbit from './SentinelOrbit';
+import SafeTLifeShield from './SafeTLifeShield';
 import { translations } from '@/lib/translations';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -312,6 +313,22 @@ export default function Hero() {
           )}
         </motion.div>
         </div>
+      </div>
+
+      {/* Desktop: SAFE-T4LIFE™ shield — center bridge */}
+      <div
+        className="hidden lg:flex absolute"
+        style={{
+          left: '52%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 20,
+          pointerEvents: 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <SafeTLifeShield />
       </div>
 
       {/* Desktop: Side-by-side cinematic panel */}
