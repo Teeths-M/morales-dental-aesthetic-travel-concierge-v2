@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import Hero from '../components/home/Hero';
+import ProviderNetworkCTA from '../components/home/ProviderNetworkCTA';
 import StatsBar from '../components/home/StatsBar';
 import WhyChooseUs from '../components/home/WhyChooseUs';
 import HowItWorks from '../components/home/HowItWorks';
@@ -49,6 +50,7 @@ export default function Home() {
   return (
     <div>
       <Hero />
+      <ProviderNetworkCTA />
       <StatsBar />
       <SlotCounter className="mx-auto mt-6" />
       <HeroSlideshow />
