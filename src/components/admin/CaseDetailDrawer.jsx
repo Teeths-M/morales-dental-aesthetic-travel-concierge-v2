@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Mail, MapPin, Activity, CreditCard, Calendar, ExternalLink, ShieldCheck, User } from 'lucide-react';
+import WaiverAdminPanel from '@/components/admin/WaiverAdminPanel';
+import HandshakeTimelinePanel from '@/components/admin/HandshakeTimelinePanel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +15,7 @@ const CASE_STATUSES = [
   'Admin-Review', 'Proposal-Sent', 'PMP-25', 'PMP-50', 'Deposit-Paid',
   'Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress',
   'SURGICAL_EXECUTION_WINDOW', 'RECOVERY_PHASE_7_DAY', 'Recovery', 'Completed',
+  'waiver_refused', 'companion_required_pending', 'companion_required_waived',
 ];
 
 const RISK_COLORS = {
@@ -279,6 +282,16 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
                     {caseRecord.updated_date ? new Date(caseRecord.updated_date).toLocaleString() : 'Unknown'}
                   </span>
                 </Row>
+              </div>
+
+              {/* Waiver & companion */}
+              <div className="bg-slate-50 rounded-xl p-4">
+                <WaiverAdminPanel caseRecord={caseRecord} />
+              </div>
+
+              {/* Handshakes timeline */}
+              <div className="bg-slate-50 rounded-xl p-4">
+                <HandshakeTimelinePanel caseId={caseRecord.id} />
               </div>
 
               {/* Doctor portal link */}

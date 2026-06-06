@@ -99,6 +99,11 @@
     "age": {
       "type": "string"
     },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Patient date of birth (required for age-based companion check)"
+    },
     "gender": {
       "type": "string"
     },
@@ -152,7 +157,7 @@
           },
           "passport_token": {
             "type": "string",
-            "description": "PASS_xxx token from PassportVault (replaces raw passport_number)"
+            "description": "PASS_xxx token from PassportVault"
           },
           "passport_expiry_date": {
             "type": "string",
@@ -289,7 +294,7 @@
     },
     "procedure_country": {
       "type": "string",
-      "description": "Country where procedure happens (for chauffeur leg logic)"
+      "description": "Country where procedure happens"
     },
     "flight_cost_usd": {
       "type": "number",
@@ -334,12 +339,12 @@
     },
     "passport_vault_token": {
       "type": "string",
-      "description": "PASS_xxx \u2014 References encrypted passport in PassportVault (replaces raw passport_number)"
+      "description": "PASS_xxx \u2014 References encrypted passport in PassportVault"
     },
     "passport_expiry_date": {
       "type": "string",
       "format": "date",
-      "description": "Non-sensitive expiry date retained for 6-month sentinel rule validation"
+      "description": "Non-sensitive expiry date retained for 6-month sentinel rule"
     },
     "ip_country_origin": {
       "type": "string",
@@ -355,6 +360,136 @@
       ],
       "default": "unknown",
       "description": "Visa requirement state: exempt | evisa | embassy | unknown"
+    },
+    "has_food_allergies": {
+      "type": "boolean",
+      "default": false
+    },
+    "food_allergies_details": {
+      "type": "string",
+      "description": "Required if has_food_allergies is true"
+    },
+    "has_medication_allergies": {
+      "type": "boolean",
+      "default": false
+    },
+    "medication_allergies_details": {
+      "type": "string",
+      "description": "Required if has_medication_allergies is true"
+    },
+    "dietary_restrictions": {
+      "type": "string",
+      "enum": [
+        "none",
+        "vegetarian",
+        "vegan",
+        "gluten_free",
+        "halal",
+        "kosher",
+        "diabetic_low_sugar",
+        "low_sodium",
+        "other"
+      ],
+      "default": "none"
+    },
+    "dietary_restrictions_details": {
+      "type": "string",
+      "description": "Required if dietary_restrictions is other or medically relevant"
+    },
+    "emergency_food_reaction_plan": {
+      "type": "string"
+    },
+    "dietary_accuracy_acknowledged": {
+      "type": "boolean",
+      "default": false
+    },
+    "clinical_boundary_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "description": "Patient acknowledges platform does not diagnose or prescribe"
+    },
+    "clinical_boundary_acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "clinical_boundary_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "preferred_language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it",
+        "ar",
+        "zh",
+        "ko",
+        "tr"
+      ],
+      "default": "en"
+    },
+    "secondary_language": {
+      "type": "string"
+    },
+    "needs_translator": {
+      "type": "boolean",
+      "default": false
+    },
+    "translation_contexts_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "airport, clinic, doctor_consultation, hotel_recovery, emergency"
+    },
+    "religious_or_modesty_considerations": {
+      "type": "string"
+    },
+    "communication_style_preference": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "gentle",
+        "detailed",
+        "family_included"
+      ],
+      "default": "gentle"
+    },
+    "companion_can_translate": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_translation_limitations": {
+      "type": "string"
+    },
+    "requires_companion": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_requirement_reason": {
+      "type": "string",
+      "enum": [
+        "age_threshold",
+        "safe_t_flag",
+        "medical_complexity",
+        "patient_request",
+        "admin_determined"
+      ]
+    },
+    "companion_requirement_status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "pending",
+        "assigned",
+        "companion_declined_with_waiver",
+        "companion_required_pending"
+      ],
+      "default": "not_required"
     }
   },
   "required": [

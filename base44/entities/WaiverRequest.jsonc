@@ -1,0 +1,139 @@
+{
+  "name": "WaiverRequest",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "waiver_type": {
+      "type": "string",
+      "enum": [
+        "companion_refusal",
+        "clinical_risk_acknowledged",
+        "enhanced_review_override",
+        "age_threshold_override"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "required",
+        "sent",
+        "signed",
+        "refused",
+        "expired",
+        "admin_reissued"
+      ],
+      "default": "required"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "refused_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "declined_by": {
+      "type": "string"
+    },
+    "declined_relationship": {
+      "type": "string"
+    },
+    "declined_reason": {
+      "type": "string"
+    },
+    "signature_data": {
+      "type": "string"
+    },
+    "waiver_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "acknowledgement_text": {
+      "type": "string"
+    },
+    "issued_by_admin_id": {
+      "type": "string"
+    },
+    "reissued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reissued_by": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "case_id",
+    "waiver_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

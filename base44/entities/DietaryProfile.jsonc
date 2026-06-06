@@ -1,0 +1,114 @@
+{
+  "name": "DietaryProfile",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "consultation_id": {
+      "type": "string"
+    },
+    "has_food_allergies": {
+      "type": "boolean",
+      "default": false
+    },
+    "food_allergies_details": {
+      "type": "string"
+    },
+    "has_medication_allergies": {
+      "type": "boolean",
+      "default": false
+    },
+    "medication_allergies_details": {
+      "type": "string"
+    },
+    "dietary_restrictions": {
+      "type": "string",
+      "enum": [
+        "none",
+        "vegetarian",
+        "vegan",
+        "gluten_free",
+        "halal",
+        "kosher",
+        "diabetic_low_sugar",
+        "low_sodium",
+        "other"
+      ],
+      "default": "none"
+    },
+    "dietary_restrictions_details": {
+      "type": "string"
+    },
+    "emergency_food_reaction_plan": {
+      "type": "string"
+    },
+    "patient_acknowledges_accuracy": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "companion_acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "companion_acknowledged_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_id",
+    "dietary_restrictions"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "name": "LinguisticProfile",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "consultation_id": {
+      "type": "string"
+    },
+    "preferred_language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it",
+        "ar",
+        "zh",
+        "ko",
+        "tr",
+        "other"
+      ],
+      "default": "en"
+    },
+    "secondary_language": {
+      "type": "string"
+    },
+    "needs_translator": {
+      "type": "boolean",
+      "default": false
+    },
+    "translation_contexts_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "airport, clinic, doctor_consultation, hotel_recovery, emergency"
+    },
+    "cultural_preferences": {
+      "type": "string"
+    },
+    "religious_or_modesty_considerations": {
+      "type": "string"
+    },
+    "communication_style_preference": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "gentle",
+        "detailed",
+        "family_included"
+      ],
+      "default": "gentle"
+    },
+    "companion_can_translate": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_translation_limitations": {
+      "type": "string"
+    },
+    "translation_routing_status": {
+      "type": "string",
+      "enum": [
+        "not_needed",
+        "companion_assigned",
+        "coordinator_notified",
+        "confirmed"
+      ],
+      "default": "not_needed"
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "patient_id",
+    "preferred_language"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

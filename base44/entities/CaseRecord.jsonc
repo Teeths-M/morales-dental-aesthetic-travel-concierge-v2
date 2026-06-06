@@ -20,7 +20,10 @@
         "SURGICAL_EXECUTION_WINDOW",
         "RECOVERY_PHASE_7_DAY",
         "Recovery",
-        "Completed"
+        "Completed",
+        "waiver_refused",
+        "companion_required_pending",
+        "companion_required_waived"
       ],
       "default": "Submitted"
     },
@@ -425,18 +428,15 @@
       "properties": {
         "in_flux": {
           "type": "boolean",
-          "default": false,
-          "description": "True when a confirmation window has been missed and fallback routing is active"
+          "default": false
         },
         "in_flux_triggered_at": {
           "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the in-flux state was triggered"
+          "format": "date-time"
         },
         "resolved_at": {
           "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when fallback routing was resolved"
+          "format": "date-time"
         },
         "primary_partner_type": {
           "type": "string",
@@ -444,8 +444,7 @@
             "doctor",
             "taxi_service",
             "travel_agency"
-          ],
-          "description": "Which partner type missed their window"
+          ]
         },
         "primary_partner_id": {
           "type": "string"
@@ -458,13 +457,11 @@
         },
         "confirmation_deadline": {
           "type": "string",
-          "format": "date-time",
-          "description": "When the primary partner was supposed to confirm by"
+          "format": "date-time"
         },
         "current_escalation_level": {
           "type": "number",
-          "default": 1,
-          "description": "1 = Backup A, 2 = Backup B, 3 = Human Required"
+          "default": 1
         },
         "escalation_reason": {
           "type": "string",
@@ -485,12 +482,10 @@
           "format": "date-time"
         },
         "human_intervention_triggered_by": {
-          "type": "string",
-          "description": "Admin user ID or name who triggered the intervention"
+          "type": "string"
         },
         "fallback_sequence": {
           "type": "array",
-          "description": "Ordered list of backup partners to contact",
           "items": {
             "type": "object",
             "properties": {
@@ -539,7 +534,6 @@
         },
         "audit_trail": {
           "type": "array",
-          "description": "Full timestamped log of every fallback action for legal review",
           "items": {
             "type": "object",
             "properties": {
@@ -560,6 +554,79 @@
           }
         }
       }
+    },
+    "requires_companion": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if patient requires a travel companion (age, SAFE-T, or admin-determined)"
+    },
+    "companion_requirement_reason": {
+      "type": "string",
+      "enum": [
+        "age_threshold",
+        "safe_t_flag",
+        "medical_complexity",
+        "patient_request",
+        "admin_determined"
+      ],
+      "description": "Why companion is required"
+    },
+    "companion_requirement_status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "pending",
+        "assigned",
+        "companion_declined_with_waiver",
+        "companion_required_pending"
+      ],
+      "default": "not_required"
+    },
+    "companion_assignment_id": {
+      "type": "string",
+      "description": "Reference to CompanionAssignment entity"
+    },
+    "waiver_status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "required",
+        "sent",
+        "signed",
+        "refused",
+        "expired",
+        "admin_reissued"
+      ],
+      "default": "not_required"
+    },
+    "waiver_request_id": {
+      "type": "string",
+      "description": "Reference to WaiverRequest entity"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Patient date of birth for age-based companion check"
+    },
+    "dietary_profile_id": {
+      "type": "string",
+      "description": "Reference to DietaryProfile entity"
+    },
+    "linguistic_profile_id": {
+      "type": "string",
+      "description": "Reference to LinguisticProfile entity"
+    },
+    "clinical_boundary_acknowledged": {
+      "type": "boolean",
+      "default": false
+    },
+    "clinical_boundary_acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "clinical_boundary_version": {
+      "type": "string",
+      "default": "1.0"
     }
   },
   "required": [

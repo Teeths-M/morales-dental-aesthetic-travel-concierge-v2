@@ -1,0 +1,138 @@
+{
+  "name": "CompanionAssignment",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "companion_id": {
+      "type": "string",
+      "description": "Companion entity ID"
+    },
+    "companion_user_id": {
+      "type": "string",
+      "description": "User ID of companion"
+    },
+    "companion_name": {
+      "type": "string"
+    },
+    "companion_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "assignment_reason": {
+      "type": "string",
+      "enum": [
+        "age_threshold",
+        "safe_t_flag",
+        "medical_complexity",
+        "patient_request",
+        "admin_determined"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "assigned",
+        "confirmed",
+        "active",
+        "completed",
+        "cancelled"
+      ],
+      "default": "assigned"
+    },
+    "can_translate": {
+      "type": "boolean",
+      "default": false
+    },
+    "translation_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "airport, clinic, hotel_recovery, doctor_consultation, emergency"
+    },
+    "dietary_handshake_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "dietary_handshake_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "assigned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "case_id",
+    "companion_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.companion_user_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.companion_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -24,8 +24,11 @@ import {
   Award,
   TrendingUp,
   MessageSquare,
-  Settings
+  Settings,
+  ClipboardCheck
 } from 'lucide-react';
+import CompanionHandshakePanel from '@/components/companion/CompanionHandshakePanel';
+import DietaryInfoCard from '@/components/companion/DietaryInfoCard';
 import { toast } from 'sonner';
 
 export default function CompanionDashboard() {
@@ -41,6 +44,12 @@ export default function CompanionDashboard() {
       return companions[0] || null;
     },
     enabled: !!user?.email
+  });
+
+  const { data: assignments = [] } = useQuery({
+    queryKey: ['companion_assignments', user?.id],
+    queryFn: () => base44.entities.CompanionAssignment.filter({ companion_user_id: user?.id }),
+    enabled: !!user?.id
   });
 
   const updateMutation = useMutation({
@@ -204,11 +213,14 @@ export default function CompanionDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="assignments">
+              My Journeys
+              {assignments.length > 0 && <span className="ml-1.5 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 inline-flex items-center justify-center">{assignments.length}</span>}
+            </TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="verification">Verification</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -392,20 +404,58 @@ export default function CompanionDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="bookings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Bookings</CardTitle>
-                <CardDescription>Your scheduled companion services</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No upcoming bookings yet</p>
-                  <p className="text-sm mt-1">Bookings will appear here once clients schedule your services</p>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="assignments" className="space-y-4">
+            {assignments.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-10 text-muted-foreground">
+                  <ClipboardCheck className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                  <p>No active journey assignments yet.</p>
+                  <p className="text-sm mt-1">Your assigned patient journeys will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              assignments.map(assignment => (
+                <Card key={assignment.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">{assignment.patient_name || 'Patient Journey'}</CardTitle>
+                      <Badge variant={assignment.status === 'active' ? 'default' : 'secondary'} className="capitalize">
+                        {assignment.status}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Assigned: {assignment.assigned_at ? new Date(assignment.assigned_at).toLocaleDateString() : 'Pending'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {assignment.can_translate && assignment.translation_tasks?.length > 0 && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">Your Translation Assignments:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {assignment.translation_tasks.map(task => (
+                            <Badge key={task} className="bg-blue-100 text-blue-700 text-xs">
+                              {task.replace(/_/g, ' ')}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dietary Info */}
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Patient Dietary & Allergy Info</p>
+                      <DietaryInfoCard caseId={assignment.case_id} />
+                    </div>
+
+                    {/* Handshakes */}
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Journey Checkpoints</p>
+                      <CompanionHandshakePanel caseId={assignment.case_id} />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="settings">

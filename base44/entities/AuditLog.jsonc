@@ -1,0 +1,111 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "sensitive_profile_viewed",
+        "passport_token_viewed",
+        "passport_access_requested",
+        "passport_access_approved",
+        "passport_access_denied",
+        "dietary_profile_updated",
+        "allergy_profile_updated",
+        "waiver_requested",
+        "waiver_signed",
+        "waiver_refused",
+        "companion_required_flagged",
+        "companion_assigned",
+        "companion_handshake_completed",
+        "partner_notified",
+        "safet_risk_status_changed",
+        "clinical_boundary_acknowledged",
+        "handshake_created",
+        "handshake_completed",
+        "case_accessed",
+        "role_escalation_attempt"
+      ]
+    },
+    "actor_id": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string"
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "resource_type": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "resource_name": {
+      "type": "string"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "user_agent": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    },
+    "sensitive": {
+      "type": "boolean",
+      "default": false
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "event_type",
+    "actor_id",
+    "timestamp"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.actor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

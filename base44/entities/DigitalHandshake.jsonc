@@ -1,0 +1,153 @@
+{
+  "name": "DigitalHandshake",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string"
+    },
+    "actor_user_id": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "companion",
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "coordinator",
+        "admin",
+        "platform_admin",
+        "system"
+      ]
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "checkpoint_type": {
+      "type": "string",
+      "enum": [
+        "booking_intake_acknowledged",
+        "clinical_boundary_acknowledged",
+        "waiver_signed",
+        "dietary_restrictions_received",
+        "allergy_restrictions_received",
+        "companion_assigned",
+        "companion_departure_airport_confirmed",
+        "companion_arrival_airport_confirmed",
+        "companion_clinic_arrival_confirmed",
+        "companion_hotel_arrival_confirmed",
+        "companion_recovery_instructions_received",
+        "doctor_preop_review_confirmed",
+        "travel_itinerary_confirmed",
+        "chauffeur_pickup_confirmed",
+        "recovery_phase_started",
+        "recovery_support_confirmed",
+        "airport_translation_ready",
+        "clinic_translation_ready",
+        "hotel_translation_ready",
+        "emergency_translation_plan_confirmed"
+      ]
+    },
+    "checkpoint_label": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "expired",
+        "skipped"
+      ],
+      "default": "pending"
+    },
+    "required": {
+      "type": "boolean",
+      "default": true
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "audit_logged": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "case_id",
+    "checkpoint_type",
+    "actor_role"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "data.actor_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.actor_user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
