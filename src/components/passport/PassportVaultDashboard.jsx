@@ -120,12 +120,12 @@ export default function PassportVaultDashboard({ patientEmail }) {
             <p className="text-xs text-emerald-600 font-mono break-all max-w-[160px]">
               {vault.passport_token}
             </p>
-            <p className="text-xs text-emerald-500 mt-1">AES-256-GCM</p>
+            <p className="text-xs text-emerald-500 mt-1">Encrypted · Access-controlled · Audited</p>
           </div>
         </div>
         <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>Encrypted · {vault.access_count || 0} access events · Vault expires {vault.expires_at ? format(new Date(vault.expires_at), 'MMM d, yyyy') : 'never'}</span>
+          <span>Encrypted & access-controlled · {vault.access_count || 0} access events · Vault expires {vault.expires_at ? format(new Date(vault.expires_at), 'MMM d, yyyy') : 'never'}</span>
         </div>
       </div>
 

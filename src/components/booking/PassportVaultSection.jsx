@@ -115,7 +115,7 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             </div>
             <p className="text-sm font-semibold text-slate-700">Upload Your Passport</p>
             <p className="text-xs text-slate-400 mt-1">Photo or PDF · JPEG, PNG, WEBP · Max 10MB</p>
-            <p className="text-xs text-emerald-600 mt-2 font-medium">🔒 AI will auto-extract your details securely</p>
+            <p className="text-xs text-emerald-600 mt-2 font-medium">🔒 Document is encrypted, access-controlled, and audited</p>
             <input
               ref={fileRef}
               type="file"

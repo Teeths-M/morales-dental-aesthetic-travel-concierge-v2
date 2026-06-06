@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard } from 'lucide-react';
+import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard, AlertCircle } from 'lucide-react';
 import DeclineDepositDialog from '@/components/checkout/DeclineDepositDialog';
 import { toast } from 'sonner';
 
@@ -46,7 +46,6 @@ export default function PaymentCheckout() {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('stripe'); // 'stripe' | 'wipay' | 'paypal'
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declinedAmount, setDeclinedAmount] = useState(null);
 
@@ -113,41 +112,10 @@ export default function PaymentCheckout() {
       const depositOption = plan_type === 'full_payment' ? 'Full' : 
                             plan_type === 'deposit_50' ? '50%' : '25%';
 
-      // Record the payment intent with timeout protection
-      const res = await withTimeout(base44.functions.invoke('iq200Pipeline', {
-        action: 'process_payment',
-        payload: { token, deposit_option: depositOption }
-      }));
-
-      if (!res.data?.success) {
-        throw new Error(res.data?.error || 'Payment processing failed');
-      }
-
-      const amountValue = depositOption === 'Full' ? (paymentPlan?.final_cost || 0) * 0.95 :
-                          depositOption === '50%' ? (paymentPlan?.final_cost || 0) * 0.50 :
-                          (paymentPlan?.final_cost || 0) * 0.25;
-
-      if (paymentMethod === 'wipay') {
-        const paymentRes = await withTimeout(base44.functions.invoke('mockWipayPayment', {
-          case_id: caseRecord.id, deposit_option: depositOption, amount: amountValue
-        }));
-        if (!paymentRes.data?.success) throw new Error(paymentRes.data?.error || 'WiPay payment failed');
-        window.location.href = paymentRes.data.payment_url;
-        return { redirecting: true };
-      }
-
-      if (paymentMethod === 'paypal') {
-        const paymentRes = await withTimeout(base44.functions.invoke('mockPaypalPayment', {
-          case_id: caseRecord.id, deposit_option: depositOption, amount: amountValue
-        }));
-        if (!paymentRes.data?.success) throw new Error(paymentRes.data?.error || 'PayPal payment failed');
-        window.location.href = paymentRes.data.payment_url;
-        return { redirecting: true };
-      }
-
-      // Default: Stripe
+      // Generate Stripe Checkout session — no payment status change until webhook fires
       const paymentRes = await withTimeout(base44.functions.invoke('generateStripePaymentLink', {
-        case_id: caseRecord.id, deposit_option: depositOption
+        case_id: caseRecord.id, deposit_option: depositOption,
+        proposal_token: token,
       }));
 
       if (!paymentRes.data?.success) {
@@ -162,7 +130,7 @@ export default function PaymentCheckout() {
       const depositMap = { full_payment: 0.95, deposit_50: 0.50, deposit_25: 0.25 };
       const multiplier = depositMap[selectedPlan] ?? 1;
       const attemptedAmount = Math.round(finalCost * multiplier);
-      if (attemptedAmount >= 3000 && paymentMethod === 'stripe') {
+      if (attemptedAmount >= 3000) {
         setDeclinedAmount(attemptedAmount);
         setShowDeclineDialog(true);
       } else {
@@ -472,34 +440,10 @@ export default function PaymentCheckout() {
               );
             })}
 
-            {/* Payment Method Selection */}
-            <div>
-              <p className="text-sm font-semibold text-foreground mb-2">Select Payment Method</p>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: 'stripe', label: 'Stripe / Card', icon: '💳' },
-                  { id: 'wipay', label: 'WiPay', icon: '🏦' },
-                  { id: 'paypal', label: 'PayPal', icon: '🅿️' },
-                ].map((method) => (
-                  <button
-                    key={method.id}
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      paymentMethod === method.id
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/40'
-                    }`}
-                  >
-                    <span className="text-xl">{method.icon}</span>
-                    <span>{method.label}</span>
-                  </button>
-                ))}
-              </div>
-              {(paymentMethod === 'wipay' || paymentMethod === 'paypal') && (
-                <p className="text-xs text-amber-600 mt-2 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
-                  ⚠️ Mock mode — no real charges will be made
-                </p>
-              )}
+            {/* Payment Method */}
+            <div className="flex items-center gap-2 p-3 bg-secondary/40 rounded-lg">
+              <CreditCard className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">Secure payment via Stripe</span>
             </div>
 
             {/* Checkout Button */}
@@ -509,7 +453,7 @@ export default function PaymentCheckout() {
               disabled={!selectedPlan || selectPlanMutation.isPending}
               onClick={() => selectPlanMutation.mutate(selectedPlan)}
             >
-              {selectPlanMutation.isPending ? 'Processing...' : `Pay with ${paymentMethod === 'stripe' ? 'Stripe' : paymentMethod === 'wipay' ? 'WiPay' : 'PayPal'}`}
+              {selectPlanMutation.isPending ? 'Processing...' : 'Proceed to Secure Checkout'}
             </Button>
 
             {/* Consultation Fee Credit Notice */}
@@ -527,15 +471,15 @@ export default function PaymentCheckout() {
             <Card className="p-4 bg-green-50 border-green-200">
               <div className="flex items-center gap-2 text-sm text-green-700">
                 <Lock className="w-4 h-4" />
-                <span>Secure Payment — {paymentMethod === 'stripe' ? 'Stripe' : paymentMethod === 'wipay' ? 'WiPay' : 'PayPal'}</span>
+                <span>Stripe-secured checkout · Payment confirmed by Stripe</span>
               </div>
             </Card>
 
             {/* Trust Badges */}
             <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground pt-4">
-              <span>✓ HIPAA Secure</span>
               <span>✓ SSL Encrypted</span>
-              <span>✓ Verified Provider</span>
+              <span>✓ Stripe Verified</span>
+              <span>✓ Audited Provider</span>
             </div>
           </div>
         </div>{/* end two-column */}

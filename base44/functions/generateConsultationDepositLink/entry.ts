@@ -6,6 +6,9 @@ const DEPOSIT_AMOUNT = 60;
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { case_id, client_email, client_name, original_amount } = await req.json();
 
     if (!client_email) {
@@ -15,6 +18,18 @@ Deno.serve(async (req) => {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
       return Response.json({ error: 'Payment system not configured' }, { status: 500 });
+    }
+
+    // Authorization: caller must be the case owner or admin
+    if (case_id) {
+      const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+      if (caseRecord) {
+        const isAdmin = ['admin', 'platform_admin', 'coordinator'].includes(user.role);
+        const isOwner = caseRecord.client_email === user.email;
+        if (!isAdmin && !isOwner) {
+          return Response.json({ error: 'Forbidden: not authorized for this case' }, { status: 403 });
+        }
+      }
     }
 
     const stripe = new Stripe(stripeKey);
@@ -65,13 +80,21 @@ Deno.serve(async (req) => {
       expires_at: Math.floor(Date.now() / 1000) + 3600,
     });
 
-    // If we have a case_id, update the CaseRecord status and log the event
+    // Log a pending PaymentTransaction — status set by webhook only
     if (case_id) {
-      await base44.asServiceRole.entities.CaseRecord.update(case_id, {
-        status: 'Deposit-Paid',
-        payment_status: '25% Paid',
-        admin_notes: `[CONSULTATION DEPOSIT] Patient authorized $60 consultation deposit after primary high-tier charge was declined by bank. Original attempted amount: $${original_amount || 'unknown'}. Coordinator action required: assist client with bank whitelist for remaining balance. Deposit secured at ${new Date().toISOString()}.`,
-      });
+      try {
+        await base44.asServiceRole.entities.PaymentTransaction.create({
+          case_id,
+          client_email: client_email,
+          stripe_session_id: session.id,
+          event_type: 'consultation_deposit.session_created',
+          status: 'session_created',
+          raw_amount: DEPOSIT_AMOUNT,
+          currency: 'usd',
+          metadata: { deposit_type: 'consultation_deposit_60', original_amount_attempted: original_amount || 0 },
+          created_at: new Date().toISOString(),
+        });
+      } catch (_) { /* non-fatal — webhook will still confirm */ }
     }
 
     return Response.json({

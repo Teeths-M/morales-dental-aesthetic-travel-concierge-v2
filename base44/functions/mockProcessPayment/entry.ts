@@ -1,6 +1,21 @@
+/**
+ * mockProcessPayment — DEVELOPMENT/TEST ONLY
+ *
+ * Gated behind MOCK_PAYMENTS_ENABLED=true env var.
+ * Returns 403 in production. Never confirms real payments.
+ */
+
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
+  const mockEnabled = Deno.env.get('MOCK_PAYMENTS_ENABLED') === 'true';
+  if (!mockEnabled) {
+    return Response.json({
+      error: 'Mock payments are disabled in production.',
+      message: 'Set MOCK_PAYMENTS_ENABLED=true in App Secrets to enable in development/test only.',
+    }, { status: 403 });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();

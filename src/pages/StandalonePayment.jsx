@@ -25,22 +25,28 @@ export default function StandalonePayment() {
 
   const processPaymentMutation = useMutation({
     mutationFn: async ({ plan_type }) => {
-      const response = await base44.functions.invoke('portalHubWorkflowEngine', {
-        action: 'client_selects_payment_option',
+      // Map plan_type to deposit_option for generateStripePaymentLink
+      const depositOption = plan_type === 'full_payment' ? 'Full' :
+                            plan_type === 'deposit_50' ? '50%' : '25%';
+      const response = await base44.functions.invoke('generateStripePaymentLink', {
         case_id: caseRecord.id,
-        data: { plan_type }
+        deposit_option: depositOption,
       });
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Failed to create payment session');
+      }
       return response.data;
     }
   });
 
   const handlePayment = async () => {
     if (!selectedPlan) return;
-    
     setIsProcessing(true);
     try {
-      await processPaymentMutation.mutateAsync({ plan_type: selectedPlan });
-      setSuccess(true);
+      const result = await processPaymentMutation.mutateAsync({ plan_type: selectedPlan });
+      if (result.payment_url) {
+        window.location.href = result.payment_url;
+      }
     } catch (error) {
       console.error('Payment processing failed:', error);
       alert('Payment processing failed. Please contact support.');
@@ -79,13 +85,13 @@ export default function StandalonePayment() {
           >
             <CheckCircle2 className="w-12 h-12 text-green-600" />
           </motion.div>
-          <h1 className="font-display text-3xl text-foreground mb-4">Payment Option Selected!</h1>
+          <h1 className="font-display text-3xl text-foreground mb-4">Redirecting to Checkout…</h1>
           <p className="text-muted-foreground mb-6">
-            Thank you, {caseRecord.client_name}. Your payment option has been recorded.
+            Thank you, {caseRecord.client_name}. You are being redirected to complete your payment securely with Stripe.
           </p>
           <Card className="p-4 bg-green-50 border-green-200 mb-6">
             <p className="text-sm text-green-800">
-              <strong>Next Step:</strong> You will be redirected to complete your payment securely.
+              <strong>Note:</strong> Your booking will be confirmed once Stripe verifies your payment.
             </p>
           </Card>
           <p className="text-sm text-muted-foreground">
@@ -277,9 +283,9 @@ export default function StandalonePayment() {
 
             {/* Trust Badges */}
             <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground pt-4">
-              <span>✓ HIPAA Secure</span>
               <span>✓ SSL Encrypted</span>
-              <span>✓ Verified Provider</span>
+              <span>✓ Stripe Verified</span>
+              <span>✓ Audited Provider</span>
             </div>
           </motion.div>
         </div>
