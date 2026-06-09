@@ -6,69 +6,100 @@ import { BadgeCheck, Shield, Plane, Heart } from 'lucide-react';
 const GOLD = '#D4AF37';
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7b4ea635d_ChatGPTImageJun1202608_35_37PM.png';
 
-const trustFeatures = [
+const trustPills = [
   { icon: BadgeCheck, label: 'Verified Specialists', sub: 'World-class experts' },
-  { icon: Shield, label: 'Transparent Pricing', sub: 'No hidden fees' },
-  { icon: Plane, label: 'End-to-End Concierge', sub: 'We handle everything' },
-  { icon: Heart, label: 'Recovery Support', sub: "Until you're home" },
+  { icon: Shield,     label: 'Transparent Pricing',  sub: 'No hidden fees' },
+  { icon: Plane,      label: 'End-to-End Concierge', sub: 'We handle everything' },
+  { icon: Heart,      label: 'Recovery Support',     sub: "Until you're home" },
 ];
 
-const orbitBadges = [
-  { label: 'Verified Specialists', x: 0, y: -145 },
-  { label: '24/7 Support', x: 125, y: -72 },
-  { label: 'Safe Facilities', x: 125, y: 72 },
-  { label: 'Risk Intelligence', x: 0, y: 145 },
-  { label: 'Travel Coordination', x: -125, y: 72 },
-  { label: 'Recovery Care', x: -125, y: -72 },
+const orbitNodes = [
+  { label: 'Verified Specialists',  angle: 320, r: 148 },
+  { label: '24/7 Support',          angle: 220, r: 148 },
+  { label: 'Safe Facilities',       angle: 25,  r: 148 },
+  { label: 'Risk Intelligence',     angle: 200, r: 148 },
+  { label: 'Travel Coordinator',    angle: 45,  r: 148 },
+  { label: 'Recovery Care',         angle: 135, r: 148 },
 ];
 
-function ShieldVisualization() {
+function deg2rad(d) { return (d * Math.PI) / 180; }
+
+function SafeTDiagram() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      {/* Orbit rings */}
-      <div className="absolute w-80 h-80 rounded-full" style={{ border: `1px solid ${GOLD}18` }} />
-      <div className="absolute w-64 h-64 rounded-full" style={{ border: `1px solid ${GOLD}10` }} />
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+      {/* Outer rings */}
+      <div className="absolute w-[320px] h-[320px] rounded-full" style={{ border: `1px solid ${GOLD}20` }} />
+      <div className="absolute w-[260px] h-[260px] rounded-full" style={{ border: `1px solid ${GOLD}15` }} />
 
-      {/* Shield center */}
+      {/* SVG lines from center to nodes */}
+      <svg className="absolute" width="340" height="340" viewBox="-170 -170 340 340">
+        {orbitNodes.map(({ angle, r }) => {
+          const x = r * Math.cos(deg2rad(angle));
+          const y = r * Math.sin(deg2rad(angle));
+          return (
+            <line
+              key={angle}
+              x1="0" y1="0"
+              x2={x} y2={y}
+              stroke={GOLD}
+              strokeWidth="0.7"
+              opacity="0.3"
+            />
+          );
+        })}
+        {/* Center glow circle */}
+        <circle cx="0" cy="0" r="54" fill={GOLD} fillOpacity="0.06" />
+        <circle cx="0" cy="0" r="42" fill={GOLD} fillOpacity="0.04" />
+      </svg>
+
+      {/* Orbit node badges */}
+      {orbitNodes.map(({ label, angle, r }) => {
+        const x = r * Math.cos(deg2rad(angle));
+        const y = r * Math.sin(deg2rad(angle));
+        return (
+          <div
+            key={label}
+            className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap"
+            style={{
+              left: `calc(50% + ${x}px)`,
+              top: `calc(50% + ${y}px)`,
+              transform: 'translate(-50%, -50%)',
+              background: 'rgba(6,11,22,0.85)',
+              border: `1px solid ${GOLD}35`,
+              color: 'rgba(255,255,255,0.82)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: GOLD }} />
+            {label}
+          </div>
+        );
+      })}
+
+      {/* Center shield */}
       <motion.div
-        animate={{ scale: [1, 1.04, 1] }}
+        animate={{ scale: [1, 1.05, 1] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
         className="relative z-10 flex flex-col items-center"
       >
-        <div className="absolute w-32 h-32 rounded-full opacity-20" style={{ background: `radial-gradient(circle, ${GOLD}, transparent)`, filter: 'blur(20px)' }} />
-        <svg viewBox="0 0 80 92" fill="none" className="w-20 h-24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z"
-            fill={`${GOLD}1A`} stroke={GOLD} strokeWidth="1.5" />
-          <path d="M34 34H46V42H54V54H46V62H34V54H26V42H34V34Z" fill="white" opacity="0.92" />
+        <div
+          className="absolute w-28 h-28 rounded-full"
+          style={{ background: `radial-gradient(circle, ${GOLD}22, transparent 70%)`, filter: 'blur(12px)' }}
+        />
+        <svg viewBox="0 0 80 92" fill="none" className="w-[72px] h-[84px]">
+          <path
+            d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z"
+            fill={`${GOLD}18`} stroke={GOLD} strokeWidth="1.5"
+          />
+          <path
+            d="M34 34H46V42H54V54H46V62H34V54H26V42H34V34Z"
+            fill="white" opacity="0.9"
+          />
         </svg>
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-2" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
-        <p className="text-[8px] text-white/35 tracking-widest uppercase mt-0.5">Safety Intelligence Engine</p>
+        <p className="text-[9px] font-bold tracking-[0.22em] uppercase mt-2" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
+        <p className="text-[7px] text-white/35 tracking-widest uppercase mt-0.5">Safety Intelligence Engine</p>
       </motion.div>
-
-      {/* Orbit badges */}
-      {orbitBadges.map(({ label, x, y }, i) => (
-        <motion.div
-          key={label}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.12 + 0.6, duration: 0.4 }}
-          className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium pointer-events-none"
-          style={{
-            transform: `translate(calc(${x}px - 50%), calc(${y}px - 50%))`,
-            left: '50%',
-            top: '50%',
-            background: 'rgba(6, 11, 22, 0.88)',
-            border: `1px solid ${GOLD}3A`,
-            color: 'rgba(255,255,255,0.8)',
-            backdropFilter: 'blur(12px)',
-            whiteSpace: 'nowrap',
-            boxShadow: `0 0 16px rgba(0,0,0,0.5)`,
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: GOLD }} />
-          {label}
-        </motion.div>
-      ))}
     </div>
   );
 }
@@ -76,123 +107,113 @@ function ShieldVisualization() {
 export default function LuxuryHero() {
   return (
     <section
-      className="relative -mt-20 lg:-mt-24 min-h-screen flex items-center overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #060B16 0%, #0D1322 100%)' }}
+      className="relative min-h-screen flex items-center overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #060B16 0%, #0D1322 100%)', marginTop: '-68px', paddingTop: '68px' }}
     >
-      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-8 lg:gap-12 items-center pt-32 pb-16 lg:pt-0 lg:pb-0">
+      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-16 lg:py-0">
 
-        {/* ── LEFT COLUMN ── */}
+        {/* ── LEFT ── */}
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="flex flex-col"
+          transition={{ duration: 0.75, ease: 'easeOut' }}
+          className="flex flex-col z-10 lg:pr-8"
         >
-          {/* Micro label */}
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-[11px] font-bold tracking-[0.28em] uppercase mb-7"
+          {/* Eyebrow */}
+          <p
+            className="text-[11px] font-bold tracking-[0.28em] uppercase mb-8"
             style={{ color: GOLD }}
           >
-            World-Class Care. Personally Coordinated.
-          </motion.p>
+            World-Class Care. Personalized For You.
+          </p>
 
           {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="font-display leading-[1.05] mb-7 text-white"
-            style={{ fontSize: 'clamp(2.6rem, 5vw, 4.2rem)' }}
+          <h1
+            className="font-display text-white leading-[1.06] mb-7"
+            style={{ fontSize: 'clamp(2.8rem, 4.5vw, 4rem)' }}
           >
             Premium Medical Travel.<br />
             Verified.{' '}
             <span style={{ color: GOLD }}>Safe.</span>{' '}
             Seamless.
-          </motion.h1>
+          </h1>
 
-          {/* Sub-paragraph */}
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-base lg:text-lg text-white/55 leading-relaxed max-w-[480px] mb-10"
-          >
-            Morales coordinates every detail of your dental and aesthetic care journey — from consultation to recovery. You focus on yourself. We handle the rest.
-          </motion.p>
+          {/* Body */}
+          <p className="text-[15px] text-white/55 leading-relaxed mb-10 max-w-[420px]">
+            Morales coordinates every step of your dental or aesthetic care journey —
+            from consultation to recovery. You focus on yourself. We handle the rest.
+          </p>
 
           {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex flex-wrap gap-4 mb-14"
-          >
+          <div className="flex flex-wrap gap-4 mb-12">
             <Link
               to="/booking"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-[15px] transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
-              style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 24px ${GOLD}33` }}
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
+              style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}
             >
               Book Your Consultation →
             </Link>
             <Link
               to="/how-it-works"
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-[15px] text-white border border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/35 transition-all duration-200"
+              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200"
             >
-              <span className="w-5 h-5 rounded-full border border-white/35 flex items-center justify-center text-[10px]">▶</span>
+              <span
+                className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"
+                style={{ fontSize: '10px' }}
+              >▶</span>
               How It Works
             </Link>
-          </motion.div>
+          </div>
 
-          {/* Trust badges row */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.55 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-t pt-10"
-            style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-          >
-            {trustFeatures.map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex flex-col gap-2">
-                <Icon className="w-5 h-5" style={{ color: GOLD }} strokeWidth={1.5} />
-                <p className="text-[13px] font-semibold text-white leading-tight">{label}</p>
-                <p className="text-[11px] text-white/40">{sub}</p>
+          {/* Trust pills */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-8 border-t border-white/[0.08]">
+            {trustPills.map(({ icon: Icon, label, sub }) => (
+              <div key={label} className="flex flex-col gap-1.5">
+                <Icon className="w-4 h-4" style={{ color: GOLD }} strokeWidth={1.5} />
+                <p className="text-[12px] font-semibold text-white leading-tight">{label}</p>
+                <p className="text-[11px] text-white/38">{sub}</p>
               </div>
             ))}
-          </motion.div>
+          </div>
         </motion.div>
 
-        {/* ── RIGHT COLUMN ── */}
+        {/* ── RIGHT ── */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.2 }}
           className="relative hidden lg:block"
-          style={{ height: '680px' }}
+          style={{ height: '100vh', maxHeight: '700px' }}
         >
-          {/* Image container */}
-          <div className="absolute inset-0 rounded-3xl overflow-hidden">
+          {/* Photo */}
+          <div className="absolute inset-0 rounded-2xl overflow-hidden">
             <img
               src={HERO_IMAGE}
               alt="Premium medical travel"
               className="w-full h-full object-cover"
-              style={{ objectPosition: '68% center' }}
+              style={{ objectPosition: '65% center' }}
             />
-            {/* Gradient overlays */}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(6,11,22,0.72) 0%, rgba(6,11,22,0.15) 45%, rgba(6,11,22,0.45) 100%)' }} />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(6,11,22,0.35) 0%, transparent 35%, rgba(6,11,22,0.6) 100%)' }} />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to right, rgba(6,11,22,0.55) 0%, rgba(6,11,22,0.1) 40%, rgba(6,11,22,0.35) 100%)' }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to bottom, rgba(6,11,22,0.3) 0%, transparent 40%, rgba(6,11,22,0.5) 100%)' }}
+            />
           </div>
 
-          {/* Shield visualization overlay */}
-          <ShieldVisualization />
+          {/* SAFE-T diagram */}
+          <SafeTDiagram />
         </motion.div>
 
       </div>
 
-      {/* Subtle bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, #060B16)' }} />
+      {/* Bottom fade */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, transparent, #060B16)' }}
+      />
     </section>
   );
 }
