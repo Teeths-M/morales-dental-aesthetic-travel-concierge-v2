@@ -115,7 +115,7 @@ export default function LuxuryHero() {
         <img
           src={HERO_IMAGE}
           alt=""
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-105"
           style={{ objectPosition: '70% center' }}
         />
         {/* Strong left-side dark overlay so text is readable */}
