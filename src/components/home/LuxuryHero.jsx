@@ -118,13 +118,17 @@ export default function LuxuryHero() {
           className="w-full h-full object-cover scale-105"
           style={{ objectPosition: '70% center' }}
         />
-        {/* Strong left-side dark overlay so text is readable */}
+        {/* Left fade */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 38%, rgba(6,11,22,0.82) 55%, rgba(6,11,22,0.35) 75%, rgba(6,11,22,0.15) 100%)' }}
+          style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 35%, rgba(6,11,22,0.88) 50%, rgba(6,11,22,0.45) 68%, rgba(6,11,22,0.1) 85%, transparent 100%)' }}
         />
-        {/* Top + bottom fade */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(6,11,22,0.6) 0%, transparent 20%, transparent 75%, #060B16 100%)' }} />
+        {/* Top fade */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060B16 0%, rgba(6,11,22,0.4) 8%, transparent 18%)' }} />
+        {/* Bottom fade */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060B16 0%, rgba(6,11,22,0.7) 10%, transparent 25%)' }} />
+        {/* Right edge fade */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to left, #060B16 0%, rgba(6,11,22,0.5) 6%, transparent 18%)' }} />
       </div>
 
       <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
