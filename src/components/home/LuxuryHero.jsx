@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { BadgeCheck, Shield, Plane, Heart } from 'lucide-react';
 
 const GOLD = '#D4AF37';
-const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7b4ea635d_ChatGPTImageJun1202608_35_37PM.png';
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=1600&q=80';
 
 const trustPills = [
   { icon: BadgeCheck, label: 'Verified Specialists', sub: 'World-class experts' },
