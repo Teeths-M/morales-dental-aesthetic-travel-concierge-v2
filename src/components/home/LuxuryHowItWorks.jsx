@@ -50,7 +50,7 @@ export default function LuxuryHowItWorks() {
               Your Journey,<br />Simplified
             </h2>
             <div className="w-8 h-[2px] mb-5" style={{ background: GOLD }} />
-            <p className="text-white/40 text-[14px] leading-relaxed mb-8">
+            <p className="text-white/75 text-[14px] leading-relaxed mb-8">
               We make world-class care accessible and stress-free.
             </p>
             <Link
@@ -73,16 +73,16 @@ export default function LuxuryHowItWorks() {
                 viewport={{ once: true }}
                 className="relative p-5 rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:border-white/[0.14] hover:bg-white/[0.045] transition-all duration-300 group"
               >
-                <p className="text-[11px] font-bold tracking-wider mb-4" style={{ color: `${GOLD}50` }}>
+                <p className="text-[11px] font-bold tracking-wider mb-4" style={{ color: GOLD }}>
                   {number}
                 </p>
                 <Icon
                   className="w-5 h-5 mb-4"
-                  style={{ color: 'rgba(255,255,255,0.32)' }}
+                  style={{ color: 'rgba(255,255,255,0.75)' }}
                   strokeWidth={1.5}
                 />
                 <h3 className="font-semibold text-white text-[14px] mb-2">{title}</h3>
-                <p className="text-white/38 text-[12.5px] leading-relaxed">{desc}</p>
+                <p className="text-white/70 text-[12.5px] leading-relaxed">{desc}</p>
 
                 {/* Arrow connector */}
                 {i < steps.length - 1 && (

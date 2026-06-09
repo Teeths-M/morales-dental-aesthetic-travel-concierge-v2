@@ -73,7 +73,7 @@ export default function LuxuryWhyMorales() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold text-[13.5px] mb-1.5">{title}</h3>
-                  <p className="text-white/38 text-[12.5px] leading-relaxed">{desc}</p>
+                  <p className="text-white/72 text-[12.5px] leading-relaxed">{desc}</p>
                 </div>
               </motion.div>
             ))}
