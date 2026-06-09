@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import Hero from '../components/home/Hero';
+import LuxuryHero from '../components/home/LuxuryHero';
 import LuxuryTrustBar from '../components/home/LuxuryTrustBar';
 import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
 import LuxuryWhyMorales from '../components/home/LuxuryWhyMorales';
@@ -43,8 +43,8 @@ export default function Home() {
   };
 
   return (
-    <div style={{ background: '#070F0B' }}>
-      <Hero />
+    <div style={{ background: '#060B16' }}>
+      <LuxuryHero />
       <LuxuryTrustBar />
       <LuxuryHowItWorks />
       <LuxuryWhyMorales />
