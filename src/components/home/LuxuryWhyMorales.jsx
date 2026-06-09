@@ -72,7 +72,7 @@ export default function LuxuryWhyMorales() {
                   <Icon className="w-4 h-4" style={{ color: GOLD }} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-[13.5px] mb-1.5">{title}</h3>
+                  <h3 className="text-white font-medium text-[13.5px] mb-1.5">{title}</h3>
                   <p className="text-white/72 text-[12.5px] leading-relaxed">{desc}</p>
                 </div>
               </motion.div>
