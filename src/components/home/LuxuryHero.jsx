@@ -107,17 +107,34 @@ function SafeTDiagram() {
 export default function LuxuryHero() {
   return (
     <section
-      className="relative min-h-screen flex items-center overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #060B16 0%, #0D1322 100%)', marginTop: '-68px', paddingTop: '68px' }}
+      className="relative min-h-screen overflow-hidden"
+      style={{ background: '#060B16', marginTop: '-68px' }}
     >
-      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-16 lg:py-0">
+      {/* Full-bleed background image — covers entire section */}
+      <div className="absolute inset-0">
+        <img
+          src={HERO_IMAGE}
+          alt=""
+          className="w-full h-full object-cover"
+          style={{ objectPosition: '70% center' }}
+        />
+        {/* Strong left-side dark overlay so text is readable */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 38%, rgba(6,11,22,0.82) 55%, rgba(6,11,22,0.35) 75%, rgba(6,11,22,0.15) 100%)' }}
+        />
+        {/* Top + bottom fade */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(6,11,22,0.6) 0%, transparent 20%, transparent 75%, #060B16 100%)' }} />
+      </div>
+
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
 
         {/* ── LEFT ── */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, ease: 'easeOut' }}
-          className="flex flex-col z-10 lg:pr-8"
+          className="flex flex-col z-10 lg:pr-16"
         >
           {/* Eyebrow */}
           <p
@@ -177,43 +194,18 @@ export default function LuxuryHero() {
           </div>
         </motion.div>
 
-        {/* ── RIGHT ── */}
+        {/* ── RIGHT ── SAFE-T diagram overlaid on image */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="relative hidden lg:block"
-          style={{ height: '100vh', maxHeight: '700px' }}
+          transition={{ duration: 1, delay: 0.3 }}
+          className="relative hidden lg:flex items-center justify-center"
+          style={{ height: '100vh' }}
         >
-          {/* Photo */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            <img
-              src={HERO_IMAGE}
-              alt="Premium medical travel"
-              className="w-full h-full object-cover"
-              style={{ objectPosition: '65% center' }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(to right, rgba(6,11,22,0.55) 0%, rgba(6,11,22,0.1) 40%, rgba(6,11,22,0.35) 100%)' }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(to bottom, rgba(6,11,22,0.3) 0%, transparent 40%, rgba(6,11,22,0.5) 100%)' }}
-            />
-          </div>
-
-          {/* SAFE-T diagram */}
           <SafeTDiagram />
         </motion.div>
 
       </div>
-
-      {/* Bottom fade */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, transparent, #060B16)' }}
-      />
     </section>
   );
 }
