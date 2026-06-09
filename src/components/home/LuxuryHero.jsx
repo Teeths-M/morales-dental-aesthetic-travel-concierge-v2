@@ -156,7 +156,7 @@ export default function LuxuryHero() {
           </h1>
 
           {/* Body */}
-          <p className="text-[15px] text-white/55 leading-relaxed mb-10 max-w-[420px]">
+          <p className="text-[15px] text-white/80 leading-relaxed mb-10 max-w-[420px]">
             Morales coordinates every step of your dental or aesthetic care journey —
             from consultation to recovery. You focus on yourself. We handle the rest.
           </p>
@@ -188,7 +188,7 @@ export default function LuxuryHero() {
               <div key={label} className="flex flex-col gap-1.5">
                 <Icon className="w-4 h-4" style={{ color: GOLD }} strokeWidth={1.5} />
                 <p className="text-[12px] font-semibold text-white leading-tight">{label}</p>
-                <p className="text-[11px] text-white/38">{sub}</p>
+                <p className="text-[11px] text-white/70">{sub}</p>
               </div>
             ))}
           </div>
