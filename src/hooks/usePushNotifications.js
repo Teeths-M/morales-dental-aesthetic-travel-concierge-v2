@@ -13,6 +13,14 @@ export function usePushNotifications(user) {
     if (!user) return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
+    // Never register the SW in dev — stale cached JS breaks React hooks
+    if (import.meta.env.DEV) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      });
+      return;
+    }
+
     async function registerPush() {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
