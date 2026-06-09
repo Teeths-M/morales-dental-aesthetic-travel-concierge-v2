@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import Hero from '../components/home/Hero';
-import StatsBar from '../components/home/StatsBar';
-import WhyChooseUs from '../components/home/WhyChooseUs';
-import HowItWorks from '../components/home/HowItWorks';
-import HeroSlideshow from '../components/home/HeroSlideshow';
+import LuxuryHero from '../components/home/LuxuryHero';
+import LuxuryTrustBar from '../components/home/LuxuryTrustBar';
+import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
+import LuxuryWhyMorales from '../components/home/LuxuryWhyMorales';
 import BrandSlideshow from '../components/home/BrandSlideshow';
-import SlotCounter from '../components/home/SlotCounter';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
-import SafeTHub from '../components/home/SafeTHub';
 
 
 export default function Home() {
@@ -46,16 +43,13 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <Hero />
-      <StatsBar />
-      <SlotCounter className="mx-auto mt-6" />
-      <HeroSlideshow />
+    <div style={{ background: '#060B16' }}>
+      <LuxuryHero />
+      <LuxuryTrustBar />
+      <LuxuryHowItWorks />
+      <LuxuryWhyMorales />
       <OurExpertsTeaser />
-      <SafeTHub />
-      <WhyChooseUs />
       <BrandSlideshow />
-      <HowItWorks />
     </div>
   );
 }

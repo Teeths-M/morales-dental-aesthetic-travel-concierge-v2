@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { Globe, ChevronDown, Stethoscope, X, Menu } from 'lucide-react';
+import { Globe, ChevronDown, X, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const getNavLinks = (language) => [
-  { label: language === 'es' ? 'Inicio' : language === 'fr' ? 'Accueil' : 'Home', path: '/' },
-  { label: language === 'es' ? 'Descubrir' : language === 'fr' ? 'Découvrir' : 'Discover', path: '/discover' },
-  { label: language === 'es' ? 'Procedimientos' : language === 'fr' ? 'Procédures' : 'Procedures', path: '/procedures' },
-  { label: language === 'es' ? 'Cómo Funciona' : language === 'fr' ? 'Comment Ça Marche' : 'How It Works', path: '/how-it-works' },
-  { label: language === 'es' ? 'Nuestros Expertos' : language === 'fr' ? 'Nos Experts' : 'Our Experts', path: '/providers' },
-  { label: 'SAFE-T 4LIFE™', path: '/safe-t' },
-  { label: language === 'es' ? '🌍 Asistencia de Visa' : language === 'fr' ? '🌍 Assistance Visa' : '🌍 Visa Assist', path: '/visa-assist' },
-  { label: language === 'es' ? 'Acerca de Nosotros' : language === 'fr' ? 'À Propos de Nous' : 'About Us', path: '/about' },
-  { label: language === 'es' ? 'Panel de Control' : language === 'fr' ? 'Tableau de Bord' : 'Dashboard', path: '/dashboard' },
+const GOLD = '#D4AF37';
+
+const getPublicNavLinks = (lang) => [
+  { label: lang === 'es' ? 'Inicio' : lang === 'fr' ? 'Accueil' : 'Home', path: '/' },
+  { label: lang === 'es' ? 'Tratamientos' : lang === 'fr' ? 'Traitements' : 'Treatments', path: '/procedures' },
+  { label: lang === 'es' ? 'Cómo Funciona' : lang === 'fr' ? 'Comment Ça Marche' : 'How It Works', path: '/how-it-works' },
+  { label: lang === 'es' ? 'Seguridad' : lang === 'fr' ? 'Sécurité' : 'Safety', path: '/safe-t' },
+  { label: lang === 'es' ? 'Conserje' : lang === 'fr' ? 'Conciergerie' : 'Concierge', path: '/discover' },
+  { label: lang === 'es' ? 'Nosotros' : lang === 'fr' ? 'À Propos' : 'About Us', path: '/about' },
 ];
 
 const allLanguages = [
@@ -27,298 +26,185 @@ const allLanguages = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [portalHubOpen, setPortalHubOpen] = useState(false);
-  const [partnerDropdownOpen, setPartnerDropdownOpen] = useState(false);
-  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
-  const [navLinks, setNavLinks] = useState(getNavLinks(language));
   const location = useLocation();
-  const { user, isAuthenticated, navigateToLogin, logout } = useAuth();
-  const portalHubTimeoutRef = useRef(null);
-  const partnerTimeoutRef = useRef(null);
-  const languageTimeoutRef = useRef(null);
   const navigate = useNavigate();
+  const { user, isAuthenticated, navigateToLogin, logout } = useAuth();
+  const langRef = useRef(null);
 
-  useEffect(() => { setNavLinks(getNavLinks(language)); }, [language]);
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  const handleLanguageChange = (langCode) => {
-    setLanguage(langCode);
-    localStorage.setItem('appLanguage', langCode);
-    setLanguageDropdownOpen(false);
-    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: langCode } }));
+  const handleLanguageChange = (code) => {
+    setLanguage(code);
+    localStorage.setItem('appLanguage', code);
+    setLanguageOpen(false);
+    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: code } }));
   };
 
-  const SENSITIVE_PATHS = ['/checkout', '/payment', '/signup', '/register-role', '/doctor-signup', '/partner-signup', '/travel-agency-signup', '/taxi-service-signup', '/client-signup'];
-  const isSensitive = SENSITIVE_PATHS.some(p => location.pathname.includes(p));
-  const isHome = location.pathname === '/';
-
-  const handleBack = () => {
-    if (isSensitive) navigate('/', { replace: true });
-    else if (window.history.length <= 1) navigate('/');
-    else navigate(-1);
-  };
-
-  const handleSafeExit = () => navigate('/', { replace: true });
-
+  const navLinks = getPublicNavLinks(language);
   const isAdmin = ['platform_admin', 'admin'].includes(user?.role);
-  const portalLinks = [
-    ...(isAdmin ? [
-      { label: language === 'es' ? 'Acceso al Portal' : 'Portal Access', path: '/portal-hub' },
-      { label: language === 'es' ? 'Administración' : 'Admin Dashboard', path: '/portal-hub/admin' },
-    ] : []),
-    ...(['doctor'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Doctor' : 'Doctor Dashboard', path: '/doctor-dashboard' },
-    ] : []),
-    ...(['travel_agency'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Agencia' : 'Travel Agency Dashboard', path: '/travel-agency-dashboard' },
-    ] : []),
-    ...(['taxi_service'].includes(user?.role) || isAdmin ? [
-      { label: language === 'es' ? 'Panel de Taxi' : 'Taxi Service Dashboard', path: '/taxi-service-dashboard' },
-    ] : []),
-  ];
 
-  const clientOnlyPaths = ['/dashboard', '/safe-t', '/visa-assist'];
-  const canUseClientPortal = ['client', 'user', 'platform_admin', 'admin'].includes(user?.role);
-  const visibleNavLinks = navLinks.filter(link => {
-    if (!clientOnlyPaths.includes(link.path)) return true;
-    return isAuthenticated && canUseClientPortal;
-  });
-
-  const rolePrimaryAction = {
-    doctor: { path: '/doctor-dashboard', label: language === 'es' ? 'Panel de Doctor' : 'Doctor Dashboard' },
-    travel_agency: { path: '/travel-agency-dashboard', label: language === 'es' ? 'Panel de Agencia' : 'Travel Agency Dashboard' },
-    taxi_service: { path: '/taxi-service-dashboard', label: language === 'es' ? 'Panel de Taxi' : 'Taxi Dashboard' },
-  }[user?.role] || { path: '/booking', label: language === 'es' ? 'Reservar Consulta' : language === 'fr' ? 'Réserver' : 'Book Consultation' };
+  const rolePrimaryPath = {
+    doctor: '/doctor-dashboard',
+    travel_agency: '/travel-agency-dashboard',
+    taxi_service: '/taxi-service-dashboard',
+    companion: '/companion-dashboard',
+  }[user?.role] || '/dashboard';
 
   return (
     <>
-      {/* ── TOP NAV ── */}
-      <nav className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-4 md:px-8 lg:px-12 flex items-center justify-between py-3 bg-[#020B0D]/90 backdrop-blur-md border-b border-white/[0.06]">
+      <nav
+        className="w-full fixed top-0 left-0 z-50 transition-all duration-300"
+        style={{
+          background: scrolled ? 'rgba(6,11,22,0.97)' : 'rgba(6,11,22,0.6)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: scrolled ? `1px solid rgba(255,255,255,0.07)` : '1px solid transparent',
+        }}
+      >
+        <div className="max-w-[1400px] mx-auto px-5 lg:px-10 flex items-center justify-between h-[68px]">
 
-        {/* Brand — desktop only (mobile uses combined hamburger button) */}
-        <div className="flex-shrink-0 hidden lg:flex">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] flex items-center justify-center rounded-lg shrink-0 overflow-hidden">
-            <img
-              src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
-              alt="Morales"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="hidden lg:flex flex-col">
-            <span className="font-['Instrument_Serif'] text-base tracking-widest text-white uppercase font-medium leading-tight">
-              Morales
-            </span>
-            <span className="text-[9px] tracking-[0.10em] text-[#D4AF37] uppercase font-sans mt-0.5 font-light">
-              Dental &amp; Aesthetic Travel Concierge
-            </span>
-          </div>
-        </Link>
-        </div>
-
-        {/* Desktop Nav Links */}
-        <div className="hidden lg:flex items-center space-x-1 text-sm font-medium ml-6">
-          {visibleNavLinks.map(link => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`px-3 py-2 rounded-md transition-colors whitespace-nowrap ${
-                location.pathname === link.path
-                  ? 'text-[#D4AF37] bg-white/[0.06]'
-                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          {/* Partner Dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => { if (partnerTimeoutRef.current) clearTimeout(partnerTimeoutRef.current); setPartnerDropdownOpen(true); }}
-            onMouseLeave={() => { partnerTimeoutRef.current = setTimeout(() => setPartnerDropdownOpen(false), 800); }}
-          >
-            <button className="px-3 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors rounded-md flex items-center gap-1 whitespace-nowrap">
-              {language === 'es' ? 'Únete' : 'Join as Partner'}
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${partnerDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <AnimatePresence>
-              {partnerDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="absolute top-full right-0 mt-2 w-44 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
-                >
-                  <Link
-                    to="/register-role"
-                    onClick={() => setPartnerDropdownOpen(false)}
-                    className="block px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
-                  >
-                    {language === 'es' ? 'Elegir Rol' : 'Choose Role'}
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Portal Hub Dropdown */}
-          {isAuthenticated && portalLinks.length > 0 && (
-            <div
-              className="relative"
-              onMouseEnter={() => { if (portalHubTimeoutRef.current) clearTimeout(portalHubTimeoutRef.current); setPortalHubOpen(true); }}
-              onMouseLeave={() => { portalHubTimeoutRef.current = setTimeout(() => setPortalHubOpen(false), 800); }}
-            >
-              <button className="px-3 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors rounded-md flex items-center gap-1">
-                <Stethoscope className="w-3.5 h-3.5" />
-                Portal Hub
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${portalHubOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {portalHubOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="absolute top-full left-0 mt-2 w-56 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
-                  >
-                    {portalLinks.map((link, i) => (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        onClick={() => setPortalHubOpen(false)}
-                        className={`block px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] transition-colors ${i === 0 ? 'rounded-t-lg' : 'border-t border-white/[0.06]'} ${i === portalLinks.length - 1 ? 'rounded-b-lg' : ''}`}
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Right Actions */}
-        <div className="hidden lg:flex items-center gap-2 shrink-0 ml-auto">
-          {/* Back button */}
-          {!isHome && (
-            <button
-              onClick={handleBack}
-              className="px-3 py-1.5 rounded-md text-xs font-medium border border-white/[0.1] text-white/50 hover:text-white hover:border-[#D4AF37]/50 transition-all"
-            >
-              ← Back
-            </button>
-          )}
-
-          {/* Language */}
-          <div
-            className="relative"
-            onMouseEnter={() => { if (languageTimeoutRef.current) clearTimeout(languageTimeoutRef.current); setLanguageDropdownOpen(true); }}
-            onMouseLeave={() => { languageTimeoutRef.current = setTimeout(() => setLanguageDropdownOpen(false), 800); }}
-          >
-            <button className="p-2 hover:bg-white/[0.05] rounded-md transition-colors text-white/50 hover:text-white">
-              <Globe className="w-4 h-4" />
-            </button>
-            <AnimatePresence>
-              {languageDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="absolute top-full right-0 mt-2 w-40 bg-[#051A1D] border border-white/[0.1] rounded-lg shadow-xl z-50"
-                >
-                  {allLanguages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => handleLanguageChange(lang.code)}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors first:rounded-t-lg last:rounded-b-lg border-b border-white/[0.06] last:border-b-0 ${
-                        language === lang.code ? 'text-[#D4AF37] bg-white/[0.05]' : 'text-white/70 hover:text-white hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      {lang.flag} {lang.name}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Auth */}
-          {isAuthenticated ? (
-            <>
-              <Link
-                to={rolePrimaryAction.path}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-[#D4AF37] text-[#020B0D] hover:bg-[#D4AF37]/90 transition-colors"
-              >
-                {rolePrimaryAction.label}
-              </Link>
-              <button
-                onClick={() => logout()}
-                className="px-3 py-2 text-sm text-white/50 hover:text-white transition-colors border border-white/[0.1] rounded-lg hover:border-white/30"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => navigateToLogin(`${window.location.origin}/register-role`)}
-                className="px-3 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors border border-white/[0.1] rounded-lg hover:border-white/30"
-              >
-                Register
-              </button>
-              <button
-                onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-[#D4AF37] text-[#020B0D] hover:bg-[#D4AF37]/90 transition-colors"
-              >
-                Login
-              </button>
-            </>
-          )}
-
-          {/* Safe Exit */}
-          <button
-            onClick={handleSafeExit}
-            className="border border-emerald-600/40 text-emerald-300 bg-emerald-950/60 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-widest hover:bg-emerald-900/60 transition-all"
-          >
-            🔒 Safe Exit
-          </button>
-        </div>
-
-        {/* Mobile/Tablet Combined Brand + Hamburger */}
-        <div className="flex lg:hidden items-center">
-          <button
-            className="flex items-center gap-2 px-2 py-1.5 rounded-xl transition-all duration-200 hover:bg-white/[0.05] active:scale-95 focus:outline-none"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-            onClick={() => setMobileOpen(!mobileOpen)}
-            onDoubleClick={(e) => { e.preventDefault(); setMobileOpen(false); navigate('/'); }}
-          >
-            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-white/[0.15]">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+            <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/15">
               <img
                 src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
                 alt="Morales"
                 className="w-full h-full object-cover"
               />
             </div>
-            <motion.div
-              key={mobileOpen ? 'close' : 'open'}
-              initial={{ opacity: 0, rotate: -15 }}
-              animate={{ opacity: 1, rotate: 0 }}
-              transition={{ duration: 0.15 }}
-              className="flex items-center justify-center"
+            <div className="hidden sm:flex flex-col leading-none">
+              <span className="font-display text-[13px] tracking-[0.2em] text-white uppercase font-medium">MORALES</span>
+              <span className="text-[8px] tracking-[0.12em] uppercase font-sans font-light mt-0.5" style={{ color: GOLD }}>
+                Dental &amp; Aesthetic Travel Concierge
+              </span>
+            </div>
+          </Link>
+
+          {/* Desktop centered nav */}
+          <div className="hidden lg:flex items-center gap-1">
+            {navLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className="px-4 py-2 text-[13.5px] font-medium transition-colors duration-150 rounded-lg whitespace-nowrap"
+                style={{
+                  color: location.pathname === link.path ? GOLD : 'rgba(255,255,255,0.55)',
+                  borderBottom: location.pathname === link.path ? `1px solid ${GOLD}` : '1px solid transparent',
+                }}
+                onMouseEnter={e => { if (location.pathname !== link.path) e.currentTarget.style.color = 'rgba(255,255,255,0.88)'; }}
+                onMouseLeave={e => { if (location.pathname !== link.path) e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop right actions */}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+
+            {/* Language selector */}
+            <div className="relative" ref={langRef}
+              onMouseEnter={() => setLanguageOpen(true)}
+              onMouseLeave={() => setLanguageOpen(false)}
+            >
+              <button className="flex items-center gap-1.5 px-3 py-2 text-[13px] text-white/45 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                <Globe className="w-3.5 h-3.5" />
+                <span className="font-medium uppercase text-[11px] tracking-wider">{language}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${languageOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {languageOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full right-0 mt-2 w-40 rounded-xl shadow-2xl z-50 overflow-hidden"
+                    style={{ background: '#0D1322', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    {allLanguages.map(lang => (
+                      <button
+                        key={lang.code}
+                        onClick={() => handleLanguageChange(lang.code)}
+                        className="w-full text-left px-4 py-2.5 text-[13px] transition-colors border-b border-white/[0.05] last:border-b-0"
+                        style={{ color: language === lang.code ? GOLD : 'rgba(255,255,255,0.65)' }}
+                        onMouseEnter={e => { if (language !== lang.code) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = ''; }}
+                      >
+                        {lang.flag} {lang.name}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Auth buttons */}
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to={rolePrimaryPath}
+                  className="px-4 py-2 text-[13px] font-medium text-white/60 border border-white/15 rounded-lg hover:border-white/30 hover:text-white transition-all"
+                >
+                  {isAdmin ? 'Admin' : 'Dashboard'}
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="px-4 py-2 text-[13px] font-medium text-white/40 hover:text-white/70 transition-colors"
+                >
+                  Logout
+                </button>
+                <Link
+                  to="/booking"
+                  className="px-5 py-2.5 text-[13px] font-semibold rounded-xl transition-all hover:opacity-90"
+                  style={{ background: GOLD, color: '#060B16' }}
+                >
+                  Book Consultation
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigateToLogin(`${window.location.origin}/dashboard`)}
+                  className="px-4 py-2 text-[13px] font-medium text-white/60 border border-white/15 rounded-lg hover:border-white/30 hover:text-white transition-all"
+                >
+                  Client Login
+                </button>
+                <Link
+                  to="/consultation"
+                  className="px-5 py-2.5 text-[13px] font-semibold rounded-xl transition-all hover:opacity-90"
+                  style={{ background: GOLD, color: '#060B16' }}
+                >
+                  Book Consultation
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile hamburger */}
+          <div className="flex lg:hidden items-center gap-3">
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
+              style={{ background: mobileOpen ? 'rgba(255,255,255,0.08)' : 'transparent' }}
             >
               {mobileOpen
-                ? <X className="w-[18px] h-[18px] text-white" strokeWidth={1.75} />
-                : <Menu className="w-[18px] h-[18px] text-white/75" strokeWidth={1.75} />
+                ? <X className="w-5 h-5 text-white" />
+                : <Menu className="w-5 h-5 text-white/70" />
               }
-            </motion.div>
-          </button>
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* ── MOBILE MENU OVERLAY ── */}
+      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -326,88 +212,45 @@ export default function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="lg:hidden fixed inset-0 z-[9998] bg-[#020B0D] overflow-y-auto flex flex-col"
+            className="lg:hidden fixed inset-0 z-[9998] flex flex-col"
+            style={{ background: '#060B16' }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
-              <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-[#051A1D] border border-white/[0.12] rounded-lg overflow-hidden flex-shrink-0">
-                  <img
-                    src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg"
-                    alt="Morales"
-                    className="w-full h-full object-cover"
-                  />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+              <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg overflow-hidden">
+                  <img src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f1286e492_logo.jpg" alt="Morales" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-['Instrument_Serif'] text-sm tracking-widest text-white uppercase leading-tight">Morales</span>
-                  <span className="text-[8px] tracking-[0.12em] text-[#D4AF37] uppercase font-light">Dental &amp; Aesthetic Travel</span>
+                  <span className="font-display text-[13px] tracking-[0.2em] text-white uppercase">MORALES</span>
+                  <span className="text-[8px] tracking-wider uppercase font-light" style={{ color: GOLD }}>Dental &amp; Aesthetic Travel Concierge</span>
                 </div>
               </Link>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="w-9 h-9 rounded-full bg-white/[0.06] flex items-center justify-center"
-              >
+              <button onClick={() => setMobileOpen(false)} className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center">
                 <X className="w-4 h-4 text-white/70" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="flex flex-col flex-1 px-6 pt-6 pb-10 gap-8 overflow-y-auto">
-
-              {/* Nav Links */}
-              <div className="flex flex-col">
-                <span className="text-[10px] font-mono tracking-[0.25em] text-[#D4AF37] uppercase font-bold mb-4">Navigation</span>
-                {visibleNavLinks.map(link => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={() => setMobileOpen(false)}
-                    className={`py-3.5 text-xl font-['Instrument_Serif'] border-b border-white/[0.05] transition-colors ${
-                      location.pathname === link.path ? 'text-[#D4AF37]' : 'text-white/80 hover:text-white'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-
-                {/* Partner link */}
+            <div className="flex flex-col flex-1 px-6 pt-8 pb-10 gap-1 overflow-y-auto">
+              {navLinks.map(link => (
                 <Link
-                  to="/register-role"
+                  key={link.path}
+                  to={link.path}
                   onClick={() => setMobileOpen(false)}
-                  className="py-3.5 text-xl font-['Instrument_Serif'] border-b border-white/[0.05] text-white/80 hover:text-white transition-colors"
+                  className="py-4 text-2xl font-display border-b border-white/[0.05] transition-colors"
+                  style={{ color: location.pathname === link.path ? GOLD : 'rgba(255,255,255,0.75)' }}
                 >
-                  {language === 'es' ? 'Únete Como Socio' : 'Join as Partner'}
+                  {link.label}
                 </Link>
-              </div>
+              ))}
 
-              {/* Portal Links */}
-              {isAuthenticated && portalLinks.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-mono tracking-[0.25em] text-white/30 uppercase font-bold mb-1">Secure Access</span>
-                  {portalLinks.map(link => (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      onClick={() => setMobileOpen(false)}
-                      className="px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm text-white/70 hover:bg-white/[0.06] transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {/* Bottom Actions */}
-              <div className="mt-auto flex flex-col gap-4 pt-6 border-t border-white/[0.06]">
-                {/* Language */}
-                <div className="flex items-center gap-1.5 self-end bg-white/[0.03] border border-white/[0.08] p-1 rounded-lg">
+              <div className="mt-auto pt-8 flex flex-col gap-3">
+                <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/[0.08] p-1 rounded-lg self-start">
                   {[{ code: 'en', label: 'EN' }, { code: 'es', label: 'ES' }, { code: 'fr', label: 'FR' }].map(({ code, label }) => (
                     <button
                       key={code}
                       onClick={() => handleLanguageChange(code)}
-                      className={`px-2.5 py-1 font-mono text-xs font-bold rounded transition-all ${
-                        language === code ? 'bg-[#D4AF37] text-[#020B0D]' : 'text-white/40 hover:text-white/70'
-                      }`}
+                      className="px-3 py-1.5 text-xs font-bold rounded transition-all"
+                      style={{ background: language === code ? GOLD : 'transparent', color: language === code ? '#060B16' : 'rgba(255,255,255,0.4)' }}
                     >
                       {label}
                     </button>
@@ -416,52 +259,30 @@ export default function Navbar() {
 
                 {isAuthenticated ? (
                   <>
-                    <Link
-                      to={rolePrimaryAction.path}
-                      onClick={() => setMobileOpen(false)}
-                      className="w-full py-3.5 text-center text-sm font-semibold text-[#020B0D] bg-[#D4AF37] hover:bg-[#D4AF37]/90 rounded-xl tracking-wide"
-                    >
-                      {rolePrimaryAction.label}
+                    <Link to={rolePrimaryPath} onClick={() => setMobileOpen(false)}
+                      className="w-full py-4 text-center text-sm font-semibold rounded-xl"
+                      style={{ background: GOLD, color: '#060B16' }}>
+                      Dashboard
                     </Link>
-                    <button
-                      onClick={() => { logout(); setMobileOpen(false); }}
-                      className="w-full py-2 text-center text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
-                    >
-                      Log Out
+                    <button onClick={() => { logout(); setMobileOpen(false); }}
+                      className="text-sm text-center text-white/40 hover:text-white/60 transition-colors py-2">
+                      Logout
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/consultation"
-                      onClick={() => setMobileOpen(false)}
-                      className="w-full py-3.5 text-center text-sm font-semibold text-[#020B0D] bg-[#D4AF37] hover:bg-[#D4AF37]/90 rounded-xl tracking-wide"
-                    >
-                      {language === 'es' ? 'Comenzar Viaje' : 'Begin Journey'}
+                    <Link to="/consultation" onClick={() => setMobileOpen(false)}
+                      className="w-full py-4 text-center text-sm font-semibold rounded-xl"
+                      style={{ background: GOLD, color: '#060B16' }}>
+                      Book Consultation
                     </Link>
-                    <div className="flex items-center justify-between px-1">
-                      <button
-                        onClick={() => { setMobileOpen(false); navigateToLogin(`${window.location.origin}/register-role`); }}
-                        className="text-sm font-medium text-white/50 hover:text-white/80 transition-colors"
-                      >
-                        Register
-                      </button>
-                      <button
-                        onClick={() => { setMobileOpen(false); navigateToLogin(`${window.location.origin}/dashboard`); }}
-                        className="text-sm font-medium text-white/70 hover:text-white transition-colors"
-                      >
-                        Log In →
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => { setMobileOpen(false); navigateToLogin(`${window.location.origin}/dashboard`); }}
+                      className="w-full py-3 text-center text-sm font-medium text-white/50 border border-white/10 rounded-xl hover:text-white/70 transition-colors">
+                      Client Login
+                    </button>
                   </>
                 )}
-
-                <button
-                  onClick={() => { handleSafeExit(); setMobileOpen(false); }}
-                  className="w-full border border-emerald-600/40 text-emerald-300 bg-emerald-950/50 rounded-full py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-emerald-900/50 transition-all"
-                >
-                  🔒 Safe Exit
-                </button>
               </div>
             </div>
           </motion.div>
