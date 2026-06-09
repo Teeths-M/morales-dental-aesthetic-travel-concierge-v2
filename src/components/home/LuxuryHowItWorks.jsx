@@ -81,7 +81,7 @@ export default function LuxuryHowItWorks() {
                   style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}90)` }}
                   strokeWidth={1.5}
                 />
-                <h3 className="font-semibold text-white text-[14px] mb-2">{title}</h3>
+                <h3 className="font-medium text-white text-[14px] mb-2">{title}</h3>
                 <p className="text-white/70 text-[12.5px] leading-relaxed">{desc}</p>
 
                 {/* Arrow connector */}
