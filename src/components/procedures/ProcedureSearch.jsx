@@ -11,7 +11,6 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [focused, setFocused] = useState(false);
-  const [showFallback, setShowFallback] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const inputRef = useRef();
 
@@ -19,8 +18,6 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
     const r = searchProcedures(query);
     setResults(r);
     onQueryChange?.(query);
-    // Show fallback when search returns 0 results and query has content
-    setShowFallback(query.trim().length >= 2 && r.length === 0);
   }, [query]);
 
   // Load recent searches on mount
@@ -159,28 +156,26 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
       </div>
 
       {/* Smart Fallback - Separate Card Below Search */}
-      {showFallback && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4"
-        >
-          <SmartFallback 
-            originalQuery={query}
-            onProcedureSelect={(matchedProc) => {
-              onSelect({
-                title: matchedProc.procedure_name,
-                procedure_id: matchedProc.procedure_id,
-                isAiMatch: true,
-                matchConfidence: matchedProc.match_confidence,
-                rationale: matchedProc.rationale
-              });
-              saveRecentSearch(query);
-              clear();
-            }}
-          />
-        </motion.div>
-      )}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-4"
+      >
+        <SmartFallback 
+          originalQuery={query}
+          onProcedureSelect={(matchedProc) => {
+            onSelect({
+              title: matchedProc.procedure_name,
+              procedure_id: matchedProc.procedure_id,
+              isAiMatch: true,
+              matchConfidence: matchedProc.match_confidence,
+              rationale: matchedProc.rationale
+            });
+            saveRecentSearch(query);
+            clear();
+          }}
+        />
+      </motion.div>
     </div>
   );
 }
