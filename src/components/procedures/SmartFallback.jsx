@@ -48,8 +48,12 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
   };
 
   const handleSelectProcedure = (procedure) => {
-    setSelectedProcedure(procedure);
     onProcedureSelect?.(procedure);
+    // Reset state to allow continued searching
+    setMatchedProcedures(null);
+    setSelectedProcedure(null);
+    setPatientQuery('');
+    setPatientNote('');
   };
 
   const handleConfirmWithNote = async () => {
@@ -66,10 +70,15 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
 
       if (response.data && response.data.success) {
         console.log('AI fallback match saved:', response.data);
-        // Note is saved to database, proceed with booking
       }
     } catch (error) {
       console.error('Failed to save fallback match:', error);
+    } finally {
+      // Reset to allow continued searching
+      setMatchedProcedures(null);
+      setSelectedProcedure(null);
+      setPatientQuery('');
+      setPatientNote('');
     }
   };
 
@@ -158,12 +167,12 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
       )}
 
       {/* Matched Procedures Display */}
-      {matchedProcedures && !selectedProcedure && (
-        <div className="space-y-4">
-          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">
+      {matchedProcedures && (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
             Top 3 AI Matches
           </p>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {matchedProcedures.map((match, idx) => (
               <motion.button
                 key={match.procedure_id}
@@ -171,30 +180,28 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 onClick={() => handleSelectProcedure(match)}
-                className="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:shadow-md hover:shadow-emerald-100/50 transition-all group"
+                className="w-full text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:shadow-sm transition-all group"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-emerald-600">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] font-bold text-emerald-600">
                         {match.match_confidence}% match
                       </span>
-                      <span className="text-[10px] text-slate-400">
-                        {match.procedure_id}
-                      </span>
                     </div>
-                    <h4 className="font-semibold text-slate-800 text-sm mb-1">
+                    <h4 className="font-semibold text-slate-800 text-xs mb-0.5 truncate">
                       {match.procedure_name}
                     </h4>
-                    <p className="text-xs text-slate-500 leading-relaxed">
+                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">
                       {match.rationale}
                     </p>
                   </div>
-                  <Check className="w-5 h-5 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <Check className="w-4 h-4 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                 </div>
               </motion.button>
             ))}
           </div>
+          <p className="text-[10px] text-slate-400 italic mt-2">Click to add to your procedures</p>
         </div>
       )}
 
