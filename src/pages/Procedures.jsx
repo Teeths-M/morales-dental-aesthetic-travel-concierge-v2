@@ -197,7 +197,7 @@ export default function Procedures() {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Mobile Cart Summary - shown only on mobile when items exist */}
         {items.length > 0 && (
@@ -210,10 +210,10 @@ export default function Procedures() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Sidebar - Smart Fallback - desktop only */}
-          <div className="lg:col-span-3 hidden xl:block">
-            <div className="sticky top-24 space-y-4">
+          <div className="lg:col-span-3 hidden lg:block">
+            <div className="sticky top-24">
               <SmartFallback 
                 originalQuery=""
                 onProcedureSelect={handleFallbackSelect}
@@ -223,38 +223,38 @@ export default function Procedures() {
           </div>
 
           {/* Main content - full width on mobile, 6 cols on desktop */}
-          <div className="lg:col-span-6 xl:col-span-6 min-w-0">
+          <div className="lg:col-span-6 min-w-0">
             {/* Category filter */}
-            <div className="flex gap-3 flex-wrap mb-10">
+            <div className="flex gap-2 flex-wrap mb-8">
               {parentFilters.map(f => (
                 <button
                   key={f.id}
                   onClick={() => setActiveParent(f.id)}
-                  className={`flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold border transition-all shadow-sm ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                     activeParent === f.id
                       ? 'bg-gradient-to-r from-emerald-700 to-blue-800 text-white border-transparent shadow-md'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <span className="text-base">{f.emoji}</span>{f.label}
+                  <span>{f.emoji}</span>{f.label}
                 </button>
               ))}
             </div>
 
             {/* Procedure categories */}
-            <div className="space-y-12">
+            <div className="space-y-10">
               {filteredCategories.map((cat) => (
                 <div key={cat.id}>
-                  <div className="flex items-center gap-4 mb-6">
-                    <span className="text-2xl">{cat.icon}</span>
-                    <h2 className={`text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full border ${cat.color.bg} ${cat.color.text} ${cat.color.border}`}>
+                  <div className="flex items-center gap-3 mb-5">
+                    <span className="text-xl">{cat.icon}</span>
+                    <h2 className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border ${cat.color.bg} ${cat.color.text} ${cat.color.border}`}>
                       {cat.label}
                     </h2>
-                    <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
+                    <div className="flex-1 h-px bg-slate-100" />
                     <span className="text-xs text-slate-400 font-medium">{cat.procedures.length} {language === 'es' ? 'tratamientos' : language === 'fr' ? 'traitements' : 'treatments'}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {cat.procedures.map(proc => {
                       const enriched = { ...proc, category: cat.label, categoryId: cat.id, categoryColor: cat.color };
                       return (
@@ -305,7 +305,7 @@ export default function Procedures() {
 
           {/* Right Sidebar - My Procedures - visible on all screens */}
           <div className="lg:col-span-3">
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-4">
             {selectedProcs.length > 0 ? (
               <>
                 <MyProceduresList
@@ -331,16 +331,16 @@ export default function Procedures() {
             {/* Voice mode promo */}
             <button
               onClick={() => setVoiceOpen(true)}
-              className="mt-4 w-full flex items-center gap-3 bg-gradient-to-r from-emerald-800 to-blue-900 rounded-2xl px-5 py-4 hover:opacity-90 transition-all shadow-lg shadow-emerald-900/20"
+              className="mt-4 w-full flex items-center gap-3 bg-gradient-to-r from-emerald-800 to-blue-900 rounded-2xl px-4 py-4 hover:opacity-90 transition-all"
             >
-              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Mic className="w-5 h-5 text-white" />
               </div>
               <div className="text-left">
                 <p className="text-white font-bold text-xs">
                   {language === 'es' ? 'Modo de Voz' : language === 'fr' ? 'Mode Voix' : 'Voice Mode'}
                 </p>
-                <p className="text-white/70 text-[10px] leading-relaxed">
+                <p className="text-white/70 text-[10px]">
                   {language === 'es' ? 'Habla tus tratamientos' : language === 'fr' ? 'Parlez vos traitements' : 'Speak your treatments'}
                 </p>
               </div>
@@ -348,9 +348,6 @@ export default function Procedures() {
             </div>
           </div>
         </div>
-
-        {/* Bottom spacing */}
-        <div className="h-12" />
       </div>
 
 
