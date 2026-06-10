@@ -86,16 +86,20 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span className="text-xs font-medium text-slate-500">Recent:</span>
             <div className="flex flex-wrap gap-2">
-              {recentSearches.map((search, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setQuery(search.data.raw_query_text)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 text-xs font-medium transition-all border border-slate-200 hover:border-emerald-200"
-                >
-                  {search.data.raw_query_text}
-                  <Search className="w-3 h-3" />
-                </button>
-              ))}
+              {recentSearches.map((search, idx) => {
+                const queryText = search.data?.raw_query_text || search.raw_query_text;
+                if (!queryText) return null;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setQuery(queryText)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 text-xs font-medium transition-all border border-slate-200 hover:border-emerald-200"
+                  >
+                    {queryText}
+                    <Search className="w-3 h-3" />
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}
