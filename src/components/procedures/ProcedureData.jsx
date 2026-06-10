@@ -63,8 +63,12 @@ const IMG = {
   beardTransplant:     'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/dcdd9c6e8_generated_image.png',
   eyebrowRestoration:  'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/005901708_generated_image.png',
   prpScalp:            'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f8e38ef58_generated_image.png',
-  ivfIcsi:             'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/2ad5dc8a8_generated_image.png',
-  eggFreezing:         'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/fda95c2d3_generated_image.png',
+  gastricSleeve:       'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/d4465acec_generated_image.png',
+  gastricBypass:       'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/1c499f5ad_generated_image.png',
+  hipArthroplasty:     'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/ea504aa20_generated_image.png',
+  kneeResurfacing:     'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/14784de9e_generated_image.png',
+  ivfIcsi:             'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/5e5c5f664_generated_image.png',
+  eggFreezing:         'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e09197fc2_generated_image.png',
 };
 
 export const procedureCategories = [
@@ -210,6 +214,39 @@ export const procedureCategories = [
       { image: IMG.beardTransplant, title: 'Beard & Facial Hair Transplant', desc: 'Meticulous follicular unit mapping to resolve patchy facial hair, building a permanently dense, natural-looking beard and jawline profile.', duration: '3–5 hours', recovery: '1–2 weeks', downtime: '5–7 days', tag: 'High Density', keywords: ['beard transplant', 'facial hair', 'patchy beard', 'beard restoration'], whatToExpect: ['Beard design consultation', 'FUE extraction from donor area', 'Precise graft placement following natural growth patterns'], benefits: ['Permanent facial hair', 'Natural growth direction', 'Confidence boosting', 'Customizable density'] },
       { image: IMG.eyebrowRestoration, title: 'Eyebrow Restoration Micro-Grafts', desc: 'Artistic, ultra-fine individual graft placements to permanently sculpt, reshape, and restore thinning or over-plucked eyebrows.', duration: '2–3 hours', recovery: '1–2 weeks', downtime: '3–5 days', tag: 'Artistic Precision', keywords: ['eyebrow transplant', 'eyebrow restoration', 'thin eyebrows', 'eyebrow micrografts'], whatToExpect: ['Eyebrow shape design', 'Single-hair graft extraction', 'Artistic placement following natural arch'], benefits: ['Permanent eyebrow restoration', 'Natural-looking results', 'No daily makeup needed', 'Customized to face shape'] },
       { image: IMG.prpScalp, title: 'Cellular PRP Scalp Therapy', desc: 'Non-surgical, autologous growth-factor injections engineered to halt active shedding, accelerate post-op transplant recovery, and thicken hair shafts.', duration: '45–60 min', recovery: 'None', downtime: 'None', tag: 'Non-Surgical Add-on', keywords: ['prp', 'platelet rich plasma', 'scalp therapy', 'hair growth', 'hair loss treatment'], whatToExpect: ['Blood draw and centrifugation', 'PRP preparation', 'Scalp injections under local anesthesia'], benefits: ['Stimulates natural growth', 'No surgery required', 'Accelerates healing', 'Thickens existing hair'] },
+    ],
+  },
+  {
+    id: 'bariatric',
+    label: 'Bariatric Surgery',
+    parent: 'bariatric',
+    icon: '⚖️',
+    color: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-600' },
+    procedures: [
+      { image: IMG.gastricSleeve, title: 'Laparoscopic Gastric Sleeve', desc: 'Advanced minimally invasive keyhole surgery removing a portion of the stomach to naturally limit capacity and regulate metabolic hunger hormones safely.', duration: '1–2 hours', recovery: '2–4 weeks', downtime: '1–2 weeks', tag: 'Top Weight Loss Choice', keywords: ['gastric sleeve', 'sleeve gastrectomy', 'weight loss', 'bariatric', 'stomach reduction'], whatToExpect: ['Laparoscopic keyhole surgery', '80% of stomach removed', 'Hospital stay 1–2 nights'], benefits: ['Significant weight loss', 'Improves obesity-related conditions', 'No intestinal rerouting'] },
+      { image: IMG.gastricBypass, title: 'Roux-en-Y Gastric Bypass', desc: 'The gold-standard metabolic procedure creating a smaller stomach pouch connected directly to the lower intestine for comprehensive caloric absorption management.', duration: '2–4 hours', recovery: '4–6 weeks', downtime: '2–3 weeks', tag: 'Gold-Standard Metabolic', keywords: ['gastric bypass', 'roux-en-y', 'weight loss surgery', 'bariatric', 'metabolic surgery'], whatToExpect: ['Small stomach pouch created', 'Intestine rerouted', 'Hospital stay 2–3 nights'], benefits: ['Maximum weight loss results', 'Diabetes remission', 'Long-term metabolic health'] },
+    ],
+  },
+  {
+    id: 'orthopedics',
+    label: 'Orthopedics & Joint Replacement',
+    parent: 'orthopedics',
+    icon: '🦴',
+    color: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', dot: 'bg-indigo-600' },
+    procedures: [
+      { image: IMG.hipArthroplasty, title: 'Total Hip Arthroplasty', desc: 'Premium prosthetic joint restoration utilizing ultra-durable ceramic or titanium implants to eliminate arthritic pain and fully restore dynamic lower-body mobility.', duration: '1–2 hours', recovery: '6–12 weeks', downtime: '2–4 weeks', tag: 'Complete Mobility Restored', keywords: ['hip replacement', 'hip arthroplasty', 'joint replacement', 'orthopedic', 'hip surgery'], whatToExpect: ['Damaged joint removal', 'Ceramic or titanium implant', 'Immediate weight-bearing possible'], benefits: ['Eliminates arthritic pain', 'Full mobility restoration', 'Lasts 15–25 years'] },
+      { image: IMG.kneeResurfacing, title: 'Total Knee Resurfacing', desc: 'State-of-the-art precision knee joint reconstruction deploying low-friction artificial implants engineered for rapid post-op rehabilitation and structural durability.', duration: '1–2 hours', recovery: '6–12 weeks', downtime: '2–4 weeks', tag: 'Advanced Joint Care', keywords: ['knee replacement', 'knee resurfacing', 'knee arthroplasty', 'orthopedic', 'knee surgery'], whatToExpect: ['Damaged cartilage removal', 'Metal and plastic implant', 'Physical therapy begins day 1'], benefits: ['Pain-free movement', 'Improved mobility', 'Long-lasting results'] },
+    ],
+  },
+  {
+    id: 'fertility',
+    label: 'Fertility & Reproductive Medicine',
+    parent: 'fertility',
+    icon: '👶',
+    color: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', dot: 'bg-pink-600' },
+    procedures: [
+      { image: IMG.ivfIcsi, title: 'Advanced IVF with ICSI', desc: 'High-success reproductive assistance featuring direct intracytoplasmic sperm injection into mature eggs under cutting-edge clinical laboratory conditions.', duration: '2–3 weeks cycle', recovery: 'Minimal', downtime: 'None', tag: 'Maximum Conception Success', keywords: ['ivf', 'icsi', 'fertility treatment', 'in vitro', 'reproductive medicine'], whatToExpect: ['Ovarian stimulation', 'Egg retrieval procedure', 'ICSI fertilization', 'Embryo transfer'], benefits: ['Highest success rates', 'Overcomes male infertility', 'Genetic testing available'] },
+      { image: IMG.eggFreezing, title: 'Oocyte Cryopreservation (Egg Freezing)', desc: 'Premium fertility preservation packages including highly managed ovulation induction, precision retrieval, and advanced scientific vitrification storage.', duration: '2–3 weeks cycle', recovery: '1–2 days', downtime: 'Minimal', tag: 'Premium Preservation', keywords: ['egg freezing', 'oocyte cryopreservation', 'fertility preservation', 'vitrification'], whatToExpect: ['Hormone stimulation injections', 'Egg retrieval under sedation', 'Flash-freezing vitrification'], benefits: ['Preserve fertility for future', 'No rush for pregnancy', 'High survival rates with vitrification'] },
     ],
   },
 ];

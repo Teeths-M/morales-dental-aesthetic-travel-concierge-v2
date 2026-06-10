@@ -19,6 +19,9 @@ const getParentFilters = (language) => [
   { id: 'dental', label: language === 'es' ? 'Dental' : language === 'fr' ? 'Dentaire' : 'Dental', emoji: '🦷' },
   { id: 'aesthetic', label: language === 'es' ? 'Estético' : language === 'fr' ? 'Esthétique' : 'Aesthetic', emoji: '✨' },
   { id: 'hair_restoration', label: language === 'es' ? 'Restauración Capilar' : language === 'fr' ? 'Restauration Capillaire' : 'Hair Restoration', emoji: '💇' },
+  { id: 'bariatric', label: language === 'es' ? 'Bariátrica' : language === 'fr' ? 'Bariatrique' : 'Bariatric', emoji: '⚖️' },
+  { id: 'orthopedics', label: language === 'es' ? 'Ortopedia' : language === 'fr' ? 'Orthopédie' : 'Orthopedics', emoji: '🦴' },
+  { id: 'fertility', label: language === 'es' ? 'Fertilidad' : language === 'fr' ? 'Fertilité' : 'Fertility', emoji: '👶' },
   { id: 'wellness', label: language === 'es' ? 'Bienestar' : language === 'fr' ? 'Bien-être' : 'Wellness', emoji: '🌿' },
 ];
 
