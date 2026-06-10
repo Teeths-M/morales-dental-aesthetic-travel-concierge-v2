@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BadgeCheck, Shield, Plane, Heart } from 'lucide-react';
+import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, BarChart3, MapPin, HeartPulse } from 'lucide-react';
 
 const GOLD = '#D4AF37';
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/7b4ea635d_ChatGPTImageJun1202608_35_37PM.png';
@@ -14,12 +14,12 @@ const trustPills = [
 ];
 
 const orbitNodes = [
-  { label: 'Verified Specialists',  angle: 320, r: 148 },
-  { label: '24/7 Support',          angle: 220, r: 148 },
-  { label: 'Safe Facilities',       angle: 25,  r: 148 },
-  { label: 'Risk Intelligence',     angle: 200, r: 148 },
-  { label: 'Travel Coordinator',    angle: 45,  r: 148 },
-  { label: 'Recovery Care',         angle: 135, r: 148 },
+  { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 155 },
+  { label: '24/7 Support',         icon: Headphones,  angle: 195, r: 155 },
+  { label: 'Safe Facilities',      icon: Building2,   angle: 345, r: 155 },
+  { label: 'Risk Intelligence',    icon: BarChart3,   angle: 160, r: 155 },
+  { label: 'Travel Coordination',  icon: Plane,       angle: 15,  r: 155 },
+  { label: 'Recovery Care',        icon: HeartPulse,  angle: 105, r: 155 },
 ];
 
 function deg2rad(d) { return (d * Math.PI) / 180; }
@@ -27,12 +27,26 @@ function deg2rad(d) { return (d * Math.PI) / 180; }
 function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-      {/* Outer rings */}
-      <div className="absolute w-[320px] h-[320px] rounded-full" style={{ border: `1px solid ${GOLD}20` }} />
-      <div className="absolute w-[260px] h-[260px] rounded-full" style={{ border: `1px solid ${GOLD}15` }} />
 
-      {/* SVG lines from center to nodes */}
-      <svg className="absolute" width="340" height="340" viewBox="-170 -170 340 340">
+      {/* Outer decorative rings */}
+      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}14`, boxShadow: `0 0 40px ${GOLD}06 inset` }} />
+      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}18` }} />
+      <div className="absolute w-[220px] h-[220px] rounded-full" style={{ border: `1px solid ${GOLD}10` }} />
+
+      {/* SVG: dashed connector lines + glowing dots at endpoints */}
+      <svg className="absolute" width="400" height="400" viewBox="-200 -200 400 400">
+        <defs>
+          <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={GOLD} stopOpacity="0.18" />
+            <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Soft center glow */}
+        <circle cx="0" cy="0" r="80" fill="url(#centerGlow)" />
+        <circle cx="0" cy="0" r="52" fill={GOLD} fillOpacity="0.05" />
+
+        {/* Dashed lines */}
         {orbitNodes.map(({ angle, r }) => {
           const x = r * Math.cos(deg2rad(angle));
           const y = r * Math.sin(deg2rad(angle));
@@ -42,36 +56,43 @@ function SafeTDiagram() {
               x1="0" y1="0"
               x2={x} y2={y}
               stroke={GOLD}
-              strokeWidth="0.7"
-              opacity="0.3"
+              strokeWidth="0.6"
+              opacity="0.25"
+              strokeDasharray="3 4"
             />
           );
         })}
-        {/* Center glow circle */}
-        <circle cx="0" cy="0" r="54" fill={GOLD} fillOpacity="0.06" />
-        <circle cx="0" cy="0" r="42" fill={GOLD} fillOpacity="0.04" />
+
+        {/* Glowing endpoint dots */}
+        {orbitNodes.map(({ angle, r, label }) => {
+          const x = r * Math.cos(deg2rad(angle));
+          const y = r * Math.sin(deg2rad(angle));
+          return (
+            <circle key={`dot-${label}`} cx={x} cy={y} r="2.5" fill={GOLD} opacity="0.55" />
+          );
+        })}
       </svg>
 
       {/* Orbit node badges */}
-      {orbitNodes.map(({ label, angle, r }) => {
+      {orbitNodes.map(({ label, icon: NodeIcon, angle, r }) => {
         const x = r * Math.cos(deg2rad(angle));
         const y = r * Math.sin(deg2rad(angle));
         return (
           <div
             key={label}
-            className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap"
+            className="absolute flex items-center gap-2 px-3 py-2 rounded-2xl text-[11px] font-medium whitespace-nowrap"
             style={{
               left: `calc(50% + ${x}px)`,
               top: `calc(50% + ${y}px)`,
               transform: 'translate(-50%, -50%)',
-              background: 'rgba(6,11,22,0.85)',
-              border: `1px solid ${GOLD}35`,
-              color: 'rgba(255,255,255,0.82)',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+              background: 'rgba(5,9,18,0.82)',
+              border: `1px solid rgba(212,175,55,0.28)`,
+              color: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(16px)',
+              boxShadow: `0 2px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.06) inset`,
             }}
           >
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: GOLD }} />
+            <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD, opacity: 0.85 }} strokeWidth={1.5} />
             {label}
           </div>
         );
@@ -79,26 +100,41 @@ function SafeTDiagram() {
 
       {/* Center shield */}
       <motion.div
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+        animate={{ scale: [1, 1.04, 1] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         className="relative z-10 flex flex-col items-center"
       >
+        {/* Outer glow */}
         <div
-          className="absolute w-28 h-28 rounded-full"
-          style={{ background: `radial-gradient(circle, ${GOLD}22, transparent 70%)`, filter: 'blur(12px)' }}
+          className="absolute w-36 h-36 rounded-full"
+          style={{ background: `radial-gradient(circle, ${GOLD}28, transparent 70%)`, filter: 'blur(18px)' }}
         />
-        <svg viewBox="0 0 80 92" fill="none" className="w-[72px] h-[84px]">
+        {/* Shield SVG — refined with double stroke */}
+        <svg viewBox="0 0 80 92" fill="none" className="w-[78px] h-[90px] relative z-10">
+          {/* Outer glow stroke */}
           <path
             d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z"
-            fill={`${GOLD}18`} stroke={GOLD} strokeWidth="1.5"
+            fill="none"
+            stroke={GOLD}
+            strokeWidth="3"
+            opacity="0.12"
           />
+          {/* Main shield */}
           <path
-            d="M34 34H46V42H54V54H46V62H34V54H26V42H34V34Z"
-            fill="white" opacity="0.9"
+            d="M40 6L70 19V48C70 65 57 76 40 86C23 76 10 65 10 48V19L40 6Z"
+            fill={`${GOLD}14`}
+            stroke={GOLD}
+            strokeWidth="1.2"
+          />
+          {/* Plus / cross */}
+          <path
+            d="M35 31H45V39H53V49H45V57H35V49H27V39H35V31Z"
+            fill="white"
+            opacity="0.92"
           />
         </svg>
-        <p className="text-[9px] font-bold tracking-[0.22em] uppercase mt-2" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
-        <p className="text-[7px] text-white/35 tracking-widest uppercase mt-0.5">Safety Intelligence Engine</p>
+        <p className="text-[9.5px] font-bold tracking-[0.24em] uppercase mt-3 relative z-10" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
+        <p className="text-[7px] tracking-[0.18em] uppercase mt-1 relative z-10" style={{ color: 'rgba(255,255,255,0.38)' }}>Safety Intelligence Engine</p>
       </motion.div>
     </div>
   );
