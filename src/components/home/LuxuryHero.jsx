@@ -115,14 +115,16 @@ function SafeTDiagram() {
 
       {/* Center shield */}
       <motion.div
-        animate={{ scale: [1, 1.04, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        animate={{ scale: [1, 1.035, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
         className="relative z-10 flex flex-col items-center"
       >
-        {/* Outer glow */}
-        <div
+        {/* Outer glow — pulses softly in sync */}
+        <motion.div
+          animate={{ opacity: [0.6, 1, 0.6], scale: [0.92, 1.08, 0.92] }}
+          transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
           className="absolute w-36 h-36 rounded-full"
-          style={{ background: `radial-gradient(circle, ${GOLD}28, transparent 70%)`, filter: 'blur(18px)' }}
+          style={{ background: `radial-gradient(circle, ${GOLD}30, transparent 70%)`, filter: 'blur(22px)' }}
         />
         {/* Shield SVG — refined with double stroke */}
         <svg viewBox="0 0 80 92" fill="none" className="w-[78px] h-[90px] relative z-10">
