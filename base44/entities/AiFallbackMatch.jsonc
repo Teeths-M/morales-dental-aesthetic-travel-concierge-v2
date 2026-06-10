@@ -1,0 +1,118 @@
+{
+  "name": "AiFallbackMatch",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "description": "User ID of the patient who made the search"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Patient's email for notifications"
+    },
+    "raw_search_query": {
+      "type": "string",
+      "description": "Patient's original search query in their own words"
+    },
+    "suggested_procedure_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of top 3 matched procedure IDs from LLM"
+    },
+    "suggested_procedures_details": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "procedure_id": {
+            "type": "string"
+          },
+          "procedure_name": {
+            "type": "string"
+          },
+          "match_confidence": {
+            "type": "number"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Detailed match information with confidence scores"
+    },
+    "selected_procedure_id": {
+      "type": "string",
+      "description": "The procedure ID the patient ultimately selected"
+    },
+    "selected_procedure_name": {
+      "type": "string",
+      "description": "Human-readable name of selected procedure"
+    },
+    "patient_custom_note": {
+      "type": "string",
+      "description": "Optional personal note from patient to doctor"
+    },
+    "doctor_notified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the doctor has been notified"
+    },
+    "doctor_id": {
+      "type": "string",
+      "description": "ID of the doctor assigned to this case"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Linked case record if booking proceeds"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "patient_id",
+    "patient_email",
+    "raw_search_query",
+    "suggested_procedure_ids"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "doctor"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
