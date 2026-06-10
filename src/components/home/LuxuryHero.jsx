@@ -44,9 +44,9 @@ function SafeTDiagram() {
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* Outer decorative rings */}
-      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}14`, boxShadow: `0 0 40px ${GOLD}06 inset` }} />
-      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}18` }} />
-      <div className="absolute w-[220px] h-[220px] rounded-full" style={{ border: `1px solid ${GOLD}10` }} />
+      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}55`, boxShadow: `0 0 40px ${GOLD}18 inset` }} />
+      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}44` }} />
+      <div className="absolute w-[220px] h-[220px] rounded-full" style={{ border: `1px solid ${GOLD}33` }} />
 
       {/* SVG: dashed connector lines + glowing dots at endpoints */}
       <svg className="absolute" width="400" height="400" viewBox="-200 -200 400 400">
@@ -71,9 +71,9 @@ function SafeTDiagram() {
               x1="0" y1="0"
               x2={x} y2={y}
               stroke={GOLD}
-              strokeWidth="0.6"
-              opacity="0.25"
-              strokeDasharray="3 4"
+              strokeWidth="1"
+              opacity="0.55"
+              strokeDasharray="3 5"
             />
           );
         })}
@@ -83,7 +83,10 @@ function SafeTDiagram() {
           const x = r * Math.cos(deg2rad(angle));
           const y = r * Math.sin(deg2rad(angle));
           return (
-            <circle key={`dot-${label}`} cx={x} cy={y} r="2.5" fill={GOLD} opacity="0.55" />
+            <g key={`dot-${label}`}>
+              <circle cx={x} cy={y} r="5" fill={GOLD} opacity="0.12" />
+              <circle cx={x} cy={y} r="2.5" fill={GOLD} opacity="0.9" />
+            </g>
           );
         })}
       </svg>
