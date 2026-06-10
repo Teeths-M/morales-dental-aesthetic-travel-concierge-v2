@@ -159,16 +159,16 @@ export default function Procedures() {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Hero */}
       <div className="bg-card/50 backdrop-blur-sm border-b border-border/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
           <motion.div
-            className="text-center max-w-3xl mx-auto mb-8"
+            className="text-center max-w-3xl mx-auto mb-10"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">
+            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-4">
               {language === 'es' ? 'Nuestros Servicios' : language === 'fr' ? 'Nos Services' : 'Our Services'}
             </p>
-            <h1 className="font-display text-3xl lg:text-5xl text-slate-900 mb-4">
+            <h1 className="font-display text-3xl lg:text-5xl text-slate-900 mb-5">
               {language === 'es' ? 'Procedimientos y Tratamientos' : language === 'fr' ? 'Procédures et Traitements' : 'Procedures & Treatments'}
             </h1>
             <p className="text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
@@ -177,7 +177,7 @@ export default function Procedures() {
           </motion.div>
 
           {/* Search + Voice */}
-          <div className="max-w-2xl mx-auto flex gap-3">
+          <div className="max-w-3xl mx-auto flex gap-3">
             <div className="flex-1">
               <ProcedureSearch onSelect={addProc} />
             </div>
@@ -197,7 +197,7 @@ export default function Procedures() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
         {/* Mobile Cart Summary - shown only on mobile when items exist */}
         {items.length > 0 && (
@@ -210,9 +210,9 @@ export default function Procedures() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
           {/* Left Sidebar - Smart Fallback - desktop only */}
-          <div className="lg:col-span-3 hidden lg:block">
+          <div className="lg:col-span-3 hidden xl:block">
             <div className="sticky top-24">
               <SmartFallback 
                 originalQuery=""
@@ -222,10 +222,10 @@ export default function Procedures() {
             </div>
           </div>
 
-          {/* Main content - full width on mobile, 6 cols on desktop */}
-          <div className="lg:col-span-6 min-w-0">
+          {/* Main content - full width on mobile/tablet, 6 cols on desktop */}
+          <div className="lg:col-span-12 xl:col-span-6 min-w-0">
             {/* Category filter */}
-            <div className="flex gap-2 flex-wrap mb-8">
+            <div className="flex gap-2 flex-wrap mb-10">
               {parentFilters.map(f => (
                 <button
                   key={f.id}
@@ -244,8 +244,8 @@ export default function Procedures() {
             {/* Procedure categories */}
             <div className="space-y-10">
               {filteredCategories.map((cat) => (
-                <div key={cat.id}>
-                  <div className="flex items-center gap-3 mb-5">
+                <div key={cat.id} className="mb-12">
+                  <div className="flex items-center gap-3 mb-6">
                     <span className="text-xl">{cat.icon}</span>
                     <h2 className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border ${cat.color.bg} ${cat.color.text} ${cat.color.border}`}>
                       {cat.label}
@@ -254,7 +254,7 @@ export default function Procedures() {
                     <span className="text-xs text-slate-400 font-medium">{cat.procedures.length} {language === 'es' ? 'tratamientos' : language === 'fr' ? 'traitements' : 'treatments'}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {cat.procedures.map(proc => {
                       const enriched = { ...proc, category: cat.label, categoryId: cat.id, categoryColor: cat.color };
                       return (
@@ -275,7 +275,7 @@ export default function Procedures() {
 
             {/* CTA */}
             <motion.div
-              className="text-center bg-white border border-slate-100 rounded-2xl p-8 lg:p-12 mt-12 shadow-sm"
+              className="text-center bg-white border border-slate-100 rounded-2xl p-8 lg:p-12 mt-16 shadow-sm"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -303,8 +303,8 @@ export default function Procedures() {
             </motion.div>
           </div>
 
-          {/* Right Sidebar - My Procedures - visible on all screens */}
-          <div className="lg:col-span-3">
+          {/* Right Sidebar - My Procedures - desktop only */}
+          <div className="lg:col-span-6 xl:col-span-3 hidden xl:block">
             <div className="sticky top-24 space-y-4">
             {selectedProcs.length > 0 ? (
               <>
