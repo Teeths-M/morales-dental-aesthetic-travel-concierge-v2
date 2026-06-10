@@ -84,7 +84,45 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
       animate={{ opacity: 1, y: 0 }}
       className="w-full bg-white border border-slate-100 rounded-2xl p-6 shadow-sm"
     >
-      {!matchedProcedures ? (
+      {matchedProcedures ? (
+        /* Matched Procedures Display */
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+            Top 3 AI Matches
+          </p>
+          <div className="space-y-2">
+            {matchedProcedures.map((match, idx) => (
+              <motion.button
+                key={match.procedure_id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                onClick={() => handleSelectProcedure(match)}
+                className="w-full text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:shadow-sm transition-all group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] font-bold text-emerald-600">
+                        {match.match_confidence}% match
+                      </span>
+                    </div>
+                    <h4 className="font-semibold text-slate-800 text-xs mb-0.5 truncate">
+                      {match.procedure_name}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">
+                      {match.rationale}
+                    </p>
+                  </div>
+                  <Check className="w-4 h-4 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                </div>
+              </motion.button>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 italic mt-2">Click to add to your basket</p>
+        </div>
+      ) : (
+        /* Input Mode - Horizontal Layout */
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Left Side - Icon + Heading + Description */}
           <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -126,42 +164,6 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
               )}
             </Button>
           </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
-          Top 3 AI Matches
-        </p>
-        <div className="space-y-2">
-          {matchedProcedures.map((match, idx) => (
-            <motion.button
-              key={match.procedure_id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              onClick={() => handleSelectProcedure(match)}
-              className="w-full text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:shadow-sm transition-all group"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[10px] font-bold text-emerald-600">
-                      {match.match_confidence}% match
-                    </span>
-                  </div>
-                  <h4 className="font-semibold text-slate-800 text-xs mb-0.5 truncate">
-                    {match.procedure_name}
-                  </h4>
-                  <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">
-                    {match.rationale}
-                  </p>
-                </div>
-                <Check className="w-4 h-4 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-              </div>
-            </motion.button>
-          ))}
-        </div>
-        <p className="text-[10px] text-slate-400 italic mt-2">Click to add to your basket</p>
         </div>
       )}
     </motion.div>
