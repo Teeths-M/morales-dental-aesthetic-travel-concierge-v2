@@ -59,9 +59,9 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
   };
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full">
       {/* Search Bar */}
-      <div className="relative">
+      <div className="relative mb-3">
         <div className={`flex items-center gap-3 bg-white border-2 rounded-2xl px-5 py-3.5 shadow-sm transition-all ${focused ? 'border-emerald-400 shadow-emerald-100' : 'border-slate-200'}`}>
           <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
           <input
@@ -163,7 +163,6 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4"
         >
           <SmartFallback 
             originalQuery={query}
