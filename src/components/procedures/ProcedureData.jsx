@@ -58,6 +58,11 @@ const IMG = {
   weightLoss:          'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/ce72d2add_generated_image.png',
   nutritional:         'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e694004ca_generated_image.png',
   recoveryTherapy:     'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/961a2cd4e_generated_image.png',
+  sapphireFUE:         'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/785e50718_generated_image.png',
+  dhiImplanter:        'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/b6f678afa_generated_image.png',
+  beardTransplant:     'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/dcdd9c6e8_generated_image.png',
+  eyebrowRestoration:  'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/005901708_generated_image.png',
+  prpScalp:            'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f8e38ef58_generated_image.png',
 };
 
 export const procedureCategories = [
@@ -189,6 +194,20 @@ export const procedureCategories = [
       { image: IMG.weightLoss, title: 'Medical Weight Loss', desc: 'Physician-supervised weight management combining nutrition, medications, and lifestyle coaching for lasting results.', duration: 'Ongoing program', recovery: 'None', downtime: 'None', tag: 'Wellness', keywords: ['weight loss', 'medical weight loss', 'weight management', 'diet program'], whatToExpect: ['Full metabolic assessment', 'Personalized plan creation', 'Regular check-ins and adjustments'], benefits: ['Medically supervised safety', 'Sustainable long-term results', 'Treats underlying conditions'] },
       { image: IMG.nutritional, title: 'Nutritional Programs', desc: 'Personalized nutrition plans designed by registered dietitians to optimize health, energy, and recovery outcomes.', duration: 'Ongoing', recovery: 'None', downtime: 'None', tag: 'Wellness', keywords: ['nutrition', 'nutritional program', 'diet plan', 'nutritionist'], whatToExpect: ['Diet assessment and goals', 'Custom meal planning', 'Ongoing coaching support'], benefits: ['Improved energy and performance', 'Supports surgical recovery', 'Long-term health optimization'] },
       { image: IMG.recoveryTherapy, title: 'Recovery Therapy', desc: 'Post-procedure physiotherapy and rehabilitation designed to accelerate healing and restore full function safely.', duration: 'Varies', recovery: 'None', downtime: 'None', tag: 'Recovery', keywords: ['recovery therapy', 'physical therapy', 'rehab', 'physiotherapy'], whatToExpect: ['Post-op assessment', 'Tailored exercise program', 'Manual therapy and modalities'], benefits: ['Faster recovery', 'Reduced scar tissue', 'Restored full range of motion'] },
+    ],
+  },
+  {
+    id: 'hair-restoration',
+    label: 'Hair Restoration & Transplants',
+    parent: 'hair_restoration',
+    icon: '💇',
+    color: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200', dot: 'bg-cyan-600' },
+    procedures: [
+      { image: IMG.sapphireFUE, title: 'Sapphire FUE Hair Transplant', desc: 'Gold-standard restoration utilizing ultra-precise sapphire gemstone blades for rapid healing, maximum graft density, and zero linear scars.', duration: '4–8 hours', recovery: '2–3 weeks', downtime: '1–2 weeks', tag: '98% Success Rate', keywords: ['fue', 'sapphire', 'hair transplant', 'baldness', 'hair loss'], whatToExpect: ['Donor area extraction with sapphire blades', 'Recipient site creation', 'Graft placement under local anesthesia'], benefits: ['Minimal scarring', 'Faster healing', 'Higher graft survival rate', 'Natural-looking density'] },
+      { image: IMG.dhiImplanter, title: 'DHI (Direct Hair Implantation)', desc: 'Premium precision grafting using an advanced Choi Implanter Pen to control depth, angle, and hair direction simultaneously without channel incisions.', duration: '4–8 hours', recovery: '2–3 weeks', downtime: '1–2 weeks', tag: 'Advanced Precision', keywords: ['dhi', 'choi implanter', 'direct implantation', 'hair transplant'], whatToExpect: ['FUE extraction', 'Loading grafts into Choi pen', 'Direct implantation without pre-made channels'], benefits: ['No linear scars', 'Precise angle control', 'Faster procedure', 'Higher density possible'] },
+      { image: IMG.beardTransplant, title: 'Beard & Facial Hair Transplant', desc: 'Meticulous follicular unit mapping to resolve patchy facial hair, building a permanently dense, natural-looking beard and jawline profile.', duration: '3–5 hours', recovery: '1–2 weeks', downtime: '5–7 days', tag: 'High Density', keywords: ['beard transplant', 'facial hair', 'patchy beard', 'beard restoration'], whatToExpect: ['Beard design consultation', 'FUE extraction from donor area', 'Precise graft placement following natural growth patterns'], benefits: ['Permanent facial hair', 'Natural growth direction', 'Confidence boosting', 'Customizable density'] },
+      { image: IMG.eyebrowRestoration, title: 'Eyebrow Restoration Micro-Grafts', desc: 'Artistic, ultra-fine individual graft placements to permanently sculpt, reshape, and restore thinning or over-plucked eyebrows.', duration: '2–3 hours', recovery: '1–2 weeks', downtime: '3–5 days', tag: 'Artistic Precision', keywords: ['eyebrow transplant', 'eyebrow restoration', 'thin eyebrows', 'eyebrow micrografts'], whatToExpect: ['Eyebrow shape design', 'Single-hair graft extraction', 'Artistic placement following natural arch'], benefits: ['Permanent eyebrow restoration', 'Natural-looking results', 'No daily makeup needed', 'Customized to face shape'] },
+      { image: IMG.prpScalp, title: 'Cellular PRP Scalp Therapy', desc: 'Non-surgical, autologous growth-factor injections engineered to halt active shedding, accelerate post-op transplant recovery, and thicken hair shafts.', duration: '45–60 min', recovery: 'None', downtime: 'None', tag: 'Non-Surgical Add-on', keywords: ['prp', 'platelet rich plasma', 'scalp therapy', 'hair growth', 'hair loss treatment'], whatToExpect: ['Blood draw and centrifugation', 'PRP preparation', 'Scalp injections under local anesthesia'], benefits: ['Stimulates natural growth', 'No surgery required', 'Accelerates healing', 'Thickens existing hair'] },
     ],
   },
 ];
