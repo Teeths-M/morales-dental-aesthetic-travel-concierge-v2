@@ -9,6 +9,7 @@ import { procedureCategories } from '@/components/procedures/ProcedureData';
 import ProcedureSearch from '@/components/procedures/ProcedureSearch';
 import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
+import SmartFallback from '@/components/procedures/SmartFallback';
 
 import { useCart } from '@/context/CartContext';
 import { getProcedureEnumValue } from '@/components/booking/SectionProcedure';
@@ -140,6 +141,16 @@ export default function Procedures() {
     procs.forEach(p => addProc(p));
   };
 
+  const handleFallbackSelect = (matchedProc) => {
+    addProc({
+      title: matchedProc.procedure_name,
+      procedure_id: matchedProc.procedure_id,
+      isAiMatch: true,
+      matchConfidence: matchedProc.match_confidence,
+      rationale: matchedProc.rationale
+    });
+  };
+
   const filteredCategories = activeParent === 'all'
     ? procedureCategories
     : procedureCategories.filter(c => c.parent === activeParent);
@@ -199,9 +210,20 @@ export default function Procedures() {
           </div>
         )}
 
-        <div className="flex gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Sidebar - Smart Fallback */}
+          <div className="lg:col-span-3 hidden lg:block">
+            <div className="sticky top-24">
+              <SmartFallback 
+                originalQuery=""
+                onProcedureSelect={handleFallbackSelect}
+                language={language}
+              />
+            </div>
+          </div>
+
           {/* Main content */}
-          <div className="flex-1 min-w-0">
+          <div className="lg:col-span-9 min-w-0">
             {/* Category filter */}
             <div className="flex gap-2 flex-wrap mb-8">
               {parentFilters.map(f => (
@@ -281,8 +303,9 @@ export default function Procedures() {
             </motion.div>
           </div>
 
-          {/* Sticky sidebar — My Procedures */}
-          <div className="hidden lg:block w-72 flex-shrink-0 sticky top-24 space-y-4">
+          {/* Right Sidebar - My Procedures */}
+          <div className="lg:col-span-3 hidden lg:block">
+            <div className="sticky top-24 space-y-4">
             {selectedProcs.length > 0 ? (
               <>
                 <MyProceduresList
@@ -322,6 +345,7 @@ export default function Procedures() {
                 </p>
               </div>
             </button>
+            </div>
           </div>
         </div>
       </div>
