@@ -154,7 +154,15 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
             >
               {isAnalyzing ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="relative flex h-3 w-3 mr-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-white/90"></span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1 h-4 bg-white/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]"></span>
+                    <span className="w-1 h-4 bg-white/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]"></span>
+                    <span className="w-1 h-4 bg-white/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.4s]"></span>
+                  </span>
                   {t.analyzing}
                 </span>
               ) : (

@@ -49,11 +49,17 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Call LLM to find top 3 matches
+    // Call LLM to find top 3 matches with clinical triage prompt
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are a medical procedure matching assistant. A patient has described what they want in their own words: "${patient_query}"
+      model: "gpt_5_mini",
+      prompt: `You are an expert clinical triage routing assistant for a premium medical tourism platform. Your job is to take raw, casual, or jargon-free patient search queries and map them accurately to our existing procedure database.
 
-Your task is to analyze their intent and match it to the closest procedures from our database.
+CORE RULES:
+- Analyze the underlying patient intent (e.g., "fix overlapping teeth" means Alignment/Veneers; "belly tuck" means Gastric Sleeve or Plastic Surgery).
+- You can ONLY suggest procedures that exist in our system categories: Dental, Aesthetic, Wellness, Hair Restoration, Bariatric, Orthopedics, Fertility.
+- NEVER invent procedures not in the database — use ONLY the procedure_id and procedure_name from the provided list.
+- Be generous with matching — patients use non-technical language, synonyms, and layman terms.
+- If the query is absolute gibberish or cannot possibly map to any medical procedure, return "General Specialist Consultation" as match #1 with 50% confidence.
 
 Available procedures:
 ${JSON.stringify(proceduresList, null, 2)}
@@ -62,12 +68,9 @@ Return the TOP 3 closest matching procedures with:
 1. procedure_id (exact match from database)
 2. procedure_name (English name)
 3. match_confidence (percentage 0-100, how well it matches)
-4. rationale (1-2 sentences explaining WHY this matches the patient's description in friendly, non-technical language)
+4. rationale (1 SHORT sentence explaining WHY this matches in patient-friendly, non-technical language)
 
-IMPORTANT: 
-- Be generous with matching - patients use non-technical language
-- Consider synonyms, layman terms, and related procedures
-- Return ONLY valid JSON in this exact format:
+Output ONLY valid JSON in this exact format:
 {
   "matches": [
     {
@@ -141,9 +144,18 @@ Language hint: Detect from query and match procedure names accordingly.`,
 
   } catch (error) {
     console.error('AI Fallback Error:', error);
+    // Graceful fallback: return General Consultation option to keep booking momentum
+    const fallbackMatches = [{
+      procedure_id: "general_consultation",
+      procedure_name: "General Specialist Consultation",
+      match_confidence: 50,
+      rationale: "A specialist will review your case and recommend the best procedure for your goals."
+    }];
+    
     return Response.json({ 
-      error: error.message,
-      success: false 
-    }, { status: 500 });
+      success: true,
+      matched_procedures: fallbackMatches,
+      is_fallback: true
+    });
   }
 });
