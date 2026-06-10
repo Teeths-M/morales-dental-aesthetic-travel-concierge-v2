@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { searchProcedures } from './ProcedureData';
 import { motion, AnimatePresence } from 'framer-motion';
+import SmartFallback from './SmartFallback';
 
 const popular = ['Dental Implants', 'Teeth Whitening', 'Porcelain Veneers', 'Rhinoplasty', 'Liposuction', 'All-on-4 Implants'];
 
@@ -9,12 +10,15 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [focused, setFocused] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   const inputRef = useRef();
 
   useEffect(() => {
     const r = searchProcedures(query);
     setResults(r);
     onQueryChange?.(query);
+    // Show fallback when search returns 0 results and query has content
+    setShowFallback(query.trim().length >= 2 && r.length === 0);
   }, [query]);
 
   const clear = () => { setQuery(''); setResults([]); onQueryChange?.(''); };
@@ -65,6 +69,22 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
                       </div>
                     </button>
                   ))}
+                </div>
+              ) : showFallback ? (
+                <div className="p-0">
+                  <SmartFallback 
+                    onProcedureSelect={(matchedProc) => {
+                      // Convert matched procedure to format expected by parent
+                      onSelect({
+                        title: matchedProc.procedure_name,
+                        procedure_id: matchedProc.procedure_id,
+                        isAiMatch: true,
+                        matchConfidence: matchedProc.match_confidence,
+                        rationale: matchedProc.rationale
+                      });
+                      clear();
+                    }}
+                  />
                 </div>
               ) : (
                 <div className="p-5 text-center">

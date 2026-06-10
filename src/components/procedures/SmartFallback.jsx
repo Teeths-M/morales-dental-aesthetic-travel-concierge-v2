@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Sparkles, Check, ArrowRight, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
 
@@ -17,20 +18,14 @@ export default function SmartFallback({ onProcedureSelect, language = 'en' }) {
     
     setIsAnalyzing(true);
     try {
-      // Call backend AI matching function
-      const response = await fetch('/api/functions/aiProcedureFallback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          raw_search_query: patientQuery.trim(),
-          selected_procedure_id: 'pending', // Will be updated after selection
-          selected_procedure_name: 'pending'
-        })
+      // Call backend AI matching function using Base44 SDK
+      const response = await base44.functions.invoke('aiProcedureFallback', {
+        patient_query: patientQuery.trim(),
+        patient_custom_note: ''
       });
 
-      const data = await response.json();
-      if (data.matched_procedures) {
-        setMatchedProcedures(data.matched_procedures);
+      if (response.data && response.data.matched_procedures) {
+        setMatchedProcedures(response.data.matched_procedures);
       }
     } catch (error) {
       console.error('AI matching failed:', error);
@@ -48,21 +43,17 @@ export default function SmartFallback({ onProcedureSelect, language = 'en' }) {
     if (!selectedProcedure) return;
 
     try {
-      const response = await fetch('/api/functions/aiProcedureFallback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          raw_search_query: patientQuery,
-          selected_procedure_id: selectedProcedure.procedure_id,
-          selected_procedure_name: selectedProcedure.procedure_name,
-          patient_custom_note: patientNote
-        })
+      // Save the final selection with patient note
+      const response = await base44.functions.invoke('aiProcedureFallback', {
+        patient_query: patientQuery,
+        patient_custom_note: patientNote,
+        selected_procedure_id: selectedProcedure.procedure_id,
+        selected_procedure_name: selectedProcedure.procedure_name
       });
 
-      const data = await response.json();
-      if (data.success) {
-        // Success - proceed with booking flow
-        console.log('AI fallback match saved:', data);
+      if (response.data && response.data.success) {
+        console.log('AI fallback match saved:', response.data);
+        // Note is saved to database, proceed with booking
       }
     } catch (error) {
       console.error('Failed to save fallback match:', error);

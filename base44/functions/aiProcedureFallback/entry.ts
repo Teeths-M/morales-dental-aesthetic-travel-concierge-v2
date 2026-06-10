@@ -4,12 +4,25 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Parse request
-    const { patient_query, patient_email, case_id } = await req.json();
+    // Validate authentication
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     
-    if (!patient_query || !patient_email) {
+    // Parse request body
+    const body = await req.json();
+    const { 
+      patient_query, 
+      patient_custom_note = '', 
+      selected_procedure_id, 
+      selected_procedure_name,
+      case_id 
+    } = body;
+    
+    if (!patient_query) {
       return Response.json({ 
-        error: 'Missing required fields: patient_query, patient_email' 
+        error: 'Missing required field: patient_query' 
       }, { status: 400 });
     }
 
@@ -46,7 +59,7 @@ Return the TOP 3 closest matching procedures with:
 1. procedure_id (exact match from database)
 2. procedure_name (English name)
 3. match_confidence (percentage 0-100, how well it matches)
-4. rationale (1-2 sentences explaining WHY this matches the patient's description)
+4. rationale (1-2 sentences explaining WHY this matches the patient's description in friendly, non-technical language)
 
 IMPORTANT: 
 - Be generous with matching - patients use non-technical language
@@ -88,21 +101,39 @@ Language hint: Detect from query and match procedure names accordingly.`,
 
     const matches = llmResponse.matches || [];
 
-    // Save to AiFallbackMatch entity if case_id provided
-    if (case_id) {
-      await base44.asServiceRole.entities.AiFallbackMatch.create({
-        case_id: case_id,
-        patient_email: patient_email,
+    // If patient selected a procedure, save the complete record
+    if (selected_procedure_id) {
+      const fallbackRecord = await base44.entities.AiFallbackMatch.create({
+        case_id: case_id || null,
+        patient_id: user.id,
+        patient_email: user.email,
         original_query: patient_query,
         matched_procedures: matches,
+        selected_procedure_id,
+        selected_procedure_name,
+        patient_custom_note,
         doctor_notified: false,
         created_at: new Date().toISOString()
       });
+
+      console.log('AI Fallback Match saved:', fallbackRecord.id);
+
+      return Response.json({ 
+        success: true,
+        fallback_match_id: fallbackRecord.id,
+        matched_procedures: matches,
+        selected_procedure: {
+          id: selected_procedure_id,
+          name: selected_procedure_name
+        },
+        patient_note_saved: !!patient_custom_note
+      });
     }
 
+    // Just returning matches (no selection yet)
     return Response.json({ 
       success: true,
-      matched_procedures: matches.slice(0, 3) // Return top 3
+      matched_procedures: matches.slice(0, 3)
     });
 
   } catch (error) {
