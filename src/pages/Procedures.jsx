@@ -211,6 +211,17 @@ export default function Procedures() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Sidebar - Smart Fallback - desktop only */}
+          <div className="lg:col-span-3 hidden lg:block">
+            <div className="sticky top-24">
+              <SmartFallback 
+                originalQuery=""
+                onProcedureSelect={handleFallbackSelect}
+                language={language}
+              />
+            </div>
+          </div>
+
           {/* Main content - full width on mobile, 9 cols on desktop */}
           <div className="lg:col-span-9 min-w-0">
             {/* Category filter */}
