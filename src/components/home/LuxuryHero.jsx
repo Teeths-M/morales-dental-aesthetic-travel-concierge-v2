@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import HowItWorksModal from './HowItWorksModal';
 import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, BarChart3, MapPin, HeartPulse } from 'lucide-react';
 
 const GOLD = '#D4AF37';
@@ -166,7 +167,10 @@ function SafeTDiagram() {
 }
 
 export default function LuxuryHero() {
+  const [showModal, setShowModal] = useState(false);
+
   return (
+    <>
     <section
       className="relative min-h-screen overflow-hidden"
       style={{ background: '#060B16', marginTop: '-68px' }}
@@ -235,8 +239,8 @@ export default function LuxuryHero() {
             >
               Book Your Consultation →
             </Link>
-            <Link
-              to="/how-it-works"
+            <button
+              onClick={() => setShowModal(true)}
               className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200"
             >
               <span
@@ -244,7 +248,7 @@ export default function LuxuryHero() {
                 style={{ fontSize: '10px' }}
               >▶</span>
               How It Works
-            </Link>
+            </button>
           </div>
 
           {/* Trust pills */}
@@ -272,5 +276,7 @@ export default function LuxuryHero() {
 
       </div>
     </section>
+      <HowItWorksModal isOpen={showModal} onClose={() => setShowModal(false)} />
+    </>
   );
 }
