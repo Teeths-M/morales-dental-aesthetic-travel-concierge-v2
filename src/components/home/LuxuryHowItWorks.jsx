@@ -71,7 +71,8 @@ export default function LuxuryHowItWorks() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08, duration: 0.5 }}
                 viewport={{ once: true }}
-                className="relative p-5 rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:border-white/[0.14] hover:bg-white/[0.045] transition-all duration-300 group"
+                className="relative p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.055] transition-all duration-300 group"
+        style={{ boxShadow: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.3)' }}
               >
                 <p className="text-[11px] font-bold tracking-wider mb-4" style={{ color: GOLD }}>
                   {number}
@@ -82,7 +83,7 @@ export default function LuxuryHowItWorks() {
                   strokeWidth={1.5}
                 />
                 <h3 className="font-medium text-white text-[14px] mb-2">{title}</h3>
-                <p className="text-white/70 text-[12.5px] leading-relaxed">{desc}</p>
+                <p className="text-white/65 text-[12.5px] leading-relaxed tracking-wide">{desc}</p>
 
                 {/* Arrow connector */}
                 {i < steps.length - 1 && (

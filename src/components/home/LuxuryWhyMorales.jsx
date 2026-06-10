@@ -66,14 +66,14 @@ export default function LuxuryWhyMorales() {
                 className="flex gap-4"
               >
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ background: `${GOLD}14`, border: `1px solid ${GOLD}28` }}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ background: `${GOLD}12`, border: `1px solid ${GOLD}35`, boxShadow: `0 0 16px ${GOLD}14` }}
                 >
                   <Icon className="w-4 h-4" style={{ color: GOLD }} strokeWidth={1.5} />
                 </div>
                 <div>
                   <h3 className="text-white font-medium text-[13.5px] mb-1.5">{title}</h3>
-                  <p className="text-white/72 text-[12.5px] leading-relaxed">{desc}</p>
+                  <p className="text-white/65 text-[12.5px] leading-relaxed tracking-wide">{desc}</p>
                 </div>
               </motion.div>
             ))}
