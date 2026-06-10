@@ -6,8 +6,8 @@ import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
 
-export default function SmartFallback({ onProcedureSelect, language = 'en' }) {
-  const [patientQuery, setPatientQuery] = useState('');
+export default function SmartFallback({ onProcedureSelect, language = 'en', originalQuery }) {
+  const [patientQuery, setPatientQuery] = useState(originalQuery || '');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [matchedProcedures, setMatchedProcedures] = useState(null);
   const [selectedProcedure, setSelectedProcedure] = useState(null);
@@ -26,6 +26,19 @@ export default function SmartFallback({ onProcedureSelect, language = 'en' }) {
 
       if (response.data && response.data.matched_procedures) {
         setMatchedProcedures(response.data.matched_procedures);
+        // Save the search record with is_matched=false (0 results triggered this)
+        try {
+          const user = await base44.auth.me();
+          await base44.entities.ProcedureSearch.create({
+            user_id: user.id,
+            raw_query_text: patientQuery.trim(),
+            result_count: 0,
+            is_matched: false,
+            timestamp: new Date().toISOString()
+          });
+        } catch (e) {
+          console.error('Failed to save search:', e);
+        }
       }
     } catch (error) {
       console.error('AI matching failed:', error);
