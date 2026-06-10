@@ -61,6 +61,7 @@ import AdminCompanions from './pages/AdminCompanions';
 import CompanionSignup from './pages/CompanionSignup';
 import PartnerPortal from './pages/PartnerPortal';
 import CompanionDashboard from './pages/CompanionDashboard';
+import DeepPerfection from './pages/DeepPerfection';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -154,6 +155,8 @@ const AuthenticatedApp = () => {
         <Route element={<ProtectedRoute allowedRoles={["travel_agency", "taxi_service", "companion", "doctor", "platform_admin", "admin"]} />}>
           <Route path="/partner-portal" element={<PartnerPortal />} />
         </Route>
+        {/* Demo/Test pages */}
+        <Route path="/deep-perfection" element={<DeepPerfection />} />
       </Route>
       {/* Standalone payment page - requires auth same as /portal-hub/checkout */}
       <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user", "travel_agency", "doctor", "taxi_service"]} />}>
