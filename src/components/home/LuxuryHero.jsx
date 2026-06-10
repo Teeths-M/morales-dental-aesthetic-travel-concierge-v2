@@ -28,20 +28,48 @@ function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
 
-      {/* Orbiting golden stars */}
+      {/* Orbiting golden stars with glitter trails */}
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin-rev { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+      `}</style>
+
+      {/* Star 1 — 18s */}
       <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin 18s linear infinite' }}>
-        <circle cx="180" cy="12" r="3" fill={GOLD} opacity="0.9" />
-        <circle cx="180" cy="12" r="5" fill={GOLD} opacity="0.2" />
+        {/* Glitter trail: fading dots behind the star */}
+        {[8, 20, 35, 52, 72].map((deg, i) => {
+          const rad = (deg * Math.PI) / 180;
+          const tx = 180 + 168 * Math.sin(rad);
+          const ty = 12 + 168 * (1 - Math.cos(rad));
+          return <circle key={i} cx={tx} cy={ty} r={1.8 - i * 0.28} fill={GOLD} opacity={0.55 - i * 0.1} />;
+        })}
+        <circle cx="180" cy="12" r="3" fill={GOLD} opacity="0.95" />
+        <circle cx="180" cy="12" r="5.5" fill={GOLD} opacity="0.18" />
       </svg>
-      <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin 24s linear infinite reverse' }}>
-        <circle cx="180" cy="12" r="2.5" fill={GOLD} opacity="0.75" />
-        <circle cx="180" cy="12" r="4.5" fill={GOLD} opacity="0.15" />
+
+      {/* Star 2 — 24s reverse */}
+      <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin-rev 24s linear infinite' }}>
+        {[8, 20, 35, 52, 72].map((deg, i) => {
+          const rad = (deg * Math.PI) / 180;
+          const tx = 180 + 168 * Math.sin(rad);
+          const ty = 12 + 168 * (1 - Math.cos(rad));
+          return <circle key={i} cx={tx} cy={ty} r={1.5 - i * 0.22} fill={GOLD} opacity={0.45 - i * 0.08} />;
+        })}
+        <circle cx="180" cy="12" r="2.5" fill={GOLD} opacity="0.8" />
+        <circle cx="180" cy="12" r="4.5" fill={GOLD} opacity="0.14" />
       </svg>
+
+      {/* Star 3 — 30s, offset */}
       <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin 30s linear infinite', animationDelay: '-8s' }}>
-        <circle cx="180" cy="12" r="2" fill={GOLD} opacity="0.6" />
-        <circle cx="180" cy="12" r="4" fill={GOLD} opacity="0.12" />
+        {[8, 20, 35, 52, 72].map((deg, i) => {
+          const rad = (deg * Math.PI) / 180;
+          const tx = 180 + 168 * Math.sin(rad);
+          const ty = 12 + 168 * (1 - Math.cos(rad));
+          return <circle key={i} cx={tx} cy={ty} r={1.3 - i * 0.18} fill={GOLD} opacity={0.38 - i * 0.06} />;
+        })}
+        <circle cx="180" cy="12" r="2" fill={GOLD} opacity="0.65" />
+        <circle cx="180" cy="12" r="4" fill={GOLD} opacity="0.11" />
       </svg>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
       {/* Outer decorative rings */}
       <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}55`, boxShadow: `0 0 40px ${GOLD}18 inset` }} />
@@ -107,13 +135,7 @@ function SafeTDiagram() {
         transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
         className="relative z-10 flex flex-col items-center"
       >
-        {/* Outer glow — pulses softly in sync */}
-        <motion.div
-          animate={{ opacity: [0.6, 1, 0.6], scale: [0.92, 1.08, 0.92] }}
-          transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
-          className="absolute w-36 h-36 rounded-full"
-          style={{ background: `radial-gradient(circle, ${GOLD}30, transparent 70%)`, filter: 'blur(22px)' }}
-        />
+
         {/* Shield SVG — refined with double stroke */}
         <svg viewBox="0 0 80 92" fill="none" className="w-[78px] h-[90px] relative z-10">
           {/* Outer glow stroke */}
