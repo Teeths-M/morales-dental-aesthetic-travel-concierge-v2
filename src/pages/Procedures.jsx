@@ -222,8 +222,8 @@ export default function Procedures() {
             </div>
           </div>
 
-          {/* Main content - full width on mobile, 9 cols on desktop */}
-          <div className="lg:col-span-9 min-w-0">
+          {/* Main content - full width on mobile, 6 cols on desktop */}
+          <div className="lg:col-span-6 min-w-0">
             {/* Category filter */}
             <div className="flex gap-2 flex-wrap mb-8">
               {parentFilters.map(f => (
