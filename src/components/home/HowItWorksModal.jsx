@@ -710,6 +710,56 @@ export default function HowItWorksModal({ isOpen, onClose }) {
               </div>
             </div>
 
+            {/* Lady Narrator */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`narrator-${scene}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="mx-5 mb-4 flex items-end gap-3"
+              >
+                {/* Avatar */}
+                <motion.div
+                  animate={{ scale: [1, 1.06, 1, 1.04, 1] }}
+                  transition={{ duration: 1.2, repeat: 2, ease: 'easeInOut' }}
+                  className="flex-shrink-0 relative"
+                >
+                  <div
+                    className="w-10 h-10 rounded-full overflow-hidden"
+                    style={{ border: `2px solid ${GOLD}60`, boxShadow: `0 0 14px ${GOLD}30` }}
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&h=80&fit=crop&crop=face"
+                      alt="Care coordinator"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {/* Talking dot */}
+                  <motion.div
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 0.6, repeat: 3, ease: 'easeInOut' }}
+                    className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full flex items-center justify-center"
+                    style={{ background: '#22c55e', border: '1.5px solid #060B16' }}
+                  />
+                </motion.div>
+
+                {/* Speech bubble */}
+                <div
+                  className="relative flex-1 px-4 py-2.5 rounded-2xl rounded-bl-sm text-[12px] text-white/75 leading-relaxed italic"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    backdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <span style={{ color: GOLD, fontStyle: 'normal', fontWeight: 600, fontSize: 10 }} className="block mb-0.5 not-italic tracking-wide uppercase">Sofia · Care Coordinator</span>
+                  {SUBTITLES[scene]}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
             {/* Bottom nav */}
             <div className="flex items-center justify-between px-5 pb-5 pt-0">
               <button
