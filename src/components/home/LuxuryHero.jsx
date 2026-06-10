@@ -61,22 +61,7 @@ function SafeTDiagram() {
         <circle cx="0" cy="0" r="80" fill="url(#centerGlow)" />
         <circle cx="0" cy="0" r="52" fill={GOLD} fillOpacity="0.05" />
 
-        {/* Dashed lines */}
-        {orbitNodes.map(({ angle, r }) => {
-          const x = r * Math.cos(deg2rad(angle));
-          const y = r * Math.sin(deg2rad(angle));
-          return (
-            <line
-              key={angle}
-              x1="0" y1="0"
-              x2={x} y2={y}
-              stroke={GOLD}
-              strokeWidth="1"
-              opacity="0.55"
-              strokeDasharray="3 5"
-            />
-          );
-        })}
+
 
         {/* Glowing endpoint dots */}
         {orbitNodes.map(({ angle, r, label }) => {
