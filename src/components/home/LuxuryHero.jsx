@@ -28,6 +28,21 @@ function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
 
+      {/* Orbiting golden stars */}
+      <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin 18s linear infinite' }}>
+        <circle cx="180" cy="12" r="3" fill={GOLD} opacity="0.9" />
+        <circle cx="180" cy="12" r="5" fill={GOLD} opacity="0.2" />
+      </svg>
+      <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin 24s linear infinite reverse' }}>
+        <circle cx="180" cy="12" r="2.5" fill={GOLD} opacity="0.75" />
+        <circle cx="180" cy="12" r="4.5" fill={GOLD} opacity="0.15" />
+      </svg>
+      <svg className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360" style={{ animation: 'spin 30s linear infinite', animationDelay: '-8s' }}>
+        <circle cx="180" cy="12" r="2" fill={GOLD} opacity="0.6" />
+        <circle cx="180" cy="12" r="4" fill={GOLD} opacity="0.12" />
+      </svg>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+
       {/* Outer decorative rings */}
       <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}14`, boxShadow: `0 0 40px ${GOLD}06 inset` }} />
       <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}18` }} />
