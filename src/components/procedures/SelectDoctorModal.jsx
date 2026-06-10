@@ -10,6 +10,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
   const [doctorPrices, setDoctorPrices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [patientNote, setPatientNote] = useState('');
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -87,8 +88,10 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
         doctor_price_usd: selectedPrice.doctor_price_usd,
         clinic_country: selectedPrice.clinic_country,
         clinic_city: selectedPrice.clinic_city,
+        patient_note: patientNote,
       });
       onClose();
+      setPatientNote('');
     }
   };
 
@@ -158,9 +161,21 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
               ))}
             </>
           )}
-        </div>
+          </div>
 
-        <div className="flex gap-3 pt-4">
+          {/* Patient Note */}
+          <div>
+          <label className="text-xs font-semibold text-foreground block mb-2">Message for this procedure (optional)</label>
+          <textarea
+            value={patientNote}
+            onChange={(e) => setPatientNote(e.target.value)}
+            placeholder="Add any notes or special requests..."
+            className="w-full p-2.5 text-sm border border-border rounded-lg bg-card placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            rows="3"
+          />
+          </div>
+
+          <div className="flex gap-3 pt-4">
           <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
           <Button
             onClick={handleSelect}
