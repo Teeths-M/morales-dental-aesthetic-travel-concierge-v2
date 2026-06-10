@@ -79,7 +79,7 @@ export default function LuxuryHowItWorks() {
                 </p>
                 <Icon
                   className="w-5 h-5 mb-4"
-                  style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}90)` }}
+                  style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}cc) drop-shadow(0 0 18px ${GOLD}66)` }}
                   strokeWidth={1.5}
                 />
                 <h3 className="font-medium text-white text-[14px] mb-2">{title}</h3>

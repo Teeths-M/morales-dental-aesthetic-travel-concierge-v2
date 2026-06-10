@@ -107,7 +107,7 @@ function SafeTDiagram() {
               boxShadow: `0 2px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.06) inset`,
             }}
           >
-            <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD, opacity: 0.85 }} strokeWidth={1.5} />
+            <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}cc) drop-shadow(0 0 12px ${GOLD}66)` }} strokeWidth={1.5} />
             {label}
           </div>
         );
@@ -243,7 +243,7 @@ export default function LuxuryHero() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-8 border-t border-white/[0.08]">
             {trustPills.map(({ icon: Icon, label, sub }) => (
               <div key={label} className="flex flex-col gap-1.5">
-                <Icon className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 5px ${GOLD}70)` }} strokeWidth={1.5} />
+                <Icon className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}99) drop-shadow(0 0 16px ${GOLD}55)` }} strokeWidth={1.5} />
                 <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
                 <p className="text-[11px] text-white/65 tracking-wide">{sub}</p>
               </div>

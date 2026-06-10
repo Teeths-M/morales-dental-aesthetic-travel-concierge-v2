@@ -69,7 +69,7 @@ export default function LuxuryWhyMorales() {
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ background: `${GOLD}12`, border: `1px solid ${GOLD}35`, boxShadow: `0 0 16px ${GOLD}14` }}
                 >
-                  <Icon className="w-4 h-4" style={{ color: GOLD }} strokeWidth={1.5} />
+                  <Icon className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}cc) drop-shadow(0 0 18px ${GOLD}66)` }} strokeWidth={1.5} />
                 </div>
                 <div>
                   <h3 className="text-white font-medium text-[13.5px] mb-1.5">{title}</h3>

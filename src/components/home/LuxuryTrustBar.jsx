@@ -35,7 +35,7 @@ export default function LuxuryTrustBar() {
 
           <div className="flex flex-col items-center lg:items-start gap-0.5">
             <div className="flex items-center gap-1.5">
-              <Users className="w-4 h-4" style={{ color: GOLD, opacity: 0.6 }} />
+              <Users className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}bb) drop-shadow(0 0 14px ${GOLD}55)` }} />
               <p className="text-white font-semibold text-xl">1,200+</p>
             </div>
             <p className="text-[11px] text-white/50">Care journeys completed</p>
@@ -45,7 +45,7 @@ export default function LuxuryTrustBar() {
 
           <div className="flex flex-col items-center lg:items-start gap-0.5">
             <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4" style={{ color: GOLD, opacity: 0.6 }} />
+              <Globe className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}bb) drop-shadow(0 0 14px ${GOLD}55)` }} />
               <p className="text-white font-semibold text-xl">35+</p>
             </div>
             <p className="text-[11px] text-white/50">Countries served</p>
@@ -55,7 +55,7 @@ export default function LuxuryTrustBar() {
 
           <div className="flex flex-col items-center lg:items-start gap-0.5">
             <div className="flex items-center gap-1.5">
-              <Shield className="w-4 h-4" style={{ color: GOLD, opacity: 0.6 }} />
+              <Shield className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}bb) drop-shadow(0 0 14px ${GOLD}55)` }} />
               <p className="text-white font-semibold text-xl">98%</p>
             </div>
             <p className="text-[11px] text-white/50">Patient satisfaction</p>
