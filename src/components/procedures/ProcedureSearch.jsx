@@ -71,7 +71,7 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
                   ))}
                 </div>
               ) : showFallback ? (
-                <div className="p-0">
+                <div className="p-4">
                   <SmartFallback 
                     onProcedureSelect={(matchedProc) => {
                       // Convert matched procedure to format expected by parent

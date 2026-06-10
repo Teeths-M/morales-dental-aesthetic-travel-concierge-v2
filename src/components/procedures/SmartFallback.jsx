@@ -99,7 +99,7 @@ export default function SmartFallback({ onProcedureSelect, language = 'en' }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 rounded-2xl border border-emerald-100 p-6 lg:p-8 shadow-sm"
+      className="bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 rounded-2xl border border-emerald-100 p-0 shadow-sm"
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-6">
