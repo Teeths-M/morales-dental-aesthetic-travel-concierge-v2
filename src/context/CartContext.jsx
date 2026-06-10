@@ -45,7 +45,7 @@ export const CartProvider = ({ children }) => {
       if (existing) {
         return prev.map(item =>
           item.name === procedure.name
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + 1, patient_custom_note: procedure.patient_custom_note || item.patient_custom_note }
             : item
         );
       }

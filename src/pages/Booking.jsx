@@ -345,13 +345,16 @@ export default function Booking() {
           }
         : {};
 
+      // Collect patient_custom_notes from cart items
+      const patientNotes = items.filter(item => item.patient_custom_note).map(item => `• ${item.name}: ${item.patient_custom_note}`).join('\n');
+      
       return base44.entities.Consultation.create({
         ...data,
         ...safeTFlags,
         procedure_interest: procedureEnum,
         notes: items.length > 1
-          ? (data.notes ? `${data.notes}\n\nAll procedures requested: ${procedureNames}` : `All procedures requested: ${procedureNames}`)
-          : data.notes || '',
+          ? (data.notes ? `${data.notes}\n\nAll procedures requested: ${procedureNames}${patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''}` : `All procedures requested: ${procedureNames}${patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''}`)
+          : (data.notes || '') + (patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''),
       });
     },
     onSuccess: async (consultation) => {

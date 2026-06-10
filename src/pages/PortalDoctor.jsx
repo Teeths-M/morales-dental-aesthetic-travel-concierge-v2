@@ -233,7 +233,19 @@ export default function PortalDoctor() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Patient Information */}
+              {/* Patient's Original Request (AI-Fallback Note) */}
+              {consultationData?.notes && (
+                <div className="space-y-2 p-4 bg-emerald-50 border border-emerald-200 rounded-lg mb-4">
+                  <h3 className="font-semibold text-emerald-800 flex items-center gap-2">
+                    <span className="text-lg">💬</span>
+                    Patient's Original Request (AI-Fallback Note)
+                  </h3>
+                  <blockquote className="text-sm text-emerald-900 italic bg-white/50 rounded-md p-3 border-l-4 border-emerald-400">
+                    {consultationData.notes}
+                  </blockquote>
+                </div>
+              )}
+
               {/* Patient Information */}
               <div className="space-y-4 p-4 bg-muted rounded-lg">
                 <h3 className="font-semibold">Patient Information</h3>
