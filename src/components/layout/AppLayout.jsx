@@ -4,8 +4,12 @@ import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
 import SafeTCompanion from '@/components/safet/SafeTCompanion';
 import Header from './Header';
+import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function AppLayout() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -15,6 +19,7 @@ export default function AppLayout() {
       <Footer />
       <WhatsAppButton />
       <SafeTCompanion />
+      <HeartNotificationCenter user={user} />
     </div>
   );
 }
