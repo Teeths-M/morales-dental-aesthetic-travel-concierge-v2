@@ -418,11 +418,30 @@ function SceneVisual({ visual }) {
 export default function HowItWorksModal({ isOpen, onClose }) {
   const [scene, setScene] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [subtitles, setSubtitles] = useState(true);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef(null);
   const progressRef = useRef(null);
+
+  const speak = (text) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 0.92;
+    utt.pitch = 1.05;
+    // Prefer a female voice
+    const voices = window.speechSynthesis.getVoices();
+    const female = voices.find(v => /female|woman|zira|samantha|karen|victoria|moira|fiona|tessa|susan|emily|aria|jenny/i.test(v.name));
+    if (female) utt.voice = female;
+    window.speechSynthesis.speak(utt);
+  };
+
+  const stopSpeech = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
   const SCENE_DURATION = 6000; // 6s per scene
   const TICK = 50;
 
@@ -437,6 +456,10 @@ export default function HowItWorksModal({ isOpen, onClose }) {
     clearTimers();
     setProgress(0);
     setScene(idx);
+    if (!muted) {
+      // Slight delay so voices are loaded
+      setTimeout(() => speak(SUBTITLES[idx]), 300);
+    }
     if (!playing) return;
 
     let elapsed = 0;
@@ -482,6 +505,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
 
   const handleClose = () => {
     clearTimers();
+    stopSpeech();
     setScene(0);
     setProgress(0);
     setPlaying(true);
@@ -558,7 +582,15 @@ export default function HowItWorksModal({ isOpen, onClose }) {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setMuted(!muted)}
+                  onClick={() => {
+                    const nowMuted = !muted;
+                    setMuted(nowMuted);
+                    if (nowMuted) {
+                      stopSpeech();
+                    } else {
+                      setTimeout(() => speak(SUBTITLES[scene]), 100);
+                    }
+                  }}
                   className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/[0.06]"
                   title={muted ? 'Unmute' : 'Mute'}
                 >
