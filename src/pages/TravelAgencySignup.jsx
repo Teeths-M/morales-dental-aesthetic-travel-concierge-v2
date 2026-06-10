@@ -186,7 +186,7 @@ export default function TravelAgencySignup() {
         )}
 
         {/* Step Content */}
-        <div className="bg-card rounded-2xl border border-border p-8 shadow-lg">
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-8 shadow-lg">
           {step === 0 && (
             <TravelAgencySignupStep1
               formData={formData}

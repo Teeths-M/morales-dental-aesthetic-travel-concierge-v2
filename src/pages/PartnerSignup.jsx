@@ -34,14 +34,14 @@ export default function PartnerSignup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Language Selector */}
-      <div className="fixed top-20 left-4 z-50 flex items-center gap-2 bg-white/30 backdrop-blur rounded-full px-2 py-2 border border-border/20 opacity-30 shadow-none hover:opacity-100 hover:bg-white/95 hover:shadow-md hover:border-border/50 transition-all duration-300">
-        <Globe className="w-4 h-4 text-muted-foreground ml-2" />
-        <div className="flex gap-1">
+      <div className="sticky top-0 z-50 flex items-center gap-2 bg-white/90 backdrop-blur border-b border-border/20 px-4 py-2 overflow-x-auto">
+        <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <div className="flex gap-1 flex-shrink-0">
           {allLanguages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => setLanguage(lang.code)}
-              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                 language === lang.code
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-transparent text-foreground hover:bg-secondary/50'
@@ -55,16 +55,16 @@ export default function PartnerSignup() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 py-16">
+      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-16">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 sm:mb-16">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/20 border border-primary/40 mb-4">
             <svg className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10"/>
               <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-display font-bold text-foreground mb-3">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground mb-3">
             {language === 'es' ? 'Únete como Socio' : language === 'fr' ? 'Rejoignez en tant que Partenaire' : 'Join as a Partner'}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -77,7 +77,7 @@ export default function PartnerSignup() {
         </div>
 
         {/* Partner Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <div className="grid sm:grid-cols-3 gap-4 sm:gap-8 mb-8 sm:mb-12">
           {/* Travel Agency Card */}
           <motion.div
             className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all overflow-hidden"
@@ -85,15 +85,15 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <div className="h-56 overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600">
+            <div className="h-36 sm:h-56 overflow-hidden bg-gradient-to-br from-sky-400 to-blue-600">
               <img 
                 src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&h=400&fit=crop"
                 alt="Commercial airplane"
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="p-8 text-center">
-              <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+            <div className="p-4 sm:p-8 text-center">
+              <h2 className="text-lg sm:text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyages' : 'Travel Agency'}
               </h2>
               <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
@@ -120,15 +120,15 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="h-56 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
+            <div className="h-36 sm:h-56 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
               <img 
                 src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=400&fit=crop"
                 alt="Black car taxi service"
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="p-8 text-center">
-              <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+            <div className="p-4 sm:p-8 text-center">
+              <h2 className="text-lg sm:text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Taxi Service'}
               </h2>
               <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
@@ -155,15 +155,15 @@ export default function PartnerSignup() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="h-56 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-600">
+            <div className="h-36 sm:h-56 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-600">
               <img 
                 src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&h=400&fit=crop"
                 alt="Tour guide companion"
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="p-8 text-center">
-              <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+            <div className="p-4 sm:p-8 text-center">
+              <h2 className="text-lg sm:text-2xl font-display font-bold text-foreground mb-2">
                 {language === 'es' ? 'Acompañante' : language === 'fr' ? 'Accompagnateur' : 'Companion'}
               </h2>
               <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
