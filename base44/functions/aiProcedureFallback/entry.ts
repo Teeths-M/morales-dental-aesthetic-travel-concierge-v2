@@ -49,17 +49,32 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Call LLM to find top 3 matches with clinical triage prompt
+    // Call LLM using governed AI framework with platform persona
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
       model: "gpt_5_mini",
-      prompt: `You are an expert clinical triage routing assistant for a premium medical tourism platform. Your job is to take raw, casual, or jargon-free patient search queries and map them accurately to our existing procedure database.
+      prompt: `You are an expert clinical concierge assistant for a premium, ultra-high-touch medical tourism platform. Your role is to facilitate seamless patient-to-procedure matching while maintaining clinical accuracy and zero hallucinations.
 
-CORE RULES:
-- Analyze the underlying patient intent (e.g., "fix overlapping teeth" means Alignment/Veneers; "belly tuck" means Gastric Sleeve or Plastic Surgery).
-- You can ONLY suggest procedures that exist in our system categories: Dental, Aesthetic, Wellness, Hair Restoration, Bariatric, Orthopedics, Fertility.
-- NEVER invent procedures not in the database — use ONLY the procedure_id and procedure_name from the provided list.
-- Be generous with matching — patients use non-technical language, synonyms, and layman terms.
-- If the query is absolute gibberish or cannot possibly map to any medical procedure, return "General Specialist Consultation" as match #1 with 50% confidence.
+PERSONA & TONE:
+- For patients: Empathetic, jargon-free, conversational, warm
+- For doctors: Precise, data-dense, clinical terminology
+- Always maintain a premium, trustworthy, professional demeanor
+
+OPERATIONAL CONSTRAINTS (NON-NEGOTIABLE):
+- ONLY suggest procedures from these categories: Dental, Aesthetic, Wellness, Hair Restoration, Bariatric, Orthopedics, Fertility
+- NEVER invent procedures, doctors, or clinical options that don't exist in the database
+- ALWAYS validate against live database entities before responding
+- If uncertain or query is gibberish → route to "General Specialist Consultation"
+
+FALLBACK RULE:
+- If input is ambiguous, slang, or unmappable → gracefully return "General Specialist Consultation" with 50% confidence
+- Never error out, break UI, or show blank states
+- Keep user momentum at 100% by always providing a next step
+
+ADDITIONAL PROCEDURE MATCHING RULES:
+- Analyze underlying patient intent (e.g., "fix overlapping teeth" → Alignment/Veneers; "belly tuck" → Gastric Sleeve or Plastic Surgery)
+- Be generous with matching — patients use non-technical language, synonyms, and layman terms
+- Consider body locations, quantities implied, and common colloquialisms
+- Match to closest procedure names from the database, even if terminology differs
 
 Available procedures:
 ${JSON.stringify(proceduresList, null, 2)}
@@ -107,6 +122,21 @@ Language hint: Detect from query and match procedure names accordingly.`,
 
     const matches = llmResponse.matches || [];
 
+    // Persist search context to database for audit trail and downstream propagation
+    try {
+      const user = await base44.auth.me();
+      await base44.entities.ProcedureSearch.create({
+        user_id: user.id,
+        raw_query_text: patient_query,
+        result_count: matches.length,
+        is_matched: matches.length > 0,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Failed to persist search context:', e);
+      // Non-blocking - don't break user flow
+    }
+
     // If patient selected a procedure, save the complete record
     if (selected_procedure_id) {
       const fallbackRecord = await base44.entities.AiFallbackMatch.create({
@@ -144,6 +174,7 @@ Language hint: Detect from query and match procedure names accordingly.`,
 
   } catch (error) {
     console.error('AI Fallback Error:', error);
+    
     // Graceful fallback: return General Consultation option to keep booking momentum
     const fallbackMatches = [{
       procedure_id: "general_consultation",
@@ -151,6 +182,20 @@ Language hint: Detect from query and match procedure names accordingly.`,
       match_confidence: 50,
       rationale: "A specialist will review your case and recommend the best procedure for your goals."
     }];
+    
+    // Persist fallback context to database (non-blocking)
+    try {
+      const user = await base44.auth.me();
+      await base44.entities.ProcedureSearch.create({
+        user_id: user.id,
+        raw_query_text: patient_query,
+        result_count: 0,
+        is_matched: false,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('Failed to persist fallback context:', e);
+    }
     
     return Response.json({ 
       success: true,

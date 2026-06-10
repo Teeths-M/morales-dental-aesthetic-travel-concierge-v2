@@ -4,6 +4,7 @@ import { Mic, MicOff, X, Sparkles, Volume2, DollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { extractProceduresFromText } from './ProcedureData';
 import { PricingEngine } from '@/lib/pricingEngine';
+import { AIGovernance } from '@/lib/AIGovernanceLayer';
 
 export default function VoiceMode({ onProceduresDetected, onClose }) {
   const [phase, setPhase] = useState('ready'); // ready | listening | processing | done
@@ -104,15 +105,18 @@ export default function VoiceMode({ onProceduresDetected, onClose }) {
 
   const processTranscript = async (text) => {
     if (!text.trim()) { setPhase('ready'); return; }
-    // Try AI extraction first, fall back to local
+    
+    // Use governed AI call with platform persona and constraints
     let results = [];
     try {
       const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are a medical procedure extraction assistant. From this patient's spoken request, extract all medical/dental procedures mentioned.
-        
+        model: AIGovernance.Performance.customerPath.model,
+        prompt: `${AIGovernance.SystemPrompt.base}
+${AIGovernance.SystemPrompt.voiceExtraction}
+
 Patient said: "${text}"
 
-Return a JSON array of procedure names exactly as they would appear in a dental/aesthetic clinic menu. Be comprehensive - include synonyms, body locations mentioned, and quantities implied.
+Return a JSON array of procedure names exactly as they would appear in our clinic menu. Be comprehensive - include synonyms, body locations mentioned, and quantities implied.
 
 Examples:
 - "I want veneers and whitening" → ["Porcelain Veneers", "Teeth Whitening"]
@@ -126,6 +130,7 @@ Examples:
           },
         },
       });
+      
       const aiNames = res?.procedures || [];
       // Match AI names against our database
       const localMatches = extractProceduresFromText(text);
@@ -133,9 +138,28 @@ Examples:
       const combined = [...localMatches];
       aiMatches.forEach(p => { if (!combined.find(c => c.title === p.title)) combined.push(p); });
       results = combined;
-    } catch {
+      
+      // Persist context to database for audit trail
+      await AIGovernance.Context.persistSearchContext(base44, {
+        raw_query: text,
+        result_count: results.length,
+        is_matched: results.length > 0,
+        is_fallback: false
+      });
+    } catch (error) {
+      // Graceful fallback - use local extraction
       results = extractProceduresFromText(text);
+      
+      // Log fallback event
+      await AIGovernance.Context.persistSearchContext(base44, {
+        raw_query: text,
+        result_count: results.length,
+        is_matched: results.length > 0,
+        is_fallback: true,
+        fallback_reason: error.message
+      });
     }
+    
     setDetected(results);
     setPhase('done');
   };
@@ -244,10 +268,18 @@ Examples:
           {phase === 'processing' && (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-7 h-7 text-emerald-700 animate-pulse" />
+                <Sparkles className="w-7 h-7 text-emerald-700" />
               </div>
               <p className="text-sm font-semibold text-slate-700 mb-1">AI is analyzing your request…</p>
               <p className="text-xs text-slate-400">Matching procedures to our catalog</p>
+              
+              {/* Premium Tailwind Pulse Loader */}
+              <div className="flex items-center justify-center gap-1.5 mt-4">
+                <span className="w-1 h-4 bg-emerald-600 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]"></span>
+                <span className="w-1 h-4 bg-emerald-600 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]"></span>
+                <span className="w-1 h-4 bg-emerald-600 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.4s]"></span>
+              </div>
+              
               {transcript && (
                 <div className="mt-4 bg-slate-50 rounded-xl px-4 py-3 text-left">
                   <p className="text-xs text-slate-400 mb-1">YOU SAID</p>
