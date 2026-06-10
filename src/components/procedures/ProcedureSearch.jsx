@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Clock } from 'lucide-react';
 import { searchProcedures } from './ProcedureData';
 import { motion, AnimatePresence } from 'framer-motion';
-import SmartFallback from './SmartFallback';
 import { base44 } from '@/api/base44Client';
 
 const popular = ['Dental Implants', 'Teeth Whitening', 'Porcelain Veneers', 'Rhinoplasty', 'Liposuction', 'All-on-4 Implants'];
@@ -154,28 +153,6 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Smart Fallback - Separate Card Below Search */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-4"
-      >
-        <SmartFallback 
-          originalQuery={query}
-          onProcedureSelect={(matchedProc) => {
-            onSelect({
-              title: matchedProc.procedure_name,
-              procedure_id: matchedProc.procedure_id,
-              isAiMatch: true,
-              matchConfidence: matchedProc.match_confidence,
-              rationale: matchedProc.rationale
-            });
-            saveRecentSearch(query);
-            clear();
-          }}
-        />
-      </motion.div>
     </div>
   );
 }
