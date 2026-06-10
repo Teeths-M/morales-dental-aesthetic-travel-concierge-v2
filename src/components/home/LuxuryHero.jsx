@@ -85,9 +85,7 @@ function SafeTDiagram() {
           </radialGradient>
         </defs>
 
-        {/* Soft center glow */}
-        <circle cx="0" cy="0" r="80" fill="url(#centerGlow)" />
-        <circle cx="0" cy="0" r="52" fill={GOLD} fillOpacity="0.05" />
+
 
 
 
