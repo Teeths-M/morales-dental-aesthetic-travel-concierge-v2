@@ -37,14 +37,17 @@ Deno.serve(async (req) => {
       }, { status: 404 });
     }
 
-    // Prepare procedures list for LLM
-    const proceduresList = procedures.map(p => ({
-      procedure_id: p.data.procedure_id,
-      en_name: p.data.en_name,
-      es_name: p.data.es_name,
-      fr_name: p.data.fr_name,
-      category: p.data.category
-    }));
+    // Prepare procedures list for LLM - handle both entity wrapper and raw data formats
+    const proceduresList = procedures.map(p => {
+      const proc = p.data || p;
+      return {
+        procedure_id: proc.procedure_id,
+        en_name: proc.en_name,
+        es_name: proc.es_name,
+        fr_name: proc.fr_name,
+        category: proc.category
+      };
+    });
 
     // Call LLM to find top 3 matches
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
