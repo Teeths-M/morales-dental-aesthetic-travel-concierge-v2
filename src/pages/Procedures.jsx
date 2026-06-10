@@ -210,20 +210,19 @@ export default function Procedures() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Sidebar - Smart Fallback - desktop only */}
-          <div className="lg:col-span-3 hidden lg:block">
-            <div className="sticky top-24">
-              <SmartFallback 
-                originalQuery=""
-                onProcedureSelect={handleFallbackSelect}
-                language={language}
-              />
-            </div>
-          </div>
+        {/* Full-Width AI Concierge Banner */}
+        <div className="mb-8">
+          <SmartFallback 
+            originalQuery=""
+            onProcedureSelect={handleFallbackSelect}
+            language={language}
+          />
+        </div>
 
-          {/* Main content - full width on mobile, 6 cols on desktop */}
-          <div className="lg:col-span-6 min-w-0">
+        {/* Main Grid - 2 columns on desktop (content + basket) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Category Filters + Procedure Grid (spans 2) */}
+          <div className="lg:col-span-2 min-w-0">
             {/* Category filter */}
             <div className="flex gap-2 flex-wrap mb-8">
               {parentFilters.map(f => (
@@ -303,8 +302,8 @@ export default function Procedures() {
             </motion.div>
           </div>
 
-          {/* Right Sidebar - My Procedures - visible on all screens */}
-          <div className="lg:col-span-3">
+          {/* Right Column - My Procedures Basket (spans 1) */}
+          <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
             {selectedProcs.length > 0 ? (
               <>
@@ -345,7 +344,6 @@ export default function Procedures() {
                 </p>
               </div>
             </button>
-            </div>
           </div>
         </div>
       </div>
