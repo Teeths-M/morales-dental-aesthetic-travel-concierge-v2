@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
         proposal_url: proposalUrl,
         doctor_auto_assigned: isDentalProcedure || isVenezuela,
         message: isDentalProcedure || isVenezuela
-          ? 'Case created, Dr Rossanna auto-assigned, SAFE-T review initiated, proposal generated'
+          ? 'Case created, default doctor auto-assigned, SAFE-T review initiated, proposal generated'
           : 'Case created, SAFE-T review initiated, proposal generated'
       });
     }
@@ -446,19 +446,25 @@ Deno.serve(async (req) => {
         <p><strong>Doctor:</strong> ${caseRecord.doctor_selected || 'Not assigned'}</p>
         <a href="${adminPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">View Case</a>
       `;
-      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com'; // set ADMIN_EMAIL secret to override
-      emailPromises.push(base44.integrations.Core.SendEmail({
-        to: adminEmail,
-        subject: `[Admin] Payment Confirmed - Case ${caseRecord.id}`,
-        body: adminEmailBody
-      }));
+      const adminEmail = Deno.env.get('ADMIN_EMAIL');
+      if (adminEmail) {
+        emailPromises.push(base44.integrations.Core.SendEmail({
+          to: adminEmail,
+          subject: `[Admin] Payment Confirmed - Case ${caseRecord.id}`,
+          body: adminEmailBody
+        }));
+      } else {
+        console.error('[iq200Pipeline] ADMIN_EMAIL not set — admin payment notification skipped.');
+      }
 
-      // 3. DOCTOR PORTAL - Case confirmation for Dr. Rossanna
+      // 3. DOCTOR PORTAL - Case confirmation to assigned doctor (dynamic — no hardcoded name)
       const doctorPortalUrl = `${appUrl}/portal/doctor/${caseRecord.doctor_portal_token || caseRecord.proposal_token}`;
+      const doctorName = caseRecord.doctor_selected || 'Doctor';
+      const procedureList = (caseRecord.procedures || ['Procedure']).join(', ');
       const doctorEmailBody = `
-        <h2>Case Confirmation - Dr. Rossanna</h2>
-        <p>Dear Dr. Rossanna,</p>
-        <p>New <strong>Smile Makeover</strong> procedure confirmed for <strong>${caseRecord.client_name}</strong>.</p>
+        <h2>Case Confirmation</h2>
+        <p>Dear ${doctorName},</p>
+        <p>New <strong>${procedureList}</strong> procedure confirmed for <strong>${caseRecord.client_name}</strong>.</p>
         <p><strong>Treatment Cost:</strong> $${caseRecord.treatment_cost}</p>
         <a href="${doctorPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Doctor Portal</a>
         <p>Please confirm procedure date.</p>

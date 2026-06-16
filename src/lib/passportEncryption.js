@@ -72,7 +72,9 @@ export async function encryptFile(file) {
   const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)));
   const ivB64 = btoa(String.fromCharCode(...iv));
 
-  return { encryptedB64, ivB64, hashB64, fileSizeBytes: file.size, tempKeyRef: tempRef, keyB64 };
+  // SECURITY: keyB64 is NEVER returned to callers — it is stored only in sessionStorage.
+  // Returning it in the result object risks it being logged, serialized, or transmitted.
+  return { encryptedB64, ivB64, hashB64, fileSizeBytes: file.size, tempKeyRef: tempRef };
 }
 
 /**
