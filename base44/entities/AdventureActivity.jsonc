@@ -1,0 +1,57 @@
+{
+  "name": "AdventureActivity",
+  "type": "object",
+  "properties": {
+    "country": {
+      "type": "string"
+    },
+    "activity_name": {
+      "type": "string"
+    },
+    "is_popular": {
+      "type": "boolean",
+      "default": true
+    },
+    "iso_21101_adoption": {
+      "type": "string",
+      "enum": [
+        "full",
+        "partial",
+        "minimal"
+      ],
+      "default": "partial"
+    },
+    "safety_notices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "high",
+        "extreme"
+      ],
+      "default": "moderate"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "water",
+        "aerial",
+        "land",
+        "extreme",
+        "wellness",
+        "other"
+      ],
+      "default": "other"
+    }
+  },
+  "required": [
+    "country",
+    "activity_name"
+  ]
+}

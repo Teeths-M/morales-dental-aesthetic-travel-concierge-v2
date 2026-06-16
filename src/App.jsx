@@ -79,6 +79,7 @@ import OfflineMode from './pages/OfflineMode';
 import PartnerVerificationHub from './pages/PartnerVerificationHub';
 import TravelServices from './pages/TravelServices';
 import EmergencyHub from './pages/EmergencyHub';
+import AdventureSafetyCenter from './pages/AdventureSafetyCenter';
 import PartnerDirectory from './pages/PartnerDirectory';
 import PostSurgeryFeedback from './pages/PostSurgeryFeedback';
 import GuardianView from './pages/GuardianView';
@@ -139,6 +140,7 @@ const AuthenticatedApp = () => {
           <Route path="/dashboard/messages" element={<Dashboard />} />
           <Route path="/dashboard/journey" element={<Dashboard />} />
           <Route path="/dashboard/case-status" element={<Dashboard />} />
+          <Route path="/dashboard/adventure" element={<AdventureSafetyCenter />} />
           <Route path="/dashboard/support" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<Dashboard />} />
           <Route path="/client-signup" element={<ClientSignup />} />
