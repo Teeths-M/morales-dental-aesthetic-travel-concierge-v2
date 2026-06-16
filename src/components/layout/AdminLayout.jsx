@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Menu, X, LayoutDashboard, Import, UserCheck, FilePlus, Eye, MessageSquare, ShieldAlert, Activity, DollarSign, User, BarChart2 } from 'lucide-react';
+import { Users, Menu, X, LayoutDashboard, Import, UserCheck, FilePlus, Eye, MessageSquare, ShieldAlert, Activity, DollarSign, User, BarChart2, Shield, FileText, Star, Settings, TrendingUp, CreditCard, AlertTriangle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 
 const adminNavItems = [
   { path: '/admin', label: 'Patient Journey', icon: LayoutDashboard },
   { path: '/admin/partners', label: 'Partner Management', icon: Users },
+  { path: '/admin/partner-verification', label: 'Partner Verification', icon: Shield },
   { path: '/admin/imports', label: 'Data Imports', icon: Import },
   { path: '/admin/doctor-verification', label: 'Doctor Verification', icon: UserCheck },
   { path: '/admin/procedure-requests', label: 'Procedure Requests', icon: FilePlus },
@@ -17,6 +19,12 @@ const adminNavItems = [
   { path: '/admin/provider-verification', label: 'Provider Verification', icon: ShieldAlert },
   { path: '/admin/companions', label: 'Companions', icon: User },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
+  { path: '/admin/audit-log', label: 'Audit Log', icon: FileText },
+  { path: '/admin/provider-performance', label: 'Provider Performance', icon: TrendingUp },
+  { path: '/admin/config-approvals', label: 'Config Approvals', icon: Settings },
+  { path: '/admin/monetization', label: 'Monetization', icon: CreditCard },
+  { path: '/admin/payments', label: 'Payments & Payouts', icon: DollarSign },
+  { path: '/admin/risk-optimization', label: 'Risk Optimization', icon: AlertTriangle },
 ];
 
 export default function AdminLayout({ children }) {
@@ -38,13 +46,20 @@ export default function AdminLayout({ children }) {
         <Link
           to="/"
           onClick={() => setSidebarOpen(false)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100 transition-all mb-4 border border-slate-200"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100 transition-all mb-2 border border-slate-200"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           Back to Website
         </Link>
+        <button
+          onClick={() => base44.auth.logout()}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-all mb-4 w-full border border-red-100"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
         {adminNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;

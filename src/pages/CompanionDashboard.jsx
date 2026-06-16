@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
@@ -25,7 +26,8 @@ import {
   TrendingUp,
   MessageSquare,
   Settings,
-  ClipboardCheck
+  ClipboardCheck,
+  LogOut
 } from 'lucide-react';
 import CompanionHandshakePanel from '@/components/companion/CompanionHandshakePanel';
 import DietaryInfoCard from '@/components/companion/DietaryInfoCard';
@@ -120,6 +122,9 @@ export default function CompanionDashboard() {
             <Button onClick={() => window.location.href = '/companion-signup'}>
               Create Profile
             </Button>
+            <Button variant="outline" className="mt-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+              <LogOut className="w-4 h-4 mr-2" /> Logout
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -141,19 +146,29 @@ export default function CompanionDashboard() {
               Manage your profile, bookings, and earnings
             </p>
           </div>
-          <Button onClick={isEditing ? handleSave : startEditing} disabled={updateMutation.isPending}>
-            {isEditing ? (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </>
-            ) : (
-              <>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/partner-reviews">
+              <Button variant="outline">
+                <Star className="w-4 h-4 mr-2 text-amber-500" /> My Reviews
+              </Button>
+            </Link>
+            <Button onClick={isEditing ? handleSave : startEditing} disabled={updateMutation.isPending}>
+              {isEditing ? (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </>
+              ) : (
+                <>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </>
+              )}
+            </Button>
+            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Car, Star, Zap, DollarSign, MapPin, LogOut } from 'lucide-react';
 import { translations } from '@/lib/translations';
+import { base44 } from '@/api/base44Client';
 
 export default function TaxiServiceDashboard({ taxi, language }) {
   const t = translations[language];
@@ -119,19 +121,27 @@ export default function TaxiServiceDashboard({ taxi, language }) {
           <Zap className="w-5 h-5 mr-2" />
           {isOnline ? (language === 'es' ? 'Desconectarse' : language === 'fr' ? 'Se Déconnecter' : 'Go Offline') : (language === 'es' ? 'Conectarse' : language === 'fr' ? 'Se Connecter' : 'Go Online')}
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full h-12"
-          onClick={() => window.location.href = '/partner-portal'}
-        >
-          🏢 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
-        </Button>
+        <Link to="/partner-portal" className="block">
+          <Button variant="outline" className="w-full h-12">
+            🏢 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
+          </Button>
+        </Link>
+        <Link to="/partner-reviews" className="block">
+          <Button variant="outline" className="w-full h-12">
+            <Star className="w-4 h-4 mr-2" />
+            {language === 'es' ? 'Mis Reseñas' : language === 'fr' ? 'Mes Avis' : 'My Reviews'}
+          </Button>
+        </Link>
         <Button 
           variant="outline" 
           className="w-full h-12"
           onClick={() => alert(language === 'es' ? 'Próximamente: Actualizar Disponibilidad' : language === 'fr' ? 'Bientôt: Mettre à jour la disponibilité' : 'Coming Soon: Update Availability')}
         >
           📅 {language === 'es' ? 'Actualizar Disponibilidad' : language === 'fr' ? 'Mettre à Jour la Disponibilité' : 'Update Availability'}
+        </Button>
+        <Button variant="outline" className="w-full h-12 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+          <LogOut className="w-4 h-4 mr-2" />
+          {language === 'es' ? 'Cerrar Sesión' : language === 'fr' ? 'Se Déconnecter' : 'Logout'}
         </Button>
       </div>
 

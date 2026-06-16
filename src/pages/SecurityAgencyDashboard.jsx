@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, CheckCircle, Clock, AlertCircle, ToggleLeft, ToggleRight, Phone, MapPin, Users, Zap } from 'lucide-react';
+import { Shield, CheckCircle, Clock, AlertCircle, ToggleLeft, ToggleRight, Phone, MapPin, Users, Zap, Star, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
@@ -63,6 +64,9 @@ export default function SecurityAgencyDashboard() {
           <Button onClick={() => window.location.href = '/security-signup'} className="w-full bg-slate-800 hover:bg-slate-900 text-white">
             Register Now
           </Button>
+          <Button variant="outline" className="w-full mt-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+            <LogOut className="w-4 h-4 mr-2" /> Logout
+          </Button>
         </div>
       </div>
     );
@@ -85,10 +89,20 @@ export default function SecurityAgencyDashboard() {
               <p className="text-slate-300 text-xs">Security Agency Dashboard</p>
             </div>
           </div>
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${status.color}`}>
-            <StatusIcon className="w-3.5 h-3.5" />
-            {status.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${status.color}`}>
+              <StatusIcon className="w-3.5 h-3.5" />
+              {status.label}
+            </span>
+            <Link to="/partner-reviews">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors">
+                <Star className="w-3.5 h-3.5" /> Reviews
+              </button>
+            </Link>
+            <button onClick={() => base44.auth.logout()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-colors">
+              <LogOut className="w-3.5 h-3.5" /> Logout
+            </button>
+          </div>
         </div>
       </div>
 

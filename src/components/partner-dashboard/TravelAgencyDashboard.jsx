@@ -1,8 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plane, BarChart3, DollarSign, Calendar } from 'lucide-react';
+import { Plane, BarChart3, DollarSign, Calendar, Star, LogOut } from 'lucide-react';
 import { translations } from '@/lib/translations';
+import { base44 } from '@/api/base44Client';
 
 export default function TravelAgencyDashboard({ agency, language }) {
   const t = translations[language];
@@ -60,11 +62,23 @@ export default function TravelAgencyDashboard({ agency, language }) {
         <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white font-semibold h-12">
           👀 {language === 'es' ? 'Ver Solicitudes de Pacientes' : language === 'fr' ? 'Voir Demandes de Patients' : 'View Patient Requests'}
         </Button>
-        <Button variant="outline" className="w-full h-12" onClick={() => window.location.href = '/partner-portal'}>
-          📊 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
-        </Button>
+        <Link to="/partner-portal" className="block">
+          <Button variant="outline" className="w-full h-12">
+            📊 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
+          </Button>
+        </Link>
+        <Link to="/partner-reviews" className="block">
+          <Button variant="outline" className="w-full h-12">
+            <Star className="w-4 h-4 mr-2" />
+            {language === 'es' ? 'Mis Reseñas' : language === 'fr' ? 'Mes Avis' : 'My Reviews'}
+          </Button>
+        </Link>
         <Button variant="outline" className="w-full h-12">
           ✏️ {language === 'es' ? 'Editar Perfil' : language === 'fr' ? 'Modifier le Profil' : 'Edit Profile'}
+        </Button>
+        <Button variant="outline" className="w-full h-12 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
+          <LogOut className="w-4 h-4 mr-2" />
+          {language === 'es' ? 'Cerrar Sesión' : language === 'fr' ? 'Se Déconnecter' : 'Logout'}
         </Button>
       </div>
 

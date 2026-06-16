@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle } from 'lucide-react';
+import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle, LogOut } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
@@ -115,9 +116,9 @@ export default function DoctorDashboard() {
             <p className="text-muted-foreground mb-6">
               Your account ({user?.email}) is not registered as a doctor in our system.
             </p>
-            <a href="/doctor-signup" className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90">
+            <Link to="/doctor-signup" className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90">
               Create Doctor Profile
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -128,9 +129,19 @@ export default function DoctorDashboard() {
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-12">
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-4xl font-bold text-foreground">My Dashboard</h1>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Secure Access</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-4xl font-bold text-foreground">My Dashboard</h1>
+              <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Secure Access</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link to="/partner-reviews" className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-secondary/20 flex items-center gap-1.5">
+                <Star className="w-4 h-4 text-amber-500" /> My Reviews
+              </Link>
+              <button onClick={() => base44.auth.logout()} className="px-4 py-2 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-1.5">
+                <LogOut className="w-4 h-4" /> Logout
+              </button>
+            </div>
           </div>
           <p className="text-muted-foreground">Manage your profile, specialties, and pricing information</p>
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
