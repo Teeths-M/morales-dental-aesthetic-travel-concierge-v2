@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Activity, ClipboardCheck, Pill, HeartPulse, MapPin, Heart, LifeBuoy, Syringe } from 'lucide-react';
+import { Shield, Activity, ClipboardCheck, Pill, HeartPulse, MapPin, Heart, LifeBuoy, Syringe, ScanLine } from 'lucide-react';
 import OverviewTab from '@/components/safet/OverviewTab';
 import RiskAssessmentTab from '@/components/safet/RiskAssessmentTab';
 import ProcedureSafetyTab from '@/components/safet/ProcedureSafetyTab';
@@ -10,10 +10,12 @@ import JourneyTimelineTab from '@/components/safet/JourneyTimelineTab';
 import WellnessMonitorTab from '@/components/safet/WellnessMonitorTab';
 import VaccinationTrackerTab from '@/components/safet/VaccinationTrackerTab';
 import SupportTab from '@/components/safet/SupportTab';
+import SafeT4LifeScanner from '@/components/safet/SafeT4LifeScanner';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
 const getTabs = (language) => [
+  { value: 'screening', label: language === 'es' ? 'Evaluación' : language === 'fr' ? 'Dépistage' : 'Screening', icon: ScanLine },
   { value: 'overview', label: language === 'es' ? 'Descripción' : language === 'fr' ? 'Aperçu' : 'Overview', icon: Shield },
   { value: 'journey', label: language === 'es' ? 'Viaje' : language === 'fr' ? 'Voyage' : 'Journey', icon: MapPin },
   { value: 'risk', label: language === 'es' ? 'Riesgo' : language === 'fr' ? 'Risque' : 'Risk', icon: Activity },
@@ -150,6 +152,7 @@ export default function SafeT() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
+            {activeTab === 'screening' && <SafeT4LifeScanner userEmail={userEmail} />}
             {activeTab === 'overview' && <OverviewTab />}
             {activeTab === 'journey' && <JourneyTimelineTab />}
             {activeTab === 'risk' && <RiskAssessmentTab />}
