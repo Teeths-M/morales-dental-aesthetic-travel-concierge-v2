@@ -1,0 +1,130 @@
+{
+  "name": "SystemConfigChange",
+  "type": "object",
+  "properties": {
+    "config_key": {
+      "type": "string",
+      "description": "The configuration key being changed (e.g. DefaultDoctorConfig, ADMIN_EMAIL, risk_weights)"
+    },
+    "config_label": {
+      "type": "string",
+      "description": "Human-readable label for the config being changed"
+    },
+    "requested_by_id": {
+      "type": "string"
+    },
+    "requested_by_name": {
+      "type": "string"
+    },
+    "requested_by_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "requested_value": {
+      "type": "object",
+      "description": "The new value being requested"
+    },
+    "previous_value": {
+      "type": "object",
+      "description": "The current/previous value before the change"
+    },
+    "change_reason": {
+      "type": "string",
+      "description": "Why this change is being requested"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "denied",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "approved_by_1_id": {
+      "type": "string"
+    },
+    "approved_by_1_name": {
+      "type": "string"
+    },
+    "approved_by_1_email": {
+      "type": "string"
+    },
+    "approved_by_1_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by_2_id": {
+      "type": "string"
+    },
+    "approved_by_2_name": {
+      "type": "string"
+    },
+    "approved_by_2_email": {
+      "type": "string"
+    },
+    "approved_by_2_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "denied_by_id": {
+      "type": "string"
+    },
+    "denied_by_name": {
+      "type": "string"
+    },
+    "denied_reason": {
+      "type": "string"
+    },
+    "denied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Auto-rejects if not fully approved within 72 hours"
+    },
+    "applied_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the config change was actually applied to the system"
+    },
+    "audit_log_id": {
+      "type": "string",
+      "description": "Reference to the AuditLog entry for this change"
+    }
+  },
+  "required": [
+    "config_key",
+    "requested_by_id",
+    "requested_by_email"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -60,6 +60,7 @@ import AdminProcedureRequests from './pages/AdminProcedureRequests';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AdminAuditLog from './pages/AdminAuditLog';
 import ProviderPerformanceDashboard from './pages/ProviderPerformanceDashboard';
+import AdminConfigApprovals from './pages/AdminConfigApprovals';
 import AdminCompanions from './pages/AdminCompanions';
 import CompanionSignup from './pages/CompanionSignup';
 import SecurityAgencySignup from './pages/SecurityAgencySignup';
@@ -223,6 +224,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/partner-verification" element={<PartnerVerificationHub />} />
         <Route path="/admin/audit-log" element={<AdminAuditLog />} />
         <Route path="/admin/provider-performance" element={<ProviderPerformanceDashboard />} />
+        <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
       </Route>
       {/* Public — Guardian View link (no auth, token-gated) */}
       <Route path="/guardian/:token" element={<GuardianView />} />
