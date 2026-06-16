@@ -10,13 +10,10 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const {
       encrypted_file_b64,
-      encryption_key_b64,
       encryption_iv_b64,
       redacted_for_display,
       file_size_bytes,
@@ -24,8 +21,15 @@ Deno.serve(async (req) => {
       document_type = 'passport'
     } = await req.json();
 
-    if (!encrypted_file_b64 || !encryption_key_b64 || !encryption_iv_b64) {
-      return Response.json({ error: 'Missing required encryption parameters' }, { status: 400 });
+    // ZERO-KNOWLEDGE: The backend must NOT receive or store an encryption key.
+    // If a client mistakenly sends one, refuse.
+    const body = await req.text().catch(() => '{}');
+    if (body.includes('encryption_key_b64')) {
+      return Response.json({ error: 'Security violation: encryption keys must never be sent to the server.' }, { status: 400 });
+    }
+
+    if (!encrypted_file_b64 || !encryption_iv_b64) {
+      return Response.json({ error: 'encrypted_file_b64 and encryption_iv_b64 are required' }, { status: 400 });
     }
 
     // Validate file size (max 10MB encrypted)
@@ -38,22 +42,19 @@ Deno.serve(async (req) => {
     const encryptedBytes = Uint8Array.from(atob(encrypted_file_b64), c => c.charCodeAt(0));
     const encryptedBlob = new Blob([encryptedBytes], { type: 'application/octet-stream' });
 
-    const { file_uri } = await base44.asServiceRole.integrations.Core.UploadPrivateFile({
-      file: encryptedBlob
-    });
+    const { file_uri } = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file: encryptedBlob });
 
     const passport_token = await generatePassportToken();
-
-    // Default retention: 180 days from now
     const expires_at = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString();
 
+    // Store ONLY the encrypted payload, IV (needed for decryption by client), and metadata.
+    // NO encryption_key_b64 — zero-knowledge architecture.
     const vault = await base44.entities.PassportVault.create({
       passport_token,
       patient_email: user.email,
       document_type,
       encrypted_file_uri: file_uri,
-      encryption_key_b64,
-      encryption_iv_b64,
+      encryption_iv_b64,               // IV is not secret — needed to initiate decryption
       redacted_for_display: redacted_for_display || {},
       file_size_bytes: file_size_bytes || 0,
       file_hash_sha256: file_hash_sha256 || '',
@@ -63,7 +64,6 @@ Deno.serve(async (req) => {
       access_count: 0
     });
 
-    // Immutable audit log
     await base44.asServiceRole.entities.PassportAuditLog.create({
       passport_token,
       patient_id: user.id,
@@ -77,13 +77,7 @@ Deno.serve(async (req) => {
       metadata: { file_size_bytes, document_type }
     });
 
-    return Response.json({
-      success: true,
-      passport_token,
-      vault_id: vault.id,
-      expires_at,
-      redacted_for_display
-    });
+    return Response.json({ success: true, passport_token, vault_id: vault.id, expires_at, redacted_for_display });
 
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

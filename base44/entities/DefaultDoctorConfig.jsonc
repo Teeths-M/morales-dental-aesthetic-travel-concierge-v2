@@ -1,0 +1,38 @@
+{
+  "name": "DefaultDoctorConfig",
+  "type": "object",
+  "properties": {
+    "doctor_name": {
+      "type": "string"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "clinic_name": {
+      "type": "string"
+    },
+    "procedure_country": {
+      "type": "string"
+    },
+    "treatment_cost": {
+      "type": "number",
+      "default": 60
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "doctor_name",
+    "doctor_email"
+  ]
+}

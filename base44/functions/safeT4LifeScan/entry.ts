@@ -196,20 +196,25 @@ Deno.serve(async (req) => {
         });
       } catch (_) {}
 
-      try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          from_name: 'SAFE-T 4LIFE™ Critical Alert',
-          to: 'admin@morales-dental.com',
-          subject: `🚨 CRITICAL RISK BLOCK — Case ${caseId} · ${cr.client_name}`,
-          body: `<h2>Critical Risk Intercept Triggered</h2>
+      const adminEmail = Deno.env.get('ADMIN_EMAIL');
+      if (!adminEmail) {
+        console.error(`CRITICAL CONFIG ERROR: ADMIN_EMAIL env var is not set. Cannot dispatch critical risk alert for case ${caseId}.`);
+      } else {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: 'SAFE-T 4LIFE™ Critical Alert',
+            to: adminEmail,
+            subject: `🚨 CRITICAL RISK BLOCK — Case ${caseId} · ${cr.client_name}`,
+            body: `<h2>Critical Risk Intercept Triggered</h2>
 <p><strong>Patient:</strong> ${cr.client_name} (${cr.client_email})</p>
 <p><strong>Case ID:</strong> ${caseId}</p>
 <p><strong>Reason:</strong> ${result.reason}</p>
 <p><strong>All Flags:</strong> ${result.flags.join(', ')}</p>
 <p><strong>Triggered at:</strong> ${now}</p>
 <p>This case has been hard-locked. No administrative override is permitted. A concierge must contact the patient.</p>`,
-        });
-      } catch (_) {}
+          });
+        } catch (_) {}
+      }
 
       return Response.json({
         status: 'BLOCKED',

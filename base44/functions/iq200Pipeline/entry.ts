@@ -110,31 +110,51 @@ Deno.serve(async (req) => {
         }]
       });
 
-      // AUTO-ASSIGN: Dr Rossanna for dental procedures in Venezuela
+      // AUTO-ASSIGN: Fetch default doctor from DB (admin-configurable via DefaultDoctorConfig entity)
       const DENTAL_PROCEDURES = ['dental_implants', 'all_on_4', 'porcelain_veneers', 'smile_makeover', 'bone_regeneration', 'teeth_whitening'];
       const isDentalProcedure = DENTAL_PROCEDURES.includes(consultation.procedure_interest);
-      const isVenezuela = (consultation.destination_country || '').toLowerCase().includes('venezuela') || 
+      const isVenezuela = (consultation.destination_country || '').toLowerCase().includes('venezuela') ||
                           (consultation.procedure_country || '').toLowerCase().includes('venezuela');
 
       if (isDentalProcedure || isVenezuela) {
-        await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-          doctor_selected: 'Dr Rossanna',
-          doctor_email: 'rosedentalspa@gmail.com',
-          clinic_selected: 'Dental Spa Margarita',
-          procedure_country: 'Venezuela',
-          treatment_cost: 60,
-          status: 'Doctor-Pending',
-          doctor_confirmation_status: 'PENDING',
-          doctor_notified_at: new Date().toISOString(),
-          timeline_log: [
-            ...(caseRecord.timeline_log || []),
-            {
-              timestamp: new Date().toISOString(),
-              action: 'auto_assigned',
-              details: 'Dr Rossanna automatically assigned — Dental Spa Margarita, Venezuela'
-            }
-          ]
-        });
+        // Dynamic lookup — never hardcoded
+        const defaultDoctorConfigs = await base44.asServiceRole.entities.DefaultDoctorConfig.filter({ is_active: true });
+        const defaultDoctor = defaultDoctorConfigs[0];
+
+        if (!defaultDoctor) {
+          console.error(`[iQ200] WARNING: No active DefaultDoctorConfig found for case ${caseRecord.id}. Auto-assignment skipped. Admin action required.`);
+          // Notify admin so this doesn't go unnoticed
+          const adminEmail = Deno.env.get('ADMIN_EMAIL');
+          if (adminEmail) {
+            try {
+              await base44.asServiceRole.integrations.Core.SendEmail({
+                from_name: 'iQ200 Pipeline Alert',
+                to: adminEmail,
+                subject: `⚠️ iQ200: No Default Doctor Configured — Case ${caseRecord.id}`,
+                body: `<p>A dental/Venezuela case was created but no active <strong>DefaultDoctorConfig</strong> is set in the database.</p><p><strong>Case ID:</strong> ${caseRecord.id}<br><strong>Patient:</strong> ${caseRecord.client_name}</p><p>Please configure a default doctor in the Admin Portal → Default Doctor Config panel.</p>`,
+              });
+            } catch (_) {}
+          }
+        } else {
+          await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+            doctor_selected: defaultDoctor.doctor_name,
+            doctor_email: defaultDoctor.doctor_email,
+            clinic_selected: defaultDoctor.clinic_name || '',
+            procedure_country: defaultDoctor.procedure_country || caseRecord.procedure_country,
+            treatment_cost: defaultDoctor.treatment_cost || 60,
+            status: 'Doctor-Pending',
+            doctor_confirmation_status: 'PENDING',
+            doctor_notified_at: new Date().toISOString(),
+            timeline_log: [
+              ...(caseRecord.timeline_log || []),
+              {
+                timestamp: new Date().toISOString(),
+                action: 'auto_assigned',
+                details: `${defaultDoctor.doctor_name} automatically assigned — ${defaultDoctor.clinic_name || 'clinic'}, ${defaultDoctor.procedure_country || 'TBD'}`
+              }
+            ]
+          });
+        }
       }
 
       // Trigger SAFE-T4LIFE scan
