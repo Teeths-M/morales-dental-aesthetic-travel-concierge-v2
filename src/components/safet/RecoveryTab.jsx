@@ -5,6 +5,7 @@ import {
   Thermometer, Smile, AlertTriangle, MessageCircle, Camera,
   Clock, Droplets, Moon, Activity, HeartHandshake, ChevronRight
 } from 'lucide-react';
+import RecoveryMilestoneTimeline from '@/components/recovery/RecoveryMilestoneTimeline';
 
 const healingTimeline = [
   { day: 'Day 1–2', label: 'Immediate Recovery', status: 'active', note: 'Rest, hydrate, avoid chewing on treated area. Light sensitivity normal.' },
@@ -60,37 +61,8 @@ export default function RecoveryTab() {
         ))}
       </div>
 
-      {/* Healing Timeline */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-emerald-700" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-800 text-sm">Healing Timeline</h3>
-            <p className="text-xs text-slate-400">What to expect during your recovery journey</p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          {healingTimeline.map((phase, i) => (
-            <motion.div
-              key={phase.day}
-              className="flex items-start gap-4 bg-slate-50 rounded-xl px-4 py-3"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.07 }}
-            >
-              <div className="flex-shrink-0 text-center">
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full whitespace-nowrap">{phase.day}</span>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-700">{phase.label}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{phase.note}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+      {/* Milestone Timeline — live when session exists, static preview otherwise */}
+      <RecoveryMilestoneTimeline session={null} />
 
       <div className="grid lg:grid-cols-2 gap-5">
         {/* Post-Care Instructions */}

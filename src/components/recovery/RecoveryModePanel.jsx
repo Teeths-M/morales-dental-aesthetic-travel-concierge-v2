@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Moon, Phone, CheckCircle2, AlertTriangle, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import RecoveryMilestoneTimeline from './RecoveryMilestoneTimeline';
 
 const COMPLEXITY_LABELS = { minor: 'Minor', moderate: 'Moderate', major: 'Major' };
 const COMPLEXITY_COLORS = {
@@ -194,6 +195,9 @@ export default function RecoveryModePanel({ caseId }) {
           </div>
         </div>
       </div>
+
+      {/* Milestone Timeline */}
+      <RecoveryMilestoneTimeline session={session} />
 
       {/* Next Check-in */}
       {nextCheckin ? (
