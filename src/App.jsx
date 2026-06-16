@@ -86,6 +86,7 @@ import PostSurgeryFeedback from './pages/PostSurgeryFeedback';
 import GuardianView from './pages/GuardianView';
 import EmergencyPINAccess from './pages/EmergencyPINAccess';
 import ShareLinkViewer from './pages/ShareLinkViewer';
+import CheckInConfirm from './pages/CheckInConfirm';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -235,6 +236,8 @@ const AuthenticatedApp = () => {
       <Route path="/guardian/:token" element={<GuardianView />} />
       {/* Public — Emergency PIN access (cross-device, no login) */}
       <Route path="/emergency-access" element={<EmergencyPINAccess />} />
+      {/* Public — Solo traveler email check-in confirmation (no login, one-time token) */}
+      <Route path="/check-in/:check_in_id" element={<CheckInConfirm />} />
       {/* Public — Secure share link viewer (no auth, token-gated) */}
       <Route path="/vault/share/:share_token" element={<ShareLinkViewer />} />
       {/* Emergency Hub — authenticated users */}

@@ -82,21 +82,68 @@ Deno.serve(async (req) => {
         created_at: now.toISOString(),
       });
 
-      // Send initial notification
-      const msg = `🛡️ Safety Check-In: Tap 'I'm Safe' within 2 hours. Your solo traveler protection is active.`;
+      // Generate one-time secure token for email link
+      const tokenArray = new Uint8Array(32);
+      crypto.getRandomValues(tokenArray);
+      const rawToken = Array.from(tokenArray, b => b.toString(16).padStart(2, '0')).join('');
 
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(rawToken));
+      const tokenHash = Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
+
+      const tokenExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      await base44.asServiceRole.entities.CheckInToken.create({
+        check_in_id: checkIn.id,
+        token_hash: tokenHash,
+        expires_at: tokenExpiresAt.toISOString(),
+        used_at: null,
+        created_at: now.toISOString(),
+      });
+
+      const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
+      const checkInLink = `${appUrl}/check-in/${checkIn.id}?token=${rawToken}`;
+
+      // Send initial notification with secure I'M SAFE button
       try {
+        const emailBody = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;">
+            <div style="background:white;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <span style="font-size:48px;">🛡️</span>
+                <h1 style="color:#111827;font-size:24px;margin:12px 0 4px;">Safety Check-In Required</h1>
+                <p style="color:#6b7280;font-size:14px;margin:0;">Morales Travel Concierge · Solo Traveler Protection</p>
+              </div>
+              <p style="color:#374151;font-size:16px;line-height:1.6;">Hi <strong>${caseRecord.client_name}</strong>,</p>
+              <p style="color:#374151;font-size:16px;line-height:1.6;">
+                This is your scheduled safety check-in. Please confirm you are safe by clicking the button below within <strong>2 hours</strong>.
+                If we do not hear from you, your emergency contact will be notified.
+              </p>
+              <div style="text-align:center;margin:32px 0;">
+                <a href="${checkInLink}"
+                   style="display:inline-block;background-color:#059669;color:white;padding:16px 36px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:18px;letter-spacing:0.5px;box-shadow:0 4px 14px rgba(5,150,105,0.3);">
+                  🟢 I'M SAFE — Confirm Now
+                </a>
+              </div>
+              <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-top:24px;">
+                <p style="color:#92400e;font-size:13px;margin:0;font-weight:bold;">⚠️ This link expires in 24 hours and can only be used once.</p>
+                <p style="color:#92400e;font-size:13px;margin:8px 0 0;">If you cannot click the button, log in to your dashboard: <a href="${appUrl}/dashboard" style="color:#92400e;">${appUrl}/dashboard</a></p>
+              </div>
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">Check-In Round #${round} · Scheduled: ${nextScheduled.toUTCString()}</p>
+            </div>
+          </div>
+        `;
+
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.client_email,
-          subject: `🛡️ Solo Traveler Safety Check-In Required`,
-          body: `<p>${msg}</p><p>Scheduled for: ${nextScheduled.toLocaleString()}</p><p><a href="${Deno.env.get('APP_URL')}/dashboard">Open Dashboard →</a></p>`,
+          subject: `🛡️ [Action Required] Solo Traveler Safety Check-In — Confirm You're Safe`,
+          body: emailBody,
         });
 
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
           sent_time: now.toISOString(),
         });
       } catch (e) {
-        console.error('Failed to send check-in notification:', e);
+        console.error('Failed to send check-in email:', e);
       }
 
       // Log to AuditLog
