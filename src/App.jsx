@@ -77,6 +77,7 @@ import PartnerVerificationHub from './pages/PartnerVerificationHub';
 import TravelServices from './pages/TravelServices';
 import EmergencyHub from './pages/EmergencyHub';
 import PartnerDirectory from './pages/PartnerDirectory';
+import PostSurgeryFeedback from './pages/PostSurgeryFeedback';
 import GuardianView from './pages/GuardianView';
 import EmergencyPINAccess from './pages/EmergencyPINAccess';
 
@@ -181,6 +182,8 @@ const AuthenticatedApp = () => {
       </Route>
       {/* Public survey page — no auth required */}
       <Route path="/survey/:token" element={<SurveyPage />} />
+      {/* Public post-surgery feedback — token-gated, no auth */}
+      <Route path="/feedback/:token" element={<PostSurgeryFeedback />} />
       {/* Public luggage finder portal — QR scanned by stranger, no auth */}
       <Route path="/luggage/:token" element={<LuggageFinderPortal />} />
       {/* Insurance & Cancellation — requires auth */}

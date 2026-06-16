@@ -31,13 +31,11 @@
     },
     "recovery_start_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Auto-set when clinic checkout handshake completes"
+      "format": "date-time"
     },
     "recovery_end_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "48h for major, 24h for moderate, 12h for minor"
+      "format": "date-time"
     },
     "is_active": {
       "type": "boolean",
@@ -119,6 +117,26 @@
           }
         }
       }
+    },
+    "feedback_token": {
+      "type": "string",
+      "description": "Unique token for the feedback form link"
+    },
+    "feedback_requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "feedback_submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "feedback_rating": {
+      "type": "number",
+      "description": "1-5 star rating"
+    },
+    "feedback_comment": {
+      "type": "string",
+      "description": "Patient's written experience"
     }
   },
   "required": [
