@@ -1,0 +1,102 @@
+{
+  "name": "SpaceIntelBriefing",
+  "type": "object",
+  "properties": {
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "destination_city": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "geopolitical_risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "elevated",
+        "high",
+        "critical"
+      ],
+      "default": "low"
+    },
+    "crime_risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "elevated",
+        "high",
+        "critical"
+      ],
+      "default": "low"
+    },
+    "health_alerts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scam_warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emergency_numbers": {
+      "type": "object",
+      "properties": {
+        "police": {
+          "type": "string"
+        },
+        "ambulance": {
+          "type": "string"
+        },
+        "fire": {
+          "type": "string"
+        },
+        "tourist_police": {
+          "type": "string"
+        },
+        "embassy_emergency": {
+          "type": "string"
+        }
+      }
+    },
+    "local_hospitals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "safe_zones": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "avoid_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "briefing_summary": {
+      "type": "string"
+    },
+    "briefing_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "destination_country"
+  ]
+}

@@ -72,6 +72,9 @@ import InsuranceCoverage from './pages/InsuranceCoverage';
 import OfflineMode from './pages/OfflineMode';
 import PartnerVerificationHub from './pages/PartnerVerificationHub';
 import TravelServices from './pages/TravelServices';
+import EmergencyHub from './pages/EmergencyHub';
+import GuardianView from './pages/GuardianView';
+import EmergencyPINAccess from './pages/EmergencyPINAccess';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -205,6 +208,14 @@ const AuthenticatedApp = () => {
         <Route path="/admin/monetization" element={<MonetizationDashboard />} />
         <Route path="/admin/risk-optimization" element={<RiskOptimizationDashboard />} />
         <Route path="/admin/partner-verification" element={<PartnerVerificationHub />} />
+      </Route>
+      {/* Public — Guardian View link (no auth, token-gated) */}
+      <Route path="/guardian/:token" element={<GuardianView />} />
+      {/* Public — Emergency PIN access (cross-device, no login) */}
+      <Route path="/emergency-access" element={<EmergencyPINAccess />} />
+      {/* Emergency Hub — authenticated users */}
+      <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
+        <Route path="/emergency" element={<EmergencyHub />} />
       </Route>
       {/* Offline Mode — public accessible (works without internet) */}
       <Route path="/offline" element={<OfflineMode />} />

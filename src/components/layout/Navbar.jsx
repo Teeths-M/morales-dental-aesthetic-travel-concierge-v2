@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { Globe, ChevronDown, X, Menu, User } from 'lucide-react';
+import { Globe, ChevronDown, X, Menu, User, AlertTriangle } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const GOLD = '#D4AF37';
@@ -180,6 +181,15 @@ export default function Navbar() {
                 <User className="w-3.5 h-3.5" />
                 Client Login
               </button>
+            )}
+
+            {/* Emergency SOS — authenticated only */}
+            {isAuthenticated && (
+              <RouterLink to="/emergency"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-700/40">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                SOS
+              </RouterLink>
             )}
 
             {/* Book Consultation CTA */}

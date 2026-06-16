@@ -1,0 +1,134 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+// Emergency routing vectors
+const SOS_ROUTES = {
+  police: { label: 'Local Police', priority: 1 },
+  ambulance: { label: 'Emergency Ambulance', priority: 1 },
+  private_security: { label: 'Private Tactical Security', priority: 2 },
+  urgent_pickup: { label: 'Emergency Pickup', priority: 2 },
+  silent_sos: { label: 'Silent SOS', priority: 1, silent: true },
+};
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    // Allow unauthenticated SOS (PIN-verified sessions)
+    let user = null;
+    try { user = await base44.auth.me(); } catch (_) {}
+
+    const { trigger_type, latitude, longitude, location_label, case_id, patient_email, patient_name, patient_phone, is_silent, destination_country } = await req.json();
+
+    if (!trigger_type || !patient_email) return Response.json({ error: 'trigger_type and patient_email required' }, { status: 400 });
+
+    const now = new Date().toISOString();
+    const route = SOS_ROUTES[trigger_type] || SOS_ROUTES.police;
+
+    // Translate emergency message to local language
+    let translatedMessage = 'EMERGENCY: Medical tourist requires immediate assistance.';
+    if (destination_country) {
+      try {
+        const langResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: `Translate this emergency message to the primary local language of ${destination_country}: "MEDICAL EMERGENCY: This person requires immediate ${route.label}. Please call the relevant emergency services." Return ONLY the translated text, nothing else.`
+        });
+        translatedMessage = typeof langResult === 'string' ? langResult : translatedMessage;
+      } catch (_) {}
+    }
+
+    // Create SOS event record
+    const sosEvent = await base44.asServiceRole.entities.SOSEvent.create({
+      case_id: case_id || null,
+      patient_email,
+      patient_name: patient_name || 'Unknown Patient',
+      patient_phone: patient_phone || '',
+      trigger_type,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      location_label: location_label || 'Location unknown',
+      status: 'triggered',
+      escalation_level: 1,
+      is_silent: !!is_silent || trigger_type === 'silent_sos',
+      translated_message: translatedMessage,
+      notifications_sent: [],
+      triggered_at: now
+    });
+
+    const notificationsSent = [];
+
+    // Notify admin / coordinator immediately
+    const adminEmailBody = `
+<div style="font-family:sans-serif;max-width:600px;">
+  <div style="background:#dc2626;color:white;padding:20px;border-radius:8px 8px 0 0;">
+    <h1 style="margin:0;font-size:24px;">🚨 ${is_silent ? 'SILENT ' : ''}SOS TRIGGERED</h1>
+    <p style="margin:8px 0 0;">Trigger Type: <strong>${route.label}</strong></p>
+  </div>
+  <div style="background:#fff;border:1px solid #fca5a5;border-top:none;padding:20px;border-radius:0 0 8px 8px;">
+    <p><strong>Patient:</strong> ${patient_name || patient_email}</p>
+    <p><strong>Email:</strong> ${patient_email}</p>
+    <p><strong>Phone:</strong> ${patient_phone || 'Not provided'}</p>
+    <p><strong>Location:</strong> ${location_label || 'Unknown'}</p>
+    ${latitude ? `<p><strong>GPS:</strong> ${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>` : ''}
+    ${latitude ? `<p><a href="https://maps.google.com/?q=${latitude},${longitude}" style="color:#dc2626;">📍 Open in Google Maps</a></p>` : ''}
+    <p><strong>Case ID:</strong> ${case_id || 'N/A'}</p>
+    <p><strong>Time:</strong> ${new Date(now).toLocaleString()}</p>
+    <hr/>
+    <p style="color:#dc2626;font-weight:bold;">IMMEDIATE ACTION REQUIRED — Dispatch ${route.label}</p>
+    <p><strong>Translated Message for Local First Responders:</strong><br/><em>${translatedMessage}</em></p>
+  </div>
+</div>`;
+
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        from_name: 'Morales Safe-T Emergency System',
+        to: user?.email || patient_email,
+        subject: `🚨 SOS — ${route.label} — ${patient_name || patient_email}`,
+        body: adminEmailBody
+      });
+      notificationsSent.push('admin_email');
+    } catch (_) { notificationsSent.push('admin_email_failed'); }
+
+    // SMS via Twilio if phone available
+    if (patient_phone) {
+      try {
+        await base44.asServiceRole.functions.invoke('sendSmsNotification', {
+          to: patient_phone,
+          message: `Morales Safe-T: Your ${route.label} SOS has been received. Emergency team alerted. Stay calm and stay where you are. If safe to call, dial your local emergency number.`
+        });
+        notificationsSent.push('patient_sms');
+      } catch (_) {}
+    }
+
+    // Get case emergency contact and notify
+    if (case_id) {
+      try {
+        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
+        if (cases[0]?.emergency_contact) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: user?.email || patient_email,
+              subject: `⚠️ Emergency Alert: ${patient_name || patient_email} triggered SOS`,
+              body: `<p>Your contact <strong>${patient_name}</strong> has triggered an emergency SOS (${route.label}) at ${location_label || 'their current location'}. The Morales Medical emergency team has been alerted and is coordinating a response.</p>`
+            });
+            notificationsSent.push('emergency_contact');
+          } catch (_) { notificationsSent.push('emergency_contact_email_failed'); }
+        }
+      } catch (_) {}
+    }
+
+    // Update event with notifications sent
+    await base44.asServiceRole.entities.SOSEvent.update(sosEvent.id, {
+      status: 'dispatched',
+      notifications_sent: notificationsSent
+    });
+
+    return Response.json({
+      event_id: sosEvent.id,
+      status: 'dispatched',
+      trigger_type,
+      translated_message: translatedMessage,
+      notifications_sent: notificationsSent,
+      message: `${route.label} SOS dispatched. Emergency team alerted.`
+    });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});

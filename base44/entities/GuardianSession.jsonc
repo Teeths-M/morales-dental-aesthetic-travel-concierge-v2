@@ -1,0 +1,65 @@
+{
+  "name": "GuardianSession",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "guardian_name": {
+      "type": "string"
+    },
+    "guardian_email": {
+      "type": "string"
+    },
+    "guardian_phone": {
+      "type": "string"
+    },
+    "view_token": {
+      "type": "string",
+      "description": "Unique expiring read-only token"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_viewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "shared_data_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "e.g. ['location', 'case_status', 'journey_stage']"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email",
+    "view_token"
+  ]
+}

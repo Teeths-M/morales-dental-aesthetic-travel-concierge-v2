@@ -1,0 +1,61 @@
+{
+  "name": "LocationBreadcrumb",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "accuracy_meters": {
+      "type": "number"
+    },
+    "place_label": {
+      "type": "string",
+      "description": "Reverse-geocoded label e.g. 'Margarita Island, Venezuela'"
+    },
+    "logged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "auto_purge_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Purged on final journey check-in unless saved"
+    },
+    "is_saved": {
+      "type": "boolean",
+      "default": false,
+      "description": "User explicitly saved this breadcrumb"
+    },
+    "is_purged": {
+      "type": "boolean",
+      "default": false
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "manual",
+        "ip_geo",
+        "checkin_handshake"
+      ],
+      "default": "gps"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email"
+  ]
+}
