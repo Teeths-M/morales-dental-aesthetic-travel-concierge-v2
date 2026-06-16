@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import PassportUploader from '@/components/passport/PassportUploader';
-import PassportVaultDashboard from '@/components/passport/PassportVaultDashboard';
+import VaultUploader from '@/components/vault/VaultUploader';
+import VaultDashboard from '@/components/vault/VaultDashboard';
 
 export default function PassportVault() {
   const [user, setUser] = useState(null);
@@ -74,17 +74,17 @@ export default function PassportVault() {
         <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-6">
             {hasVault ? (
-              <PassportVaultDashboard patientEmail={user.email} />
+              <VaultDashboard user={user} />
             ) : (
               <>
                 <div className="mb-5">
-                  <h2 className="text-base font-semibold text-foreground">Create Your Secure Passport Vault</h2>
+                  <h2 className="text-base font-semibold text-foreground">Create Your Secure Document Vault</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Your passport is encrypted locally before upload. We cannot read your document —
-                    only providers you explicitly approve can access limited, role-specific views.
+                    Your documents are encrypted locally with PBKDF2 + AES-256-GCM before upload.
+                    Zero-knowledge architecture — we cannot read your documents. Emergency PIN access enabled.
                   </p>
                 </div>
-                <PassportUploader onTokenIssued={handleTokenIssued} />
+                <VaultUploader onTokenIssued={handleTokenIssued} />
               </>
             )}
           </div>
@@ -92,8 +92,7 @@ export default function PassportVault() {
 
         {/* Privacy Footer */}
         <p className="text-center text-xs text-muted-foreground mt-5">
-          🔒 Client-side AES-256-GCM encryption · Role-based access · Immutable audit trail ·
-          Auto-deletes after procedure completion
+          🔒 PBKDF2 + AES-256-GCM · Zero-knowledge · Emergency PIN access · Secure share links · Immutable audit trail
         </p>
       </div>
     </div>

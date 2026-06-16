@@ -2,16 +2,25 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Shield, Smartphone, ArrowRight } from 'lucide-react';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
+import EmergencyVaultViewer from '@/components/vault/EmergencyVaultViewer';
 import { Link } from 'react-router-dom';
 
 export default function EmergencyPINAccess() {
   const [email, setEmail] = useState('');
   const [emailEntered, setEmailEntered] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [pinSessionToken, setPinSessionToken] = useState(null);
+
+  const handleVerified = (data) => {
+    if (data.verified && data.pin_session_token) {
+      setPinSessionToken(data.pin_session_token);
+      setVerified(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
@@ -46,8 +55,10 @@ export default function EmergencyPINAccess() {
                 Or <Link to="/" className="text-blue-400 hover:underline">return to home</Link>
               </p>
             </div>
+          ) : !verified ? (
+            <EmergencyPINSetup userEmail={email} mode="verify" onVerified={handleVerified} />
           ) : (
-            <EmergencyPINSetup userEmail={email} mode="verify" />
+            <EmergencyVaultViewer pinSessionToken={pinSessionToken} />
           )}
         </div>
 
