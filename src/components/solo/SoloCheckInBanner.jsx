@@ -9,6 +9,7 @@ export default function SoloCheckInBanner() {
   const [pendingCheckIn, setPendingCheckIn] = useState(null);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState(null);
+  const [confirmed, setConfirmed] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,10 +47,7 @@ export default function SoloCheckInBanner() {
         location_lat: location?.lat,
         location_lng: location?.lng,
       });
-      toast({
-        title: '✅ Check-in complete',
-        description: 'Your safety has been confirmed. Next check-in in 12 hours.',
-      });
+      setConfirmed(true);
       setPendingCheckIn(null);
     } catch (e) {
       toast({
@@ -60,6 +58,26 @@ export default function SoloCheckInBanner() {
     }
     setLoading(false);
   };
+
+  if (confirmed) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="rounded-2xl p-5 border-2 bg-emerald-50 border-emerald-400 shadow-sm"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="w-9 h-9 text-emerald-600" />
+          </div>
+          <div>
+            <p className="font-bold text-emerald-800 text-base">✅ You're Marked Safe!</p>
+            <p className="text-emerald-700 text-sm mt-0.5">Your response has been received. Your emergency contacts will not be notified. Next check-in in 12 hours.</p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (!pendingCheckIn) return null;
 

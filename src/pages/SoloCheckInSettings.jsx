@@ -152,6 +152,28 @@ export default function SoloCheckInSettings() {
             </CardContent>
           </Card>
 
+          {/* Last Confirmed Banner */}
+          {checkIns.some(c => c.status === 'acknowledged' || c.status === 'resolved') && (() => {
+            const last = checkIns.find(c => c.status === 'acknowledged' || c.status === 'resolved');
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-4 mb-6 flex items-center gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-bold text-emerald-800 text-sm">✅ Last Check-In Confirmed</p>
+                  <p className="text-emerald-700 text-xs mt-0.5">
+                    Round #{last.check_in_round || 1} — confirmed{last.responded_time ? ` on ${new Date(last.responded_time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : ''}. Your safety is recorded.
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })()}
+
           {/* Check-In History */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
