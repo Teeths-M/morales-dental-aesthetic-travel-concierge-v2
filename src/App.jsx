@@ -63,6 +63,10 @@ import CompanionSignup from './pages/CompanionSignup';
 import PartnerPortal from './pages/PartnerPortal';
 import CompanionDashboard from './pages/CompanionDashboard';
 import DeepPerfection from './pages/DeepPerfection';
+import SurveyPage from './pages/SurveyPage';
+import OnboardingEducation from './pages/OnboardingEducation';
+import MonetizationDashboard from './pages/MonetizationDashboard';
+import RiskOptimizationDashboard from './pages/RiskOptimizationDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -158,7 +162,10 @@ const AuthenticatedApp = () => {
         </Route>
         {/* Demo/Test pages */}
         <Route path="/deep-perfection" element={<DeepPerfection />} />
+        <Route path="/onboarding" element={<OnboardingEducation />} />
       </Route>
+      {/* Public survey page — no auth required */}
+      <Route path="/survey/:token" element={<SurveyPage />} />
       {/* Standalone payment page - requires auth same as /portal-hub/checkout */}
       <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user", "travel_agency", "doctor", "taxi_service"]} />}>
         <Route path="/pay-now" element={<PaymentCheckout />} />
@@ -184,6 +191,8 @@ const AuthenticatedApp = () => {
         <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
         <Route path="/admin/provider-verification" element={<AdminProviderVerification />} />
         <Route path="/admin/companions" element={<AdminCompanions />} />
+        <Route path="/admin/monetization" element={<MonetizationDashboard />} />
+        <Route path="/admin/risk-optimization" element={<RiskOptimizationDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

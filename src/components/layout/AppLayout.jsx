@@ -6,20 +6,23 @@ import SafeTCompanion from '@/components/safet/SafeTCompanion';
 import Header from './Header';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
 import { useAuth } from '@/lib/AuthContext';
+import BiometricGate from '@/components/security/BiometricGate';
 
 export default function AppLayout() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 pt-[68px]">
-        <Outlet />
-      </main>
-      <Footer />
-      <WhatsAppButton />
-      <SafeTCompanion />
-      <HeartNotificationCenter user={user} />
-    </div>
+    <BiometricGate>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 pt-[68px]">
+          <Outlet />
+        </main>
+        <Footer />
+        <WhatsAppButton />
+        <SafeTCompanion />
+        <HeartNotificationCenter user={user} />
+      </div>
+    </BiometricGate>
   );
 }

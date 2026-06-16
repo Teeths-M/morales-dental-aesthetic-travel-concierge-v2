@@ -1,0 +1,79 @@
+{
+  "name": "ReputationSurvey",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion"
+      ],
+      "default": "patient"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "overall_score": {
+      "type": "number",
+      "description": "Average of all question scores (1-5)"
+    },
+    "pushed_to_google": {
+      "type": "boolean",
+      "default": false
+    },
+    "pushed_to_trustpilot": {
+      "type": "boolean",
+      "default": false
+    },
+    "push_attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "routed_to_support": {
+      "type": "boolean",
+      "default": false
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "token": {
+      "type": "string",
+      "description": "Unique survey access token"
+    }
+  },
+  "required": [
+    "patient_email",
+    "role"
+  ]
+}
