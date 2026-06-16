@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import BaggageTracker from '@/components/baggage/BaggageTracker';
 import RecoveryModePanel from '@/components/recovery/RecoveryModePanel';
+import ActivitySafetyAdvisor from '@/components/activity/ActivitySafetyAdvisor';
 
 const roadmap = [
   { phase: 'Pre-Travel', color: 'blue', steps: ['Documents ready', 'Medical clearance obtained', 'Packing guide reviewed', 'Medications prepared'] },
@@ -59,6 +60,7 @@ export default function JourneyModule() {
           { id: 'journey', label: 'Roadmap', icon: MapPin },
           { id: 'baggage', label: 'Baggage', icon: Luggage },
           { id: 'recovery', label: 'Recovery', icon: Moon },
+          { id: 'activities', label: 'Adventures', icon: MapPin },
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
@@ -82,6 +84,13 @@ export default function JourneyModule() {
       {activeTab === 'recovery' && (
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
           <RecoveryModePanel caseId={DEMO_CASE_ID} />
+        </div>
+      )}
+
+      {/* Activities Tab */}
+      {activeTab === 'activities' && (
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+          <ActivitySafetyAdvisor caseId={DEMO_CASE_ID} />
         </div>
       )}
 
