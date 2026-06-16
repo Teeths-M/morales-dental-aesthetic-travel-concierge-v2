@@ -1,0 +1,88 @@
+{
+  "name": "ComplianceChecklist",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "passport_country": {
+      "type": "string",
+      "description": "ISO 3166-1 alpha-2 country code of patient passport"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "medical_purpose": {
+      "type": "string"
+    },
+    "visa_status": {
+      "type": "string",
+      "enum": [
+        "visa_free",
+        "evisa",
+        "embassy_required",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "description": "e.g. Travel Documents, Health, Insurance, Visa"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": true
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deadline_days_before": {
+            "type": "number"
+          },
+          "link": {
+            "type": "string",
+            "description": "Optional link for obtaining this document"
+          }
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "policy_snapshot": {
+      "type": "object",
+      "description": "Cached visa policy data used to generate this checklist"
+    }
+  },
+  "required": [
+    "passport_country",
+    "destination_country"
+  ]
+}

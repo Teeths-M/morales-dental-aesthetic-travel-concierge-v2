@@ -1,0 +1,87 @@
+{
+  "name": "CancellationPolicy",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "procedure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_package_price_usd": {
+      "type": "number"
+    },
+    "amount_paid_usd": {
+      "type": "number"
+    },
+    "is_cfar_protected": {
+      "type": "boolean",
+      "default": false
+    },
+    "cfar_premium_paid_usd": {
+      "type": "number",
+      "default": 250
+    },
+    "cfar_coverage_pct": {
+      "type": "number",
+      "default": 0.75
+    },
+    "is_annual_passport": {
+      "type": "boolean",
+      "default": false
+    },
+    "cancellation_requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "days_before_procedure": {
+      "type": "number"
+    },
+    "refund_tier": {
+      "type": "string",
+      "enum": [
+        "full",
+        "half",
+        "quarter",
+        "none",
+        "cfar"
+      ],
+      "description": ">14d=full, 7-14d=half, 2-7d=quarter, <48h=none, cfar=75%"
+    },
+    "refund_amount_usd": {
+      "type": "number"
+    },
+    "refund_pct": {
+      "type": "number"
+    },
+    "stripe_refund_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "refunded",
+        "denied"
+      ],
+      "default": "pending"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email"
+  ]
+}

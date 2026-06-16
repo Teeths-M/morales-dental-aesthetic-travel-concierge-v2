@@ -1,0 +1,83 @@
+{
+  "name": "TravelAddOn",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "selected_addons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "addon_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "price_usd": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "peace_of_mind_bundle": {
+      "type": "boolean",
+      "default": false,
+      "description": "Full-tier $100 bundle"
+    },
+    "safe_t_baseline_injected": {
+      "type": "boolean",
+      "default": true
+    },
+    "transport_scope": {
+      "type": "string",
+      "enum": [
+        "origin_only",
+        "destination_only",
+        "round_trip",
+        "none"
+      ],
+      "default": "none"
+    },
+    "total_addons_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "confirmed",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email"
+  ]
+}

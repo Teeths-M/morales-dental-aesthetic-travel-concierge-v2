@@ -69,6 +69,9 @@ import MonetizationDashboard from './pages/MonetizationDashboard';
 import RiskOptimizationDashboard from './pages/RiskOptimizationDashboard';
 import LuggageFinderPortal from './pages/LuggageFinderPortal';
 import InsuranceCoverage from './pages/InsuranceCoverage';
+import OfflineMode from './pages/OfflineMode';
+import PartnerVerificationHub from './pages/PartnerVerificationHub';
+import TravelServices from './pages/TravelServices';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -201,6 +204,13 @@ const AuthenticatedApp = () => {
         <Route path="/admin/companions" element={<AdminCompanions />} />
         <Route path="/admin/monetization" element={<MonetizationDashboard />} />
         <Route path="/admin/risk-optimization" element={<RiskOptimizationDashboard />} />
+        <Route path="/admin/partner-verification" element={<PartnerVerificationHub />} />
+      </Route>
+      {/* Offline Mode — public accessible (works without internet) */}
+      <Route path="/offline" element={<OfflineMode />} />
+      {/* Travel A La Carte Services */}
+      <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
+        <Route path="/travel-services" element={<TravelServices />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
