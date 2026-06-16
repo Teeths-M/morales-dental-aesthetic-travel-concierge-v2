@@ -54,8 +54,11 @@ Deno.serve(async (req) => {
 
     const notificationsSent = [];
 
-    // SECURITY: Resolve a confirmed admin email — never fall through to patient_email
-    const adminNotifyEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
+    // SECURITY: Resolve a confirmed admin email from env only — never fall back to patient_email
+    const adminNotifyEmail = Deno.env.get('ADMIN_EMAIL');
+    if (!adminNotifyEmail) {
+      console.error('[triggerSOS] CRITICAL: ADMIN_EMAIL not set. SOS admin alert will not be dispatched.');
+    }
 
     // Notify admin / coordinator immediately
     const adminEmailBody = `
@@ -79,15 +82,17 @@ Deno.serve(async (req) => {
   </div>
 </div>`;
 
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Safe-T Emergency System',
-        to: adminNotifyEmail,
-        subject: `🚨 SOS — ${route.label} — ${patient_name || patient_email}`,
-        body: adminEmailBody
-      });
-      notificationsSent.push('admin_email');
-    } catch (_) { notificationsSent.push('admin_email_failed'); }
+    if (adminNotifyEmail) {
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: 'Morales Safe-T Emergency System',
+          to: adminNotifyEmail,
+          subject: `🚨 SOS — ${route.label} — ${patient_name || patient_email}`,
+          body: adminEmailBody
+        });
+        notificationsSent.push('admin_email');
+      } catch (_) { notificationsSent.push('admin_email_failed'); }
+    }
 
     // SMS via Twilio if phone available
     if (patient_phone) {

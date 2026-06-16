@@ -5,6 +5,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 // Critical = hard BLOCK + concierge dispatch, zero overrides
 // High = mandatory waiver gate, e-sig, cryptographic timestamp, IP log
 // Low / Medium = frictionless pipeline progression
+//
+// SECURITY: Risk score is computed server-side ONLY.
+// The frontend receives only the result — it cannot inject or override the score.
 
 const CRITICAL_BLOCK_TRIGGERS = [
   { field: 'pregnancy_status', value: true, reason: 'Active pregnancy — absolute contraindication for elective procedures' },
@@ -59,7 +62,6 @@ function computeRiskScore(caseRecord) {
     caseRecord.mental_health_notes || '',
   ].join(' ').toLowerCase();
 
-  // ── CRITICAL checks ──
   for (const trigger of CRITICAL_BLOCK_TRIGGERS) {
     if (caseRecord[trigger.field] === trigger.value) {
       return { tier: 'CRITICAL', reason: trigger.reason, score: 100, flags: [trigger.reason] };
@@ -70,10 +72,8 @@ function computeRiskScore(caseRecord) {
     return { tier: 'CRITICAL', reason: criticalKeyword.reason, score: 100, flags: [criticalKeyword.reason] };
   }
 
-  // ── Weighted risk score ──
   let score = 0;
   const flags = [];
-
   for (const factor of HIGH_RISK_FACTORS) {
     if (medText.includes(factor.keyword.toLowerCase())) {
       score += factor.weight;
@@ -81,18 +81,15 @@ function computeRiskScore(caseRecord) {
     }
   }
 
-  // BMI penalty
   const bmi = getBMI(caseRecord.height_cm, caseRecord.weight_kg);
   if (bmi && bmi >= 40) { score += 4; flags.push('BMI ≥ 40 — severe obesity'); }
   else if (bmi && bmi >= 35) { score += 2; flags.push('BMI ≥ 35 — elevated surgical risk'); }
 
-  // Age penalty
   const age = caseRecord.age_years;
   if (age >= 70) { score += 3; flags.push('Age ≥ 70 — elevated anesthesia risk'); }
   else if (age >= 60) { score += 1; flags.push('Age 60+ — moderate age-related risk'); }
   else if (age <= 16) { score += 2; flags.push('Patient under 17 — parental consent and pediatric clearance required'); }
 
-  // Lifestyle penalties
   if (caseRecord.smoking_status === 'Heavy') { score += 3; flags.push('Heavy smoker — impaired wound healing'); }
   else if (caseRecord.smoking_status === 'Moderate') { score += 2; flags.push('Moderate smoker — healing risk'); }
   else if (caseRecord.smoking_status === 'Light') { score += 1; }
@@ -100,12 +97,10 @@ function computeRiskScore(caseRecord) {
   if (caseRecord.alcohol_use === 'Heavy') { score += 3; flags.push('Heavy alcohol use — liver and anesthesia risk'); }
   else if (caseRecord.alcohol_use === 'Moderate') { score += 1; }
 
-  // Multi-procedure stacking
   const procedureCount = Array.isArray(caseRecord.procedures) ? caseRecord.procedures.length : 0;
   if (procedureCount >= 3) { score += 2; flags.push(`${procedureCount} procedures selected — elevated recovery load`); }
   else if (procedureCount >= 2) { score += 1; flags.push(`${procedureCount} procedures — standard multi-procedure planning`); }
 
-  // Tier assignment
   let tier;
   if (score >= 8) tier = 'HIGH';
   else if (score >= 4) tier = 'MEDIUM';
@@ -117,26 +112,51 @@ function computeRiskScore(caseRecord) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // SECURITY: All scan and waiver actions require authenticated user
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await req.json();
     const { caseId, action } = body;
 
     if (!caseId) return Response.json({ error: 'caseId required' }, { status: 400 });
 
+    // SECURITY: Fetch case via service role but enforce ownership — only case owner or admin may scan
     const caseRecord = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId });
     const cr = Array.isArray(caseRecord) ? caseRecord[0] : caseRecord;
     if (!cr) return Response.json({ error: 'Case not found' }, { status: 404 });
 
-    // ── SIGN_WAIVER: Record high-risk digital waiver ──
+    const isAdmin = ['admin', 'platform_admin'].includes(user.role);
+    if (!isAdmin && cr.client_email !== user.email) {
+      return Response.json({ error: 'Forbidden: this case does not belong to you' }, { status: 403 });
+    }
+
+    // SECURITY: BLOCKED cases cannot be re-scanned or have waivers signed — hard lock is permanent
+    if (cr.safe_t_result === 'BLOCKED' && action !== 'get_status') {
+      return Response.json({
+        status: 'BLOCKED',
+        tier: 'CRITICAL',
+        message: 'This case has been hard-locked. No re-scan or override is permitted.',
+        override_permitted: false,
+      }, { status: 403 });
+    }
+
     if (action === 'sign_waiver') {
       const { signature_data, ip_address, patient_name } = body;
       if (!signature_data) return Response.json({ error: 'signature_data required' }, { status: 400 });
+
+      // SECURITY: Only HIGH risk cases with waiver_status='required' may sign
+      if (cr.waiver_status !== 'required' && cr.waiver_status !== 'sent') {
+        return Response.json({ error: 'No waiver is currently required for this case' }, { status: 400 });
+      }
 
       const now = new Date().toISOString();
       const tl = cr.timeline_log || [];
       await base44.asServiceRole.entities.CaseRecord.update(caseId, {
         signature_data,
         signature_timestamp: now,
-        signature_ip_address: ip_address || 'unknown',
+        signature_ip_address: ip_address || req.headers.get('x-forwarded-for') || 'unknown',
         waiver_status: 'signed',
         safe_t_result: 'PASSED',
         status: 'Safe-T-Reviewed',
@@ -152,6 +172,7 @@ Deno.serve(async (req) => {
         resource_type: 'case_record',
         resource_id: caseId,
         case_id: caseId,
+        actor_id: user.id,
         actor_name: patient_name || cr.client_name,
         details: { signed_at: now, ip_address: ip_address || 'unknown', risk_flags: cr.safe_t_flags },
         sensitive: true,
@@ -161,13 +182,14 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'WAIVER_SIGNED', safe_t_result: 'PASSED' });
     }
 
-    // ── MAIN SCAN ──
+    // ── MAIN SCAN — risk score computed entirely server-side ──
+    // SECURITY: No risk_score, tier, or flag accepted from request body.
     const result = computeRiskScore(cr);
     const now = new Date().toISOString();
     const tl = cr.timeline_log || [];
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
 
     if (result.tier === 'CRITICAL') {
-      // Hard lock — zero overrides
       await base44.asServiceRole.entities.CaseRecord.update(caseId, {
         safe_t_result: 'BLOCKED',
         risk_score: 'High',
@@ -177,41 +199,39 @@ Deno.serve(async (req) => {
         timeline_log: [...tl, {
           timestamp: now,
           action: 'safe_t_critical_block',
-          details: `CRITICAL RISK INTERCEPT: ${result.reason}. Hard lock applied. Concierge dispatched.`,
+          details: `CRITICAL RISK INTERCEPT: ${result.reason}. Hard lock applied.`,
         }],
       });
 
-      // Dispatch concierge alert
+      await base44.asServiceRole.entities.AuditLog.create({
+        event_type: 'safe_t_critical_block',
+        resource_type: 'case_record',
+        resource_id: caseId,
+        case_id: caseId,
+        actor_id: user.id,
+        details: { reason: result.reason, flags: result.flags },
+        sensitive: true,
+        timestamp: now,
+      });
+
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: 'SAFE-T 4LIFE™ Critical Alert',
           to: cr.client_email,
           subject: '⚠️ SAFE-T 4LIFE™ — Important Update on Your Medical Travel Plan',
-          body: `<p>Dear ${cr.client_name},</p>
-<p>Your SAFE-T 4LIFE™ safety screening has identified a critical factor that requires immediate review by our medical coordination team before your journey can proceed.</p>
-<p><strong>Factor identified:</strong> ${result.reason}</p>
-<p>A member of our concierge team will contact you within 24 hours. No further action is needed on your part at this time.</p>
-<p>This screening is not a medical diagnosis. Please contact your personal physician for clinical guidance.</p>
-<p>— The Morales Medical Travel Team</p>`,
+          body: `<p>Dear ${cr.client_name},</p><p>Your SAFE-T 4LIFE™ safety screening has identified a critical factor that requires immediate review by our medical coordination team before your journey can proceed.</p><p><strong>Factor identified:</strong> ${result.reason}</p><p>A member of our concierge team will contact you within 24 hours.</p><p>— The Morales Medical Travel Team</p>`,
         });
       } catch (_) {}
 
-      const adminEmail = Deno.env.get('ADMIN_EMAIL');
       if (!adminEmail) {
-        console.error(`CRITICAL CONFIG ERROR: ADMIN_EMAIL env var is not set. Cannot dispatch critical risk alert for case ${caseId}.`);
+        console.error(`CRITICAL CONFIG ERROR: ADMIN_EMAIL not set. Cannot dispatch alert for case ${caseId}.`);
       } else {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: 'SAFE-T 4LIFE™ Critical Alert',
             to: adminEmail,
             subject: `🚨 CRITICAL RISK BLOCK — Case ${caseId} · ${cr.client_name}`,
-            body: `<h2>Critical Risk Intercept Triggered</h2>
-<p><strong>Patient:</strong> ${cr.client_name} (${cr.client_email})</p>
-<p><strong>Case ID:</strong> ${caseId}</p>
-<p><strong>Reason:</strong> ${result.reason}</p>
-<p><strong>All Flags:</strong> ${result.flags.join(', ')}</p>
-<p><strong>Triggered at:</strong> ${now}</p>
-<p>This case has been hard-locked. No administrative override is permitted. A concierge must contact the patient.</p>`,
+            body: `<h2>Critical Risk Intercept Triggered</h2><p><strong>Patient:</strong> ${cr.client_name} (${cr.client_email})</p><p><strong>Case ID:</strong> ${caseId}</p><p><strong>Reason:</strong> ${result.reason}</p><p><strong>All Flags:</strong> ${result.flags.join(', ')}</p><p><strong>Triggered at:</strong> ${now}</p><p>This case has been hard-locked. No administrative override is permitted.</p>`,
           });
         } catch (_) {}
       }
@@ -221,7 +241,7 @@ Deno.serve(async (req) => {
         tier: 'CRITICAL',
         reason: result.reason,
         flags: result.flags,
-        message: 'A critical safety factor has been identified. Your case has been reviewed by our system and a member of our concierge team will contact you within 24 hours.',
+        message: 'A critical safety factor has been identified. A member of our concierge team will contact you within 24 hours.',
         admin_alerted: true,
         override_permitted: false,
       });
@@ -249,12 +269,11 @@ Deno.serve(async (req) => {
         flags: result.flags,
         bmi: result.bmi,
         procedure_count: result.procedure_count,
-        message: 'Your profile contains elevated risk factors. A mandatory digital waiver and acknowledgement is required before proceeding.',
+        message: 'Your profile contains elevated risk factors. A mandatory digital waiver is required before proceeding.',
         waiver_required: true,
       });
     }
 
-    // LOW / MEDIUM — frictionless progression
     const riskScore = result.tier === 'MEDIUM' ? 'Moderate' : 'Low';
     await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       safe_t_result: 'PASSED',

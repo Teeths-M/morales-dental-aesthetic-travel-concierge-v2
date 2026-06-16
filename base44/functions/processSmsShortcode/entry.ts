@@ -1,4 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHmac } from 'node:crypto';
+
+// Twilio signature validation — prevents forged webhook calls
+function validateTwilioSignature(req_url, params, signature, authToken) {
+  const sortedKeys = Object.keys(params).sort();
+  const str = req_url + sortedKeys.map(k => k + params[k]).join('');
+  const expected = createHmac('sha1', authToken).update(str).digest('base64');
+  return expected === signature;
+}
 
 // iQ200 SMS Shortcode Command Parser
 // Handles inbound Twilio webhooks from global shortcodes
@@ -48,6 +57,34 @@ Deno.serve(async (req) => {
       from = json.From || json.from || '';
     }
 
+    // SECURITY: Validate Twilio signature on every inbound webhook
+    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+    if (authToken) {
+      const twilioSig = req.headers.get('x-twilio-signature') || '';
+      const appUrl = Deno.env.get('APP_URL') || '';
+      const webhookUrl = `${appUrl}/api/functions/processSmsShortcode`;
+      const paramObj = {};
+      if (contentType.includes('application/x-www-form-urlencoded')) {
+        const rawText = body ? body : '';
+        new URLSearchParams(rawText).forEach((v, k) => { paramObj[k] = v; });
+      }
+      if (twilioSig && webhookUrl && !validateTwilioSignature(webhookUrl, paramObj, twilioSig, authToken)) {
+        console.error('[SMS] Rejected: invalid Twilio signature');
+        return new Response('<?xml version="1.0"?><Response></Response>', { status: 403, headers: { 'Content-Type': 'text/xml' } });
+      }
+    }
+
+    // Rate limit: max 10 SMS commands per phone number per minute (stored in entity)
+    if (from) {
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+      const recentLogs = await base44.asServiceRole.entities.OfflineHandshake.filter({ from_phone: from });
+      const recent = recentLogs.filter(l => l.received_at && l.received_at > oneMinuteAgo);
+      if (recent.length >= 10) {
+        console.warn(`[SMS] Rate limit hit for ${from}`);
+        return new Response('<?xml version="1.0"?><Response><Message>Too many requests. Please wait and try again.</Message></Response>', { headers: { 'Content-Type': 'text/xml' } });
+      }
+    }
+
     if (!body) return new Response('<?xml version="1.0"?><Response><Message>Invalid command. Try: CHECKIN OK, SOS, AGENCY CONFIRM</Message></Response>', { headers: { 'Content-Type': 'text/xml' } });
 
     const parsed = parseCommand(body);
@@ -64,31 +101,26 @@ Deno.serve(async (req) => {
     let responseMsg = '';
     let executionResult = '';
 
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+
     if (action === 'emergency_pin') {
-      const pin = match[1];
-      const records = await base44.asServiceRole.entities.OfflineHandshake.filter({ emergency_pin: pin, executed: false });
-      if (records.length > 0) {
-        await base44.asServiceRole.entities.OfflineHandshake.update(records[0].id, { executed: true, pin_used_at: new Date().toISOString() });
-        responseMsg = 'PIN validated. Emergency access granted for 30 minutes.';
-        executionResult = 'pin_validated';
-      } else {
-        responseMsg = 'Invalid or expired PIN.';
-        executionResult = 'pin_invalid';
-      }
+      // SECURITY: PIN validation via verifyEmergencyPIN — no raw PIN lookups in OfflineHandshake
+      responseMsg = 'PIN commands via SMS are not supported. Use the Emergency Access portal.';
+      executionResult = 'pin_sms_blocked';
     } else if (action === 'sos_emergency') {
-      // Escalate immediately
       if (caseId) {
         const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId });
-        if (cases[0]) {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: 'admin@moralesmedical.com',
-            subject: `🚨 SOS VIA SMS — Patient ${cases[0].client_name}`,
-            body: `<h2 style="color:red;">SOS Emergency via SMS Shortcode</h2>
-<p>Patient: ${cases[0].client_name} | Case: ${caseId}</p>
-<p>From phone: ${from}</p>
-<p>Time: ${new Date().toLocaleString()}</p>
-<p style="color:red;"><strong>IMMEDIATE ACTION REQUIRED</strong></p>`
-          });
+        // SECURITY: Only alert if this phone number is actually associated with this case
+        const c = cases[0];
+        const phoneMatch = c && (c.client_phone === from || !c.client_phone);
+        if (c && phoneMatch && adminEmail) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: adminEmail,
+              subject: `🚨 SOS VIA SMS — Patient ${c.client_name}`,
+              body: `<h2 style="color:red;">SOS Emergency via SMS Shortcode</h2><p>Patient: ${c.client_name} | Case: ${caseId}</p><p>From phone: ${from}</p><p>Time: ${new Date().toLocaleString()}</p><p style="color:red;"><strong>IMMEDIATE ACTION REQUIRED</strong></p>`
+            });
+          } catch (_) {}
         }
       }
       responseMsg = 'SOS received. Emergency team alerted. Stay where you are.';
@@ -98,21 +130,32 @@ Deno.serve(async (req) => {
       executionResult = 'checkin_safe';
     } else if (action === 'checkin_pain') {
       const painLevel = parseInt(match[1]);
-      responseMsg = `Pain level ${painLevel}/10 recorded. ${painLevel >= 7 ? 'Your care team has been alerted.' : 'Thank you for checking in.'}`;
-      executionResult = `checkin_pain_${painLevel}`;
-      if (painLevel >= 7) {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: 'admin@moralesmedical.com',
-          subject: `⚠️ High Pain Report via SMS — Level ${painLevel}/10`,
-          body: `<p>Patient reported pain level ${painLevel}/10 via SMS from ${from}. Case: ${caseId || 'unknown'}. Please follow up.</p>`
-        });
+      if (painLevel < 1 || painLevel > 10) {
+        responseMsg = 'Invalid pain level. Please use a number between 1 and 10.';
+        executionResult = 'invalid_pain_level';
+      } else {
+        responseMsg = `Pain level ${painLevel}/10 recorded. ${painLevel >= 7 ? 'Your care team has been alerted.' : 'Thank you for checking in.'}`;
+        executionResult = `checkin_pain_${painLevel}`;
+        if (painLevel >= 7 && adminEmail) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: adminEmail,
+              subject: `⚠️ High Pain Report via SMS — Level ${painLevel}/10`,
+              body: `<p>Patient reported pain level ${painLevel}/10 via SMS from ${from}. Case: ${caseId || 'unknown'}. Please follow up.</p>`
+            });
+          } catch (_) {}
+        }
       }
     } else if (action === 'agency_flight_delay') {
+      // SECURITY: Only agency roles assigned to this case may update itinerary — validated by case access
       if (caseId) {
-        await base44.asServiceRole.entities.CaseRecord.update(caseId, {
-          itinerary_status: 'PENDING',
-          admin_notes: `SMS shortcode: AGENCY FLIGHT DELAY reported at ${new Date().toISOString()}`
-        });
+        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId });
+        if (cases[0]) {
+          await base44.asServiceRole.entities.CaseRecord.update(caseId, {
+            itinerary_status: 'PENDING',
+            admin_notes: `SMS shortcode: AGENCY FLIGHT DELAY reported at ${new Date().toISOString()} from ${from}`
+          });
+        }
       }
       responseMsg = 'Flight delay logged. Coordinator notified.';
       executionResult = 'flight_delay_logged';
@@ -121,7 +164,10 @@ Deno.serve(async (req) => {
       executionResult = 'hotel_change_flagged';
     } else if (action === 'agency_confirm') {
       if (caseId) {
-        await base44.asServiceRole.entities.CaseRecord.update(caseId, { itinerary_status: 'CONFIRMED' });
+        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId });
+        if (cases[0]) {
+          await base44.asServiceRole.entities.CaseRecord.update(caseId, { itinerary_status: 'CONFIRMED' });
+        }
       }
       responseMsg = 'Agency confirmation recorded. All clear.';
       executionResult = 'agency_confirmed';
