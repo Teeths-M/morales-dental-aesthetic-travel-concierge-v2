@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Upload, MessageCircle, Calendar, HeartPulse, Users,
   Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle,
-  Plane, Star
+  Plane, Star, Lock, FileText
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import JourneyProgress from '@/components/dashboard/JourneyProgress';
@@ -32,6 +32,7 @@ const notifications = [
 ];
 
 const quickActions = [
+  { icon: Lock, label: 'My Vault', to: '/passport-vault', color: 'emerald' },
   { icon: Upload, label: 'Upload Documents', to: '/dashboard/documents', color: 'emerald' },
   { icon: MessageCircle, label: 'Message Coordinator', to: '/dashboard/messages', color: 'blue' },
   { icon: HeartPulse, label: 'View Recovery Plan', to: '/safe-t', color: 'sky' },
@@ -52,6 +53,15 @@ function DashboardHome({ user, consultations, language }) {
   const latestConsultation = consultations[0];
   const [matchedDoctors, setMatchedDoctors] = useState([]);
   const [outreachSent, setOutreachSent] = useState(false);
+  const [vaultCount, setVaultCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      base44.entities.PassportVault.filter({ user_email: user.email, status: 'active' }).then(vaults => {
+        setVaultCount(vaults.length);
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (latestConsultation?.procedure_interest) {
@@ -160,6 +170,35 @@ function DashboardHome({ user, consultations, language }) {
           </div>
         </div>
       )}
+
+      {/* Vault Summary Card */}
+      <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <Lock className="w-6 h-6 text-emerald-700" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 text-lg">Secure Document Vault</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {vaultCount === 0 
+                  ? 'No documents yet — upload your passport, tickets, and medical records' 
+                  : `${vaultCount} document${vaultCount > 1 ? 's' : ''} saved securely`}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <Link to="/passport-vault" className="flex-1">
+            <Button className="w-full h-12 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-base font-semibold">
+              <FileText className="w-5 h-5 mr-2" /> View My Documents
+            </Button>
+          </Link>
+        </div>
+        <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+          <Lock className="w-3 h-3" /> Zero-knowledge encrypted · Emergency PIN accessible
+        </p>
+      </div>
 
       {/* Coordinator Card */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">

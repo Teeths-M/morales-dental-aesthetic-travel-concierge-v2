@@ -189,47 +189,47 @@ export default function VaultDashboard({ user }) {
           {activeTab === 'documents' && (
             <div className="space-y-3">
               {vaults.map(vault => (
-                <div key={vault.id} className="flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-100 hover:bg-slate-50">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-2xl">
+                <div key={vault.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border-2 border-slate-100 hover:border-emerald-300 hover:bg-emerald-50/30 transition-all">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-3xl flex-shrink-0">
                       {getDocIcon(vault.document_type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate">
+                      <p className="text-base font-bold text-slate-800 truncate">
                         {vault.file_name}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {vault.document_type.replace(/_/g, ' ')} · {(vault.file_size_bytes / 1024).toFixed(1)} KB
+                      <p className="text-sm text-slate-600 mt-0.5">
+                        <span className="capitalize">{vault.document_type.replace(/_/g, ' ')}</span> · {(vault.file_size_bytes / 1024).toFixed(1)} KB
                       </p>
-                      <p className="text-xs text-slate-400">
-                        Uploaded {format(new Date(vault.uploaded_at), 'MMM d, yyyy')}
+                      <p className="text-xs text-slate-500 mt-1">
+                        Uploaded {format(new Date(vault.uploaded_at), 'MMMM d, yyyy')}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="outline"
-                      className="text-xs h-8"
+                      className="flex-1 sm:flex-none h-12 px-4 text-sm font-semibold"
                       onClick={() => handleDownload(vault)}
                     >
-                      <Download className="w-3 h-3" />
+                      <Download className="w-4 h-4 mr-2" /> Download
                     </Button>
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="outline"
-                      className="text-xs h-8"
+                      className="flex-1 sm:flex-none h-12 px-4 text-sm font-semibold"
                       onClick={() => handleCreateShareLink(vault)}
                     >
-                      <Share2 className="w-3 h-3" />
+                      <Share2 className="w-4 h-4 mr-2" /> Share
                     </Button>
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="outline"
-                      className="text-xs h-8 text-red-600 border-red-200 hover:bg-red-50"
+                      className="flex-1 sm:flex-none h-12 px-4 text-sm font-semibold text-red-600 border-red-200 hover:bg-red-50"
                       onClick={() => handleDelete(vault)}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
@@ -240,22 +240,26 @@ export default function VaultDashboard({ user }) {
           {activeTab === 'shares' && (
             <div className="space-y-3">
               {shareLinks.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No active share links</p>
+                <div className="text-center py-8">
+                  <Share2 className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">No active share links</p>
+                  <p className="text-xs text-slate-400 mt-1">Create a share link from any document to share securely</p>
+                </div>
               ) : (
                 shareLinks.map(link => (
-                  <div key={link.id} className="p-4 rounded-xl border border-slate-100">
+                  <div key={link.id} className="p-5 rounded-2xl border-2 border-slate-100">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">
+                        <p className="text-base font-bold text-slate-800 capitalize">
                           {link.purpose.replace(/_/g, ' ')} Share Link
                         </p>
-                        <p className="text-xs text-slate-500">
-                          Accesses: {link.access_count}/{link.max_access_count} · 
-                          Expires {format(new Date(link.expires_at), 'MMM d, h:mm a')}
+                        <p className="text-sm text-slate-600 mt-1">
+                          <strong>Accesses:</strong> {link.access_count}/{link.max_access_count} · 
+                          <strong className="ml-2">Expires:</strong> {format(new Date(link.expires_at), 'MMM d, yyyy h:mm a')}
                         </p>
                       </div>
-                      <Badge className={link.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                        {link.is_active ? 'Active' : 'Expired'}
+                      <Badge className={`text-sm px-3 py-1 ${link.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {link.is_active ? '✅ Active' : '❌ Expired'}
                       </Badge>
                     </div>
                   </div>
@@ -267,19 +271,23 @@ export default function VaultDashboard({ user }) {
           {activeTab === 'audit' && (
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {auditLogs.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No audit events yet</p>
+                <div className="text-center py-8">
+                  <Clock className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">No activity yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Your document access history will appear here</p>
+                </div>
               ) : (
                 auditLogs.map(log => (
-                  <div key={log.id} className="flex items-start gap-2.5 py-2 border-b border-border last:border-0">
+                  <div key={log.id} className="flex items-start gap-3 py-3 px-4 rounded-xl border border-slate-100 bg-slate-50">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-slate-700">
+                      <p className="text-sm font-semibold text-slate-800 capitalize">
                         {log.event_type?.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {format(new Date(log.timestamp), 'MMM d, yyyy h:mm a')}
+                      <p className="text-xs text-slate-500 mt-1">
+                        {format(new Date(log.timestamp), 'MMMM d, yyyy h:mm a')}
                       </p>
                     </div>
-                    <Badge className="text-xs bg-slate-100 text-slate-600">
+                    <Badge className={`text-xs px-2 py-1 ${log.sensitive ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
                       {log.sensitive ? '🔒 Sensitive' : 'Standard'}
                     </Badge>
                   </div>
