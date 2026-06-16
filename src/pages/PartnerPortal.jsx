@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -304,6 +304,12 @@ export default function PartnerPortal() {
                     <User className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
+                  <Link to="/partner-reviews" className="block">
+                    <Button className="w-full justify-start" variant="outline">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      My Reviews
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>

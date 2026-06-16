@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +40,8 @@ import {
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function PartnerVerificationHub() {
+  const navigate = useNavigate();
+  const { id: preselectedId } = useParams();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -286,6 +289,7 @@ export default function PartnerVerificationHub() {
                           onClick={() => {
                             setSelectedVerification(v);
                             setReviewDialogOpen(true);
+                            navigate(`/admin/partner-verification/${v.id}`);
                           }}
                         >
                           <Eye className="w-4 h-4 mr-1" />

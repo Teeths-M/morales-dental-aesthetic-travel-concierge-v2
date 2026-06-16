@@ -87,6 +87,8 @@ import GuardianView from './pages/GuardianView';
 import EmergencyPINAccess from './pages/EmergencyPINAccess';
 import ShareLinkViewer from './pages/ShareLinkViewer';
 import CheckInConfirm from './pages/CheckInConfirm';
+import PatientReviews from './pages/PatientReviews';
+import PartnerReviews from './pages/PartnerReviews';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -184,6 +186,10 @@ const AuthenticatedApp = () => {
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["travel_agency", "taxi_service", "companion", "doctor", "platform_admin", "admin"]} />}>
           <Route path="/partner-portal" element={<PartnerPortal />} />
+          <Route path="/partner-reviews" element={<PartnerReviews />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
+          <Route path="/my-reviews" element={<PatientReviews />} />
         </Route>
         {/* Demo/Test pages */}
         <Route path="/deep-perfection" element={<DeepPerfection />} />
@@ -228,6 +234,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/payments" element={<PaymentsPayoutsDashboard />} />
         <Route path="/admin/risk-optimization" element={<RiskOptimizationDashboard />} />
         <Route path="/admin/partner-verification" element={<PartnerVerificationHub />} />
+        <Route path="/admin/partner-verification/:id" element={<PartnerVerificationHub />} />
         <Route path="/admin/audit-log" element={<AdminAuditLog />} />
         <Route path="/admin/provider-performance" element={<ProviderPerformanceDashboard />} />
         <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
