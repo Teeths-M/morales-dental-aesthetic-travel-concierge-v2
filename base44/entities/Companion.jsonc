@@ -2,178 +2,131 @@
   "name": "Companion",
   "type": "object",
   "properties": {
-    "agency_name": {
-      "type": "string",
-      "description": "Name of the companion agency (required for agency signup)"
+    "full_legal_name": {
+      "type": "string"
     },
-    "contact_person": {
+    "age_tier": {
       "type": "string",
-      "description": "Primary contact person for the agency"
+      "enum": [
+        "40-45",
+        "46-50",
+        "51-55",
+        "55+"
+      ]
     },
-    "full_name": {
+    "neighborhood": {
       "type": "string",
-      "description": "Companion's full name (or agency name for agencies)"
+      "description": "e.g. Pampatar, Porlamar"
+    },
+    "city": {
+      "type": "string",
+      "description": "e.g. Margarita Island"
+    },
+    "culinary_specialties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Soups, Soft Foods, Diabetic-friendly, Allergy-safe, Traditional local"
+    },
+    "transit_mobility": {
+      "type": "string",
+      "enum": [
+        "neighborhood_only",
+        "city_wide",
+        "cook_only"
+      ],
+      "default": "neighborhood_only"
+    },
+    "care_comfort_affirmation": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "not_sure"
+      ],
+      "default": "yes",
+      "description": "Comfort level with post-surgical patient care"
+    },
+    "whatsapp_number": {
+      "type": "string"
+    },
+    "reference_1_name": {
+      "type": "string"
+    },
+    "reference_1_phone": {
+      "type": "string"
+    },
+    "reference_2_name": {
+      "type": "string"
+    },
+    "reference_2_phone": {
+      "type": "string"
+    },
+    "medical_nurse_history": {
+      "type": "string",
+      "description": "Optional background in nursing or healthcare"
     },
     "email": {
       "type": "string",
       "format": "email"
     },
-    "phone": {
-      "type": "string"
-    },
-    "country": {
-      "type": "string",
-      "description": "Country of residence"
-    },
-    "city": {
-      "type": "string",
-      "description": "City of residence"
-    },
-    "languages": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Languages spoken (e.g., English, Spanish, French)"
-    },
-    "primary_language": {
-      "type": "string",
-      "enum": [
-        "en",
-        "es",
-        "fr",
-        "pt",
-        "de",
-        "it"
-      ],
-      "default": "en"
-    },
-    "certifications": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Professional certifications (First Aid, Tour Guide, etc.)"
-    },
-    "specializations": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Areas of expertise (Medical Tourism, Cultural Tours, Adventure, etc.)"
-    },
-    "years_experience": {
-      "type": "number",
-      "default": 0
-    },
-    "bio": {
-      "type": "string",
-      "description": "Professional biography"
-    },
-    "photo_url": {
-      "type": "string",
-      "description": "Profile photo"
-    },
-    "hourly_rate_usd": {
-      "type": "number",
-      "description": "Hourly rate in USD"
-    },
-    "daily_rate_usd": {
-      "type": "number",
-      "description": "Daily rate in USD"
-    },
-    "service_regions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Geographic regions where companion offers services"
-    },
-    "available_for_medical_procedures": {
-      "type": "boolean",
-      "default": false,
-      "description": "Willing to assist patients during medical procedures"
-    },
-    "medical_training": {
-      "type": "string",
-      "description": "Any medical training or healthcare background"
-    },
-    "payout_method": {
-      "type": "string",
-      "enum": [
-        "stripe",
-        "paypal",
-        "wipay"
-      ],
-      "description": "Preferred payout method"
-    },
-    "payout_account": {
-      "type": "string",
-      "description": "Bank account or PayPal email"
-    },
     "verification_status": {
       "type": "string",
       "enum": [
-        "pending_verification",
-        "verifying",
+        "pending_interview",
+        "interview_scheduled",
         "verified",
-        "failed",
-        "manually_approved"
+        "rejected"
       ],
-      "default": "pending_verification"
+      "default": "pending_interview"
     },
-    "identity_verification_status": {
+    "admin_verification_notes": {
+      "type": "string"
+    },
+    "verified_at": {
       "type": "string",
-      "enum": [
-        "pending",
-        "passed",
-        "failed",
-        "manual_override"
-      ],
-      "default": "pending"
+      "format": "date-time"
     },
-    "background_check_status": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "passed",
-        "failed",
-        "manual_override"
-      ],
-      "default": "pending"
-    },
-    "license_verification_status": {
-      "type": "string",
-      "enum": [
-        "pending",
-        "passed",
-        "failed",
-        "manual_override"
-      ],
-      "default": "pending"
-    },
-    "verification_can_be_activated": {
-      "type": "boolean",
-      "default": false
+    "verified_by": {
+      "type": "string"
     },
     "status": {
       "type": "string",
       "enum": [
         "pending_verification",
         "active",
-        "inactive"
+        "inactive",
+        "suspended"
       ],
       "default": "pending_verification"
     },
-    "rating": {
-      "type": "number",
-      "default": 5.0
+    "is_available": {
+      "type": "boolean",
+      "default": true
     },
-    "review_count": {
+    "care_baseline_fee_usd": {
+      "type": "number",
+      "default": 40,
+      "description": "Daily baseline care fee (platform takes 15-20%)"
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "bank_transfer",
+        "whatsapp_pay",
+        "stripe"
+      ],
+      "default": "cash"
+    },
+    "payout_account": {
+      "type": "string"
+    },
+    "total_assignments": {
       "type": "number",
       "default": 0
     },
-    "total_bookings": {
+    "total_earned_usd": {
       "type": "number",
       "default": 0
     },
@@ -181,26 +134,17 @@
       "type": "number",
       "default": 0
     },
-    "is_available": {
-      "type": "boolean",
-      "default": true
-    },
-    "is_agency": {
-      "type": "boolean",
-      "default": false,
-      "description": "True if this is an agency, false if individual companion"
-    },
     "sign_up_completed_at": {
       "type": "string",
-      "description": "ISO timestamp"
+      "format": "date-time"
     }
   },
   "required": [
-    "agency_name",
-    "contact_person",
-    "email",
-    "phone",
-    "country",
-    "languages"
+    "full_legal_name",
+    "age_tier",
+    "neighborhood",
+    "culinary_specialties",
+    "transit_mobility",
+    "whatsapp_number"
   ]
 }

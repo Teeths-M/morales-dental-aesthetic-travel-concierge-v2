@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Lock, FileText, Activity } from 'lucide-react';
+import { ShieldCheck, Lock, Heart } from 'lucide-react';
 import KYPVerificationPanel from '@/components/verification/KYPVerificationPanel';
 import DoctorVerificationAdmin from './DoctorVerificationAdmin';
+import MothersTouchAdminPanel from '@/components/companion/MothersTouchAdminPanel';
 
 const TABS = [
-  { id: 'kyp', label: 'KYP — Partner Verification', icon: Lock },
-  { id: 'verimed', label: 'VeriMed — Doctor Registry', icon: ShieldCheck },
+  { id: 'kyp', label: "KYP — Partner Verification", icon: Lock },
+  { id: 'verimed', label: "VeriMed — Doctor Registry", icon: ShieldCheck },
+  { id: 'mothers_touch', label: "Mother's Touch Caregivers", icon: Heart },
 ];
 
 export default function PartnerVerificationHub() {
@@ -59,6 +61,11 @@ export default function PartnerVerificationHub() {
           {activeTab === 'verimed' && (
             <motion.div key="verimed" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <DoctorVerificationAdmin />
+            </motion.div>
+          )}
+          {activeTab === 'mothers_touch' && (
+            <motion.div key="mothers_touch" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <MothersTouchAdminPanel />
             </motion.div>
           )}
         </AnimatePresence>
