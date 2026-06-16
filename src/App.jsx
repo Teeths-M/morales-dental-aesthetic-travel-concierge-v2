@@ -87,7 +87,6 @@ import GuardianView from './pages/GuardianView';
 import EmergencyPINAccess from './pages/EmergencyPINAccess';
 import ShareLinkViewer from './pages/ShareLinkViewer';
 import CheckInConfirm from './pages/CheckInConfirm';
-import SkyEliteLanding from './pages/SkyEliteLanding';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -247,8 +246,6 @@ const AuthenticatedApp = () => {
       </Route>
       {/* Offline Mode — public accessible (works without internet) */}
       <Route path="/offline" element={<OfflineMode />} />
-      <Route path="/skyélite" element={<SkyEliteLanding />} />
-      <Route path="/skyelite" element={<SkyEliteLanding />} />
       {/* Travel A La Carte Services */}
       <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
         <Route path="/travel-services" element={<TravelServices />} />
