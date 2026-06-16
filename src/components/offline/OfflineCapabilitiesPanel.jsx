@@ -4,6 +4,23 @@ import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle
 
 // IndexedDB helper for offline document caching
 const OFFLINE_CACHE_KEY = 'morales_offline_vault';
+const MAX_VAULT_BYTES = 50 * 1024 * 1024; // 50 MB LRU cap
+
+// Prune localStorage vault entries exceeding MAX_VAULT_BYTES (LRU — oldest removed first)
+function pruneOfflineVault() {
+  try {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('morales_vault_doc_'));
+    const entries = keys.map(k => {
+      try { return { key: k, ...JSON.parse(localStorage.getItem(k)) }; } catch { return null; }
+    }).filter(Boolean).sort((a, b) => new Date(a.accessed_at || a.cached_at) - new Date(b.accessed_at || b.cached_at));
+    let total = entries.reduce((sum, e) => sum + (e.size_bytes || 0), 0);
+    for (const entry of entries) {
+      if (total <= MAX_VAULT_BYTES) break;
+      localStorage.removeItem(entry.key);
+      total -= (entry.size_bytes || 0);
+    }
+  } catch (_) {}
+}
 
 function generateQRToken(caseId, userId) {
   const payload = { case_id: caseId, user_id: userId, ts: Date.now(), nonce: Math.random().toString(36).slice(2) };
@@ -31,9 +48,20 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
   const [pinSaved, setPinSaved] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [copied, setCopied] = useState(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Show persistent "Syncing…" banner to prevent double-tap race conditions
+      const queue = JSON.parse(localStorage.getItem('morales_offline_queue') || '[]');
+      if (queue.length > 0) {
+        setSyncing(true);
+        // Give sync time to flush before hiding the banner
+        setTimeout(() => setSyncing(false), 4000);
+      }
+      pruneOfflineVault();
+    };
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -72,6 +100,13 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
   return (
     <div className="space-y-4">
       {/* Online/Offline status */}
+      {syncing && (
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3 border bg-blue-50 border-blue-300">
+          <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+          <p className="text-xs font-bold text-blue-800 flex-1">Syncing offline actions to server — please wait…</p>
+          <RefreshCw className="w-4 h-4 text-blue-500 animate-spin ml-auto" />
+        </div>
+      )}
       <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-300'}`}>
         <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
         <p className={`text-xs font-bold ${isOnline ? 'text-emerald-800' : 'text-amber-800'}`}>

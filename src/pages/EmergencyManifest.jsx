@@ -6,6 +6,21 @@ import { base44 } from '@/api/base44Client';
 // Data is fetched server-side after PIN verification and never stored in plaintext locally.
 
 const MANIFEST_STORAGE_KEY = 'morales_emergency_manifest';
+const MAX_MANIFEST_BYTES = 50 * 1024; // 50 KB — manifest is text-only, prune if oversized
+
+function safeStoreManifest(data) {
+  try {
+    const str = JSON.stringify(data);
+    if (str.length > MAX_MANIFEST_BYTES) return; // safety guard — never cache oversized payloads
+    localStorage.setItem(MANIFEST_STORAGE_KEY, str);
+  } catch (_) {
+    // Storage full — clear stale vault docs to make room, then retry once
+    try {
+      Object.keys(localStorage).filter(k => k.startsWith('morales_vault_doc_')).forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(MANIFEST_STORAGE_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
+}
 
 export default function EmergencyManifest() {
   const [pin, setPin] = useState('');
@@ -66,10 +81,8 @@ export default function EmergencyManifest() {
       cached_at: new Date().toISOString(),
     };
 
-    // Cache for offline use
-    try {
-      localStorage.setItem(MANIFEST_STORAGE_KEY, JSON.stringify(manifestData));
-    } catch (_) {}
+    // Cache for offline use (LRU-safe)
+    safeStoreManifest(manifestData);
 
     setManifest(manifestData);
     setLoading(false);
