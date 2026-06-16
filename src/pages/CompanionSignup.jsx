@@ -1,266 +1,474 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Heart, CheckCircle, ChefHat, MapPin, Phone, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Users, BookOpen, Award, MapPin, DollarSign, CheckCircle, ArrowRight, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-
-const CULINARY_OPTIONS = [
-  'Soups & Broths', 'Soft Foods', 'Diabetic-friendly', 'Allergy-safe', 'Traditional Local', 'Blended/Purée', 'Light Salads'
-];
-
-const AGE_TIERS = [
-  { value: '40-45', label: '40 – 45' },
-  { value: '46-50', label: '46 – 50' },
-  { value: '51-55', label: '51 – 55' },
-  { value: '55+',   label: '55 +' },
-];
-
-const MOBILITY_OPTIONS = [
-  { value: 'neighborhood_only', label: 'My neighborhood only', sub: 'Within walking / short ride distance' },
-  { value: 'city_wide',         label: 'City-wide',            sub: 'I can travel across the city' },
-  { value: 'cook_only',         label: 'Cook-only (no travel)', sub: 'I prepare meals for delivery, no in-person care' },
-];
 
 export default function CompanionSignup() {
   const navigate = useNavigate();
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-
-  const [form, setForm] = useState({
-    full_legal_name: '',
-    age_tier: '',
-    neighborhood: '',
-    culinary_specialties: [],
-    transit_mobility: '',
-    care_comfort_affirmation: '',
-    whatsapp_number: '',
-    reference_1_name: '',
-    reference_1_phone: '',
-    reference_2_name: '',
-    reference_2_phone: '',
-    medical_nurse_history: '',
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    agency_name: '',
+    contact_person: '',
+    email: '',
+    phone: '',
+    country: '',
+    city: '',
+    languages: [],
+    primary_language: 'en',
+    certifications: [],
+    specializations: [],
+    years_experience: 0,
+    bio: '',
+    hourly_rate_usd: 0,
+    daily_rate_usd: 0,
+    service_regions: [],
+    available_for_medical_procedures: false,
+    medical_training: '',
+    payout_method: 'stripe',
+    payout_account: '',
   });
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const commonLanguages = ['English', 'Spanish', 'French', 'Portuguese', 'German', 'Italian', 'Mandarin', 'Arabic'];
+  const commonSpecializations = ['Medical Tourism', 'Cultural Tours', 'Adventure Travel', 'Business Travel', 'Luxury Travel', 'Family Travel', 'Senior Care', 'Disability Assistance'];
+  const commonCertifications = ['First Aid Certified', 'CPR Certified', 'Tour Guide License', 'Medical Assistant', 'Nursing Background', 'Healthcare Professional', 'Customer Service Training'];
 
-  const toggleCulinary = (val) => {
-    setForm(f => ({
-      ...f,
-      culinary_specialties: f.culinary_specialties.includes(val)
-        ? f.culinary_specialties.filter(x => x !== val)
-        : [...f.culinary_specialties, val]
-    }));
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const canSubmit = form.full_legal_name && form.age_tier && form.neighborhood
-    && form.culinary_specialties.length > 0 && form.transit_mobility
-    && form.care_comfort_affirmation && form.whatsapp_number
-    && form.reference_1_name && form.reference_1_phone;
+  const handleArrayFieldToggle = (field, value) => {
+    setFormData(prev => {
+      const exists = prev[field].includes(value);
+      return {
+        ...prev,
+        [field]: exists ? prev[field].filter(item => item !== value) : [...prev[field], value]
+      };
+    });
+  };
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
-    setSubmitting(true);
+    setIsSubmitting(true);
     try {
-      await base44.entities.Companion.create({
-        ...form,
-        sign_up_completed_at: new Date().toISOString(),
-        verification_status: 'pending_interview',
-        status: 'pending_verification',
-        care_baseline_fee_usd: 40,
-        is_available: true,
+      const user = await base44.auth.me();
+      
+      const companionData = {
+        ...formData,
+        sign_up_completed_at: new Date().toISOString()
+      };
+
+      const companion = await base44.entities.Companion.create({
+        ...companionData,
+        full_name: companionData.agency_name, // Store agency name as full_name for compatibility
+        is_agency: true,
       });
-      setDone(true);
-    } catch (e) {
-      toast.error('Something went wrong. Please try again.');
+
+      // Initiate identity verification
+      try {
+        await base44.functions.invoke('initiateStripeIdentity', {
+          provider_id: companion.id,
+          provider_type: 'companion',
+          provider_email: formData.email,
+          provider_name: formData.full_name
+        });
+      } catch (error) {
+        console.error('Failed to initiate verification:', error);
+      }
+
+      toast.success('Companion agency profile created! Verification process initiated.');
+      navigate('/companion-dashboard');
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error('Failed to create companion agency profile. Please try again.');
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (done) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-rose-50 px-4">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-xl p-10 max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-5">
-            <Heart className="w-10 h-10 text-rose-500" />
-          </div>
-          <h2 className="text-2xl font-display font-bold text-slate-800 mb-2">You're registered! 🌸</h2>
-          <p className="text-slate-500 text-sm leading-relaxed mb-6">
-            Thank you for joining the Mother's Touch family. Our team will reach out via WhatsApp within 24 hours to schedule your 5-minute welcome call.
-          </p>
-          <p className="text-xs text-slate-400 mb-6">No exams. No paperwork. Just a friendly chat to get you started.</p>
-          <button onClick={() => navigate('/')}
-            className="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl transition-all">
-            Back to Home
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-amber-50 to-orange-50 py-12 px-4">
-      <div className="max-w-xl mx-auto">
-
-        {/* Hero header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-8 h-8 text-rose-500" />
-          </div>
-          <h1 className="text-3xl font-display font-bold text-slate-800">Mother's Touch</h1>
-          <p className="text-slate-500 mt-1 text-sm leading-relaxed max-w-sm mx-auto">
-            Join our network of warm caregivers — home-cooked meals & genuine human connection for recovering patients.
-          </p>
-          <div className="flex justify-center gap-4 mt-4 text-xs text-slate-400">
-            <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> No tech exams</span>
-            <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Zero upfront cost</span>
-            <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> 5-min WhatsApp call</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-lg p-7 space-y-7">
-
-          {/* 1. Full Legal Name */}
-          <Field icon={User} label="1. Full Legal Name" required>
-            <input value={form.full_legal_name} onChange={e => set('full_legal_name', e.target.value)}
-              placeholder="e.g. María Elena Rodríguez"
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
-          </Field>
-
-          {/* 2. Age Tier */}
-          <Field icon={User} label="2. Age Range" required>
-            <div className="grid grid-cols-4 gap-2">
-              {AGE_TIERS.map(t => (
-                <button key={t.value} type="button" onClick={() => set('age_tier', t.value)}
-                  className={`py-3 rounded-xl text-sm font-semibold border transition-all ${
-                    form.age_tier === t.value
-                      ? 'bg-rose-500 text-white border-rose-500'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-rose-300'
-                  }`}>
-                  {t.label}
-                </button>
-              ))}
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="agency_name">Agency Name *</Label>
+                <Input
+                  id="agency_name"
+                  value={formData.agency_name}
+                  onChange={(e) => handleInputChange('agency_name', e.target.value)}
+                  placeholder="e.g., Care Companions International"
+                />
+                <p className="text-xs text-muted-foreground">Must be a registered agency, not individuals</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact_person">Contact Person *</Label>
+                  <Input
+                    id="contact_person"
+                    value={formData.contact_person}
+                    onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                    placeholder="Agency representative"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Agency Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="agency@example.com"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Agency Phone *</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country *</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="United States"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="New York"
+                />
+              </div>
             </div>
-          </Field>
+          </div>
+        );
 
-          {/* 3. Location */}
-          <Field icon={MapPin} label="3. Neighborhood / City" required>
-            <input value={form.neighborhood} onChange={e => set('neighborhood', e.target.value)}
-              placeholder="e.g. Pampatar, Margarita Island"
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
-          </Field>
-
-          {/* 4. Culinary Specialties */}
-          <Field icon={ChefHat} label="4. What do you cook best?" required>
-            <div className="flex flex-wrap gap-2">
-              {CULINARY_OPTIONS.map(opt => (
-                <button key={opt} type="button" onClick={() => toggleCulinary(opt)}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                    form.culinary_specialties.includes(opt)
-                      ? 'bg-amber-400 text-white border-amber-400'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-amber-300'
-                  }`}>
-                  {form.culinary_specialties.includes(opt) && <CheckCircle className="w-3 h-3 inline mr-1" />}
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          {/* 5. Transit Mobility */}
-          <Field icon={MapPin} label="5. How far can you travel?" required>
+      case 2:
+        return (
+          <div className="space-y-6">
             <div className="space-y-2">
-              {MOBILITY_OPTIONS.map(opt => (
-                <button key={opt.value} type="button" onClick={() => set('transit_mobility', opt.value)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                    form.transit_mobility === opt.value
-                      ? 'bg-rose-50 border-rose-400 text-rose-800'
-                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-rose-200'
-                  }`}>
-                  <p className="text-sm font-semibold">{opt.label}</p>
-                  <p className="text-xs text-slate-400">{opt.sub}</p>
-                </button>
-              ))}
+              <Label>Languages Spoken *</Label>
+              <div className="flex flex-wrap gap-2">
+                {commonLanguages.map(lang => (
+                  <Badge
+                    key={lang}
+                    className={`cursor-pointer transition-all ${
+                      formData.languages.includes(lang)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary hover:bg-secondary/80'
+                    }`}
+                    onClick={() => handleArrayFieldToggle('languages', lang)}
+                  >
+                    {formData.languages.includes(lang) && <CheckCircle className="w-3 h-3 mr-1" />}
+                    {lang}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </Field>
-
-          {/* 6. Care Comfort Affirmation */}
-          <Field icon={Heart} label="6. Are you comfortable providing gentle in-person care & companionship to a patient recovering from surgery?" required>
-            <div className="grid grid-cols-2 gap-3">
-              {[{ v: 'yes', l: '✅ Yes, absolutely' }, { v: 'not_sure', l: '🤔 I\'m not sure yet' }].map(opt => (
-                <button key={opt.v} type="button" onClick={() => set('care_comfort_affirmation', opt.v)}
-                  className={`py-3 rounded-xl text-sm font-semibold border transition-all ${
-                    form.care_comfort_affirmation === opt.v
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-emerald-300'
-                  }`}>
-                  {opt.l}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <Label htmlFor="primary_language">Primary Language</Label>
+              <Select value={formData.primary_language} onValueChange={(val) => handleInputChange('primary_language', val)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="fr">French</SelectItem>
+                  <SelectItem value="pt">Portuguese</SelectItem>
+                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="it">Italian</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </Field>
-
-          {/* 7. WhatsApp + 2 References */}
-          <Field icon={Phone} label="7. Your WhatsApp Number + 2 References" required>
-            <input value={form.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value)}
-              placeholder="Your WhatsApp (e.g. +58 414 1234567)"
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-rose-300" />
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <input value={form.reference_1_name} onChange={e => set('reference_1_name', e.target.value)}
-                placeholder="Reference 1 — Name *"
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
-              <input value={form.reference_1_phone} onChange={e => set('reference_1_phone', e.target.value)}
-                placeholder="Phone / WhatsApp *"
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
+            <div className="space-y-2">
+              <Label htmlFor="years_experience">Years of Experience</Label>
+              <Input
+                id="years_experience"
+                type="number"
+                value={formData.years_experience}
+                onChange={(e) => handleInputChange('years_experience', parseInt(e.target.value) || 0)}
+                min="0"
+                max="50"
+              />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input value={form.reference_2_name} onChange={e => set('reference_2_name', e.target.value)}
-                placeholder="Reference 2 — Name"
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
-              <input value={form.reference_2_phone} onChange={e => set('reference_2_phone', e.target.value)}
-                placeholder="Phone / WhatsApp"
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
-            </div>
-          </Field>
-
-          {/* 8. Optional Medical Background */}
-          <Field icon={CheckCircle} label="8. Medical / Nurse Background (optional)">
-            <textarea value={form.medical_nurse_history} onChange={e => set('medical_nurse_history', e.target.value)}
-              placeholder="e.g. Retired nurse (15 yrs), Home-care aide, First aid certified — leave blank if none"
-              rows={3}
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-rose-200" />
-          </Field>
-
-          {/* Zero Out-of-Pocket notice */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
-            <p className="text-xs font-bold text-emerald-700 mb-0.5">💚 Zero Out-of-Pocket Guarantee</p>
-            <p className="text-xs text-emerald-600">You will NEVER spend your own money on groceries or transport. All costs are pre-approved or reimbursed same-day before you leave the patient's accommodation.</p>
           </div>
+        );
 
-          <button onClick={handleSubmit} disabled={!canSubmit || submitting}
-            className={`w-full py-4 rounded-2xl font-bold text-base transition-all ${
-              canSubmit ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-            }`}>
-            {submitting ? 'Submitting…' : 'Join the Mother\'s Touch Family 💛'}
-          </button>
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Certifications</Label>
+              <div className="flex flex-wrap gap-2">
+                {commonCertifications.map(cert => (
+                  <Badge
+                    key={cert}
+                    className={`cursor-pointer transition-all ${
+                      formData.certifications.includes(cert)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary hover:bg-secondary/80'
+                    }`}
+                    onClick={() => handleArrayFieldToggle('certifications', cert)}
+                  >
+                    {formData.certifications.includes(cert) && <CheckCircle className="w-3 h-3 mr-1" />}
+                    {cert}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Specializations</Label>
+              <div className="flex flex-wrap gap-2">
+                {commonSpecializations.map(spec => (
+                  <Badge
+                    key={spec}
+                    className={`cursor-pointer transition-all ${
+                      formData.specializations.includes(spec)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary hover:bg-secondary/80'
+                    }`}
+                    onClick={() => handleArrayFieldToggle('specializations', spec)}
+                  >
+                    {formData.specializations.includes(spec) && <CheckCircle className="w-3 h-3 mr-1" />}
+                    {spec}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio">Professional Bio</Label>
+              <Textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => handleInputChange('bio', e.target.value)}
+                placeholder="Tell us about your experience and what makes you a great companion..."
+                className="min-h-[120px]"
+              />
+            </div>
+          </div>
+        );
 
-          <p className="text-center text-xs text-slate-400">Our team will WhatsApp you within 24 hours for a friendly 5-minute welcome call. No technical questions. No exams.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="hourly_rate">Hourly Rate (USD)</Label>
+              <Input
+                id="hourly_rate"
+                type="number"
+                value={formData.hourly_rate_usd}
+                onChange={(e) => handleInputChange('hourly_rate_usd', parseFloat(e.target.value) || 0)}
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="daily_rate">Daily Rate (USD)</Label>
+              <Input
+                id="daily_rate"
+                type="number"
+                value={formData.daily_rate_usd}
+                onChange={(e) => handleInputChange('daily_rate_usd', parseFloat(e.target.value) || 0)}
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="service_regions">Service Regions</Label>
+              <Input
+                id="service_regions"
+                value={formData.service_regions.join(', ')}
+                onChange={(e) => handleInputChange('service_regions', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                placeholder="Caribbean, North America, Europe"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="medical_procedures"
+                checked={formData.available_for_medical_procedures}
+                onCheckedChange={(checked) => handleInputChange('available_for_medical_procedures', checked)}
+              />
+              <Label htmlFor="medical_procedures">Available for medical procedure assistance</Label>
+            </div>
+            {formData.available_for_medical_procedures && (
+              <div className="space-y-2">
+                <Label htmlFor="medical_training">Medical Training/Background</Label>
+                <Textarea
+                  id="medical_training"
+                  value={formData.medical_training}
+                  onChange={(e) => handleInputChange('medical_training', e.target.value)}
+                  placeholder="Describe any medical training or healthcare experience..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            )}
+          </div>
+        );
 
-function Field({ icon: Icon, label, required, children }) {
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="payout_method">Payout Method</Label>
+              <Select value={formData.payout_method} onValueChange={(val) => handleInputChange('payout_method', val)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stripe">Stripe (Bank Transfer)</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="wipay">Wipay</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payout_account">Payout Account</Label>
+              <Input
+                id="payout_account"
+                value={formData.payout_account}
+                onChange={(e) => handleInputChange('payout_account', e.target.value)}
+                placeholder={formData.payout_method === 'paypal' ? 'PayPal email' : 'Bank account details'}
+              />
+            </div>
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="font-semibold mb-2">Verification Process</h4>
+              <p className="text-sm text-muted-foreground">
+                After signup, you'll go through our 3-step verification:
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  Identity Verification (Stripe Identity)
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  Background Check (Checkr)
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  License/Certification Verification
+                </li>
+              </ul>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-4 h-4 text-rose-400 flex-shrink-0" />
-        <p className="text-sm font-semibold text-slate-700">{label}{required && <span className="text-rose-400 ml-0.5">*</span>}</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 border border-primary/40 mb-4">
+            <Users className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-4xl font-display font-bold text-foreground mb-2">
+            Become a Companion Agency
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Registered agencies only — provide reliable companion services for medical travelers
+          </p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <div key={s} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                  s <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {s < step ? <CheckCircle className="w-5 h-5" /> : s}
+                </div>
+                {s < 5 && (
+                  <div className={`w-12 md:w-24 h-1 mx-2 transition-all ${
+                    s < step ? 'bg-primary' : 'bg-muted'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+            <span>Agency Info</span>
+            <span>Languages</span>
+            <span>Qualifications</span>
+            <span>Services</span>
+            <span>Payout</span>
+          </div>
+        </div>
+
+        {/* Form Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {step === 1 && 'Agency Information'}
+              {step === 2 && 'Languages & Experience'}
+              {step === 3 && 'Certifications & Bio'}
+              {step === 4 && 'Services & Availability'}
+              {step === 5 && 'Payout & Verification'}
+            </CardTitle>
+            <CardDescription>
+              Step {step} of 5
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {renderStep()}
+
+            <div className="flex justify-between mt-8">
+              {step > 1 ? (
+                <Button variant="outline" onClick={() => setStep(step - 1)}>
+                  Back
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => navigate('/partner-signup')}>
+                  Cancel
+                </Button>
+              )}
+              
+              {step < 5 ? (
+                <Button onClick={() => setStep(step + 1)}>
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting || !formData.agency_name || !formData.contact_person || !formData.email || !formData.phone || !formData.country || formData.languages.length === 0}
+                >
+                  {isSubmitting ? 'Creating Profile...' : 'Complete Signup'}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      {children}
     </div>
   );
 }

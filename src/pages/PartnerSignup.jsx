@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plane, Car, Globe, User, Stethoscope, Shield } from 'lucide-react';
+import { Plane, Car, Globe, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { translations } from '@/lib/translations';
 
@@ -77,42 +77,7 @@ export default function PartnerSignup() {
         </div>
 
         {/* Partner Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mb-8 sm:mb-12">
-
-          {/* Doctor Card */}
-          <motion.div
-            className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.0 }}
-          >
-            <div className="h-36 sm:h-56 overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-700">
-              <img
-                src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=600&h=400&fit=crop"
-                alt="Medical doctor"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="p-4 sm:p-8 text-center">
-              <h2 className="text-lg sm:text-2xl font-display font-bold text-foreground mb-2">
-                {language === 'es' ? 'Médico / Clínica' : language === 'fr' ? 'Médecin / Clinique' : 'Doctor / Clinic'}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                {language === 'es'
-                  ? 'Únete a nuestra red médica verificada. Recibe pacientes de turismo médico internacional.'
-                  : language === 'fr'
-                  ? 'Rejoignez notre réseau médical vérifié. Recevez des patients en tourisme médical.'
-                  : 'Join our verified medical network. Receive international medical tourism patients.'}
-              </p>
-              <Button
-                onClick={() => navigate('/doctor-signup', { state: { language } })}
-                className="w-full bg-gradient-to-r from-teal-600 to-emerald-700 hover:opacity-90 text-white font-semibold py-3 rounded-xl gap-2 text-base"
-              >
-                <Stethoscope className="w-5 h-5" />
-                {language === 'es' ? 'Registrarse' : language === 'fr' ? 'S\'inscrire' : 'Sign up'}
-              </Button>
-            </div>
-          </motion.div>
+        <div className="grid sm:grid-cols-3 gap-4 sm:gap-8 mb-8 sm:mb-12">
           {/* Travel Agency Card */}
           <motion.div
             className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all overflow-hidden"
@@ -217,41 +182,6 @@ export default function PartnerSignup() {
               </Button>
             </div>
           </motion.div>
-          {/* Security Agency Card */}
-          <motion.div
-            className="bg-white rounded-3xl border-2 border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="h-36 sm:h-56 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-900">
-              <img
-                src="https://images.unsplash.com/photo-1614853316476-de00d14cb1fc?w=600&h=400&fit=crop"
-                alt="Security agency"
-                className="w-full h-full object-cover opacity-80"
-              />
-            </div>
-            <div className="p-4 sm:p-8 text-center">
-              <h2 className="text-lg sm:text-2xl font-display font-bold text-foreground mb-2">
-                {language === 'es' ? 'Agencia de Seguridad' : language === 'fr' ? 'Agence de Sécurité' : 'Security Agency'}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                {language === 'es'
-                  ? 'Protege pacientes VIP. Responde a alertas SOS y escoltas de protección cercana.'
-                  : language === 'fr'
-                  ? 'Protégez les patients VIP. Répondez aux alertes SOS et aux escortes de protection rapprochée.'
-                  : 'Protect VIP patients. Respond to SOS alerts, escorts, and close-protection details.'}
-              </p>
-              <Button
-                onClick={() => navigate('/security-signup', { state: { language } })}
-                className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:opacity-90 text-white font-semibold py-3 rounded-xl gap-2 text-base"
-              >
-                <Shield className="w-5 h-5" />
-                {language === 'es' ? 'Registrarse' : language === 'fr' ? 'S\'inscrire' : 'Sign up'}
-              </Button>
-            </div>
-          </motion.div>
-
         </div>
 
         {/* Footer */}

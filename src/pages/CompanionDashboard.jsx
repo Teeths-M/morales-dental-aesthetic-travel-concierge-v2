@@ -1,286 +1,513 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Heart, MapPin, ChefHat, DollarSign, Camera, CheckCircle,
-  Clock, AlertTriangle, Loader2, Upload, Receipt, TrendingUp, LogOut
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  User, 
+  Calendar, 
+  DollarSign, 
+  Star, 
+  CheckCircle, 
+  Clock, 
+  AlertTriangle,
+  Edit,
+  Save,
+  MapPin,
+  Globe,
+  Award,
+  TrendingUp,
+  MessageSquare,
+  Settings,
+  ClipboardCheck
 } from 'lucide-react';
+import CompanionHandshakePanel from '@/components/companion/CompanionHandshakePanel';
+import DietaryInfoCard from '@/components/companion/DietaryInfoCard';
 import { toast } from 'sonner';
 
 export default function CompanionDashboard() {
   const { user } = useAuth();
-  const qc = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState(null);
+  const queryClient = useQueryClient();
 
-  const { data: companion, isLoading: loadingProfile } = useQuery({
-    queryKey: ['mt_companion', user?.email],
-    queryFn: () => base44.entities.Companion.filter({ whatsapp_number: user?.phone || '__' })
-      .then(r => r[0] || null),
-    enabled: !!user,
+  const { data: companion, isLoading } = useQuery({
+    queryKey: ['companion', user?.email],
+    queryFn: async () => {
+      const companions = await base44.entities.Companion.filter({ email: user?.email });
+      return companions[0] || null;
+    },
+    enabled: !!user?.email
   });
 
-  // For demo purposes: load all active assignments for this companion
-  const { data: assignments = [], isLoading: loadingAssign } = useQuery({
-    queryKey: ['mt_assignments', companion?.id],
-    queryFn: () => base44.entities.MothersTouchAssignment.filter({ companion_id: companion?.id }),
-    enabled: !!companion?.id,
+  const { data: assignments = [] } = useQuery({
+    queryKey: ['companion_assignments', user?.id],
+    queryFn: () => base44.entities.CompanionAssignment.filter({ companion_user_id: user?.id }),
+    enabled: !!user?.id
   });
 
-  if (loadingProfile) return <LoadingScreen />;
-
-  const todayAssignments = assignments.filter(a => a.status === 'active' || a.status === 'scheduled');
-  const completedAssignments = assignments.filter(a => a.status === 'completed');
-  const totalEarned = completedAssignments.reduce((s, a) => s + (a.companion_net_care_fee_usd || 0), 0);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-amber-50 to-orange-50 pb-12">
-      {/* Header */}
-      <div className="bg-white border-b border-rose-100 px-5 py-4">
-        <div className="max-w-xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center">
-              <Heart className="w-5 h-5 text-rose-500" />
-            </div>
-            <div>
-              <p className="font-bold text-slate-800 text-sm">Mother's Touch</p>
-              <p className="text-xs text-slate-400">{companion?.full_legal_name || user?.full_name}</p>
-            </div>
-          </div>
-          <VerificationBadge status={companion?.verification_status} />
-        </div>
-      </div>
-
-      <div className="max-w-xl mx-auto px-4 py-6 space-y-5">
-
-        {/* Earnings strip */}
-        <div className="grid grid-cols-3 gap-3">
-          <StatCard label="This Month" value={`$${companion?.earnings_this_month?.toFixed(0) || 0}`} color="emerald" icon={DollarSign} />
-          <StatCard label="Total Earned" value={`$${totalEarned.toFixed(0)}`} color="amber" icon={TrendingUp} />
-          <StatCard label="Assignments" value={assignments.length} color="rose" icon={Heart} />
-        </div>
-
-        {/* Today's logistics */}
-        <Section title="Today's Assignments" subtitle="Patient name, address & dietary details">
-          {todayAssignments.length === 0 ? (
-            <EmptyCard icon={Clock} text="No active assignments today. Check back soon!" />
-          ) : (
-            todayAssignments.map(a => (
-              <TodayLogisticsCard key={a.id} assignment={a} onUpdate={() => qc.invalidateQueries(['mt_assignments'])} />
-            ))
-          )}
-        </Section>
-
-        {/* Earnings ledger */}
-        <Section title="Earnings Ledger" subtitle="Completed assignments & payment status">
-          {completedAssignments.length === 0 ? (
-            <EmptyCard icon={Receipt} text="Completed assignments will appear here." />
-          ) : (
-            completedAssignments.map(a => (
-              <EarningsRow key={a.id} assignment={a} />
-            ))
-          )}
-        </Section>
-
-      </div>
-    </div>
-  );
-}
-
-function TodayLogisticsCard({ assignment, onUpdate }) {
-  const [uploading, setUploading] = useState(false);
-  const [showReceipts, setShowReceipts] = useState(false);
-  const fileRef = useRef(null);
-
-  const totalReceipts = (assignment.grocery_receipts || []).reduce((s, r) => s + (r.amount_usd || 0), 0);
-
-  const handleReceiptUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const updatedReceipts = [
-        ...(assignment.grocery_receipts || []),
-        { receipt_url: file_url, amount_usd: 0, description: 'Grocery receipt', uploaded_at: new Date().toISOString() }
-      ];
-      await base44.entities.MothersTouchAssignment.update(assignment.id, { grocery_receipts: updatedReceipts });
-      toast.success('Receipt uploaded! Admin has been notified for reimbursement.');
-      onUpdate();
-    } catch {
-      toast.error('Upload failed. Please try again.');
-    } finally {
-      setUploading(false);
+  const updateMutation = useMutation({
+    mutationFn: async (data) => {
+      await base44.entities.Companion.update(companion.id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['companion']);
+      setIsEditing(false);
+      toast.success('Profile updated successfully');
+    },
+    onError: (error) => {
+      toast.error(`Failed to update: ${error.message}`);
     }
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate(editedData);
   };
 
-  const statusColor = assignment.status === 'active' ? 'bg-emerald-500' : 'bg-amber-400';
+  const startEditing = () => {
+    setEditedData(companion);
+    setIsEditing(true);
+  };
+
+  const getStatusBadge = () => {
+    if (!companion) return null;
+    
+    const config = {
+      pending_verification: { color: 'bg-gray-100 text-gray-800', icon: Clock, label: 'Pending Verification' },
+      verifying: { color: 'bg-blue-100 text-blue-800', icon: AlertTriangle, label: 'Under Review' },
+      verified: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Verified' },
+      failed: { color: 'bg-red-100 text-red-800', icon: AlertTriangle, label: 'Verification Failed' },
+      manually_approved: { color: 'bg-amber-100 text-amber-800', icon: CheckCircle, label: 'Manually Approved' }
+    };
+
+    const { color, icon: Icon, label } = config[companion.verification_status] || config.pending_verification;
+
+    return (
+      <Badge className={color}>
+        <Icon className="w-3 h-3 mr-1" />
+        {label}
+      </Badge>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!companion) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">No Companion Profile Found</h2>
+            <p className="text-muted-foreground mb-4">
+              You haven't created a companion profile yet.
+            </p>
+            <Button onClick={() => window.location.href = '/companion-signup'}>
+              Create Profile
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const displayData = isEditing ? editedData : companion;
 
   return (
-    <div className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
-      {/* Status bar */}
-      <div className={`${statusColor} h-1.5 w-full`} />
-      <div className="p-4 space-y-3">
-        {/* Patient & address */}
-        <div className="flex items-start justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background py-8 px-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <p className="font-bold text-slate-800">{assignment.patient_name}</p>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-rose-400" />
-              <span>{assignment.lodging_address || 'Address pending confirmation'}</span>
-            </div>
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+              Companion Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Manage your profile, bookings, and earnings
+            </p>
           </div>
-          <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${
-            assignment.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-          }`}>{assignment.status}</span>
-        </div>
-
-        {/* Dietary parameters */}
-        {assignment.dietary_parameters && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-start gap-2">
-            <ChefHat className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-0.5">Dietary Parameters</p>
-              <p className="text-xs text-amber-800">{assignment.dietary_parameters}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Fee breakdown */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Your Invoice Breakdown</p>
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Grocery reimbursement</span>
-              <span className="font-semibold text-slate-700">${totalReceipts.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Travel flat fee</span>
-              <span className="font-semibold text-slate-700">${(assignment.travel_flat_fee_usd || 10).toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between border-t border-slate-200 pt-1 mt-1">
-              <span className="font-semibold text-slate-700">Your care fee (net)</span>
-              <span className="font-bold text-emerald-700">${(assignment.companion_net_care_fee_usd || 0).toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Receipts */}
-        <div>
-          <button onClick={() => setShowReceipts(s => !s)}
-            className="text-xs text-rose-600 font-semibold flex items-center gap-1 mb-2">
-            <Receipt className="w-3.5 h-3.5" />
-            {(assignment.grocery_receipts || []).length} receipt(s) uploaded
-          </button>
-          <AnimatePresence>
-            {showReceipts && (
-              <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
-                <div className="space-y-1 mb-2">
-                  {(assignment.grocery_receipts || []).map((r, i) => (
-                    <a key={i} href={r.receipt_url} target="_blank" rel="noreferrer"
-                      className="flex items-center gap-2 text-xs text-blue-600 hover:underline">
-                      <Camera className="w-3 h-3" /> Receipt {i + 1} — ${r.amount_usd?.toFixed(2) || '0.00'}
-                    </a>
-                  ))}
-                </div>
-              </motion.div>
+          <Button onClick={isEditing ? handleSave : startEditing} disabled={updateMutation.isPending}>
+            {isEditing ? (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            ) : (
+              <>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Profile
+              </>
             )}
-          </AnimatePresence>
-
-          <input type="file" accept="image/*" ref={fileRef} onChange={handleReceiptUpload} className="hidden" />
-          <button onClick={() => fileRef.current?.click()} disabled={uploading}
-            className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 border border-rose-300 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl transition-all w-full justify-center">
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            {uploading ? 'Uploading…' : 'Upload Grocery Receipt'}
-          </button>
+          </Button>
         </div>
 
-        {/* Same-day checkout notice */}
-        {!assignment.client_checkout_confirmed && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5 text-xs text-blue-700">
-            <strong>Reminder:</strong> Client must confirm checkout before you leave. All groceries and travel costs will be paid same-day.
-          </div>
-        )}
-        {assignment.client_checkout_confirmed && (
-          <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold">
-            <CheckCircle className="w-4 h-4" /> Client checkout confirmed — payment processing
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        {/* Stats Grid */}
+        <div className="grid md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{companion.total_bookings || 0}</p>
+                  <p className="text-xs text-muted-foreground">Total Bookings</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">${companion.earnings_this_month?.toLocaleString() || 0}</p>
+                  <p className="text-xs text-muted-foreground">This Month</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+                  <Star className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{companion.rating?.toFixed(1) || '5.0'}</p>
+                  <p className="text-xs text-muted-foreground">Rating</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{companion.review_count || 0}</p>
+                  <p className="text-xs text-muted-foreground">Reviews</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-function EarningsRow({ assignment }) {
-  return (
-    <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 flex items-center justify-between">
-      <div>
-        <p className="text-sm font-semibold text-slate-700">{assignment.patient_name}</p>
-        <p className="text-xs text-slate-400">{assignment.created_at ? new Date(assignment.created_at).toLocaleDateString() : '—'}</p>
-      </div>
-      <div className="text-right">
-        <p className="font-bold text-emerald-700">${(assignment.companion_net_care_fee_usd || 0).toFixed(2)}</p>
-        <p className={`text-[10px] font-bold ${assignment.companion_paid_out ? 'text-emerald-600' : 'text-amber-600'}`}>
-          {assignment.companion_paid_out ? '✓ Paid' : 'Pending'}
-        </p>
-      </div>
-    </div>
-  );
-}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="assignments">
+              My Journeys
+              {assignments.length > 0 && <span className="ml-1.5 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 inline-flex items-center justify-center">{assignments.length}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="verification">Verification</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
 
-function VerificationBadge({ status }) {
-  const configs = {
-    verified: { label: 'Verified', color: 'bg-emerald-100 text-emerald-700' },
-    pending_interview: { label: 'Interview Pending', color: 'bg-amber-100 text-amber-700' },
-    interview_scheduled: { label: 'Interview Scheduled', color: 'bg-blue-100 text-blue-700' },
-    rejected: { label: 'Not Approved', color: 'bg-red-100 text-red-700' },
-  };
-  const cfg = configs[status] || configs.pending_interview;
-  return <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${cfg.color}`}>{cfg.label}</span>;
-}
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Stats</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status</span>
+                    {getStatusBadge()}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Availability</span>
+                    <Badge variant={companion.is_available ? 'default' : 'secondary'}>
+                      {companion.is_available ? 'Available' : 'Unavailable'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Hourly Rate</span>
+                    <span className="font-semibold">${companion.hourly_rate_usd}/hr</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Daily Rate</span>
+                    <span className="font-semibold">${companion.daily_rate_usd}/day</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-function StatCard({ label, value, color, icon: Icon }) {
-  const colors = {
-    emerald: 'bg-emerald-50 text-emerald-700',
-    amber: 'bg-amber-50 text-amber-700',
-    rose: 'bg-rose-50 text-rose-700',
-  };
-  return (
-    <div className={`${colors[color]} rounded-2xl px-4 py-3`}>
-      <Icon className="w-4 h-4 mb-1 opacity-70" />
-      <p className="text-lg font-bold">{value}</p>
-      <p className="text-[10px] opacity-70">{label}</p>
-    </div>
-  );
-}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Services</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{companion.service_regions?.join(', ') || 'Not specified'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{companion.languages?.join(', ') || 'Not specified'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{companion.certifications?.length || 0} Certifications</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-function Section({ title, subtitle, children }) {
-  return (
-    <div>
-      <div className="mb-3">
-        <p className="font-bold text-slate-800 text-sm">{title}</p>
-        <p className="text-xs text-slate-400">{subtitle}</p>
-      </div>
-      <div className="space-y-3">{children}</div>
-    </div>
-  );
-}
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Your professional profile details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Full Name</Label>
+                    {isEditing ? (
+                      <Input
+                        value={displayData.full_name || ''}
+                        onChange={(e) => setEditedData({ ...displayData, full_name: e.target.value })}
+                      />
+                    ) : (
+                      <p className="text-foreground font-medium">{companion.full_name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Email</Label>
+                    <p className="text-foreground">{companion.email}</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Phone</Label>
+                    {isEditing ? (
+                      <Input
+                        value={displayData.phone || ''}
+                        onChange={(e) => setEditedData({ ...displayData, phone: e.target.value })}
+                      />
+                    ) : (
+                      <p className="text-foreground">{companion.phone}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Location</Label>
+                    {isEditing ? (
+                      <Input
+                        value={displayData.city || ''}
+                        onChange={(e) => setEditedData({ ...displayData, city: e.target.value })}
+                        placeholder="City"
+                      />
+                    ) : (
+                      <p className="text-foreground">{companion.city}, {companion.country}</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label>Bio</Label>
+                  {isEditing ? (
+                    <Textarea
+                      value={displayData.bio || ''}
+                      onChange={(e) => setEditedData({ ...displayData, bio: e.target.value })}
+                      className="min-h-[100px]"
+                    />
+                  ) : (
+                    <p className="text-foreground">{companion.bio || 'No bio provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Languages</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {companion.languages?.map(lang => (
+                      <Badge key={lang} variant="secondary">{lang}</Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-function EmptyCard({ icon: Icon, text }) {
-  return (
-    <div className="bg-white border border-dashed border-slate-200 rounded-2xl py-8 text-center text-slate-400">
-      <Icon className="w-8 h-8 mx-auto mb-2 opacity-30" />
-      <p className="text-xs">{text}</p>
-    </div>
-  );
-}
+          <TabsContent value="verification">
+            <Card>
+              <CardHeader>
+                <CardTitle>Verification Status</CardTitle>
+                <CardDescription>Track your verification progress</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <User className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">Identity Verification</p>
+                        <p className="text-xs text-muted-foreground">Stripe Identity check</p>
+                      </div>
+                    </div>
+                    <Badge variant={companion.identity_verification_status === 'passed' ? 'default' : 'secondary'}>
+                      {companion.identity_verification_status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">Background Check</p>
+                        <p className="text-xs text-muted-foreground">Checkr screening</p>
+                      </div>
+                    </div>
+                    <Badge variant={companion.background_check_status === 'passed' ? 'default' : 'secondary'}>
+                      {companion.background_check_status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Award className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">License Verification</p>
+                        <p className="text-xs text-muted-foreground">Certification validation</p>
+                      </div>
+                    </div>
+                    <Badge variant={companion.license_verification_status === 'passed' ? 'default' : 'secondary'}>
+                      {companion.license_verification_status}
+                    </Badge>
+                  </div>
+                </div>
 
-function LoadingScreen() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-rose-50">
-      <div className="text-center">
-        <Heart className="w-10 h-10 text-rose-300 mx-auto mb-3 animate-pulse" />
-        <p className="text-slate-500 text-sm">Loading your dashboard…</p>
+                {companion.verification_can_be_activated && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 font-medium">
+                      ✓ All verifications complete! Your profile is ready for activation.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="assignments" className="space-y-4">
+            {assignments.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-10 text-muted-foreground">
+                  <ClipboardCheck className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                  <p>No active journey assignments yet.</p>
+                  <p className="text-sm mt-1">Your assigned patient journeys will appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              assignments.map(assignment => (
+                <Card key={assignment.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">{assignment.patient_name || 'Patient Journey'}</CardTitle>
+                      <Badge variant={assignment.status === 'active' ? 'default' : 'secondary'} className="capitalize">
+                        {assignment.status}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Assigned: {assignment.assigned_at ? new Date(assignment.assigned_at).toLocaleDateString() : 'Pending'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {assignment.can_translate && assignment.translation_tasks?.length > 0 && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">Your Translation Assignments:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {assignment.translation_tasks.map(task => (
+                            <Badge key={task} className="bg-blue-100 text-blue-700 text-xs">
+                              {task.replace(/_/g, ' ')}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dietary Info */}
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Patient Dietary & Allergy Info</p>
+                      <DietaryInfoCard caseId={assignment.case_id} />
+                    </div>
+
+                    {/* Handshakes */}
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Journey Checkpoints</p>
+                      <CompanionHandshakePanel caseId={assignment.case_id} />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Settings</CardTitle>
+                <CardDescription>Manage your preferences and payout</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Payout Method</Label>
+                    {isEditing ? (
+                      <select
+                        className="w-full p-2 border rounded-md"
+                        value={displayData.payout_method || 'stripe'}
+                        onChange={(e) => setEditedData({ ...displayData, payout_method: e.target.value })}
+                      >
+                        <option value="stripe">Stripe</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="wipay">Wipay</option>
+                      </select>
+                    ) : (
+                      <p className="text-foreground capitalize">{companion.payout_method}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Payout Account</Label>
+                    {isEditing ? (
+                      <Input
+                        value={displayData.payout_account || ''}
+                        onChange={(e) => setEditedData({ ...displayData, payout_account: e.target.value })}
+                      />
+                    ) : (
+                      <p className="text-foreground">{companion.payout_account || 'Not set'}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="availability"
+                    checked={isEditing ? displayData.is_available : companion.is_available}
+                    onChange={(e) => isEditing && setEditedData({ ...displayData, is_available: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="availability">Available for bookings</Label>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
