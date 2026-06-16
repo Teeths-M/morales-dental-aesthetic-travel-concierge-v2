@@ -1,0 +1,119 @@
+{
+  "name": "LuggageToken",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "token_code": {
+      "type": "string",
+      "description": "Unique QR token e.g. LUG_XXXXXXXX"
+    },
+    "bag_label": {
+      "type": "string",
+      "description": "e.g. 'Black rolling suitcase', 'Blue duffel'"
+    },
+    "bag_number": {
+      "type": "integer",
+      "description": "1, 2, 3 for multiple bags"
+    },
+    "airline_pnr": {
+      "type": "string",
+      "description": "Passenger Name Record / booking reference"
+    },
+    "airline_code": {
+      "type": "string",
+      "description": "e.g. AA, BA, LH"
+    },
+    "flight_number": {
+      "type": "string"
+    },
+    "origin_airport": {
+      "type": "string",
+      "description": "IATA code e.g. MIA"
+    },
+    "destination_airport": {
+      "type": "string",
+      "description": "IATA code e.g. CCS"
+    },
+    "current_status": {
+      "type": "string",
+      "enum": [
+        "registered",
+        "checked_in",
+        "loaded",
+        "in_transit",
+        "transferred",
+        "arrived",
+        "claimed",
+        "lost",
+        "found",
+        "returned"
+      ],
+      "default": "registered"
+    },
+    "status_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "description": "manual | sita | airline_api | finder_scan"
+          }
+        }
+      }
+    },
+    "last_seen_location": {
+      "type": "string"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lost_reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lost_claim_reference": {
+      "type": "string"
+    },
+    "finder_contact_token": {
+      "type": "string",
+      "description": "Public token for secure finder portal \u2014 no PII exposed"
+    },
+    "return_coordinated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email",
+    "token_code"
+  ]
+}
