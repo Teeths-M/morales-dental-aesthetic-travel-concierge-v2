@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   MapPin, CheckCircle2, Clock, Compass,
-  Sun, CloudRain, AlertTriangle, Luggage, Moon
+  Sun, CloudRain, AlertTriangle, Luggage, Moon, Radio
 } from 'lucide-react';
 import BaggageTracker from '@/components/baggage/BaggageTracker';
 import RecoveryModePanel from '@/components/recovery/RecoveryModePanel';
 import ActivitySafetyAdvisor from '@/components/activity/ActivitySafetyAdvisor';
+import IQ200EnginePanel from '@/components/journey/IQ200EnginePanel';
 
 const roadmap = [
   { phase: 'Pre-Travel', color: 'blue', steps: ['Documents ready', 'Medical clearance obtained', 'Packing guide reviewed', 'Medications prepared'] },
@@ -58,6 +59,7 @@ export default function JourneyModule() {
       <div className="flex gap-2">
         {[
           { id: 'journey', label: 'Roadmap', icon: MapPin },
+          { id: 'iq200', label: 'iQ200 Engine', icon: Radio },
           { id: 'baggage', label: 'Baggage', icon: Luggage },
           { id: 'recovery', label: 'Recovery', icon: Moon },
           { id: 'activities', label: 'Adventures', icon: MapPin },
@@ -72,6 +74,13 @@ export default function JourneyModule() {
           </button>
         ))}
       </div>
+
+      {/* iQ200 Engine Tab */}
+      {activeTab === 'iq200' && (
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
+          <IQ200EnginePanel caseId={DEMO_CASE_ID} />
+        </div>
+      )}
 
       {/* Baggage Tab */}
       {activeTab === 'baggage' && (
