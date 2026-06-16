@@ -1,5 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sha256(text) {
+  const msgBuffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Allowlist of valid event types — matches AuditLog entity enum exactly
 const ALLOWED_EVENT_TYPES = [
   'sensitive_profile_viewed',
@@ -53,6 +59,21 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
+    // HASH CHAIN: Fetch the most recent audit log entry to compute the chain link.
+    // If no previous entry exists, use the sentinel value "GENESIS".
+    // This makes any deletion or modification of a log entry detectable —
+    // the hash of the tampered record will no longer match the next entry's prev_hash.
+    let prevHash = 'GENESIS';
+    try {
+      const lastEntries = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+      if (lastEntries && lastEntries.length > 0) {
+        prevHash = await sha256(JSON.stringify(lastEntries[0]));
+      }
+    } catch (_) {
+      // Non-fatal: if the chain lookup fails, log with GENESIS rather than blocking the audit
+      prevHash = 'GENESIS_FALLBACK';
+    }
+
     // SECURITY: actor_id, actor_role, actor_email, and sensitive flag are ALWAYS derived
     // from the authenticated session — callers cannot forge these fields.
     // asServiceRole write is safe here — all actor fields are derived from the verified
@@ -70,6 +91,7 @@ Deno.serve(async (req) => {
       details: details || {},
       sensitive: false, // Only internal server-side code (not callers) may log sensitive events
       timestamp: new Date().toISOString(),
+      prev_hash: prevHash,
     });
 
     return Response.json({ success: true, audit_id: auditEntry.id });

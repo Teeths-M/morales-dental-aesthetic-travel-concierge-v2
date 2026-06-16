@@ -24,7 +24,9 @@
         "handshake_created",
         "handshake_completed",
         "case_accessed",
-        "role_escalation_attempt"
+        "role_escalation_attempt",
+        "safe_t_critical_block",
+        "safe_t_high_risk_waiver_signed"
       ]
     },
     "actor_id": {
@@ -67,6 +69,10 @@
     "timestamp": {
       "type": "string",
       "format": "date-time"
+    },
+    "prev_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the previous AuditLog entry \u2014 forms a tamper-evident hash chain. GENESIS for the first entry."
     }
   },
   "required": [

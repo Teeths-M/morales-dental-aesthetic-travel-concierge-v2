@@ -72,9 +72,19 @@ export async function encryptFile(file) {
   const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)));
   const ivB64 = btoa(String.fromCharCode(...iv));
 
+  // ALGORITHM ENVELOPE: wrap ciphertext with algorithm metadata so the vault can
+  // detect the cipher used on decryption and support future algorithm rotation
+  // (e.g., migrating to a post-quantum hybrid cipher) without breaking existing vaults.
+  const envelope = {
+    alg: 'AES-256-GCM',      // cipher identifier — bump this on algorithm rotation
+    v: 1,                      // envelope schema version
+    ciphertext: encryptedB64,
+  };
+  const envelopeB64 = btoa(JSON.stringify(envelope));
+
   // SECURITY: keyB64 is NEVER returned to callers — it is stored only in sessionStorage.
   // Returning it in the result object risks it being logged, serialized, or transmitted.
-  return { encryptedB64, ivB64, hashB64, fileSizeBytes: file.size, tempKeyRef: tempRef };
+  return { encryptedB64: envelopeB64, ivB64, hashB64, fileSizeBytes: file.size, tempKeyRef: tempRef };
 }
 
 /**
@@ -117,7 +127,23 @@ export async function decryptFile(passportToken, mimeType = 'image/jpeg') {
   // Fetch the encrypted blob
   const blobRes = await fetch(signed_url);
   if (!blobRes.ok) throw new Error('Failed to fetch encrypted file');
-  const encryptedBytes = new Uint8Array(await blobRes.arrayBuffer());
+  const rawBytes = new Uint8Array(await blobRes.arrayBuffer());
+
+  // ALGORITHM ENVELOPE: unwrap the envelope to extract the raw ciphertext.
+  // Supports legacy vaults (raw ciphertext, no envelope) for backward compatibility.
+  let encryptedBytes;
+  try {
+    const envelopeStr = atob(String.fromCharCode(...rawBytes));
+    const envelope = JSON.parse(envelopeStr);
+    if (envelope?.alg && envelope?.ciphertext) {
+      // Future: if envelope.alg !== 'AES-256-GCM', route to the appropriate decryptor
+      encryptedBytes = Uint8Array.from(atob(envelope.ciphertext), c => c.charCodeAt(0));
+    } else {
+      encryptedBytes = rawBytes; // legacy vault — no envelope
+    }
+  } catch (_) {
+    encryptedBytes = rawBytes; // legacy vault — raw ciphertext, not JSON-wrapped
+  }
 
   const iv = Uint8Array.from(atob(encryption_iv_b64), c => c.charCodeAt(0));
 
