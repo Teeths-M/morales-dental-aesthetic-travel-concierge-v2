@@ -1,0 +1,91 @@
+{
+  "name": "ManualVerificationQueue",
+  "type": "object",
+  "properties": {
+    "doctor_id": {
+      "type": "string"
+    },
+    "doctor_name": {
+      "type": "string"
+    },
+    "license_number": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "specialty": {
+      "type": "string"
+    },
+    "document_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Uploaded credential document URLs"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "escalate_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "48-hour escalation deadline"
+    },
+    "escalated": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "doctor_id",
+    "license_number",
+    "country",
+    "submitted_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

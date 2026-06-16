@@ -42,6 +42,18 @@
       "type": "string",
       "description": "URL to uploaded medical license"
     },
+    "license_number": {
+      "type": "string",
+      "description": "Official medical license number"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country of medical license issuance"
+    },
+    "specialty": {
+      "type": "string",
+      "description": "Medical specialty"
+    },
     "license_verified": {
       "type": "boolean",
       "default": false
@@ -53,10 +65,32 @@
         "verifying",
         "verified",
         "failed",
-        "manually_approved"
+        "manually_approved",
+        "pending_manual",
+        "rejected",
+        "suspended"
       ],
       "default": "pending_verification",
-      "description": "Overall verification state (blocks 'active' status)"
+      "description": "Overall verification state"
+    },
+    "verification_method": {
+      "type": "string",
+      "enum": [
+        "government_registry",
+        "advisory_team",
+        "manual_upload"
+      ],
+      "description": "How the doctor was verified"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When verification was completed"
+    },
+    "credential_verified_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date credentials were last verified"
     },
     "verification_confidence": {
       "type": "number",
@@ -98,8 +132,8 @@
     },
     "verification_can_be_activated": {
       "type": "boolean",
-      "description": "Computed: true only if all three checks are passed OR manually overridden",
-      "default": false
+      "default": false,
+      "description": "True only if all checks passed or overridden"
     },
     "payout_method": {
       "type": "string",
@@ -107,12 +141,10 @@
         "stripe",
         "paypal",
         "wipay"
-      ],
-      "description": "Preferred payout method"
+      ]
     },
     "payout_account": {
-      "type": "string",
-      "description": "Bank account or PayPal email"
+      "type": "string"
     },
     "language_preference": {
       "type": "string",
@@ -145,8 +177,7 @@
     },
     "successful_procedures_count": {
       "type": "number",
-      "default": 0,
-      "description": "Number of successful procedures completed"
+      "default": 0
     },
     "portfolio": {
       "type": "array",
@@ -157,8 +188,7 @@
             "type": "number"
           },
           "url": {
-            "type": "string",
-            "description": "URL to uploaded image or video"
+            "type": "string"
           },
           "type": {
             "type": "string",
@@ -174,12 +204,10 @@
             "type": "string"
           }
         }
-      },
-      "description": "Portfolio items (images and videos)"
+      }
     },
     "sign_up_completed_at": {
-      "type": "string",
-      "description": "ISO timestamp"
+      "type": "string"
     }
   },
   "required": [

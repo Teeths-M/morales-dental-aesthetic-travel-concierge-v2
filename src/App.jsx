@@ -44,6 +44,7 @@ import ConsultationForm from './pages/ConsultationForm';
 import ConsultationSuccess from './pages/ConsultationSuccess';
 import PortalDoctor from './pages/PortalDoctor';
 import DoctorLicenseVerification from './pages/DoctorLicenseVerification';
+import DoctorVerificationAdmin from './pages/DoctorVerificationAdmin';
 import AdminPortalViewer from './pages/AdminPortalViewer';
 import AdminSms from './pages/AdminSms';
 import StandalonePayment from './pages/StandalonePayment';
@@ -173,6 +174,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/partners" element={<AdminPartners />} />
         <Route path="/admin/imports" element={<AdminImports />} />
         <Route path="/admin/doctor-verification" element={<DoctorLicenseVerification />} />
+        <Route path="/admin/doctor-verification-queue" element={<DoctorVerificationAdmin />} />
         <Route path="/admin/procedure-requests" element={<AdminProcedureRequests />} />
         <Route path="/admin/portal-viewer" element={<AdminPortalViewer />} />
         <Route path="/admin/sms" element={<AdminSms />} />

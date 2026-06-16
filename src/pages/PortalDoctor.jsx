@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import CredentialBadge from '@/components/doctors/CredentialBadge';
 import { base44 } from '@/api/base44Client';
 import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
 
@@ -230,6 +231,11 @@ export default function PortalDoctor() {
             <p className="text-muted-foreground">
               Patient: {caseData?.client_name || 'N/A'} | Procedure: {caseData?.procedures?.join(', ') || 'N/A'}
             </p>
+            {caseData?.doctor_verification_status && (
+              <div className="mt-2">
+                <CredentialBadge doctor={{ verification_status: caseData.doctor_verification_status, verification_method: caseData.doctor_verification_method, credential_verified_date: caseData.doctor_credential_verified_date }} />
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
