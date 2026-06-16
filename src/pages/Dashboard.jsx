@@ -23,6 +23,7 @@ import SupportModule from '@/components/dashboard/modules/SupportModule';
 import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
+import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
 
 const notifications = [
   { type: 'warning', text: 'Lab work still required for medical clearance', time: '2h ago' },
@@ -75,6 +76,7 @@ function DashboardHome({ user, consultations, language }) {
   return (
     <div className="space-y-6">
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
+      <SoloCheckInBanner />
       {/* Welcome Header */}
       <motion.div
         className="bg-gradient-to-r from-emerald-800 to-blue-900 rounded-2xl p-6 text-white shadow-lg"

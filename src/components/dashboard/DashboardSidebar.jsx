@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ClipboardList, User, FileText, CalendarDays,
   MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight,
-  Stethoscope, Plane, Users, AlertTriangle, Mountain
+  Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio
 } from 'lucide-react';
 
 const navItems = [
@@ -19,6 +19,7 @@ const navItems = [
   { icon: Plane, label: 'Visa Assist', path: '/visa-assist' },
   { icon: Map, label: 'My Journey', path: '/dashboard/journey' },
   { icon: Mountain, label: 'Adventure Safety', path: '/dashboard/adventure' },
+  { icon: Radio, label: 'Solo Check-In', path: '/dashboard/solo-checkin' },
   { icon: AlertTriangle, label: 'Emergency Center', path: '/emergency' },
   { icon: Headphones, label: 'Support', path: '/dashboard/support' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },

@@ -1,0 +1,116 @@
+{
+  "name": "SoloCheckIn",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "Same as case_id for now \u2014 unique trip identifier"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_phone": {
+      "type": "string"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "responded_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "response_method": {
+      "type": "string",
+      "enum": [
+        "app",
+        "sms",
+        "voice",
+        "emergency_pin"
+      ],
+      "default": "app"
+    },
+    "location_lat": {
+      "type": "number"
+    },
+    "location_lng": {
+      "type": "number"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "escalation_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "contact_notified",
+        "security_dispatched"
+      ],
+      "default": "none"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "acknowledged",
+        "escalated_2h",
+        "escalated_3h",
+        "resolved"
+      ],
+      "default": "pending"
+    },
+    "check_in_round": {
+      "type": "number",
+      "default": 1,
+      "description": "Which check-in in the sequence (1, 2, 3...)"
+    },
+    "is_paused_medical": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if paused due to medical procedure"
+    },
+    "pause_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "emergency_contact_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "voice_call_attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "security_dispatched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "user_email",
+    "scheduled_time"
+  ]
+}

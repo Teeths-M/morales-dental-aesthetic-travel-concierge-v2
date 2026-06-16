@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, CheckSquare, Square, Users, Heart } from 'lucide-react';
+import { AlertCircle, CheckSquare, Square, Users, Heart, Radio } from 'lucide-react';
 
 const AGE_THRESHOLD = 65;
 
@@ -183,6 +183,19 @@ export default function SectionAgeCompanion({ form, update, showValidation = fal
         <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
           <CheckSquare className="w-5 h-5 text-emerald-600 shrink-0" />
           <p className="text-sm text-emerald-800">Your profile meets standard eligibility for an unaccompanied care journey. You are welcome to bring a companion of your choice.</p>
+        </div>
+      )}
+
+      {/* Solo Traveler Notice */}
+      {!showCompanionCard && !waiverDeclined && (
+        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <Radio className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-blue-800 text-sm mb-1">Solo Traveler Safety Protocol</p>
+            <p className="text-xs text-blue-700 leading-relaxed">
+              As you're traveling alone, mandatory safety check-ins will be activated for your journey. You'll receive notifications every 12 hours to confirm you're safe. This cannot be disabled but can be paused during medical procedures.
+            </p>
+          </div>
         </div>
       )}
 
