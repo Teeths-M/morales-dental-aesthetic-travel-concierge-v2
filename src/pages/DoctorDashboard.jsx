@@ -6,6 +6,7 @@ import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
 import ProcedureRequestForm from '@/components/doctor-dashboard/ProcedureRequestForm';
+import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -129,11 +130,15 @@ export default function DoctorDashboard() {
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-12">
+          <div className="mb-6">
+          <DoctorVerificationPanel user={user} />
+          </div>
+
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-4xl font-bold text-foreground">My Dashboard</h1>
-              <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Secure Access</span>
-            </div>
+          <div className="flex items-center gap-2">
+          <h1 className="text-4xl font-bold text-foreground">My Dashboard</h1>
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Secure Access</span>
+          </div>
             <div className="flex items-center gap-2">
               <Link to="/partner-reviews" className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-secondary/20 flex items-center gap-1.5">
                 <Star className="w-4 h-4 text-amber-500" /> My Reviews
@@ -159,6 +164,7 @@ export default function DoctorDashboard() {
                 <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
                 <TabsTrigger value="pricing">My Pricing</TabsTrigger>
                 <TabsTrigger value="requests">Request Procedure</TabsTrigger>
+                <TabsTrigger value="verification">License Verification</TabsTrigger>
               </TabsList>
             </div>
 
@@ -415,6 +421,12 @@ export default function DoctorDashboard() {
 
             <TabsContent value="requests" className="p-8">
               <ProcedureRequestForm onSuccess={() => setActiveTab('profile')} />
+            </TabsContent>
+
+            <TabsContent value="verification" className="p-8">
+              <h3 className="text-lg font-bold text-foreground mb-4">Medical License Verification</h3>
+              <p className="text-sm text-muted-foreground mb-6">Verify your medical license against your country's official government registry. Verified doctors receive a "✅ Verified by Morales" badge on their profile.</p>
+              <DoctorVerificationPanel user={user} />
             </TabsContent>
           </Tabs>
         </div>

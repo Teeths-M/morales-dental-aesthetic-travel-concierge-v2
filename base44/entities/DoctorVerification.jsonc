@@ -1,0 +1,128 @@
+{
+  "name": "DoctorVerification",
+  "type": "object",
+  "properties": {
+    "doctor_id": {
+      "type": "string",
+      "description": "References User with role = doctor"
+    },
+    "doctor_name": {
+      "type": "string"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "country": {
+      "type": "string"
+    },
+    "registration_number": {
+      "type": "string"
+    },
+    "specialty": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "auto_verified",
+        "manual_review",
+        "verified",
+        "denied",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "verification_method": {
+      "type": "string",
+      "enum": [
+        "api",
+        "manual",
+        "admin_override"
+      ],
+      "description": "How the verification was completed"
+    },
+    "registry_name": {
+      "type": "string",
+      "description": "e.g. GMC (UK)"
+    },
+    "registry_url": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "1 year from verification"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "renewal_reminder_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Manual review comments"
+    },
+    "admin_reviewer_id": {
+      "type": "string"
+    },
+    "admin_reviewer_name": {
+      "type": "string"
+    },
+    "denial_reason": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "doctor_id",
+    "country",
+    "registration_number",
+    "verification_status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.doctor_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -91,6 +91,7 @@ import PatientReviews from './pages/PatientReviews';
 import PartnerReviews from './pages/PartnerReviews';
 import AdminAuditChain from './pages/AdminAuditChain';
 import EmergencyManifest from './pages/EmergencyManifest';
+import AdminDoctorVerificationQueue from './pages/AdminDoctorVerificationQueue';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -241,6 +242,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/provider-performance" element={<ProviderPerformanceDashboard />} />
         <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
         <Route path="/admin/audit-chain" element={<AdminAuditChain />} />
+        <Route path="/admin/doctor-verification" element={<AdminDoctorVerificationQueue />} />
       </Route>
       {/* Public — Guardian View link (no auth, token-gated) */}
       <Route path="/guardian/:token" element={<GuardianView />} />

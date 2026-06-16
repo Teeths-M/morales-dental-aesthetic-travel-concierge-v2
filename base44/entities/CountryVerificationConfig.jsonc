@@ -1,0 +1,75 @@
+{
+  "name": "CountryVerificationConfig",
+  "type": "object",
+  "properties": {
+    "country": {
+      "type": "string"
+    },
+    "country_code": {
+      "type": "string",
+      "description": "ISO 2-letter code"
+    },
+    "verification_type": {
+      "type": "string",
+      "enum": [
+        "api",
+        "manual",
+        "hybrid"
+      ],
+      "default": "manual"
+    },
+    "api_endpoint": {
+      "type": "string",
+      "description": "URL for API-based verification, if available"
+    },
+    "api_key_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "registry_url": {
+      "type": "string"
+    },
+    "registry_name": {
+      "type": "string"
+    },
+    "verification_fields": {
+      "type": "object",
+      "description": "Fields required for verification lookup"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "country",
+    "verification_type",
+    "registry_url",
+    "registry_name"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Star, Stethoscope, Clock, Award } from 'lucide-react';
 import TrustBadge from './TrustBadge';
+import DoctorVerifiedBadge from '@/components/doctor/DoctorVerifiedBadge';
 
 const SPECIALTY_COLORS = {
   dental: 'bg-blue-50 text-blue-700',
@@ -48,8 +49,9 @@ export default function DoctorCard({ doctor }) {
             {doctor.clinic_name && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate">{doctor.clinic_name}</p>
             )}
-            <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               <TrustBadge status={doctor.verification_status} />
+              <DoctorVerifiedBadge doctorId={doctor.id} />
             </div>
           </div>
         </div>
