@@ -60,6 +60,7 @@ import AdminProcedureRequests from './pages/AdminProcedureRequests';
 import AdminProviderVerification from './pages/AdminProviderVerification';
 import AdminCompanions from './pages/AdminCompanions';
 import CompanionSignup from './pages/CompanionSignup';
+import SecurityAgencySignup from './pages/SecurityAgencySignup';
 import PartnerPortal from './pages/PartnerPortal';
 import CompanionDashboard from './pages/CompanionDashboard';
 import DeepPerfection from './pages/DeepPerfection';
@@ -151,6 +152,7 @@ const AuthenticatedApp = () => {
         <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
         <Route path="/partner-signup/taxi-service" element={<TaxiServiceSignup />} />
         <Route path="/companion-signup" element={<CompanionSignup />} />
+        <Route path="/security-signup" element={<SecurityAgencySignup />} />
       <Route path="/consultation" element={<ConsultationForm />} />
       <Route path="/consultation-success" element={<ConsultationSuccess />} />
         <Route element={<ProtectedRoute allowedRoles={["doctor", "platform_admin", "admin"]} />}>
