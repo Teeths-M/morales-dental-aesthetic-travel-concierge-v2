@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mountain, Plus, Shield, Zap, Waves, Wind, Leaf, CheckCircle2, Circle,
-  Clock, AlertTriangle, ChevronDown, ChevronUp, Loader2, Bell } from 'lucide-react';
+  Clock, AlertTriangle, ChevronDown, ChevronUp, Loader2, Bell, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { getChecklist } from '@/lib/activityChecklists';
@@ -37,6 +38,7 @@ const STATUS_CONFIG = {
 };
 
 export default function AdventureSafetyCenter() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [consultations, setConsultations] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -165,6 +167,15 @@ export default function AdventureSafetyCenter() {
       <DashboardSidebar />
       <main className="flex-1 p-5 lg:p-8 overflow-y-auto max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-5 text-sm font-medium group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            Back
+          </button>
 
           {/* Header */}
           <div className="flex items-center justify-between mb-6">

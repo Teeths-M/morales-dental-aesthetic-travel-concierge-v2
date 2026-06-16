@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Users, Radio, Map } from 'lucide-react';
+import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Users, Radio, Map, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ function SoloCheckInBanner() {
 }
 
 export default function SoloCheckInSettings() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,6 +75,14 @@ export default function SoloCheckInSettings() {
       <DashboardSidebar />
       <main className="flex-1 p-5 lg:p-8 overflow-y-auto max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-5 text-sm font-medium group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            Back
+          </button>
+
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-blue-700 flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
