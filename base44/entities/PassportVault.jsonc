@@ -6,17 +6,24 @@
       "type": "string",
       "description": "PASS_<hex> - Immutable unique reference token"
     },
-    "patient_email": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
       "type": "string",
-      "format": "email",
-      "description": "Denormalized for audit queries"
+      "format": "email"
     },
     "document_type": {
       "type": "string",
       "enum": [
         "passport",
+        "visa",
         "national_id",
-        "travel_permit"
+        "flight_ticket",
+        "hotel_booking",
+        "medical_record",
+        "insurance",
+        "other"
       ],
       "default": "passport"
     },
@@ -28,9 +35,31 @@
       "type": "string",
       "description": "Base64 initialization vector \u2014 not secret, required for client-side decryption"
     },
+    "algorithm": {
+      "type": "string",
+      "default": "AES-256-GCM",
+      "description": "Encryption algorithm identifier"
+    },
+    "algorithm_version": {
+      "type": "number",
+      "default": 1,
+      "description": "Algorithm envelope version for future rotation"
+    },
+    "integrity_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of original file for integrity verification"
+    },
+    "file_size_bytes": {
+      "type": "number"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
     "redacted_for_display": {
       "type": "object",
-      "description": "Safe non-sensitive metadata for operational use",
       "properties": {
         "last_4_digits": {
           "type": "string"
@@ -46,16 +75,17 @@
         },
         "document_type": {
           "type": "string"
+        },
+        "booking_reference": {
+          "type": "string"
+        },
+        "hotel_name": {
+          "type": "string"
+        },
+        "airline": {
+          "type": "string"
         }
       }
-    },
-    "file_size_bytes": {
-      "type": "number",
-      "description": "Original file size before encryption"
-    },
-    "file_hash_sha256": {
-      "type": "string",
-      "description": "SHA-256 hash of original file for integrity"
     },
     "status": {
       "type": "string",
@@ -74,9 +104,13 @@
         "passed",
         "quarantined"
       ],
-      "default": "pending"
+      "default": "passed"
     },
     "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "uploaded_at": {
       "type": "string",
       "format": "date-time"
     },
@@ -87,54 +121,17 @@
     "access_count": {
       "type": "number",
       "default": 0
+    },
+    "is_emergency_accessible": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this document can be accessed via Emergency PIN"
     }
   },
   "required": [
     "passport_token",
-    "patient_email",
-    "document_type"
-  ],
-  "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "platform_admin"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+    "user_email",
+    "document_type",
+    "encrypted_file_uri"
+  ]
 }
