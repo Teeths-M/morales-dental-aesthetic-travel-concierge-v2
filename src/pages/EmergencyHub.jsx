@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation } from 'lucide-react';
+import { BackButtonLight } from '@/components/nav/BackButton';
 import SOSDropdown from '@/components/emergency/SOSDropdown';
 import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
 import SpaceIntelPanel from '@/components/emergency/SpaceIntelPanel';
@@ -18,7 +18,6 @@ const TABS = [
 ];
 
 export default function EmergencyHub() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [activeCase, setActiveCase] = useState(null);
   const [activeTab, setActiveTab] = useState('sos');
@@ -47,13 +46,7 @@ export default function EmergencyHub() {
       <div className="border-b border-red-900/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-10">
           {/* Back button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-sm font-medium group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Back
-          </button>
+          <BackButtonLight fallback="/dashboard" className="mb-6" />
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-red-900/50 rounded-2xl flex items-center justify-center border border-red-800/50">

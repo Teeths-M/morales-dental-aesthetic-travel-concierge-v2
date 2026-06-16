@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldCheck, Umbrella, FileText, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Shield, ShieldCheck, Umbrella, FileText, HelpCircle } from 'lucide-react';
+import { BackButtonLight } from '@/components/nav/BackButton';
 import CancellationInsurancePanel from '@/components/insurance/CancellationInsurancePanel';
 
 const TABS = [
@@ -19,7 +19,6 @@ const FAQS = [
 ];
 
 export default function InsuranceCoverage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('coverage');
   const [claimCaseId, setClaimCaseId] = useState('');
   const [claimSubmitted, setClaimSubmitted] = useState(false);
@@ -39,13 +38,7 @@ export default function InsuranceCoverage() {
       {/* Hero */}
       <div className="bg-gradient-to-r from-blue-800 to-emerald-800 text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-14">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors mb-6 text-sm font-medium group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Back
-          </button>
+          <BackButtonLight fallback="/dashboard" className="mb-6" />
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
               <ShieldCheck className="w-7 h-7 text-white" />

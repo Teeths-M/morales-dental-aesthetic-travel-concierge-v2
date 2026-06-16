@@ -1,22 +1,15 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plane, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Plane, ShieldCheck } from 'lucide-react';
+import { BackButtonLight } from '@/components/nav/BackButton';
 import TravelAddOnBuilder from '@/components/travel/TravelAddOnBuilder';
 
 export default function TravelServices() {
-  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Hero */}
       <div className="bg-gradient-to-r from-blue-700 to-emerald-700 text-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-12">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-blue-200 hover:text-white transition-colors mb-6 text-sm font-medium group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Back
-          </button>
+          <BackButtonLight fallback="/dashboard" className="mb-6" />
           <div className="flex items-center gap-4 mb-3">
             <div className="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center">
               <Plane className="w-7 h-7 text-white" />
