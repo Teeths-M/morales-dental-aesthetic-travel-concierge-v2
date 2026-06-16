@@ -6,6 +6,7 @@ import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, B
 
 const GOLD = '#c9a84c';
 const NAVY = '#0a1628';
+const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e35e484d5_generated_image.png';
 
 const orbitNodes = [
   { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 158 },
@@ -153,19 +154,15 @@ export default function LuxuryHero() {
           paddingTop: '68px',
         }}
       >
-        {/* Background mesh glow */}
-        <div style={{
-          position:'absolute', inset:0, pointerEvents:'none',
-          background:`radial-gradient(ellipse 70% 60% at 75% 50%, ${GOLD}0d 0%, transparent 65%),
-                      radial-gradient(ellipse 45% 80% at 10% 30%, #1a3a6e18 0%, transparent 60%)`,
-        }} />
-
-        {/* Subtle grid overlay */}
-        <div style={{
-          position:'absolute', inset:0, pointerEvents:'none', opacity:0.04,
-          backgroundImage:`linear-gradient(${GOLD}66 1px, transparent 1px), linear-gradient(90deg, ${GOLD}66 1px, transparent 1px)`,
-          backgroundSize:'60px 60px',
-        }} />
+        {/* Full-bleed background image */}
+        <div style={{ position:'absolute', inset:0 }}>
+          <img src={HERO_IMAGE} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'70% center' }} />
+          {/* Left fade so text is readable */}
+          <div style={{ position:'absolute', inset:0, background:`linear-gradient(to right, ${NAVY} 0%, ${NAVY} 30%, rgba(10,22,40,0.88) 48%, rgba(10,22,40,0.35) 68%, transparent 100%)` }} />
+          {/* Top + bottom fades */}
+          <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom, ${NAVY} 0%, rgba(10,22,40,0.3) 8%, transparent 18%)` }} />
+          <div style={{ position:'absolute', inset:0, background:`linear-gradient(to top, ${NAVY} 0%, rgba(10,22,40,0.6) 10%, transparent 25%)` }} />
+        </div>
 
         <div style={{
           position:'relative', zIndex:10, maxWidth:1380, margin:'0 auto',
@@ -266,15 +263,66 @@ export default function LuxuryHero() {
             </div>
           </motion.div>
 
-          {/* ── RIGHT ── */}
+          {/* ── RIGHT ── floating chips over the hero image */}
           <motion.div
             initial={{ opacity:0 }}
             animate={{ opacity:1 }}
-            transition={{ duration:1.1, delay:0.25 }}
-            className="hidden lg:flex"
-            style={{ position:'relative', height:'100vh', alignItems:'center', justifyContent:'center' }}
+            transition={{ duration:1.1, delay:0.3 }}
+            className="hidden lg:block"
+            style={{ position:'relative', height:'100vh' }}
           >
-            <HeroOrb />
+            <style>{`
+              @keyframes float-a { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+              @keyframes float-b { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+              @keyframes float-c { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+              @keyframes shield-pulse { 0%,100%{box-shadow:0 0 20px ${GOLD}44} 50%{box-shadow:0 0 40px ${GOLD}88} }
+            `}</style>
+
+            {/* Floating label chips */}
+            {[
+              { label:'Verified Specialists', top:'18%', left:'52%', anim:'float-a', delay:'0s' },
+              { label:'Safe Facilities',      top:'28%', left:'78%', anim:'float-b', delay:'0.6s' },
+              { label:'Recovery Care',        top:'52%', left:'38%', anim:'float-c', delay:'1.1s' },
+              { label:'Travel Coordination',  top:'52%', left:'74%', anim:'float-a', delay:'0.4s' },
+              { label:'24/7 Support',         top:'72%', left:'44%', anim:'float-b', delay:'0.9s' },
+              { label:'Risk Intelligence',    top:'72%', left:'74%', anim:'float-c', delay:'0.2s' },
+            ].map(({ label, top, left, anim, delay }) => (
+              <div key={label} style={{
+                position:'absolute', top, left,
+                animation:`${anim} 4s ease-in-out infinite`, animationDelay: delay,
+                background:'rgba(5,10,22,0.78)',
+                border:`1px solid ${GOLD}50`,
+                backdropFilter:'blur(12px)',
+                borderRadius:999, padding:'7px 14px',
+                fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.9)',
+                whiteSpace:'nowrap', letterSpacing:'0.04em',
+                boxShadow:'0 4px 20px rgba(0,0,0,0.5)',
+                display:'flex', alignItems:'center', gap:6,
+              }}>
+                <span style={{ width:6, height:6, borderRadius:'50%', background: GOLD, flexShrink:0, boxShadow:`0 0 6px ${GOLD}` }} />
+                {label}
+              </div>
+            ))}
+
+            {/* SAFE-T shield badge */}
+            <div style={{
+              position:'absolute', top:'38%', left:'52%',
+              animation:'shield-pulse 3s ease-in-out infinite',
+              background:'rgba(5,10,22,0.88)',
+              border:`1.5px solid ${GOLD}66`,
+              borderRadius:16, padding:'10px 16px',
+              display:'flex', flexDirection:'column', alignItems:'center', gap:4,
+              backdropFilter:'blur(16px)',
+            }}>
+              <svg viewBox="0 0 44 50" fill="none" style={{ width:34, height:38 }}>
+                <path d="M22 2L40 10V28C40 38 33 44 22 48C11 44 4 38 4 28V10L22 2Z"
+                  fill={`${GOLD}18`} stroke={GOLD} strokeWidth="1.2" />
+                <path d="M18 18H26V23H31V31H26V36H18V31H13V23H18V18Z"
+                  fill="white" opacity="0.92" />
+              </svg>
+              <p style={{ color: GOLD, fontSize:8.5, fontWeight:800, letterSpacing:'0.2em', textTransform:'uppercase' }}>SAFE-T4LIFE™</p>
+              <p style={{ color:'rgba(255,255,255,0.35)', fontSize:6.5, letterSpacing:'0.14em', textTransform:'uppercase' }}>Safety Intelligence</p>
+            </div>
           </motion.div>
         </div>
       </section>
