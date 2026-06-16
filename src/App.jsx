@@ -58,6 +58,7 @@ import DoctorCasesDashboard from './pages/DoctorCasesDashboard';
 import AdminAnalyticsDashboard from './pages/AdminAnalytics';
 import AdminProcedureRequests from './pages/AdminProcedureRequests';
 import AdminProviderVerification from './pages/AdminProviderVerification';
+import AdminAuditLog from './pages/AdminAuditLog';
 import AdminCompanions from './pages/AdminCompanions';
 import CompanionSignup from './pages/CompanionSignup';
 import SecurityAgencySignup from './pages/SecurityAgencySignup';
@@ -219,6 +220,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/payments" element={<PaymentsPayoutsDashboard />} />
         <Route path="/admin/risk-optimization" element={<RiskOptimizationDashboard />} />
         <Route path="/admin/partner-verification" element={<PartnerVerificationHub />} />
+        <Route path="/admin/audit-log" element={<AdminAuditLog />} />
       </Route>
       {/* Public — Guardian View link (no auth, token-gated) */}
       <Route path="/guardian/:token" element={<GuardianView />} />
