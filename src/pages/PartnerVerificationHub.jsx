@@ -1,68 +1,422 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Lock, FileText, Activity } from 'lucide-react';
-import KYPVerificationPanel from '@/components/verification/KYPVerificationPanel';
-import DoctorVerificationAdmin from './DoctorVerificationAdmin';
-
-const TABS = [
-  { id: 'kyp', label: 'KYP — Partner Verification', icon: Lock },
-  { id: 'verimed', label: 'VeriMed — Doctor Registry', icon: ShieldCheck },
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { 
+  Shield, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  Eye,
+  FileText,
+  TrendingUp,
+  Users,
+  Search,
+  ThumbsUp,
+  ThumbsDown
+} from 'lucide-react';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function PartnerVerificationHub() {
-  const [activeTab, setActiveTab] = useState('kyp');
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedVerification, setSelectedVerification] = useState(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewDecision, setReviewDecision] = useState('approve');
+  const [reviewNotes, setReviewNotes] = useState('');
+
+  const { data: verifications, isLoading } = useQuery({
+    queryKey: ['partner-verifications'],
+    queryFn: async () => {
+      const verifs = await base44.entities.PartnerVerification.list('-created_at', 100);
+      return verifs;
+    }
+  });
+
+  const filteredVerifications = verifications?.filter(v => {
+    const matchesSearch = 
+      v.partner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.partner_email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = filterStatus === 'all' || v.verification_status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const manualReviewMutation = useMutation({
+    mutationFn: async (data) => {
+      return base44.functions.invoke('manualReviewVerification', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['partner-verifications']);
+      setReviewDialogOpen(false);
+      setReviewNotes('');
+    }
+  });
+
+  const handleReview = () => {
+    if (!selectedVerification) return;
+    
+    manualReviewMutation.mutate({
+      verification_id: selectedVerification.id,
+      decision: reviewDecision,
+      notes: reviewNotes
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    const config = {
+      pending: { color: 'bg-gray-100 text-gray-700', label: 'Pending', icon: Clock },
+      documents_received: { color: 'bg-blue-100 text-blue-700', label: 'Documents Received', icon: FileText },
+      ai_analysis_complete: { color: 'bg-purple-100 text-purple-700', label: 'AI Analysis Complete', icon: TrendingUp },
+      manual_review: { color: 'bg-amber-100 text-amber-700', label: 'Manual Review', icon: Eye },
+      verified: { color: 'bg-green-100 text-green-700', label: 'Verified', icon: CheckCircle },
+      denied: { color: 'bg-red-100 text-red-700', label: 'Denied', icon: AlertTriangle },
+      suspended: { color: 'bg-slate-100 text-slate-700', label: 'Suspended', icon: Shield }
+    };
+
+    const { color, label, icon: Icon } = config[status] || config.pending;
+    return (
+      <Badge className={color}>
+        <Icon className="w-3 h-3 mr-1" />
+        {label}
+      </Badge>
+    );
+  };
+
+  const getFraudScoreBadge = (score) => {
+    let color = 'bg-green-100 text-green-700';
+    if (score >= 70) color = 'bg-red-100 text-red-700';
+    else if (score >= 30) color = 'bg-amber-100 text-amber-700';
+
+    return (
+      <Badge className={color}>
+        {score}/100
+      </Badge>
+    );
+  };
+
+  const stats = {
+    total: verifications?.length || 0,
+    pending: verifications?.filter(v => v.verification_status === 'pending' || v.verification_status === 'documents_received').length || 0,
+    manual_review: verifications?.filter(v => v.verification_status === 'manual_review').length || 0,
+    verified: verifications?.filter(v => v.verification_status === 'verified').length || 0,
+    denied: verifications?.filter(v => v.verification_status === 'denied').length || 0,
+    high_risk: verifications?.filter(v => (v.ai_fraud_score || 0) >= 70).length || 0
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
-      {/* Hero */}
-      <div className="bg-gradient-to-r from-violet-800 to-slate-800 text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
-              <ShieldCheck className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <p className="text-violet-300 text-xs font-bold uppercase tracking-widest">Compliance Engine</p>
-              <h1 className="text-2xl font-bold">Partner & Doctor Verification</h1>
-            </div>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold font-display">Partner Verification Hub</h1>
+            <p className="text-muted-foreground mt-1">
+              AI-powered fraud detection + manual review workflow
+            </p>
           </div>
-          <p className="text-violet-200 text-sm max-w-xl leading-relaxed">
-            VeriMed Regulatory Engine + Know Your Partner (KYP) Framework — automated sanctions screening, document forensics, AI risk scoring, and immutable audit trails.
-          </p>
         </div>
-      </div>
 
-      {/* Tab Nav */}
-      <div className="sticky top-0 z-30 bg-card/90 backdrop-blur-sm border-b border-border/30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex">
-          {TABS.map(tab => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all ${active ? 'text-violet-700' : 'text-slate-500 hover:text-slate-800'}`}>
-                <Icon className="w-4 h-4" />{tab.label}
-                {active && <motion.div layoutId="verify-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600" />}
-              </button>
-            );
-          })}
+        {/* Stats */}
+        <div className="grid gap-4 md:grid-cols-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-blue-600">Pending</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pending}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-amber-600">Manual Review</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.manual_review}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-green-600">Verified</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.verified}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-red-600">Denied</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.denied}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-red-600">High Risk (≥70)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.high_risk}</div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-        <AnimatePresence mode="wait">
-          {activeTab === 'kyp' && (
-            <motion.div key="kyp" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <KYPVerificationPanel />
-            </motion.div>
-          )}
-          {activeTab === 'verimed' && (
-            <motion.div key="verimed" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <DoctorVerificationAdmin />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="documents_received">Documents Received</option>
+                <option value="ai_analysis_complete">AI Analysis Complete</option>
+                <option value="manual_review">Manual Review</option>
+                <option value="verified">Verified</option>
+                <option value="denied">Denied</option>
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Verifications Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Verification Queue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Partner</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>AI Fraud Score</TableHead>
+                    <TableHead>Auto Verified</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredVerifications?.map((v) => (
+                    <TableRow key={v.id}>
+                      <TableCell className="font-medium">
+                        <div>
+                          <div>{v.partner_name}</div>
+                          <div className="text-xs text-muted-foreground">{v.partner_email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {v.partner_type?.replace('_', ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(v.verification_status)}
+                      </TableCell>
+                      <TableCell>
+                        {v.ai_fraud_score !== null && v.ai_fraud_score !== undefined ? (
+                          getFraudScoreBadge(v.ai_fraud_score)
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Pending</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {v.auto_verified ? (
+                          <Badge className="bg-green-100 text-green-700">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Yes
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(v.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedVerification(v);
+                            setReviewDialogOpen(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Review
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Review Dialog */}
+        <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Review Verification: {selectedVerification?.partner_name}</DialogTitle>
+            </DialogHeader>
+            
+            {selectedVerification && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Partner Type</Label>
+                    <p className="text-sm font-medium capitalize">{selectedVerification.partner_type?.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <p className="text-sm">{selectedVerification.partner_email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Current Status</Label>
+                    <div>{getStatusBadge(selectedVerification.verification_status)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">AI Fraud Score</Label>
+                    <div>
+                      {selectedVerification.ai_fraud_score !== null && selectedVerification.ai_fraud_score !== undefined ? (
+                        getFraudScoreBadge(selectedVerification.ai_fraud_score)
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Not analyzed</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedVerification.ai_fraud_indicators && selectedVerification.ai_fraud_indicators.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">AI Fraud Indicators</Label>
+                    <ul className="text-sm text-red-600 list-disc list-inside mt-1">
+                      {selectedVerification.ai_fraud_indicators.map((indicator, i) => (
+                        <li key={i}>{indicator}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedVerification.documents_uploaded && selectedVerification.documents_uploaded.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Uploaded Documents</Label>
+                    <div className="mt-2 space-y-2">
+                      {selectedVerification.documents_uploaded.map((doc, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                          <div>
+                            <p className="text-sm font-medium">{doc.document_type?.replace('_', ' ')}</p>
+                            <p className="text-xs text-muted-foreground">{doc.file_name}</p>
+                          </div>
+                          {doc.ai_analysis_result && (
+                            <Badge className={doc.ai_analysis_result.tampering_detected ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
+                              {doc.ai_analysis_result.tampering_detected ? 'Tampering Detected' : 'Clean'}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label>Review Decision</Label>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        checked={reviewDecision === 'approve'}
+                        onChange={() => setReviewDecision('approve')}
+                      />
+                      <span className="text-sm">Approve</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        checked={reviewDecision === 'deny'}
+                        onChange={() => setReviewDecision('deny')}
+                      />
+                      <span className="text-sm">Deny</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">Review Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    placeholder="Add notes about your decision..."
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleReview}
+                disabled={manualReviewMutation.isPending}
+                className={reviewDecision === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              >
+                {manualReviewMutation.isPending ? 'Processing...' : (reviewDecision === 'approve' ? 'Approve' : 'Deny')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

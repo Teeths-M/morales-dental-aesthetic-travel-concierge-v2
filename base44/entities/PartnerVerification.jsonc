@@ -1,0 +1,178 @@
+{
+  "name": "PartnerVerification",
+  "type": "object",
+  "properties": {
+    "partner_id": {
+      "type": "string",
+      "description": "Reference to partner entity (Doctor/TravelAgency/TaxiService/Companion)"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion_agency",
+        "security_agency"
+      ],
+      "description": "Type of partner being verified"
+    },
+    "partner_name": {
+      "type": "string",
+      "description": "Partner or agency name for display"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "documents_received",
+        "ai_analysis_complete",
+        "manual_review",
+        "verified",
+        "denied",
+        "suspended"
+      ],
+      "default": "pending",
+      "description": "Current verification stage"
+    },
+    "documents_uploaded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_type": {
+            "type": "string",
+            "enum": [
+              "business_license",
+              "professional_license",
+              "insurance_certificate",
+              "registration",
+              "identity",
+              "certification",
+              "other"
+            ]
+          },
+          "file_uri": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ai_analysis_result": {
+            "type": "object",
+            "properties": {
+              "tampering_detected": {
+                "type": "boolean"
+              },
+              "forgery_indicators": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "ai_generated_probability": {
+                "type": "number"
+              },
+              "confidence_score": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ai_fraud_score": {
+      "type": "number",
+      "description": "AI-generated fraud risk score (0-100, higher = riskier)",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "ai_fraud_indicators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific fraud indicators detected by AI"
+    },
+    "ai_analysis_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "manual_review_notes": {
+      "type": "string",
+      "description": "Notes from human reviewer"
+    },
+    "manual_reviewer_id": {
+      "type": "string",
+      "description": "Admin user ID who performed manual review"
+    },
+    "manual_reviewer_name": {
+      "type": "string"
+    },
+    "manual_review_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_by": {
+      "type": "string",
+      "enum": [
+        "ai_auto",
+        "manual_review",
+        "admin_override"
+      ]
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Verification expiry (re-verification required after)"
+    },
+    "denial_reason": {
+      "type": "string"
+    },
+    "denied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "denied_by": {
+      "type": "string"
+    },
+    "auto_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if auto-verified by AI (fraud_score < 30)"
+    },
+    "requires_reverification": {
+      "type": "boolean",
+      "default": false
+    },
+    "reverification_due_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "partner_id",
+    "partner_type",
+    "partner_email"
+  ]
+}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, Clock, CheckCircle2, Eye, Users, FileText, Download, Share2, Trash2, Lock } from 'lucide-react';
+import { Shield, Clock, CheckCircle2, Eye, Users, FileText, Download, Share2, Trash2, Lock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
