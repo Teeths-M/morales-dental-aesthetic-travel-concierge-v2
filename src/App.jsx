@@ -89,6 +89,8 @@ import ShareLinkViewer from './pages/ShareLinkViewer';
 import CheckInConfirm from './pages/CheckInConfirm';
 import PatientReviews from './pages/PatientReviews';
 import PartnerReviews from './pages/PartnerReviews';
+import AdminAuditChain from './pages/AdminAuditChain';
+import EmergencyManifest from './pages/EmergencyManifest';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -238,6 +240,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/audit-log" element={<AdminAuditLog />} />
         <Route path="/admin/provider-performance" element={<ProviderPerformanceDashboard />} />
         <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
+        <Route path="/admin/audit-chain" element={<AdminAuditChain />} />
       </Route>
       {/* Public — Guardian View link (no auth, token-gated) */}
       <Route path="/guardian/:token" element={<GuardianView />} />
@@ -253,6 +256,8 @@ const AuthenticatedApp = () => {
       </Route>
       {/* Offline Mode — public accessible (works without internet) */}
       <Route path="/offline" element={<OfflineMode />} />
+      {/* Emergency Manifest — PIN-gated, no login required, for first responders */}
+      <Route path="/emergency-manifest" element={<EmergencyManifest />} />
       {/* Travel A La Carte Services */}
       <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
         <Route path="/travel-services" element={<TravelServices />} />
