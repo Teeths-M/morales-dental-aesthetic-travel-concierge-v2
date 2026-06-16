@@ -9,10 +9,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Get all cases and workflow events
-    const allCases = await base44.asServiceRole.entities.CaseRecord.filter({});
-    const allWorkflows = await base44.asServiceRole.entities.WorkflowEvent.filter({});
-    const allDoctors = await base44.asServiceRole.entities.Doctor.filter({});
+    // Fetch with limits to prevent unbounded full-table scans
+    const [allCases, allWorkflows, allDoctors] = await Promise.all([
+      base44.asServiceRole.entities.CaseRecord.list('-created_date', 500),
+      base44.asServiceRole.entities.WorkflowEvent.list('-created_date', 1000),
+      base44.asServiceRole.entities.Doctor.list('-updated_date', 200),
+    ]);
 
     const now = new Date();
 

@@ -10,33 +10,23 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get all active cases (exclude Completed status)
-    const allCases = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
+    // Fetch active cases only — use updated_date sort to surface stagnant ones first
+    const allCases = await base44.asServiceRole.entities.CaseRecord.list('updated_date', 500);
     const now = new Date();
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-    const stagnantCases = [];
-
-    for (const caseRecord of allCases) {
-      if (caseRecord.status === 'Completed') continue;
-
-      // Check if case hasn't been updated in 48+ hours
-      const lastUpdated = new Date(caseRecord.updated_date);
-      
-      if (lastUpdated < fortyEightHoursAgo) {
-        const daysStagnant = Math.floor((now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24));
-        
-        stagnantCases.push({
-          case_id: caseRecord.id,
-          patient_name: caseRecord.client_name,
-          patient_email: caseRecord.client_email,
-          current_stage: caseRecord.status,
-          days_stagnant: daysStagnant,
-          last_updated: caseRecord.updated_date,
-          consultation_id: caseRecord.consultation_id,
-        });
-      }
-    }
+    // Single-pass filter: skip Completed and recently-updated in one loop
+    const stagnantCases = allCases
+      .filter(c => c.status !== 'Completed' && new Date(c.updated_date) < fortyEightHoursAgo)
+      .map(c => ({
+        case_id: c.id,
+        patient_name: c.client_name,
+        patient_email: c.client_email,
+        current_stage: c.status,
+        days_stagnant: Math.floor((now - new Date(c.updated_date)) / (1000 * 60 * 60 * 24)),
+        last_updated: c.updated_date,
+        consultation_id: c.consultation_id,
+      }));
 
     if (stagnantCases.length === 0) {
       return Response.json({ message: 'No stagnant cases found' });

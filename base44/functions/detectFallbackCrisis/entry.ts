@@ -18,6 +18,9 @@ Deno.serve(async (req) => {
 
     const results = { scanned: activeCases.length, flagged: 0, resolved: 0, unchanged: 0, details: [] };
 
+    // Collect all updates then fire them concurrently — avoid serial await-per-case
+    const updatePromises = [];
+
     for (const c of activeCases) {
       // Skip if already explicitly resolved
       if (c.fallback_state?.in_flux === false && c.fallback_state?.resolved_at) {
@@ -54,28 +57,35 @@ Deno.serve(async (req) => {
           notes: `${reason} — primary partner: ${primaryPartnerName}. Notified at ${missedAt.toISOString()}, window expired.`,
         };
 
-        await base44.asServiceRole.entities.CaseRecord.update(c.id, {
-          case_priority: c.case_priority === 'Normal' ? 'Urgent' : c.case_priority,
-          fallback_state: {
-            in_flux: true,
-            in_flux_triggered_at: now.toISOString(),
-            primary_partner_type: primaryPartnerType,
-            primary_partner_name: primaryPartnerName,
-            primary_partner_contact_phone: '',
-            confirmation_deadline: confirmationDeadline.toISOString(),
-            current_escalation_level: 1,
-            escalation_reason: reason,
-            human_intervention_required: false,
-            fallback_sequence: [],
-            audit_trail: [...(c.fallback_state?.audit_trail || []), auditEntry],
-          },
-        });
+        updatePromises.push(
+          base44.asServiceRole.entities.CaseRecord.update(c.id, {
+            case_priority: c.case_priority === 'Normal' ? 'Urgent' : c.case_priority,
+            fallback_state: {
+              in_flux: true,
+              in_flux_triggered_at: now.toISOString(),
+              primary_partner_type: primaryPartnerType,
+              primary_partner_name: primaryPartnerName,
+              primary_partner_contact_phone: '',
+              confirmation_deadline: confirmationDeadline.toISOString(),
+              current_escalation_level: 1,
+              escalation_reason: reason,
+              human_intervention_required: false,
+              fallback_sequence: [],
+              audit_trail: [...(c.fallback_state?.audit_trail || []), auditEntry],
+            },
+          })
+        );
 
         results.flagged++;
         results.details.push({ id: c.id, name: c.client_name, reason });
       } else {
         results.unchanged++;
       }
+    }
+
+    // Fire all updates concurrently instead of serially
+    if (updatePromises.length > 0) {
+      await Promise.allSettled(updatePromises);
     }
 
     return Response.json({ success: true, ...results });

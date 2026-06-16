@@ -35,14 +35,12 @@ Deno.serve(async (req) => {
 
     // Action: get_carousel_cards (last 15, published)
     if (action === 'get_carousel_cards') {
-      const cards = await base44.entities.PriceBroadcastLog.filter({
-        is_published: true
-      });
-
-      // Sort by newest first, limit to 15
-      const sorted = cards.sort((a, b) => 
-        new Date(b.timestamp) - new Date(a.timestamp)
-      ).slice(0, 15);
+      // Sort and limit at the DB level — avoid full table scan + in-memory sort
+      const sorted = await base44.entities.PriceBroadcastLog.filter(
+        { is_published: true },
+        '-timestamp',
+        15
+      );
 
       return Response.json({
         status: 'success',
@@ -61,18 +59,12 @@ Deno.serve(async (req) => {
 
     // Action: get_trending_procedures
     if (action === 'get_trending_procedures') {
-      const logs = await base44.entities.PriceBroadcastLog.list();
-      
-      // Count procedures in last 24h
-      const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      
-      const last24h = logs.filter(log => 
-        new Date(log.timestamp) > yesterday
-      );
+      // Only fetch recent records — avoid loading all historical data
+      const last24h = await base44.entities.PriceBroadcastLog.list('-timestamp', 200);
 
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const counts = {};
-      last24h.forEach(log => {
+      last24h.filter(log => new Date(log.timestamp) > cutoff).forEach(log => {
         const key = `${log.procedure}|${log.destination}`;
         counts[key] = (counts[key] || 0) + 1;
       });
