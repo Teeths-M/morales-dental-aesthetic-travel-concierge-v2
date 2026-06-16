@@ -66,6 +66,7 @@ import DeepPerfection from './pages/DeepPerfection';
 import SurveyPage from './pages/SurveyPage';
 import OnboardingEducation from './pages/OnboardingEducation';
 import MonetizationDashboard from './pages/MonetizationDashboard';
+import PaymentsPayoutsDashboard from './pages/PaymentsPayoutsDashboard';
 import RiskOptimizationDashboard from './pages/RiskOptimizationDashboard';
 import LuggageFinderPortal from './pages/LuggageFinderPortal';
 import InsuranceCoverage from './pages/InsuranceCoverage';
@@ -206,6 +207,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/provider-verification" element={<AdminProviderVerification />} />
         <Route path="/admin/companions" element={<AdminCompanions />} />
         <Route path="/admin/monetization" element={<MonetizationDashboard />} />
+        <Route path="/admin/payments" element={<PaymentsPayoutsDashboard />} />
         <Route path="/admin/risk-optimization" element={<RiskOptimizationDashboard />} />
         <Route path="/admin/partner-verification" element={<PartnerVerificationHub />} />
       </Route>
