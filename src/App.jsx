@@ -76,6 +76,7 @@ import OfflineMode from './pages/OfflineMode';
 import PartnerVerificationHub from './pages/PartnerVerificationHub';
 import TravelServices from './pages/TravelServices';
 import EmergencyHub from './pages/EmergencyHub';
+import PartnerDirectory from './pages/PartnerDirectory';
 import GuardianView from './pages/GuardianView';
 import EmergencyPINAccess from './pages/EmergencyPINAccess';
 
@@ -139,6 +140,7 @@ const AuthenticatedApp = () => {
           <Route path="/client-signup" element={<ClientSignup />} />
         </Route>
         <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/partners" element={<PartnerDirectory />} />
         <Route path="/about" element={<About />} />
         <Route path="/procedures" element={<Procedures />} />
 
