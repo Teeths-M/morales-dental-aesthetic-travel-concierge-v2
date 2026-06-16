@@ -54,6 +54,9 @@ Deno.serve(async (req) => {
 
     const notificationsSent = [];
 
+    // SECURITY: Resolve a confirmed admin email — never fall through to patient_email
+    const adminNotifyEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
+
     // Notify admin / coordinator immediately
     const adminEmailBody = `
 <div style="font-family:sans-serif;max-width:600px;">
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         from_name: 'Morales Safe-T Emergency System',
-        to: user?.email || patient_email,
+        to: adminNotifyEmail,
         subject: `🚨 SOS — ${route.label} — ${patient_name || patient_email}`,
         body: adminEmailBody
       });
@@ -101,10 +104,11 @@ Deno.serve(async (req) => {
     if (case_id) {
       try {
         const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-        if (cases[0]?.emergency_contact) {
+        const emergencyContactEmail = cases[0]?.emergency_contact;
+        if (emergencyContactEmail && emergencyContactEmail.includes('@')) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
-              to: user?.email || patient_email,
+              to: emergencyContactEmail,
               subject: `⚠️ Emergency Alert: ${patient_name || patient_email} triggered SOS`,
               body: `<p>Your contact <strong>${patient_name}</strong> has triggered an emergency SOS (${route.label}) at ${location_label || 'their current location'}. The Morales Medical emergency team has been alerted and is coordinating a response.</p>`
             });

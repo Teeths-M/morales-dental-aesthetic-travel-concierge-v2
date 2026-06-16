@@ -198,9 +198,10 @@ Deno.serve(async (req) => {
       // Notify admin if any overdue
       if (overdue.length > 0) {
         try {
+          const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
           await base44.asServiceRole.integrations.Core.SendEmail({
             from_name: 'iQ200 Contingency Engine',
-            to: 'admin@morales-dental.com',
+            to: adminEmail,
             subject: `⚠️ iQ200 Contingency Alert — ${overdue.length} missed handshake(s) for Case ${case_id}`,
             body: `<h2>Contingency Auto-Rerouting Triggered</h2>
 <p>The following touchpoints exceeded the ${WINDOW_MINUTES}-minute confirmation window:</p>

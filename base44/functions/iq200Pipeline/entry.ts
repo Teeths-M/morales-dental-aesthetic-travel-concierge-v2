@@ -426,7 +426,7 @@ Deno.serve(async (req) => {
         <p><strong>Doctor:</strong> ${caseRecord.doctor_selected || 'Not assigned'}</p>
         <a href="${adminPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">View Case</a>
       `;
-      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com'; // set ADMIN_EMAIL secret to override
       emailPromises.push(base44.integrations.Core.SendEmail({
         to: adminEmail,
         subject: `[Admin] Payment Confirmed - Case ${caseRecord.id}`,

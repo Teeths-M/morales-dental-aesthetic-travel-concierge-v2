@@ -66,8 +66,10 @@ Deno.serve(async (req) => {
           failed_attempts: 0,
           locked_until: null
         });
-        // Issue a short-lived session token (simple — in prod use proper JWT)
-        const sessionToken = btoa(JSON.stringify({ user_email, expires: Date.now() + 30 * 60 * 1000, type: 'emergency_pin' }));
+        // Crypto-random session token — not forgeable unlike btoa(JSON)
+        const rawBytes = new Uint8Array(32);
+        crypto.getRandomValues(rawBytes);
+        const sessionToken = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
         return Response.json({ verified: true, session_token: sessionToken, user_email });
       } else {
         const newFailCount = (record.failed_attempts || 0) + 1;

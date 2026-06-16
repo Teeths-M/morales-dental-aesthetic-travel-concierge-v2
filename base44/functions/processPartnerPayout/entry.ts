@@ -154,7 +154,10 @@ Deno.serve(async (req) => {
       // Attempt Stripe Connect transfer if account ID provided
       if (stripe_connect_account_id) {
         const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-        if (stripeKey) {
+        if (!stripeKey) {
+          return Response.json({ error: 'STRIPE_SECRET_KEY not configured' }, { status: 503 });
+        }
+        try {
           const stripe = new Stripe(stripeKey);
           const transferAmountCents = Math.round(partnerPayoutAmt * 100);
           const transfer = await stripe.transfers.create({
@@ -172,6 +175,10 @@ Deno.serve(async (req) => {
             },
           });
           stripeTransferId = transfer.id;
+        } catch (stripeErr) {
+          console.error('[processPartnerPayout] Stripe transfer failed:', stripeErr.message);
+          stripeError = stripeErr.message;
+          // Do NOT return error — log and continue so audit trail is still written
         }
       }
 

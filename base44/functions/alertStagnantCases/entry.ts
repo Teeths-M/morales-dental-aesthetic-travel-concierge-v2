@@ -4,8 +4,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // Admin-only guard for direct HTTP calls (automation has no user)
+    const callerUser = await base44.auth.me().catch(() => null);
+    if (callerUser && callerUser.role !== 'admin' && callerUser.role !== 'platform_admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     // Get all active cases (exclude Completed status)
-    const allCases = await base44.asServiceRole.entities.CaseRecord.filter({});
+    const allCases = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
     const now = new Date();
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
@@ -46,8 +52,9 @@ Deno.serve(async (req) => {
       </tr>
     `).join('');
 
-    await base44.integrations.Core.SendEmail({
-      to: 'admin@moralesdentalandaesthetics.com',
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: adminEmail,
       subject: `⚠️ Alert: ${stagnantCases.length} Case(s) Stagnant for 48+ Hours`,
       body: `
         <h2>Case Stagnation Alert</h2>
