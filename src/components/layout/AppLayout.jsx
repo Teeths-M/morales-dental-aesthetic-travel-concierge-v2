@@ -7,6 +7,7 @@ import Header from './Header';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
 import { useAuth } from '@/lib/AuthContext';
 import BiometricGate from '@/components/security/BiometricGate';
+import GuardianTicker from '@/components/guardian/GuardianTicker';
 
 export default function AppLayout() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function AppLayout() {
         <WhatsAppButton />
         <SafeTCompanion />
         <HeartNotificationCenter user={user} />
+        <GuardianTicker />
       </div>
     </BiometricGate>
   );
