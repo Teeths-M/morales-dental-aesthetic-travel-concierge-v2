@@ -29,7 +29,7 @@ export default function AppLayout() {
         {/* Floating Vault FAB - accessible from every screen */}
         <Link 
           to="/passport-vault" 
-          className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-emerald-700 hover:bg-emerald-800 rounded-full shadow-2xl flex items-center justify-center text-white transition-all hover:scale-105 group"
+          className="fixed bottom-24 right-6 z-50 w-16 h-16 bg-emerald-700 hover:bg-emerald-800 rounded-full shadow-2xl flex items-center justify-center text-white transition-all hover:scale-105 group"
           aria-label="Open My Vault"
         >
           <Lock className="w-7 h-7" />
