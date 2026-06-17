@@ -48,11 +48,6 @@
         }
       ]
     },
-    "create": {
-      "user_condition": {
-        "isAuthenticated": true
-      }
-    },
     "update": {
       "$or": [
         {
