@@ -17,7 +17,9 @@ export default function CompanionSignup() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accountType, setAccountType] = useState('individual'); // 'individual' or 'agency'
   const [formData, setFormData] = useState({
+    full_name: '',
     agency_name: '',
     contact_person: '',
     email: '',
@@ -69,8 +71,9 @@ export default function CompanionSignup() {
 
       const companion = await base44.entities.Companion.create({
         ...companionData,
-        full_name: companionData.agency_name, // Store agency name as full_name for compatibility
-        is_agency: true,
+        full_name: accountType === 'individual' ? companionData.full_name : companionData.agency_name,
+        contact_person: accountType === 'individual' ? companionData.full_name : companionData.contact_person,
+        is_agency: accountType === 'agency',
       });
 
       // Initiate identity verification
@@ -85,7 +88,7 @@ export default function CompanionSignup() {
         console.error('Failed to initiate verification:', error);
       }
 
-      toast.success('Companion agency profile created! Verification process initiated.');
+      toast.success(accountType === 'individual' ? 'Caregiver profile created! Verification process initiated.' : 'Companion agency profile created! Verification process initiated.');
       navigate('/companion-dashboard');
     } catch (error) {
       console.error('Signup error:', error);
@@ -100,41 +103,97 @@ export default function CompanionSignup() {
       case 1:
         return (
           <div className="space-y-6">
+            {/* Account Type Selection */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setAccountType('individual')}
+                className={`p-6 rounded-xl border-2 transition-all text-left ${
+                  accountType === 'individual'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    accountType === 'individual' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-lg">Individual Caregiver</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">For mothers and individual caregivers offering personal care services</p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAccountType('agency')}
+                className={`p-6 rounded-xl border-2 transition-all text-left ${
+                  accountType === 'agency'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    accountType === 'agency' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-lg">Agency / Organization</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">For registered companies providing companion services</p>
+              </button>
+            </div>
+
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="agency_name">Agency Name *</Label>
-                <Input
-                  id="agency_name"
-                  value={formData.agency_name}
-                  onChange={(e) => handleInputChange('agency_name', e.target.value)}
-                  placeholder="e.g., Care Companions International"
-                />
-                <p className="text-xs text-muted-foreground">Must be a registered agency, not individuals</p>
-              </div>
+              {accountType === 'individual' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Your Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
+                    placeholder="e.g., Maria Rodriguez"
+                  />
+                  <p className="text-xs text-muted-foreground">For individual caregivers and mothers</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="agency_name">Agency Name *</Label>
+                    <Input
+                      id="agency_name"
+                      value={formData.agency_name}
+                      onChange={(e) => handleInputChange('agency_name', e.target.value)}
+                      placeholder="e.g., Care Companions International"
+                    />
+                    <p className="text-xs text-muted-foreground">Must be a registered agency</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_person">Contact Person *</Label>
+                    <Input
+                      id="contact_person"
+                      value={formData.contact_person}
+                      onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                      placeholder="Agency representative"
+                    />
+                  </div>
+                </>
+              )}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="contact_person">Contact Person *</Label>
-                  <Input
-                    id="contact_person"
-                    value={formData.contact_person}
-                    onChange={(e) => handleInputChange('contact_person', e.target.value)}
-                    placeholder="Agency representative"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Agency Email *</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="agency@example.com"
+                    placeholder={accountType === 'individual' ? 'your@email.com' : 'agency@example.com'}
                   />
                 </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Agency Phone *</Label>
+                  <Label htmlFor="phone">Phone *</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -142,6 +201,8 @@ export default function CompanionSignup() {
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="country">Country *</Label>
                   <Input
@@ -151,15 +212,15 @@ export default function CompanionSignup() {
                     placeholder="United States"
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="New York"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="New York"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -390,10 +451,12 @@ export default function CompanionSignup() {
             <Users className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-4xl font-display font-bold text-foreground mb-2">
-            Become a Companion Agency
+            {accountType === 'individual' ? 'Become a Care Companion' : 'Become a Companion Agency'}
           </h1>
           <p className="text-lg text-muted-foreground">
-            Registered agencies only — provide reliable companion services for medical travelers
+            {accountType === 'individual' 
+              ? 'Individual caregivers and mothers — provide compassionate care for medical travelers' 
+              : 'Registered agencies — provide reliable companion services for medical travelers'}
           </p>
         </div>
 
@@ -460,7 +523,7 @@ export default function CompanionSignup() {
               ) : (
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={isSubmitting || !formData.agency_name || !formData.contact_person || !formData.email || !formData.phone || !formData.country || formData.languages.length === 0}
+                  disabled={isSubmitting || (accountType === 'individual' ? !formData.full_name : !formData.agency_name || !formData.contact_person) || !formData.email || !formData.phone || !formData.country || formData.languages.length === 0}
                 >
                   {isSubmitting ? 'Creating Profile...' : 'Complete Signup'}
                 </Button>
