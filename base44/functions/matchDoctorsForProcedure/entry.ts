@@ -16,11 +16,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Procedure interest required' }, { status: 400 });
     }
 
-    // Search for doctors who offer this procedure
-    const allDoctors = await base44.entities.Doctor.filter({ status: 'active' });
+    // BUG-R17-01 FIX: use asServiceRole — Doctor and DoctorSpecialty records are owned
+    // by doctor users, not by the calling user. User-scoped entities returns empty for
+    // cross-user data, so every procedure match returned 0 doctors and triggered unnecessary
+    // outreach emails.
+    const allDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' });
     
     // Get doctor procedures
-    const doctorProcedures = await base44.entities.DoctorSpecialty.filter({});
+    const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.filter({});
     
     // Match doctors to procedure
     const matchedDoctors = allDoctors.filter(doctor => {
@@ -46,7 +49,8 @@ Deno.serve(async (req) => {
       // Send outreach emails
       const emailPromises = Array.from(doctorsToNotify).map(async (doctorEmail) => {
         try {
-          await base44.integrations.Core.SendEmail({
+          // BUG-R17-01 FIX: use asServiceRole for integrations in admin/system functions
+          await base44.asServiceRole.integrations.Core.SendEmail({
             to: doctorEmail,
             subject: `New Client Interested in ${procedure_interest}`,
             body: `Hi Doctor,
@@ -100,6 +104,8 @@ SAFE-T 4LIFE™ Team`
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R17-02 FIX: SEC-10
+    console.error('[matchDoctorsForProcedure]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
