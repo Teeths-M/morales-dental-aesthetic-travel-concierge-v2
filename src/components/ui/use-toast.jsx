@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 5000; // 5 seconds default - production UX standard
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -122,17 +122,29 @@ function toast({ ...props }) {
   const dismiss = () =>
     dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
 
+  // Apply default duration if not specified (critical for UX)
+  const duration = props.duration ?? TOAST_REMOVE_DELAY;
+
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
       id,
       open: true,
+      duration,
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
     },
   });
+
+  // CRITICAL FIX: Auto-dismiss after duration expires (production UX requirement)
+  // Previously, toasts would stick forever because addToRemoveQueue was only called on dismiss
+  if (duration !== Infinity && duration > 0) {
+    setTimeout(() => {
+      dismiss();
+    }, duration);
+  }
 
   return {
     id,
@@ -161,4 +173,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast }; 
+export { useToast, toast };
