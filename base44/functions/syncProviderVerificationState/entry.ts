@@ -5,8 +5,13 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin' && user.role !== 'platform_admin') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // BUG-R17-03 FIX: Missing parentheses around role check — operator precedence means
+    // `!user || user.role !== 'admin' && user.role !== 'platform_admin'` evaluates as
+    // `!user || (user.role !== 'admin' && user.role !== 'platform_admin')` which is correct,
+    // but if user is null/undefined, accessing user.role throws TypeError before the guard fires.
+    // Add explicit grouping and handle null user safely.
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const { provider_id, provider_type } = await req.json();
