@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/react'
-import { BrowserTracing } from '@sentry/tracing'
 import App from '@/App.jsx'
 import '@/index.css'
 
@@ -14,7 +13,7 @@ if (SENTRY_DSN && import.meta.env.PROD) {
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
     integrations: [
-      new BrowserTracing(),
+      Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({
         maskAllText: true,
         blockAllMedia: true,
