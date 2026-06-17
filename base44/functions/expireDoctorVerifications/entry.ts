@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, expired, reminded, checked: allActive.length });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[expireDoctorVerifications]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

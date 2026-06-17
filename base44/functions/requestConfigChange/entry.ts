@@ -8,7 +8,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    // BUG-08 FIX: include platform_admin
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Unauthorized — admin only' }, { status: 403 });
     }
 
@@ -122,6 +123,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[requestConfigChange]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

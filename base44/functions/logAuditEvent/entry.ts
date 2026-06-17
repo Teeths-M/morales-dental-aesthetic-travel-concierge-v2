@@ -98,6 +98,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, audit_id: auditEntry.id });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[logAuditEvent]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

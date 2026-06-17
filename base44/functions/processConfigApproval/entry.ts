@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    // BUG-07 FIX: include platform_admin — consistent with all other governance functions
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Unauthorized — admin only' }, { status: 403 });
     }
 
@@ -18,11 +19,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'change_id and action (approve|deny) are required' }, { status: 400 });
     }
 
-    const record = await base44.asServiceRole.entities.SystemConfigChange.filter({ id: change_id });
-    if (!record || record.length === 0) {
+    // BUG-02 FIX: SDK filter() cannot query by built-in `id` field — returns empty always.
+    // List recent pending records and match by id on the JS side.
+    const recentChanges = await base44.asServiceRole.entities.SystemConfigChange.list('-created_date', 100);
+    const change = recentChanges.find(r => r.id === change_id);
+    if (!change) {
       return Response.json({ error: 'Config change record not found' }, { status: 404 });
     }
-    const change = record[0];
 
     // Status guard
     if (change.status !== 'pending') {
@@ -162,7 +165,8 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[processConfigApproval]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
 

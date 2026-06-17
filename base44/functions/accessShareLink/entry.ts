@@ -72,10 +72,12 @@ Deno.serve(async (req) => {
       last_accessed_ip: req.headers.get('x-forwarded-for') || 'unknown'
     });
 
-    // SEC-07: Use real prev_hash — hardcoded 'SHARE_LINK_ACCESS' broke the audit chain
+    // BUG-01 FIX: 'passport_access_granted' is NOT in the AuditLog entity enum — it caused
+    // a validation error on every access, making the entire share link feature return 500.
+    // Correct enum value is 'passport_access_approved' (document shared = access approved).
     const prevHash = await getLastAuditHash(base44);
     await base44.asServiceRole.entities.AuditLog.create({
-      event_type: 'passport_access_granted',
+      event_type: 'passport_access_approved',
       actor_id: 'share_link_' + share_token,
       actor_role: 'external_recipient',
       actor_name: 'External recipient via share link',
@@ -101,7 +103,9 @@ Deno.serve(async (req) => {
       mime_type: vault.mime_type,
       redacted_for_display: vault.redacted_for_display,
       purpose: shareLink.purpose,
-      accesses_remaining: shareLink.max_access_count - shareLink.access_count - 1
+      // BUG-10 FIX: shareLink.access_count is the pre-update stale value (+1 was written above).
+      // Add 1 to the stale count before subtracting to get the correct post-update remainder.
+      accesses_remaining: Math.max(0, shareLink.max_access_count - (shareLink.access_count + 1))
     });
 
   } catch (error) {
