@@ -33,19 +33,19 @@ export default function LocationBreadcrumbTracker({ caseId }) {
     const res = await base44.functions.invoke('logLocationBreadcrumb', {
       action: 'log', case_id: caseId, latitude: lat, longitude: lng, place_label: label, source: lat ? 'gps' : 'manual'
     });
-    if (res.data?.logged) { toast({ title: '📍 Location logged' }); load(); }
+    if (res.data?.logged) { toast({ title: '📍 Location logged', duration: 3000 }); load(); }
     setLogging(false);
   };
 
   const save = async (id) => {
     await base44.functions.invoke('logLocationBreadcrumb', { action: 'save', breadcrumb_id: id });
-    toast({ title: 'Location saved permanently' });
+    toast({ title: 'Location saved permanently', duration: 3000 });
     load();
   };
 
   const purgeAll = async () => {
     const res = await base44.functions.invoke('logLocationBreadcrumb', { action: 'purge_journey', case_id: caseId });
-    toast({ title: `${res.data?.purged_count || 0} unsaved locations purged` });
+    toast({ title: `${res.data?.purged_count || 0} unsaved locations purged`, duration: 3000 });
     load();
   };
 
@@ -53,7 +53,7 @@ export default function LocationBreadcrumbTracker({ caseId }) {
     const text = crumb.latitude
       ? `https://maps.google.com/?q=${crumb.latitude},${crumb.longitude}`
       : crumb.place_label;
-    navigator.clipboard.writeText(text).then(() => toast({ title: 'Location coordinates copied' }));
+    navigator.clipboard.writeText(text).then(() => toast({ title: 'Location coordinates copied', duration: 3000 }));
   };
 
   return (
