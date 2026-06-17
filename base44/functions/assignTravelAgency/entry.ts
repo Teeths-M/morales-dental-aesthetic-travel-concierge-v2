@@ -9,67 +9,50 @@ Deno.serve(async (req) => {
     }
 
     const { caseId } = await req.json();
-    
-    if (!caseId) {
-      return Response.json({ error: 'Case ID required' }, { status: 400 });
-    }
+    if (!caseId) return Response.json({ error: 'Case ID required' }, { status: 400 });
 
-    const caseRecord = await base44.entities.CaseRecord.get(caseId);
-    
-    if (!caseRecord) {
-      return Response.json({ error: 'Case not found' }, { status: 404 });
-    }
+    // BUG-R7-01 FIX: use asServiceRole — patient CaseRecords and TravelAgency records are not
+    // owned by the admin user; user-scoped entities returns 404/empty for cross-user data.
+    const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(caseId);
+    if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
 
-    // Check if doctor has confirmed
-    if (caseRecord.doctor_confirmation_status !== 'Confirmed') {
-      return Response.json({ 
+    if (caseRecord.doctor_confirmation_status !== 'CONFIRMED') {
+      return Response.json({
         error: 'Doctor has not confirmed yet',
-        doctor_status: caseRecord.doctor_confirmation_status 
+        doctor_status: caseRecord.doctor_confirmation_status
       }, { status: 400 });
     }
 
-    // Find travel agencies in client's country or region
-    const travelAgencies = await base44.entities.TravelAgency.filter({
-      status: 'active'
-    });
+    const travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' });
 
     if (travelAgencies.length === 0) {
-      await base44.entities.CaseRecord.update(caseId, {
+      await base44.asServiceRole.entities.CaseRecord.update(caseId, {
         status: 'Admin-Review',
         admin_notes: 'No travel agencies available for booking'
       });
-
-      return Response.json({
-        status: 'NO_TRAVEL_AGENCIES',
-        message: 'No travel agencies available. Admin review required.'
-      });
+      return Response.json({ status: 'NO_TRAVEL_AGENCIES', message: 'No travel agencies available. Admin review required.' });
     }
 
-    // Select first available agency (implement smarter matching later)
     const selectedAgency = travelAgencies[0];
 
-    // Generate portal token
     const randomBytes = new Uint8Array(32);
     crypto.getRandomValues(randomBytes);
     const hex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
     const portalToken = `travel_${caseId}_${hex}`;
 
-    // Update case
-    await base44.entities.CaseRecord.update(caseId, {
+    await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       travel_vendor_id: selectedAgency.id,
       status: 'Vendor-Pending'
     });
 
-    // Send email to travel agency
     const portalUrl = `${(Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '')}/portal/travel/${portalToken}`;
-    
-    await base44.integrations.Core.SendEmail({
+
+    await base44.asServiceRole.integrations.Core.SendEmail({
       to: selectedAgency.email,
       subject: `Travel Coordination Request - ${caseRecord.client_name}`,
       body: `
         <h2>Travel Coordination Request</h2>
         <p>Dear ${selectedAgency.agency_name || 'Travel Partner'},</p>
-        
         <p>You have a new travel coordination request:</p>
         <ul>
           <li><strong>Patient:</strong> ${caseRecord.client_name}</li>
@@ -78,20 +61,14 @@ Deno.serve(async (req) => {
           <li><strong>Procedure Date:</strong> TBD (based on doctor availability)</li>
           <li><strong>Recovery Days:</strong> ${caseRecord.recovery_days || 'TBD'}</li>
         </ul>
-        
         <p>Please provide quotes for:</p>
         <ul>
           <li>Round-trip flights</li>
           <li>Hotel accommodation (procedure + recovery period)</li>
           <li>Airport transfers</li>
         </ul>
-        
-        <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-          Submit Travel Quote
-        </a>
-        
+        <a href="${portalUrl}" style="display:inline-block;padding:12px 24px;background-color:#059669;color:white;text-decoration:none;border-radius:6px;margin:16px 0;">Submit Travel Quote</a>
         <p>Please respond within 24 hours.</p>
-        
         <p>Best regards,<br/>IQ200 Medical Travel Coordination</p>
       `
     });
@@ -105,6 +82,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[assignTravelAgency]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

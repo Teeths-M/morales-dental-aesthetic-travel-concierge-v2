@@ -45,9 +45,10 @@ Deno.serve(async (req) => {
       consultation_id: consultation.id,
     });
 
-    // Notify admin about the reassignment
-    await base44.integrations.Core.SendEmail({
-      to: 'admin@moralesdentalandaesthetics.com',
+    // BUG-R7-04 FIX: hardcoded admin email — use ADMIN_EMAIL env var
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (adminEmail) await base44.asServiceRole.integrations.Core.SendEmail({
+      to: adminEmail,
       subject: `Case Auto-Reassigned: ${consultation.patient_name}`,
       body: `
         <h2>Automatic Doctor Reassignment</h2>
@@ -60,13 +61,14 @@ Deno.serve(async (req) => {
       `,
     });
 
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       message: 'Case auto-reassigned',
       new_doctor_id: nextDoctor.id,
       new_doctor_name: nextDoctor.full_name
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[autoReassignDoctorOnDecline]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

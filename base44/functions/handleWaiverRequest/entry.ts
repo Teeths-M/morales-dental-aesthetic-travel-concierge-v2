@@ -26,12 +26,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'case_id required' }, { status: 400 });
     }
 
-    const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-    if (!cases.length) {
+    // BUG-R7-02 FIX: filter({ id: case_id }) always returns [] — the SDK cannot query the
+    // built-in `id` field via filter(). Use .get() for primary key lookup.
+    const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+    if (!caseRecord) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
     }
-
-    const caseRecord = cases[0];
     const isAdmin = ['admin', 'platform_admin', 'coordinator'].includes(user.role);
     const isPatient = caseRecord.client_email === user.email;
 
@@ -218,6 +218,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Invalid action. Use: sign | refuse | reissue | check_companion_requirement' }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[handleWaiverRequest]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

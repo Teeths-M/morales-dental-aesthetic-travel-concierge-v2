@@ -39,14 +39,12 @@ const PROCEDURE_LABELS = {
 
 const formatProcedure = (raw) => {
   if (!raw) return 'Not specified';
-  // Handle array (Case.procedures) or single string (Consultation.procedure_interest)
   if (Array.isArray(raw)) {
     return raw.map(p => {
       const normalized = String(p).toLowerCase().replace(/\s+/g, '_');
       return PROCEDURE_LABELS[normalized] || p.replace(/_/g, ' ');
     }).join(', ');
   }
-  // Normalize: strip spaces, lowercase, replace spaces with underscores
   const normalized = String(raw).toLowerCase().replace(/\s+/g, '_');
   return PROCEDURE_LABELS[normalized] || raw.replace(/_/g, ' ');
 };
@@ -57,9 +55,7 @@ const escapeHtml = (v) => String(v ?? '')
 async function generateSecureToken(prefix, caseId) {
   const randomBytes = new Uint8Array(32);
   crypto.getRandomValues(randomBytes);
-  const hex = Array.from(randomBytes)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  const hex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   return `${prefix}_${caseId}_${hex}`;
 }
 
@@ -72,28 +68,34 @@ Deno.serve(async (req) => {
     }
 
     const { caseId, doctorId } = await req.json();
-    
     if (!caseId) return Response.json({ error: 'Case ID required' }, { status: 400 });
 
-    // Auto-select doctor if not provided
+    // BUG-R7-01 FIX: All entity reads/writes must use asServiceRole in admin functions.
+    // Patient CaseRecords and Doctor records are owned by non-admin users. The user-scoped
+    // base44.entities client only returns records owned by the calling admin, so every
+    // CaseRecord.get() and Doctor.filter() returned 404 / [] for real patient data.
+    const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(caseId);
+    if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
+
+    if (caseRecord.safe_t_result !== 'PASSED') {
+      return Response.json({
+        error: 'Cannot assign doctor - SAFE-T review not passed',
+        safe_t_result: caseRecord.safe_t_result
+      }, { status: 400 });
+    }
+
     let selectedDoctor = null;
     if (!doctorId) {
-      const caseRecord = await base44.entities.CaseRecord.get(caseId);
-      if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
-
-      // Find doctors in procedure country
-      let doctors = await base44.entities.Doctor.filter({
+      // Try country-matched doctors first, fall back to any active
+      let doctors = await base44.asServiceRole.entities.Doctor.filter({
         clinic_country: caseRecord.procedure_country,
         status: 'active'
       });
-
-      // Fallback to any active doctor if no country match
       if (doctors.length === 0) {
-        doctors = await base44.entities.Doctor.filter({ status: 'active' });
+        doctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' });
       }
-
       if (doctors.length === 0) {
-        await base44.entities.CaseRecord.update(caseId, {
+        await base44.asServiceRole.entities.CaseRecord.update(caseId, {
           status: 'Admin-Review',
           admin_notes: 'No available doctor found — manual assignment required',
           timeline_log: [...(caseRecord.timeline_log || []), {
@@ -102,26 +104,11 @@ Deno.serve(async (req) => {
             details: 'No available doctor found — manual assignment required'
           }]
         });
-
-        return Response.json({
-          status: 'NO_DOCTOR_AVAILABLE',
-          message: 'No available doctor found. Case flagged for manual review.'
-        });
+        return Response.json({ status: 'NO_DOCTOR_AVAILABLE', message: 'No available doctor found. Case flagged for manual review.' });
       }
-
       selectedDoctor = doctors[0];
     } else {
-      selectedDoctor = await base44.entities.Doctor.get(doctorId);
-    }
-
-    const caseRecord = await base44.entities.CaseRecord.get(caseId);
-    if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
-
-    if (caseRecord.safe_t_result !== 'PASSED') {
-      return Response.json({ 
-        error: 'Cannot assign doctor - SAFE-T review not passed',
-        safe_t_result: caseRecord.safe_t_result 
-      }, { status: 400 });
+      selectedDoctor = await base44.asServiceRole.entities.Doctor.get(doctorId);
     }
 
     if (!selectedDoctor || selectedDoctor.status !== 'active') {
@@ -136,28 +123,25 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
-    // Resolve procedure name: prefer consultation.procedure_interest over Case.procedures
-    const procedureDisplay = formatProcedure(
-      consultation?.procedure_interest || caseRecord.procedures
-    );
-
+    const procedureDisplay = formatProcedure(consultation?.procedure_interest || caseRecord.procedures);
     const portalToken = await generateSecureToken('doc', caseId);
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const portalUrl = `${appUrl}/portal/doctor/${portalToken}`;
 
-    await base44.entities.CaseRecord.update(caseId, {
+    await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       status: 'Doctor-Pending',
       doctor_email: selectedDoctor.email,
       doctor_portal_token: portalToken,
       doctor_selected: selectedDoctor.full_name,
-      clinic_selected: selectedDoctor.clinic_name || 'Clinic'
+      clinic_selected: selectedDoctor.clinic_name || 'Clinic',
+      doctor_notified_at: new Date().toISOString(),
     });
 
     const preferredDate = consultation?.preferred_date
       ? new Date(consultation.preferred_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : 'To be confirmed';
 
-    await base44.integrations.Core.SendEmail({
+    await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND,
       to: selectedDoctor.email,
       subject: `New Patient Ready for Scheduling — ${caseRecord.client_name} | ${BRAND}`,
@@ -175,26 +159,11 @@ Deno.serve(async (req) => {
           <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">New patient ready for scheduling</h1>
           <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">A patient has passed the SAFE-T review and is ready for clinical availability confirmation.</p>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">
-            <tr>
-              <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">Patient</td>
-              <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(caseRecord.client_name)}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 0;color:#64746d;font-size:13px;">Procedure</td>
-              <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(procedureDisplay)}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 0;color:#64746d;font-size:13px;">Preferred date</td>
-              <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(preferredDate)}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 0;color:#64746d;font-size:13px;">Risk level</td>
-              <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(caseRecord.risk_score || 'Low')}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 0;color:#64746d;font-size:13px;">Notes</td>
-              <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(consultation?.notes || 'None')}</td>
-            </tr>
+            <tr><td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">Patient</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(caseRecord.client_name)}</td></tr>
+            <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Procedure</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(procedureDisplay)}</td></tr>
+            <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Preferred date</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(preferredDate)}</td></tr>
+            <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Risk level</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(caseRecord.risk_score || 'Low')}</td></tr>
+            <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Notes</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(consultation?.notes || 'None')}</td></tr>
           </table>
           <a href="${escapeHtml(portalUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 28px;border-radius:999px;font-size:14px;font-weight:700;">Review in portal</a>
           <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">Please confirm availability through the portal or by replying to this email.</p>
@@ -217,6 +186,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[assignDoctorToCase]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

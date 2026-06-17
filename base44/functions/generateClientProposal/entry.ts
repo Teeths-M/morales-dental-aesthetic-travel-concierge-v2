@@ -4,29 +4,24 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { caseId } = await req.json();
-    
-    if (!caseId) {
-      return Response.json({ error: 'Case ID required' }, { status: 400 });
-    }
+    if (!caseId) return Response.json({ error: 'Case ID required' }, { status: 400 });
 
-    const caseRecord = await base44.entities.Case.get(caseId);
-    
-    if (!caseRecord) {
-      return Response.json({ error: 'Case not found' }, { status: 404 });
-    }
+    // BUG-R7-03 FIX: entity is named CaseRecord, not Case — wrong name caused EntityNotFound on
+    // every call, returning 500 for every patient proposal view.
+    // BUG-R7-01 FIX: also switch to asServiceRole — user-scoped read fails for non-owning users
+    // (e.g. admins previewing a patient proposal, or the patient seeing their own full breakdown
+    // after the case was created by an admin import flow).
+    const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(caseId);
+    if (!caseRecord) return Response.json({ error: 'Case not found' }, { status: 404 });
 
-    // Check if user is authorized to view this case
-    if (caseRecord.client_email !== user.email && user.role !== 'admin') {
+    // Authorization: patient can view their own case; admins can view any
+    if (caseRecord.client_email !== user.email && user.role !== 'admin' && user.role !== 'platform_admin') {
       return Response.json({ error: 'Unauthorized access' }, { status: 403 });
     }
 
-    // Calculate costs
     const baseCost = (caseRecord.treatment_cost || 0) +
                      (caseRecord.flight_cost || 0) +
                      (caseRecord.hotel_cost || 0) +
@@ -34,12 +29,14 @@ Deno.serve(async (req) => {
                      (caseRecord.dropoff_cost || 0) +
                      (caseRecord.local_transfer_cost || 0);
 
-    // Apply markup
-    const markupMultiplier = 1 + (caseRecord.markup_percentage || 30) / 100;
+    // markup_percentage stored as decimal (0.3) or integer (30) — normalise both forms
+    const markupPct = (caseRecord.markup_percentage || 30) > 1
+      ? caseRecord.markup_percentage
+      : (caseRecord.markup_percentage || 0.3) * 100;
+    const markupMultiplier = 1 + markupPct / 100;
     const finalPackagePrice = baseCost * markupMultiplier;
     const profit = finalPackagePrice - baseCost;
 
-    // Determine deposit options
     const deposit25 = finalPackagePrice * 0.25;
     const deposit50 = finalPackagePrice * 0.50;
 
@@ -54,7 +51,7 @@ Deno.serve(async (req) => {
         origin_transfer: (caseRecord.pickup_cost || 0) + (caseRecord.dropoff_cost || 0),
         destination_transfer: caseRecord.local_transfer_cost || 0,
         base_cost: baseCost,
-        markup_percentage: caseRecord.markup_percentage || 30,
+        markup_percentage: markupPct,
         final_package_price: finalPackagePrice,
         profit: profit
       },
@@ -75,6 +72,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[generateClientProposal]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
