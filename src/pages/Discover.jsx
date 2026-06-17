@@ -155,10 +155,10 @@ export default function Discover() {
           <div className="flex items-center gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
               <Input
                 placeholder="Search procedures, doctors, or locations..."
-                className="pl-11 bg-[#0A101D]/50 border-white/[0.08] text-white placeholder:text-white/25 focus:border-[#D4AF37]/40"
+                className="pl-11 bg-[#0C1A1D] border-[#2A3F4A] text-white placeholder:text-white/40 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
                 value={filters.procedure}
                 onChange={(e) => updateFilter("procedure", e.target.value)}
               />
@@ -167,44 +167,44 @@ export default function Discover() {
             {/* Desktop Filters */}
             <div className="hidden md:flex items-center gap-2">
               <Select value={filters.country} onValueChange={(v) => updateFilter("country", v)}>
-                <SelectTrigger className="w-40 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white">
-                  <SelectValue placeholder="Country" className="text-white" />
+                <SelectTrigger className="w-40 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:border-[#D4AF37]/50 hover:bg-[#0E2A2A]">
+                  <SelectValue placeholder="Country" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0A101D] border-white/[0.12]">
-                  <SelectItem value={null} className="text-white hover:bg-white/[0.08]">All Countries</SelectItem>
+                <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
+                  <SelectItem value={null} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Countries</SelectItem>
                   {COUNTRIES.map(country => (
-                    <SelectItem key={country} value={country} className="text-white hover:bg-white/[0.08]">{country}</SelectItem>
+                    <SelectItem key={country} value={country} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">{country}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={filters.city} onValueChange={(v) => updateFilter("city", v)} disabled={!filters.country}>
-                <SelectTrigger className="w-40 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white disabled:opacity-50">
-                  <SelectValue placeholder="City" className="text-white" />
+                <SelectTrigger className="w-40 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:border-[#D4AF37]/50 hover:bg-[#0E2A2A] disabled:opacity-40 disabled:border-white/[0.08]">
+                  <SelectValue placeholder="City" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0A101D] border-white/[0.12]">
-                  <SelectItem value={null} className="text-white hover:bg-white/[0.08]">All Cities</SelectItem>
+                <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
+                  <SelectItem value={null} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Cities</SelectItem>
                   {getCityOptions().map(city => (
-                    <SelectItem key={city} value={city} className="text-white hover:bg-white/[0.08]">{city}</SelectItem>
+                    <SelectItem key={city} value={city} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">{city}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={String(filters.rating)} onValueChange={(v) => updateFilter("rating", Number(v))}>
-                <SelectTrigger className="w-32 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white">
-                  <SelectValue placeholder="Rating" className="text-white" />
+                <SelectTrigger className="w-32 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:border-[#D4AF37]/50 hover:bg-[#0E2A2A]">
+                  <SelectValue placeholder="Rating" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0A101D] border-white/[0.12]">
-                  <SelectItem value="4" className="text-white hover:bg-white/[0.08]">4+ Stars</SelectItem>
-                  <SelectItem value="4.5" className="text-white hover:bg-white/[0.08]">4.5+ Stars</SelectItem>
-                  <SelectItem value="5" className="text-white hover:bg-white/[0.08]">5 Stars</SelectItem>
+                <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
+                  <SelectItem value="4" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">4+ Stars</SelectItem>
+                  <SelectItem value="4.5" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">4.5+ Stars</SelectItem>
+                  <SelectItem value="5" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">5 Stars</SelectItem>
                 </SelectContent>
               </Select>
 
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(true)}
-                className="gap-2 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white hover:border-white/30"
+                className="gap-2 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:bg-[#0E2A2A] hover:border-[#D4AF37]/50 hover:text-white"
               >
                 <Filter className="h-4 w-4" />
                 More Filters
@@ -226,30 +226,30 @@ export default function Discover() {
           {(filters.procedure || filters.country || filters.city || filters.rating !== 4) && (
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               {filters.procedure && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:bg-[#0E2A2A]">
                   {PROCEDURES.find(p => p.id === filters.procedure)?.name || filters.procedure}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("procedure", "")} />
+                  <X className="h-3 w-3 text-white/70 hover:text-white cursor-pointer" onClick={() => updateFilter("procedure", "")} />
                 </Badge>
               )}
               {filters.country && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:bg-[#0E2A2A]">
                   {filters.country}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("country", "")} />
+                  <X className="h-3 w-3 text-white/70 hover:text-white cursor-pointer" onClick={() => updateFilter("country", "")} />
                 </Badge>
               )}
               {filters.city && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:bg-[#0E2A2A]">
                   {filters.city}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("city", "")} />
+                  <X className="h-3 w-3 text-white/70 hover:text-white cursor-pointer" onClick={() => updateFilter("city", "")} />
                 </Badge>
               )}
               {filters.rating !== 4 && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:bg-[#0E2A2A]">
                   {filters.rating}+ Stars
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("rating", 4)} />
+                  <X className="h-3 w-3 text-white/70 hover:text-white cursor-pointer" onClick={() => updateFilter("rating", 4)} />
                 </Badge>
               )}
-              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-white/80 hover:text-white hover:bg-white/[0.08]">
                 Clear all
               </Button>
             </div>
