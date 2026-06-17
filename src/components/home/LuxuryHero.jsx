@@ -169,9 +169,29 @@ export default function LuxuryHero() {
               className="mb-10"
             >
               <Link to={content.cta.path}>
-                <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg shadow-emerald-900/40">
-                  {content.cta.label}
-                </Button>
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group relative h-14 px-10 rounded-xl text-base font-semibold overflow-hidden"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`, 
+                    color: '#060B16',
+                    boxShadow: `0 8px 40px ${GOLD}40, 0 0 0 1px ${GOLD}33 inset`,
+                    textShadow: '0 1px 2px rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    {content.cta.label}
+                    <motion.span 
+                      className="inline-block"
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    >→</motion.span>
+                  </span>
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }} 
+                  />
+                </motion.button>
               </Link>
             </motion.div>
 
