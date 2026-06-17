@@ -19,13 +19,12 @@ const CONTENT = {
         <span style={{ color: GOLD }}>Zero Compromises.</span>
       </>
     ),
-    body: 'From your first consultation to full recovery, Morales orchestrates every detail. You deserve exceptional results without the stress. Let us deliver the care journey you deserve.',
+    body: 'From consultation to recovery, Morales orchestrates every detail. Exceptional results, zero stress.',
     cta: { label: 'Start Your Journey →', path: '/booking' },
     trustPills: [
       { icon: BadgeCheck, label: 'Verified Experts', sub: 'Top 1% specialists' },
       { icon: Shield, label: 'All-Inclusive Pricing', sub: 'No surprises' },
-      { icon: Plane, label: 'Full Concierge', sub: 'Flights to recovery' },
-      { icon: Heart, label: 'Dedicated Support', sub: '24/7 until home' },
+      { icon: Heart, label: 'End-to-End Care', sub: '24/7 until home' },
     ],
   },
   nonmedical: {
@@ -36,12 +35,11 @@ const CONTENT = {
         <span style={{ color: GOLD }}>Effortlessly Yours.</span>
       </>
     ),
-    body: 'Private jets, exclusive hotels, personal companions, and real-time safety — seamlessly integrated. Experience travel designed entirely around you.',
+    body: 'Private jets, exclusive hotels, personal companions — seamlessly integrated. Travel designed entirely around you.',
     cta: { label: 'Plan My Journey →', path: '/travel-concierge' },
     trustPills: [
       { icon: Plane, label: 'Global Access', sub: '190+ countries' },
       { icon: BadgeCheck, label: 'Vetted Partners', sub: 'Excellence guaranteed' },
-      { icon: Shield, label: '24/7 Protection', sub: 'Always monitored' },
       { icon: Heart, label: 'White-Glove Care', sub: 'Every detail handled' },
     ],
   },
@@ -182,23 +180,6 @@ export default function LuxuryHero() {
                   transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                 >→</motion.span>
               </Link>
-              {isMedical && (
-                <button 
-                  onClick={openModal}
-                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-[15px] text-white border border-white/20 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 transition-all duration-300 backdrop-blur-sm"
-                  style={{ boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}
-                >
-                  <motion.span 
-                    className="w-7 h-7 rounded-full border border-white/25 flex items-center justify-center group-hover:border-white/40 transition-colors" 
-                    style={{ fontSize: '9px' }}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    ▶
-                  </motion.span>
-                  How It Works
-                </button>
-              )}
             </motion.div>
 
             <AnimatePresence mode="wait">
