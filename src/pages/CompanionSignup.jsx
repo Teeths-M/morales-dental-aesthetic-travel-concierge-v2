@@ -35,8 +35,11 @@ export default function CompanionSignup() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accountType, setAccountType] = useState('individual'); // 'individual' or 'agency'
   const [formData, setFormData] = useState({
     full_name: '',
+    agency_name: '',
+    contact_person: '',
     email: '',
     phone: '',
     country: '',
@@ -67,8 +70,8 @@ export default function CompanionSignup() {
       const user = await base44.auth.me();
       
       const companionData = {
-        full_name: formData.full_name,
-        contact_person: formData.full_name,
+        full_name: accountType === 'individual' ? formData.full_name : formData.agency_name,
+        contact_person: accountType === 'individual' ? formData.full_name : formData.contact_person,
         email: formData.email,
         phone: formData.phone,
         country: formData.country,
@@ -76,7 +79,9 @@ export default function CompanionSignup() {
         languages: formData.languages,
         primary_language: formData.languages[0] || 'en',
         years_experience: parseInt(formData.years_experience) || 0,
-        bio: `Caregiver with ${formData.years_experience} experience. Available ${formData.availability}.`,
+        bio: accountType === 'individual' 
+          ? `Caregiver with ${formData.years_experience} experience. Available ${formData.availability}.`
+          : `Professional companion agency serving ${formData.country}. Specializing in tour guide and companion services.`,
         hourly_rate_usd: 0,
         daily_rate_usd: 0,
         service_regions: [formData.country],
@@ -85,12 +90,12 @@ export default function CompanionSignup() {
         payout_method: 'stripe',
         payout_account: '',
         sign_up_completed_at: new Date().toISOString(),
-        is_agency: false,
+        is_agency: accountType === 'agency',
       };
 
       await base44.entities.Companion.create(companionData);
 
-      toast.success('Welcome! Your caregiver profile is created. We\'ll guide you through the next steps.');
+      toast.success(accountType === 'individual' ? 'Welcome! Your caregiver profile is created.' : 'Welcome! Your agency profile is created.');
       navigate('/companion-dashboard');
     } catch (error) {
       console.error('Signup error:', error);
@@ -107,20 +112,88 @@ export default function CompanionSignup() {
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold mb-2">Let's Get Started! 👋</h3>
-              <p className="text-sm text-muted-foreground">Tell us a bit about yourself</p>
+              <p className="text-sm text-muted-foreground">Choose your account type</p>
+            </div>
+
+            {/* Account Type Selection */}
+            <div className="grid md:grid-cols-2 gap-4 mb-6">
+              <button
+                type="button"
+                onClick={() => setAccountType('individual')}
+                className={`p-6 rounded-xl border-2 transition-all text-left ${
+                  accountType === 'individual'
+                    ? 'border-emerald-600 bg-emerald-50'
+                    : 'border-border hover:border-emerald-300'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    accountType === 'individual' ? 'bg-emerald-600 text-white' : 'bg-muted'
+                  }`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-lg">Individual Caregiver</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Mothers & caregivers offering personal care services</p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setAccountType('agency')}
+                className={`p-6 rounded-xl border-2 transition-all text-left ${
+                  accountType === 'agency'
+                    ? 'border-emerald-600 bg-emerald-50'
+                    : 'border-border hover:border-emerald-300'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    accountType === 'agency' ? 'bg-emerald-600 text-white' : 'bg-muted'
+                  }`}>
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-semibold text-lg">Agency / Tour Guide</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Agencies providing tour guide & companion services</p>
+              </button>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Your Name *</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => handleInputChange('full_name', e.target.value)}
-                  placeholder="Maria Rodriguez"
-                  className="text-lg py-6"
-                />
-              </div>
+              {accountType === 'individual' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Your Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
+                    placeholder="Maria Rodriguez"
+                    className="text-lg py-6"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="agency_name">Agency Name *</Label>
+                    <Input
+                      id="agency_name"
+                      value={formData.agency_name}
+                      onChange={(e) => handleInputChange('agency_name', e.target.value)}
+                      placeholder="Caribbean Tours & Companions"
+                      className="text-lg py-6"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_person">Contact Person *</Label>
+                    <Input
+                      id="contact_person"
+                      value={formData.contact_person}
+                      onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                      placeholder="Agency representative"
+                      className="py-6"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -306,10 +379,12 @@ export default function CompanionSignup() {
             <Users className="w-10 h-10 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-            Join Our Caregiver Family 💚
+            {accountType === 'individual' ? 'Join Our Caregiver Family 💚' : 'Partner With Us 🤝'}
           </h1>
           <p className="text-base text-muted-foreground max-w-md mx-auto">
-            Mothers and caregivers 40+ — turn your caring heart into meaningful work
+            {accountType === 'individual' 
+              ? 'Mothers and caregivers 40+ — turn your caring heart into meaningful work' 
+              : 'Agencies & tour guides — provide exceptional companion services'}
           </p>
         </div>
 
@@ -351,13 +426,31 @@ export default function CompanionSignup() {
               )}
               
               {step < 3 ? (
-                <Button onClick={() => setStep(step + 1)} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                <Button 
+                  onClick={() => setStep(step + 1)} 
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                  disabled={
+                    (accountType === 'individual' && !formData.full_name) ||
+                    (accountType === 'agency' && (!formData.agency_name || !formData.contact_person)) ||
+                    !formData.email || 
+                    !formData.phone || 
+                    !formData.country
+                  }
+                >
                   Next Step →
                 </Button>
               ) : (
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={isSubmitting || !formData.full_name || !formData.email || !formData.phone || !formData.country || formData.languages.length === 0}
+                  disabled={
+                    isSubmitting || 
+                    (accountType === 'individual' && !formData.full_name) ||
+                    (accountType === 'agency' && (!formData.agency_name || !formData.contact_person)) ||
+                    !formData.email || 
+                    !formData.phone || 
+                    !formData.country || 
+                    formData.languages.length === 0
+                  }
                   className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
                 >
                   {isSubmitting ? 'Creating Your Profile...' : 'Complete Registration ✨'}
