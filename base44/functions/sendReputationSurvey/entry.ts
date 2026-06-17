@@ -64,7 +64,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, token, survey_url: surveyUrl });
   } catch (error) {
-    console.error('sendReputationSurvey error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10
+    console.error('[sendReputationSurvey]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

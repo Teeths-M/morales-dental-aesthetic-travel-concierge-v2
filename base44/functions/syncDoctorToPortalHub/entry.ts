@@ -11,17 +11,20 @@ Deno.serve(async (req) => {
 
     const doctor = data;
 
-    // Check if doctor already has a partner record in Portal Hub
-    const existingPartners = await base44.asServiceRole.entities.Partner.filter({ 
+    // BUG-R12-04 FIX: Partner entity has no `name` field — the correct field is `email`.
+    // Matching by full_name is also unsafe: two doctors with the same name would block the second.
+    // Use email as the unique key for idempotency — it's always present and unique.
+    const existingPartners = await base44.asServiceRole.entities.Partner.filter({
       type: 'doctor',
-      name: doctor.full_name
+      email: doctor.email
     });
 
     if (existingPartners.length === 0) {
-      // Create a Partner record for this doctor in Portal Hub
       await base44.asServiceRole.entities.Partner.create({
         type: 'doctor',
-        name: doctor.full_name,
+        // BUG-R12-04 FIX: use agency_name (the Partner entity's display name field),
+        // not `name` which does not exist on the Partner schema.
+        agency_name: doctor.full_name,
         email: doctor.email,
         phone: doctor.phone,
         notes: `${doctor.clinic_name || 'Clinic'} - ${doctor.clinic_country}`,
@@ -34,7 +37,8 @@ Deno.serve(async (req) => {
       doctor_id: doctor.id
     });
   } catch (error) {
-    console.error('Sync error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10
+    console.error('[syncDoctorToPortalHub]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

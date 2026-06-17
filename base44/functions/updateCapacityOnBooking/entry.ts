@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
       updated_count: finalCount
     });
   } catch (error) {
-    console.error('Error updating capacity:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10
+    console.error('[updateCapacityOnBooking]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

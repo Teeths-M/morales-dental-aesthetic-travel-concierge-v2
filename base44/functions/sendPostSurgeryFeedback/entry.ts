@@ -11,8 +11,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'entity_id is required' }, { status: 400 });
     }
 
-    const sessions = await base44.asServiceRole.entities.RecoverySession.filter({ id: entity_id });
-    const session = sessions[0];
+    // BUG-R12-03 FIX: filter({ id }) cannot query the built-in `id` field — always returns [].
+    // Use .get() for primary-key lookup.
+    const session = await base44.asServiceRole.entities.RecoverySession.get(entity_id);
     if (!session) return Response.json({ error: 'RecoverySession not found' }, { status: 404 });
 
     // Skip if already sent or session still active
@@ -106,6 +107,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, sent_to: session.patient_email });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10
+    console.error('[sendPostSurgeryFeedback]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

@@ -9,7 +9,12 @@ Deno.serve(async (req) => {
     }
 
     const appUrl = Deno.env.get('APP_URL') || 'https://app.moralesmedical.com';
-    const incomplete = await base44.asServiceRole.entities.OnboardingProgress.filter({ onboarding_completed: false });
+    // BUG-R12-02 FIX: unbounded filter — limit to prevent OOM on large user bases
+    const incomplete = await base44.asServiceRole.entities.OnboardingProgress.filter(
+      { onboarding_completed: false },
+      'last_nudge_sent_at',
+      200
+    );
 
     let nudged = 0;
     for (const prog of incomplete) {
@@ -46,7 +51,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, nudged });
   } catch (error) {
-    console.error('sendOnboardingNudges error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10
+    console.error('[sendOnboardingNudges]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

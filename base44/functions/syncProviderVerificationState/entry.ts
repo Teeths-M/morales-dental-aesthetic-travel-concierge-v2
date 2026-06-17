@@ -20,8 +20,9 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, message: 'Verification state synced' });
 
   } catch (error) {
-    console.error('Sync error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10
+    console.error('[syncProviderVerificationState]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
 

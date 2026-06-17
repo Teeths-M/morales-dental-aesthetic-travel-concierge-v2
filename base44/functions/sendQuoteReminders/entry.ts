@@ -48,8 +48,13 @@ Deno.serve(async (req) => {
     const now = new Date();
     const cutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
 
-    // Get all Travel-Coordination cases
-    const cases = await base44.asServiceRole.entities.CaseRecord.filter({ status: 'Travel-Coordination' });
+    // BUG-R12-02 FIX: unbounded filter — loads all Travel-Coordination cases on every cron run.
+    // Limit to 100 to prevent OOM; oldest cases are most likely to have stale quotes.
+    const cases = await base44.asServiceRole.entities.CaseRecord.filter(
+      { status: 'Travel-Coordination' },
+      'updated_date',
+      100
+    );
 
     const results = { reminders_sent: [], skipped: 0 };
 
@@ -164,7 +169,8 @@ Deno.serve(async (req) => {
     console.log(`sendQuoteReminders: ${results.reminders_sent.length} reminders sent, ${results.skipped} cases skipped`);
     return Response.json({ success: true, results });
   } catch (error) {
-    console.error('sendQuoteReminders error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R12-01 FIX: SEC-10 — never expose internal error details
+    console.error('[sendQuoteReminders]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
