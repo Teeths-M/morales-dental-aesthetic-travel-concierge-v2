@@ -5,6 +5,7 @@ import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
 import { BadgeCheck, Shield, Plane, Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
@@ -147,7 +148,7 @@ export default function LuxuryHero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }} 
                 transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                className="text-white/65 mb-14 max-w-[480px]"
+                className="text-white/65 mb-8 max-w-[480px]"
                 style={{ 
                   fontSize: '18px',
                   lineHeight: 1.8,
@@ -160,6 +161,34 @@ export default function LuxuryHero() {
               </motion.p>
             </AnimatePresence>
 
+            {/* Dual CTA Buttons */}
+            <motion.div 
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col sm:flex-row gap-4 mb-10"
+            >
+              <Link to={content.cta.path}>
+                <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg shadow-emerald-900/40">
+                  {content.cta.label}
+                </Button>
+              </Link>
+              {!isMedical && (
+                <Link to="/travel-concierge">
+                  <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm">
+                    Book Travel Package →
+                  </Button>
+                </Link>
+              )}
+              {isMedical && (
+                <Link to="/travel-concierge">
+                  <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm">
+                    Need Travel Only? →
+                  </Button>
+                </Link>
+              )}
+            </motion.div>
+
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -169,27 +198,7 @@ export default function LuxuryHero() {
               <ModeToggle />
             </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-              className="flex flex-wrap gap-4 mb-14"
-            >
-              <Link to={content.cta.path}
-                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-[15px] transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-98"
-                style={{ 
-                  background: `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`, 
-                  color: '#060B16', 
-                  boxShadow: `0 8px 40px ${GOLD}40, 0 0 0 1px ${GOLD}33 inset`
-                }}>
-                {content.cta.label}
-                <motion.span 
-                  className="inline-block"
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                >→</motion.span>
-              </Link>
-            </motion.div>
+
 
             <AnimatePresence mode="wait">
               <motion.div 

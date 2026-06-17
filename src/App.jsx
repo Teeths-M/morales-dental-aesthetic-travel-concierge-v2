@@ -94,6 +94,7 @@ import AdminAuditChain from './pages/AdminAuditChain';
 import EmergencyManifest from './pages/EmergencyManifest';
 import AdminDoctorVerificationQueue from './pages/AdminDoctorVerificationQueue';
 import TravelConcierge from './pages/TravelConcierge';
+import AdminTravelRequests from './pages/AdminTravelRequests';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -245,6 +246,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
         <Route path="/admin/audit-chain" element={<AdminAuditChain />} />
         <Route path="/admin/doctor-verification" element={<AdminDoctorVerificationQueue />} />
+        <Route path="/admin/travel-requests" element={<AdminTravelRequests />} />
       </Route>
       {/* Travel Concierge — public, no admin guard needed */}
       <Route element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
