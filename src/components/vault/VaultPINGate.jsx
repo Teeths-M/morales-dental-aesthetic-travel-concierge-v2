@@ -11,13 +11,19 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
   const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSettingPIN, setIsSettingPIN] = useState(!hasExistingPIN);
+  const [isSettingPIN, setIsSettingPIN] = useState(hasExistingPIN === false);
   const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
   const confirmRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
   useEffect(() => {
     if (inputRefs[0].current) inputRefs[0].current.focus();
   }, []);
+
+  useEffect(() => {
+    if (hasExistingPIN !== undefined) {
+      setIsSettingPIN(hasExistingPIN === false);
+    }
+  }, [hasExistingPIN]);
 
   const handlePinChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
@@ -98,11 +104,13 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
 
     setLoading(true);
     try {
+      console.log('Setting PIN...');
       const response = await base44.functions.invoke('verifyVaultPIN', {
         pin: pinString,
         action: 'set'
       });
       
+      console.log('PIN response:', response.data);
       if (response.data.success) {
         onPINVerified();
       } else {
@@ -110,7 +118,7 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
       }
     } catch (err) {
       console.error('PIN setup error:', err);
-      setError(err.message || 'Failed to set PIN. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Failed to set PIN. Please try again.');
     } finally {
       setLoading(false);
     }
