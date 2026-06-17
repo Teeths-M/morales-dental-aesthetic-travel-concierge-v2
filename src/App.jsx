@@ -97,6 +97,7 @@ import TravelConcierge from './pages/TravelConcierge';
 import AdminTravelRequests from './pages/AdminTravelRequests';
 import TripOverview from './pages/TripOverview';
 import WalkieTalkie from './pages/WalkieTalkie';
+import BaggageTrackerPage from './pages/BaggageTrackerPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -275,6 +276,7 @@ const AuthenticatedApp = () => {
         <Route path="/travel-services" element={<TravelServices />} />
         <Route path="/trip-overview" element={<TripOverview />} />
         <Route path="/walkie-talkie" element={<WalkieTalkie />} />
+        <Route path="/baggage-tracker" element={<BaggageTrackerPage />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

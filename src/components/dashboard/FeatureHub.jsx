@@ -54,7 +54,7 @@ const FEATURE_CATEGORIES = [
     features: [
       { label: 'Passport Vault', path: '/passport-vault', icon: FileText, desc: 'Encrypted documents' },
       { label: 'Upload Files', path: '/dashboard/documents', icon: FileText, desc: 'Add new documents' },
-      { label: 'Baggage Tracker', path: '/dashboard', icon: Luggage, desc: 'QR luggage tracking' },
+      { label: 'Baggage Tracker', path: '/baggage-tracker', icon: Luggage, desc: 'QR luggage tracking' },
     ]
   },
   {
