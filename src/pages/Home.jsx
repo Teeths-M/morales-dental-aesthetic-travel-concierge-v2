@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useToast } from '@/components/ui/use-toast';
 import LuxuryHero from '../components/home/LuxuryHero';
 import LuxuryTrustBar from '../components/home/LuxuryTrustBar';
 import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
@@ -14,6 +15,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleCardClick = (card) => {
     setSelectedCard(card);
@@ -38,8 +40,8 @@ export default function Home() {
       setIsModalOpen(false);
       navigate(`/estimate/${res.data.estimate_id}`);
     } catch (error) {
-      alert('Error creating estimate. Please try again.');
       console.error(error);
+      toast({ title: 'Something went wrong', description: 'Unable to create your estimate. Please try again.', variant: 'destructive' });
     }
   };
 

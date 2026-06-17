@@ -6,7 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
-import { PlatformModeProvider } from '@/context/PlatformModeContext';
+import { PlatformModeProvider } from '@/context/PlatformModeContext'; // single provider — wraps App root below
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
@@ -245,6 +245,9 @@ const AuthenticatedApp = () => {
         <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
         <Route path="/admin/audit-chain" element={<AdminAuditChain />} />
         <Route path="/admin/doctor-verification" element={<AdminDoctorVerificationQueue />} />
+      </Route>
+      {/* Travel Concierge — public, no admin guard needed */}
+      <Route element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
         <Route path="/travel-concierge" element={<TravelConcierge />} />
       </Route>
       {/* Public — Guardian View link (no auth, token-gated) */}
@@ -278,12 +281,12 @@ function App() {
     <Router>
       <AuthProvider>
         <CartProvider>
-          <QueryClientProvider client={queryClientInstance}>
-            <PlatformModeProvider>
+          <PlatformModeProvider>
+            <QueryClientProvider client={queryClientInstance}>
               <AuthenticatedApp />
-            </PlatformModeProvider>
-            <Toaster />
-          </QueryClientProvider>
+              <Toaster />
+            </QueryClientProvider>
+          </PlatformModeProvider>
         </CartProvider>
       </AuthProvider>
     </Router>

@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { usePlatformMode } from '@/context/PlatformModeContext';
+import { BRAND } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
+const GOLD = BRAND.gold;
 
 export default function ModeToggle() {
   const { mode, toggleMode } = usePlatformMode();

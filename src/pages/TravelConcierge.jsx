@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plane, Hotel, Car, Users, Heart, MapPin, Star, Shield, Headphones, ArrowRight } from 'lucide-react';
+import { Plane, Hotel, Car, Users, Heart, MapPin, Shield, ArrowRight } from 'lucide-react';
+import { BRAND } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
+const GOLD = BRAND.gold;
 
 const services = [
   {

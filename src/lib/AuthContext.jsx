@@ -15,6 +15,9 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
   const isPreviewAdmin = appParams.isPreview || (Boolean(appParams.previewToken) && window.location.hostname.includes('preview'));
 
+  // Single preview user object — keeps all three guard sites in sync
+  const PREVIEW_USER = { role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true };
+
   useEffect(() => {
     checkAppState();
   }, []);
@@ -41,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         
         // If we got the app public settings successfully, check if user is authenticated
         if (isPreviewAdmin) {
-          setUser({ role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true });
+          setUser(PREVIEW_USER);
           setIsAuthenticated(true);
           setIsLoadingAuth(false);
           setAuthChecked(true);
@@ -58,7 +61,7 @@ export const AuthProvider = ({ children }) => {
         
         // Handle app-level errors
         if (isPreviewAdmin) {
-          setUser({ role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true });
+          setUser(PREVIEW_USER);
           setIsAuthenticated(true);
           setAuthChecked(true);
           setAuthError(null);
@@ -105,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       if (isPreviewAdmin) {
-        setUser({ role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true });
+        setUser(PREVIEW_USER);
         setIsAuthenticated(true);
         setIsLoadingAuth(false);
         setAuthChecked(true);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const PlatformModeContext = createContext(null);
 
@@ -22,5 +22,10 @@ export function PlatformModeProvider({ children }) {
 }
 
 export function usePlatformMode() {
-  return useContext(PlatformModeContext);
+  const ctx = useContext(PlatformModeContext);
+  if (!ctx) {
+    // Graceful fallback — never throw in production rendering paths
+    return { mode: 'medical', toggleMode: () => {} };
+  }
+  return ctx;
 }

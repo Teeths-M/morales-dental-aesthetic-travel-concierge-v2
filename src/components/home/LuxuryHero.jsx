@@ -5,8 +5,9 @@ import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
 import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, BarChart3, MapPin, HeartPulse } from 'lucide-react';
+import { BRAND } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
+const GOLD = BRAND.gold;
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e35e484d5_generated_image.png';
 
 const orbitNodes = [
