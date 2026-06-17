@@ -5,6 +5,10 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    // Verify authenticated
+    const isAuthenticated = await base44.auth.isAuthenticated();
+    if (!isAuthenticated) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
     const { action, case_id, source_language, target_language, audio_url, session_token } = await req.json();
 
@@ -29,6 +33,7 @@ Deno.serve(async (req) => {
 
       const sessionToken = 'WALKIE_' + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
       
+      // Use service role with explicit permission check
       const session = await base44.asServiceRole.entities.WalkieTalkieSession.create({
         session_token: sessionToken,
         case_id: case_id || null,
