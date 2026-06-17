@@ -30,28 +30,29 @@ export default function Header() {
 
   return (
     <>
-    <nav className="w-full min-h-[92px] border-b border-white/[0.06] bg-[#020B0D]/90 backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-12 flex items-center justify-between py-4">
+    <nav className="w-full min-h-[88px] border-b border-white/[0.08] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-3">
       
-      {/* 1. VERBATIM BRANDING IDENTITY */}
-      <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-4 group z-50">
-        <div className="w-12 h-12 bg-[#051A1D] border border-white/[0.1] flex items-center justify-center rounded-lg shadow-inner">
-          <span className="font-serif text-xl text-[#D4AF37] tracking-wider group-hover:scale-105 transition-transform">M</span>
+      {/* 1. PREMIUM BRANDING IDENTITY */}
+      <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-5 group z-50">
+        <div className="w-14 h-14 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-xl shadow-lg" style={{ boxShadow: '0 4px 20px rgba(184,151,80,0.3)' }}>
+          <span className="font-serif text-2xl text-[#0C1A1D] font-bold">M</span>
         </div>
-        <div className="flex flex-col py-1">
-          <span className="font-serif text-base tracking-widest text-white uppercase font-medium max-w-[280px] leading-tight">
-            Morales
+        <div className="flex flex-col">
+          <span className="font-serif text-[26px] text-white uppercase font-bold tracking-wide leading-none">
+            MORALES
           </span>
-          <span className="text-[10px] tracking-[0.15em] text-[#D4AF37] uppercase font-sans mt-0.5 font-light">
+          <span className="text-[11px] tracking-[0.25em] text-[#B89750] uppercase font-sans mt-1 font-medium">
             Dental & Aesthetic Travel Concierge
           </span>
         </div>
       </Link>
 
-      {/* 2. PRODUCTION REACT ROUTER LINKS (Desktop) */}
-      <div className="hidden lg:flex items-center space-x-8 text-sm font-medium text-white/70">
+      {/* 2. PREMIUM NAVIGATION LINKS */}
+      <div className="hidden lg:flex items-center gap-10 text-[14px] font-sans">
         <Link 
           to={!user ? "/" : user.role === 'admin' || user.role === 'platform_admin' ? "/admin" : "/dashboard"} 
-          className={`transition-colors duration-200 ${location.pathname === '/' || location.pathname === '/admin' ? 'text-[#D4AF37] font-semibold' : 'hover:text-white'}`}
+          className="transition-all duration-200 font-semibold"
+          style={{ color: location.pathname === '/' || location.pathname === '/admin' ? '#B89750' : '#A9A9A9' }}
         >
           Home
         </Link>
@@ -60,65 +61,114 @@ export default function Header() {
           <Link
             key={link.path}
             to={link.path}
-            className={`transition-colors duration-200 ${location.pathname === link.path ? 'text-white font-semibold' : 'hover:text-white'}`}
+            className="transition-all duration-200"
+            style={{ color: location.pathname === link.path ? '#FFFFFF' : '#A9A9A9', fontWeight: location.pathname === link.path ? '600' : '400' }}
           >
             {link.name}
           </Link>
         ))}
 
-        <Link to="/visa-assist" className="flex items-center gap-1.5 hover:text-white transition-colors duration-200">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block shadow-[0_0_8px_rgba(34,211,238,0.6)]"></span>
-          Visa Assist
+        <Link to="/visa-assist" className="flex items-center gap-2 transition-all duration-200">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#00E5FF] inline-block" style={{ boxShadow: '0 0 10px rgba(0,229,255,0.6)' }}></span>
+          <span style={{ color: '#A9A9A9', fontWeight: 400 }}>Visa Assist</span>
         </Link>
 
-        <Link to="/passport-vault" className="flex items-center gap-1.5 hover:text-white transition-colors duration-200">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-          My Vault
+        <Link to="/passport-vault" className="flex items-center gap-2 transition-all duration-200">
+          <svg className="w-4 h-4" fill="none" stroke="#A9A9A9" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          <span style={{ color: '#A9A9A9', fontWeight: 400 }}>My Vault</span>
         </Link>
+        
+        {/* Portal Hub Dropdown */}
+        <div className="relative">
+          <button 
+            onClick={() => { setIsPortalOpen(!isPortalOpen); setIsLangOpen(false); }}
+            className="flex items-center gap-1.5 transition-all duration-200"
+          >
+            <span style={{ color: '#A9A9A9', fontWeight: 400 }}>Portal Hub</span>
+            <svg className={`w-3.5 h-3.5 transform transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`} fill="none" stroke="#A9A9A9" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+
+          {isPortalOpen && (
+            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#0C1A1D] border border-white/[0.1] shadow-2xl p-1.5 flex flex-col" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+              <Link to="/doctor-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Doctor Portal</Link>
+              <Link to="/travel-agency-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Travel Agency Portal</Link>
+              <Link to="/taxi-service-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Chauffeur Portal</Link>
+              <Link to="/companion-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Companion Portal</Link>
+              <div className="h-[1px] bg-white/[0.08] my-1" />
+              <Link to="/partner-signup" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all font-semibold" style={{ color: '#B89750' }}>Join as Provider Partner</Link>
+            </div>
+          )}
+        </div>
+        
+        {/* Language Selector */}
+        <div className="relative">
+          <button 
+            onClick={() => { setIsLangOpen(!isLangOpen); setIsPortalOpen(false); }}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all"
+          >
+            <span className="text-[13px] font-sans font-semibold" style={{ color: '#A9A9A9' }}>EN</span>
+          </button>
+
+          {isLangOpen && (
+            <div className="absolute right-0 mt-2 w-20 rounded-lg bg-[#0C1A1D] border border-white/[0.1] p-1 flex flex-col shadow-xl">
+              {['EN', 'ES', 'FR'].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => handleLanguageChange(lang)}
+                  className={`px-3 py-1.5 text-[12px] font-sans rounded text-left transition-all ${currentLang === lang ? 'font-semibold' : ''}`}
+                  style={{ color: currentLang === lang ? '#B89750' : '#A9A9A9' }}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 3. CORE UTILITIES, PORTALS, & LANGUAGE SELECTOR */}
-      <div className="hidden lg:flex items-center space-x-6">
+      <div className="hidden lg:flex items-center space-x-5">
 
         {/* Unified Portal Dropdown */}
         <div className="relative">
           <button 
             onClick={() => { setIsPortalOpen(!isPortalOpen); setIsLangOpen(false); }}
-            className="text-sm font-medium text-white/80 hover:text-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/[0.04] transition-all"
+            className="text-[14px] font-medium flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all"
+            style={{ color: '#A9A9A9' }}
           >
             Portal Hub
-            <svg className={`w-4 h-4 transform transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+            <svg className={`w-3.5 h-3.5 transform transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
           </button>
 
           {isPortalOpen && (
-            <div className="absolute right-0 mt-2 w-60 rounded-xl bg-[#030E10] border border-white/[0.08] shadow-2xl p-2 flex flex-col space-y-0.5 backdrop-blur-2xl">
+            <div className="absolute right-0 mt-2 w-60 rounded-xl bg-[#0C1A1D] border border-white/[0.08] shadow-2xl p-2 flex flex-col space-y-0.5 backdrop-blur-2xl">
               <Link to="/doctor-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Doctor Portal</Link>
               <Link to="/travel-agency-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Travel Agency Portal</Link>
               <Link to="/taxi-service-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Chauffeur Portal</Link>
               <Link to="/companion-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Companion Portal</Link>
               <div className="h-[1px] bg-white/[0.08] my-1.5" />
-              <Link to="/partner-signup" className="px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/[0.05] rounded-lg transition-colors font-medium">Join as Provider Partner</Link>
+              <Link to="/partner-signup" className="px-4 py-2.5 text-sm text-[#B89750] hover:bg-[#B89750]/[0.05] rounded-lg transition-colors font-medium">Join as Provider Partner</Link>
             </div>
           )}
         </div>
 
-        {/* Dynamic Multi-Language Selector */}
+        {/* Language Selector */}
         <div className="relative">
           <button 
             onClick={() => { setIsLangOpen(!isLangOpen); setIsPortalOpen(false); }}
-            className="p-2 text-white/60 hover:text-white rounded-full hover:bg-white/[0.04] transition-colors flex items-center gap-1"
+            className="px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"
+            style={{ color: '#A9A9A9' }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9h18" /></svg>
-            <span className="text-xs font-mono font-bold tracking-wider text-white/80">{currentLang}</span>
+            <span className="text-[14px] font-medium">{currentLang}</span>
           </button>
 
           {isLangOpen && (
-            <div className="absolute right-0 mt-2 w-24 rounded-lg bg-[#030E10] border border-white/[0.08] p-1 flex flex-col space-y-0.5 shadow-xl">
+            <div className="absolute right-0 mt-2 w-20 rounded-lg bg-[#0C1A1D] border border-white/[0.08] p-1 flex flex-col space-y-0.5 shadow-xl">
               {['EN', 'ES', 'FR'].map((lang) => (
                 <button
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
-                  className={`px-3 py-1.5 text-xs font-mono rounded text-left transition-colors ${currentLang === lang ? 'text-[#D4AF37] bg-white/[0.05]' : 'text-white/60 hover:text-white hover:bg-white/[0.02]'}`}
+                  className={`px-3 py-1.5 text-xs font-medium rounded text-left transition-colors ${currentLang === lang ? 'text-[#B89750] bg-white/[0.05]' : 'text-[#A9A9A9] hover:text-white hover:bg-white/[0.02]'}`}
                 >
                   {lang}
                 </button>
@@ -127,39 +177,49 @@ export default function Header() {
           )}
         </div>
 
-        {/* Refined Luxury CTAs */}
-        <div className="flex items-center space-x-4 pl-2 border-l border-white/[0.08]">
+        {/* Premium Action Buttons */}
+        <div className="flex items-center gap-3 pl-4">
           {user ? (
             <>
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
+                  style={{ background: '#1A4E4E', color: '#FFFFFF', boxShadow: '0 2px 12px rgba(26,78,78,0.4)' }}
                 >
-                  ⚙️ Admin
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-1.066 2.573c1.543.94 3.31.826 2.37 2.37a1.724 1.724 0 00-2.573 1.066c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-1.543-.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  Admin
                 </Link>
               )}
+              
               <Link 
                 to="/dashboard" 
-                className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
+                style={{ background: 'linear-gradient(135deg, #F2D045 0%, #F9E58B 100%)', color: '#0C1A1D', boxShadow: '0 4px 20px rgba(242,208,69,0.35)' }}
               >
                 Dashboard
               </Link>
+              
               <button
-                onClick={() => base44.auth.logout()}
-                className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+                onClick={async () => {
+                  await base44.auth.logout();
+                  window.location.reload();
+                }}
+                className="text-[14px] font-medium transition-all hover:text-white"
+                style={{ color: '#A9A9A9' }}
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/register-role" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
+              <Link to="/register-role" className="text-[14px] font-medium transition-all hover:text-white" style={{ color: '#A9A9A9' }}>
                 Register
               </Link>
               <Link 
                 to="/dashboard" 
-                className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
+                style={{ background: 'linear-gradient(135deg, #F2D045 0%, #F9E58B 100%)', color: '#0C1A1D', boxShadow: '0 4px 20px rgba(242,208,69,0.35)' }}
               >
                 Log In
               </Link>
