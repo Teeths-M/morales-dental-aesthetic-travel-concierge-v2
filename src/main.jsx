@@ -1,16 +1,52 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import * as Sentry from '@sentry/react'
+import { BrowserTracing } from '@sentry/tracing'
 import App from '@/App.jsx'
 import '@/index.css'
 
-// ── Error Tracking (To be enabled after installing @sentry/react) ───────────
-// 1. Run: npm install @sentry/react
-// 2. Add VITE_SENTRY_DSN to environment variables
-// 3. Uncomment Sentry initialization code below
-//
-// Example:
-// import * as Sentry from '@sentry/react';
-// Sentry.init({ dsn: import.meta.env.VITE_SENTRY_DSN, tracesSampleRate: 0.2 });
+// ── Sentry Error Tracking (Production Only) ──────────────────────────────────
+
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+
+if (SENTRY_DSN && import.meta.env.PROD) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    integrations: [
+      new BrowserTracing(),
+      Sentry.replayIntegration({
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    ],
+    tracesSampleRate: 0.2, // 20% sampling for free tier
+    enableTracing: true,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+    beforeSend(event, hint) {
+      if (import.meta.env.DEV) {
+        console.log('[Sentry] Error captured (dev mode, not sent):', event.message);
+        return null;
+      }
+      return event;
+    },
+  });
+}
+
+// ── Global Error Handlers (Safety Net) ───────────────────────────────────────
+
+if (import.meta.env.PROD && SENTRY_DSN) {
+  window.onerror = (message, source, lineno, colno, error) => {
+    console.error('[Global Error]', { message, source, lineno, colno, error });
+    Sentry.captureException(error || new Error(message));
+  };
+
+  window.onunhandledrejection = (event) => {
+    console.error('[Unhandled Rejection]', event.reason);
+    Sentry.captureException(event.reason || new Error('Unhandled promise rejection'));
+  };
+}
 
 // ── Service Worker Cleanup (Dev Only) ────────────────────────────────────────
 
