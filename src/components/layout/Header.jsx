@@ -30,28 +30,28 @@ export default function Header() {
 
   return (
     <>
-    <nav className="w-full min-h-[92px] border-b border-white/[0.06] bg-transparent backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-12 flex items-center justify-between py-4">
+    <nav className="w-full min-h-[92px] border-b border-white/[0.06] bg-[#020B0D]/90 backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-12 flex items-center justify-between py-4">
       
-      {/* 1. BRANDING - RESTYLED */}
+      {/* 1. VERBATIM BRANDING IDENTITY */}
       <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-4 group z-50">
-        <div className="w-12 h-12 flex items-center justify-center rounded-lg">
-          <span className="font-serif text-xl text-[#C9A84C] tracking-[0.12em] font-bold group-hover:scale-105 transition-transform">M</span>
+        <div className="w-12 h-12 bg-[#051A1D] border border-white/[0.1] flex items-center justify-center rounded-lg shadow-inner">
+          <span className="font-serif text-xl text-[#D4AF37] tracking-wider group-hover:scale-105 transition-transform">M</span>
         </div>
         <div className="flex flex-col py-1">
-          <span className="font-serif text-[20px] tracking-[0.12em] text-white uppercase font-bold max-w-[280px] leading-tight">
-            MORALES
+          <span className="font-serif text-base tracking-widest text-white uppercase font-medium max-w-[280px] leading-tight">
+            Morales
           </span>
-          <span className="text-[8px] tracking-[0.2em] text-[#8899AA] uppercase font-sans mt-0.5 font-light">
-            DENTAL & AESTHETIC TRAVEL CONCIERGE
+          <span className="text-[10px] tracking-[0.15em] text-[#D4AF37] uppercase font-sans mt-0.5 font-light">
+            Dental & Aesthetic Travel Concierge
           </span>
         </div>
       </Link>
 
-      {/* 2. NAVIGATION LINKS - RESTYLED */}
-      <div className="hidden lg:flex items-center space-x-8 text-[14px] font-medium">
+      {/* 2. PRODUCTION REACT ROUTER LINKS (Desktop) */}
+      <div className="hidden lg:flex items-center space-x-8 text-sm font-medium text-white/70">
         <Link 
           to={!user ? "/" : user.role === 'admin' || user.role === 'platform_admin' ? "/admin" : "/dashboard"} 
-          className={`transition-colors duration-200 ${location.pathname === '/' || location.pathname === '/admin' ? 'text-[#C9A84C]' : 'text-white hover:text-white'}`}
+          className={`transition-colors duration-200 ${location.pathname === '/' || location.pathname === '/admin' ? 'text-[#D4AF37] font-semibold' : 'hover:text-white'}`}
         >
           Home
         </Link>
@@ -60,18 +60,18 @@ export default function Header() {
           <Link
             key={link.path}
             to={link.path}
-            className={`transition-colors duration-200 text-white hover:text-white ${location.pathname === link.path ? 'text-[#C9A84C]' : ''}`}
+            className={`transition-colors duration-200 ${location.pathname === link.path ? 'text-white font-semibold' : 'hover:text-white'}`}
           >
             {link.name}
           </Link>
         ))}
 
-        <Link to="/visa-assist" className="flex items-center gap-1.5 text-white hover:text-white transition-colors duration-200">
-          <span className="w-2 h-2 rounded-full bg-[#00E5CC] inline-block shadow-[0_0_8px_rgba(0,229,204,0.6)]"></span>
+        <Link to="/visa-assist" className="flex items-center gap-1.5 hover:text-white transition-colors duration-200">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block shadow-[0_0_8px_rgba(34,211,238,0.6)]"></span>
           Visa Assist
         </Link>
 
-        <Link to="/passport-vault" className="flex items-center gap-1.5 text-white hover:text-white transition-colors duration-200">
+        <Link to="/passport-vault" className="flex items-center gap-1.5 hover:text-white transition-colors duration-200">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
           My Vault
         </Link>
@@ -84,7 +84,7 @@ export default function Header() {
         <div className="relative">
           <button 
             onClick={() => { setIsPortalOpen(!isPortalOpen); setIsLangOpen(false); }}
-            className="text-[14px] font-medium text-white hover:text-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/[0.04] transition-all"
+            className="text-sm font-medium text-white/80 hover:text-white flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-white/[0.04] transition-all"
           >
             Portal Hub
             <svg className={`w-4 h-4 transform transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -127,40 +127,39 @@ export default function Header() {
           )}
         </div>
 
-        {/* CTAs - RESTYLED */}
+        {/* Refined Luxury CTAs */}
         <div className="flex items-center space-x-4 pl-2 border-l border-white/[0.08]">
           {user ? (
             <>
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="w-9 h-9 rounded-full bg-[#1A2535] border border-white/[0.15] flex items-center justify-center text-white hover:bg-[#1A2535]/80 transition-all duration-200"
-                  title="Admin"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1a3a3a] border border-[#D4AF37]/40 hover:border-[#D4AF37] hover:bg-[#1f4545] rounded-full transition-all duration-200"
                 >
-                  ⚙️
+                  ⚙️ Admin
                 </Link>
               )}
               <Link 
                 to="/dashboard" 
-                className="px-6 py-2.5 text-[14px] font-semibold text-[#0B1623] bg-[#C9A84C] rounded-[30px] hover:opacity-95 transition-all duration-200"
+                className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
               >
                 Dashboard
               </Link>
               <button
                 onClick={() => base44.auth.logout()}
-                className="text-[14px] font-medium text-white hover:text-white transition-colors"
+                className="text-sm font-medium text-white/70 hover:text-white transition-colors"
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/register-role" className="text-[14px] font-medium text-white hover:text-white transition-colors">
+              <Link to="/register-role" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
                 Register
               </Link>
               <Link 
                 to="/dashboard" 
-                className="px-6 py-2.5 text-[14px] font-semibold text-[#0B1623] bg-[#C9A84C] rounded-[30px] hover:opacity-95 transition-all duration-200"
+                className="px-6 py-2.5 text-sm font-medium text-[#020B0D] bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:opacity-95 rounded-full shadow-lg shadow-[#D4AF37]/5 transition-all duration-200 transform hover:-translate-y-0.5"
               >
                 Log In
               </Link>
