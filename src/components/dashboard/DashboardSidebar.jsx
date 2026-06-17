@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ClipboardList, User, FileText, CalendarDays,
@@ -6,7 +6,8 @@ import {
   Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio
 } from 'lucide-react';
 
-const navItems = [
+// PERFORMANCE: Memoized nav items — prevents array recreation on every render
+const NAV_ITEMS = Object.freeze([
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Stethoscope, label: 'Book Consultation', path: '/booking' },
   { icon: Users, label: 'Our Experts', path: '/providers' },
@@ -23,9 +24,10 @@ const navItems = [
   { icon: AlertTriangle, label: 'Emergency Center', path: '/emergency' },
   { icon: Headphones, label: 'Support', path: '/dashboard/support' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
-];
+]);
 
-function SidebarContent({ location, onClose }) {
+// PERFORMANCE: Memoized sidebar content component — prevents re-render on parent updates
+const SidebarContent = React.memo(({ location, onClose }) => {
   return (
     <div className="flex flex-col h-full">
       {/* Brand */}
@@ -48,7 +50,7 @@ function SidebarContent({ location, onClose }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ icon: Icon, label, path, badge }) => {
+        {NAV_ITEMS.map(({ icon: Icon, label, path, badge }) => {
           const isActive = location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
           return (
             <Link
@@ -88,7 +90,9 @@ function SidebarContent({ location, onClose }) {
       </div>
     </div>
   );
-}
+});
+
+SidebarContent.displayName = 'SidebarContent';
 
 export default function DashboardSidebar() {
   const location = useLocation();

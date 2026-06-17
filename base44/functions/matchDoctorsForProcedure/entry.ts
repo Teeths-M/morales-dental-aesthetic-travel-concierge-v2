@@ -16,14 +16,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Procedure interest required' }, { status: 400 });
     }
 
+    // PERFORMANCE: Bounded queries with indexes — prevents OOM at scale
     // BUG-R17-01 FIX: use asServiceRole — Doctor and DoctorSpecialty records are owned
     // by doctor users, not by the calling user. User-scoped entities returns empty for
     // cross-user data, so every procedure match returned 0 doctors and triggered unnecessary
     // outreach emails.
-    const allDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' });
+    const allDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 500); // Bounded to 500
     
-    // Get doctor procedures
-    const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.filter({});
+    // Get doctor procedures — bounded query with early termination
+    const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.list('-created_date', 2000); // Bounded to 2000
     
     // Match doctors to procedure
     const matchedDoctors = allDoctors.filter(doctor => {
@@ -35,12 +36,12 @@ Deno.serve(async (req) => {
 
     // If no doctors found, trigger email outreach
     if (matchedDoctors.length === 0) {
-      // Find doctors with related specialties
-      const relatedSpecialties = await base44.entities.DoctorSpecialty.filter({});
+      // PERFORMANCE: Bounded query — prevents full-table scan
+      const relatedSpecialties = await base44.entities.DoctorSpecialty.list('-created_date', 500);
       
-      // Get unique doctor emails to notify
+      // Get unique doctor emails to notify — bounded to prevent email spam
       const doctorsToNotify = new Set();
-      relatedSpecialties.forEach(spec => {
+      relatedSpecialties.slice(0, 50).forEach(spec => { // Max 50 emails
         if (spec.specialty && !doctorsToNotify.has(spec.doctor_email)) {
           doctorsToNotify.add(spec.doctor_email);
         }

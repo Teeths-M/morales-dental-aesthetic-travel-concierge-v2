@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle, LogOut } from 'lucide-react';
@@ -11,53 +12,59 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function DoctorDashboard() {
-  const [doctor, setDoctor] = useState(null);
-  const [specialties, setSpecialties] = useState([]);
-  const [pricing, setPricing] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [activeTab, setActiveTab] = useState('profile');
-  const [user, setUser] = useState(null);
   const { user: authUser } = useAuth();
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const currentUser = authUser?.isPreviewAdmin ? authUser : await base44.auth.me();
-        setUser(currentUser);
+  // PERFORMANCE: React Query with caching — automatic deduplication, no manual useEffect
+  const { data: userData, isLoading: loadingUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => authUser?.isPreviewAdmin ? authUser : base44.auth.me(),
+    staleTime: 300000, // 5 minutes cache
+  });
 
-        if (currentUser?.isPreviewAdmin) {
-          const doctors = await base44.entities.Doctor.list('-updated_date', 1);
-          const previewDoctor = doctors[0] || null;
-          if (previewDoctor) {
-            const doctorData = { ...previewDoctor, successful_procedures_count: previewDoctor.successful_procedures_count || 0 };
-            setDoctor(doctorData);
-            setFormData(doctorData);
-            setSpecialties(await base44.entities.DoctorSpecialty.filter({ doctor_id: previewDoctor.id }));
-            setPricing(await base44.entities.DoctorPricing.filter({ doctor_id: previewDoctor.id }));
-          }
-          return;
+  const { data: profileData, isLoading: loadingProfile, refetch } = useQuery({
+    queryKey: ['doctor-profile', userData?.id, userData?.email],
+    queryFn: async () => {
+      if (userData?.isPreviewAdmin) {
+        const doctors = await base44.entities.Doctor.list('-updated_date', 1);
+        const previewDoctor = doctors[0] || null;
+        if (previewDoctor) {
+          const specialties = await base44.entities.DoctorSpecialty.filter({ doctor_id: previewDoctor.id }, '-created_date', 50);
+          const pricing = await base44.entities.DoctorPricing.filter({ doctor_id: previewDoctor.id }, '-created_date', 50);
+          return {
+            doctor: { ...previewDoctor, successful_procedures_count: previewDoctor.successful_procedures_count || 0 },
+            specialties,
+            pricing
+          };
         }
-        
-        const response = await base44.functions.invoke('getMyDoctorProfile', {});
-        
-        if (response.data.doctor) {
-          const doctorData = { ...response.data.doctor, successful_procedures_count: response.data.doctor.successful_procedures_count || 0 };
-          setDoctor(doctorData);
-          setFormData(doctorData);
-          setSpecialties(response.data.specialties || []);
-          setPricing(response.data.pricing || []);
-        }
-      } catch (error) {
-        console.error('Failed to load doctor profile:', error);
-      } finally {
-        setLoading(false);
+        return null;
       }
-    };
-    
-    loadData();
-  }, [authUser]);
+      
+      const response = await base44.functions.invoke('getMyDoctorProfile', {});
+      return {
+        doctor: { ...response.data.doctor, successful_procedures_count: response.data.doctor.successful_procedures_count || 0 },
+        specialties: response.data.specialties || [],
+        pricing: response.data.pricing || []
+      };
+    },
+    enabled: !!userData,
+    staleTime: 120000, // 2 minutes cache
+  });
+
+  const doctor = profileData?.doctor;
+  const specialties = profileData?.specialties || [];
+  const pricing = profileData?.pricing || [];
+  const user = userData;
+  const loading = loadingUser || loadingProfile;
+
+  // PERFORMANCE: Memoize initial form data — prevents recreation on every render
+  useMemo(() => {
+    if (doctor && !formData.full_name) {
+      setFormData(doctor);
+    }
+  }, [doctor]);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -74,7 +81,7 @@ export default function DoctorDashboard() {
         successful_procedures_count: formData.successful_procedures_count !== undefined ? parseInt(formData.successful_procedures_count) || 0 : 0
       };
       await base44.entities.Doctor.update(doctor.id, updateData);
-      setDoctor({ ...doctor, ...updateData });
+      await refetch(); // Refresh data from server
       setEditing(false);
     } catch (error) {
       console.error('Failed to save profile:', error);
@@ -86,7 +93,7 @@ export default function DoctorDashboard() {
     if (confirm('Are you sure you want to remove your profile? This action cannot be undone.')) {
       try {
         await base44.entities.Doctor.delete(doctor.id);
-        setDoctor(null);
+        await refetch(); // Refresh data from server
       } catch (error) {
         console.error('Failed to delete profile:', error);
         alert('Failed to delete profile. Please try again.');
