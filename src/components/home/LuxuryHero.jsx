@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
+import ModeToggle from './ModeToggle';
+import { usePlatformMode } from '@/context/PlatformModeContext';
 import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, BarChart3, MapPin, HeartPulse } from 'lucide-react';
 
 const GOLD = '#D4AF37';
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e35e484d5_generated_image.png';
-
-const trustPills = [
-  { icon: BadgeCheck, label: 'Verified Specialists', sub: 'World-class experts' },
-  { icon: Shield,     label: 'Transparent Pricing',  sub: 'No hidden fees' },
-  { icon: Plane,      label: 'End-to-End Concierge', sub: 'We handle everything' },
-  { icon: Heart,      label: 'Recovery Support',     sub: "Until you're home" },
-];
 
 const orbitNodes = [
   { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 155 },
@@ -166,8 +161,38 @@ function SafeTDiagram() {
   );
 }
 
+const CONTENT = {
+  medical: {
+    eyebrow: 'World-Class Care. Personalized For You.',
+    headline: <>Premium Medical Travel.<br />Verified.{' '}<span style={{ color: GOLD }}>Safe.</span>{' '}Seamless.</>,
+    body: 'Morales coordinates every step of your dental or aesthetic care journey — from consultation to recovery. You focus on yourself. We handle the rest.',
+    cta: { label: 'Book Your Consultation →', path: '/booking' },
+    trustPills: [
+      { icon: BadgeCheck, label: 'Verified Specialists', sub: 'World-class experts' },
+      { icon: Shield,     label: 'Transparent Pricing',  sub: 'No hidden fees' },
+      { icon: Plane,      label: 'End-to-End Concierge', sub: 'We handle everything' },
+      { icon: Heart,      label: 'Recovery Support',     sub: "Until you're home" },
+    ],
+  },
+  nonmedical: {
+    eyebrow: 'Bespoke Travel. Effortlessly Arranged.',
+    headline: <>The World,{' '}<span style={{ color: GOLD }}>Curated</span>{' '}For You.</>,
+    body: 'Flights, hotels, private transfers, personal companions, and real-time safety — all in one place. Travel your way, with white-glove support at every step.',
+    cta: { label: 'Plan My Trip →', path: '/travel-concierge' },
+    trustPills: [
+      { icon: Plane,      label: '190+ Countries',       sub: 'Worldwide coverage' },
+      { icon: BadgeCheck, label: 'Vetted Partners',       sub: 'Quality guaranteed' },
+      { icon: MapPin,     label: 'Private Transfers',     sub: 'Door-to-door service' },
+      { icon: Shield,     label: '24/7 Safety',           sub: 'SOS & monitoring' },
+    ],
+  },
+};
+
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
+  const { mode } = usePlatformMode();
+  const isMedical = mode === 'medical';
+  const content = isMedical ? CONTENT.medical : CONTENT.nonmedical;
 
   return (
     <>
@@ -205,62 +230,97 @@ export default function LuxuryHero() {
           transition={{ duration: 0.75, ease: 'easeOut' }}
           className="flex flex-col z-10 lg:pr-16"
         >
+          {/* Mode Toggle */}
+          <div className="mb-7">
+            <ModeToggle />
+          </div>
+
           {/* Eyebrow */}
-          <p
-            className="text-[11px] font-bold tracking-[0.28em] uppercase mb-8"
-            style={{ color: GOLD }}
-          >
-            World-Class Care. Personalized For You.
-          </p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={`eyebrow-${mode}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+              className="text-[11px] font-bold tracking-[0.28em] uppercase mb-6"
+              style={{ color: GOLD }}
+            >
+              {content.eyebrow}
+            </motion.p>
+          </AnimatePresence>
 
           {/* Headline */}
-          <h1
-            className="font-display text-white leading-[1.06] mb-7"
-            style={{ fontSize: 'clamp(2.8rem, 4.5vw, 4rem)' }}
-          >
-            Premium Medical Travel.<br />
-            Verified.{' '}
-            <span style={{ color: GOLD }}>Safe.</span>{' '}
-            Seamless.
-          </h1>
+          <AnimatePresence mode="wait">
+            <motion.h1
+              key={`headline-${mode}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="font-display text-white leading-[1.06] mb-6"
+              style={{ fontSize: 'clamp(2.8rem, 4.5vw, 4rem)' }}
+            >
+              {content.headline}
+            </motion.h1>
+          </AnimatePresence>
 
           {/* Body */}
-          <p className="text-[15px] text-white/55 leading-relaxed mb-10 max-w-[420px]">
-            Morales coordinates every step of your dental or aesthetic care journey —
-            from consultation to recovery. You focus on yourself. We handle the rest.
-          </p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={`body-${mode}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-[15px] text-white/55 leading-relaxed mb-10 max-w-[420px]"
+            >
+              {content.body}
+            </motion.p>
+          </AnimatePresence>
 
           {/* CTAs */}
           <div className="flex flex-wrap gap-4 mb-12">
             <Link
-              to="/booking"
+              to={content.cta.path}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
               style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}
             >
-              Book Your Consultation →
+              {content.cta.label}
             </Link>
-            <button
-              onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200"
-            >
-              <span
-                className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"
-                style={{ fontSize: '10px' }}
-              >▶</span>
-              How It Works
-            </button>
+            {isMedical && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200"
+              >
+                <span
+                  className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center"
+                  style={{ fontSize: '10px' }}
+                >▶</span>
+                How It Works
+              </button>
+            )}
           </div>
 
           {/* Trust pills */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-8 border-t border-white/[0.08]">
-            {trustPills.map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex flex-col gap-1.5">
-                <Icon className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}99) drop-shadow(0 0 16px ${GOLD}55)` }} strokeWidth={1.5} />
-                <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
-                <p className="text-[11px] text-white/65 tracking-wide">{sub}</p>
-              </div>
-            ))}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`pills-${mode}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-8 border-t border-white/[0.08]"
+            >
+              {content.trustPills.map(({ icon: Icon, label, sub }) => (
+                <div key={label} className="flex flex-col gap-1.5">
+                  <Icon className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}99) drop-shadow(0 0 16px ${GOLD}55)` }} strokeWidth={1.5} />
+                  <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
+                  <p className="text-[11px] text-white/65 tracking-wide">{sub}</p>
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
 
         {/* ── RIGHT ── SAFE-T diagram overlaid on image */}

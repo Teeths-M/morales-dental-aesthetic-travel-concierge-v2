@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { PlatformModeProvider } from '@/context/PlatformModeContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
@@ -92,6 +93,7 @@ import PartnerReviews from './pages/PartnerReviews';
 import AdminAuditChain from './pages/AdminAuditChain';
 import EmergencyManifest from './pages/EmergencyManifest';
 import AdminDoctorVerificationQueue from './pages/AdminDoctorVerificationQueue';
+import TravelConcierge from './pages/TravelConcierge';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -243,6 +245,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/config-approvals" element={<AdminConfigApprovals />} />
         <Route path="/admin/audit-chain" element={<AdminAuditChain />} />
         <Route path="/admin/doctor-verification" element={<AdminDoctorVerificationQueue />} />
+        <Route path="/travel-concierge" element={<TravelConcierge />} />
       </Route>
       {/* Public — Guardian View link (no auth, token-gated) */}
       <Route path="/guardian/:token" element={<GuardianView />} />
@@ -276,7 +279,9 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <QueryClientProvider client={queryClientInstance}>
-            <AuthenticatedApp />
+            <PlatformModeProvider>
+              <AuthenticatedApp />
+            </PlatformModeProvider>
             <Toaster />
           </QueryClientProvider>
         </CartProvider>
