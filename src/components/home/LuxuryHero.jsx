@@ -161,32 +161,18 @@ export default function LuxuryHero() {
               </motion.p>
             </AnimatePresence>
 
-            {/* Dual CTA Buttons */}
+            {/* CTA Button */}
             <motion.div 
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-4 mb-10"
+              className="mb-10"
             >
               <Link to={content.cta.path}>
                 <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg shadow-emerald-900/40">
                   {content.cta.label}
                 </Button>
               </Link>
-              {!isMedical && (
-                <Link to="/travel-concierge">
-                  <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm">
-                    Book Travel Package →
-                  </Button>
-                </Link>
-              )}
-              {isMedical && (
-                <Link to="/travel-concierge">
-                  <Button className="h-14 px-8 rounded-xl text-base font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm">
-                    Need Travel Only? →
-                  </Button>
-                </Link>
-              )}
             </motion.div>
 
             <motion.div 
