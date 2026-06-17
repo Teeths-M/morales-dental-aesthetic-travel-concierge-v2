@@ -74,19 +74,22 @@ Deno.serve(async (req) => {
       procedure_country: consultation.procedure_country,
     };
 
+    // BUG-R10-05 FIX: try/catch on .get() silently swallows legitimate not-found vs auth errors.
+    // Use a sequential fallback without throwing — check TaxiService first, then TravelAgency.
+    // Also: getPortalData is called by partners who are NOT authenticated app users,
+    // so partner lookup must always use asServiceRole, which is already correct here.
     let partner = null;
-    try {
-      partner = await base44.asServiceRole.entities.TaxiService.get(partner_id);
-    } catch (e) {
-      try {
-        partner = await base44.asServiceRole.entities.TravelAgency.get(partner_id);
-      } catch (e2) {
-        partner = null;
-      }
-    }
+    const [taxi, agency] = await Promise.allSettled([
+      base44.asServiceRole.entities.TaxiService.get(partner_id),
+      base44.asServiceRole.entities.TravelAgency.get(partner_id),
+    ]);
+    if (taxi.status === 'fulfilled' && taxi.value) partner = taxi.value;
+    else if (agency.status === 'fulfilled' && agency.value) partner = agency.value;
 
+    // BUG-R10-06 FIX: SEC-10 — never return internal error detail from a public-facing endpoint
     return Response.json({ consultation: safeConsultation, partner });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[getPortalData]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

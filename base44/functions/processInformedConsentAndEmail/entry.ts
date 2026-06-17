@@ -199,7 +199,8 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, email_sent_to: client_email, archived_at: now });
 
   } catch (error) {
-    console.error('processInformedConsentAndEmail error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R10-07 FIX: SEC-10 — never expose internal error details to callers
+    console.error('[processInformedConsentAndEmail]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

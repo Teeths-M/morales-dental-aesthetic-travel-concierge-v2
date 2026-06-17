@@ -125,11 +125,14 @@ Deno.serve(async (req) => {
 
     // 1. Fetch the consultation, or use the automation payload when available.
     let consultation = body.data || null;
-    let consultationExists = false;
     if (!consultation) {
-      const matches = await base44.asServiceRole.entities.Consultation.filter({ id: consultation_id });
-      consultation = matches?.[0] || null;
-      consultationExists = Boolean(consultation);
+      // BUG-R10-01 FIX: filter({ id: consultation_id }) cannot query the built-in `id` field
+      // via the SDK — always returns []. Use .get() for primary-key lookup.
+      try {
+        consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+      } catch (_) {
+        consultation = null;
+      }
     }
     if (!consultation) {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });
@@ -332,7 +335,8 @@ Return a JSON with:
       workflow_id: workflow.id,
     });
   } catch (error) {
-    console.error('portalHubWorkflow failed:', error);
-    return Response.json({ error: error.message || 'Workflow failed' }, { status: 500 });
+    // BUG-R10-02 FIX: SEC-10 — never expose internal error details to callers
+    console.error('[portalHubWorkflow]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

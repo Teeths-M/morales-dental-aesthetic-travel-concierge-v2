@@ -15,16 +15,15 @@ Deno.serve(async (req) => {
     // Action: request_doctor_date_confirmation
     if (action === 'request_doctor_date_confirmation') {
       const { procedure_date, recommended_arrival, recommended_departure } = payload;
-      
-      const consultation = await base44.entities.Consultation.get(consultation_id);
 
-      // Create WorkflowEvent if not exists
-      let workflowEvent = await base44.entities.WorkflowEvent.filter({
-        consultation_id
-      });
+      // BUG-R10-03 FIX: user-scoped SDK — admin calling this cannot read patient-owned records.
+      // Switch all entity and workflow calls to asServiceRole throughout this engine.
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+
+      let workflowEvent = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });
 
       if (!workflowEvent.length) {
-        workflowEvent = [await base44.entities.WorkflowEvent.create({
+        workflowEvent = [await base44.asServiceRole.entities.WorkflowEvent.create({
           consultation_id,
           patient_name: consultation.patient_name,
           patient_email: consultation.email,
@@ -32,14 +31,13 @@ Deno.serve(async (req) => {
         })];
       }
 
-      // Send to all active doctors for approval
-      const doctors = await base44.entities.Partner.filter({
+      const doctors = await base44.asServiceRole.entities.Partner.filter({
         type: 'doctor',
         is_active: true
       });
 
       for (const doctor of doctors) {
-        await base44.entities.WorkflowNotification.create({
+        await base44.asServiceRole.entities.WorkflowNotification.create({
           workflow_event_id: workflowEvent[0].id,
           recipient_type: 'doctor',
           recipient_email: doctor.email,
@@ -49,8 +47,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update consultation with proposed dates
-      await base44.entities.Consultation.update(consultation_id, {
+      await base44.asServiceRole.entities.Consultation.update(consultation_id, {
         preferred_date: procedure_date
       });
 
@@ -63,16 +60,15 @@ Deno.serve(async (req) => {
 
     // Action: initiate_doctor_approval
     if (action === 'initiate_doctor_approval') {
-      const consultation = await base44.entities.Consultation.get(consultation_id);
-      
-      // Update WorkflowEvent status
-      const workflowEvent = await base44.entities.WorkflowEvent.filter({
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+
+      const workflowEvent = await base44.asServiceRole.entities.WorkflowEvent.filter({
         consultation_id,
         stage: 'risk_check'
       });
-      
+
       if (!workflowEvent.length) {
-        const newEvent = await base44.entities.WorkflowEvent.create({
+        const newEvent = await base44.asServiceRole.entities.WorkflowEvent.create({
           consultation_id,
           patient_name: consultation.patient_name,
           patient_email: consultation.email,
@@ -92,27 +88,22 @@ Deno.serve(async (req) => {
     // Action: doctor_approved
     if (action === 'doctor_approved') {
       const { procedure_name, price, recovery_days, available_dates } = data;
-      
-      // Update WorkflowEvent
-      const workflowEvent = await base44.entities.WorkflowEvent.filter({
-        consultation_id
-      });
-      
+
+      const workflowEvent = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });
+
       if (workflowEvent.length) {
-        await base44.entities.WorkflowEvent.update(workflowEvent[0].id, {
+        await base44.asServiceRole.entities.WorkflowEvent.update(workflowEvent[0].id, {
           stage: 'doctor',
           doctor_status: 'confirmed',
           doctor_notes: `${procedure_name} - $${price} - Recovery: ${recovery_days} days`
         });
       }
 
-      // Fetch consultation for patient details
-      const consultation = await base44.entities.Consultation.get(consultation_id);
-      
-      // STEP 2: Now notify travel, hotel, and taxi partners (doctor confirmed)
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+
       const [partners, taxiServices] = await Promise.all([
-        base44.entities.Partner.filter({ is_active: true }),
-        base44.entities.TaxiService.filter({ status: 'active' }),
+        base44.asServiceRole.entities.Partner.filter({ is_active: true }),
+        base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
       ]);
       
       const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -270,8 +261,7 @@ Deno.serve(async (req) => {
         console.warn(`[FaultTolerance] ${vendorFailureWrites.length} vendor dispatch(es) failed and logged`);
       }
       
-      // Update workflow status - all partners now notified
-      await base44.entities.WorkflowEvent.update(workflowEvent[0].id, {
+      await base44.asServiceRole.entities.WorkflowEvent.update(workflowEvent[0].id, {
         stage: 'travel',
         travel_status: 'all_partners_notified',
         last_update_summary: `Doctor confirmed (${procedure_name}, $${price}). Travel, hotel, and taxi partners notified.`,
@@ -292,12 +282,13 @@ Deno.serve(async (req) => {
           if (provider_type === 'flight') return p.type === 'travel';
           if (provider_type === 'hotel') return p.type === 'hotel';
           if (provider_type.includes('taxi')) return p.type === 'cab';
-          if (provider_type === 'recovery_accommodation') return p.type === 'other' && p.name.toLowerCase().includes('recovery');
+          // BUG-R10-04 FIX: p.name was used but Partner entity has no `name` field — use agency_name
+          if (provider_type === 'recovery_accommodation') return p.type === 'other' && (p.agency_name || '').toLowerCase().includes('recovery');
           return false;
         });
 
         for (const partner of relevant_partners) {
-          const qr = await base44.entities.QuoteRequest.create({
+          const qr = await base44.asServiceRole.entities.QuoteRequest.create({
             consultation_id,
             patient_name: consultation.patient_name,
             procedure_name,
@@ -326,8 +317,8 @@ Deno.serve(async (req) => {
 
     // Action: process_quotes_and_calculate_package
     if (action === 'process_quotes_and_calculate_package') {
-      const consultation = await base44.entities.Consultation.get(consultation_id);
-      const quotes = await base44.entities.Quote.filter({ consultation_id });
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+      const quotes = await base44.asServiceRole.entities.Quote.filter({ consultation_id });
       
       // Calculate total package cost
       let totalCost = 0;
@@ -346,8 +337,7 @@ Deno.serve(async (req) => {
       const markup_pct = 35;
       const marked_up_cost = totalCost * (1 + markup_pct / 100);
 
-      // Create payment plan
-      const paymentPlan = await base44.entities.PaymentPlan.create({
+      const paymentPlan = await base44.asServiceRole.entities.PaymentPlan.create({
         consultation_id,
         plan_type: 'awaiting_selection',
         total_package_cost: totalCost,
@@ -369,7 +359,7 @@ Deno.serve(async (req) => {
     // Action: client_selects_payment_option
     if (action === 'client_selects_payment_option') {
       const { plan_type } = data;
-      const paymentPlan = await base44.entities.PaymentPlan.filter({ consultation_id });
+      const paymentPlan = await base44.asServiceRole.entities.PaymentPlan.filter({ consultation_id });
       
       if (!paymentPlan.length) {
         return Response.json({ error: 'Payment plan not found' }, { status: 404 });
@@ -392,7 +382,7 @@ Deno.serve(async (req) => {
         amount_due_later = pp.final_cost * 0.50;
       }
 
-      await base44.entities.PaymentPlan.update(pp.id, {
+      await base44.asServiceRole.entities.PaymentPlan.update(pp.id, {
         plan_type,
         discount_pct,
         amount_due_today,
@@ -412,7 +402,7 @@ Deno.serve(async (req) => {
     // Action: payment_received
     if (action === 'payment_received') {
       const { amount_received } = data;
-      const paymentPlan = await base44.entities.PaymentPlan.filter({ consultation_id });
+      const paymentPlan = await base44.asServiceRole.entities.PaymentPlan.filter({ consultation_id });
       
       if (!paymentPlan.length) {
         return Response.json({ error: 'Payment plan not found' }, { status: 404 });
@@ -427,7 +417,7 @@ Deno.serve(async (req) => {
         new_status = 'partial_paid';
       }
 
-      await base44.entities.PaymentPlan.update(pp.id, {
+      await base44.asServiceRole.entities.PaymentPlan.update(pp.id, {
         payment_status: new_status
       });
 
@@ -448,8 +438,8 @@ Deno.serve(async (req) => {
 
     // Action: trigger_full_confirmation_workflow
     if (action === 'trigger_full_confirmation_workflow') {
-      const consultation = await base44.entities.Consultation.get(consultation_id);
-      const workflowEvent = await base44.entities.WorkflowEvent.filter({ consultation_id });
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+      const workflowEvent = await base44.asServiceRole.entities.WorkflowEvent.filter({ consultation_id });
       
       if (!workflowEvent.length) {
         return Response.json({ error: 'Workflow not found' }, { status: 404 });
@@ -457,21 +447,19 @@ Deno.serve(async (req) => {
 
       const we = workflowEvent[0];
 
-      // Update workflow stage to 'travel'
-      await base44.entities.WorkflowEvent.update(we.id, {
+      await base44.asServiceRole.entities.WorkflowEvent.update(we.id, {
         stage: 'travel',
         travel_status: 'confirmed'
       });
 
-      // Notify all parties
-      const partners = await base44.entities.Partner.filter({ is_active: true });
-      const quotes = await base44.entities.Quote.filter({ consultation_id });
-      
+      const partners = await base44.asServiceRole.entities.Partner.filter({ is_active: true });
+      const quotes = await base44.asServiceRole.entities.Quote.filter({ consultation_id });
+
       for (const quote of quotes) {
         if (quote.is_selected) {
           const partner = partners.find(p => p.id === quote.partner_id);
           if (partner) {
-            await base44.entities.WorkflowNotification.create({
+            await base44.asServiceRole.entities.WorkflowNotification.create({
               workflow_event_id: we.id,
               recipient_type: 'partner',
               recipient_email: partner.email,
@@ -483,8 +471,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Request client address
-      await base44.entities.WorkflowNotification.create({
+      await base44.asServiceRole.entities.WorkflowNotification.create({
         workflow_event_id: we.id,
         recipient_type: 'patient',
         recipient_email: consultation.email,
@@ -503,6 +490,8 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R10-02 FIX: SEC-10 — never expose internal stack details to callers
+    console.error('[portalHubWorkflowEngine]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
