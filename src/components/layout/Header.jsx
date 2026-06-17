@@ -30,29 +30,29 @@ export default function Header() {
 
   return (
     <>
-    <nav className="w-full min-h-[88px] border-b border-white/[0.08] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-3">
+    <nav className="w-full min-h-[88px] border-b border-white/[0.06] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-4">
       
       {/* 1. PREMIUM BRANDING IDENTITY */}
       <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-5 group z-50">
-        <div className="w-14 h-14 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-xl shadow-lg" style={{ boxShadow: '0 4px 20px rgba(184,151,80,0.3)' }}>
+        <div className="w-14 h-14 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-xl shadow-lg" style={{ boxShadow: '0 4px 24px rgba(212,175,55,0.35)' }}>
           <span className="font-serif text-2xl text-[#0C1A1D] font-bold">M</span>
         </div>
         <div className="flex flex-col">
           <span className="font-serif text-[26px] text-white uppercase font-bold tracking-wide leading-none">
             MORALES
           </span>
-          <span className="text-[11px] tracking-[0.25em] text-[#B89750] uppercase font-sans mt-1 font-medium">
+          <span className="text-[11px] tracking-[0.28em] text-[#D4AF37] uppercase font-sans mt-1.5 font-medium">
             Dental & Aesthetic Travel Concierge
           </span>
         </div>
       </Link>
 
       {/* 2. PREMIUM NAVIGATION LINKS */}
-      <div className="hidden lg:flex items-center gap-10 text-[14px] font-sans">
+      <div className="hidden lg:flex items-center gap-12 text-[14px] font-sans">
         <Link 
           to={!user ? "/" : user.role === 'admin' || user.role === 'platform_admin' ? "/admin" : "/dashboard"} 
           className="transition-all duration-200 font-semibold"
-          style={{ color: location.pathname === '/' || location.pathname === '/admin' ? '#B89750' : '#A9A9A9' }}
+          style={{ color: location.pathname === '/' || location.pathname === '/admin' ? '#D4AF37' : '#A9A9A9' }}
         >
           Home
         </Link>
@@ -95,7 +95,7 @@ export default function Header() {
               <Link to="/taxi-service-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Chauffeur Portal</Link>
               <Link to="/companion-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Companion Portal</Link>
               <div className="h-[1px] bg-white/[0.08] my-1" />
-              <Link to="/partner-signup" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all font-semibold" style={{ color: '#B89750' }}>Join as Provider Partner</Link>
+              <Link to="/partner-signup" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all font-semibold" style={{ color: '#D4AF37' }}>Join as Provider Partner</Link>
             </div>
           )}
         </div>
@@ -116,7 +116,7 @@ export default function Header() {
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
                   className={`px-3 py-1.5 text-[12px] font-sans rounded text-left transition-all ${currentLang === lang ? 'font-semibold' : ''}`}
-                  style={{ color: currentLang === lang ? '#B89750' : '#A9A9A9' }}
+                  style={{ color: currentLang === lang ? '#D4AF37' : '#A9A9A9' }}
                 >
                   {lang}
                 </button>
@@ -147,7 +147,7 @@ export default function Header() {
               <Link to="/taxi-service-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Chauffeur Portal</Link>
               <Link to="/companion-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Companion Portal</Link>
               <div className="h-[1px] bg-white/[0.08] my-1.5" />
-              <Link to="/partner-signup" className="px-4 py-2.5 text-sm text-[#B89750] hover:bg-[#B89750]/[0.05] rounded-lg transition-colors font-medium">Join as Provider Partner</Link>
+              <Link to="/partner-signup" className="px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/[0.05] rounded-lg transition-colors font-medium">Join as Provider Partner</Link>
             </div>
           )}
         </div>
@@ -168,7 +168,7 @@ export default function Header() {
                 <button
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded text-left transition-colors ${currentLang === lang ? 'text-[#B89750] bg-white/[0.05]' : 'text-[#A9A9A9] hover:text-white hover:bg-white/[0.02]'}`}
+                  className={`px-3 py-1.5 text-xs font-medium rounded text-left transition-colors ${currentLang === lang ? 'text-[#D4AF37] bg-white/[0.05]' : 'text-[#A9A9A9] hover:text-white hover:bg-white/[0.02]'}`}
                 >
                   {lang}
                 </button>
@@ -185,7 +185,7 @@ export default function Header() {
                 <Link
                   to="/admin"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
-                  style={{ background: '#1A4E4E', color: '#FFFFFF', boxShadow: '0 2px 12px rgba(26,78,78,0.4)' }}
+                  style={{ background: '#1A4E4E', color: '#FFFFFF', boxShadow: '0 2px 12px rgba(26,78,78,0.5)' }}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-1.066 2.573c1.543.94 3.31.826 2.37 2.37a1.724 1.724 0 00-2.573 1.066c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-1.543-.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   Admin
@@ -230,7 +230,7 @@ export default function Header() {
 
       {/* 4. MOBILE HAMBURGER TOGGLE */}
       <div className="flex lg:hidden items-center space-x-4">
-        <Link to="/consultation" className="px-4 py-2 text-xs font-medium text-[#020B0D] bg-[#D4AF37] rounded-full">
+        <Link to="/consultation" className="px-5 py-2.5 text-xs font-bold text-[#0C1A1D] bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] rounded-full shadow-lg" style={{ boxShadow: '0 4px 16px rgba(212,175,55,0.35)' }}>
           Begin
         </Link>
         <button 
@@ -261,7 +261,7 @@ export default function Header() {
           </button>
 
           <div className="flex flex-col space-y-4 text-xl font-medium border-b border-white/[0.06] pb-6">
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-[#D4AF37]">Home</Link>
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-[#D4AF37] font-semibold">Home</Link>
             {navLinks.map((link) => (
               <Link key={link.path} to={link.path} onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-white">{link.name}</Link>
             ))}
@@ -278,7 +278,7 @@ export default function Header() {
             <Link to="/taxi-service-dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-sm text-white/70">Chauffeur Portal</Link>
           </div>
           {isAdmin && (
-            <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-4 py-3 bg-[#1a3a3a] border border-[#D4AF37]/40 rounded-xl text-[#D4AF37] font-semibold text-sm">
+            <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 px-4 py-3.5 bg-[#1a3a3a] border border-[#D4AF37]/40 rounded-xl text-[#D4AF37] font-semibold text-[14px]" style={{ boxShadow: '0 4px 20px rgba(212,175,55,0.15)' }}>
               ⚙️ Admin Portal
             </Link>
           )}
@@ -309,7 +309,7 @@ export default function Header() {
                     setIsMobileMenuOpen(false);
                     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: lang.toLowerCase() } }));
                   }}
-                  className={`px-2 py-1 font-mono text-xs rounded ${currentLang === lang ? 'bg-[#D4AF37] text-black font-bold' : 'text-white/40'}`}
+                  className={`px-3 py-1.5 font-mono text-[11px] rounded-lg ${currentLang === lang ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-black font-bold' : 'text-white/40 hover:text-white/60'}`}
                 >
                   {lang}
                 </button>

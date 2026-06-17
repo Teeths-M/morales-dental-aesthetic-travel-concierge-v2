@@ -16,8 +16,8 @@ export default function LuxuryTrustBar() {
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-6 flex flex-col lg:flex-row items-center gap-6 lg:gap-0">
 
         {/* Left label */}
-        <div className="shrink-0 lg:pr-10 lg:border-r border-white/[0.08] text-center lg:text-left">
-          <p className="text-[10px] font-semibold tracking-[0.32em] uppercase text-white/45">
+        <div className="shrink-0 lg:pr-10 lg:border-r border-white/[0.06] text-center lg:text-left">
+          <p className="text-[10px] font-semibold tracking-[0.32em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Trusted By Patients Worldwide
           </p>
         </div>
@@ -31,7 +31,7 @@ export default function LuxuryTrustBar() {
             <p className="text-[11px] text-white/50">From 1,200+ reviews</p>
           </div>
 
-          <div className="hidden lg:block w-px h-8 bg-white/[0.10]" />
+          <div className="hidden lg:block w-px h-8 bg-white/[0.08]" />
 
           <div className="flex flex-col items-center lg:items-start gap-0.5">
             <div className="flex items-center gap-1.5">
@@ -41,7 +41,7 @@ export default function LuxuryTrustBar() {
             <p className="text-[11px] text-white/50">Care journeys completed</p>
           </div>
 
-          <div className="hidden lg:block w-px h-8 bg-white/[0.10]" />
+          <div className="hidden lg:block w-px h-8 bg-white/[0.08]" />
 
           <div className="flex flex-col items-center lg:items-start gap-0.5">
             <div className="flex items-center gap-1.5">
@@ -51,7 +51,7 @@ export default function LuxuryTrustBar() {
             <p className="text-[11px] text-white/50">Countries served</p>
           </div>
 
-          <div className="hidden lg:block w-px h-8 bg-white/[0.10]" />
+          <div className="hidden lg:block w-px h-8 bg-white/[0.08]" />
 
           <div className="flex flex-col items-center lg:items-start gap-0.5">
             <div className="flex items-center gap-1.5">
@@ -63,10 +63,10 @@ export default function LuxuryTrustBar() {
         </div>
 
         {/* Logos */}
-        <div className="shrink-0 lg:pl-10 lg:border-l border-white/[0.08] flex items-center gap-6">
-          <span className="text-white/30 text-sm font-medium hover:text-white/50 transition-colors">Google</span>
-          <span className="text-white/30 text-sm font-medium hover:text-white/50 transition-colors">★ Trustpilot</span>
-          <span className="text-white/30 text-sm font-medium hover:text-white/50 transition-colors">realself.</span>
+        <div className="shrink-0 lg:pl-10 lg:border-l border-white/[0.06] flex items-center gap-8">
+          <span className="text-white/35 text-[13px] font-medium hover:text-white/60 transition-colors">Google</span>
+          <span className="text-white/35 text-[13px] font-medium hover:text-white/60 transition-colors">★ Trustpilot</span>
+          <span className="text-white/35 text-[13px] font-medium hover:text-white/60 transition-colors">realself.</span>
         </div>
 
       </div>

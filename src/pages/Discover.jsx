@@ -141,17 +141,17 @@ export default function Discover() {
   const hasMore = doctors && displayedDoctors.length < doctors.length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#060B16]" style={{ background: 'linear-gradient(180deg, #060B16 0%, #0A101D 100%)' }}>
       {/* Search Header - Desktop */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-4">
+      <div className="sticky top-[88px] z-40 bg-[#060B16]/95 backdrop-blur-md border-b border-white/[0.06]">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
               <Input
                 placeholder="Search procedures, doctors, or locations..."
-                className="pl-10"
+                className="pl-11 bg-[#0A101D]/50 border-white/[0.08] text-white placeholder:text-white/25 focus:border-[#D4AF37]/40"
                 value={filters.procedure}
                 onChange={(e) => updateFilter("procedure", e.target.value)}
               />
@@ -251,32 +251,32 @@ export default function Discover() {
       </div>
 
       {/* Results Grid */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-6 py-10">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
+              <Card key={i} className="animate-pulse bg-[#0A101D]/40 border-white/[0.06]">
                 <CardContent className="p-6">
-                  <div className="h-48 bg-muted rounded-lg mb-4" />
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2 mb-4" />
+                  <div className="h-48 bg-white/[0.04] rounded-xl mb-4" />
+                  <div className="h-5 bg-white/[0.06] rounded w-3/4 mb-3" />
+                  <div className="h-3 bg-white/[0.04] rounded w-1/2 mb-4" />
                   <div className="flex gap-2">
-                    <div className="h-3 bg-muted rounded w-16" />
-                    <div className="h-3 bg-muted rounded w-16" />
+                    <div className="h-3 bg-white/[0.04] rounded w-16" />
+                    <div className="h-3 bg-white/[0.04] rounded w-16" />
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Failed to load doctors. Please try again.</p>
+          <div className="text-center py-16">
+            <p className="text-white/40 text-[15px]">Failed to load doctors. Please try again.</p>
           </div>
         ) : displayedDoctors.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">No doctors found</h3>
-            <p className="text-muted-foreground mb-4">Try adjusting your filters</p>
-            <Button onClick={clearAllFilters}>Clear all filters</Button>
+          <div className="text-center py-16">
+            <h3 className="text-xl font-semibold mb-3 text-white" style={{ letterSpacing: '-0.01em' }}>No doctors found</h3>
+            <p className="text-white/40 mb-6 text-[15px]">Try adjusting your filters</p>
+            <Button onClick={clearAllFilters} className="bg-[#D4AF37] hover:bg-[#E8C85C] text-[#0C1A1D] font-semibold">Clear all filters</Button>
           </div>
         ) : (
           <>
