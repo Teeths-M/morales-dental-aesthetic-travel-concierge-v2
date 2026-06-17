@@ -8,6 +8,8 @@ import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, B
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
+const GOLD_LIGHT = '#F4D66A';
+const GOLD_DARK = '#B8941F';
 const CYAN_GLOW = '#22d3ee';
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
 
@@ -69,11 +71,11 @@ const SafeTDiagram = React.memo(function SafeTDiagram() {
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
       <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes spin-rev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}@keyframes pulse-glow{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}`}</style>
 
-      {/* Outer glow rings with cyan accent */}
-      <div className="absolute w-[420px] h-[420px] rounded-full" style={{ border: `1px solid ${CYAN_GLOW}33`, boxShadow: `0 0 60px ${CYAN_GLOW}22 inset` }} />
-      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}44`, boxShadow: `0 0 40px ${GOLD}18 inset` }} />
-      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}33` }} />
-      <div className="absolute w-[240px] h-[240px] rounded-full" style={{ border: `1px solid ${CYAN_GLOW}22` }} />
+      {/* Outer glow rings with luxury gold/cyan blend */}
+      <div className="absolute w-[420px] h-[420px] rounded-full" style={{ border: `1px solid ${GOLD}25`, boxShadow: `0 0 80px ${GOLD}15 inset, 0 0 40px ${CYAN_GLOW}10 inset` }} />
+      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}40`, boxShadow: `0 0 60px ${GOLD}20 inset` }} />
+      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}35` }} />
+      <div className="absolute w-[240px] h-[240px] rounded-full" style={{ border: `1px solid ${GOLD}30`, boxShadow: `0 0 30px ${GOLD}12 inset` }} />
 
       {/* Glitter trails */}
       {TRAIL_CONFIGS.map(({ anim, delay, radii, baseOp, star }, si) => (
@@ -87,43 +89,51 @@ const SafeTDiagram = React.memo(function SafeTDiagram() {
         </svg>
       ))}
 
-      {/* Orbit node badges */}
+      {/* Orbit node badges with hover lift effect */}
       {ORBIT_NODES_COMPUTED.map(({ label, icon: NodeIcon, x, y }) => (
-        <div key={label} className="absolute flex items-center gap-2 px-3 py-2.5 rounded-2xl text-[11px] font-medium whitespace-nowrap backdrop-blur-xl"
+        <motion.div
+          key={label}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          whileHover={{ scale: 1.05, y: -3 }}
+          className="absolute flex items-center gap-2 px-3 py-2.5 rounded-2xl text-[11px] font-medium whitespace-nowrap backdrop-blur-xl cursor-pointer"
           style={{ 
             left: `calc(50% + ${x}px)`, 
             top: `calc(50% + ${y}px)`, 
-            background: 'rgba(11,18,25,0.85)',
-            border: `1px solid rgba(34,211,238,0.25)`,
-            color: 'rgba(255,255,255,0.9)',
-            boxShadow: `0 2px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(34,211,238,0.08) inset`
+            background: 'linear-gradient(135deg, rgba(11,18,25,0.95) 0%, rgba(18,28,38,0.88) 100%)',
+            border: `1px solid rgba(212,175,55,0.35)`,
+            color: 'rgba(255,255,255,0.95)',
+            boxShadow: `0 4px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,175,55,0.12) inset, 0 0 20px rgba(212,175,55,0.08)`
           }}>
-          <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: CYAN_GLOW, filter: `drop-shadow(0 0 6px ${CYAN_GLOW}cc)` }} strokeWidth={1.5} />
+          <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}cc) drop-shadow(0 0 16px ${GOLD}66)` }} strokeWidth={1.5} />
           {label}
-        </div>
+        </motion.div>
       ))}
 
-      {/* Center SAFE-T4LIFE emblem */}
+      {/* Center SAFE-T4LIFE emblem with enhanced luxury styling */}
       <motion.div
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: [1, 1.03, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1], delay: 0.3 }}
         className="relative z-10 flex flex-col items-center"
       >
-        <div className="absolute inset-0 flex items-center justify-center" style={{ filter: `drop-shadow(0 0 20px ${CYAN_GLOW}66) drop-shadow(0 0 40px ${GOLD}44)` }}>
-          <svg viewBox="0 0 80 92" fill="none" className="w-[88px] h-[96px] relative z-10">
-            <path d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z" fill="none" stroke={CYAN_GLOW} strokeWidth="2" opacity="0.4" />
-            <path d="M40 8L70 20V48C70 64 58 74 40 84C22 74 10 64 10 48V20L40 8Z" fill={`url(#shieldGradient)`} stroke={GOLD} strokeWidth="1.5" />
+        <div className="absolute inset-0 flex items-center justify-center" style={{ filter: `drop-shadow(0 0 30px ${GOLD}55) drop-shadow(0 0 60px ${GOLD}33) drop-shadow(0 0 90px ${CYAN_GLOW}22)` }}>
+          <svg viewBox="0 0 80 92" fill="none" className="w-[96px] h-[104px] relative z-10">
+            <path d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z" fill="none" stroke={GOLD} strokeWidth="1.5" opacity="0.5" />
+            <path d="M40 8L70 20V48C70 64 58 74 40 84C22 74 10 64 10 48V20L40 8Z" fill={`url(#shieldGradientLux)`} stroke={GOLD} strokeWidth="2" />
             <defs>
-              <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor={CYAN_GLOW} stopOpacity="0.2" />
-                <stop offset="100%" stopColor={GOLD} stopOpacity="0.15" />
+              <linearGradient id="shieldGradientLux" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={GOLD_LIGHT} stopOpacity="0.25" />
+                <stop offset="50%" stopColor={GOLD} stopOpacity="0.18" />
+                <stop offset="100%" stopColor={GOLD_DARK} stopOpacity="0.12" />
               </linearGradient>
             </defs>
-            <path d="M35 32H45V40H53V50H45V58H35V50H27V40H35V32Z" fill="white" opacity="0.95" style={{ filter: `drop-shadow(0 0 8px white)` }} />
+            <path d="M35 32H45V40H53V50H45V58H35V50H27V40H35V32Z" fill="white" opacity="1" style={{ filter: `drop-shadow(0 0 12px ${GOLD})` }} />
           </svg>
         </div>
-        <p className="text-[10px] font-bold tracking-[0.28em] uppercase mt-4 relative z-10" style={{ color: GOLD, textShadow: `0 0 12px ${GOLD}88` }}>SAFE-T4LIFE™</p>
-        <p className="text-[7px] tracking-[0.2em] uppercase mt-1.5 relative z-10" style={{ color: CYAN_GLOW, textShadow: `0 0 8px ${CYAN_GLOW}88` }}>Safety Intelligence Engine</p>
+        <p className="text-[11px] font-bold tracking-[0.35em] uppercase mt-5 relative z-10" style={{ color: GOLD_LIGHT, textShadow: `0 0 16px ${GOLD}aa, 0 0 32px ${GOLD}66` }}>SAFE-T4LIFE™</p>
+        <p className="text-[8px] tracking-[0.25em] uppercase mt-2 relative z-10" style={{ color: CYAN_GLOW, textShadow: `0 0 10px ${CYAN_GLOW}aa` }}>Safety Intelligence Engine</p>
       </motion.div>
     </div>
   );
@@ -168,14 +178,21 @@ export default function LuxuryHero() {
 
   return (
     <>
-      <section className="relative min-h-screen overflow-hidden" style={{ background: '#0b1219', marginTop: '-68px' }}>
-        {/* Full-bleed background */}
+      <section className="relative min-h-screen overflow-hidden" style={{ background: '#060a0f', marginTop: '-68px' }}>
+        {/* Full-bleed background with geometric pattern overlay */}
         <div className="absolute inset-0">
           <img src={HERO_IMAGE} alt="Premium medical travel with Safe-T4Life safety intelligence" className="w-full h-full object-cover"
             style={{ objectPosition: 'center center' }} loading="eager" fetchpriority="high" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 30%, rgba(11,18,25,0.85) 45%, rgba(11,18,25,0.4) 65%, transparent 100%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.5) 10%, transparent 25%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.8) 12%, transparent 30%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060a0f 0%, #060a0f 25%, rgba(6,10,15,0.88) 40%, rgba(6,10,15,0.5) 60%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060a0f 0%, rgba(6,10,15,0.6) 8%, transparent 20%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060a0f 0%, rgba(6,10,15,0.85) 10%, transparent 25%)' }} />
+          {/* Subtle geometric pattern overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `repeating-linear-gradient(45deg, ${GOLD} 0px, ${GOLD} 1px, transparent 1px, transparent 40px),
+                              repeating-linear-gradient(-45deg, ${GOLD} 0px, ${GOLD} 1px, transparent 1px, transparent 40px)`,
+          }} />
+          {/* Radial glow for depth */}
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 70% 50%, rgba(212,175,55,0.08) 0%, transparent 50%)' }} />
         </div>
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
@@ -189,53 +206,76 @@ export default function LuxuryHero() {
             <AnimatePresence mode="wait">
               <motion.p key={`eyebrow-${mode}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}
-                className="text-[11px] font-bold tracking-[0.28em] uppercase mb-6" style={{ color: GOLD }}>
+                className="text-[11px] font-bold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
                 {content.eyebrow}
               </motion.p>
             </AnimatePresence>
 
             <AnimatePresence mode="wait">
               <motion.h1 key={`headline-${mode}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}
-                className="font-display text-white leading-[1.06] mb-6"
-                style={{ fontSize: 'clamp(2.8rem, 4.5vw, 4rem)' }}>
+                exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                className="font-display text-white leading-[1.08] mb-7"
+                style={{ fontSize: 'clamp(3rem, 5vw, 4.5rem)', letterSpacing: '-0.02em' }}>
                 {content.headline}
               </motion.h1>
             </AnimatePresence>
 
             <AnimatePresence mode="wait">
               <motion.p key={`body-${mode}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
-                className="text-[15px] text-white/55 leading-relaxed mb-10 max-w-[420px]">
+                exit={{ opacity: 0 }} transition={{ duration: 0.35, delay: 0.1 }}
+                className="text-[15px] text-white/60 leading-relaxed mb-11 max-w-[440px]">
                 {content.body}
               </motion.p>
             </AnimatePresence>
 
-            <div className="flex flex-wrap gap-4 mb-12">
+            <div className="flex flex-wrap gap-4 mb-14">
               <Link to={content.cta.path}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
-                style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
-                {content.cta.label}
+                className="group relative inline-flex items-center gap-2.5 px-9 py-4 rounded-xl font-semibold text-[14px] overflow-hidden transition-all duration-400 hover:shadow-2xl hover:-translate-y-1"
+                style={{ 
+                  background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_LIGHT} 50%, ${GOLD_DARK} 100%)`, 
+                  color: '#060B16', 
+                  boxShadow: `0 12px 48px ${GOLD}50, 0 0 0 1px ${GOLD}80 inset`,
+                  textShadow: '0 1px 2px rgba(255,255,255,0.25)'
+                }}>
+                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400"
+                  style={{ background: `linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)` }} />
+                <span className="relative z-10">{content.cta.label}</span>
+                <span className="relative z-10 transition-transform duration-400 group-hover:translate-x-1.5">→</span>
               </Link>
               {isMedical && (
                 <button onClick={openModal}
-                  className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200">
-                  <span className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center" style={{ fontSize: '10px' }}>▶</span>
+                  className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-[14px] text-white/90 border border-white/20 bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.08] hover:border-white/35 hover:-translate-y-0.5 transition-all duration-300">
+                  <span className="w-6 h-6 rounded-full border border-white/25 flex items-center justify-center" style={{ fontSize: '9px' }}>▶</span>
                   How It Works
                 </button>
               )}
             </div>
 
+            {/* Gold divider line */}
+            <div className="w-24 h-[1px] mb-8" style={{ background: `linear-gradient(90deg, transparent 0%, ${GOLD} 50%, transparent 100%)` }} />
+            
             <AnimatePresence mode="wait">
-              <motion.div key={`pills-${mode}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }} transition={{ duration: 0.35 }}
-                className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-8 border-t border-white/[0.08]">
+              <motion.div key={`pills-${mode}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.4, delay: 0.15 }}
+                className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-2">
                 {content.trustPills.map(({ icon: Icon, label, sub }) => (
-                  <div key={label} className="flex flex-col gap-1.5">
-                    <Icon className="w-4 h-4" style={NODE_ICON_STYLE} strokeWidth={1.5} />
-                    <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
-                    <p className="text-[11px] text-white/65 tracking-wide">{sub}</p>
-                  </div>
+                  <motion.div 
+                    key={label} 
+                    className="flex flex-col gap-2 p-3 rounded-xl transition-all duration-300 hover:-translate-y-1"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0.02) 100%)`,
+                      border: `1px solid ${GOLD}15`,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+                    }}
+                    whileHover={{ 
+                      boxShadow: `0 8px 24px ${GOLD}20`,
+                      borderColor: `${GOLD}35`
+                    }}
+                  >
+                    <Icon className="w-5 h-5" style={NODE_ICON_STYLE} strokeWidth={1.5} />
+                    <p className="text-[12px] font-semibold text-white leading-tight tracking-wide">{label}</p>
+                    <p className="text-[11px] text-white/60 tracking-wide">{sub}</p>
+                  </motion.div>
                 ))}
               </motion.div>
             </AnimatePresence>
