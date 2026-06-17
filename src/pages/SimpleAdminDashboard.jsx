@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Tabs,
@@ -26,6 +27,7 @@ export default function SimpleAdminDashboard() {
   const [activeTab, setActiveTab] = useState('active');
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
+  const { toast } = useToast();
 
   // Fetch all cases in a single query for better performance
   const { data: allCases = [], isLoading, refetch } = useQuery({
@@ -61,6 +63,13 @@ export default function SimpleAdminDashboard() {
     a.download = `cases-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleTestSentry = () => {
+    // This will be caught by Sentry in production
+    const testError = new Error('TEST_SENTRY_ERROR - This is a test error for Sentry integration validation');
+    testError.name = 'SentryTestError';
+    throw testError;
   };
 
   // Derive active and completed cases from the single query
@@ -142,6 +151,9 @@ export default function SimpleAdminDashboard() {
             <p className="text-muted-foreground mt-1">Monitor active medical travel cases</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={handleTestSentry} variant="destructive" size="sm" className="gap-1.5">
+              🧪 Test Sentry
+            </Button>
             <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" disabled={allCases.length === 0}>
               <Download className="w-4 h-4" /> <span className="hidden md:inline">Export CSV</span>
             </Button>
