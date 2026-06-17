@@ -9,7 +9,7 @@ import {
 // PREMIUM COLOR PALETTE
 const LUXURY_COLORS = {
   header: 'bg-gradient-to-br from-slate-900 to-slate-950',
-  activeGradient: 'bg-gradient-to-br from-blue-900 to-indigo-900',
+  activeGradient: 'bg-gradient-to-br from-slate-800 to-slate-900',
   gold: '#D4AF37',
   goldLight: '#E5C55A',
   textPrimary: 'text-slate-700',
@@ -34,25 +34,28 @@ const SidebarContent = React.memo(({ location, onClose }) => {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Premium Brand Header */}
-      <div className={`${LUXURY_COLORS.header} px-5 py-5`}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-serif font-bold text-xl">M</span>
+      <div className={`${LUXURY_COLORS.header} px-5 py-6`}>
+        {/* Main Logo */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-xl">
+            <span className="text-white font-serif font-bold text-2xl">M</span>
           </div>
           <div>
-            <p className="text-white font-serif font-semibold text-sm tracking-wide">MORALES</p>
-            <p className="text-white/70 text-[10px] tracking-widest uppercase">Dental & Aesthetic</p>
+            <p className="text-white font-serif font-semibold text-base tracking-wide">MORALES</p>
+            <p className="text-amber-400/80 text-[10px] tracking-widest uppercase">Dental & Aesthetic</p>
           </div>
         </div>
         
-        {/* User Profile */}
-        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-800 to-indigo-900 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-serif font-bold text-xs">M</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-xs truncate">Morales</p>
-            <p className="text-white/60 text-[10px] truncate">Patient Portal</p>
+        {/* User Profile - Unified Luxury Style */}
+        <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md flex-shrink-0">
+              <span className="text-white font-serif font-bold text-sm">M</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm truncate">Welcome back</p>
+              <p className="text-white/60 text-xs truncate">Patient Portal</p>
+            </div>
           </div>
         </div>
       </div>
@@ -68,7 +71,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
               onClick={onClose}
               className={`group flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm transition-all duration-200 ${
                 isActive
-                  ? `${LUXURY_COLORS.activeGradient} text-white font-semibold shadow-lg shadow-blue-900/20`
+                  ? `${LUXURY_COLORS.activeGradient} text-white font-semibold shadow-lg shadow-slate-900/20 border border-slate-700/50`
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
@@ -90,12 +93,12 @@ const SidebarContent = React.memo(({ location, onClose }) => {
       {/* Premium Footer */}
       <div className="px-4 py-4 border-t border-slate-100 space-y-3">
         <Link to="/trip-overview">
-          <div className={`${LUXURY_COLORS.activeGradient} rounded-xl px-4 py-3 text-white text-center hover:opacity-90 transition-all shadow-md`}>
+          <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl px-4 py-3 text-white text-center hover:opacity-90 transition-all shadow-lg shadow-amber-500/20">
             <div className="flex items-center justify-center gap-2 mb-1">
               <Globe className="w-4 h-4" />
               <p className="text-xs font-bold">My Trip Overview</p>
             </div>
-            <p className="text-[10px] text-white/70">View itinerary & partners</p>
+            <p className="text-[10px] text-white/80">View itinerary & partners</p>
           </div>
         </Link>
         
