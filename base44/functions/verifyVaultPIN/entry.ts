@@ -20,18 +20,18 @@ Deno.serve(async (req) => {
     const pinHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     if (action === 'set') {
-      // Check if PIN already exists
-      const existingPins = await base44.entities.VaultPIN.filter({ user_id: user.id });
+      // Check if PIN already exists (use service role to bypass RLS)
+      const existingPins = await base44.asServiceRole.entities.VaultPIN.filter({ user_id: user.id });
       
       if (existingPins.length > 0) {
         // Update existing PIN
-        await base44.entities.VaultPIN.update(existingPins[0].id, {
+        await base44.asServiceRole.entities.VaultPIN.update(existingPins[0].id, {
           pin_hash: pinHash,
           updated_at: new Date().toISOString()
         });
       } else {
         // Create new PIN
-        await base44.entities.VaultPIN.create({
+        await base44.asServiceRole.entities.VaultPIN.create({
           user_id: user.id,
           user_email: user.email,
           pin_hash: pinHash,
@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
 
       return Response.json({ success: true });
     } else if (action === 'verify') {
-      // Verify PIN
-      const pins = await base44.entities.VaultPIN.filter({ user_id: user.id });
+      // Verify PIN (use service role to bypass RLS)
+      const pins = await base44.asServiceRole.entities.VaultPIN.filter({ user_id: user.id });
       
       if (pins.length === 0) {
         return Response.json({ valid: false, error: 'No PIN set' });
