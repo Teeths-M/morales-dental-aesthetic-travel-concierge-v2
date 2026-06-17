@@ -101,21 +101,21 @@ export default function VaultDashboard({ user }) {
     <div className="space-y-6">
       {/* Summary strip */}
       <motion.div
-        className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06]"
+        className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.15]"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       >
         <div>
-          <p className="text-[15px] font-semibold text-emerald-100" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
-          <p className="text-[12px] text-emerald-200/90 mt-1 tracking-[0.15em] uppercase">PBKDF2 + AES-256-GCM · Zero-knowledge</p>
+          <p className="text-[15px] font-bold text-emerald-50" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
+          <p className="text-[12px] text-emerald-100 mt-1 tracking-[0.15em] uppercase">PBKDF2 + AES-256-GCM · Zero-knowledge</p>
         </div>
-        <Shield className="w-8 h-8 text-emerald-200/90" strokeWidth={1.3} />
+        <Shield className="w-8 h-8 text-emerald-100" strokeWidth={1.3} />
       </motion.div>
 
       {/* Tab bar */}
       <motion.div
-        className="flex rounded-xl border border-white/[0.10] overflow-hidden bg-white/[0.04]"
+        className="flex rounded-xl border border-white/20 overflow-hidden bg-white/10"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
@@ -126,13 +126,13 @@ export default function VaultDashboard({ user }) {
             <motion.button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold transition-colors ${activeTab === key ? 'bg-white/[0.15] text-white' : 'bg-transparent text-white/70 hover:text-white hover:bg-white/[0.08]'}`}
-              whileHover={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-bold transition-colors ${activeTab === key ? 'bg-white/25 text-white' : 'bg-transparent text-white/80 hover:text-white hover:bg-white/15'}`}
+              whileHover={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
               whileTap={{ scale: 0.98 }}
             >
               <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span className="hidden sm:inline">{label}</span>
-              {count !== null && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === key ? 'bg-white/25 text-white/90' : 'bg-white/[0.12] text-white/60'}`}>{count}</span>}
+              {count !== null && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === key ? 'bg-white/30 text-white' : 'bg-white/20 text-white/80'}`}>{count}</span>}
             </motion.button>
           );
         })}
@@ -145,9 +145,9 @@ export default function VaultDashboard({ user }) {
           <div className="space-y-3">
             {vaults.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5 text-2xl" style={{ boxShadow: '0 0 40px rgba(212,175,55,0.06)' }}>🔒</div>
-                <p className="text-[15px] font-semibold text-white/50" style={{ letterSpacing: '-0.01em' }}>No documents yet</p>
-                <p className="text-[13px] text-white/25 mt-2 max-w-xs leading-relaxed">Add your first document using the "Add New" tab above.</p>
+                <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-5 text-2xl" style={{ boxShadow: '0 0 40px rgba(212,175,55,0.15)' }}>🔒</div>
+                <p className="text-[15px] font-bold text-white/80" style={{ letterSpacing: '-0.01em' }}>No documents yet</p>
+                <p className="text-[13px] text-white/70 mt-2 max-w-xs leading-relaxed">Add your first document using the "Add New" tab above.</p>
               </div>
             ) : (
               vaults.map((vault, index) => {
@@ -158,18 +158,18 @@ export default function VaultDashboard({ user }) {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-white/[0.10] bg-white/[0.04] hover:border-white/[0.15] hover:bg-white/[0.06] transition-all"
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-white/20 bg-white/10 hover:border-white/30 hover:bg-white/15 transition-all"
                     whileHover={{ scale: 1.01, y: -2 }}
                   >
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-14 h-14 rounded-xl bg-white/[0.05] border border-white/[0.10] flex items-center justify-center text-2xl flex-shrink-0" style={{ boxShadow: '0 0 30px rgba(212,175,55,0.08)' }}>
+                      <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl flex-shrink-0" style={{ boxShadow: '0 0 30px rgba(212,175,55,0.12)' }}>
                         {meta.emoji}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-semibold text-white truncate" style={{ letterSpacing: '-0.01em' }}>{vault.file_name}</p>
-                        <p className="text-[12px] text-white/60 mt-1">{meta.label} · {(vault.file_size_bytes / 1024).toFixed(1)} KB</p>
+                        <p className="text-[15px] font-bold text-white truncate" style={{ letterSpacing: '-0.01em' }}>{vault.file_name}</p>
+                        <p className="text-[12px] text-white/80 mt-1">{meta.label} · {(vault.file_size_bytes / 1024).toFixed(1)} KB</p>
                         {formattedDates[vault.id] && (
-                          <p className="text-[11px] text-white/40 mt-1.5 tracking-[0.15em] uppercase">
+                          <p className="text-[11px] text-white/70 mt-1.5 tracking-[0.15em] uppercase">
                             Added {formattedDates[vault.id]}
                           </p>
                         )}
@@ -178,7 +178,7 @@ export default function VaultDashboard({ user }) {
                     <div className="flex items-center gap-2.5 w-full sm:w-auto">
                       <motion.button
                         onClick={() => handleDownload(vault)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.12] text-white/80 hover:text-white hover:border-white/25 hover:bg-white/[0.06] text-[13px] font-semibold transition-all"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/25 text-white/90 hover:text-white hover:border-white/40 hover:bg-white/15 text-[13px] font-bold transition-all"
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
                       >
@@ -186,7 +186,7 @@ export default function VaultDashboard({ user }) {
                       </motion.button>
                       <motion.button
                         onClick={() => setShareModal({ open: true, vault })}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.12] text-white/80 hover:text-white hover:border-white/25 hover:bg-white/[0.06] text-[13px] font-semibold transition-all"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/25 text-white/90 hover:text-white hover:border-white/40 hover:bg-white/15 text-[13px] font-bold transition-all"
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
                       >
@@ -194,7 +194,7 @@ export default function VaultDashboard({ user }) {
                       </motion.button>
                       <motion.button
                         onClick={() => setDeleteTarget(vault)}
-                        className="p-2.5 rounded-xl border border-white/[0.10] text-white/40 hover:text-red-300 hover:border-red-500/30 hover:bg-red-500/[0.06] transition-all"
+                        className="p-2.5 rounded-xl border border-white/20 text-white/70 hover:text-red-200 hover:border-red-400/40 hover:bg-red-500/[0.12] transition-all"
                         aria-label="Delete document"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -214,9 +214,9 @@ export default function VaultDashboard({ user }) {
           <div className="space-y-3">
             {shareLinks.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5"><Share2 className="w-7 h-7 text-white/12" /></div>
-                <p className="text-[15px] font-semibold text-white/50" style={{ letterSpacing: '-0.01em' }}>No active share links</p>
-                <p className="text-[13px] text-white/25 mt-2 max-w-xs leading-relaxed">Create a share link from any document to securely share with embassies, airlines, or hotels.</p>
+                <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-5"><Share2 className="w-7 h-7 text-white/40" /></div>
+                <p className="text-[15px] font-bold text-white/80" style={{ letterSpacing: '-0.01em' }}>No active share links</p>
+                <p className="text-[13px] text-white/70 mt-2 max-w-xs leading-relaxed">Create a share link from any document to securely share with embassies, airlines, or hotels.</p>
               </div>
             ) : shareLinks.map((link, index) => (
               <motion.div
@@ -224,17 +224,17 @@ export default function VaultDashboard({ user }) {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="p-5 rounded-2xl border border-white/[0.10] bg-white/[0.04]"
+                className="p-5 rounded-2xl border border-white/20 bg-white/10"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[14px] font-semibold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{link.purpose?.replace(/_/g, ' ')} Share Link</p>
-                    <p className="text-[12px] text-white/60 mt-1.5">
+                    <p className="text-[14px] font-bold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{link.purpose?.replace(/_/g, ' ')} Share Link</p>
+                    <p className="text-[12px] text-white/80 mt-1.5">
                       {link.access_count}/{link.max_access_count} downloads ·{' '}
                       Expires {formattedDates[`sl-${link.id}`] || '—'}
                     </p>
                   </div>
-                  <span className={`flex-shrink-0 text-[10px] font-bold px-3 py-1 rounded-full ring-1 tracking-[0.15em] uppercase ${link.is_active ? 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/25' : 'bg-red-500/15 text-red-300 ring-red-500/25'}`}>
+                  <span className={`flex-shrink-0 text-[10px] font-bold px-3 py-1 rounded-full ring-1 tracking-[0.15em] uppercase ${link.is_active ? 'bg-emerald-400/30 text-emerald-100 ring-emerald-400/40' : 'bg-red-400/30 text-red-100 ring-red-400/40'}`}>
                     {link.is_active ? 'Active' : 'Expired'}
                   </span>
                 </div>
@@ -253,8 +253,8 @@ export default function VaultDashboard({ user }) {
           <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
             {auditLogs.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5"><Clock className="w-7 h-7 text-white/12" /></div>
-                <p className="text-[15px] font-semibold text-white/50" style={{ letterSpacing: '-0.01em' }}>No activity yet</p>
+                <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-5"><Clock className="w-7 h-7 text-white/40" /></div>
+                <p className="text-[15px] font-bold text-white/80" style={{ letterSpacing: '-0.01em' }}>No activity yet</p>
               </div>
             ) : auditLogs.map((log, index) => (
               <motion.div
@@ -262,14 +262,14 @@ export default function VaultDashboard({ user }) {
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.25, delay: index * 0.04 }}
-                className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-white/[0.08] bg-white/[0.04]"
+                className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-white/15 bg-white/10"
               >
                 <div>
-                  <p className="text-[13px] font-medium text-white/90 capitalize" style={{ letterSpacing: '-0.01em' }}>{log.event_type?.replace(/_/g, ' ')}</p>
-                  {formattedDates[`al-${log.id}`] && <p className="text-[11px] text-white/50 mt-1 tracking-[0.15em] uppercase">{formattedDates[`al-${log.id}`]}</p>}
+                  <p className="text-[13px] font-bold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{log.event_type?.replace(/_/g, ' ')}</p>
+                  {formattedDates[`al-${log.id}`] && <p className="text-[11px] text-white/70 mt-1 tracking-[0.15em] uppercase">{formattedDates[`al-${log.id}`]}</p>}
                 </div>
                 {log.sensitive && (
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/15 text-red-300 ring-1 ring-red-500/25 flex-shrink-0 tracking-[0.15em] uppercase">Sensitive</span>
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-400/30 text-red-100 ring-1 ring-red-400/40 flex-shrink-0 tracking-[0.15em] uppercase">Sensitive</span>
                 )}
               </motion.div>
             ))}
