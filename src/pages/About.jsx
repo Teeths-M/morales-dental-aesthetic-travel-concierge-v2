@@ -33,13 +33,13 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
+          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.32em] mb-4">
             {language === 'es' ? 'Acerca de Nosotros' : language === 'fr' ? 'À Propos de Nous' : 'About Us'}
           </p>
-          <h1 className="font-display text-3xl lg:text-5xl text-foreground mb-6">
+          <h1 className="font-display text-4xl lg:text-5xl text-foreground mb-7" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
             {language === 'es' ? 'Tu Seguridad, Nuestra Misión' : language === 'fr' ? 'Votre Sécurité, Notre Mission' : 'Your Safety, Our Mission'}
           </h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[17px] text-muted-foreground max-w-2xl mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
             {language === 'es' ? 'Morales Dental & Aesthetic Travel Concierge fue fundada en un principio simple: todos merecen acceso a cuidado dental y estético de clase mundial, entregado con seguridad inquebrantable y atención personalizada.' : language === 'fr' ? 'Morales Dental & Aesthetic Travel Concierge a été fondée sur un principe simple : tout le monde mérite l\'accès aux soins dentaires et esthétiques de classe mondiale, livrés avec une sécurité inébranlable et une attention personnalisée.' : 'Morales Dental & Aesthetic Travel Concierge was founded on a simple principle: everyone deserves access to world-class dental and aesthetic care, delivered with uncompromising safety and personalized attention.'}
           </p>
         </motion.div>
@@ -74,8 +74,8 @@ export default function About() {
               <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center mb-4">
                 <Icon className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-display text-lg text-foreground mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+              <h3 className="font-display text-xl text-foreground mb-2" style={{ letterSpacing: '-0.01em' }}>{title}</h3>
+              <p className="text-[15px] text-muted-foreground leading-[1.7]" style={{ fontWeight: 300 }}>{desc}</p>
             </motion.div>
           ))}
         </div>

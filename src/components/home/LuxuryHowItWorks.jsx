@@ -43,14 +43,14 @@ export default function LuxuryHowItWorks() {
 
           {/* Left */}
           <div>
-            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-5" style={{ color: GOLD }}>
+            <p className="text-[11px] font-bold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
               HOW IT WORKS
             </p>
-            <h2 className="font-display text-4xl lg:text-[2.6rem] text-white leading-[1.1] mb-4">
+            <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-5" style={{ letterSpacing: '-0.02em' }}>
               Your Journey,<br />Simplified
             </h2>
-            <div className="w-8 h-[2px] mb-5" style={{ background: GOLD }} />
-            <p className="text-white/75 text-[14px] leading-relaxed mb-8">
+            <div className="w-10 h-[2px] mb-6" style={{ background: GOLD }} />
+            <p className="text-white/70 text-[17px] leading-[1.75] mb-9" style={{ fontWeight: 300 }}>
               We make world-class care accessible and stress-free.
             </p>
             <Link
@@ -74,16 +74,16 @@ export default function LuxuryHowItWorks() {
                 className="relative p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.055] transition-all duration-300 group"
         style={{ boxShadow: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.3)' }}
               >
-                <p className="text-[11px] font-bold tracking-wider mb-4" style={{ color: GOLD }}>
+                <p className="text-[12px] font-bold tracking-[0.25em] mb-5" style={{ color: GOLD }}>
                   {number}
                 </p>
                 <Icon
-                  className="w-5 h-5 mb-4"
+                  className="w-5 h-5 mb-5"
                   style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}cc) drop-shadow(0 0 18px ${GOLD}66)` }}
                   strokeWidth={1.5}
                 />
-                <h3 className="font-medium text-white text-[14px] mb-2">{title}</h3>
-                <p className="text-white/65 text-[12.5px] leading-relaxed tracking-wide">{desc}</p>
+                <h3 className="font-medium text-white text-[15px] mb-2.5" style={{ letterSpacing: '0.01em' }}>{title}</h3>
+                <p className="text-white/60 text-[13px] leading-[1.7]" style={{ fontWeight: 300 }}>{desc}</p>
 
                 {/* Arrow connector */}
                 {i < steps.length - 1 && (

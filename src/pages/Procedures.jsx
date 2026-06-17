@@ -169,13 +169,13 @@ export default function Procedures() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-3">
+            <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-[0.32em] mb-4">
               {language === 'es' ? 'Nuestros Servicios' : language === 'fr' ? 'Nos Services' : 'Our Services'}
             </p>
-            <h1 className="font-display text-3xl lg:text-5xl text-slate-900 mb-4">
+            <h1 className="font-display text-4xl lg:text-5xl text-slate-900 mb-6" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
               {language === 'es' ? 'Procedimientos y Tratamientos' : language === 'fr' ? 'Procédures et Traitements' : 'Procedures & Treatments'}
             </h1>
-            <p className="text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
+            <p className="text-[17px] text-slate-500 max-w-xl mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
               {language === 'es' ? 'Cuidado dental, estético y de bienestar de clase mundial. Busca abajo, o simplemente ' : language === 'fr' ? 'Soins dentaires, esthétiques et de bien-être de classe mondiale. Parcourez ci-dessous, ou simplement ' : 'World-class dental, aesthetic, and wellness care. Browse below, search, or simply '}<span className="font-semibold text-emerald-700">{language === 'es' ? 'habla tus objetivos' : language === 'fr' ? 'parlez vos objectifs' : 'speak your goals'}</span> {language === 'es' ? 'usando el modo de voz.' : language === 'fr' ? 'en utilisant le mode voix.' : 'using Voice Mode.'}
             </p>
           </motion.div>
@@ -283,13 +283,13 @@ export default function Procedures() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">
+              <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-[0.32em] mb-3">
                 {language === 'es' ? '¿No Estás Seguro Por Dónde Empezar?' : language === 'fr' ? 'Vous Ne Savez Pas Où Commencer?' : 'Not Sure Where to Start?'}
               </p>
-              <h2 className="font-display text-2xl lg:text-3xl text-slate-900 mb-3">
+              <h2 className="font-display text-3xl lg:text-4xl text-slate-900 mb-4" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
                 {language === 'es' ? 'Habla Con Nuestro Equipo de Conserjería' : language === 'fr' ? 'Parlez à Notre Équipe de Conciergerie' : 'Talk to Our Concierge Team'}
               </h2>
-              <p className="text-slate-500 text-sm mb-6 max-w-md mx-auto">
+              <p className="text-[15px] text-slate-500 mb-6 max-w-md mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
                 {language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.'}
               </p>
               <Link to="/booking">

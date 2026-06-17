@@ -105,22 +105,22 @@ function DashboardHome({ user, consultations, language }) {
       >
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">
+            <p className="text-white/70 text-[11px] font-bold uppercase tracking-[0.28em] mb-2">
               {language === 'es' ? 'Bienvenido de vuelta' : language === 'fr' ? 'Bienvenue' : 'Welcome back'}
             </p>
-            <h1 className="font-display text-2xl lg:text-3xl">
+            <h1 className="font-display text-3xl lg:text-4xl" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
               {language === 'es' ? 'Hola, ' : language === 'fr' ? 'Bonjour, ' : 'Hello, '}{displayName} 👋
             </h1>
-            <p className="text-white/70 text-sm mt-1.5">
+            <p className="text-white/70 text-[15px] mt-2" style={{ fontWeight: 300 }}>
               {language === 'es' ? 'Etapa del Viaje: ' : language === 'fr' ? 'Stade du Voyage: ' : 'Journey Stage: '}<span className="text-white font-semibold capitalize">{latestConsultation?.journey_stage || (language === 'es' ? 'Consulta' : language === 'fr' ? 'Consultation' : 'Consultation')}</span>
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-4 text-center">
-            <p className="text-white/70 text-[11px] uppercase tracking-widest mb-1">
+            <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.25em] mb-2">
               {language === 'es' ? 'Días Hasta el Procedimiento' : language === 'fr' ? 'Jours Jusqu\'à la Procédure' : 'Days Until Procedure'}
             </p>
-            <p className="font-display text-4xl text-white">{daysUntil > 0 ? daysUntil : '—'}</p>
-            <p className="text-white/60 text-[11px] mt-0.5">Jun 14, 2026</p>
+            <p className="font-display text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntil > 0 ? daysUntil : '—'}</p>
+            <p className="text-white/60 text-[12px] mt-1">Jun 14, 2026</p>
           </div>
         </div>
       </motion.div>
@@ -189,8 +189,8 @@ function DashboardHome({ user, consultations, language }) {
               <Lock className="w-6 h-6 text-emerald-700" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg">Secure Document Vault</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h3 className="font-bold text-slate-800 text-xl" style={{ letterSpacing: '-0.01em' }}>Secure Document Vault</h3>
+              <p className="text-[14px] text-slate-500 mt-1" style={{ fontWeight: 300 }}>
                 {vaultCount === 0 
                   ? 'No documents yet — upload your passport, tickets, and medical records' 
                   : `${vaultCount} document${vaultCount > 1 ? 's' : ''} saved securely`}
@@ -284,7 +284,7 @@ function DashboardHome({ user, consultations, language }) {
 
       {/* Quick Actions */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
+        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.28em] mb-5">
           {language === 'es' ? 'Acciones Rápidas' : language === 'fr' ? 'Actions Rapides' : 'Quick Actions'}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -306,7 +306,7 @@ function DashboardHome({ user, consultations, language }) {
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
         <div className="flex items-center gap-3 mb-4">
           <Bell className="w-4 h-4 text-slate-500" />
-          <p className="text-sm font-semibold text-slate-800">
+          <p className="text-[15px] font-semibold text-slate-800" style={{ letterSpacing: '-0.01em' }}>
             {language === 'es' ? 'Notificaciones' : language === 'fr' ? 'Notifications' : 'Notifications'}
           </p>
           <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{notifications.length}</span>

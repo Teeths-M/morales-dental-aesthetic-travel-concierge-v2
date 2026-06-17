@@ -99,10 +99,10 @@ export default function LuxuryTestimonials() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-14 gap-6">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-4" style={{ color: GOLD }}>
+            <p className="text-[11px] font-bold tracking-[0.32em] uppercase mb-5" style={{ color: GOLD }}>
               PATIENT STORIES
             </p>
-            <h2 className="font-display text-4xl lg:text-[2.6rem] text-white leading-[1.1]">
+            <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-1" style={{ letterSpacing: '-0.02em' }}>
               Journeys That{' '}
               <span style={{ color: GOLD, fontStyle: 'italic' }}>Changed Lives</span>
             </h2>
@@ -181,8 +181,8 @@ export default function LuxuryTestimonials() {
                   </div>
 
                   <div>
-                    <p className="text-white font-medium text-[16px] leading-tight">{t.name}</p>
-                    <p className="text-white/50 text-[12px] mt-0.5">{t.country}</p>
+                    <p className="text-white font-medium text-[17px] leading-tight">{t.name}</p>
+                    <p className="text-white/50 text-[13px] mt-1">{t.country}</p>
                     <div className="flex gap-0.5 mt-2">
                       {Array.from({ length: t.rating }).map((_, i) => (
                         <span key={i} style={{ color: GOLD, fontSize: 11 }}>★</span>
@@ -213,7 +213,7 @@ export default function LuxuryTestimonials() {
                     style={{ color: GOLD }}
                     strokeWidth={1.5}
                   />
-                  <p className="text-white/80 text-[15px] lg:text-[16px] leading-[1.75] font-light italic mb-8">
+                  <p className="text-white/85 text-[16px] lg:text-[17px] leading-[1.85] font-light italic mb-9">
                     "{t.quote}"
                   </p>
                 </div>
@@ -221,7 +221,7 @@ export default function LuxuryTestimonials() {
                 <div
                   className="pt-6 border-t border-white/[0.07]"
                 >
-                  <p className="text-[11px] font-bold tracking-[0.2em] uppercase" style={{ color: GOLD }}>
+                  <p className="text-[12px] font-bold tracking-[0.25em] uppercase" style={{ color: GOLD }}>
                     {t.procedure}
                   </p>
                 </div>

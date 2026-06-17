@@ -43,15 +43,15 @@ export default function LuxuryWhyMorales() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <p className="text-[10px] font-bold tracking-[0.28em] uppercase mb-5" style={{ color: GOLD }}>
+            <p className="text-[11px] font-bold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
               WHY PATIENTS CHOOSE MORALES
             </p>
-            <h2 className="font-display text-4xl lg:text-[2.6rem] text-white leading-[1.1]">
+            <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-6" style={{ letterSpacing: '-0.02em' }}>
               More Than Travel.<br />
               It's{' '}
               <span style={{ color: GOLD, fontStyle: 'italic' }}>Peace of Mind.</span>
             </h2>
-            <div className="w-8 h-[2px] mt-7" style={{ background: GOLD }} />
+            <div className="w-10 h-[2px] mt-7" style={{ background: GOLD }} />
           </motion.div>
 
           {/* Right — 4 features */}
@@ -72,8 +72,8 @@ export default function LuxuryWhyMorales() {
                   <Icon className="w-4 h-4" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}cc) drop-shadow(0 0 18px ${GOLD}66)` }} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium text-[13.5px] mb-1.5">{title}</h3>
-                  <p className="text-white/65 text-[12.5px] leading-relaxed tracking-wide">{desc}</p>
+                  <h3 className="text-white font-medium text-[15px] mb-2" style={{ letterSpacing: '0.01em' }}>{title}</h3>
+                  <p className="text-white/60 text-[13px] leading-[1.7] font-light">{desc}</p>
                 </div>
               </motion.div>
             ))}

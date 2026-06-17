@@ -38,13 +38,13 @@ export default function HowItWorksPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
+          <p className="text-[11px] font-bold text-accent uppercase tracking-[0.32em] mb-4">
             {language === 'es' ? 'Tu Viaje' : language === 'fr' ? 'Votre Voyage' : 'Your Journey'}
           </p>
-          <h1 className="font-display text-3xl lg:text-5xl text-foreground mb-4">
+          <h1 className="font-display text-4xl lg:text-5xl text-foreground mb-6" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
             {language === 'es' ? 'Cómo Funciona' : language === 'fr' ? 'Comment Ça Marche' : 'How It Works'}
           </h1>
-          <p className="text-base text-muted-foreground max-w-xl mx-auto">
+          <p className="text-[17px] text-muted-foreground max-w-xl mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
             {language === 'es' ? 'Desde la primera consulta hasta el seguimiento posterior, nos encargamos de cada detalle de tu viaje de transformación.' : language === 'fr' ? 'De la première consultation aux soins post-traitement, nous gérons chaque détail de votre voyage de transformation.' : 'From first consultation to aftercare, we handle every detail of your transformation journey.'}
           </p>
         </motion.div>
@@ -66,11 +66,11 @@ export default function HowItWorksPage() {
                 {i < steps.length - 1 && <div className="w-px flex-1 bg-border mt-2" />}
               </div>
               <div className="pb-8">
-                <div className="text-[10px] font-bold text-accent uppercase tracking-wider mb-1">
+                <div className="text-[11px] font-bold text-accent uppercase tracking-[0.28em] mb-2">
                   {language === 'es' ? 'Paso' : language === 'fr' ? 'Étape' : 'Step'} {num}
                 </div>
-                <h3 className="font-display text-xl text-foreground mb-1">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="font-display text-xl text-foreground mb-2" style={{ letterSpacing: '-0.01em' }}>{title}</h3>
+                <p className="text-[15px] text-muted-foreground leading-[1.7]" style={{ fontWeight: 300 }}>{desc}</p>
               </div>
             </motion.div>
           ))}
