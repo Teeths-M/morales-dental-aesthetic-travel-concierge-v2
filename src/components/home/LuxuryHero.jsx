@@ -139,26 +139,26 @@ export default function LuxuryHero() {
             src={HERO_IMAGE} 
             alt="Premium medical travel with Safe-T4Life safety intelligence" 
             className="w-full h-full object-cover"
-            style={{ objectPosition: 'center center' }} 
+            style={{ objectPosition: '65% center' }} 
             loading="eager" 
             fetchpriority="high"
-            initial={{ scale: 1.05 }}
+            initial={{ scale: 1.08 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 20, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
+            transition={{ duration: 25, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 30%, rgba(11,18,25,0.85) 45%, rgba(11,18,25,0.4) 65%, transparent 100%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.5) 10%, transparent 25%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.8) 12%, transparent 30%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 35%, rgba(11,18,25,0.88) 50%, rgba(11,18,25,0.5) 70%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.6) 15%, transparent 35%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.85) 15%, transparent 35%)' }} />
           {/* Subtle animated shimmer overlay */}
           <motion.div 
             className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(circle at 50% 50%, rgba(212,175,55,0.03) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(circle at 65% 50%, rgba(212,175,55,0.04) 0%, transparent 65%)' }}
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
 
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
+        <div className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-20 lg:py-0" style={{ paddingTop: '68px' }}>
 
           {/* LEFT */}
           <motion.div 
@@ -284,16 +284,14 @@ export default function LuxuryHero() {
             </AnimatePresence>
           </motion.div>
 
-          {/* RIGHT — SafeTDiagram is memoized, never re-renders on mode toggle */}
+          {/* RIGHT — Clean space for jet imagery */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            transition={{ duration: 1.2, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="relative hidden lg:flex items-center justify-center" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            transition={{ duration: 1, delay: 0.3 }}
+            className="relative hidden lg:block" 
             style={{ height: '100vh' }}
-          >
-            <SafeTDiagram />
-          </motion.div>
+          />
         </div>
       </section>
       <HowItWorksModal isOpen={showModal} onClose={closeModal} />
