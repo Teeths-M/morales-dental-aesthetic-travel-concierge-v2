@@ -65,13 +65,18 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
 
       if (response.data.valid) {
         onPINVerified();
+      } else if (response.data.error === 'No PIN set') {
+        // No PIN exists - switch to setup mode
+        setIsSettingPIN(true);
+        setError('No PIN found. Please set a new PIN.');
       } else {
         setError('Incorrect PIN. Please try again.');
         setPin(['', '', '', '']);
         inputRefs[0]?.current?.focus();
       }
     } catch (err) {
-      setError('Verification failed. Please try again.');
+      console.error('PIN verification error:', err);
+      setError(err.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -93,13 +98,19 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
 
     setLoading(true);
     try {
-      await base44.functions.invoke('verifyVaultPIN', {
+      const response = await base44.functions.invoke('verifyVaultPIN', {
         pin: pinString,
         action: 'set'
       });
-      onPINVerified();
+      
+      if (response.data.success) {
+        onPINVerified();
+      } else {
+        setError('Failed to set PIN. Please try again.');
+      }
     } catch (err) {
-      setError('Failed to set PIN. Please try again.');
+      console.error('PIN setup error:', err);
+      setError(err.message || 'Failed to set PIN. Please try again.');
     } finally {
       setLoading(false);
     }

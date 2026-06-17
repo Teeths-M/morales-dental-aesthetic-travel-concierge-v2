@@ -32,7 +32,7 @@ export default function PassportVault() {
     setPinVerified(true);
   };
 
-  if (loading) {
+  if (loading || hasPIN === null) {
     return (
       <div className="min-h-screen bg-[#060B16] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
@@ -41,14 +41,9 @@ export default function PassportVault() {
     );
   }
 
-  // Show PIN gate if PIN exists and not verified yet
-  if (hasPIN && !pinVerified) {
-    return <VaultPINGate hasExistingPIN={true} onPINVerified={handlePINVerified} />;
-  }
-
-  // Show PIN setup if no PIN exists and user is authenticated
-  if (!hasPIN && user && !pinVerified) {
-    return <VaultPINGate hasExistingPIN={false} onPINVerified={handlePINVerified} />;
+  // Show PIN gate - will handle both setup and verification internally
+  if (user && !pinVerified) {
+    return <VaultPINGate hasExistingPIN={hasPIN === true} onPINVerified={handlePINVerified} />;
   }
 
   if (!user) {
