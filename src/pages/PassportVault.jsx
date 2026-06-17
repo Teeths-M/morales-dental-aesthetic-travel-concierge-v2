@@ -4,11 +4,14 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import VaultDashboard from '@/components/vault/VaultDashboard';
 import VaultUploader from '@/components/vault/VaultUploader';
+import VaultPINGate from '@/components/vault/VaultPINGate';
 import { BRAND } from '@/lib/brandTokens';
 
 export default function PassportVault() {
   const [user, setUser]       = useState(null);
   const [hasVault, setHasVault] = useState(null);
+  const [hasPIN, setHasPIN] = useState(null);
+  const [pinVerified, setPinVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,10 +20,17 @@ export default function PassportVault() {
       if (u) {
         const vaults = await base44.entities.PassportVault.filter({ user_email: u.email, status: 'active' }, '-uploaded_at', 1);
         setHasVault(vaults.length > 0);
+        
+        const pins = await base44.entities.VaultPIN.filter({ user_id: u.id });
+        setHasPIN(pins.length > 0);
       }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  const handlePINVerified = () => {
+    setPinVerified(true);
+  };
 
   if (loading) {
     return (
@@ -29,6 +39,16 @@ export default function PassportVault() {
           style={{ borderColor: `${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} transparent` }} />
       </div>
     );
+  }
+
+  // Show PIN gate if PIN exists and not verified yet
+  if (hasPIN && !pinVerified) {
+    return <VaultPINGate hasExistingPIN={true} onPINVerified={handlePINVerified} />;
+  }
+
+  // Show PIN setup if no PIN exists and user is authenticated
+  if (!hasPIN && user && !pinVerified) {
+    return <VaultPINGate hasExistingPIN={false} onPINVerified={handlePINVerified} />;
   }
 
   if (!user) {
