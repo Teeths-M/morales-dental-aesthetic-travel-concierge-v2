@@ -10,7 +10,24 @@ import { Badge } from '@/components/ui/badge';
 import { Users, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-const countries = ['Trinidad and Tobago', 'United States', 'Canada', 'United Kingdom', 'Jamaica', 'Barbados', 'Guyana', 'Bahamas'];
+const countries = [
+  // Caribbean
+  'Trinidad and Tobago', 'Jamaica', 'Barbados', 'Bahamas', 'Guyana', 'Dominican Republic', 'Puerto Rico', 'Cuba', 'Haiti', 'Saint Lucia', 'Grenada', 'Antigua and Barbuda', 'Dominica', 'Saint Vincent and the Grenadines', 'Saint Kitts and Nevis', 'Aruba', 'Curacao', 'Cayman Islands', 'Turks and Caicos', 'British Virgin Islands', 'US Virgin Islands',
+  // North America
+  'United States', 'Canada', 'Mexico',
+  // Central America
+  'Costa Rica', 'Panama', 'Guatemala', 'Belize', 'Honduras', 'El Salvador', 'Nicaragua',
+  // South America
+  'Colombia', 'Brazil', 'Argentina', 'Chile', 'Peru', 'Ecuador', 'Uruguay', 'Paraguay', 'Bolivia', 'Venezuela',
+  // Europe
+  'United Kingdom', 'Germany', 'France', 'Spain', 'Italy', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Portugal', 'Greece', 'Turkey', 'Poland', 'Czech Republic', 'Hungary', 'Thailand', 'India', 'Singapore', 'Malaysia', 'Philippines', 'Indonesia', 'Vietnam', 'South Korea', 'Japan', 'China', 'Taiwan', 'Hong Kong',
+  // Middle East
+  'United Arab Emirates', 'Israel', 'Jordan', 'Lebanon', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Oman', 'Bahrain',
+  // Africa
+  'South Africa', 'Egypt', 'Morocco', 'Tunisia', 'Kenya', 'Nigeria', 'Ghana',
+  // Oceania
+  'Australia', 'New Zealand', 'Fiji'
+];
 const languagesList = ['English', 'Spanish', 'French', 'Hindi', 'Urdu', 'Mandarin', 'Arabic'];
 const experienceOptions = ['Just starting out', '1-2 years', '3-5 years', '5-10 years', '10+ years'];
 
