@@ -58,13 +58,15 @@ Deno.serve(async (req) => {
 
     const { file_uri } = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file: encryptedBlob });
 
-    const vault_token = await generateVaultToken();
+    // Entity field is passport_token — not vault_token. Using the wrong name means
+    // every downstream filter({ passport_token }) returns empty, breaking all downloads.
+    const passport_token = await generateVaultToken();
     const expires_at = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year
     const now = new Date().toISOString();
 
     // Create vault record
     const vault = await base44.entities.PassportVault.create({
-      vault_token,
+      passport_token,
       user_id: user.id,
       user_email: user.email,
       document_type,
@@ -86,9 +88,9 @@ Deno.serve(async (req) => {
       is_emergency_accessible
     });
 
-    // Log to AuditLog
+    // Log to AuditLog — use 'passport_access_requested' which is in the allowed event type list
     await base44.functions.invoke('logAuditEvent', {
-      event_type: 'passport_token_viewed',
+      event_type: 'passport_access_requested',
       actor_id: user.id,
       actor_role: user.role || 'client',
       actor_name: user.full_name,
@@ -106,7 +108,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      vault_token,
+      vault_token: passport_token,
       vault_id: vault.id,
       expires_at,
       redacted_for_display

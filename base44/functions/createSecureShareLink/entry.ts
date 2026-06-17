@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
     // Log to AuditLog
     await base44.functions.invoke('logAuditEvent', {
-      event_type: 'passport_access_granted',
+      event_type: 'passport_access_approved',
       actor_id: user.id,
       actor_role: user.role || 'client',
       actor_name: user.full_name,

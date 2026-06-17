@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Shield, Lock, Download, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
 
 export default function ShareLinkViewer() {
@@ -11,6 +12,8 @@ export default function ShareLinkViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [password, setPassword] = useState('');
+  const [downloadError, setDownloadError] = useState(null);
 
   useEffect(() => {
     loadShareLink();
@@ -27,24 +30,14 @@ export default function ShareLinkViewer() {
   };
 
   const handleDownload = async () => {
-    const password = prompt('Enter the decryption password provided by the document owner:');
-    if (!password) return;
-
+    if (!password) { setDownloadError('Please enter the decryption password.'); return; }
     setDownloading(true);
+    setDownloadError(null);
     try {
       const { signed_url, encryption_iv_b64, encryption_salt_b64, file_name, mime_type } = vaultData;
-      
       const blob = await fetch(signed_url).then(r => r.blob());
       const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
-      
-      const decryptedBlob = await decryptFileWithPassword(
-        encryptedB64,
-        encryption_iv_b64,
-        encryption_salt_b64,
-        password,
-        mime_type
-      );
-
+      const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
       const url = URL.createObjectURL(decryptedBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -52,7 +45,7 @@ export default function ShareLinkViewer() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Download failed: ' + (err.message || 'Wrong password'));
+      setDownloadError('Decryption failed — please check your password and try again.');
     }
     setDownloading(false);
   };
@@ -127,16 +120,28 @@ export default function ShareLinkViewer() {
             </span>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-start gap-2">
-              <Lock className="w-4 h-4 text-blue-600 mt-0.5" />
-              <div>
-                <p className="text-xs font-bold text-blue-800">Encrypted Document</p>
-                <p className="text-xs text-blue-700 mt-0.5">
-                  This document is end-to-end encrypted. You'll need the decryption password from the document owner.
-                </p>
-              </div>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
+              <Lock className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-700">
+                <strong>Encrypted document.</strong> Enter the decryption password provided by the document owner.
+              </p>
             </div>
+            <Input
+              type="password"
+              value={password}
+              onChange={e => { setPassword(e.target.value); setDownloadError(null); }}
+              onKeyDown={e => e.key === 'Enter' && !downloading && handleDownload()}
+              placeholder="Decryption password"
+              className="w-full"
+              autoComplete="off"
+            />
+            {downloadError && (
+              <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                <p className="text-xs">{downloadError}</p>
+              </div>
+            )}
           </div>
 
           <Button

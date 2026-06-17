@@ -50,8 +50,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get vault
-    const vaults = await base44.asServiceRole.entities.PassportVault.filter({ id: shareLink.vault_id });
+    // Get vault — SDK filter() cannot query by built-in `id` field.
+    // Use passport_token (stored on SecureShareLink as passport_token) for the lookup.
+    const vaults = await base44.asServiceRole.entities.PassportVault.filter({ passport_token: shareLink.passport_token });
     if (!vaults?.length) {
       return Response.json({ error: 'Vault not found' }, { status: 404 });
     }
