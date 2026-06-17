@@ -28,18 +28,20 @@ export function usePushNotifications(user) {
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') return;
 
-        // Fetch the VAPID public key from backend
+        // Check for existing subscription BEFORE fetching VAPID key
+        // Avoids a round-trip when already subscribed
+        const existingSub = await reg.pushManager.getSubscription();
+
         const { data: keyData } = await base44.functions.invoke('getVapidPublicKey', {});
         if (!keyData?.publicKey) return;
 
-        const existingSub = await reg.pushManager.getSubscription();
         const sub = existingSub || await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
         });
 
-        // Upsert subscription — find existing record for this user and update, or create new
-        const existing = await base44.entities.UserPushSubscription.filter({ user_id: user.id });
+        // Limit the DB filter to 1 — we only need to know if a record exists
+        const existing = await base44.entities.UserPushSubscription.filter({ user_id: user.id }, '-created_date', 1);
         if (existing && existing.length > 0) {
           await base44.entities.UserPushSubscription.update(existing[0].id, {
             subscription: JSON.stringify(sub),

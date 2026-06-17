@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Shield, Clock, FileText, Share2, Trash2, Download, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
@@ -37,10 +37,14 @@ export default function VaultDashboard({ user }) {
   const [shareModal, setShareModal]     = useState({ open: false, vault: null });
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // ── Download with decryption ──
-  const handleDownload = (vault) => setPwModal({ open: true, vault, isLoading: false });
+  // Stable callbacks — useCallback prevents new function refs on every render,
+  // which would otherwise cause every vault row button to re-render on modal open/close
+  const handleDownload = useCallback((vault) => setPwModal({ open: true, vault, isLoading: false }), []);
+  const closePwModal   = useCallback(() => setPwModal({ open: false, vault: null, isLoading: false }), []);
+  const closeShareModal= useCallback(() => setShareModal({ open: false, vault: null }), []);
+  const closeDelete    = useCallback(() => setDeleteTarget(null), []);
 
-  const handleDecryptAndDownload = async (password) => {
+  const handleDecryptAndDownload = useCallback(async (password) => {
     const vault = pwModal.vault;
     setPwModal(p => ({ ...p, isLoading: true }));
     try {
@@ -50,24 +54,30 @@ export default function VaultDashboard({ user }) {
       const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
       const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
       const url = URL.createObjectURL(decryptedBlob);
-      const a = document.createElement('a');
-      a.href = url; a.download = file_name; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = file_name; a.click();
       URL.revokeObjectURL(url);
       setPwModal({ open: false, vault: null, isLoading: false });
     } catch (err) {
       setPwModal(p => ({ ...p, isLoading: false }));
-      // Re-show the modal so user sees the error inline — don't close on failure
       console.error('[VaultDashboard] decrypt error:', err.message);
-      alert('Decryption failed. Please check your password and try again.'); // only fallback for crypto failure
+      alert('Decryption failed. Please check your password and try again.');
     }
-  };
+  }, [pwModal.vault]);
 
-  // ── Delete ──
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     await vaultService.archiveDocument(deleteTarget.id);
     setDeleteTarget(null);
     await reload();
-  };
+  }, [deleteTarget?.id, reload]);
+
+  // Pre-format all dates once when vaults/links/logs change — not on every render
+  const formattedDates = useMemo(() => {
+    const out = {};
+    vaults.forEach(v => { if (v.uploaded_at) out[v.id] = format(new Date(v.uploaded_at), 'MMM d, yyyy'); });
+    shareLinks.forEach(l => { if (l.expires_at) out[`sl-${l.id}`] = format(new Date(l.expires_at), 'MMM d, yyyy h:mm a'); });
+    auditLogs.forEach(l => { if (l.timestamp) out[`al-${l.id}`] = format(new Date(l.timestamp), 'MMM d, yyyy h:mm a'); });
+    return out;
+  }, [vaults, shareLinks, auditLogs]);
 
   const docCount = vaults.length;
 
@@ -130,9 +140,9 @@ export default function VaultDashboard({ user }) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-white truncate">{vault.file_name}</p>
                         <p className="text-xs text-white/40 mt-0.5">{meta.label} · {(vault.file_size_bytes / 1024).toFixed(1)} KB</p>
-                        {vault.uploaded_at && (
+                        {formattedDates[vault.id] && (
                           <p className="text-[10px] text-white/20 mt-1">
-                            Added {format(new Date(vault.uploaded_at), 'MMM d, yyyy')}
+                            Added {formattedDates[vault.id]}
                           </p>
                         )}
                       </div>
@@ -175,7 +185,7 @@ export default function VaultDashboard({ user }) {
                     <p className="text-sm font-semibold text-white capitalize">{link.purpose?.replace(/_/g, ' ')} Share Link</p>
                     <p className="text-xs text-white/30 mt-1">
                       {link.access_count}/{link.max_access_count} downloads used ·{' '}
-                      Expires {link.expires_at ? format(new Date(link.expires_at), 'MMM d, yyyy h:mm a') : '—'}
+                      Expires {formattedDates[`sl-${link.id}`] || '—'}
                     </p>
                   </div>
                   <span className={`flex-shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full ring-1 ${link.is_active ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20' : 'bg-red-500/10 text-red-400 ring-red-500/20'}`}>
@@ -204,7 +214,7 @@ export default function VaultDashboard({ user }) {
               <div key={log.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.05] bg-white/[0.02]">
                 <div>
                   <p className="text-xs font-medium text-white/70 capitalize">{log.event_type?.replace(/_/g, ' ')}</p>
-                  {log.timestamp && <p className="text-[10px] text-white/25 mt-0.5">{format(new Date(log.timestamp), 'MMM d, yyyy h:mm a')}</p>}
+                  {formattedDates[`al-${log.id}`] && <p className="text-[10px] text-white/25 mt-0.5">{formattedDates[`al-${log.id}`]}</p>}
                 </div>
                 {log.sensitive && (
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 ring-1 ring-red-500/20 flex-shrink-0">Sensitive</span>
@@ -219,17 +229,17 @@ export default function VaultDashboard({ user }) {
       <VaultPasswordModal
         isOpen={pwModal.open}
         isLoading={pwModal.isLoading}
-        onClose={() => setPwModal({ open: false, vault: null, isLoading: false })}
+        onClose={closePwModal}
         onConfirm={handleDecryptAndDownload}
       />
       <ShareLinkModal
         isOpen={shareModal.open}
         vault={shareModal.vault}
-        onClose={() => setShareModal({ open: false, vault: null })}
+        onClose={closeShareModal}
       />
       <ConfirmDialog
         isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
+        onClose={closeDelete}
         onConfirm={handleDeleteConfirm}
         title="Archive this document?"
         message={`"${deleteTarget?.file_name}" will be removed from your active vault. This action cannot be undone.`}
