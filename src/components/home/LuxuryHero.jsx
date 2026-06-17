@@ -1,189 +1,166 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Brain, Plane, Heart, ShieldCheck, Headphones, Building2, BarChart3 } from 'lucide-react';
+import { Shield, Brain, Plane, Heart, ShieldCheck, Headphones, Building2, BarChart3, CheckCircle } from 'lucide-react';
 import ModeToggle from './ModeToggle';
 import HowItWorksModal from './HowItWorksModal';
 
-// ── Brand Colors ──────────────────────────────────────────────────────────────
+// ── Brand Colors (from screenshot) ────────────────────────────────────────────
 const COLORS = {
-  bg: '#0B1623',
+  bg: '#0a1521',
   surface: '#0F1E30',
-  gold: '#E3B463',
-  goldButton: '#E8B946',
-  cyan: '#00F0FF',
-  white: '#FFFFFF',
-  muted: '#A0A0A0',
+  gold: '#e3b463',
+  goldButton: '#e3b463',
+  cyan: '#00e5ff',
+  white: '#f8f9fa',
+  muted: '#a0aec0',
   dim: '#6B7E93',
 };
 
-// ── Orbit Nodes with positions ───────────────────────────────────────────────
-const orbitNodes = [
-  { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 155 },
-  { label: '24/7 Support',         icon: Headphones,  angle: 195, r: 155 },
-  { label: 'Safe Facilities',      icon: Building2,   angle: 345, r: 155 },
-  { label: 'Risk Intelligence',    icon: BarChart3,   angle: 160, r: 155 },
-  { label: 'Travel Coordination',  icon: Plane,       angle: 15,  r: 155 },
-  { label: 'Recovery Care',        icon: Heart,       angle: 105, r: 155 },
+// ── Feature Labels with positions ─────────────────────────────────────────────
+const featureLabels = [
+  { label: 'Verified Specialists', icon: ShieldCheck, x: 280, y: 80 },
+  { label: 'Safe Facilities', icon: Building2, x: 420, y: 140 },
+  { label: 'Travel Coordination', icon: Plane, x: 380, y: 220 },
+  { label: 'Risk Intelligence', icon: BarChart3, x: 200, y: 200 },
+  { label: '24/7 Support', icon: Headphones, x: 140, y: 140 },
+  { label: 'Recovery Care', icon: Heart, x: 240, y: 260 },
 ];
 
-// Pre-compute positions
-const DEG2RAD = Math.PI / 180;
-const ORBIT_NODES_COMPUTED = orbitNodes.map(node => ({
-  ...node,
-  x: node.r * Math.cos(node.angle * DEG2RAD),
-  y: node.r * Math.sin(node.angle * DEG2RAD),
-}));
-
-// ── SafeTDiagram Component ────────────────────────────────────────────────────
+// ── SafeT Diagram Component ───────────────────────────────────────────────────
 const SafeTDiagram = React.memo(function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spin-rev { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        @keyframes glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.3); opacity: 0; } }
       `}</style>
 
-      {/* Glitter trails */}
-      {[
-        { anim: 'spin 18s linear infinite', radii: [1.8, 1.52, 1.24, 0.96, 0.68], baseOp: 0.55 },
-        { anim: 'spin-rev 24s linear infinite', radii: [1.5, 1.28, 1.06, 0.84, 0.62], baseOp: 0.45 },
-        { anim: 'spin 30s linear infinite', delay: '-8s', radii: [1.3, 1.12, 0.94, 0.76, 0.58], baseOp: 0.38 },
-      ].map((trail, si) => (
-        <svg key={si} className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360"
-          style={{ animation: trail.anim, animationDelay: trail.delay }}>
-          {[8, 20, 35, 52, 72].map((deg, i) => {
-            const tx = 180 + 168 * Math.sin(deg * DEG2RAD);
-            const ty = 12 + 168 * (1 - Math.cos(deg * DEG2RAD));
-            return <circle key={i} cx={tx} cy={ty} r={trail.radii[i]} fill={COLORS.cyan} opacity={trail.baseOp - i * 0.08} />;
-          })}
-          <circle cx="180" cy="12" r="3" fill={COLORS.cyan} opacity="0.95" />
-          <circle cx="180" cy="12" r="5.5" fill={COLORS.cyan} opacity="0.18" />
-        </svg>
-      ))}
+      {/* Glowing rings */}
+      <div className="absolute w-[400px] h-[400px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}33` }} />
+      <div className="absolute w-[320px] h-[320px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}22` }} />
+      <div className="absolute w-[240px] h-[240px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}11` }} />
 
-      {/* Outer rings */}
-      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}33` }} />
-      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}1a` }} />
-
-      {/* Endpoint dots */}
-      <svg className="absolute" width="400" height="400" viewBox="-200 -200 400 400">
-        {ORBIT_NODES_COMPUTED.map(({ x, y, label }) => (
-          <g key={`dot-${label}`}>
-            <circle cx={x} cy={y} r="5" fill={COLORS.cyan} opacity="0.12" />
-            <circle cx={x} cy={y} r="2.5" fill={COLORS.cyan} opacity="0.9" />
-          </g>
+      {/* Connection lines to features */}
+      <svg className="absolute w-[500px] h-[500px]" viewBox="0 0 500 500">
+        {featureLabels.map(({ x, y }, idx) => (
+          <line
+            key={idx}
+            x1="250"
+            y1="250"
+            x2={x + 50}
+            y2={y + 50}
+            stroke={COLORS.cyan}
+            strokeWidth="0.5"
+            opacity="0.2"
+            strokeDasharray="4 4"
+          />
         ))}
       </svg>
 
-      {/* Orbit node badges */}
-      {ORBIT_NODES_COMPUTED.map(({ label, icon: NodeIcon, x, y }, idx) => {
-        const dotColor = idx % 2 === 0 ? COLORS.gold : COLORS.cyan;
-        return (
-          <div key={label} className="absolute flex items-center gap-2 px-3 py-2 rounded-2xl text-[13px] font-medium whitespace-nowrap"
-            style={{ 
-              left: `calc(50% + ${x}px)`, 
-              top: `calc(50% + ${y}px)`,
-              background: 'rgba(11,22,35,0.88)',
-              border: '1px solid rgba(255,255,255,0.14)',
-              color: COLORS.white,
-              backdropFilter: 'blur(16px)',
-            }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}` }} />
-            <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: dotColor }} strokeWidth={1.5} />
-            {label}
-          </div>
-        );
-      })}
+      {/* Feature badges */}
+      {featureLabels.map(({ label, icon: Icon, x, y }, idx) => (
+        <motion.div
+          key={label}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 + idx * 0.1 }}
+          className="absolute flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium whitespace-nowrap"
+          style={{
+            left: x,
+            top: y,
+            background: 'rgba(10,21,33,0.92)',
+            border: `1px solid ${COLORS.cyan}44`,
+            color: COLORS.white,
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          <div className="w-2 h-2 rounded-full" style={{ background: COLORS.cyan, boxShadow: `0 0 8px ${COLORS.cyan}` }} />
+          <Icon className="w-3.5 h-3.5" style={{ color: COLORS.cyan }} strokeWidth={1.5} />
+          {label}
+        </motion.div>
+      ))}
 
-      {/* Center SAFE-T Badge */}
+      {/* Digital Brain */}
       <motion.div
-        animate={{ scale: [1, 1.035, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
+        className="absolute top-[15%] left-1/2 -translate-x-1/2"
+        style={{ animation: 'glow 4s ease-in-out infinite' }}
+      >
+        <svg viewBox="0 0 200 140" className="w-[200px] h-[140px]">
+          {/* Brain outline */}
+          <ellipse cx="100" cy="70" rx="70" ry="50" fill="none" stroke={COLORS.cyan} strokeWidth="1.2" opacity="0.7" />
+          
+          {/* Circuit pattern */}
+          <path d="M 50 70 L 80 70 M 100 50 L 100 90 M 120 70 L 150 70" stroke={COLORS.cyan} strokeWidth="0.8" opacity="0.6" />
+          <circle cx="65" cy="70" r="2.5" fill={COLORS.cyan} opacity="0.9" />
+          <circle cx="100" cy="70" r="3" fill={COLORS.cyan} opacity="1" />
+          <circle cx="135" cy="70" r="2.5" fill={COLORS.cyan} opacity="0.9" />
+          
+          {/* Neural connections */}
+          {[40, 70, 100, 130, 160].map((x, i) => (
+            <circle key={i} cx={x} cy={50 + (i % 2) * 40} r="1.5" fill={COLORS.cyan} opacity="0.7" />
+          ))}
+          
+          {/* Connection paths */}
+          <path d="M 40 50 L 70 70 L 100 50 L 130 70 L 160 50" stroke={COLORS.cyan} strokeWidth="0.6" opacity="0.4" fill="none" />
+        </svg>
+        <p className="text-[10px] font-bold tracking-[0.2em] text-center mt-2" style={{ color: COLORS.cyan }}>SAFE-T4LIFE</p>
+      </motion.div>
+
+      {/* Central SAFE-T Badge */}
+      <motion.div
+        animate={{ scale: [1, 1.04, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
         className="relative z-10 flex flex-col items-center"
         style={{ animation: 'float 6s ease-in-out infinite' }}
       >
-        <div className="w-[78px] h-[78px] rounded-full flex items-center justify-center"
-          style={{ 
+        <div className="w-[90px] h-[90px] rounded-full flex items-center justify-center"
+          style={{
             background: COLORS.surface,
             border: `2px solid ${COLORS.gold}`,
-            boxShadow: `0 0 40px ${COLORS.gold}22`,
+            boxShadow: `0 0 50px ${COLORS.gold}33`,
           }}>
-          <Shield className="w-[52px] h-[52px]" style={{ color: COLORS.gold }} strokeWidth={1.5} />
+          <Shield className="w-[60px] h-[60px]" style={{ color: COLORS.gold }} strokeWidth={1.5} />
         </div>
-        <p className="text-[13px] font-bold tracking-[0.1em] uppercase mt-3 relative z-10" style={{ color: COLORS.gold }}>
-          SAFE-T4LIFE™
-        </p>
-        <p className="text-[9px] tracking-[0.15em] uppercase mt-1 relative z-10" style={{ color: COLORS.dim }}>
-          SAFETY INTELLIGENCE ENGINE
-        </p>
+        <p className="text-[14px] font-bold tracking-[0.15em] uppercase mt-3" style={{ color: COLORS.gold }}>SAFE-T</p>
       </motion.div>
     </div>
   );
 });
 
-// ── Private Jet Illustration ─────────────────────────────────────────────────
+// ── Private Jet Illustration ──────────────────────────────────────────────────
 function PrivateJetIllustration() {
   return (
     <div className="absolute right-0 bottom-0 w-full h-full pointer-events-none select-none">
-      <svg viewBox="0 0 500 400" className="absolute right-[-50px] bottom-[10%] w-[550px] h-[400px]" style={{ transform: 'rotate(-8deg)' }}>
-        {/* Fuselage */}
-        <ellipse cx="250" cy="200" rx="180" ry="45" 
-          fill="url(#jetBodyGrad)" 
-          stroke={COLORS.gold} 
-          strokeWidth="0.8" 
-          opacity="0.95" />
+      <svg viewBox="0 0 600 450" className="absolute right-[-80px] bottom-[5%] w-[680px] h-[450px]" style={{ transform: 'rotate(-6deg)' }}>
+        {/* Fuselage with gold stripe */}
+        <ellipse cx="300" cy="225" rx="240" ry="60" fill="url(#jetBodyGrad)" stroke={COLORS.gold} strokeWidth="1" opacity="0.95" />
         
-        {/* Cockpit window */}
-        <path d="M 380 185 Q 410 190 420 200 L 425 205 Q 415 210 385 205 Z" 
-          fill={COLORS.surface} 
-          stroke={COLORS.gold} 
-          strokeWidth="0.6" 
-          opacity="0.8" />
+        {/* Gold pinstripe along fuselage */}
+        <path d="M 80 220 Q 200 215 420 220 Q 500 225 530 230" fill="none" stroke={COLORS.gold} strokeWidth="1.5" opacity="0.8" />
+        
+        {/* Cockpit */}
+        <path d="M 500 210 Q 545 218 560 230 L 565 238 Q 550 243 505 238 Z" fill={COLORS.surface} stroke={COLORS.gold} strokeWidth="0.8" opacity="0.85" />
         
         {/* Main wing */}
-        <path d="M 220 210 L 280 280 L 340 290 L 260 230 Z" 
-          fill="url(#wingGrad)" 
-          stroke={COLORS.gold} 
-          strokeWidth="0.7" 
-          opacity="0.85" />
+        <path d="M 280 240 L 380 350 L 470 370 L 350 270 Z" fill="url(#wingGrad)" stroke={COLORS.gold} strokeWidth="0.9" opacity="0.88" />
         
-        {/* Engine nacelle */}
-        <ellipse cx="290" cy="245" rx="28" ry="14" 
-          fill="url(#engineGrad)" 
-          stroke={COLORS.gold} 
-          strokeWidth="0.8" 
-          opacity="0.9" />
+        {/* Engine */}
+        <ellipse cx="380" cy="295" rx="40" ry="20" fill="url(#engineGrad)" stroke={COLORS.gold} strokeWidth="0.9" opacity="0.92" />
         
         {/* Tail fin */}
-        <path d="M 100 185 L 60 130 L 80 125 L 115 180 Z" 
-          fill="url(#tailGrad)" 
-          stroke={COLORS.gold} 
-          strokeWidth="0.6" 
-          opacity="0.8" />
+        <path d="M 140 210 L 80 125 L 110 118 L 165 195 Z" fill="url(#tailGrad)" stroke={COLORS.gold} strokeWidth="0.7" opacity="0.82" />
         
         {/* Winglet */}
-        <path d="M 335 288 L 345 275 L 350 280 L 340 292 Z" 
-          fill={COLORS.surface} 
-          stroke={COLORS.gold} 
-          strokeWidth="0.5" 
-          opacity="0.7" />
-        
-        {/* Fuselage highlight */}
-        <path d="M 90 195 Q 180 188 350 192 Q 400 195 420 200" 
-          fill="none" 
-          stroke="rgba(255,255,255,0.15)" 
-          strokeWidth="1" 
-          opacity="0.7" />
+        <path d="M 465 365 L 482 345 L 490 352 L 473 371 Z" fill={COLORS.surface} stroke={COLORS.gold} strokeWidth="0.6" opacity="0.75" />
         
         {/* Gradients */}
         <defs>
           <linearGradient id="jetBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={COLORS.surface} />
+            <stop offset="0%" stopColor="#1a2639" />
             <stop offset="50%" stopColor="#2A3848" />
-            <stop offset="100%" stopColor={COLORS.surface} />
+            <stop offset="100%" stopColor="#1a2639" />
           </linearGradient>
           <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#152030" />
@@ -199,47 +176,18 @@ function PrivateJetIllustration() {
           </linearGradient>
         </defs>
       </svg>
-      
-      {/* Digital Brain (cyan circuit board style) */}
-      <div className="absolute right-[18%] top-[18%] w-[280px] h-[200px]" style={{ animation: 'glow 4s ease-in-out infinite' }}>
-        <svg viewBox="0 0 280 200" className="w-full h-full">
-          {/* Brain outline */}
-          <ellipse cx="140" cy="100" rx="100" ry="70" 
-            fill="none" 
-            stroke={COLORS.cyan} 
-            strokeWidth="1.5" 
-            opacity="0.6" />
-          
-          {/* Circuit lines */}
-          <path d="M 80 100 L 120 100 M 140 80 L 140 120 M 160 100 L 200 100" 
-            stroke={COLORS.cyan} strokeWidth="1" opacity="0.5" />
-          <circle cx="100" cy="100" r="3" fill={COLORS.cyan} opacity="0.8" />
-          <circle cx="140" cy="100" r="4" fill={COLORS.cyan} opacity="0.9" />
-          <circle cx="180" cy="100" r="3" fill={COLORS.cyan} opacity="0.8" />
-          
-          {/* Neural nodes */}
-          {[60, 100, 140, 180, 220].map((x, i) => (
-            <circle key={i} cx={x} cy={80 + (i % 2) * 40} r="2" fill={COLORS.cyan} opacity="0.7" />
-          ))}
-          
-          {/* Connection lines */}
-          <path d="M 60 80 L 100 100 L 140 80 L 180 100 L 220 80" 
-            stroke={COLORS.cyan} strokeWidth="0.8" opacity="0.4" fill="none" />
-        </svg>
-      </div>
-      
+
       {/* Cloud layers */}
-      <div className="absolute right-[10%] top-[20%] w-[300px] h-[150px] rounded-full"
-        style={{ background: 'rgba(255,255,255,0.04)', filter: 'blur(40px)' }} />
-      <div className="absolute right-[5%] top-[35%] w-[250px] h-[120px] rounded-full"
-        style={{ background: 'rgba(255,255,255,0.06)', filter: 'blur(50px)' }} />
-      
-      {/* Gold glow beneath jet */}
-      <div className="absolute right-[15%] bottom-[20%] w-[350px] h-[200px] rounded-full"
-        style={{ 
-          background: `radial-gradient(ellipse at center, ${COLORS.gold}1A 0%, transparent 70%)`,
-          filter: 'blur(60px)',
-        }} />
+      <div className="absolute right-[8%] top-[25%] w-[350px] h-[180px] rounded-full"
+        style={{ background: 'rgba(255,255,255,0.03)', filter: 'blur(50px)' }} />
+      <div className="absolute right-[3%] top-[40%] w-[300px] h-[150px] rounded-full"
+        style={{ background: 'rgba(255,255,255,0.04)', filter: 'blur(60px)' }} />
+      <div className="absolute right-[18%] bottom-[25%] w-[280px] h-[140px] rounded-full"
+        style={{ background: 'rgba(255,255,255,0.03)', filter: 'blur(55px)' }} />
+
+      {/* Cyan glow accent */}
+      <div className="absolute right-[20%] top-[20%] w-[400px] h-[300px] rounded-full"
+        style={{ background: `radial-gradient(ellipse at center, ${COLORS.cyan}0D 0%, transparent 70%)`, filter: 'blur(70px)' }} />
     </div>
   );
 }
@@ -254,56 +202,71 @@ export default function LuxuryHero() {
   return (
     <>
       <section className="relative min-h-screen overflow-hidden" style={{ background: COLORS.bg, fontFamily: 'Inter, sans-serif' }}>
-        {/* Background */}
+        {/* Background gradient */}
         <div className="absolute inset-0">
           <div className="absolute inset-0" style={{ background: COLORS.bg }} />
-          <div className="absolute inset-0" style={{ 
-            background: 'radial-gradient(ellipse at 70% 60%, rgba(227,180,99,0.08) 0%, transparent 50%)' 
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(ellipse at 65% 55%, rgba(227,180,99,0.06) 0%, transparent 60%)'
           }} />
         </div>
 
-        {/* Jet + Brain */}
+        {/* Jet + Diagram */}
         <PrivateJetIllustration />
 
-        {/* Content */}
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
-          
-          {/* LEFT COLUMN */}
-          <motion.div 
-            initial={{ opacity: 0, y: 28 }} 
+        {/* Content Container */}
+        <div className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-20 lg:py-0" style={{ paddingTop: '88px' }}>
+
+          {/* LEFT COLUMN - Text Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: 'easeOut' }} 
-            className="flex flex-col z-10 lg:pr-16"
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col z-10 lg:pr-12"
           >
             {/* Mode Toggle */}
-            <div className="mb-7"><ModeToggle /></div>
+            <div className="mb-6"><ModeToggle /></div>
 
             {/* Eyebrow */}
-            <motion.p 
-              initial={{ opacity: 0, y: 6 }} 
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-[11px] font-bold tracking-[0.22em] uppercase mb-6" 
+              transition={{ delay: 0.2 }}
+              className="text-[11px] font-bold tracking-[0.25em] uppercase mb-5"
               style={{ color: COLORS.gold }}
             >
               WORLD-CLASS CARE. PERSONALIZED FOR YOU.
             </motion.p>
 
             {/* Headline */}
-            <motion.h1 
-              initial={{ opacity: 0, y: 10 }} 
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-white leading-[1.06] mb-6"
-              style={{ fontSize: 'clamp(48px, 5vw, 64px)' }}
+              transition={{ delay: 0.3 }}
+              className="font-serif text-white leading-[1.08] mb-5"
+              style={{ fontSize: 'clamp(52px, 6vw, 72px)' }}
             >
               Premium Medical Travel.<br />
               <span style={{ color: COLORS.gold, fontStyle: 'italic' }}>Verified. Safe. Seamless.</span>
             </motion.h1>
 
+            {/* Subtitle badge */}
+            <motion.div
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 w-fit"
+              style={{ background: 'rgba(227,180,99,0.08)', border: `1px solid ${COLORS.gold}33` }}
+            >
+              <ShieldCheck className="w-4 h-4" style={{ color: COLORS.gold }} strokeWidth={1.5} />
+              <span className="text-[13px] font-medium" style={{ color: COLORS.gold }}>SAFE-T4LIFE™ Protection</span>
+            </motion.div>
+
             {/* Body */}
-            <motion.p 
-              initial={{ opacity: 0 }} 
+            <motion.p
+              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[16px] leading-[1.75] mb-10 max-w-[520px]" 
+              transition={{ delay: 0.5 }}
+              className="text-[16px] leading-[1.8] mb-10 max-w-[560px]"
               style={{ color: COLORS.muted }}
             >
               Morales coordinates your entire medical journey — from verified specialist matching and travel logistics to recovery care — with white-glove concierge support at every step.
@@ -311,44 +274,49 @@ export default function LuxuryHero() {
 
             {/* CTAs */}
             <div className="flex flex-wrap gap-4 mb-12">
-              <Link 
+              <Link
                 to="/booking"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-[30px] font-bold text-[16px] transition-all duration-200 hover:opacity-90"
-                style={{ background: COLORS.goldButton, color: '#0B1623' }}
+                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-[32px] font-bold text-[15px] transition-all duration-300 hover:opacity-90 hover:shadow-lg"
+                style={{ background: COLORS.goldButton, color: '#0a1521', boxShadow: `0 4px 20px ${COLORS.gold}44` }}
               >
                 Book Your Consultation →
               </Link>
-              <button 
+              <button
                 onClick={openModal}
-                className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200"
+                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-semibold text-[14px] text-white border border-white/20 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/35 transition-all duration-300"
               >
-                <span className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center" style={{ fontSize: '10px' }}>▶</span>
+                <span className="w-7 h-7 rounded-full border border-white/25 flex items-center justify-center" style={{ fontSize: '11px' }}>▶</span>
                 How It Works
               </button>
             </div>
 
-            {/* Value Props Bar */}
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.35, delay: 0.2 }}
-              className="flex flex-wrap gap-6 pt-8 border-t border-white/[0.1]"
+            {/* Trust Badges */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-wrap gap-5 pt-8 border-t border-white/[0.08]"
             >
-              {['Verified Specialists', 'Transparent Pricing', 'End-to-End Concierge', 'Recovery Support'].map((item, idx) => (
-                <React.Fragment key={item}>
-                  <span className="text-[14px] font-medium" style={{ color: COLORS.white }}>{item}</span>
-                  {idx < 3 && <span className="text-[14px]" style={{ color: COLORS.dim }}>·</span>}
-                </React.Fragment>
+              {[
+                { label: 'Verified Specialists', icon: CheckCircle },
+                { label: 'Transparent Pricing', icon: CheckCircle },
+                { label: 'End-to-End Concierge', icon: CheckCircle },
+                { label: 'Recovery Support', icon: CheckCircle },
+              ].map(({ label, icon: Icon }) => (
+                <div key={label} className="flex items-center gap-2.5">
+                  <Icon className="w-4 h-4" style={{ color: COLORS.gold }} strokeWidth={1.5} />
+                  <span className="text-[14px] font-medium" style={{ color: COLORS.white }}>{label}</span>
+                </div>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* RIGHT COLUMN - SafeTDiagram */}
-          <motion.div 
-            initial={{ opacity: 0 }} 
+          {/* RIGHT COLUMN - SafeT Diagram */}
+          <motion.div
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="relative hidden lg:flex items-center justify-center" 
+            transition={{ duration: 1.2, delay: 0.4 }}
+            className="relative hidden lg:flex items-center justify-center"
             style={{ height: '100vh' }}
           >
             <SafeTDiagram />
