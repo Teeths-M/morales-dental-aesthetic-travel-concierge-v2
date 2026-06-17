@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, CheckCircle } from 'lucide-react';
+import { User, Building2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const countries = [
@@ -122,17 +122,22 @@ export default function CompanionSignup() {
                 <button
                   type="button"
                   onClick={() => setAccountType('individual')}
-                  className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
+                  className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg relative ${
                     accountType === 'individual'
                       ? 'border-emerald-600 bg-emerald-50 shadow-md'
                       : 'border-gray-200 hover:border-emerald-400'
                   }`}
                 >
+                  {accountType === 'individual' && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       accountType === 'individual' ? 'bg-emerald-600 text-white' : 'bg-gray-100'
                     }`}>
-                      <Users className="w-6 h-6" />
+                      <User className="w-6 h-6" />
                     </div>
                     <h3 className="font-bold text-lg">Individual Caregiver</h3>
                   </div>
@@ -142,17 +147,22 @@ export default function CompanionSignup() {
                 <button
                   type="button"
                   onClick={() => setAccountType('agency')}
-                  className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
+                  className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg relative ${
                     accountType === 'agency'
                       ? 'border-emerald-600 bg-emerald-50 shadow-md'
                       : 'border-gray-200 hover:border-emerald-400'
                   }`}
                 >
+                  {accountType === 'agency' && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       accountType === 'agency' ? 'bg-emerald-600 text-white' : 'bg-gray-100'
                     }`}>
-                      <Users className="w-6 h-6" />
+                      <Building2 className="w-6 h-6" />
                     </div>
                     <h3 className="font-bold text-lg">Agency / Tour Guide</h3>
                   </div>
@@ -379,7 +389,7 @@ export default function CompanionSignup() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 border-4 border-emerald-300 mb-4">
-            <Users className="w-10 h-10 text-emerald-600" />
+            <User className="w-10 h-10 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">
             {accountType === 'individual' ? 'Join Our Caregiver Family 💚' : 'Partner With Us 🤝'}
