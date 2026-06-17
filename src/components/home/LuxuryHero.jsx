@@ -194,33 +194,27 @@ export default function LuxuryHero() {
     <>
       <section className="relative min-h-screen overflow-hidden" style={{ background: '#060a0f', marginTop: '-68px' }}>
         <style>{`@keyframes shimmer{0%{background-position:200% 0}50%{background-position:-200% 0}100%{background-position:200% 0}}@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes pulse-glow{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}`}</style>
-        {/* Full-bleed premium background with layered depth */}
+        {/* Full-bleed smooth premium background - no grid lines */}
         <div className="absolute inset-0">
           <img src={HERO_IMAGE} alt="Premium medical travel with Safe-T4Life safety intelligence" className="w-full h-full object-cover"
-            style={{ objectPosition: 'center center', filter: 'brightness(0.85) contrast(1.05)' }} loading="eager" fetchpriority="high" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060a0f 0%, #060a0f 20%, rgba(6,10,15,0.92) 35%, rgba(6,10,15,0.65) 55%, rgba(6,10,15,0.35) 75%, transparent 100%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060a0f 0%, rgba(6,10,15,0.75) 6%, rgba(6,10,15,0.4) 15%, transparent 25%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060a0f 0%, rgba(6,10,15,0.92) 8%, rgba(6,10,15,0.5) 18%, transparent 30%)' }} />
-          {/* Premium geometric pattern - diamond grid */}
-          <div className="absolute inset-0 opacity-[0.04]" style={{
-            backgroundImage: `repeating-linear-gradient(45deg, ${GOLD} 0px, ${GOLD} 1px, transparent 1px, transparent 56px),
-                              repeating-linear-gradient(-45deg, ${GOLD} 0px, ${GOLD} 1px, transparent 1px, transparent 56px)`,
-            backgroundBlendMode: 'overlay',
+            style={{ objectPosition: 'center center', filter: 'brightness(0.88) contrast(1.02)' }} loading="eager" fetchpriority="high" />
+          {/* Smooth multi-layer gradient overlay - no harsh lines */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #060a0f 0%, rgba(6,10,15,0.92) 25%, rgba(6,10,15,0.75) 45%, rgba(6,10,15,0.55) 65%, rgba(6,10,15,0.35) 85%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 70% 40%, transparent 0%, rgba(6,10,15,0.6) 50%, #060a0f 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 20% 70%, rgba(6,10,15,0.7) 0%, transparent 60%)' }} />
+          {/* Ultra-subtle noise texture for premium matte finish - no visible pattern */}
+          <div className="absolute inset-0 opacity-[0.018]" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+            backgroundBlendMode: 'soft-light',
           }} />
-          {/* Subtle hexagonal pattern for texture */}
-          <div className="absolute inset-0 opacity-[0.025]" style={{
-            backgroundImage: `radial-gradient(circle at 50% 50%, ${GOLD} 1px, transparent 1px)`,
-            backgroundSize: '32px 32px',
-            backgroundBlendMode: 'screen',
-          }} />
-          {/* Radial glow for depth - dual layer */}
-          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 70% 45%, rgba(212,175,55,0.12) 0%, rgba(212,175,55,0.04) 35%, transparent 60%)' }} />
-          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 30% 60%, rgba(34,211,238,0.06) 0%, transparent 50%)' }} />
-          {/* Animated shimmer overlay */}
-          <div className="absolute inset-0 opacity-[0.015]" style={{
+          {/* Soft radial glows for depth - smooth transitions */}
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 65% 45%, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0.02) 40%, transparent 65%)' }} />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 35% 55%, rgba(34,211,238,0.04) 0%, transparent 55%)' }} />
+          {/* Subtle animated shimmer - very gentle */}
+          <div className="absolute inset-0 opacity-[0.012]" style={{
             background: `linear-gradient(110deg, transparent 0%, ${GOLD} 45%, ${GOLD_SHIMMER} 50%, ${GOLD} 55%, transparent 100%)`,
             backgroundSize: '200% 100%',
-            animation: 'shimmer 8s ease-in-out infinite',
+            animation: 'shimmer 10s ease-in-out infinite',
           }} />
         </div>
 
