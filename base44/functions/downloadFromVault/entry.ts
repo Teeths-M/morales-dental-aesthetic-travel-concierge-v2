@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
     const { vault_token } = await req.json();
     if (!vault_token) return Response.json({ error: 'vault_token required' }, { status: 400 });
 
-    const vaults = await base44.asServiceRole.entities.PassportVault.filter({ vault_token });
+    // Entity field is passport_token, not vault_token
+    const vaults = await base44.asServiceRole.entities.PassportVault.filter({ passport_token: vault_token });
     if (!vaults?.length) return Response.json({ error: 'Vault entry not found' }, { status: 404 });
 
     const vault = vaults[0];
@@ -17,6 +18,15 @@ Deno.serve(async (req) => {
     // Authorization: owner or admin only
     if (vault.user_email !== user.email && user.role !== 'admin') {
       return Response.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    // Guard: encryption_salt_b64 was added after initial launch — older vault documents won't have it.
+    // Fail fast BEFORE generating the signed URL or mutating any stats, since no download will occur.
+    if (!vault.encryption_salt_b64) {
+      return Response.json({
+        error: 'This document was encrypted with a legacy format and cannot be decrypted. Please re-upload it.',
+        error_code: 'LEGACY_ENCRYPTION_NO_SALT',
+      }, { status: 422 });
     }
 
     // Return signed URL + encryption metadata (IV + salt, NOT the key)
@@ -46,15 +56,6 @@ Deno.serve(async (req) => {
       },
       sensitive: true,
     });
-
-    // encryption_salt_b64 was added after initial launch — older vault documents won't have it.
-    // Return a clear flag so the client can show a migration prompt instead of "wrong password".
-    if (!vault.encryption_salt_b64) {
-      return Response.json({
-        error: 'This document was encrypted with a legacy format and cannot be decrypted. Please re-upload it.',
-        error_code: 'LEGACY_ENCRYPTION_NO_SALT',
-      }, { status: 422 });
-    }
 
     return Response.json({
       signed_url,

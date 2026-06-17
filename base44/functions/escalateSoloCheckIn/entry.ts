@@ -63,9 +63,18 @@ Deno.serve(async (req) => {
         escalated2h++;
       }
 
-      // 3-hour escalation: voice call + emergency contact notification
-      // Guard against race: only fire if escalation_level is still 'none' (not yet processed by a concurrent run)
+      // 3-hour escalation: voice call + emergency contact notification.
+      // RACE CONDITION FIX: Write the status update FIRST before any external calls.
+      // Two concurrent automation runs both read escalation_level === 'none'. Without this
+      // optimistic lock the Twilio call and emergency contact email both fire twice.
       if (hoursSinceSent >= 3 && checkIn.escalation_level === 'none' && checkIn.status !== 'escalated_3h' && checkIn.status !== 'resolved') {
+        // Claim this check-in atomically before any side effects
+        await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
+          status: 'escalated_3h',
+          escalation_level: 'contact_notified',
+          emergency_contact_notified_at: now.toISOString(),
+        });
+
         const emergencyContact = checkIn.emergency_contact || 'Not provided';
 
         // Attempt Twilio voice call
@@ -115,12 +124,9 @@ Deno.serve(async (req) => {
           console.error('Failed to notify emergency contact:', e);
         }
 
-        // Optimistically set escalation_level first to prevent race-condition double-fire
+        // Update with voice call result (status/escalation_level already written above)
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
-          status: 'escalated_3h',
-          escalation_level: 'contact_notified',
           voice_call_attempted_at: voiceCallSuccess ? now.toISOString() : null,
-          emergency_contact_notified_at: now.toISOString(),
         });
 
         // Log to AuditLog with real hash chain link
