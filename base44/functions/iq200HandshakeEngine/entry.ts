@@ -45,9 +45,11 @@ Deno.serve(async (req) => {
         created.push(hs);
       }
 
-      // Audit
+      // BUG-R9-04 FIX: 'iq200_touchpoints_initialized' is not in the AuditLog event_type enum —
+      // writing an invalid enum value silently fails or throws a validation error.
+      // Use the closest valid enum value: 'handshake_created'.
       await base44.asServiceRole.entities.AuditLog.create({
-        event_type: 'iq200_touchpoints_initialized',
+        event_type: 'handshake_created',
         resource_type: 'digital_handshake',
         case_id,
         details: { touchpoints_created: created.length, total: TOUCHPOINTS.length },
@@ -121,9 +123,9 @@ Deno.serve(async (req) => {
         audit_logged: true,
       });
 
-      // Immutable audit entry
+      // BUG-R9-04 FIX: use valid enum value 'handshake_completed'
       await base44.asServiceRole.entities.AuditLog.create({
-        event_type: 'iq200_handshake_confirmed',
+        event_type: 'handshake_completed',
         resource_type: 'digital_handshake',
         resource_id: hs.id,
         case_id,
@@ -183,8 +185,9 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.DigitalHandshake.update(hs.id, { status: 'expired' });
 
           // Log contingency trigger
+          // BUG-R9-04 FIX: use valid enum value 'role_escalation_attempt' (closest match for contingency)
           await base44.asServiceRole.entities.AuditLog.create({
-            event_type: 'iq200_contingency_triggered',
+            event_type: 'role_escalation_attempt',
             resource_type: 'digital_handshake',
             resource_id: hs.id,
             case_id,

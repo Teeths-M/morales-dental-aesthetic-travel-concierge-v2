@@ -56,7 +56,9 @@ Deno.serve(async (req) => {
 
     // All other actions require admin authentication
     const user = await base44.auth.me().catch(() => null);
-    const isAdmin = user?.role === 'admin';
+    // BUG-R9-03 FIX: platform_admin must also be allowed — isAdmin only checked 'admin',
+    // blocking platform_admin users from all create/approve/escalate/process actions.
+    const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
 
     if (!isAdmin) {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
@@ -64,7 +66,9 @@ Deno.serve(async (req) => {
 
     // CREATE: Ingest consultation into IQ200 pipeline
     if (action === 'create') {
-      const consultation = await base44.entities.Consultation.get(consultation_id);
+      // BUG-R9-01 FIX: use asServiceRole — consultations are owned by the patient user,
+      // not by the admin triggering the pipeline. user-scoped .get() returns 404.
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
       
       if (!consultation) {
         return Response.json({ error: 'Consultation not found' }, { status: 404 });
@@ -82,7 +86,9 @@ Deno.serve(async (req) => {
       }
 
       // Safe to create — no existing record
-      const caseRecord = await base44.entities.CaseRecord.create({
+      // BUG-R9-01 FIX: use asServiceRole for the create so the record is system-owned
+      // and visible to all admin functions that query it with asServiceRole.
+      const caseRecord = await base44.asServiceRole.entities.CaseRecord.create({
         consultation_id: consultation.id,
         client_name: consultation.patient_name,
         client_email: consultation.email,
@@ -189,37 +195,39 @@ Deno.serve(async (req) => {
 
     // ADMIN_APPROVE_PROPOSAL: Send proposal to client
     if (action === 'admin_approve_proposal') {
-      const caseRecord = await base44.entities.CaseRecord.get(case_id);
-      
+      // BUG-R9-01 FIX: asServiceRole throughout this action
+      const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
       if (!caseRecord) {
         return Response.json({ error: 'Case not found' }, { status: 404 });
       }
 
-      const markupPct = payload?.markup_percentage || caseRecord.markup_percentage || 0.35;
+      // BUG-R9-02 FIX: markup_percentage may be stored as a decimal (0.3 = 30%) or integer (30).
+      // Normalise to an integer percentage so (1 + markupPct/100) is always correct.
+      const rawMarkup = payload?.markup_percentage ?? caseRecord.markup_percentage ?? 35;
+      const markupPct = rawMarkup > 1 ? rawMarkup : rawMarkup * 100;
 
       // Update with approved markup
-      await base44.entities.CaseRecord.update(case_id, {
+      await base44.asServiceRole.entities.CaseRecord.update(case_id, {
         markup_percentage: markupPct,
-        final_package_price: caseRecord.base_cost * (1 + markupPct),
-        profit: caseRecord.base_cost * markupPct,
+        final_package_price: caseRecord.base_cost * (1 + markupPct / 100),
+        profit: caseRecord.base_cost * (markupPct / 100),
         status: 'Proposal-Sent'
       });
 
-      // Generate proposal token (clean alphanumeric only - no timestamps or random hashes)
       const proposalToken = `prop_${case_id}`;
-      
-      await base44.entities.CaseRecord.update(case_id, {
+      await base44.asServiceRole.entities.CaseRecord.update(case_id, {
         proposal_token: proposalToken,
         proposal_sent_at: new Date().toISOString(),
-        final_package_price: caseRecord.base_cost * (1 + markupPct),
-        profit: caseRecord.base_cost * markupPct
+        final_package_price: caseRecord.base_cost * (1 + markupPct / 100),
+        profit: caseRecord.base_cost * (markupPct / 100)
       });
 
       // Send proposal email to client with absolute URL - route to NEW standalone payment page with token
       const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
       const paymentUrl = `${appUrl}/pay-now?token=${proposalToken}`;
       
-      await base44.integrations.Core.SendEmail({
+      // BUG-R9-01 FIX: use asServiceRole for integrations in admin-scoped actions
+      await base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Personalized Medical Travel Package — MORALES Concierge`,
         body: `
@@ -425,7 +433,8 @@ Deno.serve(async (req) => {
         </body>
         </html>
       `;
-      emailPromises.push(base44.integrations.Core.SendEmail({
+      // BUG-R9-01 FIX: asServiceRole for all email dispatches in process_payment (admin-triggered)
+      emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,
         body: patientEmailBody
@@ -448,7 +457,7 @@ Deno.serve(async (req) => {
       `;
       const adminEmail = Deno.env.get('ADMIN_EMAIL');
       if (adminEmail) {
-        emailPromises.push(base44.integrations.Core.SendEmail({
+        emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: adminEmail,
           subject: `[Admin] Payment Confirmed - Case ${caseRecord.id}`,
           body: adminEmailBody
@@ -470,7 +479,7 @@ Deno.serve(async (req) => {
         <p>Please confirm procedure date.</p>
       `;
       if (caseRecord.doctor_email) {
-        emailPromises.push(base44.integrations.Core.SendEmail({
+        emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.doctor_email,
           subject: `Case Confirmation: ${(caseRecord.procedures || ['Procedure']).join(', ')} - ${caseRecord.client_name}`,
           body: doctorEmailBody
@@ -489,7 +498,7 @@ Deno.serve(async (req) => {
         <a href="${originDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
       `;
       if (originDriver?.email) {
-        emailPromises.push(base44.integrations.Core.SendEmail({
+        emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: originDriver.email,
           subject: `Pickup Request: ${caseRecord.client_name}`,
           body: originDriverEmailBody
@@ -507,7 +516,7 @@ Deno.serve(async (req) => {
         <a href="${destDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
       `;
       if (destDriver?.email) {
-        emailPromises.push(base44.integrations.Core.SendEmail({
+        emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: destDriver.email,
           subject: `Arrival Transfer: ${caseRecord.client_name}`,
           body: destDriverEmailBody
@@ -571,8 +580,8 @@ Deno.serve(async (req) => {
 
     // ADMIN_ESCALATE: Manual stage override
     if (action === 'admin_escalate') {
-      const caseRecord = await base44.entities.CaseRecord.get(case_id);
-      
+      // BUG-R9-01 FIX: asServiceRole throughout
+      const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
       if (!caseRecord) {
         return Response.json({ error: 'Case not found' }, { status: 404 });
       }
@@ -580,23 +589,18 @@ Deno.serve(async (req) => {
       const newStatus = payload.new_status;
       const notes = payload.notes || 'Manual escalation';
 
-      // Update status
-      await base44.entities.CaseRecord.update(case_id, {
-        status: newStatus,
-        admin_notes: notes
-      });
-
-      // Add to timeline
       const timelineEntry = {
         timestamp: new Date().toISOString(),
         action: 'admin_escalation',
         status_before: caseRecord.status,
         status_after: newStatus,
-        notes: notes
+        notes
       };
 
       const updatedTimeline = caseRecord.timeline_log ? [...caseRecord.timeline_log, timelineEntry] : [timelineEntry];
-      await base44.entities.CaseRecord.update(case_id, {
+      await base44.asServiceRole.entities.CaseRecord.update(case_id, {
+        status: newStatus,
+        admin_notes: notes,
         timeline_log: updatedTimeline
       });
 
