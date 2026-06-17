@@ -90,9 +90,10 @@ function computeRiskScore(caseRecord) {
   else if (age >= 60) { score += 1; flags.push('Age 60+ — moderate age-related risk'); }
   else if (age <= 16) { score += 2; flags.push('Patient under 17 — parental consent and pediatric clearance required'); }
 
-  if (caseRecord.smoking_status === 'Heavy') { score += 3; flags.push('Heavy smoker — impaired wound healing'); }
-  else if (caseRecord.smoking_status === 'Moderate') { score += 2; flags.push('Moderate smoker — healing risk'); }
-  else if (caseRecord.smoking_status === 'Light') { score += 1; }
+  // BUG-R6-03 FIX: CaseRecord.smoking_status schema is boolean (true/false), not a string enum.
+  // The previous string comparisons ('Heavy'/'Moderate'/'Light') never matched, silently scoring
+  // all smokers as non-smokers. Now correctly checks the boolean value from the entity schema.
+  if (caseRecord.smoking_status === true) { score += 2; flags.push('Smoker — impaired wound healing and elevated surgical risk'); }
 
   if (caseRecord.alcohol_use === 'Heavy') { score += 3; flags.push('Heavy alcohol use — liver and anesthesia risk'); }
   else if (caseRecord.alcohol_use === 'Moderate') { score += 1; }

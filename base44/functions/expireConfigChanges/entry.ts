@@ -12,7 +12,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const pending = await base44.asServiceRole.entities.SystemConfigChange.filter({ status: 'pending' });
+    // BUG-R6-05 FIX: bound the query — unbounded filter loads the full table into memory each cron run
+    const pending = await base44.asServiceRole.entities.SystemConfigChange.filter({ status: 'pending' }, '-created_date', 200);
     const now = new Date();
     const expired = (pending || []).filter(r => r.expires_at && new Date(r.expires_at) < now);
 
@@ -24,6 +25,19 @@ Deno.serve(async (req) => {
       // throw, aborting the entire expiry loop after the first record.
       // Write directly to AuditLog via service role instead of invoking the user-auth-gated endpoint.
       try {
+        // BUG-R6-01 FIX: prev_hash must be computed from the last real AuditLog entry.
+        // Hardcoding 'SYSTEM_EXPIRY' writes a literal that breaks the hash chain —
+        // every subsequent verifyAuditChain run will detect a false-positive integrity
+        // violation and send a critical alert email for every expiry event.
+        let prevHash = 'GENESIS';
+        try {
+          const lastLogs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+          if (lastLogs && lastLogs[0]) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(lastLogs[0])));
+            prevHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+          }
+        } catch (_) { prevHash = 'GENESIS_FALLBACK'; }
+
         await base44.asServiceRole.entities.AuditLog.create({
           event_type: 'role_escalation_attempt',
           actor_id: 'system',
@@ -35,7 +49,7 @@ Deno.serve(async (req) => {
           details: { action: 'config_change_expired', config_key: record.config_key, expired_at: now.toISOString() },
           sensitive: false,
           timestamp: now.toISOString(),
-          prev_hash: 'SYSTEM_EXPIRY',
+          prev_hash: prevHash,
         });
       } catch (logErr) {
         console.error('[expireConfigChanges] audit log failed for', record.id, logErr);

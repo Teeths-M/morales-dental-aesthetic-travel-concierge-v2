@@ -390,9 +390,18 @@ async function handleConsultationFeePaid(base44, {
   }
 
   // VALIDATION 4: If the ConsultationFee record itself is tagged as demo, do not advance workflow
-  const feesToCheck = fee_record_id
-    ? await base44.asServiceRole.entities.ConsultationFee.filter({ id: fee_record_id })
-    : await base44.asServiceRole.entities.ConsultationFee.filter({ user_id, fee_paid: false });
+  // BUG-R6-04 FIX: filter({ id }) always returns [] — use .get() for primary key lookup.
+  // When fee_record_id is present (standard path), the old code silently returned [],
+  // causing the fee to never be marked paid after a successful Stripe checkout.
+  let feesToCheck = [];
+  if (fee_record_id) {
+    try {
+      const feeRecord = await base44.asServiceRole.entities.ConsultationFee.get(fee_record_id);
+      if (feeRecord) feesToCheck = [feeRecord];
+    } catch (_) { feesToCheck = []; }
+  } else {
+    feesToCheck = await base44.asServiceRole.entities.ConsultationFee.filter({ user_id, fee_paid: false });
+  }
 
   if (feesToCheck.length > 0) {
     const fee = feesToCheck[0];

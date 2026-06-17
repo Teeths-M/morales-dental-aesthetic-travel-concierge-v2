@@ -52,24 +52,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Token expired', code: 'EXPIRED' }, { status: 401 });
     }
 
-    // Load the SoloCheckIn record.
-    // CheckInToken.check_in_id stores the SoloCheckIn entity id.
-    // The SDK filter() does not support filtering by the built-in `id` field directly,
-    // so we use the check_in_id entity field which is explicitly stored on SoloCheckIn.
-    // This is the correct, indexed lookup path.
-    const checkIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
-      { trip_id: check_in_id },
-      '-created_date',
-      1
-    );
-
-    // trip_id mirrors case_id and is set at creation. If for any reason it's not indexed,
-    // fall back to a user-email-scoped list and match by id.
-    let checkIn = checkIns[0] || null;
-    if (!checkIn) {
-      const recent = await base44.asServiceRole.entities.SoloCheckIn.list('-created_date', 500);
-      checkIn = recent.find(c => c.id === check_in_id) || null;
-    }
+    // BUG-R6-02 FIX: The URL sent by scheduleSoloCheckIns uses checkIn.id (entity primary key)
+    // as the check_in_id path param. filter({ trip_id: check_in_id }) was looking for a record
+    // where trip_id === checkIn.id, but trip_id is set to case_id at creation — not the entity id.
+    // So the filter always returned [] and the only rescue was a 500-record list scan.
+    // On large production systems with >500 check-ins, that rescue silently fails and patients
+    // are unable to confirm they're safe via email link.
+    //
+    // Correct fix: use the SDK .get() call which resolves by entity primary key directly.
+    // check_in_id in the URL IS the entity's primary key (checkIn.id set at creation).
+    let checkIn = null;
+    try {
+      checkIn = await base44.asServiceRole.entities.SoloCheckIn.get(check_in_id);
+    } catch (_) { checkIn = null; }
 
     if (!checkIn) {
       return Response.json({ error: 'Check-in not found', code: 'NOT_FOUND' }, { status: 404 });

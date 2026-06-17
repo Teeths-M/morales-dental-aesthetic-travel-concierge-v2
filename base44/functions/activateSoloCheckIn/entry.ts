@@ -33,8 +33,11 @@ Deno.serve(async (req) => {
     const handshakeTime = caseData.intake_handshake_logged_at ? new Date(caseData.intake_handshake_logged_at) : now;
     const firstCheckInTime = new Date(handshakeTime.getTime() + 6 * 60 * 60 * 1000);
 
-    // Create first check-in
-    const checkIn = await base44.entities.SoloCheckIn.create({
+    // BUG-R6-06 FIX: use asServiceRole for entity writes — user-scoped writes can fail
+    // for non-client roles (doctor, travel_agency) due to platform RLS defaults.
+    // All other SoloCheckIn-writing functions (scheduleSoloCheckIns, escalateSoloCheckIn)
+    // already use asServiceRole consistently.
+    const checkIn = await base44.asServiceRole.entities.SoloCheckIn.create({
       case_id,
       trip_id: case_id,
       user_id: user.id,
@@ -58,7 +61,7 @@ Deno.serve(async (req) => {
         body: `<p>${msg}</p><p><a href="${Deno.env.get('APP_URL')}/dashboard/solo-checkin">View Check-In Settings →</a></p>`,
       });
 
-      await base44.entities.SoloCheckIn.update(checkIn.id, {
+      await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
         sent_time: now.toISOString(),
       });
     } catch (e) {
