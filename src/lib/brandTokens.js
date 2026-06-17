@@ -10,25 +10,36 @@
  */
 
 export const BRAND = {
-  // Primary brand colors
-  gold: '#D4AF37',
-  dark: '#060B16',
-  darkCard: '#0A101D',
-  emerald: '#29483d',
-  emeraldLight: '#40514a',
-  cream: '#F5F7F4',
+  // Primary brand colors — Space Navy & Gold luxury palette
+  gold: '#C9A84C',
+  cyan: '#00E5CC',
+  bg: '#0B1623',
+  surface: '#0F1E30',
+  card: '#1A2535',
+  muted: '#A0AEC0',
+  dim: '#6B7E93',
+  
+  // Legacy aliases for backwards compatibility
+  dark: '#0B1623',
+  darkCard: '#0F1E30',
+  emerald: '#0F1E30',
+  emeraldLight: '#1A2535',
+  cream: '#FFFFFF',
   
   // Dynamic alpha channels for transparency
-  goldAlpha: (opacity) => `rgba(212,175,55,${opacity})`,
-  darkAlpha: (opacity) => `rgba(6,11,22,${opacity})`,
-  emeraldAlpha: (opacity) => `rgba(41,72,61,${opacity})`,
+  goldAlpha: (opacity) => `rgba(201,168,76,${opacity})`,
+  cyanAlpha: (opacity) => `rgba(0,229,204,${opacity})`,
+  bgAlpha: (opacity) => `rgba(11,22,35,${opacity})`,
+  surfaceAlpha: (opacity) => `rgba(15,30,48,${opacity})`,
+  darkAlpha: (opacity) => `rgba(11,22,35,${opacity})`,
+  emeraldAlpha: (opacity) => `rgba(15,30,48,${opacity})`,
   
   // Extended palette (for gradients, states)
-  goldLight: '#E8C85C',
-  goldDark: '#B8941F',
-  emeraldDark: '#1a3a2f',
-  slate: '#64746d',
-  slateLight: '#889985',
+  goldLight: '#D4B763',
+  goldDark: '#A8903D',
+  emeraldDark: '#0A1520',
+  slate: '#6B7E93',
+  slateLight: '#8899AA',
 };
 
 // Pre-computed style objects — zero per-render allocation
