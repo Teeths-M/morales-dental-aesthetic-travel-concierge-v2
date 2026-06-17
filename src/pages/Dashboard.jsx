@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link, useLocation } from 'react-router-dom';
@@ -49,39 +49,49 @@ const colorMap = {
 };
 
 function DashboardHome({ user, consultations, language }) {
-  const displayName = user?.full_name?.split(' ')[0] || 'there';
+  // PERFORMANCE: Memoize displayName to prevent recalculation
+  const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
   const latestConsultation = consultations[0];
-  const [matchedDoctors, setMatchedDoctors] = useState([]);
-  const [outreachSent, setOutreachSent] = useState(false);
-  const [vaultCount, setVaultCount] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      base44.entities.PassportVault.filter({ user_email: user.email, status: 'active' }).then(vaults => {
-        setVaultCount(vaults.length);
-      });
-    }
-  }, [user]);
+  // PERFORMANCE: React Query for vault count — automatic caching, no manual useEffect
+  const { data: vaultCount = 0 } = useQuery({
+    queryKey: ['vault-count', user?.email],
+    queryFn: async () => {
+      const vaults = await base44.entities.PassportVault.filter(
+        { user_email: user.email, status: 'active' },
+        '-uploaded_at',
+        1
+      );
+      return vaults.length;
+    },
+    enabled: !!user,
+    staleTime: 120000, // 2 minutes cache
+  });
 
-  useEffect(() => {
-    if (latestConsultation?.procedure_interest) {
-      base44.functions.invoke('matchDoctorsForProcedure', {
-        procedure_interest: latestConsultation.procedure_interest,
-        client_email: user?.email,
-        client_id: user?.id
-      }).then(result => {
-        if (result.data?.matched_doctors) {
-          setMatchedDoctors(result.data.matched_doctors);
-          setOutreachSent(result.data.outreach_sent || false);
-        }
-      }).catch(console.error);
-    }
-  }, [latestConsultation?.procedure_interest, user?.email, user?.id]);
+  // PERFORMANCE: React Query for matched doctors — cached, deduplicated
+  const { data: matchedDoctorsData } = useQuery({
+    queryKey: ['matched-doctors', latestConsultation?.procedure_interest, user?.email, user?.id],
+    queryFn: () => base44.functions.invoke('matchDoctorsForProcedure', {
+      procedure_interest: latestConsultation?.procedure_interest,
+      client_email: user?.email,
+      client_id: user?.id
+    }).then(result => ({
+      matched_doctors: result.data?.matched_doctors || [],
+      outreach_sent: result.data?.outreach_sent || false
+    })),
+    enabled: !!latestConsultation?.procedure_interest && !!user,
+    staleTime: 300000, // 5 minutes cache
+  });
 
-  // Countdown to procedure
-  const procedureDate = new Date('2026-06-14');
-  const today = new Date();
-  const daysUntil = Math.ceil((procedureDate - today) / (1000 * 60 * 60 * 24));
+  const matchedDoctors = matchedDoctorsData?.matched_doctors || [];
+  const outreachSent = matchedDoctorsData?.outreach_sent || false;
+
+  // PERFORMANCE: Memoize countdown calculation
+  const daysUntil = useMemo(() => {
+    const procedureDate = new Date('2026-06-14');
+    const today = new Date();
+    return Math.ceil((procedureDate - today) / (1000 * 60 * 60 * 24));
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -345,6 +355,7 @@ export default function Dashboard() {
       '-created_date', 10
     ),
     enabled: !!user,
+    staleTime: 60000, // 1 minute cache
   });
 
   const getModule = () => {

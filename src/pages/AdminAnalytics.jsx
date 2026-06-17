@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { Activity, Clock, Users, TrendingUp, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
@@ -31,6 +31,17 @@ export default function AdminAnalyticsDashboard() {
     loadAnalytics();
   }, []);
 
+  // PERFORMANCE: Memoize expensive filtering/sorting operations (before early returns)
+  const activePipeline = useMemo(() => 
+    analytics?.pipeline_funnel?.filter(s => s.count > 0) || [],
+    [analytics?.pipeline_funnel]
+  );
+  
+  const bottlenecks = useMemo(() => 
+    analytics?.avg_time_per_stage?.filter(s => s.avgDays > 3).sort((a, b) => b.avgDays - a.avgDays) || [],
+    [analytics?.avg_time_per_stage]
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 p-8">
@@ -61,12 +72,6 @@ export default function AdminAnalyticsDashboard() {
   }
 
   const { summary, pipeline_funnel, avg_time_per_stage, doctor_performance } = analytics;
-
-  // Filter stages with cases for funnel
-  const activePipeline = pipeline_funnel.filter(s => s.count > 0);
-  
-  // Find bottlenecks (stages with avg time > 3 days)
-  const bottlenecks = avg_time_per_stage.filter(s => s.avgDays > 3).sort((a, b) => b.avgDays - a.avgDays);
 
   return (
     <AdminLayout>

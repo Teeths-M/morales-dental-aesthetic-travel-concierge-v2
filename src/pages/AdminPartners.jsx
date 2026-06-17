@@ -34,14 +34,15 @@ export default function AdminPartners() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch all partner types
+  // PERFORMANCE: Bounded queries with cache — prevents OOM at scale
   const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
     queryKey: ['admin_doctors'],
     queryFn: async () => {
-      const result = await base44.entities.Doctor.list('-created_date', 1000);
+      const result = await base44.entities.Doctor.list('-created_date', 500); // Reduced from 1000
       console.log('Fetched doctors:', result);
       return result;
     },
+    staleTime: 60000, // 1 minute cache
   });
 
   const { data: travelAgencies = [], isLoading: loadingTravel } = useQuery({
@@ -51,6 +52,7 @@ export default function AdminPartners() {
       console.log('Fetched travel agencies:', result);
       return result;
     },
+    staleTime: 60000,
   });
 
   const { data: taxiServices = [], isLoading: loadingTaxi } = useQuery({
@@ -60,6 +62,7 @@ export default function AdminPartners() {
       console.log('Fetched taxi services:', result);
       return result;
     },
+    staleTime: 60000,
   });
 
   const { data: companions = [], isLoading: loadingCompanions } = useQuery({
@@ -69,6 +72,7 @@ export default function AdminPartners() {
       console.log('Fetched companions:', result);
       return result;
     },
+    staleTime: 60000,
   });
 
   const getStatusBadge = (status) => {

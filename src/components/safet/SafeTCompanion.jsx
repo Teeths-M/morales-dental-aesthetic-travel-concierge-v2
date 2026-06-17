@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageCircle, X, Send, Mic, MicOff, Minimize2, Maximize2,
@@ -66,7 +66,8 @@ const STAGE_MESSAGES = {
   aftercare: "You're in aftercare. Keep up with your follow-up appointments and reach out anytime you have questions.",
 };
 
-export default function SafeTCompanion() {
+// PERFORMANCE: Memoized component — prevents re-renders on parent updates
+const SafeTCompanionComponent = () => {
   const [appLanguage, setAppLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -77,11 +78,18 @@ export default function SafeTCompanion() {
   const compatResult = items && items.length >= 2 ? analyseCompatibility(items) : null;
   const isHighAnesthesia = compatResult && (compatResult.level === 'RED' || compatResult.level === 'YELLOW') && compatResult.totalAnesthesiaHrs >= 4;
 
-  const contextualGreeting = isHighAnesthesia
-    ? `I see your selected treatment sequence involves a longer recovery footprint (~${compatResult.totalAnesthesiaHrs.toFixed(1)} hours total anesthesia). I'm here to help walk you through how we safely organize staged recovery plans and medical clearances for this specific combination. 💚\n\nWhat can I clarify for you?`
-    : labels.welcome;
+  // PERFORMANCE: Memoize expensive derived state — prevents recalculation on every render
+  const contextualGreeting = useMemo(() => 
+    isHighAnesthesia
+      ? `I see your selected treatment sequence involves a longer recovery footprint (~${compatResult.totalAnesthesiaHrs.toFixed(1)} hours total anesthesia). I'm here to help walk you through how we safely organize staged recovery plans and medical clearances for this specific combination. 💚\n\nWhat can I clarify for you?`
+      : labels.welcome,
+    [isHighAnesthesia, compatResult?.totalAnesthesiaHrs, labels.welcome]
+  );
 
-  const activeQuickPrompts = isHighAnesthesia ? HIGH_ANESTHESIA_QUICK_PROMPTS : DEFAULT_QUICK_PROMPTS;
+  const activeQuickPrompts = useMemo(() => 
+    isHighAnesthesia ? HIGH_ANESTHESIA_QUICK_PROMPTS : DEFAULT_QUICK_PROMPTS,
+    [isHighAnesthesia]
+  );
 
   const [messages, setMessages] = useState([
     {
@@ -137,7 +145,8 @@ export default function SafeTCompanion() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async (text) => {
+  // PERFORMANCE: Memoized send function — stable reference prevents child re-renders
+  const sendMessage = useCallback(async (text) => {
     const userText = text || input.trim();
     if (!userText || isLoading) return;
     setInput('');
@@ -163,7 +172,7 @@ export default function SafeTCompanion() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading, messages, isHighAnesthesia, items.length, compatResult?.totalAnesthesiaHrs, compatResult?.level]);
 
   const handleVoice = () => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
@@ -182,7 +191,8 @@ export default function SafeTCompanion() {
     rec.onend = () => setIsListening(false);
   };
 
-  const formatContent = (text) =>
+  // PERFORMANCE: Memoized formatting functions — prevents recreation on every render
+  const formatContent = useCallback((text) =>
     text.split('\n').map((line, i, arr) => (
       <React.Fragment key={i}>
         {line.split(/\*\*(.*?)\*\*/).map((part, j) =>
@@ -190,9 +200,9 @@ export default function SafeTCompanion() {
         )}
         {i < arr.length - 1 && <br />}
       </React.Fragment>
-    ));
+    )), []);
 
-  const renderMessage = (msg) => {
+  const renderMessage = useCallback((msg) => {
     const isUser = msg.role === 'user';
     return (
       <motion.div
@@ -215,7 +225,7 @@ export default function SafeTCompanion() {
         </div>
       </motion.div>
     );
-  };
+  }, [formatContent]);
 
   return (
     <>
@@ -383,4 +393,6 @@ export default function SafeTCompanion() {
       </AnimatePresence>
     </>
   );
-}
+};
+
+export default React.memo(SafeTCompanionComponent);
