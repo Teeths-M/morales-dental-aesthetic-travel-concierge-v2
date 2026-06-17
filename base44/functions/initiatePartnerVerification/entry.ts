@@ -12,20 +12,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'partner_id and partner_type required' }, { status: 400 });
     }
 
-    // Get partner details
+    // BUG-R16-04 FIX: filter({ id: partner_id }) ALWAYS RETURNS [] — SDK cannot query
+    // the built-in `id` field via filter(). Every partner lookup fails with 404.
+    // Also: use asServiceRole — partner records are owned by the partner user, not the
+    // admin triggering verification, so user-scoped entities returns nothing.
+    // Fix: use .get() with asServiceRole for direct primary-key lookup.
     let partner;
     if (partner_type === 'doctor') {
-      const partners = await base44.entities.Doctor.filter({ id: partner_id });
-      partner = partners[0];
+      partner = await base44.asServiceRole.entities.Doctor.get(partner_id);
     } else if (partner_type === 'travel_agency') {
-      const partners = await base44.entities.TravelAgency.filter({ id: partner_id });
-      partner = partners[0];
+      partner = await base44.asServiceRole.entities.TravelAgency.get(partner_id);
     } else if (partner_type === 'taxi_service') {
-      const partners = await base44.entities.TaxiService.filter({ id: partner_id });
-      partner = partners[0];
+      partner = await base44.asServiceRole.entities.TaxiService.get(partner_id);
     } else if (partner_type === 'companion') {
-      const partners = await base44.entities.Companion.filter({ id: partner_id });
-      partner = partners[0];
+      partner = await base44.asServiceRole.entities.Companion.get(partner_id);
     }
 
     if (!partner) {
@@ -34,8 +34,9 @@ Deno.serve(async (req) => {
 
     const now = new Date().toISOString();
 
-    // Create verification record
-    const verification = await base44.entities.PartnerVerification.create({
+    // BUG-R16-05 FIX: use asServiceRole — PartnerVerification is system-owned,
+    // not user-owned; user-scoped create can fail on cross-user partner data.
+    const verification = await base44.asServiceRole.entities.PartnerVerification.create({
       partner_id,
       partner_type,
       partner_name: partner.full_name || partner.agency_name || partner.driver_name || partner.name,
@@ -71,7 +72,8 @@ Deno.serve(async (req) => {
       newStatus = 'denied';
     }
 
-    await base44.entities.PartnerVerification.update(verification.id, {
+    // BUG-R16-05 FIX: use asServiceRole for update
+    await base44.asServiceRole.entities.PartnerVerification.update(verification.id, {
       verification_status: newStatus,
       ai_fraud_score: fraud_score,
       ai_fraud_indicators: fraud_indicators,
@@ -95,14 +97,15 @@ Deno.serve(async (req) => {
       partnerUpdate.status = 'active';
     }
 
+    // BUG-R16-05 FIX: use asServiceRole for all partner updates
     if (partner_type === 'doctor') {
-      await base44.entities.Doctor.update(partner_id, partnerUpdate);
+      await base44.asServiceRole.entities.Doctor.update(partner_id, partnerUpdate);
     } else if (partner_type === 'travel_agency') {
-      await base44.entities.TravelAgency.update(partner_id, partnerUpdate);
+      await base44.asServiceRole.entities.TravelAgency.update(partner_id, partnerUpdate);
     } else if (partner_type === 'taxi_service') {
-      await base44.entities.TaxiService.update(partner_id, partnerUpdate);
+      await base44.asServiceRole.entities.TaxiService.update(partner_id, partnerUpdate);
     } else if (partner_type === 'companion') {
-      await base44.entities.Companion.update(partner_id, partnerUpdate);
+      await base44.asServiceRole.entities.Companion.update(partner_id, partnerUpdate);
     }
 
     // Log to AuditLog
@@ -159,6 +162,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R16-06 FIX: SEC-10
+    console.error('[initiatePartnerVerification]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

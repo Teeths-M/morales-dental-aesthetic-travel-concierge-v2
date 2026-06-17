@@ -92,6 +92,8 @@ Return a JSON response with:
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R16-03 FIX: SEC-10
+    console.error('[analyzePartnerDocuments]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

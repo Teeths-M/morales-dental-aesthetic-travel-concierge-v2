@@ -12,7 +12,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
+    // BUG-R16-01 FIX: platform_admin blocked — include both admin roles
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) return Response.json({ error: 'Admin only' }, { status: 403 });
 
     const { partner_id, partner_type, partner_name, partner_email, business_registration_number, business_registration_country, document_urls } = await req.json();
     if (!partner_name || !partner_email) return Response.json({ error: 'partner_name and partner_email required' }, { status: 400 });
@@ -133,6 +134,8 @@ Return JSON: {
 
     return Response.json({ record, ai_result: aiResult, sanctions_status: sanctionsStatus });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R16-02 FIX: SEC-10 — never expose internal error details
+    console.error('[runKYPVerification]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
