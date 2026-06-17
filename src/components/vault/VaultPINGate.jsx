@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Shield, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Lock, Shield, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
@@ -149,6 +149,10 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
     );
   };
 
+  const handleBack = () => {
+    window.history.back();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -156,6 +160,15 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
       className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-blue-900 flex items-center justify-center p-6"
     >
       <div className="max-w-md w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
+        {/* Back Button */}
+        <button
+          onClick={handleBack}
+          className="absolute top-4 left-4 flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mx-auto mb-6">
             <Shield className="w-10 h-10 text-emerald-400" />
