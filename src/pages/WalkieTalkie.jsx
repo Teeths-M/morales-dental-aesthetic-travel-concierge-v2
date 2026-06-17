@@ -122,12 +122,19 @@ export default function WalkieTalkie() {
   };
 
   const processAudio = async (audioBlob) => {
+    setConnectionStatus('translating');
+    
     try {
+      console.log('[WalkieTalkie] Processing audio, size:', audioBlob.size);
+      
       // Upload audio to get URL
       const uploadResponse = await base44.integrations.Core.UploadFile({ file: audioBlob });
       const audioUrl = uploadResponse.data?.file_url;
+      console.log('[WalkieTalkie] Uploaded audio, URL:', audioUrl);
 
-      if (!audioUrl) throw new Error('Upload failed');
+      if (!audioUrl) {
+        throw new Error('Upload failed - no URL returned');
+      }
 
       // Send for translation
       const response = await base44.functions.invoke('walkieTalkieTranslate', {
@@ -137,6 +144,8 @@ export default function WalkieTalkie() {
         source_language: sourceLang,
         target_language: targetLang
       });
+
+      console.log('[WalkieTalkie] Translation response:', response.data);
 
       if (response.data?.translated_text) {
         setLastTranslation({
@@ -148,16 +157,35 @@ export default function WalkieTalkie() {
         });
 
         // Auto-play translated audio
-        const audio = new Audio(response.data.audio_url);
-        setIsPlaying(true);
-        audio.onended = () => setIsPlaying(false);
-        audio.onerror = () => setIsPlaying(false);
-        audio.play().catch(() => {});
+        if (response.data.audio_url) {
+          const audio = new Audio(response.data.audio_url);
+          setIsPlaying(true);
+          audio.onended = () => setIsPlaying(false);
+          audio.onerror = () => {
+            console.error('[WalkieTalkie] Audio playback error');
+            setIsPlaying(false);
+          };
+          await audio.play();
+        }
 
         toast({ title: 'Translation complete', description: 'Message translated successfully' });
+      } else if (response.data?.error) {
+        throw new Error(response.data.error);
+      } else {
+        throw new Error('No translation returned');
       }
+      
+      setConnectionStatus('connected');
     } catch (error) {
-      toast({ title: 'Translation failed', description: 'Please try again', variant: 'destructive' });
+      console.error('[WalkieTalkie] Translation error:', error);
+      setConnectionStatus('error');
+      toast({ 
+        title: 'Translation failed', 
+        description: error.message || 'Please try again', 
+        variant: 'destructive' 
+      });
+      // Reset to connected after 3 seconds
+      setTimeout(() => setConnectionStatus('connected'), 3000);
     }
   };
 
@@ -165,6 +193,7 @@ export default function WalkieTalkie() {
     switch (connectionStatus) {
       case 'connected': return 'bg-emerald-500';
       case 'connecting': return 'bg-amber-500 animate-pulse';
+      case 'translating': return 'bg-blue-500 animate-pulse';
       case 'error': return 'bg-red-500';
       default: return 'bg-slate-500';
     }
@@ -174,6 +203,7 @@ export default function WalkieTalkie() {
     switch (connectionStatus) {
       case 'connected': return 'Connected';
       case 'connecting': return 'Connecting...';
+      case 'translating': return 'Translating...';
       case 'error': return 'Connection lost';
       default: return 'Disconnected';
     }
