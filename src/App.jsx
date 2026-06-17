@@ -95,6 +95,7 @@ import EmergencyManifest from './pages/EmergencyManifest';
 import AdminDoctorVerificationQueue from './pages/AdminDoctorVerificationQueue';
 import TravelConcierge from './pages/TravelConcierge';
 import AdminTravelRequests from './pages/AdminTravelRequests';
+import TripOverview from './pages/TripOverview';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -271,6 +272,7 @@ const AuthenticatedApp = () => {
       {/* Travel A La Carte Services */}
       <Route element={<ProtectedRoute allowedRoles={["client", "platform_admin", "admin", "user"]} />}>
         <Route path="/travel-services" element={<TravelServices />} />
+        <Route path="/trip-overview" element={<TripOverview />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

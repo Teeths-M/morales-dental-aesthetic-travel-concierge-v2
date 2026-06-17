@@ -29,6 +29,7 @@ const FEATURE_CATEGORIES = [
     theme: 'travel',
     features: [
       { label: 'Travel Booking', path: '/travel-concierge', icon: Plane, desc: 'Flights, hotels, transfers' },
+      { label: 'Trip Overview', path: '/trip-overview', icon: MapPin, desc: 'View itinerary & partners' },
       { label: 'Visa Assistance', path: '/visa-assist', icon: MapPin, desc: 'Requirements & guides' },
       { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, desc: 'Trip details' },
     ]
