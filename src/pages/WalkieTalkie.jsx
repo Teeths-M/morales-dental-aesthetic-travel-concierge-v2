@@ -210,25 +210,25 @@ export default function WalkieTalkie() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950/20 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
-      <div className="border-b border-blue-900/30">
+      <div className="border-b border-amber-900/20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-8">
           <BackButton fallback="/dashboard" className="mb-6" />
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center border border-blue-800/50">
-                <Radio className="w-7 h-7 text-blue-400" />
+              <div className="w-14 h-14 bg-gradient-to-br from-amber-900/40 to-amber-800/30 rounded-2xl flex items-center justify-center border border-amber-700/40 shadow-lg shadow-amber-900/20">
+                <Radio className="w-7 h-7 text-amber-400" />
               </div>
               <div>
-                <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">Real-Time Translation</p>
+                <p className="text-amber-400/90 text-xs font-bold uppercase tracking-widest">Real-Time Translation</p>
                 <h1 className="text-2xl font-bold text-white">Walkie-Talkie</h1>
               </div>
             </div>
             
             {/* Session Status */}
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${getStatusColor()}`} />
+              <div className={`w-3 h-3 rounded-full ${getStatusColor()} shadow-lg`} />
               <span className="text-slate-300 text-sm font-semibold">{getStatusText()}</span>
             </div>
           </div>
@@ -236,10 +236,10 @@ export default function WalkieTalkie() {
           {/* Session Type Badge */}
           {sessionToken && (
             <div className="mt-4 flex items-center gap-2">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${
                 sessionType === 'medical' 
-                  ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-800/50' 
-                  : 'bg-amber-900/40 text-amber-300 border border-amber-800/50'
+                  ? 'bg-gradient-to-r from-emerald-900/50 to-emerald-800/40 text-emerald-300 border-emerald-700/40' 
+                  : 'bg-gradient-to-r from-amber-900/50 to-amber-800/40 text-amber-300 border-amber-700/40'
               }`}>
                 {sessionType === 'medical' ? 'Medical Package - Unlimited' : 'Pay-Per-Use'}
               </span>
@@ -252,7 +252,7 @@ export default function WalkieTalkie() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {!sessionToken ? (
           /* Session Setup */
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 space-y-6">
+          <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-8 space-y-6 shadow-xl shadow-amber-900/10">
             <div>
               <h2 className="text-white font-bold text-lg mb-2">Start New Session</h2>
               <p className="text-slate-400 text-sm">Select your languages and connect to begin translating</p>
@@ -264,7 +264,7 @@ export default function WalkieTalkie() {
                 <select
                   value={sourceLang}
                   onChange={(e) => setSourceLang(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-950/80 border border-amber-900/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
                 >
                   {LANGUAGES.map(lang => (
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
@@ -277,7 +277,7 @@ export default function WalkieTalkie() {
                 <select
                   value={targetLang}
                   onChange={(e) => setTargetLang(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-slate-950/80 border border-amber-900/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
                 >
                   {LANGUAGES.map(lang => (
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
@@ -289,7 +289,7 @@ export default function WalkieTalkie() {
             <button
               onClick={createSession}
               disabled={connectionStatus === 'connecting'}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:via-amber-400 hover:to-amber-500 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 active:scale-[0.98]"
             >
               <Radio className="w-5 h-5" />
               {connectionStatus === 'connecting' ? 'Connecting...' : 'Start Session'}
@@ -299,8 +299,8 @@ export default function WalkieTalkie() {
           /* Active Session */
           <div className="space-y-6">
             {/* Push to Talk Button */}
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 flex flex-col items-center">
-              <p className="text-slate-400 text-sm font-semibold mb-6 uppercase tracking-wider">
+            <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-8 flex flex-col items-center shadow-xl shadow-amber-900/10">
+              <p className="text-amber-400/90 text-sm font-semibold mb-6 uppercase tracking-wider">
                 {isRecording ? 'Recording...' : 'Push to Talk'}
               </p>
               
@@ -310,30 +310,35 @@ export default function WalkieTalkie() {
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
                 whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative w-48 h-48 rounded-full flex items-center justify-center transition-all ${
+                whileTap={{ scale: 0.92 }}
+                className={`relative w-52 h-52 sm:w-56 sm:h-56 rounded-full flex items-center justify-center transition-all shadow-2xl touch-manipulation ${
                   isRecording 
-                    ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-2xl shadow-red-500/50 animate-pulse' 
-                    : 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl shadow-blue-500/30'
+                    ? 'bg-gradient-to-br from-red-600 via-red-500 to-red-600 shadow-red-500/50 shadow-2xl animate-pulse' 
+                    : 'bg-gradient-to-br from-amber-600 via-amber-500 to-amber-600 shadow-amber-500/40 shadow-2xl hover:shadow-amber-500/60'
                 }`}
               >
                 {isRecording ? (
-                  <Square className="w-16 h-16 text-white" />
+                  <Square className="w-20 h-20 text-white drop-shadow-lg" />
                 ) : (
-                  <Mic className="w-16 h-16 text-white" />
+                  <Mic className="w-20 h-20 text-white drop-shadow-lg" />
                 )}
+                
+                {/* Premium metallic ring */}
+                <div className={`absolute inset-2 rounded-full border-2 ${
+                  isRecording ? 'border-red-300/50' : 'border-amber-300/40'
+                }`} />
                 
                 {/* Ripple effect when recording */}
                 {isRecording && (
                   <>
                     <motion.div
-                      className="absolute inset-0 rounded-full border-4 border-red-400"
+                      className="absolute inset-0 rounded-full border-4 border-red-400/60"
                       initial={{ scale: 1, opacity: 1 }}
                       animate={{ scale: 1.5, opacity: 0 }}
                       transition={{ repeat: Infinity, duration: 1 }}
                     />
                     <motion.div
-                      className="absolute inset-0 rounded-full border-4 border-red-400"
+                      className="absolute inset-0 rounded-full border-4 border-red-400/60"
                       initial={{ scale: 1, opacity: 1 }}
                       animate={{ scale: 1.5, opacity: 0 }}
                       transition={{ repeat: Infinity, duration: 1, delay: 0.5 }}
@@ -342,7 +347,7 @@ export default function WalkieTalkie() {
                 )}
               </motion.button>
 
-              <p className="text-slate-500 text-xs mt-6">
+              <p className="text-slate-400 text-xs mt-6 font-medium">
                 {isRecording ? 'Release to send' : 'Hold button to record'}
               </p>
             </div>
@@ -354,12 +359,12 @@ export default function WalkieTalkie() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="bg-slate-900/60 border border-slate-700 rounded-2xl p-6 space-y-4"
+                  className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-6 space-y-4 shadow-xl shadow-amber-900/10"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-white font-bold text-sm uppercase tracking-wider">Latest Translation</h3>
+                    <h3 className="text-amber-400/90 font-bold text-sm uppercase tracking-wider">Latest Translation</h3>
                     {isPlaying && (
-                      <span className="flex items-center gap-2 text-blue-400 text-xs font-semibold">
+                      <span className="flex items-center gap-2 text-amber-400 text-xs font-semibold">
                         <Volume2 className="w-4 h-4 animate-pulse" />
                         Playing audio...
                       </span>
@@ -367,18 +372,18 @@ export default function WalkieTalkie() {
                   </div>
                   
                   <div className="space-y-3">
-                    <div className="bg-slate-800/80 rounded-xl p-4 border border-slate-600">
+                    <div className="bg-slate-950/60 rounded-xl p-4 border border-amber-900/20">
                       <p className="text-slate-400 text-xs font-semibold uppercase mb-1">
                         Original ({LANGUAGES.find(l => l.code === lastTranslation.sourceLang)?.name || lastTranslation.sourceLang})
                       </p>
                       <p className="text-white text-base leading-relaxed">{lastTranslation.original}</p>
                     </div>
                     
-                    <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-800/50">
-                      <p className="text-blue-300 text-xs font-semibold uppercase mb-1">
+                    <div className="bg-gradient-to-br from-amber-900/20 to-amber-800/10 rounded-xl p-4 border border-amber-700/30">
+                      <p className="text-amber-400/90 text-xs font-semibold uppercase mb-1">
                         Translated ({LANGUAGES.find(l => l.code === lastTranslation.targetLang)?.name || lastTranslation.targetLang})
                       </p>
-                      <p className="text-blue-100 text-base leading-relaxed">{lastTranslation.translated}</p>
+                      <p className="text-amber-100 text-base leading-relaxed">{lastTranslation.translated}</p>
                     </div>
                   </div>
 
@@ -390,7 +395,7 @@ export default function WalkieTalkie() {
                         audio.onended = () => setIsPlaying(false);
                         audio.play();
                       }}
-                      className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-semibold transition-colors"
+                      className="flex items-center gap-2 text-amber-400 hover:text-amber-300 text-sm font-semibold transition-colors"
                     >
                       <Volume2 className="w-4 h-4" />
                       Replay audio
@@ -402,13 +407,13 @@ export default function WalkieTalkie() {
 
             {/* Connection Error State */}
             {connectionStatus === 'error' && (
-              <div className="bg-red-900/30 border border-red-800/50 rounded-2xl p-6 text-center">
+              <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 border border-red-800/30 rounded-2xl p-6 text-center shadow-lg shadow-red-900/10">
                 <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
                 <p className="text-red-300 font-bold mb-2">Connection Lost</p>
                 <p className="text-red-400/70 text-sm mb-4">Trying to reconnect...</p>
                 <button
                   onClick={createSession}
-                  className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors"
+                  className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-red-900/30 active:scale-[0.98]"
                 >
                   Reconnect
                 </button>
@@ -418,7 +423,7 @@ export default function WalkieTalkie() {
             {/* End Session Button */}
             <button
               onClick={endSession}
-              className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+              className="w-full bg-slate-900/60 hover:bg-slate-800/60 border border-amber-900/20 text-slate-300 hover:text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2 hover:border-amber-700/40 active:scale-[0.98]"
             >
               <PhoneOff className="w-5 h-5" />
               End Session
@@ -427,23 +432,23 @@ export default function WalkieTalkie() {
         )}
 
         {/* Info Card */}
-        <div className="mt-6 bg-slate-800/30 border border-slate-700/50 rounded-2xl p-6">
-          <h3 className="text-white font-bold text-sm mb-3">How It Works</h3>
+        <div className="mt-6 bg-gradient-to-br from-slate-900/60 to-slate-800/40 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-6 shadow-lg shadow-amber-900/5">
+          <h3 className="text-amber-400/90 font-bold text-sm mb-3">How It Works</h3>
           <ul className="space-y-2 text-slate-400 text-sm">
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">1.</span>
+              <span className="text-amber-500 font-bold">1.</span>
               <span>Hold the microphone button to record your message</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">2.</span>
+              <span className="text-amber-500 font-bold">2.</span>
               <span>Release to send - audio is transcribed and translated</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">3.</span>
+              <span className="text-amber-500 font-bold">3.</span>
               <span>Translated text appears instantly with audio playback</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-blue-400 font-bold">4.</span>
+              <span className="text-amber-500 font-bold">4.</span>
               <span>Medical package users: unlimited free usage · Travel users: pay-per-session</span>
             </li>
           </ul>
