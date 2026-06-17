@@ -8,7 +8,8 @@ import { BadgeCheck, Shield, Plane, Heart, ShieldCheck, Headphones, Building2, B
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
-const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/e35e484d5_generated_image.png';
+const CYAN_GLOW = '#22d3ee';
+const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f28c3ff3f_generated_image.png';
 
 const orbitNodes = [
   { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 155 },
@@ -53,7 +54,12 @@ const NODE_BADGE_STYLE = {
 };
 const NODE_ICON_STYLE = {
   color: GOLD,
-  filter: `drop-shadow(0 0 6px ${GOLD}cc) drop-shadow(0 0 12px ${GOLD}66)`,
+  filter: `drop-shadow(0 0 8px ${GOLD}dd) drop-shadow(0 0 16px ${GOLD}88)`,
+};
+
+const CYAN_NODE_STYLE = {
+  color: CYAN_GLOW,
+  filter: `drop-shadow(0 0 8px ${CYAN_GLOW}dd) drop-shadow(0 0 16px ${CYAN_GLOW}88)`,
 };
 
 // SafeTDiagram never needs to re-render — all animations are CSS-driven
@@ -61,57 +67,81 @@ const NODE_ICON_STYLE = {
 const SafeTDiagram = React.memo(function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-      {/* CSS keyframes injected once via index.css or here as a static string */}
-      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes spin-rev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}`}</style>
+      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes spin-rev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}@keyframes pulse-glow{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}`}</style>
 
+      {/* Outer glow rings with cyan accent */}
+      <div className="absolute w-[420px] h-[420px] rounded-full" style={{ border: `1px solid ${CYAN_GLOW}33`, boxShadow: `0 0 60px ${CYAN_GLOW}22 inset` }} />
+      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}44`, boxShadow: `0 0 40px ${GOLD}18 inset` }} />
+      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}33` }} />
+      <div className="absolute w-[240px] h-[240px] rounded-full" style={{ border: `1px solid ${CYAN_GLOW}22` }} />
+
+      {/* Glitter trails */}
       {TRAIL_CONFIGS.map(({ anim, delay, radii, baseOp, star }, si) => (
-        <svg key={si} className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360"
+        <svg key={si} className="absolute w-[400px] h-[400px]" viewBox="0 0 400 400"
           style={{ animation: anim, animationDelay: delay }}>
           {PRECOMPUTED_TRAILS.map(({ tx, ty }, i) => (
-            <circle key={i} cx={tx} cy={ty} r={radii[i]} fill={GOLD} opacity={baseOp - i * 0.08} />
+            <circle key={i} cx={tx + 20} cy={ty + 20} r={radii[i]} fill={GOLD} opacity={baseOp - i * 0.08} />
           ))}
-          <circle cx="180" cy="12" r={star.r}  fill={GOLD} opacity={star.op}  />
-          <circle cx="180" cy="12" r={star.r2} fill={GOLD} opacity={star.op2} />
+          <circle cx="200" cy="20" r={star.r}  fill={GOLD} opacity={star.op}  />
+          <circle cx="200" cy="20" r={star.r2} fill={GOLD} opacity={star.op2} />
         </svg>
       ))}
 
-      {/* Decorative rings */}
-      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}55`, boxShadow: `0 0 40px ${GOLD}18 inset` }} />
-      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}44` }} />
-      <div className="absolute w-[220px] h-[220px] rounded-full" style={{ border: `1px solid ${GOLD}33` }} />
+      {/* Connection lines to nodes */}
+      <svg className="absolute" width="500" height="500" viewBox="-250 -250 500 500">
+        {ORBIT_NODES_COMPUTED.map(({ x, y }) => (
+          <line key={`line-${x}-${y}`} x1="0" y1="0" x2={x} y2={y} stroke={CYAN_GLOW} strokeWidth="0.5" opacity="0.15" />
+        ))}
+      </svg>
 
-      {/* Single SVG for all endpoint dots — uses pre-computed positions */}
-      <svg className="absolute" width="400" height="400" viewBox="-200 -200 400 400">
+      {/* Endpoint dots with cyan glow */}
+      <svg className="absolute" width="500" height="500" viewBox="-250 -250 500 500">
         {ORBIT_NODES_COMPUTED.map(({ x, y, label }) => (
           <g key={`dot-${label}`}>
-            <circle cx={x} cy={y} r="5"   fill={GOLD} opacity="0.12" />
-            <circle cx={x} cy={y} r="2.5" fill={GOLD} opacity="0.9" />
+            <circle cx={x} cy={y} r="6" fill={CYAN_GLOW} opacity="0.08" />
+            <circle cx={x} cy={y} r="3" fill={CYAN_GLOW} opacity="0.85" style={{ filter: `drop-shadow(0 0 6px ${CYAN_GLOW})` }} />
           </g>
         ))}
       </svg>
 
-      {/* Orbit node badges — pre-computed positions, stable style object */}
+      {/* Orbit node badges with cyan/gold hybrid styling */}
       {ORBIT_NODES_COMPUTED.map(({ label, icon: NodeIcon, x, y }) => (
-        <div key={label} className="absolute flex items-center gap-2 px-3 py-2 rounded-2xl text-[11px] font-medium whitespace-nowrap"
-          style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, ...NODE_BADGE_STYLE }}>
-          <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={NODE_ICON_STYLE} strokeWidth={1.5} />
+        <div key={label} className="absolute flex items-center gap-2 px-3 py-2.5 rounded-2xl text-[11px] font-medium whitespace-nowrap backdrop-blur-xl"
+          style={{ 
+            left: `calc(50% + ${x}px)`, 
+            top: `calc(50% + ${y}px)`, 
+            background: 'rgba(11,18,25,0.85)',
+            border: `1px solid rgba(34,211,238,0.25)`,
+            color: 'rgba(255,255,255,0.9)',
+            boxShadow: `0 2px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(34,211,238,0.08) inset`
+          }}>
+          <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: CYAN_GLOW, filter: `drop-shadow(0 0 6px ${CYAN_GLOW}cc)` }} strokeWidth={1.5} />
           {label}
         </div>
       ))}
 
-      {/* Center shield — subtle pulse, no state */}
+      {/* Center SAFE-T4LIFE emblem with enhanced glow */}
       <motion.div
-        animate={{ scale: [1, 1.035, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ duration: 4, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
         className="relative z-10 flex flex-col items-center"
       >
-        <svg viewBox="0 0 80 92" fill="none" className="w-[78px] h-[90px] relative z-10">
-          <path d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z" fill="none" stroke={GOLD} strokeWidth="3" opacity="0.12" />
-          <path d="M40 6L70 19V48C70 65 57 76 40 86C23 76 10 65 10 48V19L40 6Z" fill={`${GOLD}14`} stroke={GOLD} strokeWidth="1.2" />
-          <path d="M35 31H45V39H53V49H45V57H35V49H27V39H35V31Z" fill="white" opacity="0.92" />
-        </svg>
-        <p className="text-[9.5px] font-bold tracking-[0.24em] uppercase mt-3 relative z-10" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
-        <p className="text-[7px] tracking-[0.18em] uppercase mt-1 relative z-10" style={{ color: 'rgba(255,255,255,0.38)' }}>Safety Intelligence Engine</p>
+        {/* Outer glow */}
+        <div className="absolute inset-0 flex items-center justify-center" style={{ filter: `drop-shadow(0 0 20px ${CYAN_GLOW}66) drop-shadow(0 0 40px ${GOLD}44)` }}>
+          <svg viewBox="0 0 80 92" fill="none" className="w-[88px] h-[96px] relative z-10">
+            <path d="M40 4L72 18V48C72 66 58 78 40 88C22 78 8 66 8 48V18L40 4Z" fill="none" stroke={CYAN_GLOW} strokeWidth="2" opacity="0.4" />
+            <path d="M40 8L70 20V48C70 64 58 74 40 84C22 74 10 64 10 48V20L40 8Z" fill={`url(#shieldGradient)`} stroke={GOLD} strokeWidth="1.5" />
+            <defs>
+              <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={CYAN_GLOW} stopOpacity="0.2" />
+                <stop offset="100%" stopColor={GOLD} stopOpacity="0.15" />
+              </linearGradient>
+            </defs>
+            <path d="M35 32H45V40H53V50H45V58H35V50H27V40H35V32Z" fill="white" opacity="0.95" style={{ filter: `drop-shadow(0 0 8px white)` }} />
+          </svg>
+        </div>
+        <p className="text-[10px] font-bold tracking-[0.28em] uppercase mt-4 relative z-10" style={{ color: GOLD, textShadow: `0 0 12px ${GOLD}88` }}>SAFE-T4LIFE™</p>
+        <p className="text-[7px] tracking-[0.2em] uppercase mt-1.5 relative z-10" style={{ color: CYAN_GLOW, textShadow: `0 0 8px ${CYAN_GLOW}88` }}>Safety Intelligence Engine</p>
       </motion.div>
     </div>
   );
@@ -156,15 +186,14 @@ export default function LuxuryHero() {
 
   return (
     <>
-      <section className="relative min-h-screen overflow-hidden" style={{ background: '#060B16', marginTop: '-68px' }}>
+      <section className="relative min-h-screen overflow-hidden" style={{ background: '#0b1219', marginTop: '-68px' }}>
         {/* Full-bleed background */}
         <div className="absolute inset-0">
-          <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover scale-105"
-            style={{ objectPosition: '70% center' }} loading="eager" fetchpriority="high" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 35%, rgba(6,11,22,0.88) 50%, rgba(6,11,22,0.45) 68%, rgba(6,11,22,0.1) 85%, transparent 100%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060B16 0%, rgba(6,11,22,0.4) 8%, transparent 18%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060B16 0%, rgba(6,11,22,0.7) 10%, transparent 25%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to left, #060B16 0%, rgba(6,11,22,0.5) 6%, transparent 18%)' }} />
+          <img src={HERO_IMAGE} alt="Premium medical travel with Safe-T4Life safety intelligence" className="w-full h-full object-cover"
+            style={{ objectPosition: 'center center' }} loading="eager" fetchpriority="high" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 30%, rgba(11,18,25,0.85) 45%, rgba(11,18,25,0.4) 65%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.5) 10%, transparent 25%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.8) 12%, transparent 30%)' }} />
         </div>
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
