@@ -25,7 +25,7 @@ export default function PassportVault() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#060B16] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
           style={{ borderColor: `${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} transparent` }} />
       </div>
     );
@@ -34,16 +34,16 @@ export default function PassportVault() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#060B16] flex items-center justify-center p-6">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-7 h-7 text-white/20" />
+        <div className="text-center max-w-sm">
+          <div className="w-20 h-20 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-5" style={{ boxShadow: '0 0 40px rgba(212,175,55,0.08)' }}>
+            <Shield className="w-8 h-8 text-white/15" />
           </div>
-          <h2 className="text-lg font-display font-semibold text-white">Sign In Required</h2>
-          <p className="text-sm text-white/40 mt-1 max-w-xs">You must be signed in to access your Passport Vault.</p>
+          <h2 className="font-display text-2xl text-white mb-3" style={{ letterSpacing: '-0.02em' }}>Sign In Required</h2>
+          <p className="text-white/40 text-[15px] mb-7 leading-relaxed">You must be signed in to access your secure Passport Vault.</p>
           <button
             onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-            className="mt-5 px-6 py-2.5 rounded-full text-sm font-semibold transition-all"
-            style={{ background: BRAND.gold, color: '#060B16' }}
+            className="px-8 py-3.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ background: `linear-gradient(135deg, ${BRAND.gold} 0%, ${BRAND.goldLight} 100%)`, color: '#060B16', boxShadow: `0 4px 20px ${BRAND.goldAlpha(0.3)}` }}
           >
             Sign In
           </button>
@@ -53,21 +53,21 @@ export default function PassportVault() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060B16] py-10 px-4">
-      <div className="max-w-2xl mx-auto space-y-5">
+    <div className="min-h-screen bg-[#060B16] py-12 px-4" style={{ background: 'linear-gradient(180deg, #060B16 0%, #0A101D 100%)' }}>
+      <div className="max-w-3xl mx-auto space-y-6">
 
         {/* Emergency Access Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07]">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-            <Lock className="w-4 h-4 text-amber-400" strokeWidth={1.75} />
+        <div className="flex items-start gap-4 p-5 rounded-2xl border border-amber-500/20 bg-amber-500/[0.05]">
+          <div className="w-11 h-11 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+            <Lock className="w-5 h-5 text-amber-400" strokeWidth={1.5} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-300">Emergency Access Available</p>
-            <p className="text-xs text-amber-400/70 mt-0.5 leading-relaxed">
+            <p className="text-[15px] font-semibold text-amber-300" style={{ letterSpacing: '-0.01em' }}>Emergency Access Available</p>
+            <p className="text-[13px] text-amber-400/60 mt-1 leading-relaxed">
               Lost your phone? Access documents from any device — no login required.
             </p>
             <Link to="/emergency-access"
-              className="inline-block mt-2.5 px-4 py-1.5 rounded-lg text-xs font-bold text-amber-900 transition-colors"
+              className="inline-block mt-3 px-5 py-2 rounded-lg text-xs font-bold text-amber-900 transition-all hover:opacity-90"
               style={{ background: '#f59e0b' }}>
               Go to Emergency Access →
             </Link>
@@ -75,23 +75,23 @@ export default function PassportVault() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="p-2 rounded-xl text-white/25 hover:text-white hover:bg-white/[0.05] transition-colors" aria-label="Back to dashboard">
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="p-2.5 rounded-xl text-white/20 hover:text-white hover:bg-white/[0.04] transition-all" aria-label="Back to dashboard">
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-emerald-400" strokeWidth={1.75} />
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
             </div>
             <div>
-              <h1 className="text-lg font-display font-semibold text-white leading-none">My Vault</h1>
-              <p className="text-[10px] text-white/25 mt-0.5 tracking-wide">Zero-knowledge · AES-256-GCM</p>
+              <h1 className="font-display text-2xl text-white leading-none" style={{ letterSpacing: '-0.02em' }}>Secure Document Vault</h1>
+              <p className="text-[11px] text-white/30 mt-1.5 tracking-[0.2em] uppercase">Zero-knowledge · AES-256-GCM</p>
             </div>
           </div>
         </div>
 
         {/* Main card */}
-        <div className="rounded-2xl border border-white/[0.07] bg-[#0A101D] p-5">
+        <div className="rounded-2xl border border-white/[0.06] bg-[#0A101D]/80 p-6" style={{ backdropFilter: 'blur(20px)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
           {hasVault ? (
             <VaultDashboard user={user} />
           ) : (
@@ -108,8 +108,8 @@ export default function PassportVault() {
         </div>
 
         {/* Privacy footer */}
-        <p className="text-center text-[10px] text-white/20 tracking-wider">
-          🔒 PBKDF2 · AES-256-GCM · Zero-knowledge · Emergency PIN · Tamper-evident audit chain
+        <p className="text-center text-[10px] text-white/25 tracking-[0.25em] uppercase pt-4">
+          🔒 PBKDF2 · AES-256-GCM · Zero-knowledge · Emergency PIN
         </p>
       </div>
     </div>

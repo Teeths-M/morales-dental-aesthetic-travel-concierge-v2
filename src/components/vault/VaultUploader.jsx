@@ -128,13 +128,13 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
   const relevantFields = getRelevantFields();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Security Banner */}
-      <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-        <Lock className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+      <div className="flex items-start gap-4 bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4">
+        <Lock className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="text-xs font-bold text-emerald-800">Zero-Knowledge Encryption</p>
-          <p className="text-xs text-emerald-700 mt-0.5">
+          <p className="text-[13px] font-bold text-emerald-800" style={{ letterSpacing: '-0.01em' }}>Zero-Knowledge Encryption</p>
+          <p className="text-[13px] text-emerald-700 mt-1.5 leading-relaxed">
             Your document is encrypted <strong>on your device</strong> using PBKDF2 + AES-256-GCM.
             Your password never leaves your browser. Only you can decrypt.
           </p>
@@ -142,15 +142,15 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       </div>
 
       {step === 'done' ? (
-        <div className="flex flex-col items-center gap-3 py-6 bg-green-50 border border-green-200 rounded-xl">
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
+        <div className="flex flex-col items-center gap-4 py-8 bg-green-50 border border-green-200 rounded-xl">
+          <CheckCircle2 className="w-12 h-12 text-green-600" />
           <div className="text-center">
-            <p className="text-sm font-bold text-green-800">Document Vaulted Successfully</p>
-            <p className="text-xs text-green-700 mt-1">Secure reference token:</p>
-            <code className="mt-2 block text-xs bg-white border border-green-200 rounded-lg px-3 py-2 font-mono text-green-800 break-all">
+            <p className="text-[15px] font-bold text-green-800" style={{ letterSpacing: '-0.01em' }}>Document Vaulted Successfully</p>
+            <p className="text-[13px] text-green-700 mt-2">Secure reference token:</p>
+            <code className="mt-3 block text-[12px] bg-white border border-green-200 rounded-lg px-4 py-2.5 font-mono text-green-800 break-all">
               {issuedToken}
             </code>
-            <p className="text-xs text-green-600 mt-2">
+            <p className="text-[12px] text-green-600 mt-3">
               Store this token safely. Use it to access your document anytime.
             </p>
           </div>
@@ -159,19 +159,19 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         <>
           {/* Document Type Selection */}
           <div>
-            <Label className="text-xs text-slate-600">Document Type</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+            <Label className="text-[13px] font-semibold text-slate-700" style={{ letterSpacing: '-0.01em' }}>Document Type</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3">
               {DOCUMENT_TYPES.map(type => (
                 <button
                   key={type.value}
                   onClick={() => setVaultMeta(p => ({ ...p, document_type: type.value }))}
-                  className={`p-3 rounded-xl border text-xs font-semibold transition-all ${
+                  className={`p-4 rounded-xl border text-[13px] font-semibold transition-all ${
                     vaultMeta.document_type === type.value
                       ? 'bg-emerald-600 text-white border-emerald-700'
                       : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300'
                   }`}
                 >
-                  <span className="text-lg block mb-1">{type.icon}</span>
+                  <span className="text-xl block mb-1.5">{type.icon}</span>
                   {type.label}
                 </button>
               ))}
@@ -179,21 +179,21 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
           </div>
 
           {/* Dynamic Metadata Fields */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <div className="space-y-4">
+            <h4 className="text-[14px] font-semibold text-slate-700 flex items-center gap-2" style={{ letterSpacing: '-0.01em' }}>
               <Eye className="w-4 h-4 text-slate-400" />
               Document Reference Info
             </h4>
 
             {relevantFields.includes('last_4_digits') && (
               <div>
-                <Label className="text-xs text-slate-600">Last 4 Characters of Document Number</Label>
+                <Label className="text-[13px] font-medium text-slate-600">Last 4 Characters of Document Number</Label>
                 <Input
                   value={vaultMeta.last_4_digits}
                   onChange={e => setVaultMeta(p => ({ ...p, last_4_digits: e.target.value.slice(-4).toUpperCase() }))}
                   placeholder="e.g. 678"
                   maxLength={4}
-                  className="mt-1 font-mono"
+                  className="mt-1.5 font-mono"
                 />
               </div>
             )}
@@ -272,34 +272,34 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
           </div>
 
           {/* Encryption Password */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
-            <div className="flex items-center gap-2">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-3.5">
+            <div className="flex items-center gap-2.5">
               <Lock className="w-4 h-4 text-blue-600" />
-              <p className="text-sm font-bold text-blue-800">Set Encryption Password</p>
+              <p className="text-[14px] font-bold text-blue-800" style={{ letterSpacing: '-0.01em' }}>Set Encryption Password</p>
             </div>
-            <p className="text-xs text-blue-700">
+            <p className="text-[13px] text-blue-700 leading-relaxed">
               This password encrypts your document. You'll need it to decrypt later. 
               <strong> We cannot recover it if lost.</strong>
             </p>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3.5">
               <div>
-                <Label className="text-xs text-blue-700">Password</Label>
+                <Label className="text-[13px] font-medium text-blue-700">Password</Label>
                 <Input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Min 6 characters"
-                  className="mt-1"
+                  className="mt-1.5"
                 />
               </div>
               <div>
-                <Label className="text-xs text-blue-700">Confirm Password</Label>
+                <Label className="text-[13px] font-medium text-blue-700">Confirm Password</Label>
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter password"
-                  className="mt-1"
+                  className="mt-1.5"
                 />
               </div>
             </div>
@@ -307,20 +307,20 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
           {/* File Upload */}
           <div>
-            <Label className="text-xs text-slate-600">Upload Document</Label>
+            <Label className="text-[13px] font-medium text-slate-600" style={{ letterSpacing: '-0.01em' }}>Upload Document</Label>
             <div
-              className="mt-1 border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all"
+              className="mt-2 border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all"
               onClick={() => fileRef.current?.click()}
             >
-              <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-600">
+              <Upload className="w-7 h-7 text-slate-400 mx-auto mb-3" />
+              <p className="text-[14px] text-slate-600">
                 {fileName ? (
                   <span className="text-emerald-700 font-semibold">{fileName}</span>
                 ) : (
                   <>Click to select <span className="font-semibold">JPEG, PNG, or PDF</span></>
                 )}
               </p>
-              <p className="text-xs text-slate-400 mt-1">Max {MAX_SIZE_MB}MB · Encrypted before upload</p>
+              <p className="text-[12px] text-slate-400 mt-2">Max {MAX_SIZE_MB}MB · Encrypted before upload</p>
               <input
                 ref={fileRef}
                 type="file"
@@ -332,16 +332,16 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <p className="text-xs">{error}</p>
+            <div className="flex items-center gap-3 text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <p className="text-[13px]">{error}</p>
             </div>
           )}
 
           <Button
             onClick={handleUpload}
             disabled={step === 'encrypting' || step === 'uploading'}
-            className="w-full gap-2"
+            className="w-full gap-2.5 h-12 rounded-xl text-[14px] font-semibold"
           >
             {step === 'encrypting' ? (
               <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Encrypting on your device...</>
