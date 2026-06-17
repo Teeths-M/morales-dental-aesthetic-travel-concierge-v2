@@ -67,6 +67,26 @@ const CYAN_NODE_STYLE = {
 const SafeTDiagram = React.memo(function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+      <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes spin-rev{from{transform:rotate(0)}to{transform:rotate(-360deg)}}@keyframes pulse-glow{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}`}</style>
+
+      {/* Outer glow rings with cyan accent */}
+      <div className="absolute w-[420px] h-[420px] rounded-full" style={{ border: `1px solid ${CYAN_GLOW}33`, boxShadow: `0 0 60px ${CYAN_GLOW}22 inset` }} />
+      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${GOLD}44`, boxShadow: `0 0 40px ${GOLD}18 inset` }} />
+      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px dashed ${GOLD}33` }} />
+      <div className="absolute w-[240px] h-[240px] rounded-full" style={{ border: `1px solid ${CYAN_GLOW}22` }} />
+
+      {/* Glitter trails */}
+      {TRAIL_CONFIGS.map(({ anim, delay, radii, baseOp, star }, si) => (
+        <svg key={si} className="absolute w-[400px] h-[400px]" viewBox="0 0 400 400"
+          style={{ animation: anim, animationDelay: delay }}>
+          {PRECOMPUTED_TRAILS.map(({ tx, ty }, i) => (
+            <circle key={i} cx={tx + 20} cy={ty + 20} r={radii[i]} fill={GOLD} opacity={baseOp - i * 0.08} />
+          ))}
+          <circle cx="200" cy="20" r={star.r}  fill={GOLD} opacity={star.op}  />
+          <circle cx="200" cy="20" r={star.r2} fill={GOLD} opacity={star.op2} />
+        </svg>
+      ))}
+
       {/* Orbit node badges */}
       {ORBIT_NODES_COMPUTED.map(({ label, icon: NodeIcon, x, y }) => (
         <div key={label} className="absolute flex items-center gap-2 px-3 py-2.5 rounded-2xl text-[11px] font-medium whitespace-nowrap backdrop-blur-xl"
