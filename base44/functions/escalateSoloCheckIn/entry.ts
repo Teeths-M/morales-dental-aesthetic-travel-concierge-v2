@@ -41,11 +41,18 @@ Deno.serve(async (req) => {
       const sentAt = new Date(checkIn.sent_time);
       const hoursSinceSent = (now - sentAt) / (1000 * 60 * 60);
 
-      // 2-hour escalation: second notification — only fire if still genuinely pending
+      // 2-hour escalation: second notification.
+      // BUG-R15-01 FIX: RACE CONDITION — status was written AFTER the email, meaning two
+      // concurrent cron runs both read status==='pending' and escalation_level==='none',
+      // both send the 2h email, then both write escalated_2h. The patient gets two emails.
+      // Fix: claim the record atomically FIRST (write escalated_2h), then send the email.
       if (hoursSinceSent >= 2 && hoursSinceSent < 3 && checkIn.escalation_level === 'none' && checkIn.status === 'pending') {
-        // Send second notification
-        const msg = `⚠️ SECOND ATTEMPT: You have not responded to your safety check-in. Please tap 'I'm Safe' immediately or your emergency contact will be notified.`;
+        // Claim atomically before any side effect
+        await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
+          status: 'escalated_2h',
+        });
 
+        const msg = `⚠️ SECOND ATTEMPT: You have not responded to your safety check-in. Please tap 'I'm Safe' immediately or your emergency contact will be notified.`;
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
             to: checkIn.user_email,
@@ -55,10 +62,6 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error('Failed to send 2h email:', e);
         }
-
-        await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
-          status: 'escalated_2h',
-        });
 
         escalated2h++;
       }
