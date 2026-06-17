@@ -77,53 +77,6 @@ export default function Header() {
           <svg className="w-4 h-4" fill="none" stroke="#A9A9A9" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
           <span style={{ color: '#A9A9A9', fontWeight: 400 }}>My Vault</span>
         </Link>
-        
-        {/* Portal Hub Dropdown */}
-        <div className="relative">
-          <button 
-            onClick={() => { setIsPortalOpen(!isPortalOpen); setIsLangOpen(false); }}
-            className="flex items-center gap-1.5 transition-all duration-200"
-          >
-            <span style={{ color: '#A9A9A9', fontWeight: 400 }}>Portal Hub</span>
-            <svg className={`w-3.5 h-3.5 transform transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`} fill="none" stroke="#A9A9A9" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-          </button>
-
-          {isPortalOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#0C1A1D] border border-white/[0.1] shadow-2xl p-1.5 flex flex-col" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
-              <Link to="/doctor-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Doctor Portal</Link>
-              <Link to="/travel-agency-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Travel Agency Portal</Link>
-              <Link to="/taxi-service-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Chauffeur Portal</Link>
-              <Link to="/companion-dashboard" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all" style={{ color: '#A9A9A9' }}>Companion Portal</Link>
-              <div className="h-[1px] bg-white/[0.08] my-1" />
-              <Link to="/partner-signup" className="px-3.5 py-2.5 text-[13px] rounded-lg transition-all font-semibold" style={{ color: '#D4AF37' }}>Join as Provider Partner</Link>
-            </div>
-          )}
-        </div>
-        
-        {/* Language Selector */}
-        <div className="relative">
-          <button 
-            onClick={() => { setIsLangOpen(!isLangOpen); setIsPortalOpen(false); }}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all"
-          >
-            <span className="text-[13px] font-sans font-semibold" style={{ color: '#A9A9A9' }}>EN</span>
-          </button>
-
-          {isLangOpen && (
-            <div className="absolute right-0 mt-2 w-20 rounded-lg bg-[#0C1A1D] border border-white/[0.1] p-1 flex flex-col shadow-xl">
-              {['EN', 'ES', 'FR'].map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => handleLanguageChange(lang)}
-                  className={`px-3 py-1.5 text-[12px] font-sans rounded text-left transition-all ${currentLang === lang ? 'font-semibold' : ''}`}
-                  style={{ color: currentLang === lang ? '#D4AF37' : '#A9A9A9' }}
-                >
-                  {lang}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* 3. CORE UTILITIES, PORTALS, & LANGUAGE SELECTOR */}
