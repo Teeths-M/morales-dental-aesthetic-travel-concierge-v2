@@ -3,26 +3,18 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ClipboardList, User, FileText, CalendarDays,
   MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight,
-  Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio
+  Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio, Globe, Luggage
 } from 'lucide-react';
 
 // PERFORMANCE: Memoized nav items — prevents array recreation on every render
 const NAV_ITEMS = Object.freeze([
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Stethoscope, label: 'Book Consultation', path: '/booking' },
-  { icon: Users, label: 'Our Experts', path: '/providers' },
-  { icon: ClipboardList, label: 'My Consultations', path: '/dashboard/consultations' },
-  { icon: User, label: 'Medical Profile', path: '/dashboard/profile' },
-  { icon: FileText, label: 'Documents', path: '/dashboard/documents' },
-  { icon: CalendarDays, label: 'My Bookings', path: '/dashboard/bookings' },
+  { icon: LayoutDashboard, label: 'All Features', path: '/dashboard' },
+  { icon: Stethoscope, label: 'Medical', path: '/booking' },
+  { icon: Plane, label: 'Travel', path: '/travel-concierge' },
+  { icon: Shield, label: 'Safety', path: '/safe-t' },
+  { icon: FileText, label: 'Documents', path: '/passport-vault' },
   { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages', badge: 2 },
-  { icon: Shield, label: 'SAFE-T 4LIFE™', path: '/safe-t' },
-  { icon: Plane, label: 'Visa Assist', path: '/visa-assist' },
-  { icon: Map, label: 'My Journey', path: '/dashboard/journey' },
-  { icon: Mountain, label: 'Adventure Safety', path: '/dashboard/adventure' },
-  { icon: Radio, label: 'Solo Check-In', path: '/dashboard/solo-checkin' },
-  { icon: AlertTriangle, label: 'Emergency Center', path: '/emergency' },
-  { icon: Headphones, label: 'Support', path: '/dashboard/support' },
+  { icon: AlertTriangle, label: 'Emergency', path: '/emergency' },
   { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
 ]);
 
@@ -77,7 +69,13 @@ const SidebarContent = React.memo(({ location, onClose }) => {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-4 border-t border-slate-100">
+      <div className="px-4 py-4 border-t border-slate-100 space-y-3">
+        <Link to="/dashboard">
+          <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl px-3 py-2.5 text-white text-center hover:opacity-90 transition-opacity">
+            <p className="text-xs font-bold">🗂️ All Features</p>
+            <p className="text-[10px] text-white/70">Browse everything</p>
+          </div>
+        </Link>
         <div className="flex items-center gap-2.5 bg-emerald-50 rounded-xl px-3 py-2.5">
           <div className="w-6 h-6 rounded-full bg-emerald-200 flex items-center justify-center">
             <Shield className="w-3 h-3 text-emerald-700" />

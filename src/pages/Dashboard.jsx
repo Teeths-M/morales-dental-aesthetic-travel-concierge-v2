@@ -10,6 +10,7 @@ import {
   Plane, Star, Lock, FileText
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import FeatureHub from '@/components/dashboard/FeatureHub';
 import JourneyProgress from '@/components/dashboard/JourneyProgress';
 import RecoveryMilestoneTracker from '@/components/dashboard/RecoveryMilestoneTracker';
 import PreparationChecklist from '@/components/dashboard/PreparationChecklist';
@@ -374,6 +375,7 @@ export default function Dashboard() {
     if (p === '/dashboard/support') return <SupportModule />;
     if (p === '/dashboard/settings') return <SettingsModule />;
     if (p === '/dashboard/case-status') return <CaseStatusModule userEmail={user?.email} />;
+    if (p === '/dashboard') return <FeatureHub />;
     return <DashboardHome user={user} consultations={consultations} language={language} />;
   };
 
