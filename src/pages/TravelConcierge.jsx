@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, FileText, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,11 @@ export default function TravelConcierge() {
   const [step, setStep] = useState('form');
   const [loading, setLoading] = useState(false);
   const [pricing, setPricing] = useState(null);
+  const [passportData, setPassportData] = useState(null);
+  const [visaRequirements, setVisaRequirements] = useState(null);
+  const [checkingVisa, setCheckingVisa] = useState(false);
+  const [userVaults, setUserVaults] = useState([]);
+  const [selectedPassportId, setSelectedPassportId] = useState('');
   const [formData, setFormData] = useState({
     origin_city: '',
     origin_country: '',
@@ -56,13 +61,79 @@ export default function TravelConcierge() {
     special_requests: ''
   });
 
+  useEffect(() => {
+    const loadUserPassports = async () => {
+      try {
+        const user = await base44.auth.me();
+        if (user) {
+          const vaults = await base44.entities.PassportVault.filter({ user_id: user.id });
+          const passports = vaults.filter(v => ['passport', 'national_id'].includes(v.document_type));
+          setUserVaults(passports);
+          if (passports.length > 0) {
+            setSelectedPassportId(passports[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading passports:', error);
+      }
+    };
+    loadUserPassports();
+  }, []);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const checkVisaRequirements = async () => {
+    if (!formData.destination_country || !passportData) return;
+    
+    setCheckingVisa(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze visa requirements for travel from ${formData.origin_country} to ${formData.destination_country}. 
+        Passport nationality: ${passportData.redacted_for_display?.nationality || 'Unknown'}.
+        Travel dates: ${formData.departure_date} to ${formData.return_date}.
+        Purpose: Tourism/Business.
+        
+        Provide a concise summary including:
+        1. Visa required? (Yes/No/Visa on Arrival)
+        2. Maximum stay duration
+        3. Key requirements (passport validity, blank pages, etc.)
+        4. Processing time if visa needed
+        5. Any travel advisories or health requirements (vaccinations)
+        
+        Format as a brief bullet-point list.`,
+        add_context_from_internet: true,
+        model: 'gemini_3_flash'
+      });
+      
+      setVisaRequirements(response.data);
+      toast({
+        title: 'Visa Requirements Checked',
+        description: 'AI has analyzed the visa requirements for your destination.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Could not fetch visa requirements. Please check manually.',
+        variant: 'destructive',
+      });
+    } finally {
+      setCheckingVisa(false);
+    }
   };
 
   const handleCalculatePricing = async () => {
     setLoading(true);
     try {
+      // Load selected passport details
+      if (selectedPassportId) {
+        const selectedPassport = userVaults.find(v => v.id === selectedPassportId);
+        if (selectedPassport) {
+          setPassportData(selectedPassport);
+        }
+      }
+      
       const response = await base44.functions.invoke('calculateTravelPackagePrice', formData);
       setPricing(response.data);
       setStep('pricing');
@@ -245,6 +316,47 @@ export default function TravelConcierge() {
                   </div>
                 </div>
 
+                {/* Passport Selection */}
+                <div className="space-y-3 pt-4 border-t border-white/20">
+                  <div className="flex items-center gap-2 text-white">
+                    <Shield className="w-5 h-5" />
+                    <span className="font-semibold">Passport & Visa Check</span>
+                  </div>
+                  {userVaults.length > 0 ? (
+                    <div>
+                      <Label className="text-white/90 text-sm">Select Passport</Label>
+                      <Select value={selectedPassportId} onValueChange={setSelectedPassportId}>
+                        <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {userVaults.map(passport => (
+                            <SelectItem key={passport.id} value={passport.id}>
+                              🛂 {passport.redacted_for_display?.nationality || 'Passport'} 
+                              {passport.redacted_for_display?.expiry_date && ` (Exp: ${passport.redacted_for_display.expiry_date})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-500/20 border border-amber-400/30 rounded-xl p-4 flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-amber-100 text-sm font-semibold">No Passport in Vault</p>
+                        <p className="text-amber-200/80 text-xs mt-1">
+                          Add your passport to the Passport Vault for AI-powered visa requirement checking.
+                        </p>
+                        <Link to="/passport-vault">
+                          <Button className="mt-2 h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white">
+                            Add Passport
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Travelers & Class */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -382,17 +494,60 @@ export default function TravelConcierge() {
                   )}
                 </div>
 
-                <Button
-                  onClick={step === 'pricing' ? handleSubmitRequest : handleCalculatePricing}
-                  disabled={loading || !formData.origin_city || !formData.destination_city || !formData.departure_date}
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold mt-6"
-                >
-                  {loading ? 'Processing...' : step === 'pricing' ? 'Submit Request' : 'Calculate Package Price'}
-                  {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
-                </Button>
+                {/* Visa Check Button */}
+                <div className="flex flex-col gap-3">
+                  <Button
+                    onClick={checkVisaRequirements}
+                    disabled={checkingVisa || !formData.destination_country || !selectedPassportId}
+                    className="w-full h-12 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold"
+                  >
+                    {checkingVisa ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Checking Visa Requirements...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Check Visa Requirements with AI
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    onClick={step === 'pricing' ? handleSubmitRequest : handleCalculatePricing}
+                    disabled={loading || !formData.origin_city || !formData.destination_city || !formData.departure_date}
+                    className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
+                  >
+                    {loading ? 'Processing...' : step === 'pricing' ? 'Submit Request' : 'Calculate Package Price'}
+                    {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* Visa Requirements Section - Full Width */}
+          {visaRequirements && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 lg:col-span-2"
+            >
+              <Card className="bg-emerald-500/10 backdrop-blur-lg border-emerald-400/30">
+                <CardHeader>
+                  <CardTitle className="text-emerald-100 text-lg flex items-center gap-2">
+                    <Shield className="w-5 h-5" /> Visa Requirements & Travel Advisory
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-emerald-500/20 rounded-xl p-5 text-emerald-50 text-sm whitespace-pre-line leading-relaxed">
+                    {visaRequirements}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Pricing Section */}
           {pricing && (
