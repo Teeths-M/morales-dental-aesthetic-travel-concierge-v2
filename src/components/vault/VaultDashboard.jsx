@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Shield, Clock, FileText, Share2, Trash2, Download, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
@@ -99,28 +100,43 @@ export default function VaultDashboard({ user }) {
   return (
     <div className="space-y-6">
       {/* Summary strip */}
-      <div className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.04]">
+      <motion.div
+        className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.04]"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div>
           <p className="text-[15px] font-semibold text-emerald-300" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
           <p className="text-[12px] text-emerald-400/50 mt-1 tracking-[0.15em] uppercase">PBKDF2 + AES-256-GCM · Zero-knowledge</p>
         </div>
         <Shield className="w-8 h-8 text-emerald-400/50" strokeWidth={1.3} />
-      </div>
+      </motion.div>
 
       {/* Tab bar */}
-      <div className="flex rounded-xl border border-white/[0.06] overflow-hidden bg-white/[0.02]">
+      <motion.div
+        className="flex rounded-xl border border-white/[0.06] overflow-hidden bg-white/[0.02]"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      >
         {TABS.map(({ key, icon: Icon, label }) => {
           const count = key === 'documents' ? docCount : key === 'shares' ? shareLinks.length : key === 'audit' ? auditLogs.length : null;
           return (
-            <button key={key} onClick={() => setActiveTab(key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold transition-colors ${activeTab === key ? 'bg-white/[0.08] text-white' : 'bg-transparent text-white/30 hover:text-white/60 hover:bg-white/[0.03]'}`}>
+            <motion.button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold transition-colors ${activeTab === key ? 'bg-white/[0.08] text-white' : 'bg-transparent text-white/30 hover:text-white/60 hover:bg-white/[0.03]'}`}
+              whileHover={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+              whileTap={{ scale: 0.98 }}
+            >
               <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span className="hidden sm:inline">{label}</span>
               {count !== null && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === key ? 'bg-white/10 text-white/60' : 'bg-white/[0.05] text-white/25'}`}>{count}</span>}
-            </button>
+            </motion.button>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Tab content */}
       <div>
@@ -134,11 +150,17 @@ export default function VaultDashboard({ user }) {
                 <p className="text-[13px] text-white/25 mt-2 max-w-xs leading-relaxed">Add your first document using the "Add New" tab above.</p>
               </div>
             ) : (
-              vaults.map(vault => {
+              vaults.map((vault, index) => {
                 const meta = DOC_META[vault.document_type] || DOC_META.other;
                 return (
-                  <div key={vault.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.10] hover:bg-white/[0.035] transition-all">
+                  <motion.div
+                    key={vault.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.10] hover:bg-white/[0.035] transition-all"
+                    whileHover={{ scale: 1.01, y: -2 }}
+                  >
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                       <div className="w-14 h-14 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-2xl flex-shrink-0" style={{ boxShadow: '0 0 30px rgba(212,175,55,0.05)' }}>
                         {meta.emoji}
@@ -154,21 +176,33 @@ export default function VaultDashboard({ user }) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                      <button onClick={() => handleDownload(vault)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.09] text-white/65 hover:text-white hover:border-white/20 hover:bg-white/[0.04] text-[13px] font-semibold transition-all">
+                      <motion.button
+                        onClick={() => handleDownload(vault)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.09] text-white/65 hover:text-white hover:border-white/20 hover:bg-white/[0.04] text-[13px] font-semibold transition-all"
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
                         <Download className="w-3.5 h-3.5" /> Download
-                      </button>
-                      <button onClick={() => setShareModal({ open: true, vault })}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.09] text-white/65 hover:text-white hover:border-white/20 hover:bg-white/[0.04] text-[13px] font-semibold transition-all">
+                      </motion.button>
+                      <motion.button
+                        onClick={() => setShareModal({ open: true, vault })}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.09] text-white/65 hover:text-white hover:border-white/20 hover:bg-white/[0.04] text-[13px] font-semibold transition-all"
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
                         <Share2 className="w-3.5 h-3.5" /> Share
-                      </button>
-                      <button onClick={() => setDeleteTarget(vault)}
+                      </motion.button>
+                      <motion.button
+                        onClick={() => setDeleteTarget(vault)}
                         className="p-2.5 rounded-xl border border-white/[0.07] text-white/25 hover:text-red-400 hover:border-red-500/25 hover:bg-red-500/[0.04] transition-all"
-                        aria-label="Delete document">
+                        aria-label="Delete document"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </motion.button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })
             )}
@@ -184,8 +218,14 @@ export default function VaultDashboard({ user }) {
                 <p className="text-[15px] font-semibold text-white/50" style={{ letterSpacing: '-0.01em' }}>No active share links</p>
                 <p className="text-[13px] text-white/25 mt-2 max-w-xs leading-relaxed">Create a share link from any document to securely share with embassies, airlines, or hotels.</p>
               </div>
-            ) : shareLinks.map(link => (
-              <div key={link.id} className="p-5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            ) : shareLinks.map((link, index) => (
+              <motion.div
+                key={link.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className="p-5 rounded-2xl border border-white/[0.06] bg-white/[0.02]"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[14px] font-semibold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{link.purpose?.replace(/_/g, ' ')} Share Link</p>
@@ -198,7 +238,7 @@ export default function VaultDashboard({ user }) {
                     {link.is_active ? 'Active' : 'Expired'}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
@@ -216,8 +256,14 @@ export default function VaultDashboard({ user }) {
                 <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5"><Clock className="w-7 h-7 text-white/12" /></div>
                 <p className="text-[15px] font-semibold text-white/50" style={{ letterSpacing: '-0.01em' }}>No activity yet</p>
               </div>
-            ) : auditLogs.map(log => (
-              <div key={log.id} className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-white/[0.05] bg-white/[0.02]">
+            ) : auditLogs.map((log, index) => (
+              <motion.div
+                key={log.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: index * 0.04 }}
+                className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-white/[0.05] bg-white/[0.02]"
+              >
                 <div>
                   <p className="text-[13px] font-medium text-white/75 capitalize" style={{ letterSpacing: '-0.01em' }}>{log.event_type?.replace(/_/g, ' ')}</p>
                   {formattedDates[`al-${log.id}`] && <p className="text-[11px] text-white/30 mt-1 tracking-[0.15em] uppercase">{formattedDates[`al-${log.id}`]}</p>}
@@ -225,7 +271,7 @@ export default function VaultDashboard({ user }) {
                 {log.sensitive && (
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 ring-1 ring-red-500/20 flex-shrink-0 tracking-[0.15em] uppercase">Sensitive</span>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
