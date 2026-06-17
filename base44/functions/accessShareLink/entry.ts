@@ -1,5 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sha256(text) {
+  const msgBuffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getLastAuditHash(base44) {
+  try {
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+  } catch (_) { return 'GENESIS'; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -28,10 +41,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Maximum access count reached' }, { status: 410 });
     }
 
-    // Optional: verify recipient email if specified
+    // SEC-03: Enforce recipient_email restriction — this was previously a no-op stub
     if (shareLink.recipient_email) {
-      // In a real implementation, verify the user's email matches
-      // For now, we just log it
+      let requestUser = null;
+      try { requestUser = await base44.auth.me(); } catch (_) {}
+      if (!requestUser || requestUser.email !== shareLink.recipient_email) {
+        return Response.json({ error: 'This share link is restricted to a specific recipient. Please log in with the correct account.' }, { status: 403 });
+      }
     }
 
     // Get vault
@@ -55,7 +71,8 @@ Deno.serve(async (req) => {
       last_accessed_ip: req.headers.get('x-forwarded-for') || 'unknown'
     });
 
-    // Log to AuditLog
+    // SEC-07: Use real prev_hash — hardcoded 'SHARE_LINK_ACCESS' broke the audit chain
+    const prevHash = await getLastAuditHash(base44);
     await base44.asServiceRole.entities.AuditLog.create({
       event_type: 'passport_access_granted',
       actor_id: 'share_link_' + share_token,
@@ -72,7 +89,7 @@ Deno.serve(async (req) => {
       },
       sensitive: true,
       timestamp: now.toISOString(),
-      prev_hash: 'SHARE_LINK_ACCESS',
+      prev_hash: prevHash,
     });
 
     return Response.json({
@@ -87,6 +104,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // SEC-10: Never leak internal stack details to clients
+    console.error('[accessShareLink]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

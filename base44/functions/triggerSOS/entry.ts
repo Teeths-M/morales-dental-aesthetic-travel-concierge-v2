@@ -12,11 +12,25 @@ const SOS_ROUTES = {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    // Allow unauthenticated SOS (PIN-verified sessions)
+    // SOS requires either a logged-in user OR a valid PIN session token
     let user = null;
     try { user = await base44.auth.me(); } catch (_) {}
 
-    const { trigger_type, latitude, longitude, location_label, case_id, patient_email, patient_name, patient_phone, is_silent, destination_country } = await req.json();
+    const body = await req.json();
+    const { trigger_type, latitude, longitude, location_label, case_id, patient_email, patient_name, patient_phone, is_silent, destination_country, pin_session_token } = body;
+
+    // Require authentication: either JWT session or PIN session
+    if (!user && !pin_session_token) {
+      return Response.json({ error: 'Authentication required: provide a valid session or PIN session token.' }, { status: 401 });
+    }
+
+    // If PIN session provided (no JWT), validate it
+    if (!user && pin_session_token) {
+      const pinCheck = await base44.functions.invoke('verifyEmergencyPIN', { action: 'validate_session', user_email: patient_email, pin_session_token });
+      if (!pinCheck?.data?.valid) {
+        return Response.json({ error: 'Invalid or expired PIN session.' }, { status: 401 });
+      }
+    }
 
     if (!trigger_type || !patient_email) return Response.json({ error: 'trigger_type and patient_email required' }, { status: 400 });
 
@@ -25,10 +39,13 @@ Deno.serve(async (req) => {
 
     // Translate emergency message to local language
     let translatedMessage = 'EMERGENCY: Medical tourist requires immediate assistance.';
-    if (destination_country) {
+    // SEC-09: Sanitise destination_country before LLM interpolation to prevent prompt injection
+    const safeCountry = destination_country ? String(destination_country).replace(/[^a-zA-Z\s\-]/g, '').slice(0, 60) : null;
+
+    if (safeCountry) {
       try {
         const langResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: `Translate this emergency message to the primary local language of ${destination_country}: "MEDICAL EMERGENCY: This person requires immediate ${route.label}. Please call the relevant emergency services." Return ONLY the translated text, nothing else.`
+          prompt: `Translate this emergency message to the primary local language of ${safeCountry}: "MEDICAL EMERGENCY: This person requires immediate ${route.label}. Please call the relevant emergency services." Return ONLY the translated text, nothing else.`
         });
         translatedMessage = typeof langResult === 'string' ? langResult : translatedMessage;
       } catch (_) {}
@@ -138,6 +155,8 @@ Deno.serve(async (req) => {
       message: `${route.label} SOS dispatched. Emergency team alerted.`
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // SEC-10: Never expose internal error details
+    console.error('[triggerSOS]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

@@ -150,6 +150,10 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // SEC-10: Never expose internal error details; SEC-04: PIN hash migration note:
+    // SHA-256(pin+email) is vulnerable to GPU brute-force on DB breach.
+    // Migrate to PBKDF2 (SubtleCrypto, ≥200k iterations) or server-side bcrypt when available.
+    console.error('[verifyEmergencyPIN]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

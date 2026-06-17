@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // Parse body once — req.body is a single-read stream; calling req.text() after req.json() returns ''
     const body = await req.json();
     const {
       encrypted_file_b64,
@@ -32,10 +33,13 @@ Deno.serve(async (req) => {
       is_emergency_accessible = true
     } = body;
 
-    // ZERO-KNOWLEDGE: reject if encryption key is sent
-    const rawBody = await req.text().catch(() => '{}');
-    if (rawBody.includes('encryption_key_b64') || rawBody.includes('password')) {
-      return Response.json({ error: 'Security violation: keys/passwords must never be sent to the server.' }, { status: 400 });
+    // ZERO-KNOWLEDGE: reject if encryption key fields are present in the parsed object
+    // (SEC-02: previously checked on already-consumed req.text() — always returned empty string)
+    const FORBIDDEN_FIELDS = ['encryption_key_b64', 'password', 'key', 'secret'];
+    for (const field of FORBIDDEN_FIELDS) {
+      if (field in body) {
+        return Response.json({ error: 'Security violation: keys/passwords must never be sent to the server.' }, { status: 400 });
+      }
     }
 
     if (!encrypted_file_b64 || !encryption_iv_b64 || !encryption_salt_b64) {
@@ -109,6 +113,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[uploadToVault]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

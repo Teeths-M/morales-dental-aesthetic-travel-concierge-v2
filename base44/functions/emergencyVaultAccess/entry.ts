@@ -6,6 +6,14 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// SEC-06: Fetch real prev_hash to maintain the tamper-evident audit chain
+async function getLastAuditHash(base44) {
+  try {
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+  } catch (_) { return 'GENESIS'; }
+}
+
 async function validatePinSession(base44, token) {
   if (!token) return { valid: false, error: 'pin_session_token required' };
   const tokenHash = await sha256(token);
@@ -31,7 +39,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'pin_session_token required' }, { status: 400 });
     }
 
-    // Validate PIN session
     const sessionResult = await validatePinSession(base44, pin_session_token);
     if (!sessionResult.valid) {
       return Response.json({ error: sessionResult.error }, { status: 401 });
@@ -40,14 +47,12 @@ Deno.serve(async (req) => {
     const session = sessionResult.session;
     const user_email = session.user_email;
 
-    // Get all emergency-accessible vault entries for this user
     const vaults = await base44.asServiceRole.entities.PassportVault.filter(
       { user_email, is_emergency_accessible: true, status: 'active' },
       '-uploaded_at',
       50
     );
 
-    // Format for display (no sensitive data)
     const vaultList = vaults.map(v => ({
       vault_id: v.id,
       vault_token: v.passport_token,
@@ -59,7 +64,8 @@ Deno.serve(async (req) => {
       redacted_for_display: v.redacted_for_display,
     }));
 
-    // Log emergency access
+    // SEC-06: Real prev_hash — hardcoded literals break the tamper-evident chain
+    const prevHash = await getLastAuditHash(base44);
     await base44.asServiceRole.entities.AuditLog.create({
       event_type: 'passport_access_requested',
       actor_id: session.user_id || 'emergency_pin_user',
@@ -76,7 +82,7 @@ Deno.serve(async (req) => {
       },
       sensitive: true,
       timestamp: new Date().toISOString(),
-      prev_hash: 'EMERGENCY_VAULT_ACCESS',
+      prev_hash: prevHash,
     });
 
     return Response.json({
@@ -87,6 +93,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // SEC-10: Never leak internal error details to the client
+    console.error('[emergencyVaultAccess]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
