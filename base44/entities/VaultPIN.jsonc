@@ -11,7 +11,7 @@
     },
     "pin_hash": {
       "type": "string",
-      "description": "SHA-256 hash of the 4-digit PIN \u2014 never store plaintext"
+      "description": "SHA-256 hash of the 4-digit PIN"
     },
     "created_at": {
       "type": "string",
