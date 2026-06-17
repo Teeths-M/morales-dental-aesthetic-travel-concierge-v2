@@ -34,14 +34,14 @@ const SidebarContent = React.memo(({ location, onClose }) => {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Premium Brand Header - Single Clean Logo */}
-      <div className={`${LUXURY_COLORS.header} px-5 py-5`}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-serif font-bold text-lg">M</span>
+      <div className={`${LUXURY_COLORS.header} px-5 py-6`}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
+            <span className="text-white font-serif font-bold text-xl">M</span>
           </div>
           <div>
             <p className="text-white font-serif font-semibold text-sm tracking-wide">MORALES</p>
-            <p className="text-amber-400/70 text-[9px] tracking-widest uppercase">Patient Portal</p>
+            <p className="text-amber-400/70 text-[10px] tracking-widest uppercase">Patient Portal</p>
           </div>
         </div>
       </div>
