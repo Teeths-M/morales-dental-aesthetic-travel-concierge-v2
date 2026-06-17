@@ -183,8 +183,14 @@ export default function LuxuryHero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }} 
                 transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="text-[11px] font-bold tracking-[0.35em] uppercase mb-8" 
-                style={{ color: GOLD, textShadow: `0 0 20px ${GOLD}44` }}
+                className="font-body uppercase mb-9" 
+                style={{ 
+                  color: GOLD, 
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  letterSpacing: '0.35em',
+                  textShadow: `0 0 24px ${GOLD}44`
+                }}
               >
                 {content.eyebrow}
               </motion.p>
@@ -196,11 +202,15 @@ export default function LuxuryHero() {
                 initial={{ opacity: 0, y: 16 }} 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }} 
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="font-display text-white leading-[1.05] mb-7"
+                transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                className="font-display text-white mb-8"
                 style={{ 
-                  fontSize: 'clamp(3rem, 5vw, 4.5rem)',
-                  textShadow: '0 2px 40px rgba(0,0,0,0.5)'
+                  fontSize: 'clamp(3.5rem, 6vw, 5rem)',
+                  lineHeight: 1.02,
+                  letterSpacing: '-0.03em',
+                  fontWeight: 400,
+                  textShadow: '0 4px 60px rgba(0,0,0,0.6)',
+                  fontSmooth: 'antialiased'
                 }}>
                 {content.headline}
               </motion.h1>
@@ -212,9 +222,15 @@ export default function LuxuryHero() {
                 initial={{ opacity: 0, y: 8 }} 
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }} 
-                transition={{ duration: 0.4, delay: 0.15 }}
-                className="text-[16px] text-white/60 leading-relaxed mb-12 max-w-[460px]"
-                style={{ fontWeight: 300 }}
+                transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                className="text-white/65 mb-14 max-w-[480px]"
+                style={{ 
+                  fontSize: '17px',
+                  lineHeight: 1.75,
+                  fontWeight: 300,
+                  letterSpacing: '0.01em',
+                  fontSmooth: 'antialiased'
+                }}
               >
                 {content.body}
               </motion.p>
