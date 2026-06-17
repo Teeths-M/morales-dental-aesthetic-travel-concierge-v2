@@ -12,14 +12,15 @@ import { useVault } from '@/hooks/useVault';
 import { vaultService } from '@/lib/services';
 
 const DOC_META = {
-  passport:      { emoji: '🛂', label: 'Passport' },
-  visa:          { emoji: '🛂', label: 'Visa' },
-  national_id:   { emoji: '🆔', label: 'National ID' },
-  flight_ticket: { emoji: '✈️', label: 'Flight Ticket' },
-  hotel_booking: { emoji: '🏨', label: 'Hotel Booking' },
-  medical_record:{ emoji: '🏥', label: 'Medical Record' },
-  insurance:     { emoji: '🛡️', label: 'Insurance' },
-  other:         { emoji: '📄', label: 'Document' },
+  passport:          { emoji: '🛂', label: 'Passport' },
+  visa:              { emoji: '🛂', label: 'Visa' },
+  national_id:       { emoji: '🆔', label: 'National ID' },
+  flight_ticket:     { emoji: '✈️', label: 'Flight Ticket' },
+  hotel_booking:     { emoji: '🏨', label: 'Hotel Booking' },
+  medical_record:    { emoji: '🏥', label: 'Medical Record' },
+  insurance:         { emoji: '🛡️', label: 'Insurance' },
+  payment_reference: { emoji: '💳', label: 'Payment Reference' },
+  other:             { emoji: '📄', label: 'Document' },
 };
 
 const TABS = [

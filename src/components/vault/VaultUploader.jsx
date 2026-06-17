@@ -17,6 +17,7 @@ const DOCUMENT_TYPES = [
   { value: 'hotel_booking', label: '🏨 Hotel Booking', icon: '🏨' },
   { value: 'medical_record', label: '🏥 Medical Record', icon: '🏥' },
   { value: 'insurance', label: '🛡️ Insurance', icon: '🛡️' },
+  { value: 'payment_reference', label: '💳 Payment Reference', icon: '💳' },
   { value: 'other', label: '📄 Other', icon: '📄' },
 ];
 
@@ -120,6 +121,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         return ['booking_reference', 'hotel_name', 'full_name_redacted'];
       case 'insurance':
         return ['booking_reference', 'full_name_redacted'];
+      case 'payment_reference':
+        return ['card_issuer', 'bank_phone', 'last_4_digits', 'full_name_redacted'];
       default:
         return ['full_name_redacted'];
     }
@@ -184,6 +187,20 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
               <Eye className="w-4 h-4 text-white/70" />
               Document Reference Info
             </h4>
+
+            {/* Payment Reference Security Warning */}
+            {vaultMeta.document_type === 'payment_reference' && (
+              <div className="flex items-start gap-3 bg-amber-900/40 border border-amber-400/30 rounded-xl p-4">
+                <AlertTriangle className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[13px] font-bold text-amber-100" style={{ letterSpacing: '-0.01em' }}>Security Notice</p>
+                  <p className="text-[12px] text-amber-200/90 mt-1.5 leading-relaxed">
+                    <strong>Do NOT upload images showing full card numbers or CVV codes.</strong> This vault is for emergency reference only. 
+                    Before uploading, physically cover the middle 8 digits and CVV on your card. Store only the last 4 digits below.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {relevantFields.includes('last_4_digits') && (
               <div>
@@ -254,6 +271,30 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
                   onChange={e => setVaultMeta(p => ({ ...p, airline: e.target.value }))}
                   placeholder="e.g. American Airlines"
                   className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-1 focus:ring-white/20"
+                />
+              </div>
+            )}
+
+            {relevantFields.includes('card_issuer') && (
+              <div>
+                <Label className="text-[13px] font-bold text-white/90">Card Issuer / Bank Name</Label>
+                <Input
+                  value={vaultMeta.card_issuer}
+                  onChange={e => setVaultMeta(p => ({ ...p, card_issuer: e.target.value }))}
+                  placeholder="e.g. Chase Visa, RBC Mastercard"
+                  className="mt-1.5 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-1 focus:ring-white/20"
+                />
+              </div>
+            )}
+
+            {relevantFields.includes('bank_phone') && (
+              <div>
+                <Label className="text-[13px] font-bold text-white/90">Bank Emergency Phone</Label>
+                <Input
+                  value={vaultMeta.bank_phone}
+                  onChange={e => setVaultMeta(p => ({ ...p, bank_phone: e.target.value }))}
+                  placeholder="e.g. +1-800-555-1234"
+                  className="mt-1.5 font-mono bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-1 focus:ring-white/20"
                 />
               </div>
             )}
