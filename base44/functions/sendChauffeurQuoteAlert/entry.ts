@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
 
     await base44.asServiceRole.entities.Consultation.update(consultation_id, updateData);
 
-    const consultations = await base44.asServiceRole.entities.Consultation.filter({ id: consultation_id });
-    const consultation = consultations[0];
+    // BUG-R13-03 FIX: filter({ id }) always returns [] — update first, then fetch with .get()
+    const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
     if (!consultation) {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });
     }
@@ -59,9 +59,10 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
     const adminUrl = `${appUrl}/portal-hub/admin`;
 
-    // Fetch all admin users and notify
-    const allUsers = await base44.asServiceRole.entities.User.list();
-    const adminUsers = allUsers.filter(u => u.role === 'admin' || u.role === 'platform_admin');
+    // BUG-R13-05 FIX: User.list() without a limit loads every user on every chauffeur quote.
+    // Use ADMIN_EMAIL env var for direct admin notification — no full-table User scan needed.
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    const adminUsers = adminEmail ? [{ email: adminEmail }] : [];
 
     const legDetails = driver_type === 'origin'
       ? `<tr><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 1 (Home → Airport)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_1_cost_usd).toFixed(2)}</td></tr>
@@ -112,7 +113,8 @@ Deno.serve(async (req) => {
       transfer_total: transferTotal,
     });
   } catch (error) {
-    console.error('sendChauffeurQuoteAlert error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10
+    console.error('[sendChauffeurQuoteAlert]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

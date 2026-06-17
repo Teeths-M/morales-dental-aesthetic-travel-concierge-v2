@@ -63,8 +63,8 @@ Deno.serve(async (req) => {
     let ctaText;
 
     if (partner_type === 'doctor') {
-      const partners = await base44.asServiceRole.entities.Doctor.filter({ id: partner_id });
-      partner = partners[0];
+      // BUG-R13-03 FIX: filter({ id }) always returns [] — use .get()
+      partner = await base44.asServiceRole.entities.Doctor.get(partner_id);
       if (!partner) {
         return Response.json({ error: 'Doctor not found' }, { status: 404 });
       }
@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
       ];
       ctaText = 'Access Doctor Portal →';
     } else if (partner_type === 'travel_agency') {
-      const partners = await base44.asServiceRole.entities.TravelAgency.filter({ id: partner_id });
-      partner = partners[0];
+      // BUG-R13-03 FIX: filter({ id }) always returns [] — use .get()
+      partner = await base44.asServiceRole.entities.TravelAgency.get(partner_id);
       if (!partner) {
         return Response.json({ error: 'Travel agency not found' }, { status: 404 });
       }
@@ -99,8 +99,8 @@ Deno.serve(async (req) => {
       ];
       ctaText = 'Access Travel Portal →';
     } else if (partner_type === 'taxi_service') {
-      const partners = await base44.asServiceRole.entities.TaxiService.filter({ id: partner_id });
-      partner = partners[0];
+      // BUG-R13-03 FIX: filter({ id }) always returns [] — use .get()
+      partner = await base44.asServiceRole.entities.TaxiService.get(partner_id);
       if (!partner) {
         return Response.json({ error: 'Taxi service not found' }, { status: 404 });
       }
@@ -154,7 +154,8 @@ Deno.serve(async (req) => {
       partner_name: partner.full_name || partner.agency_name || partner.driver_name || partner.email,
     });
   } catch (error) {
-    console.error('sendPartnerWelcomeEmail error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10
+    console.error('[sendPartnerWelcomeEmail]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

@@ -32,9 +32,10 @@ Deno.serve(async (req) => {
     });
 
     if (!isPositive) {
-      // Route to support for service recovery
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: 'admin@moralesmedical.com',
+      // BUG-R13-01 FIX: hardcoded admin email — use ADMIN_EMAIL env var
+      const adminEmail = Deno.env.get('ADMIN_EMAIL');
+      if (adminEmail) await base44.asServiceRole.integrations.Core.SendEmail({
+        to: adminEmail,
         subject: `⚠️ Low Satisfaction Survey — ${survey.patient_name || survey.patient_email} (${overallScore}/5)`,
         body: `A patient has submitted a low satisfaction score.\n\nPatient: ${survey.patient_name || 'Unknown'}\nEmail: ${survey.patient_email}\nScore: ${overallScore}/5\nCase ID: ${survey.case_id || 'N/A'}\n\nAnswers:\n${answers.map((a, i) => `${i + 1}. ${a.question}\nScore: ${a.score}/5\nComment: ${a.comment || 'None'}`).join('\n\n')}\n\nPlease reach out immediately for service recovery.`
       });
@@ -51,7 +52,8 @@ Deno.serve(async (req) => {
       routed_to_support: !isPositive
     });
   } catch (error) {
-    console.error('submitReputationSurvey error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10 — never expose internal error details
+    console.error('[submitReputationSurvey]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

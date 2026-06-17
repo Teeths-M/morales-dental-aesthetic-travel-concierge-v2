@@ -231,14 +231,14 @@ Deno.serve(async (req) => {
     let partner, subject, html;
 
     if (partner_type === 'doctor') {
-      const doctors = await base44.asServiceRole.entities.Doctor.filter({ id: entity_id });
-      partner = doctors[0];
+      // BUG-R13-03 FIX: filter({ id }) always returns [] — use .get()
+      partner = await base44.asServiceRole.entities.Doctor.get(entity_id);
       if (!partner) return Response.json({ error: 'Doctor not found' }, { status: 404 });
       subject = 'Welcome to SAFE-T 4LIFE™ — Your Doctor Onboarding Guide';
       html = doctorEmailBody(partner);
     } else if (partner_type === 'security_agency') {
-      const agencies = await base44.asServiceRole.entities.SecurityAgency.filter({ id: entity_id });
-      partner = agencies[0];
+      // BUG-R13-03 FIX: filter({ id }) always returns [] — use .get()
+      partner = await base44.asServiceRole.entities.SecurityAgency.get(entity_id);
       if (!partner) return Response.json({ error: 'Security agency not found' }, { status: 404 });
       subject = 'Welcome to SAFE-T 4LIFE™ — Security Agency Onboarding Guide';
       html = securityAgencyEmailBody(partner);
@@ -255,6 +255,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, sent_to: partner.email, partner_type });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10
+    console.error('[sendPartnerOnboarding]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

@@ -35,17 +35,20 @@ Deno.serve(async (req) => {
 
     // Verify ownership when case_id provided
     if (case_id) {
-      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-      if (!cases.length) {
+      // BUG-R13-03 FIX: filter({ id }) cannot query built-in `id` field — always returns [].
+      // Use .get() for primary-key lookup.
+      const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+      if (!caseRecord) {
         return Response.json({ error: 'Case not found' }, { status: 404 });
       }
-      const caseRecord = cases[0];
+      // Keep caseRecord in scope for the ownership check below (block restructured)
       const isAdmin = ['admin', 'platform_admin', 'coordinator'].includes(user.role);
       const isOwner = caseRecord.client_email === user.email;
       if (!isAdmin && !isOwner) {
         return Response.json({ error: 'Forbidden: not authorized for this case' }, { status: 403 });
       }
     }
+    // (end case ownership check)
 
     const existing = case_id
       ? await base44.asServiceRole.entities.DietaryProfile.filter({ case_id })
@@ -102,6 +105,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, profile });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10
+    console.error('[submitDietaryProfile]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

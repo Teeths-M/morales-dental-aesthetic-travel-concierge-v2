@@ -4,8 +4,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
+  // BUG-R13-04 FIX: role check only allowed 'admin', blocking 'platform_admin'.
+  // Consistent with all other admin-guarded endpoints in this codebase.
   const user = await base44.auth.me();
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
     return Response.json({ error: 'Admin only' }, { status: 403 });
   }
 
@@ -92,6 +94,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
     console.error('sendDriverAlert error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10
+    console.error('[sendDriverAlert]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

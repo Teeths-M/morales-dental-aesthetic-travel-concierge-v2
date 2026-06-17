@@ -28,6 +28,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, patient_name: session.patient_name });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R13-02 FIX: SEC-10
+    console.error('[submitPostSurgeryFeedback]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
