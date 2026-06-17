@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
       method: 'email',
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[confirmSoloCheckIn]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

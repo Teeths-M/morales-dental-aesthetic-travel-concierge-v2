@@ -26,8 +26,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'vault_id and passport_token required' }, { status: 400 });
     }
 
-    // Verify ownership
-    const vaults = await base44.entities.PassportVault.filter({ id: vault_id, user_email: user.email });
+    // Verify ownership — SDK filter() cannot query by built-in `id` field.
+    // Filter by passport_token (unique, indexed) and user_email to confirm ownership.
+    const vaults = await base44.entities.PassportVault.filter({ passport_token, user_email: user.email });
     if (!vaults?.length) {
       return Response.json({ error: 'Vault not found or you do not own it' }, { status: 404 });
     }
@@ -93,6 +94,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[createSecureShareLink]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

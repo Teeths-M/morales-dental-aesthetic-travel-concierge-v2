@@ -28,6 +28,8 @@ const ALLOWED_EVENT_TYPES = [
   'handshake_completed',
   'case_accessed',
   'role_escalation_attempt',
+  'safe_t_critical_block',
+  'safe_t_high_risk_waiver_signed',
 ];
 
 Deno.serve(async (req) => {
