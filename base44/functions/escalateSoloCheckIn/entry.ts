@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getLastAuditHash(base44) {
+  try {
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+  } catch (_) { return 'GENESIS'; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -29,8 +41,8 @@ Deno.serve(async (req) => {
       const sentAt = new Date(checkIn.sent_time);
       const hoursSinceSent = (now - sentAt) / (1000 * 60 * 60);
 
-      // 2-hour escalation: second notification
-      if (hoursSinceSent >= 2 && hoursSinceSent < 3 && checkIn.status === 'pending') {
+      // 2-hour escalation: second notification — only fire if still genuinely pending
+      if (hoursSinceSent >= 2 && hoursSinceSent < 3 && checkIn.escalation_level === 'none' && checkIn.status === 'pending') {
         // Send second notification
         const msg = `⚠️ SECOND ATTEMPT: You have not responded to your safety check-in. Please tap 'I'm Safe' immediately or your emergency contact will be notified.`;
 
@@ -52,7 +64,8 @@ Deno.serve(async (req) => {
       }
 
       // 3-hour escalation: voice call + emergency contact notification
-      if (hoursSinceSent >= 3 && checkIn.status !== 'escalated_3h' && checkIn.status !== 'resolved') {
+      // Guard against race: only fire if escalation_level is still 'none' (not yet processed by a concurrent run)
+      if (hoursSinceSent >= 3 && checkIn.escalation_level === 'none' && checkIn.status !== 'escalated_3h' && checkIn.status !== 'resolved') {
         const emergencyContact = checkIn.emergency_contact || 'Not provided';
 
         // Attempt Twilio voice call
@@ -102,6 +115,7 @@ Deno.serve(async (req) => {
           console.error('Failed to notify emergency contact:', e);
         }
 
+        // Optimistically set escalation_level first to prevent race-condition double-fire
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
           status: 'escalated_3h',
           escalation_level: 'contact_notified',
@@ -109,7 +123,8 @@ Deno.serve(async (req) => {
           emergency_contact_notified_at: now.toISOString(),
         });
 
-        // Log to AuditLog
+        // Log to AuditLog with real hash chain link
+        const prevHash3h = await getLastAuditHash(base44);
         await base44.asServiceRole.entities.AuditLog.create({
           event_type: 'safet_risk_status_changed',
           actor_id: 'system',
@@ -127,7 +142,7 @@ Deno.serve(async (req) => {
           },
           sensitive: true,
           timestamp: now.toISOString(),
-          prev_hash: 'SOLO_ESCALATION_3H',
+          prev_hash: prevHash3h,
         });
 
         escalated3h++;

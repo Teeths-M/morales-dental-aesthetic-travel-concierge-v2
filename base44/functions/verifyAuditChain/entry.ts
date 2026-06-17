@@ -20,17 +20,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden — admin only' }, { status: 403 });
     }
 
-    // Fetch all audit log entries in ascending timestamp order
-    // We page through in batches to avoid loading everything at once
+    // Fetch all audit log entries in ascending timestamp order.
+    // The SDK list() does not support skip — paginate by cursor (last seen timestamp).
     const PAGE_SIZE = 200;
     let allEntries = [];
-    let skip = 0;
+    let afterTimestamp = null;
     while (true) {
-      const batch = await base44.asServiceRole.entities.AuditLog.list('timestamp', PAGE_SIZE, skip);
+      const filter = afterTimestamp ? { timestamp: { $gt: afterTimestamp } } : {};
+      const batch = await base44.asServiceRole.entities.AuditLog.filter(filter, 'timestamp', PAGE_SIZE);
       if (!batch || batch.length === 0) break;
       allEntries = allEntries.concat(batch);
       if (batch.length < PAGE_SIZE) break;
-      skip += PAGE_SIZE;
+      afterTimestamp = batch[batch.length - 1].timestamp;
     }
 
     if (allEntries.length === 0) {

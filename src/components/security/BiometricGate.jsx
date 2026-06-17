@@ -39,10 +39,21 @@ export default function BiometricGate({ children }) {
     };
   }, []);
 
-  // Lock on tab/window visibility change (background transition)
+  // Lock on visibility change — but only after the page has been hidden for >30s.
+  // Immediate locking on every tab/keyboard/app switch causes constant auth friction on mobile.
   useEffect(() => {
+    let hiddenSince = null;
+    const LOCK_AFTER_HIDDEN_MS = 30_000; // 30 seconds hidden = lock
+
     const handleVisibility = () => {
-      if (document.hidden) setLocked(true);
+      if (document.hidden) {
+        hiddenSince = Date.now();
+      } else {
+        if (hiddenSince !== null && Date.now() - hiddenSince >= LOCK_AFTER_HIDDEN_MS) {
+          setLocked(true);
+        }
+        hiddenSince = null;
+      }
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
@@ -90,16 +101,13 @@ export default function BiometricGate({ children }) {
   };
 
   const tryPin = () => {
-    // Simple session PIN — stored in sessionStorage, set by user on first lock
     const savedPin = sessionStorage.getItem('morales_session_pin');
     if (!savedPin) {
-      // First time — save the entered PIN
-      if (pin.length >= 4) {
-        sessionStorage.setItem('morales_session_pin', pin);
-        setLocked(false);
-        setPin('');
-        setFailedAttempts(0);
-      }
+      // No PIN has been set yet in this session — this should not happen during
+      // a lock (the lock only triggers after the user has been active). If
+      // sessionStorage was wiped (iOS private browsing, memory pressure) we
+      // cannot silently accept any input — force a proper logout instead.
+      base44.auth.logout('/');
       return;
     }
     if (pin === savedPin) {
@@ -112,9 +120,23 @@ export default function BiometricGate({ children }) {
     }
   };
 
+  // Expose a way to set the PIN before the first lock so sessionStorage is populated
+  // while the user is still authenticated. Called once on first authenticated render.
+  const ensurePinRegistered = useCallback(() => {
+    if (!sessionStorage.getItem('morales_session_pin')) {
+      // Generate a random 6-digit session PIN transparently — user never needs to know it.
+      // The gate will fall back to biometric; PIN is the last-resort fallback.
+      const pin = String(Math.floor(100000 + Math.random() * 900000));
+      sessionStorage.setItem('morales_session_pin', pin);
+    }
+  }, []);
+
   const handleFailure = () => {
     setFailedAttempts(f => f + 1);
   };
+
+  // Register a session PIN on mount (while user is authenticated and unlocked)
+  useEffect(() => { ensurePinRegistered(); }, [ensurePinRegistered]);
 
   if (!locked) return children;
 

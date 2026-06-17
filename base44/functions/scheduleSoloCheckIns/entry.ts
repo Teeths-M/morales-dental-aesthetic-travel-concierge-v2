@@ -1,5 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getLastAuditHash(base44) {
+  try {
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+  } catch (_) { return 'GENESIS'; }
+}
+
+// Only statuses that represent an active trip with a traveler physically on the ground
+const ACTIVE_TRAVEL_STATUSES = new Set([
+  'Travel-Coordination',
+  'Ready-For-Travel',
+  'Recovery',
+  'RECOVERY_PHASE_7_DAY',
+]);
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -13,8 +33,12 @@ Deno.serve(async (req) => {
     // Find all cases where user is traveling solo (no companion)
     const allCases = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 200);
 
+    // Only schedule check-ins for cases where the patient is actively traveling on the ground
+    // AND a destination handshake has been recorded (intake_handshake_logged_at is set).
+    // Without this guard, every newly submitted consultation gets a check-in email.
     const soloCases = allCases.filter(c =>
-      c.status !== 'Completed' &&
+      ACTIVE_TRAVEL_STATUSES.has(c.status) &&
+      c.intake_handshake_logged_at &&
       (!c.requires_companion || c.companion_requirement_status === 'companion_required_pending' || c.companion_requirement_status === 'not_required')
     );
 
@@ -146,7 +170,8 @@ Deno.serve(async (req) => {
         console.error('Failed to send check-in email:', e);
       }
 
-      // Log to AuditLog
+      // Log to AuditLog with real hash chain link
+      const prevHashSched = await getLastAuditHash(base44);
       await base44.asServiceRole.entities.AuditLog.create({
         event_type: 'handshake_created',
         actor_id: 'system',
@@ -163,7 +188,7 @@ Deno.serve(async (req) => {
         },
         sensitive: false,
         timestamp: now.toISOString(),
-        prev_hash: 'SOLO_SCHEDULER',
+        prev_hash: prevHashSched,
       });
 
       created++;

@@ -47,6 +47,15 @@ Deno.serve(async (req) => {
       sensitive: true,
     });
 
+    // encryption_salt_b64 was added after initial launch — older vault documents won't have it.
+    // Return a clear flag so the client can show a migration prompt instead of "wrong password".
+    if (!vault.encryption_salt_b64) {
+      return Response.json({
+        error: 'This document was encrypted with a legacy format and cannot be decrypted. Please re-upload it.',
+        error_code: 'LEGACY_ENCRYPTION_NO_SALT',
+      }, { status: 422 });
+    }
+
     return Response.json({
       signed_url,
       encryption_iv_b64: vault.encryption_iv_b64,
