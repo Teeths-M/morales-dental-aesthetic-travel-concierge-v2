@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Users, Radio, Map } from 'lucide-react';
+import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Users, Radio, Map, Heart } from 'lucide-react';
 import { BackButton } from '@/components/nav/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +26,7 @@ export default function SoloCheckInSettings() {
   const [user, setUser] = useState(null);
   const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [acknowledging, setAcknowledging] = useState(false);
   const [stats, setStats] = useState({ total: 0, acknowledged: 0, escalated: 0 });
 
   useEffect(() => {
@@ -57,6 +58,60 @@ export default function SoloCheckInSettings() {
     if (user) loadCheckIns();
   }, [user]);
 
+  const handleIAmSafe = async () => {
+    if (!user) return;
+    setAcknowledging(true);
+    try {
+      // Get active cases for this user
+      const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10);
+      if (cases.length === 0) {
+        alert('No active journey found. Please contact support.');
+        return;
+      }
+
+      // Create or acknowledge the most recent check-in
+      const activeCase = cases[0];
+      const pendingCheckIns = await base44.entities.SoloCheckIn.filter(
+        { case_id: activeCase.id, status: 'pending' },
+        '-scheduled_time',
+        1
+      );
+
+      if (pendingCheckIns.length > 0) {
+        // Acknowledge the pending check-in
+        await base44.entities.SoloCheckIn.update(pendingCheckIns[0].id, {
+          status: 'acknowledged',
+          acknowledged_at: new Date().toISOString(),
+          responded_time: new Date().toISOString(),
+          response_method: 'app'
+        });
+      } else {
+        // Create a new check-in record
+        const newCheckIn = await base44.entities.SoloCheckIn.create({
+          case_id: activeCase.id,
+          trip_id: activeCase.id,
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.full_name,
+          scheduled_time: new Date().toISOString(),
+          status: 'acknowledged',
+          acknowledged_at: new Date().toISOString(),
+          responded_time: new Date().toISOString(),
+          response_method: 'app',
+          check_in_round: 1
+        });
+      }
+
+      alert('✅ You are safe! Check-in recorded successfully.');
+      loadCheckIns();
+    } catch (err) {
+      console.error('Check-in error:', err);
+      alert('Failed to record check-in. Please try again or contact support.');
+    } finally {
+      setAcknowledging(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const configs = {
       pending: { label: 'Pending', color: 'bg-amber-100 text-amber-700' },
@@ -85,6 +140,31 @@ export default function SoloCheckInSettings() {
               <p className="text-sm text-slate-500">Mandatory safety protocol for unaccompanied journeys</p>
             </div>
           </div>
+
+          {/* I Am Safe Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6"
+          >
+            <Button
+              onClick={handleIAmSafe}
+              disabled={acknowledging}
+              className="w-full h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl text-lg font-bold shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {acknowledging ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
+                  Recording Your Safety...
+                </>
+              ) : (
+                <>
+                  <Heart className="w-6 h-6 mr-3 fill-white" />
+                  I Am Safe
+                </>
+              )}
+            </Button>
+          </motion.div>
 
           {/* Current Status Banner */}
           <SoloCheckInBanner />
