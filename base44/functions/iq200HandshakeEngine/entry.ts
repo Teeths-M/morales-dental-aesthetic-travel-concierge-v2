@@ -140,15 +140,14 @@ Deno.serve(async (req) => {
         timestamp: now,
       });
 
-      // Check if this was the final touchpoint (Golden M)
       const tp = TOUCHPOINTS.find(t => t.id === touchpoint_id);
       let golden_m_triggered = false;
       if (tp?.is_golden_m) {
         golden_m_triggered = true;
-        // Update case timeline
-        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-        if (cases[0]) {
-          const tl = cases[0].timeline_log || [];
+        // BUG-R7-02 FIX: filter({ id }) always returns [] — use .get()
+        const goldenCase = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+        if (goldenCase) {
+          const tl = goldenCase.timeline_log || [];
           await base44.asServiceRole.entities.CaseRecord.update(case_id, {
             status: 'Completed',
             timeline_log: [...tl, {
@@ -159,6 +158,7 @@ Deno.serve(async (req) => {
           });
         }
       }
+
 
       return Response.json({ success: true, handshake: updated, golden_m_triggered });
     }
@@ -217,6 +217,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unknown action. Use: create_touchpoints | get_status | confirm_handshake | check_contingency' }, { status: 400 });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[iq200HandshakeEngine]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

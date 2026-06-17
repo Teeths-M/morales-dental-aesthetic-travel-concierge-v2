@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[logPhysicalIntakeHandshake]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

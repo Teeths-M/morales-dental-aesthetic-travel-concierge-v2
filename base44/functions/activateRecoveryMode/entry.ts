@@ -34,8 +34,9 @@ Deno.serve(async (req) => {
       t = new Date(t.getTime() + intervalHours * 60 * 60 * 1000);
     }
 
-    // Create recovery session
-    const session = await base44.entities.RecoverySession.create({
+    // BUG-R7-01 FIX: use asServiceRole — this is triggered by admin/doctor portal flows,
+    // not the patient, so user-scoped entity writes may fail cross-ownership checks
+    const session = await base44.asServiceRole.entities.RecoverySession.create({
       case_id,
       patient_id: user.id,
       patient_email: user.email,
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, session, checkins_scheduled: checkins.length, recovery_ends_at: endAt.toISOString() });
   } catch (error) {
-    console.error('activateRecoveryMode error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[activateRecoveryMode]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

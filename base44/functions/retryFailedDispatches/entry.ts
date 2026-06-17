@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ retried: results.length, results });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[retryFailedDispatches]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

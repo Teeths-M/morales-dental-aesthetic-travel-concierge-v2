@@ -225,6 +225,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ status: 'ok', results });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[onDoctorConfirmed]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

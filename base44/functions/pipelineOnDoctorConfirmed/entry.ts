@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, results });
   } catch (error) {
-    console.error('pipelineOnDoctorConfirmed error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[pipelineOnDoctorConfirmed]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

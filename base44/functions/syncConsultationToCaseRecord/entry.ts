@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, synced_fields: Object.keys(updates) });
   } catch (error) {
-    console.error('Sync error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[syncConsultationToCaseRecord]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
