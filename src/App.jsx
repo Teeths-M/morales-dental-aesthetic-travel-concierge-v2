@@ -281,12 +281,12 @@ function App() {
     <Router>
       <AuthProvider>
         <CartProvider>
-          <PlatformModeProvider>
-            <QueryClientProvider client={queryClientInstance}>
+          <QueryClientProvider client={queryClientInstance}>
+            <PlatformModeProvider>
               <AuthenticatedApp />
               <Toaster />
-            </QueryClientProvider>
-          </PlatformModeProvider>
+            </PlatformModeProvider>
+          </QueryClientProvider>
         </CartProvider>
       </AuthProvider>
     </Router>

@@ -281,17 +281,18 @@ export class PricingEngine {
 
 /**
  * Create pricing engine from Base44 SDK entities
+ * Bounded queries prevent OOM on production-scale datasets
  */
 export async function initializePricingEngine(base44) {
   try {
     const [procedures, countryPricing, doctorPricing, bundles, complexityModifiers, rules] =
       await Promise.all([
-        base44.entities.ProcedurePricing.list(),
-        base44.entities.CountryPricing.list(),
-        base44.entities.DoctorPricing.list(),
-        base44.entities.ProcedureBundle.list(),
-        base44.entities.ComplexityModifier.list(),
-        base44.entities.PricingRule.list(),
+        base44.entities.ProcedurePricing.list('-created_date', 500),
+        base44.entities.CountryPricing.list('-created_date', 1000),
+        base44.entities.DoctorPricing.list('-created_date', 500),
+        base44.entities.ProcedureBundle.list('-created_date', 100),
+        base44.entities.ComplexityModifier.list('-created_date', 100),
+        base44.entities.PricingRule.list('-created_date', 100),
       ]);
 
     return new PricingEngine(procedures, countryPricing, doctorPricing, bundles, complexityModifiers, rules);
