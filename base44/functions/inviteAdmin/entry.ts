@@ -22,6 +22,8 @@ Deno.serve(async (req) => {
       message: `Admin invitation sent to ${email}`
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R4-11 FIX: SEC-10 — never expose internal error details
+    console.error('[inviteAdmin]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

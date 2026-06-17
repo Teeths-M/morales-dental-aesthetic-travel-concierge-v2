@@ -7,9 +7,12 @@ async function sha256(text) {
 }
 
 async function getLastAuditHash(base44) {
+  // BUG-R4-06 FIX: Sort by '-timestamp' (logical event order) not '-created_date'.
+  // created_date is insertion time; timestamp is the audit event time. Using created_date
+  // produces a wrong prev_hash when any backfill or out-of-order write occurs.
   try {
-    const logs = await base44.asServiceRole.entities.AuditLog.list('-created_date', 1);
-    return logs[0]?.id ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
   } catch (_) { return 'GENESIS'; }
 }
 
@@ -147,7 +150,10 @@ Deno.serve(async (req) => {
       if (!verification_record_id) return Response.json({ error: 'verification_record_id required' }, { status: 400 });
 
       const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      const records = await base44.asServiceRole.entities.DoctorVerification.filter({ id: verification_record_id });
+      // BUG-R4-04 FIX: SDK filter() cannot query by built-in `id` — always returns [].
+      // List recent records for this admin action context and match by id on the JS side.
+      const allVerifications = await base44.asServiceRole.entities.DoctorVerification.list('-submitted_at', 200);
+      const records = allVerifications.filter(r => r.id === verification_record_id);
       if (!records.length) return Response.json({ error: 'Record not found' }, { status: 404 });
 
       await base44.asServiceRole.entities.DoctorVerification.update(verification_record_id, {
@@ -190,7 +196,9 @@ Deno.serve(async (req) => {
       }
       if (!verification_record_id) return Response.json({ error: 'verification_record_id required' }, { status: 400 });
 
-      const records = await base44.asServiceRole.entities.DoctorVerification.filter({ id: verification_record_id });
+      // BUG-R4-04 FIX (admin_deny path): same SDK id-filter bug
+      const allDenyVerifications = await base44.asServiceRole.entities.DoctorVerification.list('-submitted_at', 200);
+      const records = allDenyVerifications.filter(r => r.id === verification_record_id);
       if (!records.length) return Response.json({ error: 'Record not found' }, { status: 404 });
 
       await base44.asServiceRole.entities.DoctorVerification.update(verification_record_id, {
@@ -232,6 +240,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R4-10 FIX: SEC-10 — never expose internal error details
+    console.error('[runDoctorVerification]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

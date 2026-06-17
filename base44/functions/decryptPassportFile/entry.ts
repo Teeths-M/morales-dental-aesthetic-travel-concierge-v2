@@ -18,11 +18,15 @@ Deno.serve(async (req) => {
 
     const vault = vaults[0];
 
-    // Authorization: only the owner or an admin may retrieve
-    if (vault.patient_email !== user.email && user.role !== 'admin') {
+    // BUG-R4-03 FIX: PassportVault schema stores `user_email` not `patient_email`.
+    // The old check used `vault.patient_email` which is always undefined → always denied the owner.
+    // Also check `vault.user_id` as a secondary fallback for records created before user_email was set.
+    const isOwner = (vault.user_email && vault.user_email === user.email) ||
+                    (vault.user_id && vault.user_id === user.id);
+    if (!isOwner && user.role !== 'admin') {
       await base44.asServiceRole.entities.PassportAuditLog.create({
         passport_token,
-        patient_email: vault.patient_email,
+        patient_email: vault.user_email || vault.patient_email,
         actor_id: user.id,
         actor_role: user.role || 'unknown',
         actor_name: user.full_name,
@@ -43,7 +47,7 @@ Deno.serve(async (req) => {
 
     await base44.asServiceRole.entities.PassportAuditLog.create({
       passport_token,
-      patient_email: vault.patient_email,
+      patient_email: vault.user_email || vault.patient_email,
       actor_id: user.id,
       actor_role: user.role === 'admin' ? 'admin' : 'patient',
       actor_name: user.full_name,
@@ -66,7 +70,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('decryptPassportFile error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R4-09 FIX: SEC-10 — never expose internal error details
+    console.error('[decryptPassportFile]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

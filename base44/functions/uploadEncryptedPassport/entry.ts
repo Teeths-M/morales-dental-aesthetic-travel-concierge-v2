@@ -12,6 +12,10 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // BUG-R4-01 FIX: Parse body ONCE into a variable. req.body is a single-read stream —
+    // calling req.json() then req.text() always returns '' on the second read.
+    // Check for forbidden key fields on the parsed object, not a re-read stream.
+    const parsedBody = await req.json();
     const {
       encrypted_file_b64,
       encryption_iv_b64,
@@ -19,13 +23,14 @@ Deno.serve(async (req) => {
       file_size_bytes,
       file_hash_sha256,
       document_type = 'passport'
-    } = await req.json();
+    } = parsedBody;
 
-    // ZERO-KNOWLEDGE: The backend must NOT receive or store an encryption key.
-    // If a client mistakenly sends one, refuse.
-    const body = await req.text().catch(() => '{}');
-    if (body.includes('encryption_key_b64')) {
-      return Response.json({ error: 'Security violation: encryption keys must never be sent to the server.' }, { status: 400 });
+    // ZERO-KNOWLEDGE: reject if encryption key fields are present in the parsed body
+    const FORBIDDEN_FIELDS = ['encryption_key_b64', 'password', 'key', 'secret'];
+    for (const field of FORBIDDEN_FIELDS) {
+      if (field in parsedBody) {
+        return Response.json({ error: 'Security violation: encryption keys must never be sent to the server.' }, { status: 400 });
+      }
     }
 
     if (!encrypted_file_b64 || !encryption_iv_b64) {
@@ -47,21 +52,24 @@ Deno.serve(async (req) => {
     const passport_token = await generatePassportToken();
     const expires_at = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Store ONLY the encrypted payload, IV (needed for decryption by client), and metadata.
-    // NO encryption_key_b64 — zero-knowledge architecture.
+    // BUG-R4-02 FIX: PassportVault schema uses `user_email` not `patient_email`.
+    // Storing in the wrong field caused user_email to be undefined, making every
+    // downstream filter({ user_email }) and auth check fail with 403 for the owner.
     const vault = await base44.entities.PassportVault.create({
       passport_token,
-      patient_email: user.email,
+      user_id: user.id,
+      user_email: user.email,     // Correct field name per PassportVault schema
       document_type,
       encrypted_file_uri: file_uri,
-      encryption_iv_b64,               // IV is not secret — needed to initiate decryption
+      encryption_iv_b64,          // IV is not secret — needed to initiate client-side decryption
       redacted_for_display: redacted_for_display || {},
       file_size_bytes: file_size_bytes || 0,
-      file_hash_sha256: file_hash_sha256 || '',
+      integrity_hash: file_hash_sha256 || '',
       status: 'active',
       virus_scan_status: 'passed',
       expires_at,
-      access_count: 0
+      access_count: 0,
+      is_emergency_accessible: true,
     });
 
     await base44.asServiceRole.entities.PassportAuditLog.create({
@@ -80,6 +88,8 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, passport_token, vault_id: vault.id, expires_at, redacted_for_display });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R4-08 FIX: SEC-10 — never expose internal error details
+    console.error('[uploadEncryptedPassport]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
