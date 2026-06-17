@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,8 +8,6 @@
   :root {
     --font-display: 'Instrument Serif', serif;
     --font-body: 'Public Sans', sans-serif;
-    --brand-dark: #202A36;
-    --brand-dark-hover: #1a2229;
 
     --background: 150 8% 97%;
     --foreground: 156 16% 7%;
@@ -47,8 +45,6 @@
   }
 
   .dark {
-    --brand-dark: #202A36;
-    --brand-dark-hover: #1a2229;
     --background: 156 16% 5%;
     --foreground: 150 8% 95%;
     --card: 156 14% 8%;
@@ -82,10 +78,6 @@
     --sidebar-border: 156 10% 15%;
     --sidebar-ring: 150 20% 60%;
   }
-
-  /* SkyElite Brand Colors */
-  --brand-dark: #202A36;
-  --brand-dark-hover: #1a2229;
 }
 
 @layer base {
@@ -95,9 +87,6 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
-  }
-  .font-inter {
-    font-family: 'Inter', sans-serif;
   }
   h1, h2, h3 {
     font-family: var(--font-display);

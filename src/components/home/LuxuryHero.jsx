@@ -142,32 +142,13 @@ const CONTENT = {
       { icon: Shield,     label: '24/7 Safety',           sub: 'SOS & monitoring' },
     ],
   },
-  skyelite: {
-    eyebrow: 'PRIVATE JETS',
-    headline: (
-      <>
-        Premium.<br />
-        <span style={{ display: 'block', marginTop: '-8px' }}>Accessible.</span>
-      </>
-    ),
-    body: 'Your dedication deserves recognition. Experience luxury private jet travel with SkyElite.',
-    cta: { label: 'Discover', path: '/private-jets' },
-    ctaSecondary: { label: 'Book Now', path: '/booking' },
-    trustPills: [
-      { icon: Plane,      label: 'Premium Fleet',    sub: 'Latest aircraft' },
-      { icon: BadgeCheck, label: 'Verified Pilots',  sub: 'Certified experts' },
-      { icon: Shield,     label: 'Safety First',     sub: 'ISO certified' },
-      { icon: Heart,      label: '24/7 Support',     sub: 'Always available' },
-    ],
-  },
 };
 
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
   const { mode } = usePlatformMode();
   const isMedical = mode === 'medical';
-  const isSkyElite = mode === 'skyelite';
-  const content = isSkyElite ? CONTENT.skyelite : (isMedical ? CONTENT.medical : CONTENT.nonmedical);
+  const content = isMedical ? CONTENT.medical : CONTENT.nonmedical;
 
   // Stable callback — doesn't change between renders
   const openModal  = useCallback(() => setShowModal(true),  []);
@@ -221,21 +202,10 @@ export default function LuxuryHero() {
 
             <div className="flex flex-wrap gap-4 mb-12">
               <Link to={content.cta.path}
-                className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90 ${
-                  isSkyElite ? 'bg-gray-300 text-gray-900 hover:bg-gray-400' : ''
-                }`}
-                style={isSkyElite ? {} : { background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
+                style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
                 {content.cta.label}
               </Link>
-              {content.ctaSecondary && (
-                <Link to={content.ctaSecondary.path}
-                  className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90 ${
-                    isSkyElite ? 'bg-brand-dark text-white hover:bg-brand-darkHover' : ''
-                  }`}
-                  style={isSkyElite ? {} : { background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
-                  {content.ctaSecondary.label}
-                </Link>
-              )}
               {isMedical && (
                 <button onClick={openModal}
                   className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200">
@@ -261,12 +231,10 @@ export default function LuxuryHero() {
           </motion.div>
 
           {/* RIGHT — SafeTDiagram is memoized, never re-renders on mode toggle */}
-          {!isSkyElite && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.3 }}
-              className="relative hidden lg:flex items-center justify-center" style={{ height: '100vh' }}>
-              <SafeTDiagram />
-            </motion.div>
-          )}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.3 }}
+            className="relative hidden lg:flex items-center justify-center" style={{ height: '100vh' }}>
+            <SafeTDiagram />
+          </motion.div>
         </div>
       </section>
       <HowItWorksModal isOpen={showModal} onClose={closeModal} />

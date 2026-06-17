@@ -14,11 +14,8 @@ export function PlatformModeProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, newMode);
   };
 
-  // Helper to check if in SkyElite mode
-  const isSkyElite = mode === 'skyelite';
-
   return (
-    <PlatformModeContext.Provider value={{ mode, toggleMode, isSkyElite }}>
+    <PlatformModeContext.Provider value={{ mode, toggleMode }}>
       {children}
     </PlatformModeContext.Provider>
   );

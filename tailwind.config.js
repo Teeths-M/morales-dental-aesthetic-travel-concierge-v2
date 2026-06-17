@@ -7,13 +7,6 @@ module.exports = {
       fontFamily: {
         display: ['var(--font-display)'],
         body: ['var(--font-body)'],
-        inter: ['Inter', 'sans-serif'],
-      },
-      colors: {
-        brand: {
-          dark: '#202A36',
-          darkHover: '#1a2229',
-        },
       },
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -70,10 +63,6 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			},
-  			brand: {
-  				dark: 'var(--brand-dark)',
-  				darkHover: 'var(--brand-dark-hover)'
   			}
   		},
   		keyframes: {
