@@ -87,23 +87,6 @@ const SafeTDiagram = React.memo(function SafeTDiagram() {
         </svg>
       ))}
 
-      {/* Connection lines to nodes */}
-      <svg className="absolute" width="500" height="500" viewBox="-250 -250 500 500">
-        {ORBIT_NODES_COMPUTED.map(({ x, y }) => (
-          <line key={`line-${x}-${y}`} x1="0" y1="0" x2={x} y2={y} stroke={CYAN_GLOW} strokeWidth="0.5" opacity="0.15" />
-        ))}
-      </svg>
-
-      {/* Endpoint dots with cyan glow */}
-      <svg className="absolute" width="500" height="500" viewBox="-250 -250 500 500">
-        {ORBIT_NODES_COMPUTED.map(({ x, y, label }) => (
-          <g key={`dot-${label}`}>
-            <circle cx={x} cy={y} r="6" fill={CYAN_GLOW} opacity="0.08" />
-            <circle cx={x} cy={y} r="3" fill={CYAN_GLOW} opacity="0.85" style={{ filter: `drop-shadow(0 0 6px ${CYAN_GLOW})` }} />
-          </g>
-        ))}
-      </svg>
-
       {/* Orbit node badges with cyan/gold hybrid styling */}
       {ORBIT_NODES_COMPUTED.map(({ label, icon: NodeIcon, x, y }) => (
         <div key={label} className="absolute flex items-center gap-2 px-3 py-2.5 rounded-2xl text-[11px] font-medium whitespace-nowrap backdrop-blur-xl"
