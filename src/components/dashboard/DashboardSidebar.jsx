@@ -33,29 +33,15 @@ const NAV_ITEMS = Object.freeze([
 const SidebarContent = React.memo(({ location, onClose }) => {
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Premium Brand Header */}
+      {/* Premium Brand Header - Single Clean Logo */}
       <div className={`${LUXURY_COLORS.header} px-5 py-6`}>
-        {/* Main Logo */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-xl">
-            <span className="text-white font-serif font-bold text-2xl">M</span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
+            <span className="text-white font-serif font-bold text-xl">M</span>
           </div>
           <div>
-            <p className="text-white font-serif font-semibold text-base tracking-wide">MORALES</p>
-            <p className="text-amber-400/80 text-[10px] tracking-widest uppercase">Dental & Aesthetic</p>
-          </div>
-        </div>
-        
-        {/* User Profile - Unified Luxury Style */}
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md flex-shrink-0">
-              <span className="text-white font-serif font-bold text-sm">M</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold text-sm truncate">Welcome back</p>
-              <p className="text-white/60 text-xs truncate">Patient Portal</p>
-            </div>
+            <p className="text-white font-serif font-semibold text-sm tracking-wide">MORALES</p>
+            <p className="text-amber-400/70 text-[10px] tracking-widest uppercase">Patient Portal</p>
           </div>
         </div>
       </div>
