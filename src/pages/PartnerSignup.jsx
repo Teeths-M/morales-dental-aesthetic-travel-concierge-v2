@@ -34,7 +34,7 @@ const CARDS = (language, navigate) => [
     alt: 'Luxury chauffeur service',
     title: language === 'es' ? 'Servicio de Taxi' : language === 'fr' ? 'Service de Taxi' : 'Chauffeur Service',
     desc: language === 'es' ? 'Transporte VIP de puerta a puerta con vehículos de lujo.' : language === 'fr' ? 'Transport VIP porte-à-porte avec véhicules de luxe.' : 'VIP door-to-door transportation with luxury vehicles.',
-    btn: 'from-blue-600 to-cyan-600',
+    btn: 'from-slate-800 to-slate-900',
     icon: Car,
     onClick: () => navigate('/partner-signup/taxi-service', { state: { language } }),
     badge: 'LUXURY',
