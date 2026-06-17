@@ -125,7 +125,7 @@ export default function WalkieTalkie() {
     setConnectionStatus('translating');
     
     try {
-      console.log('[WalkieTalkie] Processing audio, size:', audioBlob.size);
+      console.log('[WalkieTalkie] Processing audio, size:', audioBlob.size, 'type:', audioBlob.type);
       
       // Upload audio to get URL
       const uploadResponse = await base44.integrations.Core.UploadFile({ file: audioBlob });
@@ -133,10 +133,19 @@ export default function WalkieTalkie() {
       console.log('[WalkieTalkie] Uploaded audio, URL:', audioUrl);
 
       if (!audioUrl) {
+        console.error('[WalkieTalkie] Upload failed - no URL in response:', uploadResponse);
         throw new Error('Upload failed - no URL returned');
       }
 
       // Send for translation
+      console.log('[WalkieTalkie] Calling walkieTalkieTranslate with:', {
+        action: 'translate_audio',
+        session_token: sessionToken,
+        audio_url: audioUrl,
+        source_language: sourceLang,
+        target_language: targetLang
+      });
+      
       const response = await base44.functions.invoke('walkieTalkieTranslate', {
         action: 'translate_audio',
         session_token: sessionToken,
@@ -145,11 +154,17 @@ export default function WalkieTalkie() {
         target_language: targetLang
       });
 
-      console.log('[WalkieTalkie] Translation response:', response.data);
+      console.log('[WalkieTalkie] Translation response status:', response.status);
+      console.log('[WalkieTalkie] Translation response data:', response.data);
+
+      // Check for errors first
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
       if (response.data?.translated_text) {
         setLastTranslation({
-          original: response.data.original_text,
+          original: response.data.original_text || '',
           translated: response.data.translated_text,
           sourceLang: sourceLang,
           targetLang: targetLang,
@@ -161,23 +176,27 @@ export default function WalkieTalkie() {
           const audio = new Audio(response.data.audio_url);
           setIsPlaying(true);
           audio.onended = () => setIsPlaying(false);
-          audio.onerror = () => {
-            console.error('[WalkieTalkie] Audio playback error');
+          audio.onerror = (e) => {
+            console.error('[WalkieTalkie] Audio playback error:', e);
             setIsPlaying(false);
           };
-          await audio.play();
+          await audio.play().catch(e => console.error('[WalkieTalkie] Play failed:', e));
         }
 
         toast({ title: 'Translation complete', description: 'Message translated successfully' });
-      } else if (response.data?.error) {
-        throw new Error(response.data.error);
       } else {
+        console.error('[WalkieTalkie] No translated_text in response:', response.data);
         throw new Error('No translation returned');
       }
       
       setConnectionStatus('connected');
     } catch (error) {
       console.error('[WalkieTalkie] Translation error:', error);
+      console.error('[WalkieTalkie] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       setConnectionStatus('error');
       toast({ 
         title: 'Translation failed', 

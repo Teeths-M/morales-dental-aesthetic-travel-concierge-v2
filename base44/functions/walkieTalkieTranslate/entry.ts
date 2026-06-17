@@ -61,72 +61,85 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'audio_url, source_language, target_language, session_token required' }, { status: 400 });
       }
 
+      // Step 1: Transcribe audio to text
+      console.log('[walkieTalkieTranslate] Transcribing audio...');
+      let originalText = '';
+      
       try {
-        // Step 1: Transcribe audio to text
-        console.log('[walkieTalkieTranslate] Transcribing audio...');
-        let transcription, originalText, translationResult, translatedText, speechResult, audioUrl;
-        
-        try {
-          transcription = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url });
-          originalText = transcription.data || '';
-          console.log('[walkieTalkieTranslate] Transcription result:', originalText);
-        } catch (e) {
-          console.error('[walkieTalkieTranslate] Transcription failed:', e);
-          originalText = 'Audio transcription unavailable';
-        }
-
-        // Step 2: Translate text using LLM
-        console.log('[walkieTalkieTranslate] Translating text...');
-        try {
-          translationResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
-            prompt: `Translate the following text from ${source_language} to ${target_language}. Return ONLY the translation, nothing else: "${originalText}"`,
-            add_context_from_internet: false
-          });
-          translatedText = typeof translationResult === 'string' ? translationResult : originalText;
-          console.log('[walkieTalkieTranslate] Translation result:', translatedText);
-        } catch (e) {
-          console.error('[walkieTalkieTranslate] Translation failed:', e);
-          translatedText = originalText;
-        }
-
-        // Step 3: Generate speech (TTS) for translated text
-        console.log('[walkieTalkieTranslate] Generating speech...');
-        try {
-          speechResult = await base44.asServiceRole.integrations.Core.GenerateSpeech({
-            text: translatedText,
-            language_code: target_language
-          });
-          audioUrl = speechResult.url;
-          console.log('[walkieTalkieTranslate] Speech URL:', audioUrl);
-        } catch (e) {
-          console.error('[walkieTalkieTranslate] TTS failed:', e);
-          audioUrl = null;
-        }
-
-        // Update session metrics
-        const session = await base44.asServiceRole.entities.WalkieTalkieSession.filter(
-          { session_token: session_token, status: 'active' },
-          '-created_date',
-          1
-        );
-
-        if (session && session[0]) {
-          await base44.asServiceRole.entities.WalkieTalkieSession.update(session[0].id, {
-            message_count: (session[0].message_count || 0) + 1
-          });
-        }
-
-        return Response.json({
-          original_text: originalText,
-          translated_text: translatedText,
-          audio_url: audioUrl,
-          source_language,
-          target_language
-        });
-      } catch (integrationError) {
-        console.error('[walkieTalkieTranslate] Integration error:', integrationError);
-        return Response.json({ error: integrationError.message || 'Translation processing failed' }, { status: 500 });
+        const transcription = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url });
+        originalText = transcription.data || '';
+        console.log('[walkieTalkieTranslate] Transcription result:', originalText);
+      } catch (e) {
+        console.error('[walkieTalkieTranslate] Transcription failed:', e.message);
+        return Response.json({ 
+          error: 'Transcription failed: ' + (e.message || 'Unknown error'),
+          original_text: '',
+          translated_text: '',
+          audio_url: null
+        }, { status: 500 });
       }
+
+      if (!originalText || originalText.trim() === '') {
+        return Response.json({ 
+          error: 'No speech detected in audio',
+          original_text: '',
+          translated_text: '',
+          audio_url: null
+        }, { status: 400 });
+      }
+
+      // Step 2: Translate text using LLM
+      console.log('[walkieTalkieTranslate] Translating text...');
+      let translatedText = originalText;
+      
+      try {
+        const translationResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: `Translate the following text from ${source_language} to ${target_language}. Return ONLY the translation, nothing else: "${originalText}"`,
+          add_context_from_internet: false
+        });
+        translatedText = typeof translationResult === 'string' ? translationResult : originalText;
+        console.log('[walkieTalkieTranslate] Translation result:', translatedText);
+      } catch (e) {
+        console.error('[walkieTalkieTranslate] Translation failed:', e.message);
+        // Continue with original text if translation fails
+      }
+
+      // Step 3: Generate speech (TTS) for translated text
+      console.log('[walkieTalkieTranslate] Generating speech...');
+      let audioUrl = null;
+      
+      try {
+        const speechResult = await base44.asServiceRole.integrations.Core.GenerateSpeech({
+          text: translatedText,
+          language_code: target_language
+        });
+        audioUrl = speechResult.url;
+        console.log('[walkieTalkieTranslate] Speech URL:', audioUrl);
+      } catch (e) {
+        console.error('[walkieTalkieTranslate] TTS failed:', e.message);
+        // Continue without audio if TTS fails
+      }
+
+      // Update session metrics
+      const session = await base44.asServiceRole.entities.WalkieTalkieSession.filter(
+        { session_token: session_token, status: 'active' },
+        '-created_date',
+        1
+      );
+
+      if (session && session[0]) {
+        await base44.asServiceRole.entities.WalkieTalkieSession.update(session[0].id, {
+          message_count: (session[0].message_count || 0) + 1
+        });
+      }
+
+      return Response.json({
+        original_text: originalText,
+        translated_text: translatedText,
+        audio_url: audioUrl,
+        source_language,
+        target_language
+      });
     }
 
     // END SESSION
