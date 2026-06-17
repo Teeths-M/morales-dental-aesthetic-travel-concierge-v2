@@ -167,44 +167,44 @@ export default function Discover() {
             {/* Desktop Filters */}
             <div className="hidden md:flex items-center gap-2">
               <Select value={filters.country} onValueChange={(v) => updateFilter("country", v)}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Country" />
+                <SelectTrigger className="w-40 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white">
+                  <SelectValue placeholder="Country" className="text-white" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>All Countries</SelectItem>
+                <SelectContent className="bg-[#0A101D] border-white/[0.12]">
+                  <SelectItem value={null} className="text-white hover:bg-white/[0.08]">All Countries</SelectItem>
                   {COUNTRIES.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
+                    <SelectItem key={country} value={country} className="text-white hover:bg-white/[0.08]">{country}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={filters.city} onValueChange={(v) => updateFilter("city", v)} disabled={!filters.country}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="City" />
+                <SelectTrigger className="w-40 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white disabled:opacity-50">
+                  <SelectValue placeholder="City" className="text-white" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>All Cities</SelectItem>
+                <SelectContent className="bg-[#0A101D] border-white/[0.12]">
+                  <SelectItem value={null} className="text-white hover:bg-white/[0.08]">All Cities</SelectItem>
                   {getCityOptions().map(city => (
-                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                    <SelectItem key={city} value={city} className="text-white hover:bg-white/[0.08]">{city}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={String(filters.rating)} onValueChange={(v) => updateFilter("rating", Number(v))}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Rating" />
+                <SelectTrigger className="w-32 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white">
+                  <SelectValue placeholder="Rating" className="text-white" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="4">4+ Stars</SelectItem>
-                  <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
+                <SelectContent className="bg-[#0A101D] border-white/[0.12]">
+                  <SelectItem value="4" className="text-white hover:bg-white/[0.08]">4+ Stars</SelectItem>
+                  <SelectItem value="4.5" className="text-white hover:bg-white/[0.08]">4.5+ Stars</SelectItem>
+                  <SelectItem value="5" className="text-white hover:bg-white/[0.08]">5 Stars</SelectItem>
                 </SelectContent>
               </Select>
 
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(true)}
-                className="gap-2"
+                className="gap-2 bg-[#0A101D]/80 border-white/[0.12] text-white hover:bg-[#0A101D] hover:text-white hover:border-white/30"
               >
                 <Filter className="h-4 w-4" />
                 More Filters
