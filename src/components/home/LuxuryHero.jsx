@@ -91,15 +91,6 @@ export default function LuxuryHero() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} 
             className="flex flex-col z-10 lg:pr-16"
           >
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-7"
-            >
-              <ModeToggle />
-            </motion.div>
-
             <AnimatePresence mode="wait">
               <motion.p 
                 key={`eyebrow-${mode}`} 
@@ -119,6 +110,15 @@ export default function LuxuryHero() {
                 {content.eyebrow}
               </motion.p>
             </AnimatePresence>
+
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mb-7 lg:hidden"
+            >
+              <ModeToggle />
+            </motion.div>
 
             <AnimatePresence mode="wait">
               <motion.h1 
@@ -149,8 +149,8 @@ export default function LuxuryHero() {
                 transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="text-white/65 mb-14 max-w-[480px]"
                 style={{ 
-                  fontSize: '17px',
-                  lineHeight: 1.75,
+                  fontSize: '18px',
+                  lineHeight: 1.8,
                   fontWeight: 300,
                   letterSpacing: '0.01em',
                   fontSmooth: 'antialiased'
@@ -159,6 +159,15 @@ export default function LuxuryHero() {
                 {content.body}
               </motion.p>
             </AnimatePresence>
+
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mb-7 hidden lg:block"
+            >
+              <ModeToggle />
+            </motion.div>
 
             <motion.div 
               initial={{ opacity: 0, y: 12 }}
@@ -198,7 +207,7 @@ export default function LuxuryHero() {
                     whileHover={{ y: -2 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Icon className="w-5 h-5" style={{ color: GOLD, filter: `drop-shadow(0 0 8px ${GOLD}dd)` }} strokeWidth={1.3} />
+                    <Icon className="w-5 h-5" style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}88)` }} strokeWidth={1.3} />
                     <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
                     <p className="text-[11px] text-white/50 tracking-wide">{sub}</p>
                   </motion.div>
