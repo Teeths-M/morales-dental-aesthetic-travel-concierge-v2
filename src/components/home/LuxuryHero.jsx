@@ -117,6 +117,9 @@ const SafeTDiagram = React.memo(function SafeTDiagram() {
   );
 });
 
+const VIDEO_URL = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_091828_e240eb17-6edc-4129-ad9d-98678e3fd238.mp4';
+const POSTER_URL = 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1920&q=80';
+
 const CONTENT = {
   medical: {
     eyebrow: 'World-Class Care. Personalized For You.',
@@ -142,13 +145,33 @@ const CONTENT = {
       { icon: Shield,     label: '24/7 Safety',           sub: 'SOS & monitoring' },
     ],
   },
+  skyelite: {
+    eyebrow: 'PRIVATE JETS',
+    headline: (
+      <>
+        <span style={{ color: '#9CA3AF' }}>Premium.</span>
+        <br />
+        <span style={{ color: '#202A36', marginTop: '-12px', display: 'block' }}>Accessible.</span>
+      </>
+    ),
+    body: 'Your dedication deserves recognition. Experience luxury private jet travel with SkyElite — where premium service meets accessible pricing.',
+    cta: { label: 'Discover', path: '/private-jets' },
+    ctaSecondary: { label: 'Book Now', path: '/booking' },
+    trustPills: [
+      { icon: Plane,      label: 'Premium Fleet',        sub: 'Latest aircraft' },
+      { icon: BadgeCheck, label: 'Verified Pilots',      sub: 'Certified experts' },
+      { icon: Shield,     label: 'Safety First',         sub: 'ISO certified' },
+      { icon: Heart,      label: '24/7 Support',         sub: 'Always available' },
+    ],
+  },
 };
 
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
-  const { mode } = usePlatformMode();
+  const [videoError, setVideoError] = useState(false);
+  const { mode, isSkyElite } = usePlatformMode();
   const isMedical = mode === 'medical';
-  const content = isMedical ? CONTENT.medical : CONTENT.nonmedical;
+  const content = isSkyElite ? CONTENT.skyelite : (isMedical ? CONTENT.medical : CONTENT.nonmedical);
 
   // Stable callback — doesn't change between renders
   const openModal  = useCallback(() => setShowModal(true),  []);
@@ -156,15 +179,45 @@ export default function LuxuryHero() {
 
   return (
     <>
-      <section className="relative min-h-screen overflow-hidden" style={{ background: '#060B16', marginTop: '-68px' }}>
+      <section className="relative min-h-screen overflow-hidden" style={{ background: isSkyElite ? '#000' : '#060B16', marginTop: '-68px' }}>
         {/* Full-bleed background */}
         <div className="absolute inset-0">
-          <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover scale-105"
-            style={{ objectPosition: '70% center' }} loading="eager" fetchpriority="high" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 35%, rgba(6,11,22,0.88) 50%, rgba(6,11,22,0.45) 68%, rgba(6,11,22,0.1) 85%, transparent 100%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060B16 0%, rgba(6,11,22,0.4) 8%, transparent 18%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060B16 0%, rgba(6,11,22,0.7) 10%, transparent 25%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to left, #060B16 0%, rgba(6,11,22,0.5) 6%, transparent 18%)' }} />
+          {isSkyElite ? (
+            <>
+              {!videoError ? (
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  poster={POSTER_URL}
+                  className="w-full h-full object-cover"
+                  onError={() => setVideoError(true)}
+                >
+                  <source src={VIDEO_URL} type="video/mp4" />
+                </video>
+              ) : null}
+              <div 
+                className="w-full h-full object-cover"
+                style={{ 
+                  backgroundImage: `url(${POSTER_URL})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              />
+              <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)' }} />
+            </>
+          ) : (
+            <>
+              <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover scale-105"
+                style={{ objectPosition: '70% center' }} loading="eager" fetchpriority="high" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 35%, rgba(6,11,22,0.88) 50%, rgba(6,11,22,0.45) 68%, rgba(6,11,22,0.1) 85%, transparent 100%)' }} />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060B16 0%, rgba(6,11,22,0.4) 8%, transparent 18%)' }} />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060B16 0%, rgba(6,11,22,0.7) 10%, transparent 25%)' }} />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to left, #060B16 0%, rgba(6,11,22,0.5) 6%, transparent 18%)' }} />
+            </>
+          )}
         </div>
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
@@ -202,10 +255,21 @@ export default function LuxuryHero() {
 
             <div className="flex flex-wrap gap-4 mb-12">
               <Link to={content.cta.path}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
-                style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
+                className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90 ${
+                  isSkyElite ? 'bg-gray-300 text-gray-900 hover:bg-gray-400' : ''
+                }`}
+                style={isSkyElite ? {} : { background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
                 {content.cta.label}
               </Link>
+              {content.ctaSecondary && (
+                <Link to={content.ctaSecondary.path}
+                  className={`inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90 ${
+                    isSkyElite ? 'bg-brand-dark text-white hover:bg-brand-darkHover' : ''
+                  }`}
+                  style={isSkyElite ? {} : { background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
+                  {content.ctaSecondary.label}
+                </Link>
+              )}
               {isMedical && (
                 <button onClick={openModal}
                   className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200">
@@ -231,10 +295,12 @@ export default function LuxuryHero() {
           </motion.div>
 
           {/* RIGHT — SafeTDiagram is memoized, never re-renders on mode toggle */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.3 }}
-            className="relative hidden lg:flex items-center justify-center" style={{ height: '100vh' }}>
-            <SafeTDiagram />
-          </motion.div>
+          {!isSkyElite && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.3 }}
+              className="relative hidden lg:flex items-center justify-center" style={{ height: '100vh' }}>
+              <SafeTDiagram />
+            </motion.div>
+          )}
         </div>
       </section>
       <HowItWorksModal isOpen={showModal} onClose={closeModal} />
