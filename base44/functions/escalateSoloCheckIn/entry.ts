@@ -157,6 +157,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ escalated2h, escalated3h, checked: pendingCheckIns.length });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[escalateSoloCheckIn]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

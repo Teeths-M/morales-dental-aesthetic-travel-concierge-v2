@@ -1,17 +1,29 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getLastAuditHash(base44) {
+  try {
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+  } catch (_) { return 'GENESIS'; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    // BUG-FIX: include platform_admin — consistent with all other admin-guarded functions
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const now = new Date();
-    const fiveHoursAgo = new Date(now.getTime() - 5 * 60 * 60 * 1000);
 
-    // Find check-ins escalated at 3h level that are now 5+ hours overdue (2 more hours passed)
+    // Find check-ins escalated at 3h level that are now 5+ hours overdue
     const escalated3h = await base44.asServiceRole.entities.SoloCheckIn.filter(
       { status: 'escalated_3h' },
       '-scheduled_time',
@@ -28,16 +40,14 @@ Deno.serve(async (req) => {
 
       // If 5+ hours since original send (2h more after 3h escalation)
       if (hoursSinceSent >= 5) {
-        // Dispatch private security + notify local police
         const securityAgency = await base44.asServiceRole.entities.SecurityAgency.filter(
           { country: checkIn.procedure_country || 'Unknown', is_available: true },
           '-created_date',
           1
         );
 
-        const dispatchMsg = `🚨 SECURITY DISPATCH: ${checkIn.user_name} (solo traveler) has been unresponsive for 5+ hours. Last location: ${checkIn.location_label || checkIn.location_lat + ',' + checkIn.location_lng || 'Unknown'}. Phone: ${checkIn.user_phone}. Case ID: ${checkIn.case_id}. Please attempt welfare check immediately.`;
+        const dispatchMsg = `🚨 SECURITY DISPATCH: ${checkIn.user_name} (solo traveler) has been unresponsive for 5+ hours. Last location: ${checkIn.location_label || `${checkIn.location_lat},${checkIn.location_lng}` || 'Unknown'}. Phone: ${checkIn.user_phone}. Case ID: ${checkIn.case_id}. Please attempt welfare check immediately.`;
 
-        // Notify security agency via email
         if (securityAgency.length > 0) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({
@@ -50,16 +60,16 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Update check-in record
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
           status: 'resolved',
           escalation_level: 'security_dispatched',
           security_dispatched_at: now.toISOString(),
         });
 
-        // Log to AuditLog (SOS audit)
+        // BUG-FIX: real prev_hash (not hardcoded literal) + correct event_type for a security dispatch
+        const prevHash = await getLastAuditHash(base44);
         await base44.asServiceRole.entities.AuditLog.create({
-          event_type: 'safe_t_high_risk_waiver_signed',
+          event_type: 'safet_risk_status_changed',
           actor_id: 'system',
           actor_role: 'automated',
           actor_name: 'Solo Check-In Emergency Dispatch',
@@ -75,7 +85,7 @@ Deno.serve(async (req) => {
           },
           sensitive: true,
           timestamp: now.toISOString(),
-          prev_hash: 'SOLO_DISPATCH_5H',
+          prev_hash: prevHash,
         });
 
         dispatched++;
@@ -84,6 +94,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ dispatched, checked: escalated3h.length });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[dispatchSoloSecurity]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

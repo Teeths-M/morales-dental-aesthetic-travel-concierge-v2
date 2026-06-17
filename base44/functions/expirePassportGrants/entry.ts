@@ -5,6 +5,13 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // This is a scheduled/admin function — enforce admin auth to prevent unauthorized mass-archival
+    let user;
+    try { user = await base44.auth.me(); } catch (_) {}
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const now = new Date().toISOString();
     let expiredGrantCount = 0;
 

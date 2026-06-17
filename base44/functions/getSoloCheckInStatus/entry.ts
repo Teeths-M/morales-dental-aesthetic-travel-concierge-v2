@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
       overdue_check_ins: overdue,
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[getSoloCheckInStatus]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

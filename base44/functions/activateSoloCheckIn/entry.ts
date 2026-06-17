@@ -14,12 +14,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'case_id required' }, { status: 400 });
     }
 
-    const caseRecord = await base44.entities.CaseRecord.filter({ id: case_id }, '-created_date', 1);
-    if (caseRecord.length === 0) {
+    // SDK filter() cannot query by built-in `id` field — use created_by_id scoped list + client match
+    // We fetch the user's own cases and match by id safely on the JS side (max 50, user-scoped)
+    const userCases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 50);
+    const caseData = userCases.find(c => c.id === case_id);
+    if (!caseData) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
     }
-
-    const caseData = caseRecord[0];
 
     // Check if solo traveler (no companion required or declined)
     const isSolo = !caseData.requires_companion || caseData.companion_requirement_status === 'companion_required_pending';
@@ -84,6 +85,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ activated: true, check_in_id: checkIn.id, first_check_in: firstCheckInTime.toISOString() });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[activateSoloCheckIn]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

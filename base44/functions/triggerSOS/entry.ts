@@ -123,10 +123,14 @@ Deno.serve(async (req) => {
     }
 
     // Get case emergency contact and notify
+    // SDK filter() cannot query by built-in `id` field — list recent cases and match by id
     if (case_id) {
       try {
-        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-        const emergencyContactEmail = cases[0]?.emergency_contact;
+        const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
+          { client_email: patient_email }, '-created_date', 20
+        );
+        const matchedCase = recentCases.find(c => c.id === case_id);
+        const emergencyContactEmail = matchedCase?.emergency_contact;
         if (emergencyContactEmail && emergencyContactEmail.includes('@')) {
           try {
             await base44.asServiceRole.integrations.Core.SendEmail({

@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getLastAuditHash(base44) {
+  try {
+    const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+    return logs[0] ? await sha256(JSON.stringify(logs[0])) : 'GENESIS';
+  } catch (_) { return 'GENESIS'; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -39,7 +51,8 @@ Deno.serve(async (req) => {
       acknowledged_at: now,
     });
 
-    // Log to AuditLog
+    // Log to AuditLog — real prev_hash to maintain tamper-evident chain
+    const prevHash = await getLastAuditHash(base44);
     await base44.asServiceRole.entities.AuditLog.create({
       event_type: 'handshake_completed',
       actor_id: user.id,
@@ -56,11 +69,12 @@ Deno.serve(async (req) => {
       },
       sensitive: false,
       timestamp: now,
-      prev_hash: 'SOLO_CHECKIN',
+      prev_hash: prevHash,
     });
 
     return Response.json({ success: true, check_in_id: checkIn.id });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[acknowledgeSoloCheckIn]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
