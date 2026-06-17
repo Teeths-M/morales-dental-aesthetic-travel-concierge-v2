@@ -2,9 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, ClipboardList, User, FileText, CalendarDays,
-  MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight,
-  Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio, Globe, Luggage
+  MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight, ChevronLeft,
+  Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio, Globe, Luggage, Crown
 } from 'lucide-react';
+
+// PREMIUM COLOR PALETTE
+const LUXURY_COLORS = {
+  header: 'bg-gradient-to-br from-slate-900 to-slate-950',
+  activeGradient: 'bg-gradient-to-br from-blue-900 to-indigo-900',
+  gold: '#D4AF37',
+  goldLight: '#E5C55A',
+  textPrimary: 'text-slate-700',
+  textSecondary: 'text-slate-500',
+  badge: 'bg-rose-400',
+};
 
 // PERFORMANCE: Memoized nav items — prevents array recreation on every render
 const NAV_ITEMS = Object.freeze([
@@ -21,27 +32,33 @@ const NAV_ITEMS = Object.freeze([
 // PERFORMANCE: Memoized sidebar content component — prevents re-render on parent updates
 const SidebarContent = React.memo(({ location, onClose }) => {
   return (
-    <div className="flex flex-col h-full">
-      {/* Brand */}
-      <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-800 to-blue-900 flex items-center justify-center">
-            <span className="text-white font-serif font-bold text-sm">M</span>
+    <div className="flex flex-col h-full bg-white">
+      {/* Premium Brand Header */}
+      <div className={`${LUXURY_COLORS.header} px-5 py-5`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
+            <span className="text-white font-serif font-bold text-xl">M</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800">Morales</p>
-            <p className="text-[10px] text-slate-400">Patient Portal</p>
+            <p className="text-white font-serif font-semibold text-sm tracking-wide">MORALES</p>
+            <p className="text-white/70 text-[10px] tracking-widest uppercase">Dental & Aesthetic</p>
           </div>
         </div>
-        {onClose && (
-          <button onClick={onClose} className="lg:hidden p-1 rounded-lg hover:bg-slate-100">
-            <X className="w-4 h-4 text-slate-500" />
-          </button>
-        )}
+        
+        {/* User Profile */}
+        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2.5 border border-white/10">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-800 to-indigo-900 flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-serif font-bold text-xs">M</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold text-xs truncate">Morales</p>
+            <p className="text-white/60 text-[10px] truncate">Patient Portal</p>
+          </div>
+        </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      {/* Premium Navigation */}
+      <nav className="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto">
         {NAV_ITEMS.map(({ icon: Icon, label, path, badge }) => {
           const isActive = location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
           return (
@@ -49,40 +66,53 @@ const SidebarContent = React.memo(({ location, onClose }) => {
               key={path}
               to={path}
               onClick={onClose}
-              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
+              className={`group flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-gradient-to-r from-emerald-800 to-blue-900 text-white font-semibold shadow-sm'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                  ? `${LUXURY_COLORS.activeGradient} text-white font-semibold shadow-lg shadow-blue-900/20`
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
               <span className="flex-1">{label}</span>
               {badge && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-red-100 text-red-600'}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  isActive ? 'bg-white/20 text-white' : `${LUXURY_COLORS.badge} text-white`
+                }`}>
                   {badge}
                 </span>
               )}
-              {isActive && <ChevronRight className="w-3 h-3 opacity-60" />}
+              {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Premium Footer */}
       <div className="px-4 py-4 border-t border-slate-100 space-y-3">
-        <Link to="/dashboard">
-          <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl px-3 py-2.5 text-white text-center hover:opacity-90 transition-opacity">
-            <p className="text-xs font-bold">🗂️ All Features</p>
-            <p className="text-[10px] text-white/70">Browse everything</p>
+        <Link to="/trip-overview">
+          <div className={`${LUXURY_COLORS.activeGradient} rounded-xl px-4 py-3 text-white text-center hover:opacity-90 transition-all shadow-md`}>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Globe className="w-4 h-4" />
+              <p className="text-xs font-bold">My Trip Overview</p>
+            </div>
+            <p className="text-[10px] text-white/70">View itinerary & partners</p>
           </div>
         </Link>
-        <div className="flex items-center gap-2.5 bg-emerald-50 rounded-xl px-3 py-2.5">
-          <div className="w-6 h-6 rounded-full bg-emerald-200 flex items-center justify-center">
-            <Shield className="w-3 h-3 text-emerald-700" />
+        
+        {/* SAFE-T Badge */}
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-emerald-800 tracking-wide">SAFE-T 4LIFE™</p>
+              <p className="text-[9px] text-emerald-600 font-medium">Active Protection</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-bold text-emerald-800">SAFE-T 4LIFE™</p>
-            <p className="text-[10px] text-emerald-600">Active Protection</p>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <p className="text-[9px] text-emerald-700">Real-time monitoring enabled</p>
           </div>
         </div>
       </div>
@@ -100,24 +130,24 @@ export default function DashboardSidebar() {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white border border-slate-200 rounded-xl shadow-md flex items-center justify-center"
+        className="lg:hidden fixed top-4 left-4 z-50 w-11 h-11 bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-amber-400/30 rounded-xl shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
         onClick={() => setMobileOpen(true)}
       >
-        <Menu className="w-4 h-4 text-slate-600" />
+        <Menu className="w-5 h-5 text-white" />
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 bg-white shadow-2xl h-full">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="relative w-72 bg-white shadow-2xl h-full border-r border-slate-100">
             <SidebarContent location={location} onClose={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 shadow-sm min-h-screen flex-shrink-0">
+      <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-100 shadow-xl shadow-slate-200/50 min-h-screen flex-shrink-0">
         <SidebarContent location={location} />
       </aside>
     </>
