@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
 import { Shield, Clock, FileText, Share2, Trash2, Download, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
@@ -8,6 +7,8 @@ import ShareLinkModal from './ShareLinkModal';
 import VaultUploader from './VaultUploader';
 import { ConfirmDialog } from '@/components/ui-system';
 import { BRAND } from '@/lib/brandTokens';
+import { useVault } from '@/hooks/useVault';
+import { vaultService } from '@/lib/services';
 
 const DOC_META = {
   passport:      { emoji: '🛂', label: 'Passport' },
@@ -28,35 +29,13 @@ const TABS = [
 ];
 
 export default function VaultDashboard({ user }) {
-  const [vaults, setVaults]         = useState([]);
-  const [shareLinks, setShareLinks] = useState([]);
-  const [auditLogs, setAuditLogs]   = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [activeTab, setActiveTab]   = useState('documents');
+  const { vaults, shareLinks, auditLogs, loading, reload } = useVault(user);
+  const [activeTab, setActiveTab] = useState('documents');
 
   // Modal state
-  const [pwModal, setPwModal]       = useState({ open: false, vault: null, isLoading: false });
-  const [shareModal, setShareModal] = useState({ open: false, vault: null });
+  const [pwModal, setPwModal]           = useState({ open: false, vault: null, isLoading: false });
+  const [shareModal, setShareModal]     = useState({ open: false, vault: null });
   const [deleteTarget, setDeleteTarget] = useState(null);
-
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [vaultsData, linksData, logsData] = await Promise.all([
-        base44.entities.PassportVault.filter({ user_email: user.email, status: 'active' }, '-uploaded_at', 50),
-        base44.entities.SecureShareLink.filter({ owner_email: user.email, is_active: true }, '-created_at', 20),
-        base44.entities.AuditLog.filter({ actor_id: user.id }, '-timestamp', 50),
-      ]);
-      setVaults(vaultsData || []);
-      setShareLinks(linksData || []);
-      setAuditLogs(logsData || []);
-    } catch (err) {
-      console.error('[VaultDashboard] loadData:', err);
-    }
-    setLoading(false);
-  };
 
   // ── Download with decryption ──
   const handleDownload = (vault) => setPwModal({ open: true, vault, isLoading: false });
@@ -65,7 +44,7 @@ export default function VaultDashboard({ user }) {
     const vault = pwModal.vault;
     setPwModal(p => ({ ...p, isLoading: true }));
     try {
-      const res = await base44.functions.invoke('downloadFromVault', { vault_token: vault.passport_token });
+      const res = await vaultService.requestDownload(vault.passport_token);
       const { signed_url, encryption_iv_b64, encryption_salt_b64, file_name, mime_type } = res.data;
       const blob = await fetch(signed_url).then(r => r.blob());
       const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
@@ -85,9 +64,9 @@ export default function VaultDashboard({ user }) {
 
   // ── Delete ──
   const handleDeleteConfirm = async () => {
-    await base44.entities.PassportVault.update(deleteTarget.id, { status: 'archived' });
+    await vaultService.archiveDocument(deleteTarget.id);
     setDeleteTarget(null);
-    await loadData();
+    await reload();
   };
 
   const docCount = vaults.length;
@@ -210,7 +189,7 @@ export default function VaultDashboard({ user }) {
 
         {/* ── Add New ── */}
         {activeTab === 'upload' && (
-          <VaultUploader onTokenIssued={() => { loadData(); setActiveTab('documents'); }} />
+          <VaultUploader onTokenIssued={() => { reload(); setActiveTab('documents'); }} />
         )}
 
         {/* ── Audit Log ── */}
