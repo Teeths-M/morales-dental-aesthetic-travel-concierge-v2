@@ -283,21 +283,31 @@ export class PricingEngine {
  * Create pricing engine from Base44 SDK entities
  * Bounded queries prevent OOM on production-scale datasets
  */
+/**
+ * Create pricing engine from Base44 SDK entities
+ * Bounded queries prevent OOM on production-scale datasets
+ * 
+ * @param {object} base44 - Base44 SDK client
+ * @returns {Promise<PricingEngine>}
+ */
 export async function initializePricingEngine(base44) {
   try {
+    // CRITICAL: All queries bounded to prevent memory exhaustion at scale
+    // Limits based on expected max records per entity in production
     const [procedures, countryPricing, doctorPricing, bundles, complexityModifiers, rules] =
       await Promise.all([
-        base44.entities.ProcedurePricing.list('-created_date', 500),
-        base44.entities.CountryPricing.list('-created_date', 1000),
-        base44.entities.DoctorPricing.list('-created_date', 500),
-        base44.entities.ProcedureBundle.list('-created_date', 100),
-        base44.entities.ComplexityModifier.list('-created_date', 100),
-        base44.entities.PricingRule.list('-created_date', 100),
+        base44.entities.ProcedurePricing.list('-created_date', 500),     // ~200 procedures expected
+        base44.entities.CountryPricing.list('-created_date', 1000),      // ~500 country-procedure combos
+        base44.entities.DoctorPricing.list('-created_date', 500),        // ~200 doctor-procedure combos
+        base44.entities.ProcedureBundle.list('-created_date', 100),      // ~50 bundles
+        base44.entities.ComplexityModifier.list('-created_date', 100),   // ~100 modifiers
+        base44.entities.PricingRule.list('-created_date', 100),          // ~50 rules
       ]);
 
     return new PricingEngine(procedures, countryPricing, doctorPricing, bundles, complexityModifiers, rules);
   } catch (error) {
-    console.error('Failed to initialize pricing engine:', error);
+    console.error('[PricingEngine] Initialization failed:', error);
+    // Graceful degradation — return empty engine rather than crashing
     return new PricingEngine([], [], [], [], [], []);
   }
 }

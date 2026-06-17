@@ -2,8 +2,17 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { ROLES } from '@/lib/constants';
 
 const AuthContext = createContext();
+
+// Single source of truth — never duplicate elsewhere
+const PREVIEW_USER = { 
+  role: ROLES.ADMIN, 
+  email: 'preview-admin@base44.app', 
+  full_name: 'Base44 Preview Admin', 
+  isPreviewAdmin: true 
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -13,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null);
-  const PREVIEW_USER = { role: 'admin', email: 'preview-admin@base44.app', full_name: 'Base44 Preview Admin', isPreviewAdmin: true };
+  // Use module-level PREVIEW_USER — single source of truth
   const isPreviewAdmin = appParams.isPreview || (Boolean(appParams.previewToken) && window.location.hostname.includes('preview'));
 
   useEffect(() => {
