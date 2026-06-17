@@ -42,9 +42,10 @@ const metrics = {
 // Sample memory usage periodically
 setInterval(() => {
   try {
-    // @ts-ignore - Deno global available in Deno runtime
+    // Deno global available in Deno runtime
+    // eslint-disable-next-line no-undef
     if (typeof Deno !== 'undefined' && Deno.memoryUsage) {
-      // @ts-ignore
+      // eslint-disable-next-line no-undef
       const mem = Deno.memoryUsage();
       metrics.lastMemorySample = {
         rss: Math.round(mem.rss / 1024 / 1024), // MB
@@ -153,4 +154,25 @@ export function handleHealthEndpoint(req) {
   
   const health = getHealthStatus();
   return Response.json(health);
+}
+
+// ── Memory Utility ───────────────────────────────────────────────────────────
+
+/**
+ * Get current memory usage (Deno runtime)
+ * @returns {number|null} Memory in MB
+ */
+export function getMemoryUsage() {
+  try {
+    // Deno global available in Deno runtime
+    // eslint-disable-next-line no-undef
+    if (typeof Deno !== 'undefined' && Deno.memoryUsage) {
+      // eslint-disable-next-line no-undef
+      const mem = Deno.memoryUsage();
+      return Math.round(mem.rss / 1024 / 1024); // MB
+    }
+  } catch (_) {
+    // Memory API not available
+  }
+  return null;
 }
