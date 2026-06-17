@@ -6,12 +6,16 @@
  *   import { StatusBadge, DataTable, StatCard } from '@/components/ui-system';
  */
 
-export { default as StatusBadge }  from './StatusBadge';
-export { default as DataTable }    from './DataTable';
-export { default as PageHeader }   from './PageHeader';
-export { default as StatCard }     from './StatCard';
-export { default as ActionMenu }   from './ActionMenu';
-export { default as FormField }    from './FormField';
-export { default as ConfirmDialog } from './ConfirmDialog';
-export { default as InlineAlert }  from './InlineAlert';
+export { default as StatusBadge }     from './StatusBadge';
+export { default as DataTable }       from './DataTable';
+export { default as PageHeader }      from './PageHeader';
+export { default as StatCard }        from './StatCard';
+export { default as ActionMenu }      from './ActionMenu';
+export { default as FormField }       from './FormField';
+export { default as ConfirmDialog }   from './ConfirmDialog';
+export { default as InlineAlert }     from './InlineAlert';
 export { default as LoadingSpinner, SectionLoader, PageLoader } from './LoadingSpinner';
+export { default as EmptyState }      from './EmptyState';
+export { default as SearchBar }       from './SearchBar';
+export { default as Pagination }      from './Pagination';
+export { default as ProgressBar }     from './ProgressBar';
