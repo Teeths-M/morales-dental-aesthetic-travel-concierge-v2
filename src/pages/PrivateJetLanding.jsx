@@ -15,23 +15,31 @@ export default function PrivateJetLanding() {
   return (
     <div className="min-h-screen bg-gray-50 font-inter">
       {/* Hero Section with Video Background */}
-      <section className="relative h-screen overflow-hidden">
+      <section className="relative h-screen overflow-hidden bg-gray-100">
         {/* Video Background */}
         <video
           autoPlay
           muted
           loop
           playsInline
+          preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
+          poster="https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1920&q=80"
         >
           <source
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_091828_e240eb17-6edc-4129-ad9d-98678e3fd238.mp4"
             type="video/mp4"
           />
+          {/* Fallback image if video fails */}
+          <img
+            src="https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1920&q=80"
+            alt="Private jet"
+            className="w-full h-full object-cover"
+          />
         </video>
 
         {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-white/30" />
+        <div className="absolute inset-0 bg-black/40" />
 
         {/* Navigation Bar */}
         <nav className="relative z-10 max-w-7xl mx-auto px-8 py-6">
