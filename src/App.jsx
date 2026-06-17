@@ -94,6 +94,7 @@ import AdminAuditChain from './pages/AdminAuditChain';
 import EmergencyManifest from './pages/EmergencyManifest';
 import AdminDoctorVerificationQueue from './pages/AdminDoctorVerificationQueue';
 import TravelConcierge from './pages/TravelConcierge';
+import PrivateJetLanding from './pages/PrivateJetLanding';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -250,6 +251,8 @@ const AuthenticatedApp = () => {
       <Route element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
         <Route path="/travel-concierge" element={<TravelConcierge />} />
       </Route>
+      {/* Private Jet Landing Page — standalone, no layout */}
+      <Route path="/private-jets" element={<ErrorBoundary><PrivateJetLanding /></ErrorBoundary>} />
       {/* Public — Guardian View link (no auth, token-gated) */}
       <Route path="/guardian/:token" element={<GuardianView />} />
       {/* Public — Emergency PIN access (cross-device, no login) */}
