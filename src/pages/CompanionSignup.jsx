@@ -116,46 +116,49 @@ export default function CompanionSignup() {
             </div>
 
             {/* Account Type Selection */}
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <button
-                type="button"
-                onClick={() => setAccountType('individual')}
-                className={`p-6 rounded-xl border-2 transition-all text-left ${
-                  accountType === 'individual'
-                    ? 'border-emerald-600 bg-emerald-50'
-                    : 'border-border hover:border-emerald-300'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    accountType === 'individual' ? 'bg-emerald-600 text-white' : 'bg-muted'
-                  }`}>
-                    <Users className="w-5 h-5" />
+            <div className="space-y-4 mb-6">
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide text-center">Choose Your Account Type</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setAccountType('individual')}
+                  className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
+                    accountType === 'individual'
+                      ? 'border-emerald-600 bg-emerald-50 shadow-md'
+                      : 'border-gray-200 hover:border-emerald-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      accountType === 'individual' ? 'bg-emerald-600 text-white' : 'bg-gray-100'
+                    }`}>
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-lg">Individual Caregiver</h3>
                   </div>
-                  <h3 className="font-semibold text-lg">Individual Caregiver</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">Mothers & caregivers offering personal care services</p>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setAccountType('agency')}
-                className={`p-6 rounded-xl border-2 transition-all text-left ${
-                  accountType === 'agency'
-                    ? 'border-emerald-600 bg-emerald-50'
-                    : 'border-border hover:border-emerald-300'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    accountType === 'agency' ? 'bg-emerald-600 text-white' : 'bg-muted'
-                  }`}>
-                    <Users className="w-5 h-5" />
+                  <p className="text-sm text-muted-foreground leading-relaxed">Mothers & caregivers 40+ offering personal care services</p>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setAccountType('agency')}
+                  className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
+                    accountType === 'agency'
+                      ? 'border-emerald-600 bg-emerald-50 shadow-md'
+                      : 'border-gray-200 hover:border-emerald-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      accountType === 'agency' ? 'bg-emerald-600 text-white' : 'bg-gray-100'
+                    }`}>
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-lg">Agency / Tour Guide</h3>
                   </div>
-                  <h3 className="font-semibold text-lg">Agency / Tour Guide</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">Agencies providing tour guide & companion services</p>
-              </button>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Agencies providing tour guide & companion services</p>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
