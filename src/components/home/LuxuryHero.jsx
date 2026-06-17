@@ -40,86 +40,112 @@ const SafeTDiagram = React.memo(function SafeTDiagram() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spin-rev { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        @keyframes glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
       `}</style>
 
-      {/* Glitter trails */}
-      {[
-        { anim: 'spin 18s linear infinite', radii: [1.8, 1.52, 1.24, 0.96, 0.68], baseOp: 0.55 },
-        { anim: 'spin-rev 24s linear infinite', radii: [1.5, 1.28, 1.06, 0.84, 0.62], baseOp: 0.45 },
-        { anim: 'spin 30s linear infinite', delay: '-8s', radii: [1.3, 1.12, 0.94, 0.76, 0.58], baseOp: 0.38 },
-      ].map((trail, si) => (
-        <svg key={si} className="absolute w-[360px] h-[360px]" viewBox="0 0 360 360"
-          style={{ animation: trail.anim, animationDelay: trail.delay }}>
-          {[8, 20, 35, 52, 72].map((deg, i) => {
-            const tx = 180 + 168 * Math.sin(deg * DEG2RAD);
-            const ty = 12 + 168 * (1 - Math.cos(deg * DEG2RAD));
-            return <circle key={i} cx={tx} cy={ty} r={trail.radii[i]} fill={COLORS.cyan} opacity={trail.baseOp - i * 0.08} />;
-          })}
-          <circle cx="180" cy="12" r="3" fill={COLORS.cyan} opacity="0.95" />
-          <circle cx="180" cy="12" r="5.5" fill={COLORS.cyan} opacity="0.18" />
-        </svg>
-      ))}
+      {/* Main orbital ring */}
+      <div className="w-[520px] h-[520px] rounded-full absolute"
+        style={{ border: `1.5px solid ${COLORS.cyan}40` }} />
 
-      {/* Outer rings */}
-      <div className="absolute w-[360px] h-[360px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}33` }} />
-      <div className="absolute w-[300px] h-[300px] rounded-full" style={{ border: `1px solid ${COLORS.cyan}1a` }} />
+      {/* Inner decorative ring */}
+      <div className="w-[440px] h-[440px] rounded-full absolute"
+        style={{ border: `1px solid ${COLORS.cyan}20` }} />
 
-      {/* Endpoint dots */}
-      <svg className="absolute" width="400" height="400" viewBox="-200 -200 400 400">
-        {ORBIT_NODES_COMPUTED.map(({ x, y, label }) => (
-          <g key={`dot-${label}`}>
-            <circle cx={x} cy={y} r="5" fill={COLORS.cyan} opacity="0.12" />
-            <circle cx={x} cy={y} r="2.5" fill={COLORS.cyan} opacity="0.9" />
-          </g>
-        ))}
+      {/* Orbit dots */}
+      <svg className="absolute w-[520px] h-[520px]" viewBox="0 0 520 520">
+        {ORBIT_NODES_COMPUTED.map(({ x, y }, idx) => {
+          const dotColor = idx < 3 ? COLORS.gold : COLORS.cyan;
+          return (
+            <g key={`orbit-dot-${idx}`}>
+              <circle cx={260 + x} cy={260 + y} r="4" fill={dotColor} opacity="0.9" />
+              <circle cx={260 + x} cy={260 + y} r="8" fill={dotColor} opacity="0.2" />
+            </g>
+          );
+        })}
       </svg>
 
-      {/* Orbit node badges */}
+      {/* Abstract constellation/graph at top */}
+      <svg className="absolute w-[280px] h-[180px]" style={{ top: '12%', left: '50%', transform: 'translateX(-50%)' }} viewBox="0 0 280 180">
+        <ellipse cx="140" cy="90" rx="120" ry="70" fill="none" stroke={COLORS.cyan} strokeWidth="0.8" opacity="0.3" />
+        <path d="M 60 90 L 100 70 L 140 85 L 180 65 L 220 90" fill="none" stroke={COLORS.cyan} strokeWidth="1.2" opacity="0.6" />
+        <circle cx="60" cy="90" r="3" fill={COLORS.cyan} opacity="0.8" />
+        <circle cx="100" cy="70" r="2.5" fill={COLORS.cyan} opacity="0.7" />
+        <circle cx="140" cy="85" r="3.5" fill={COLORS.cyan} opacity="0.9" />
+        <circle cx="180" cy="65" r="2.5" fill={COLORS.cyan} opacity="0.7" />
+        <circle cx="220" cy="90" r="3" fill={COLORS.cyan} opacity="0.8" />
+      </svg>
+
+      {/* Wireframe jet (minimalist thin-line style) */}
+      <svg className="absolute w-[320px] h-[220px]" style={{ bottom: '8%', right: '12%' }} viewBox="0 0 320 220">
+        {/* Fuselage outline */}
+        <ellipse cx="160" cy="110" rx="120" ry="35" fill="none" stroke={COLORS.gold} strokeWidth="1" opacity="0.5" />
+        {/* Cockpit */}
+        <path d="M 250 105 Q 275 110 285 115 L 280 118 Q 260 115 250 112" fill="none" stroke={COLORS.gold} strokeWidth="0.8" opacity="0.5" />
+        {/* Wing */}
+        <path d="M 140 120 L 180 165 L 210 170 L 170 135 Z" fill="none" stroke={COLORS.gold} strokeWidth="0.9" opacity="0.45" />
+        {/* Tail */}
+        <path d="M 70 105 L 50 75 L 60 72 L 78 102 Z" fill="none" stroke={COLORS.gold} strokeWidth="0.8" opacity="0.45" />
+        {/* Engine */}
+        <ellipse cx="185" cy="135" rx="18" ry="10" fill="none" stroke={COLORS.gold} strokeWidth="0.7" opacity="0.4" />
+      </svg>
+
+      {/* Center SAFE-T Badge */}
+      <motion.div
+        animate={{ scale: [1, 1.025, 1] }}
+        transition={{ duration: 4, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
+        className="relative z-10 flex flex-col items-center"
+        style={{ animation: 'float 6s ease-in-out infinite' }}
+      >
+        <div className="w-[82px] h-[82px] rounded-full flex items-center justify-center"
+          style={{ 
+            background: 'rgba(15,30,48,0.95)',
+            border: `2.5px solid ${COLORS.gold}`,
+            boxShadow: `0 0 50px ${COLORS.gold}33`,
+          }}>
+          <Shield className="w-[56px] h-[56px]" style={{ color: COLORS.gold }} strokeWidth={1.3} />
+        </div>
+        <p className="text-[14px] font-bold tracking-[0.12em] uppercase mt-3.5" style={{ color: COLORS.gold }}>
+          SAFE-T4LIFE™
+        </p>
+        <p className="text-[9px] tracking-[0.18em] uppercase mt-1.5" style={{ color: COLORS.dim }}>
+          SAFETY INTELLIGENCE ENGINE
+        </p>
+      </motion.div>
+
+      {/* Floating label badges */}
       {ORBIT_NODES_COMPUTED.map(({ label, icon: NodeIcon, x, y }, idx) => {
-        const dotColor = idx % 2 === 0 ? COLORS.gold : COLORS.cyan;
+        const dotColor = idx < 3 ? COLORS.gold : COLORS.cyan;
         return (
-          <div key={label} className="absolute flex items-center gap-2 px-3 py-2 rounded-2xl text-[13px] font-medium whitespace-nowrap"
+          <div key={label} className="absolute flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-[12.5px] font-medium whitespace-nowrap"
             style={{ 
-              left: `calc(50% + ${x}px)`, 
+              left: `calc(50% + ${x}px + ${x > 0 ? '12' : '-12'}px)`, 
               top: `calc(50% + ${y}px)`,
-              background: 'rgba(11,22,35,0.88)',
-              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'rgba(11,22,35,0.92)',
+              border: `1px solid ${COLORS.cyan}25`,
               color: COLORS.white,
-              backdropFilter: 'blur(16px)',
+              backdropFilter: 'blur(12px)',
             }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}` }} />
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
             <NodeIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: dotColor }} strokeWidth={1.5} />
             {label}
           </div>
         );
       })}
 
-      {/* Center SAFE-T Badge */}
-      <motion.div
-        animate={{ scale: [1, 1.035, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: [0.45, 0, 0.55, 1] }}
-        className="relative z-10 flex flex-col items-center"
-        style={{ animation: 'float 6s ease-in-out infinite' }}
-      >
-        <div className="w-[78px] h-[78px] rounded-full flex items-center justify-center"
-          style={{ 
-            background: COLORS.surface,
-            border: `2px solid ${COLORS.gold}`,
-            boxShadow: `0 0 40px ${COLORS.gold}22`,
-          }}>
-          <Shield className="w-[52px] h-[52px]" style={{ color: COLORS.gold }} strokeWidth={1.5} />
-        </div>
-        <p className="text-[13px] font-bold tracking-[0.1em] uppercase mt-3 relative z-10" style={{ color: COLORS.gold }}>
-          SAFE-T4LIFE™
-        </p>
-        <p className="text-[9px] tracking-[0.15em] uppercase mt-1 relative z-10" style={{ color: COLORS.dim }}>
-          SAFETY INTELLIGENCE ENGINE
-        </p>
-      </motion.div>
+      {/* Corner lock icon buttons */}
+      <div className="absolute bottom-8 right-8 flex flex-col gap-3 z-20 pointer-events-auto">
+        <button className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
+          style={{ background: `rgba(0,240,255,0.15)`, border: `1px solid ${COLORS.cyan}40` }}>
+          <svg className="w-5 h-5" style={{ color: COLORS.cyan }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </button>
+        <button className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-105"
+          style={{ background: 'rgba(15,30,48,0.8)', border: '1px solid rgba(255,255,255,0.12)' }}>
+          <Shield className="w-5 h-5" style={{ color: COLORS.gold }} strokeWidth={1.5} />
+        </button>
+      </div>
     </div>
   );
 });
