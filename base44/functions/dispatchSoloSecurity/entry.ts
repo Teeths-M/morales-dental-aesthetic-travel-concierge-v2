@@ -40,8 +40,19 @@ Deno.serve(async (req) => {
 
       // If 5+ hours since original send (2h more after 3h escalation)
       if (hoursSinceSent >= 5) {
+        // BUG-07 FIX: SoloCheckIn has no procedure_country field — that field lives on CaseRecord.
+        // Fetch the case to get the destination country for the security agency lookup.
+        let destinationCountry = 'Unknown';
+        try {
+          const casesForDispatch = await base44.asServiceRole.entities.CaseRecord.filter(
+            { client_email: checkIn.user_email }, '-created_date', 20
+          );
+          const matchedCase = casesForDispatch.find(c => c.id === checkIn.case_id);
+          if (matchedCase?.procedure_country) destinationCountry = matchedCase.procedure_country;
+        } catch (_) {}
+
         const securityAgency = await base44.asServiceRole.entities.SecurityAgency.filter(
-          { country: checkIn.procedure_country || 'Unknown', is_available: true },
+          { country: destinationCountry, is_available: true },
           '-created_date',
           1
         );

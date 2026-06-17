@@ -81,12 +81,14 @@ Deno.serve(async (req) => {
       return Response.json({ code: 'ALREADY_ACKNOWLEDGED', message: 'You have already confirmed you are safe.' }, { status: 200 });
     }
 
-    // Mark the check-in as acknowledged
-    await base44.asServiceRole.entities.SoloCheckIn.update(check_in_id, {
+    // BUG-01 FIX: Must update using checkIn.id (the loaded entity's real ID),
+    // NOT check_in_id from the request body (which equals the case_id / trip_id,
+    // NOT the SoloCheckIn entity's primary key).
+    await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
       status: 'acknowledged',
       responded_time: now.toISOString(),
       acknowledged_at: now.toISOString(),
-      response_method: 'app', // 'app' is the valid enum value; 'email' is not in the enum
+      response_method: 'app',
     });
 
     // Mark the token as used (one-time)

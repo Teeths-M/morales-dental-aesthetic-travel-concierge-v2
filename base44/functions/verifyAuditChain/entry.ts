@@ -21,17 +21,18 @@ Deno.serve(async (req) => {
     }
 
     // Fetch all audit log entries in ascending timestamp order.
-    // The SDK list() does not support skip — paginate by cursor (last seen timestamp).
+    // BUG-03 FIX: Cursor-by-timestamp creates an infinite loop when two entries share
+    // the same timestamp (the $gt boundary re-fetches the same page forever).
+    // Fix: use SDK list() with skip-based pagination instead, which is stable by index.
     const PAGE_SIZE = 200;
     let allEntries = [];
-    let afterTimestamp = null;
+    let skip = 0;
     while (true) {
-      const filter = afterTimestamp ? { timestamp: { $gt: afterTimestamp } } : {};
-      const batch = await base44.asServiceRole.entities.AuditLog.filter(filter, 'timestamp', PAGE_SIZE);
+      const batch = await base44.asServiceRole.entities.AuditLog.list('timestamp', PAGE_SIZE, skip);
       if (!batch || batch.length === 0) break;
       allEntries = allEntries.concat(batch);
       if (batch.length < PAGE_SIZE) break;
-      afterTimestamp = batch[batch.length - 1].timestamp;
+      skip += batch.length;
     }
 
     if (allEntries.length === 0) {
@@ -101,6 +102,7 @@ Deno.serve(async (req) => {
       verified_at: new Date().toISOString(),
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[verifyAuditChain]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

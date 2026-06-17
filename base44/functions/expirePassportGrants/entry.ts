@@ -15,8 +15,9 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     let expiredGrantCount = 0;
 
-    // Expire approved grants past their expiry time
-    const approvedGrants = await base44.asServiceRole.entities.PassportAccessGrant.filter({ status: 'approved' });
+    // BUG-05 FIX: Always pass a limit — unbounded filter() loads the entire table into memory.
+    // 500 is a safe batch ceiling; the cron runs hourly so backlog can't grow faster than this.
+    const approvedGrants = await base44.asServiceRole.entities.PassportAccessGrant.filter({ status: 'approved' }, '-created_date', 500);
     const staleGrants = approvedGrants.filter(g => g.expires_at && new Date(g.expires_at) < new Date());
 
     for (const grant of staleGrants) {
@@ -44,8 +45,8 @@ Deno.serve(async (req) => {
       expiredGrantCount++;
     }
 
-    // Archive vaults past their retention date
-    const allVaults = await base44.asServiceRole.entities.PassportVault.filter({ status: 'active' });
+    // BUG-05 FIX (cont.): Same — bound the vault scan
+    const allVaults = await base44.asServiceRole.entities.PassportVault.filter({ status: 'active' }, '-created_date', 500);
     const expiredVaults = allVaults.filter(v => v.expires_at && new Date(v.expires_at) < new Date());
     let archivedVaultCount = 0;
 
@@ -76,6 +77,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[expirePassportGrants]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

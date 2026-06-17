@@ -20,14 +20,16 @@ Deno.serve(async (req) => {
       return Response.json({ active_solo_trips: 0, check_ins: [] });
     }
 
-    const caseIds = activeCases.map(c => c.id);
+    const caseIds = new Set(activeCases.map(c => c.id));
 
-    // Find all pending check-ins for these cases
-    const allCheckIns = await base44.entities.SoloCheckIn.filter(
-      { case_id: { $in: caseIds }, status: 'pending' },
+    // BUG-06 FIX: SDK filter() $in operator is not guaranteed — fetch by user_email
+    // (an indexed entity field on SoloCheckIn) and filter case membership in JS.
+    const rawCheckIns = await base44.entities.SoloCheckIn.filter(
+      { user_email: user.email, status: 'pending' },
       '-scheduled_time',
-      20
+      50
     );
+    const allCheckIns = rawCheckIns.filter(c => caseIds.has(c.case_id));
 
     // Find upcoming check-ins (next 12 hours)
     const now = new Date();

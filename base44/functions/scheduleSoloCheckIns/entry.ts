@@ -196,6 +196,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ created, total_solo_cases: soloCases.length });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[scheduleSoloCheckIns]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
