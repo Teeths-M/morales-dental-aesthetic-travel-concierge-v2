@@ -13,6 +13,7 @@ import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import JourneyProgress from '@/components/dashboard/JourneyProgress';
 import RecoveryMilestoneTracker from '@/components/dashboard/RecoveryMilestoneTracker';
 import PreparationChecklist from '@/components/dashboard/PreparationChecklist';
+import CaseStatusIndicator from '@/components/dashboard/CaseStatusIndicator';
 import ConsultationsModule from '@/components/dashboard/modules/ConsultationsModule';
 import MedicalProfileModule from '@/components/dashboard/modules/MedicalProfileModule';
 import DocumentsModule from '@/components/dashboard/modules/DocumentsModule';
@@ -52,6 +53,7 @@ function DashboardHome({ user, consultations, language }) {
   // PERFORMANCE: Memoize displayName to prevent recalculation
   const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
   const latestConsultation = consultations[0];
+  const caseStatus = latestConsultation?.status || 'Submitted';
 
   // PERFORMANCE: React Query for vault count — automatic caching, no manual useEffect
   const { data: vaultCount = 0 } = useQuery({
@@ -180,6 +182,9 @@ function DashboardHome({ user, consultations, language }) {
           </div>
         </div>
       )}
+
+      {/* Case Status Indicator */}
+      <CaseStatusIndicator caseStatus={caseStatus} />
 
       {/* Vault Summary Card */}
       <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
