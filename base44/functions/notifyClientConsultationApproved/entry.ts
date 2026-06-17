@@ -58,6 +58,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, client: clientEmail, results });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R11-02 FIX: SEC-10
+    console.error('[notifyClientConsultationApproved]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

@@ -161,6 +161,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R11-02 FIX: SEC-10
+    console.error('[generateCulturalCarePackage]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

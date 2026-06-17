@@ -17,21 +17,20 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'consultation_id is required' }, { status: 400 });
         }
 
-        // Fetch consultation data
-        const consultations = await base44.entities.Consultation.filter({ id: consultation_id });
-        if (!consultations || consultations.length === 0) {
+        // BUG-R11-01 FIX: filter({ id }) never works — SDK cannot query the built-in `id` field.
+        // Also switch to asServiceRole — admin calling this cannot read patient-owned consultations.
+        const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+        if (!consultation) {
             return Response.json({ error: 'Consultation not found' }, { status: 404 });
         }
-        
-        const consultation = consultations[0];
 
-        // Fetch doctor pricing if available
         let doctorPrice = 0;
         if (consultation.doctor_id) {
-            const doctorPricings = await base44.entities.DoctorPricing.filter({ 
-                doctor_id: consultation.doctor_id 
+            // BUG-R11-01 FIX: use asServiceRole for DoctorPricing lookup
+            const doctorPricings = await base44.asServiceRole.entities.DoctorPricing.filter({
+                doctor_id: consultation.doctor_id
             });
-            const matchingPricing = doctorPricings.find(p => 
+            const matchingPricing = doctorPricings.find(p =>
                 p.procedure_name === consultation.procedure_interest
             );
             doctorPrice = matchingPricing?.doctor_price_usd || 0;
@@ -145,9 +144,9 @@ Deno.serve(async (req) => {
         const pdfBase64 = doc.output('base64');
         const pdfUrl = `data:application/pdf;base64,${pdfBase64}`;
 
-        // Send email to client
+        // BUG-R11-01 FIX: use asServiceRole for email dispatch (admin-triggered function)
         if (consultation.email) {
-            await base44.integrations.Core.SendEmail({
+            await base44.asServiceRole.integrations.Core.SendEmail({
                 to: consultation.email,
                 subject: 'Your SAFE-T 4LIFE Medical Tourism Package Proposal',
                 body: `Dear ${consultation.patient_name},\n\nThank you for choosing SAFE-T 4LIFE for your medical tourism needs.\n\nPlease find attached your personalized package proposal.\n\nTotal Package Cost: $${totalCost.toFixed(2)}\n\nThis proposal includes:\n- Medical procedure with our certified partner\n- Flight arrangements\n- Accommodation\n- Ground transportation\n\nTo proceed with your booking or if you have any questions, please don't hesitate to contact us.\n\nBest regards,\nSAFE-T 4LIFE Team`
@@ -168,7 +167,8 @@ Deno.serve(async (req) => {
             }
         });
     } catch (error) {
-        console.error('Error generating proposal:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        // BUG-R11-02 FIX: SEC-10 — never expose internal error details to callers
+        console.error('[generateClientProposalPDF]', error);
+        return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
     }
 });

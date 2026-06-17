@@ -31,9 +31,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Email admin
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: 'admin@moralesdentalandaesthetics.com',
+    // BUG-R11-03 FIX: hardcoded admin email — use ADMIN_EMAIL env var
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (adminEmail) await base44.asServiceRole.integrations.Core.SendEmail({
+      to: adminEmail,
       subject: `❓ Doctor Requested More Info — ${patientName}`,
       body: `
         <p>A doctor has requested additional information from a patient before confirming their case.</p>
@@ -52,6 +53,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R11-02 FIX: SEC-10
+    console.error('[notifyPatientInfoRequest]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

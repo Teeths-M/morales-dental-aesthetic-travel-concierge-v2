@@ -9,12 +9,16 @@ Deno.serve(async (req) => {
     // Action: log_price_event
     if (action === 'log_price_event') {
       const { procedure, destination, package_cost, inclusions, recovery_days, booking_type } = data;
-      
-      // Generate anonymized ref
-      const timestamp = new Date().toISOString();
-      const anonymized_ref = `user_${Math.random().toString(36).substr(2, 5)}`;
 
-      const logEntry = await base44.entities.PriceBroadcastLog.create({
+      const timestamp = new Date().toISOString();
+      // BUG-R11-04 FIX: Math.random() produces weak, colliding 5-char refs — use crypto for uniqueness
+      const refBytes = new Uint8Array(4);
+      crypto.getRandomValues(refBytes);
+      const anonymized_ref = `user_${Array.from(refBytes).map(b => b.toString(16).padStart(2, '0')).join('')}`;
+
+      // BUG-R11-05 FIX: use asServiceRole — this endpoint has no auth guard, so base44.entities
+      // will use anonymous/system scope which may fail on RLS-protected entities
+      const logEntry = await base44.asServiceRole.entities.PriceBroadcastLog.create({
         timestamp,
         anonymized_ref,
         procedure,
@@ -33,10 +37,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Action: get_carousel_cards (last 15, published)
     if (action === 'get_carousel_cards') {
-      // Sort and limit at the DB level — avoid full table scan + in-memory sort
-      const sorted = await base44.entities.PriceBroadcastLog.filter(
+      const sorted = await base44.asServiceRole.entities.PriceBroadcastLog.filter(
         { is_published: true },
         '-timestamp',
         15
@@ -57,10 +59,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Action: get_trending_procedures
     if (action === 'get_trending_procedures') {
-      // Only fetch recent records — avoid loading all historical data
-      const last24h = await base44.entities.PriceBroadcastLog.list('-timestamp', 200);
+      const last24h = await base44.asServiceRole.entities.PriceBroadcastLog.list('-timestamp', 200);
 
       const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const counts = {};
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
         'breast_surgery': 7
       }[procKey] || 7;
 
-      const estimate = await base44.entities.PriceEstimate.create({
+      const estimate = await base44.asServiceRole.entities.PriceEstimate.create({
         user_email,
         user_name,
         user_phone,
@@ -141,8 +141,7 @@ Deno.serve(async (req) => {
         estimate_status: 'generated'
       });
 
-      // Log as price event
-      await base44.entities.PriceBroadcastLog.create({
+      await base44.asServiceRole.entities.PriceBroadcastLog.create({
         timestamp: new Date().toISOString(),
         anonymized_ref: `user_${Math.random().toString(36).substr(2, 5)}`,
         procedure,
@@ -226,10 +225,11 @@ Deno.serve(async (req) => {
     if (action === 'process_consultation_fee_refund') {
       const { consultation_fee_id, package_booking_id, refund_method } = data;
 
-      const fee = await base44.entities.ConsultationFee.get(consultation_fee_id);
-      
+      // BUG-R11-05 FIX: use asServiceRole for admin-scoped fee refund
+      const fee = await base44.asServiceRole.entities.ConsultationFee.get(consultation_fee_id);
+
       if (fee && fee.fee_paid && !fee.fee_refunded) {
-        await base44.entities.ConsultationFee.update(consultation_fee_id, {
+        await base44.asServiceRole.entities.ConsultationFee.update(consultation_fee_id, {
           fee_refunded: true,
           refund_method,
           package_booking_id,
@@ -251,6 +251,8 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R11-02 FIX: SEC-10
+    console.error('[priceBroadcastEngine]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

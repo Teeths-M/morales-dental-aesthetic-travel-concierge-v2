@@ -7,8 +7,14 @@ Deno.serve(async (req) => {
 
     const total = (flight_cost_usd || 0) + (hotel_cost_usd || 0);
 
+    // BUG-R11-03 FIX: hardcoded admin email — use ADMIN_EMAIL env var
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (!adminEmail) {
+      console.error('[notifyAdminQuoteRevised] ADMIN_EMAIL not set — notification skipped');
+      return Response.json({ success: false, reason: 'ADMIN_EMAIL not configured' });
+    }
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: 'admin@moralesdentalandaesthetics.com',
+      to: adminEmail,
       subject: `✏️ Travel Quote Revised — ${patient_name}`,
       body: `
         <p>A travel quote has been <strong>revised</strong> by the travel agency.</p>
@@ -26,6 +32,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R11-02 FIX: SEC-10
+    console.error('[notifyAdminQuoteRevised]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

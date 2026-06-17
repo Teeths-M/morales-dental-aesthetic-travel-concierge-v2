@@ -174,8 +174,13 @@ Deno.serve(async (req) => {
       disclaimer: 'Prices shown are estimated and may vary depending on doctor assessment, medical complexity, materials, diagnostics, and final treatment plan.',
     });
   } catch (error) {
-    console.error('Quote calculation error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    // BUG-R11-02 FIX: SEC-10 — do not expose internal error message (includes procedure names, entity paths)
+    console.error('[calculatePriceQuote]', error);
+    // Distinguish user-facing "procedure not found" from true 500s
+    if (error.message?.startsWith('Procedure ') && error.message?.includes('not found')) {
+      return Response.json({ error: error.message }, { status: 400 });
+    }
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
 
