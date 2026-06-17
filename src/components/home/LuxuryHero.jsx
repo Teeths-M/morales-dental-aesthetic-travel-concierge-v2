@@ -169,81 +169,165 @@ export default function LuxuryHero() {
   return (
     <>
       <section className="relative min-h-screen overflow-hidden" style={{ background: '#0b1219', marginTop: '-68px' }}>
-        {/* Full-bleed background */}
+        {/* Full-bleed background with parallax effect */}
         <div className="absolute inset-0">
-          <img src={HERO_IMAGE} alt="Premium medical travel with Safe-T4Life safety intelligence" className="w-full h-full object-cover"
-            style={{ objectPosition: 'center center' }} loading="eager" fetchpriority="high" />
+          <motion.img 
+            src={HERO_IMAGE} 
+            alt="Premium medical travel with Safe-T4Life safety intelligence" 
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center center' }} 
+            loading="eager" 
+            fetchpriority="high"
+            initial={{ scale: 1.05 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 20, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
+          />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 30%, rgba(11,18,25,0.85) 45%, rgba(11,18,25,0.4) 65%, transparent 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.5) 10%, transparent 25%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.8) 12%, transparent 30%)' }} />
+          {/* Subtle animated shimmer overlay */}
+          <motion.div 
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at 50% 50%, rgba(212,175,55,0.03) 0%, transparent 70%)' }}
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          />
         </div>
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
 
           {/* LEFT */}
-          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: 'easeOut' }} className="flex flex-col z-10 lg:pr-16">
-
-            <div className="mb-7"><ModeToggle /></div>
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }} 
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} 
+            className="flex flex-col z-10 lg:pr-16"
+          >
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mb-7"
+            >
+              <ModeToggle />
+            </motion.div>
 
             <AnimatePresence mode="wait">
-              <motion.p key={`eyebrow-${mode}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}
-                className="text-[11px] font-bold tracking-[0.28em] uppercase mb-6" style={{ color: GOLD }}>
+              <motion.p 
+                key={`eyebrow-${mode}`} 
+                initial={{ opacity: 0, y: 12 }} 
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }} 
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="text-[11px] font-bold tracking-[0.35em] uppercase mb-8" 
+                style={{ color: GOLD, textShadow: `0 0 20px ${GOLD}44` }}
+              >
                 {content.eyebrow}
               </motion.p>
             </AnimatePresence>
 
             <AnimatePresence mode="wait">
-              <motion.h1 key={`headline-${mode}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}
-                className="font-display text-white leading-[1.06] mb-6"
-                style={{ fontSize: 'clamp(2.8rem, 4.5vw, 4rem)' }}>
+              <motion.h1 
+                key={`headline-${mode}`} 
+                initial={{ opacity: 0, y: 16 }} 
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }} 
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="font-display text-white leading-[1.05] mb-7"
+                style={{ 
+                  fontSize: 'clamp(3rem, 5vw, 4.5rem)',
+                  textShadow: '0 2px 40px rgba(0,0,0,0.5)'
+                }}>
                 {content.headline}
               </motion.h1>
             </AnimatePresence>
 
             <AnimatePresence mode="wait">
-              <motion.p key={`body-${mode}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
-                className="text-[15px] text-white/55 leading-relaxed mb-10 max-w-[420px]">
+              <motion.p 
+                key={`body-${mode}`} 
+                initial={{ opacity: 0, y: 8 }} 
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }} 
+                transition={{ duration: 0.4, delay: 0.15 }}
+                className="text-[16px] text-white/60 leading-relaxed mb-12 max-w-[460px]"
+                style={{ fontWeight: 300 }}
+              >
                 {content.body}
               </motion.p>
             </AnimatePresence>
 
-            <div className="flex flex-wrap gap-4 mb-12">
+            <motion.div 
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              className="flex flex-wrap gap-4 mb-14"
+            >
               <Link to={content.cta.path}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
-                style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}30` }}>
+                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-[15px] transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-98"
+                style={{ 
+                  background: `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`, 
+                  color: '#060B16', 
+                  boxShadow: `0 8px 40px ${GOLD}40, 0 0 0 1px ${GOLD}33 inset`
+                }}>
                 {content.cta.label}
+                <motion.span 
+                  className="inline-block"
+                  animate={{ x: [0, 4, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                >→</motion.span>
               </Link>
               {isMedical && (
-                <button onClick={openModal}
-                  className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[14px] text-white border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 transition-all duration-200">
-                  <span className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center" style={{ fontSize: '10px' }}>▶</span>
+                <button 
+                  onClick={openModal}
+                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-[15px] text-white border border-white/20 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 transition-all duration-300 backdrop-blur-sm"
+                  style={{ boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}
+                >
+                  <motion.span 
+                    className="w-7 h-7 rounded-full border border-white/25 flex items-center justify-center group-hover:border-white/40 transition-colors" 
+                    style={{ fontSize: '9px' }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    ▶
+                  </motion.span>
                   How It Works
                 </button>
               )}
-            </div>
+            </motion.div>
 
             <AnimatePresence mode="wait">
-              <motion.div key={`pills-${mode}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }} transition={{ duration: 0.35 }}
-                className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-8 border-t border-white/[0.08]">
+              <motion.div 
+                key={`pills-${mode}`} 
+                initial={{ opacity: 0, y: 16 }} 
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }} 
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-10 border-t border-white/[0.06]"
+              >
                 {content.trustPills.map(({ icon: Icon, label, sub }) => (
-                  <div key={label} className="flex flex-col gap-1.5">
-                    <Icon className="w-4 h-4" style={NODE_ICON_STYLE} strokeWidth={1.5} />
+                  <motion.div 
+                    key={label} 
+                    className="flex flex-col gap-2"
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Icon className="w-5 h-5" style={NODE_ICON_STYLE} strokeWidth={1.3} />
                     <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
-                    <p className="text-[11px] text-white/65 tracking-wide">{sub}</p>
-                  </div>
+                    <p className="text-[11px] text-white/50 tracking-wide">{sub}</p>
+                  </motion.div>
                 ))}
               </motion.div>
             </AnimatePresence>
           </motion.div>
 
           {/* RIGHT — SafeTDiagram is memoized, never re-renders on mode toggle */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.3 }}
-            className="relative hidden lg:flex items-center justify-center" style={{ height: '100vh' }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            transition={{ duration: 1.2, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="relative hidden lg:flex items-center justify-center" 
+            style={{ height: '100vh' }}
+          >
             <SafeTDiagram />
           </motion.div>
         </div>
