@@ -117,9 +117,6 @@ const SafeTDiagram = React.memo(function SafeTDiagram() {
   );
 });
 
-const VIDEO_URL = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_091828_e240eb17-6edc-4129-ad9d-98678e3fd238.mp4';
-const POSTER_URL = 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=1920&q=80';
-
 const CONTENT = {
   medical: {
     eyebrow: 'World-Class Care. Personalized For You.',
@@ -149,28 +146,27 @@ const CONTENT = {
     eyebrow: 'PRIVATE JETS',
     headline: (
       <>
-        <span style={{ color: '#9CA3AF' }}>Premium.</span>
-        <br />
-        <span style={{ color: '#202A36', marginTop: '-12px', display: 'block' }}>Accessible.</span>
+        Premium.<br />
+        <span style={{ display: 'block', marginTop: '-8px' }}>Accessible.</span>
       </>
     ),
-    body: 'Your dedication deserves recognition. Experience luxury private jet travel with SkyElite — where premium service meets accessible pricing.',
+    body: 'Your dedication deserves recognition. Experience luxury private jet travel with SkyElite.',
     cta: { label: 'Discover', path: '/private-jets' },
     ctaSecondary: { label: 'Book Now', path: '/booking' },
     trustPills: [
-      { icon: Plane,      label: 'Premium Fleet',        sub: 'Latest aircraft' },
-      { icon: BadgeCheck, label: 'Verified Pilots',      sub: 'Certified experts' },
-      { icon: Shield,     label: 'Safety First',         sub: 'ISO certified' },
-      { icon: Heart,      label: '24/7 Support',         sub: 'Always available' },
+      { icon: Plane,      label: 'Premium Fleet',    sub: 'Latest aircraft' },
+      { icon: BadgeCheck, label: 'Verified Pilots',  sub: 'Certified experts' },
+      { icon: Shield,     label: 'Safety First',     sub: 'ISO certified' },
+      { icon: Heart,      label: '24/7 Support',     sub: 'Always available' },
     ],
   },
 };
 
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const { mode, isSkyElite } = usePlatformMode();
+  const { mode } = usePlatformMode();
   const isMedical = mode === 'medical';
+  const isSkyElite = mode === 'skyelite';
   const content = isSkyElite ? CONTENT.skyelite : (isMedical ? CONTENT.medical : CONTENT.nonmedical);
 
   // Stable callback — doesn't change between renders
@@ -179,45 +175,15 @@ export default function LuxuryHero() {
 
   return (
     <>
-      <section className="relative min-h-screen overflow-hidden" style={{ background: isSkyElite ? '#000' : '#060B16', marginTop: '-68px' }}>
+      <section className="relative min-h-screen overflow-hidden" style={{ background: '#060B16', marginTop: '-68px' }}>
         {/* Full-bleed background */}
         <div className="absolute inset-0">
-          {isSkyElite ? (
-            <>
-              {!videoError ? (
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  poster={POSTER_URL}
-                  className="w-full h-full object-cover"
-                  onError={() => setVideoError(true)}
-                >
-                  <source src={VIDEO_URL} type="video/mp4" />
-                </video>
-              ) : null}
-              <div 
-                className="w-full h-full object-cover"
-                style={{ 
-                  backgroundImage: `url(${POSTER_URL})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              />
-              <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.5)' }} />
-            </>
-          ) : (
-            <>
-              <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover scale-105"
-                style={{ objectPosition: '70% center' }} loading="eager" fetchpriority="high" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 35%, rgba(6,11,22,0.88) 50%, rgba(6,11,22,0.45) 68%, rgba(6,11,22,0.1) 85%, transparent 100%)' }} />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060B16 0%, rgba(6,11,22,0.4) 8%, transparent 18%)' }} />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060B16 0%, rgba(6,11,22,0.7) 10%, transparent 25%)' }} />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to left, #060B16 0%, rgba(6,11,22,0.5) 6%, transparent 18%)' }} />
-            </>
-          )}
+          <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover scale-105"
+            style={{ objectPosition: '70% center' }} loading="eager" fetchpriority="high" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #060B16 0%, #060B16 35%, rgba(6,11,22,0.88) 50%, rgba(6,11,22,0.45) 68%, rgba(6,11,22,0.1) 85%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #060B16 0%, rgba(6,11,22,0.4) 8%, transparent 18%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #060B16 0%, rgba(6,11,22,0.7) 10%, transparent 25%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to left, #060B16 0%, rgba(6,11,22,0.5) 6%, transparent 18%)' }} />
         </div>
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-24 lg:py-0" style={{ paddingTop: '68px' }}>
