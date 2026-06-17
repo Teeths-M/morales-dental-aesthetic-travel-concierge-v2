@@ -13,11 +13,7 @@ const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd
 
 const orbitNodes = [
   { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 155 },
-  { label: '24/7 Support',         icon: Headphones,  angle: 195, r: 155 },
-  { label: 'Safe Facilities',      icon: Building2,   angle: 345, r: 155 },
   { label: 'Risk Intelligence',    icon: BarChart3,   angle: 160, r: 155 },
-  { label: 'Travel Coordination',  icon: Plane,       angle: 15,  r: 155 },
-  { label: 'Recovery Care',        icon: HeartPulse,  angle: 105, r: 155 },
 ];
 
 // ── All expensive calculations done ONCE at module load, never at render time ──
