@@ -9,7 +9,7 @@ import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
 const CYAN_GLOW = '#22d3ee';
-const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/5274e554d_generated_image.png';
+const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/f28c3ff3f_generated_image.png';
 
 const orbitNodes = [
   { label: 'Verified Specialists', icon: ShieldCheck, angle: 270, r: 155 },
