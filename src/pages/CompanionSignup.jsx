@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { User, Building2, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 
 const countries = [
   // Caribbean
@@ -33,6 +33,7 @@ const experienceOptions = ['Just starting out', '1-2 years', '3-5 years', '5-10 
 
 export default function CompanionSignup() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [accountType, setAccountType] = useState('individual'); // 'individual' or 'agency'
@@ -95,11 +96,18 @@ export default function CompanionSignup() {
 
       await base44.entities.Companion.create(companionData);
 
-      toast.success(accountType === 'individual' ? 'Welcome! Your caregiver profile is created.' : 'Welcome! Your agency profile is created.');
+      toast({
+        title: 'Welcome!',
+        description: accountType === 'individual' ? 'Your caregiver profile is created.' : 'Your agency profile is created.',
+      });
       navigate('/companion-dashboard');
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error('Failed to create profile. Please try again.');
+      toast({
+        title: 'Error',
+        description: 'Failed to create profile. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
