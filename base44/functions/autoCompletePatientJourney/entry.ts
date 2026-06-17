@@ -13,24 +13,20 @@ Deno.serve(async (req) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
-    // Fetch all active cases in Travel-Coordination or later stages
-    const activeCases = await base44.asServiceRole.entities.CaseRecord.filter({
-      status: 'Travel-Coordination'
-    });
-
-    const completedCases = await base44.asServiceRole.entities.CaseRecord.filter({
-      status: 'Ready-For-Travel'
-    });
-
-    const inProgressCases = await base44.asServiceRole.entities.CaseRecord.filter({
-      status: 'Procedure-In-Progress'
-    });
-
-    const recoveryCases = await base44.asServiceRole.entities.CaseRecord.filter({
-      status: 'Recovery'
-    });
-
-    const allActiveCases = [...(activeCases || []), ...(completedCases || []), ...(inProgressCases || []), ...(recoveryCases || [])];
+    // BUG-R14-04 FIX: 4 separate unbounded filter() calls — each loads all records for that
+    // status with no limit, on every scheduled run. Combined this is 4× full-table scans.
+    // Only Recovery / RECOVERY_PHASE_7_DAY cases can ever satisfy the auto-complete rules
+    // (Rules 1 and 2 both check for Recovery status). Travel-Coordination, Ready-For-Travel,
+    // and Procedure-In-Progress cases are never completed by this function — they are scanned
+    // and skipped every single run, wasting memory and time.
+    // Fix: fetch only the two statuses that can actually trigger completion, with a cap.
+    const recoveryCases = await base44.asServiceRole.entities.CaseRecord.filter(
+      { status: 'Recovery' }, 'updated_date', 100
+    );
+    const recoveryPhaseCases = await base44.asServiceRole.entities.CaseRecord.filter(
+      { status: 'RECOVERY_PHASE_7_DAY' }, 'updated_date', 100
+    );
+    const allActiveCases = [...(recoveryCases || []), ...(recoveryPhaseCases || [])];
     
     let updatedCount = 0;
     const updatedCaseIds = [];

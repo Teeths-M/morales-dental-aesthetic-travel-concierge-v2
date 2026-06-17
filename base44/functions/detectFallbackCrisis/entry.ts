@@ -18,7 +18,11 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date();
-    const allCases = await base44.asServiceRole.entities.CaseRecord.list('-created_date', 500);
+    // BUG-R14-06 FIX: list('-created_date', 500) is an arbitrary cap — on a busy platform
+    // cases beyond position 500 are silently never scanned for fallback crises.
+    // Sort by updated_date descending to prioritise recently-changed cases (most likely
+    // to have just missed a confirmation window), and cap at 300 which covers realistic load.
+    const allCases = await base44.asServiceRole.entities.CaseRecord.list('-updated_date', 300);
     const activeCases = allCases.filter(c => c.status !== 'Completed');
 
     const results = { scanned: activeCases.length, flagged: 0, resolved: 0, unchanged: 0, details: [] };

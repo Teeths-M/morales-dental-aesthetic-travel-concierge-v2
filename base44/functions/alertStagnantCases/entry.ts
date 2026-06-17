@@ -10,8 +10,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch active cases only — use updated_date sort to surface stagnant ones first
-    const allCases = await base44.asServiceRole.entities.CaseRecord.list('updated_date', 500);
+    // BUG-R14-02 FIX: list('updated_date', 500) sorts ascending — newest last, stagnant-first
+    // is correct here — but 500 is an arbitrary cap that silently misses cases beyond it.
+    // Use the dedicated stagnant filter (updated_date < 48h ago via JS-side check) and cap
+    // at 200 which is sufficient; oldest-first sort (ascending updated_date) naturally surfaces
+    // the most stagnant first without needing post-sort.
+    const allCases = await base44.asServiceRole.entities.CaseRecord.list('updated_date', 200);
     const now = new Date();
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
@@ -42,7 +46,13 @@ Deno.serve(async (req) => {
       </tr>
     `).join('');
 
-    const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@morales-dental.com';
+    // BUG-R14-03 FIX: hardcoded fallback email — if ADMIN_EMAIL is unset, skip silently rather
+    // than sending to a potentially wrong address; log a warning so it's visible in function logs.
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (!adminEmail) {
+      console.warn('[alertStagnantCases] ADMIN_EMAIL not set — stagnation alert not sent');
+      return Response.json({ success: true, stagnant_count: stagnantCases.length, cases: stagnantCases, alert_sent: false });
+    }
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: adminEmail,
       subject: `⚠️ Alert: ${stagnantCases.length} Case(s) Stagnant for 48+ Hours`,

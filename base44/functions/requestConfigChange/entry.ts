@@ -64,12 +64,16 @@ Deno.serve(async (req) => {
       timestamp: now.toISOString(),
     });
 
-    // Notify all admins by email
-    const allAdmins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+    // BUG-R14-01 FIX: User.filter({ role: 'admin' }) is a full-table scan that misses
+    // platform_admin users (the second admin role) and loads all users on every request.
+    // Use ADMIN_EMAIL env var for direct notification — same pattern used everywhere else.
+    // The approval UI lists all pending changes; admins discover it there too.
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
     const appUrl = (Deno.env.get('APP_URL') || 'https://app.base44.app').replace(/\/$/, '');
     const approvalUrl = `${appUrl}/admin/config-approvals`;
 
-    const emailPromises = allAdmins.map(admin =>
+    const adminRecipients = adminEmail ? [{ email: adminEmail, full_name: 'Admin' }] : [];
+    const emailPromises = adminRecipients.map(admin =>
       base44.asServiceRole.integrations.Core.SendEmail({
         from_name: 'MORALES Security — Config Approval Required',
         to: admin.email,

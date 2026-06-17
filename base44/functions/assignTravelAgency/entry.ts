@@ -45,7 +45,10 @@ Deno.serve(async (req) => {
       status: 'Vendor-Pending'
     });
 
-    const portalUrl = `${(Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '')}/portal/travel/${portalToken}`;
+    // BUG-R14-05 FIX: portal URL uses /portal/travel/:token (path param) but the actual
+    // travel portal route is /portal/travel?token=... (query param). The link in the email
+    // was always a dead 404. Corrected to query string format.
+    const portalUrl = `${(Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '')}/portal/travel?token=${portalToken}`;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: selectedAgency.email,
