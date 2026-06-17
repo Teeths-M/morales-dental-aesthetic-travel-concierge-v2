@@ -32,8 +32,8 @@ export default function Header() {
     <>
     <nav className="w-full min-h-[88px] border-b border-white/[0.06] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-4">
       
-      {/* 1. PREMIUM BRANDING IDENTITY */}
-      <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-5 group z-50">
+      {/* 1. PREMIUM BRANDING IDENTITY - Hidden on Dashboard Pages (Sidebar handles it) */}
+      <Link to={user ? "/dashboard" : "/"} className={`flex items-center gap-5 group z-50 ${location.pathname.startsWith('/dashboard') ? 'lg:hidden' : ''}`}>
         <div className="w-14 h-14 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-xl shadow-lg" style={{ boxShadow: '0 4px 24px rgba(212,175,55,0.35)' }}>
           <span className="font-serif text-2xl text-[#0C1A1D] font-bold">M</span>
         </div>
