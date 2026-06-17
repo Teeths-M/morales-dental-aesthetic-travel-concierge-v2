@@ -1,0 +1,131 @@
+{
+  "name": "WalkieTalkieSession",
+  "type": "object",
+  "properties": {
+    "session_token": {
+      "type": "string",
+      "description": "WALKIE_<hex> - Unique session identifier"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Reference to CaseRecord if medical journey"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "doctor",
+        "companion",
+        "travel_agency",
+        "taxi_service"
+      ]
+    },
+    "session_type": {
+      "type": "string",
+      "enum": [
+        "medical",
+        "travel",
+        "paid"
+      ],
+      "default": "medical"
+    },
+    "source_language": {
+      "type": "string",
+      "description": "ISO 639-1 code (e.g., 'en', 'es')"
+    },
+    "target_language": {
+      "type": "string",
+      "description": "ISO 639-1 code"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "default": 0
+    },
+    "message_count": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "ended",
+        "error"
+      ],
+      "default": "active"
+    },
+    "stripe_payment_id": {
+      "type": "string",
+      "description": "If paid session"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "session_token",
+    "user_email",
+    "source_language",
+    "target_language"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation } from 'lucide-react';
+import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation, Mic } from 'lucide-react';
 import { BackButtonLight } from '@/components/nav/BackButton';
 import SOSDropdown from '@/components/emergency/SOSDropdown';
 import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
 import SpaceIntelPanel from '@/components/emergency/SpaceIntelPanel';
 import LocationBreadcrumbTracker from '@/components/emergency/LocationBreadcrumbTracker';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
+import { Link } from 'react-router-dom';
 
 const TABS = [
   { id: 'sos', label: 'SOS & Dispatch', icon: AlertTriangle },
@@ -77,9 +78,16 @@ export default function EmergencyHub() {
               { icon: Eye, label: 'Guardian View', color: 'bg-violet-900/40 text-violet-300 border-violet-800/50' },
               { icon: Navigation, label: 'Auto-Purge Breadcrumbs', color: 'bg-emerald-900/40 text-emerald-300 border-emerald-800/50' },
               { icon: Smartphone, label: 'Universal 6-Digit PIN', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
+              { icon: Mic, label: 'Walkie-Talkie', color: 'bg-cyan-900/40 text-cyan-300 border-cyan-800/50', link: '/walkie-talkie' },
             ].map(b => {
               const Icon = b.icon;
-              return (
+              return b.link ? (
+                <Link key={b.label} to={b.link}>
+                  <span className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${b.color} hover:opacity-80 transition-opacity cursor-pointer`}>
+                    <Icon className="w-3 h-3" />{b.label}
+                  </span>
+                </Link>
+              ) : (
                 <span key={b.label} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${b.color}`}>
                   <Icon className="w-3 h-3" />{b.label}
                 </span>
