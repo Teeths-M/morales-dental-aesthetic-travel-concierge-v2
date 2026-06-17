@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
         created_at: new Date().toISOString()
       });
 
-      return Response.json({ session_token: sessionToken, session_id: session.id, session_type });
+      return Response.json({ session_token: sessionToken, session_id: session.id, session_type: sessionType });
     }
 
     // TRANSLATE AUDIO (Transcribe + Translate + TTS)
