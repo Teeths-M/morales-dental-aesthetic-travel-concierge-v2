@@ -34,7 +34,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Premium Brand Header - Single Clean Logo */}
-      <div className={`${LUXURY_COLORS.header} px-5 py-6`}>
+      <div className={`${LUXURY_COLORS.header} px-5 py-8 mb-2`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
             <span className="text-white font-serif font-bold text-xl">M</span>
@@ -47,7 +47,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
       </div>
 
       {/* Premium Navigation */}
-      <nav className="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
         {NAV_ITEMS.map(({ icon: Icon, label, path, badge }) => {
           const isActive = location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
           return (
