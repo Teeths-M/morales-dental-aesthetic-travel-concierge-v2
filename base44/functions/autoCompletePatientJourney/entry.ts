@@ -43,16 +43,25 @@ Deno.serve(async (req) => {
       let shouldComplete = false;
       let completionReason = '';
 
-      // Rule 1: Check if recovery period has ended
-      if (caseRecord.recovery_days) {
-        // Calculate expected return date from case creation or procedure date
-        const caseCreated = new Date(caseRecord.created_date);
-        const expectedReturnDate = new Date(caseCreated);
-        expectedReturnDate.setDate(expectedReturnDate.getDate() + caseRecord.recovery_days + 7); // Add 7 days buffer
+      // BUG-R5-01 FIX: NEVER use created_date to estimate return date.
+      // created_date is the consultation submission timestamp — weeks/months before travel.
+      // Using it means cases auto-complete the moment recovery_days passes since *submission*,
+      // silently terminating active journeys where the patient hasn't even left yet.
+      //
+      // Rule 1 now requires: case is in Recovery/RECOVERY_PHASE_7_DAY status AND
+      // updated_date (last status transition) + recovery_days has elapsed.
+      // This correctly measures recovery from the time the case entered Recovery, not from creation.
+      if (
+        caseRecord.recovery_days &&
+        (caseRecord.status === 'Recovery' || caseRecord.status === 'RECOVERY_PHASE_7_DAY')
+      ) {
+        const lastTransition = new Date(caseRecord.updated_date);
+        const expectedReturnDate = new Date(lastTransition);
+        expectedReturnDate.setDate(expectedReturnDate.getDate() + caseRecord.recovery_days + 7);
 
         if (expectedReturnDate.toISOString().split('T')[0] < today) {
           shouldComplete = true;
-          completionReason = `Recovery period ended (expected return: ${expectedReturnDate.toISOString().split('T')[0]})`;
+          completionReason = `Recovery period ended (expected return: ${expectedReturnDate.toISOString().split('T')[0]}, from last status transition)`;
         }
       }
 
@@ -95,7 +104,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in patient lifecycle automation:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[autoCompletePatientJourney]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

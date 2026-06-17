@@ -33,8 +33,9 @@ const REQUIRED_MILESTONES = [
 ];
 
 async function checkMilestones(base44, caseId) {
-  const tl = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId });
-  const cr = tl[0];
+  // BUG-R5-06 FIX: SDK filter() cannot query by built-in `id` field — always returns [].
+  // Use .get() which is the correct SDK method for lookup by primary key.
+  const cr = await base44.asServiceRole.entities.CaseRecord.get(caseId);
   if (!cr) return { complete: false, reason: 'Case not found', missing: [] };
 
   const completedActions = (cr.timeline_log || []).map(e => e.action);
@@ -79,8 +80,8 @@ Deno.serve(async (req) => {
     // ── CHECK ESCROW ──────────────────────────────────────────────────────────
     if (action === 'check_escrow') {
       const milestone = await checkMilestones(base44, case_id);
-      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-      const cr = cases[0];
+      // BUG-R5-06 FIX: use .get() not filter({ id })
+      const cr = await base44.asServiceRole.entities.CaseRecord.get(case_id);
       if (!cr) return Response.json({ error: 'Case not found' }, { status: 404 });
 
       const packagePrice = cr.amount_paid || cr.final_package_price || 0;
@@ -129,8 +130,8 @@ Deno.serve(async (req) => {
         }, { status: 402 });
       }
 
-      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
-      const cr = cases[0];
+      // BUG-R5-06 FIX: use .get() not filter({ id })
+      const cr = await base44.asServiceRole.entities.CaseRecord.get(case_id);
       if (!cr) return Response.json({ error: 'Case not found' }, { status: 404 });
 
       const packagePrice = cr.amount_paid || cr.final_package_price || 0;
@@ -230,7 +231,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unknown action. Use: check_escrow | release_payout | manual_override' }, { status: 400 });
 
   } catch (error) {
-    console.error('processPartnerPayout error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[processPartnerPayout]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

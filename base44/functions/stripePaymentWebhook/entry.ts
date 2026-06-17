@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
     }
   } catch (err) {
     console.error(`[stripePaymentWebhook] Error processing ${event.type}:`, err.message);
-    return Response.json({ error: 'Handler error', message: err.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 
   return Response.json({ received: true, event_type: event.type });

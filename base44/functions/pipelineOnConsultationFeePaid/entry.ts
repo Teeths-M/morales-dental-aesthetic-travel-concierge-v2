@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, results });
   } catch (error) {
-    console.error('pipelineOnConsultationFeePaid error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[pipelineOnConsultationFeePaid]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

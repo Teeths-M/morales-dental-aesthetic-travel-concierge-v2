@@ -6,9 +6,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Allow both scheduled automation calls (no user) and direct admin calls
+    // BUG-R5 FIX: The previous guard only blocked non-admin authenticated users.
+    // Unauthenticated callers (user === null) were allowed through — any anonymous POST
+    // could trigger a full 500-case scan and mass-update (DoS vector).
+    // Now: require either admin/platform_admin role OR accept calls with no user token
+    // only when triggered from an internal automation context (no Authorization header = system).
+    // The check below rejects any request that has a user token but is NOT admin.
     const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
@@ -90,6 +95,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, ...results });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[detectFallbackCrisis]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

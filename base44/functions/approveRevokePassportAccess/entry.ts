@@ -73,6 +73,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, grant_token, new_status: newStatus });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[approveRevokePassportAccess]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

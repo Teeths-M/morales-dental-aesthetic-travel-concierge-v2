@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
       cases: stagnantCases
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[alertStagnantCases]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

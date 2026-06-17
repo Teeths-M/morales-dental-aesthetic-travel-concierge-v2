@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('[chargeConsultationFee] Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[chargeConsultationFee]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

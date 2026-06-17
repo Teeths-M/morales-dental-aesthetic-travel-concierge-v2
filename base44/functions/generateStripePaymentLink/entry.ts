@@ -140,6 +140,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[generateStripePaymentLink]', error.message);
-    return Response.json({ error: 'Payment link generation failed', message: error.message }, { status: 500 });
+    return Response.json({ error: 'Payment link generation failed.' }, { status: 500 });
   }
 });

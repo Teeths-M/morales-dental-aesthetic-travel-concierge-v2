@@ -123,8 +123,8 @@ Deno.serve(async (req) => {
     if (!caseId) return Response.json({ error: 'caseId required' }, { status: 400 });
 
     // SECURITY: Fetch case via service role but enforce ownership — only case owner or admin may scan
-    const caseRecord = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId });
-    const cr = Array.isArray(caseRecord) ? caseRecord[0] : caseRecord;
+    // BUG-R5-08 FIX: filter({ id }) always returns [] — use .get() for primary key lookup
+    const cr = await base44.asServiceRole.entities.CaseRecord.get(caseId);
     if (!cr) return Response.json({ error: 'Case not found' }, { status: 404 });
 
     const isAdmin = ['admin', 'platform_admin'].includes(user.role);
@@ -303,6 +303,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[safeT4LifeScan]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

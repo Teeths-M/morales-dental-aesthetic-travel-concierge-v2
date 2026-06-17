@@ -15,7 +15,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Case ID required' }, { status: 400 });
     }
 
-    const caseRecord = await base44.entities.CaseRecord.get(caseId);
+    // BUG-R5-09 FIX: admin function must use asServiceRole to access any patient's case,
+    // not user-scoped base44.entities which only returns the admin's own records.
+    const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(caseId);
     
     if (!caseRecord) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
@@ -95,7 +97,7 @@ Deno.serve(async (req) => {
 
     const updatedTimeline = caseRecord.timeline_log ? [...caseRecord.timeline_log, timelineEntry] : [timelineEntry];
 
-    await base44.entities.CaseRecord.update(caseId, {
+    await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       timeline_log: updatedTimeline
     });
 
@@ -106,6 +108,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[executeCaseWorkflow]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
