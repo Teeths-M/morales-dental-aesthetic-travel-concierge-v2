@@ -145,6 +145,13 @@ export default function Discover() {
       {/* Search Header - Desktop */}
       <div className="sticky top-[88px] z-40 bg-[#060B16]/95 backdrop-blur-md border-b border-white/[0.06]">
         <div className="container mx-auto px-6 py-5">
+          <div className="flex items-center gap-4 mb-4">
+            {/* Discover Title */}
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-display text-white" style={{ letterSpacing: '-0.02em' }}>Discover</h1>
+              <div className="w-8 h-[2px]" style={{ background: '#D4AF37' }} />
+            </div>
+          </div>
           <div className="flex items-center gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
