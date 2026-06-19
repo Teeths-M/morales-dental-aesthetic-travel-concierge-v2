@@ -48,18 +48,22 @@ if (import.meta.env.PROD && SENTRY_DSN) {
 }
 
 // ── Service Worker Cleanup (Dev Only) ────────────────────────────────────────
+// Must complete BEFORE React mounts — stale SW cache can serve old JS with a
+// null React instance, causing "Cannot read properties of null (reading 'useState')"
 
-if (import.meta.env.DEV && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister());
-  });
-  caches.keys().then(keys => {
-    keys.forEach(key => caches.delete(key));
-  });
+async function mountApp() {
+  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    } catch (_) { /* ignore — best effort */ }
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <App />
+  );
 }
 
-// ── React Root ───────────────────────────────────────────────────────────────
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
-)
+mountApp();
