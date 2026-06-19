@@ -45,6 +45,8 @@ const STATUS_MAP = {
   under_review:       { color: 'orange',  label: 'Under Review' },
   suspended:          { color: 'orange',  label: 'Suspended' },
   requires_reverification: { color: 'orange', label: 'Re-verify' },
+  escalated:          { color: 'orange',  label: 'Escalated' },
+  missed:             { color: 'red',     label: 'Missed' },
 
   // ── Error / Blocked ──
   denied:             { color: 'red',     label: 'Denied' },

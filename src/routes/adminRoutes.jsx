@@ -17,6 +17,7 @@ const DoctorLicenseVerification = lazy(() => import('@/pages/DoctorLicenseVerifi
 const DoctorVerificationAdmin   = lazy(() => import('@/pages/DoctorVerificationAdmin'));
 const AdminPortalViewer         = lazy(() => import('@/pages/AdminPortalViewer'));
 const AdminSms                  = lazy(() => import('@/pages/AdminSms'));
+const AdminSmsHandshake         = lazy(() => import('@/pages/AdminSmsHandshake'));
 const AdminDispatchMonitor      = lazy(() => import('@/pages/AdminDispatchMonitor'));
 const IQ200AdminCenter          = lazy(() => import('@/pages/IQ200AdminCenter'));
 const AdminPricingDashboard     = lazy(() => import('@/pages/AdminPricingDashboard'));
@@ -47,6 +48,7 @@ export const adminRoutes = (
       <Route path="/admin/procedure-requests"        element={<AdminProcedureRequests />} />
       <Route path="/admin/portal-viewer"             element={<AdminPortalViewer />} />
       <Route path="/admin/sms"                       element={<AdminSms />} />
+      <Route path="/admin/sms-handshake"             element={<AdminSmsHandshake />} />
       <Route path="/admin/dispatch-monitor"          element={<AdminDispatchMonitor />} />
       <Route path="/admin/iq200"                     element={<IQ200AdminCenter />} />
       <Route path="/admin/pricing"                   element={<AdminPricingDashboard />} />
