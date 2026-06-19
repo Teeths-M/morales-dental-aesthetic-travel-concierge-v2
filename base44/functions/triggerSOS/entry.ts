@@ -144,6 +144,54 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
+    // Update LiveLocation immediately on SOS so guardian sees last-known coords
+    if (latitude != null && longitude != null && case_id) {
+      try {
+        const liveLocations = await base44.asServiceRole.entities.LiveLocation.filter({ case_id });
+        const existingLive = liveLocations?.[0];
+        const liveData = {
+          case_id, user_id: patient_email, user_email: patient_email,
+          latitude, longitude,
+          source: 'gps', updated_at: now, is_active: true, guardian_share_enabled: true,
+          stale_after: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          stale_alerted_15m: false, stale_alerted_30m: false,
+        };
+        if (existingLive) {
+          await base44.asServiceRole.entities.LiveLocation.update(existingLive.id, liveData);
+        } else {
+          await base44.asServiceRole.entities.LiveLocation.create(liveData);
+        }
+      } catch (_) {}
+    }
+
+    // Auto-create guardian session on SOS if none active
+    if (case_id) {
+      try {
+        const activeSessions = await base44.asServiceRole.entities.GuardianSession.filter({ case_id, is_active: true });
+        const validSession = activeSessions.find(s => new Date(s.expires_at) > new Date());
+        if (!validSession) {
+          const tokenArray = new Uint8Array(32);
+          crypto.getRandomValues(tokenArray);
+          const token = Array.from(tokenArray, b => b.toString(16).padStart(2, '0')).join('');
+          const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+          await base44.asServiceRole.entities.GuardianSession.create({
+            case_id,
+            patient_email,
+            patient_name: patient_name || 'Traveler',
+            guardian_name: 'Emergency Contact',
+            guardian_email: '',
+            view_token: token,
+            expires_at: expiresAt,
+            is_active: true,
+            view_count: 0,
+            shared_data_scope: ['case_status', 'journey_stage', 'location'],
+            created_at: now,
+          });
+          notificationsSent.push('guardian_session_created');
+        }
+      } catch (_) {}
+    }
+
     // Update event with notifications sent
     await base44.asServiceRole.entities.SOSEvent.update(sosEvent.id, {
       status: 'dispatched',

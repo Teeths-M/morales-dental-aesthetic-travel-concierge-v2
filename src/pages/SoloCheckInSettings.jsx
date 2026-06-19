@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
-import SoloSafetyBeaconStatus from '@/components/solo/SoloSafetyBeaconStatus';
+import LiveBeaconPanel from '@/components/solo/LiveBeaconPanel';
+import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
 
 function SoloCheckInBanner() {
   return (
@@ -29,35 +30,12 @@ export default function SoloCheckInSettings() {
   const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
-  const [locStatus, setLocStatus] = useState('idle');
   const [stats, setStats] = useState({ total: 0, acknowledged: 0, escalated: 0 });
   const locRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
-
-  // Pre-acquire location quietly
-  useEffect(() => {
-    if (!user) return;
-    setLocStatus('acquiring');
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          locRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, source: 'gps' };
-          setLocStatus('gps');
-        },
-        () => {
-          base44.functions.invoke('getGeolocationAndCurrency', {}).then(res => {
-            const d = res?.data;
-            if (d) { locRef.current = { lat: d.latitude, lng: d.longitude, city: d.city, country: d.country, country_code: d.country_code, region: d.region, timezone: d.timezone, source: 'ip_geo' }; }
-            setLocStatus(d?.city ? 'ip_geo' : 'none');
-          }).catch(() => setLocStatus('none'));
-        },
-        { timeout: 8000, maximumAge: 60000 }
-      );
-    } else { setLocStatus('none'); }
-  }, [user]);
 
   const loadCheckIns = async () => {
     if (!user) return;
@@ -144,22 +122,15 @@ export default function SoloCheckInSettings() {
             </div>
           </div>
 
-          {/* Safety Beacon Status */}
+          {/* Live Beacon Panel */}
           {activeCase && (
             <div className="mb-5">
-              <SoloSafetyBeaconStatus
+              <LiveBeaconPanel
                 caseId={activeCase.id}
                 caseStatus={activeCase.status}
-                isSoloTraveler={!activeCase.requires_companion || activeCase.companion_requirement_status === 'companion_required_pending'}
+                guardianToken={null}
+                isAdmin={user?.role === 'admin' || user?.role === 'platform_admin'}
               />
-            </div>
-          )}
-
-          {/* Location status bar */}
-          {locStatus === 'ip_geo' && (
-            <div className="mb-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700">
-              <Globe className="w-3.5 h-3.5 flex-shrink-0" />
-              Precise GPS is off. We can only share approximate network location with your guardian.
             </div>
           )}
 
@@ -278,6 +249,13 @@ export default function SoloCheckInSettings() {
               </motion.div>
             );
           })()}
+
+          {/* Guardian Links */}
+          {activeCase && (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+              <GuardianLinkManager caseId={activeCase.id} patientEmail={user?.email} />
+            </div>
+          )}
 
           {/* Check-In History */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">

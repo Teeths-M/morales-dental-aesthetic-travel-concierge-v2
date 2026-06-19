@@ -26,6 +26,7 @@ import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
+import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
 
 const notifications = [
   { type: 'warning', text: 'Lab work still required for medical clearance', time: '2h ago' },
@@ -53,6 +54,11 @@ const colorMap = {
 function DashboardHome({ user, consultations, language }) {
   // PERFORMANCE: Memoize displayName to prevent recalculation
   const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
+
+  const latestActive = consultations.find(c => c.status !== 'Completed');
+  const isSolo = latestActive && (!latestActive.requires_companion || latestActive.companion_requirement_status === 'companion_required_pending');
+  // Auto-start live beacon for solo travelers with an active journey
+  useLiveLocationBeacon({ caseId: latestActive?.id, caseStatus: latestActive?.status, enabled: !!isSolo });
   const latestConsultation = consultations[0];
   const caseStatus = latestConsultation?.status || 'Submitted';
 

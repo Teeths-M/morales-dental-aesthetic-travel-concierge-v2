@@ -23,7 +23,7 @@ export default function SoloCheckInBanner() {
       .catch(() => {});
   }, []);
 
-  // Pre-acquire location quietly in background
+  // Pre-acquire location when there's a pending check-in
   useEffect(() => {
     if (!pendingCheckIn) return;
     setLocStatus('acquiring');
@@ -34,15 +34,11 @@ export default function SoloCheckInBanner() {
           setLocStatus('gps');
         },
         () => {
-          // GPS denied — try IP geo
           base44.functions.invoke('getGeolocationAndCurrency', {})
             .then(res => {
               const d = res?.data;
               if (d?.latitude) {
                 locRef.current = { lat: d.latitude, lng: d.longitude, city: d.city, country: d.country, country_code: d.country_code, region: d.region, timezone: d.timezone, source: 'ip_geo' };
-                setLocStatus('ip_geo');
-              } else if (d?.city || d?.country) {
-                locRef.current = { city: d.city, country: d.country, country_code: d.country_code, region: d.region, timezone: d.timezone, source: 'ip_geo' };
                 setLocStatus('ip_geo');
               } else {
                 setLocStatus('none');
@@ -77,7 +73,7 @@ export default function SoloCheckInBanner() {
       });
       setConfirmed(true);
       setPendingCheckIn(null);
-    } catch (e) {
+    } catch {
       toast({ title: 'Failed to acknowledge', description: 'Please try again.', variant: 'destructive' });
     }
     setLoading(false);
@@ -86,21 +82,22 @@ export default function SoloCheckInBanner() {
   if (confirmed) {
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        className="rounded-2xl p-5 border-2 bg-emerald-50 border-emerald-400 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 className="w-9 h-9 text-emerald-600" />
-          </div>
+        className="rounded-2xl p-4 border-2 bg-emerald-50 border-emerald-400 shadow-sm mb-4">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="w-8 h-8 text-emerald-600 flex-shrink-0" />
           <div>
-            <p className="font-bold text-emerald-800 text-base">✅ You're Marked Safe!</p>
-            <p className="text-emerald-700 text-sm mt-0.5">Your location and safety status have been recorded. Next check-in in 12 hours.</p>
+            <p className="font-bold text-emerald-800 text-sm">✅ You're Marked Safe</p>
+            <p className="text-emerald-700 text-xs mt-0.5">Your location and safety status have been recorded. Next check-in in 12 hours.</p>
           </div>
         </div>
       </motion.div>
     );
   }
 
-  if (!pendingCheckIn) return null;
+  if (!pendingCheckIn) {
+    // Just show static "active" info banner — no overdue check-in
+    return null;
+  }
 
   const isOverdue = new Date(pendingCheckIn.scheduled_time) < new Date();
   const scheduledTime = new Date(pendingCheckIn.scheduled_time);
@@ -108,49 +105,39 @@ export default function SoloCheckInBanner() {
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-        className={`rounded-2xl p-4 border-2 shadow-sm ${isOverdue ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-200'}`}>
+        className={`rounded-2xl p-4 border-2 shadow-sm mb-4 ${isOverdue ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-200'}`}>
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
             {isOverdue
               ? <AlertTriangle className="w-5 h-5 text-red-600 animate-pulse" />
               : <Shield className="w-5 h-5 text-emerald-600" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className={`font-bold text-sm ${isOverdue ? 'text-red-800' : 'text-emerald-800'}`}>
-              {isOverdue ? '🚨 Safety Check-In Overdue' : '🛡️ Solo Traveler Check-In'}
+              {isOverdue ? '🚨 Safety Check-In Overdue' : '🛡️ Solo Traveler Check-In Due'}
             </p>
             <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-700' : 'text-emerald-700'}`}>
               {isOverdue
-                ? `Missed check-in for ${scheduledTime.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}. Confirm immediately.`
-                : `Scheduled ${scheduledTime.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}. Tap to confirm you're safe.`}
+                ? `Missed: ${scheduledTime.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}. Confirm immediately to stop escalation.`
+                : `Due: ${scheduledTime.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`}
             </p>
 
-            {/* Location status */}
             {locStatus === 'gps' && locRef.current && (
-              <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-emerald-600">
+              <div className="flex items-center gap-1.5 mt-1 text-[10px] text-emerald-600">
                 <MapPin className="w-3 h-3" />
                 GPS ready · {locRef.current.lat?.toFixed(4)}, {locRef.current.lng?.toFixed(4)}
-                {locRef.current.accuracy != null && ` ±${Math.round(locRef.current.accuracy)}m`}
               </div>
             )}
-            {locStatus === 'ip_geo' && locRef.current && (
-              <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-amber-600">
+            {locStatus === 'ip_geo' && (
+              <div className="flex items-center gap-1.5 mt-1 text-[10px] text-amber-600">
                 <Globe className="w-3 h-3" />
-                Approximate location · {[locRef.current.city, locRef.current.country].filter(Boolean).join(', ') || 'Network location'}
-              </div>
-            )}
-            {locStatus === 'none' && (
-              <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-slate-500">
-                <Clock className="w-3 h-3" />
-                Location unavailable — check-in will still be recorded
+                Approximate network location
               </div>
             )}
 
             <Button onClick={handleAcknowledge} disabled={loading}
               className={`mt-3 w-full sm:w-auto ${isOverdue ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white gap-2 text-xs h-9`}>
-              {loading
-                ? 'Recording...'
-                : <><CheckCircle2 className="w-3.5 h-3.5" />{isOverdue ? "✅ I'm Safe (Confirm Now)" : "✅ I'm Safe"}</>}
+              {loading ? 'Recording...' : <><CheckCircle2 className="w-3.5 h-3.5" />I'm Safe — Confirm Now</>}
             </Button>
           </div>
         </div>
