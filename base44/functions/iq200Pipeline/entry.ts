@@ -131,6 +131,14 @@ Deno.serve(async (req) => {
             }
           ]
         });
+
+        // Notify Slack — fire-and-forget, never blocks the pipeline
+        base44.functions.invoke('notifySlackHighRisk', {
+          patient_name: consultation.patient_name,
+          flagged_condition: consultation.high_risk_flagged_condition || 'High-risk condition',
+          procedure: consultation.procedure_interest,
+          case_id: caseRecord.id,
+        }).catch(e => console.error('[iq200Pipeline] Slack notify failed (non-fatal):', e.message));
       }
 
       const DENTAL_PROCEDURES = ['dental_implants', 'all_on_4', 'porcelain_veneers', 'smile_makeover', 'bone_regeneration', 'teeth_whitening'];
