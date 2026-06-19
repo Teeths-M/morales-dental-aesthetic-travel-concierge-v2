@@ -37,6 +37,9 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     const route = SOS_ROUTES[trigger_type] || SOS_ROUTES.police;
 
+    // Extra fields for wilderness_injury
+    const { activity_type, offline_packet_id, emergency_type, activity_session_id } = body;
+
     // Translate emergency message to local language
     let translatedMessage = 'EMERGENCY: Medical tourist requires immediate assistance.';
     // SEC-09: Sanitise destination_country before LLM interpolation to prevent prompt injection
@@ -52,17 +55,18 @@ Deno.serve(async (req) => {
     }
 
     // Create SOS event record
+    const isWilderness = trigger_type === 'wilderness_injury' || emergency_type === 'wilderness_injury';
     const sosEvent = await base44.asServiceRole.entities.SOSEvent.create({
       case_id: case_id || null,
       patient_email,
       patient_name: patient_name || 'Unknown Patient',
       patient_phone: patient_phone || '',
-      trigger_type,
+      trigger_type: isWilderness ? 'silent_sos' : trigger_type, // map to existing enum
       latitude: latitude || null,
       longitude: longitude || null,
-      location_label: location_label || 'Location unknown',
+      location_label: location_label || (isWilderness ? 'Wilderness SOS — offline packet' : 'Location unknown'),
       status: 'triggered',
-      escalation_level: 1,
+      escalation_level: isWilderness ? 5 : 1, // wilderness = highest urgency
       is_silent: !!is_silent || trigger_type === 'silent_sos',
       translated_message: translatedMessage,
       notifications_sent: [],
@@ -99,13 +103,76 @@ Deno.serve(async (req) => {
   </div>
 </div>`;
 
+    // For wilderness SOS: log breadcrumb and update activity session
+    if (isWilderness) {
+      if (latitude != null && longitude != null) {
+        try {
+          await base44.asServiceRole.entities.LocationBreadcrumb.create({
+            case_id: case_id || '',
+            patient_email,
+            patient_name: patient_name || '',
+            latitude, longitude,
+            source: 'checkin_handshake',
+            provider: 'browser_gps',
+            location_precision: 'precise',
+            logged_at: now,
+            is_saved: true,
+            place_label: `Wilderness SOS${offline_packet_id ? ' — ' + offline_packet_id : ''}`,
+          });
+        } catch (_) {}
+      }
+      // Update ActivitySession status if provided
+      if (activity_session_id) {
+        try {
+          await base44.asServiceRole.entities.ActivitySession.update(activity_session_id, {
+            status: 'sos_triggered',
+            handshake_status: 'overdue',
+          });
+        } catch (_) {}
+      }
+      // Create DispatchFailureLog if no rescue partner — admin task
+      try {
+        await base44.asServiceRole.entities.DispatchFailureLog.create({
+          case_id: case_id || '',
+          escalation_level: 5,
+          failure_reason: `WILDERNESS SOS — ${offline_packet_id || 'direct'} — SEARCH_RESCUE_REQUIRED. Coordinates: ${
+            latitude ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}` : 'unknown'
+          }. Activity: ${activity_type || 'unknown'}.`,
+          partner_type: 'security',
+          status: 'logged',
+          created_at: now,
+        });
+      } catch (_) {}
+    }
+
     if (adminNotifyEmail) {
       try {
+        const subject = isWilderness
+          ? `🏔️ WILDERNESS SOS — SEARCH & RESCUE REQUIRED — ${patient_name || patient_email}`
+          : `🚨 SOS — ${route.label} — ${patient_name || patient_email}`;
         await base44.asServiceRole.integrations.Core.SendEmail({
           from_name: 'Morales Safe-T Emergency System',
           to: adminNotifyEmail,
-          subject: `🚨 SOS — ${route.label} — ${patient_name || patient_email}`,
-          body: adminEmailBody
+          subject,
+          body: isWilderness
+            ? `<div style="font-family:sans-serif;max-width:600px">
+                <div style="background:#dc2626;color:white;padding:20px;border-radius:8px 8px 0 0">
+                  <h1 style="margin:0">🏔️ WILDERNESS SOS — CANOPY COLLAPSE PROTOCOL</h1>
+                </div>
+                <div style="background:#fff;border:1px solid #fca5a5;border-top:none;padding:20px;border-radius:0 0 8px 8px">
+                  <p><strong>Patient:</strong> ${patient_name || patient_email}</p>
+                  <p><strong>Coordinates:</strong> ${latitude ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}` : 'UNKNOWN'}</p>
+                  ${latitude ? `<p><a href="https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}">📍 Open in Google Maps</a></p>` : ''}
+                  ${latitude ? `<p><a href="https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving">🧭 Get Directions</a></p>` : ''}
+                  <p><strong>Activity:</strong> ${activity_type || 'unknown'}</p>
+                  <p><strong>Offline Packet ID:</strong> ${offline_packet_id || 'N/A — direct SOS'}</p>
+                  <p><strong>Case ID:</strong> ${case_id || 'N/A'}</p>
+                  <p><strong>Time:</strong> ${new Date(now).toLocaleString()}</p>
+                  <hr/>
+                  <p style="color:#dc2626;font-weight:bold">SEARCH & RESCUE REQUIRED — Review /admin/wilderness-rescue immediately.</p>
+                </div>
+              </div>`
+            : adminEmailBody,
         });
         notificationsSent.push('admin_email');
       } catch (_) { notificationsSent.push('admin_email_failed'); }

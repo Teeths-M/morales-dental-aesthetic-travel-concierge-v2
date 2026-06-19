@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mountain, Plus, Shield, Zap, Waves, Wind, Leaf, CheckCircle2, Circle,
-  Clock, AlertTriangle, ChevronDown, ChevronUp, Loader2, Bell } from 'lucide-react';
+  Clock, AlertTriangle, ChevronDown, ChevronUp, Loader2, Bell, TreePine } from 'lucide-react';
 import { BackButton } from '@/components/nav/BackButton';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { getChecklist } from '@/lib/activityChecklists';
@@ -181,9 +182,16 @@ export default function AdventureSafetyCenter() {
               </div>
               <p className="text-sm text-slate-500 ml-13">ISO 21101 safety protocols · Automated pre-activity nudges</p>
             </div>
-            <Button onClick={() => setShowForm(!showForm)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2">
-              <Plus className="w-4 h-4" /> Log Activity
-            </Button>
+            <div className="flex gap-2">
+              <Link to="/wilderness-safety">
+                <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50 rounded-xl gap-2 text-xs">
+                  <TreePine className="w-3.5 h-3.5" /> Wilderness SOS
+                </Button>
+              </Link>
+              <Button onClick={() => setShowForm(!showForm)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2">
+                <Plus className="w-4 h-4" /> Log Activity
+              </Button>
+            </div>
           </div>
 
           {/* Upcoming nudge banners */}

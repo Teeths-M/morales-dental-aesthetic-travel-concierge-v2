@@ -37,6 +37,7 @@ const AdminTravelRequests       = lazy(() => import('@/pages/AdminTravelRequests
 const TestPortalLink            = lazy(() => import('@/pages/TestPortalLink'));
 const PortalTestHub             = lazy(() => import('@/pages/PortalTestHub'));
 const AdminSoloMonitor          = lazy(() => import('@/pages/AdminSoloMonitor'));
+const AdminWildernessRescue     = lazy(() => import('@/pages/AdminWildernessRescue'));
 
 export const adminRoutes = (
   <Route key="admin-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -67,6 +68,7 @@ export const adminRoutes = (
       <Route path="/admin/audit-chain"               element={<AdminAuditChain />} />
       <Route path="/admin/travel-requests"           element={<AdminTravelRequests />} />
       <Route path="/admin/solo-monitor"              element={<AdminSoloMonitor />} />
+      <Route path="/admin/wilderness-rescue"         element={<AdminWildernessRescue />} />
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<TestPortalLink />} />
       <Route path="/portal-test-hub"                 element={<PortalTestHub />} />

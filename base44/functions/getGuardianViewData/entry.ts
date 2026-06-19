@@ -126,6 +126,46 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
+    // Check for active wilderness SOS event
+    let wildernessSOS = null;
+    if (session.case_id) {
+      try {
+        const sosEvents = await base44.asServiceRole.entities.SOSEvent.filter({
+          case_id: session.case_id,
+        }, '-triggered_at', 5);
+        const activeSOS = sosEvents.find(e =>
+          ['triggered', 'dispatched', 'acknowledged'].includes(e.status)
+        );
+        if (activeSOS) {
+          wildernessSOS = {
+            status: activeSOS.status,
+            trigger_type: activeSOS.trigger_type,
+            latitude: activeSOS.latitude ?? null,
+            longitude: activeSOS.longitude ?? null,
+            location_label: activeSOS.location_label,
+            triggered_at: activeSOS.triggered_at,
+            responder_name: activeSOS.responder_name ?? null,
+            responder_eta_minutes: activeSOS.responder_eta_minutes ?? null,
+            notifications_sent: activeSOS.notifications_sent ?? [],
+          };
+          // If SOS has GPS but latestLocation doesn't, use SOS GPS for map
+          if (!latestLocation && activeSOS.latitude != null) {
+            latestLocation = {
+              latitude: activeSOS.latitude,
+              longitude: activeSOS.longitude,
+              accuracy_meters: null,
+              source: 'gps',
+              updated_at: activeSOS.triggered_at,
+              is_live: false,
+              stale_after: null,
+              location_precision: 'precise',
+              place_label: activeSOS.location_label || 'SOS Location',
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
     return Response.json({
       status: 'ok',
       session: {
@@ -137,6 +177,7 @@ Deno.serve(async (req) => {
       case: casePublic,
       latest_location: latestLocation,
       escalation: escalationInfo,
+      wilderness_sos: wildernessSOS,
     });
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });

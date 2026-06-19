@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Menu, X, LayoutDashboard, Import, UserCheck, FilePlus, Eye, MessageSquare, ShieldAlert, Activity, DollarSign, User, BarChart2, Shield, FileText, Star, Settings, TrendingUp, CreditCard, AlertTriangle, LogOut } from 'lucide-react';
+import { Users, Menu, X, LayoutDashboard, Import, UserCheck, FilePlus, Eye, MessageSquare, ShieldAlert, Activity, DollarSign, User, BarChart2, Shield, FileText, Star, Settings, TrendingUp, CreditCard, AlertTriangle, LogOut, TreePine, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
@@ -25,6 +25,8 @@ const adminNavItems = [
   { path: '/admin/monetization', label: 'Monetization', icon: CreditCard },
   { path: '/admin/payments', label: 'Payments & Payouts', icon: DollarSign },
   { path: '/admin/risk-optimization', label: 'Risk Optimization', icon: AlertTriangle },
+  { path: '/admin/solo-monitor', label: 'Solo Safety Monitor', icon: Radio },
+  { path: '/admin/wilderness-rescue', label: '🏔️ Wilderness Rescue', icon: TreePine },
 ];
 
 export default function AdminLayout({ children }) {

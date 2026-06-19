@@ -175,7 +175,7 @@ export default function GuardianView() {
     </div>
   );
 
-  const { session, case: caseData, latest_location: loc, escalation } = data;
+  const { session, case: caseData, latest_location: loc, escalation, wilderness_sos: wildernessSOS } = data;
   const hasGPS = loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
   const hasCityOnly = loc && !hasGPS && (loc.city || loc.country || loc.place_label);
   const currentStageIndex = STAGE_STEPS.indexOf(caseData?.journey_stage || 'consultation');
@@ -210,6 +210,55 @@ export default function GuardianView() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+
+        {/* Wilderness SOS banner */}
+        {wildernessSOS && (
+          <div className="rounded-2xl border-2 border-red-500 bg-red-900/50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-400 animate-pulse flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-black text-white text-sm uppercase tracking-wide">🏔️ Emergency SOS Active — Wilderness Rescue</p>
+                <p className="text-red-300 text-xs mt-1">This traveler has triggered an emergency SOS. Rescue escalation is underway.</p>
+                {wildernessSOS.triggered_at && (
+                  <p className="text-red-400 text-xs mt-0.5">
+                    SOS triggered: {new Date(wildernessSOS.triggered_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
+                {wildernessSOS.responder_name && (
+                  <p className="text-emerald-300 text-xs mt-0.5 font-semibold">Responder: {wildernessSOS.responder_name}{wildernessSOS.responder_eta_minutes ? ` — ETA ${wildernessSOS.responder_eta_minutes} min` : ''}</p>
+                )}
+                {wildernessSOS.latitude != null && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${wildernessSOS.latitude},${wildernessSOS.longitude}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs bg-red-800/50 border border-red-600/50 text-red-200 px-2 py-1 rounded-lg hover:bg-red-700/50">
+                      <ExternalLink className="w-3 h-3" />View SOS Location
+                    </a>
+                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${wildernessSOS.latitude},${wildernessSOS.longitude}&travelmode=driving`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs bg-emerald-900/50 border border-emerald-700/50 text-emerald-300 px-2 py-1 rounded-lg hover:bg-emerald-800/50">
+                      <Navigation className="w-3 h-3" />Directions to SOS
+                    </a>
+                  </div>
+                )}
+                <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-red-400">
+                  {[
+                    { label: 'SOS Received', active: true },
+                    { label: 'Guardian Notified', active: wildernessSOS.notifications_sent?.includes('admin_email') },
+                    { label: 'Rescue Dispatched', active: wildernessSOS.status === 'dispatched' },
+                    { label: 'Resolved', active: wildernessSOS.status === 'resolved' },
+                  ].map(step => (
+                    <span key={step.label} className={`px-2 py-0.5 rounded-full border font-semibold ${
+                      step.active
+                        ? 'bg-red-700/50 border-red-500/60 text-red-200'
+                        : 'bg-slate-800/50 border-slate-600/50 text-slate-500'
+                    }`}>{step.label}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Escalation banner — shown when silent escalation is active */}
         {escalation && (

@@ -81,6 +81,104 @@ Deno.serve(async (req) => {
       .sort((a, b) => new Date(b.scheduled_time) - new Date(a.scheduled_time));
     const checkIn = allCheckIns[0] || null;
 
+    // ── MORALES SOS packet (wilderness offline SOS) ──────────────────────────
+    // Format: MORALES SOS MSOS_XXXX LAT:<lat> LNG:<lng> ACC:<m> CASE:<ref> ACT:<type> TS:<unix>
+    const rawBody = params.get('Body') || '';
+    const isWildernessSOS = rawBody.trimStart().toUpperCase().startsWith('MORALES SOS');
+
+    if (isWildernessSOS) {
+      // Parse fields from payload
+      const latMatch = rawBody.match(/LAT:([-\d.]+)/i);
+      const lngMatch = rawBody.match(/LNG:([-\d.]+)/i);
+      const accMatch = rawBody.match(/ACC:([\d.]+)/i);
+      const caseMatch = rawBody.match(/CASE:([A-Z0-9]+)/i);
+      const actMatch = rawBody.match(/ACT:([A-Z0-9_]+)/i);
+      const tsMatch  = rawBody.match(/TS:(\d+)/i);
+      const packetIdMatch = rawBody.match(/(MSOS_[A-F0-9]+)/i);
+
+      const latitude  = latMatch  ? parseFloat(latMatch[1])  : null;
+      const longitude = lngMatch  ? parseFloat(lngMatch[1])  : null;
+      const accuracy  = accMatch  ? parseFloat(accMatch[1])  : null;
+      const caseRef   = caseMatch ? caseMatch[1]             : '';
+      const actType   = actMatch  ? actMatch[1].toLowerCase(): 'wilderness_injury';
+      const packetId  = packetIdMatch ? packetIdMatch[1]     : '';
+
+      // Validate coordinate ranges
+      const validCoords = latitude != null && longitude != null &&
+        Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180;
+
+      await logEntry('received_sos', `MORALES SOS packet: ${packetId} | coords valid: ${validCoords}`, '');
+
+      // Create SOSEvent
+      const sosEventData = {
+        patient_email: from, // phone as fallback — admin will link
+        patient_phone: from,
+        trigger_type: 'wilderness_injury',
+        status: 'triggered',
+        escalation_level: 5,
+        is_silent: false,
+        triggered_at: now,
+        notifications_sent: ['inbound_sms'],
+        location_label: validCoords
+          ? `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+          : 'GPS unknown — offline SMS SOS',
+      };
+      if (validCoords) { sosEventData.latitude = latitude; sosEventData.longitude = longitude; }
+
+      let sosEvent = null;
+      try { sosEvent = await base44.asServiceRole.entities.SOSEvent.create(sosEventData); } catch (_) {}
+
+      // Create LocationBreadcrumb if valid GPS
+      if (validCoords) {
+        try {
+          await base44.asServiceRole.entities.LocationBreadcrumb.create({
+            patient_email: from,
+            latitude, longitude,
+            accuracy_meters: accuracy,
+            source: 'checkin_handshake',
+            provider: 'browser_gps',
+            location_precision: accuracy && accuracy < 100 ? 'precise' : 'approximate',
+            logged_at: now,
+            is_saved: true,
+            place_label: `Wilderness SOS — ${actType}`,
+          });
+        } catch (_) {}
+      }
+
+      // Notify admin
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+      if (adminEmail) {
+        try {
+          const mapsLink = validCoords
+            ? `<a href="https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}">📍 Open in Google Maps</a>`
+            : 'No GPS coordinates available';
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: 'Morales — Wilderness SOS',
+            to: adminEmail,
+            subject: `🆘 WILDERNESS SOS received via SMS from ${from}`,
+            body: `<div style="font-family:sans-serif">
+              <div style="background:#dc2626;color:white;padding:16px;border-radius:8px 8px 0 0">
+                <h1 style="margin:0">🏔️ WILDERNESS SOS — Canopy Collapse Protocol</h1>
+              </div>
+              <div style="border:1px solid #fca5a5;border-top:none;padding:16px;border-radius:0 0 8px 8px">
+                <p><strong>Phone:</strong> ${from}</p>
+                <p><strong>Packet ID:</strong> ${packetId || 'N/A'}</p>
+                <p><strong>Activity:</strong> ${actType}</p>
+                <p><strong>Coordinates:</strong> ${validCoords ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}` : 'Not available'}</p>
+                <p><strong>Accuracy:</strong> ${accuracy ? `±${Math.round(accuracy)}m` : '—'}</p>
+                <p>${mapsLink}</p>
+                <p><strong>Time:</strong> ${now}</p>
+                <hr/>
+                <p style="color:#dc2626;font-weight:bold">SEARCH & RESCUE REQUIRED — check /admin/wilderness-rescue</p>
+              </div>
+            </div>`,
+          });
+        } catch (_) {}
+      }
+
+      return twimlReply('Morales SOS received. Rescue escalation started. Stay where you are if safe. Help is being dispatched.');
+    }
+
     // Parse command
     const isSafe = body.startsWith('SAFE') || body.startsWith('CHECKIN');
     const isSOS = body === 'SOS' || body === 'HELP' || body.startsWith('SOS ') || body.startsWith('HELP ');
