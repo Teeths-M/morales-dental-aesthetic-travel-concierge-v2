@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, MessageSquare, QrCode, Shield, Smartphone } from 'lucide-react';
+import { WifiOff, MessageSquare, QrCode, Shield, Smartphone, ArrowLeft } from 'lucide-react';
 import OfflineCapabilitiesPanel from '@/components/offline/OfflineCapabilitiesPanel';
+import { useNavigate } from 'react-router-dom';
 
 export default function OfflineMode() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero */}
       <div className="border-b border-slate-700">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+          <button onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-6">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </button>
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center">
               <WifiOff className="w-7 h-7 text-blue-400" />

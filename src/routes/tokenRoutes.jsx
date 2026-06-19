@@ -25,6 +25,7 @@ export const tokenRoutes = (
     <Route key="emergency-access" path="/emergency-access"      element={<EmergencyPINAccess />} />
     <Route key="checkin"        path="/check-in/:check_in_id"  element={<CheckInConfirm />} />
     <Route key="vault-share"    path="/vault/share/:share_token" element={<ShareLinkViewer />} />
+    {/* /offline is intentionally kept public so users can access it without login */}
     <Route key="offline"        path="/offline"                 element={<OfflineMode />} />
     <Route key="emergency-manifest" path="/emergency-manifest"  element={<EmergencyManifest />} />
   </>

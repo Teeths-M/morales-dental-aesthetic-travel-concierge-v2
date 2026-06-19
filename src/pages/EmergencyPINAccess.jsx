@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock } from 'lucide-react';
+import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft } from 'lucide-react';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
 import EmergencyVaultViewer from '@/components/vault/EmergencyVaultViewer';
 import EmergencyRecoveryVault from '@/pages/EmergencyRecoveryVault';
@@ -98,15 +98,31 @@ export default function EmergencyPINAccess() {
               </div>
             </div>
           ) : !verified ? (
-            <EmergencyPINSetup userEmail={email} mode="verify" onVerified={handleVerified} />
+            <div className="space-y-4">
+              <button onClick={() => setEmailEntered(false)}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back
+              </button>
+              <EmergencyPINSetup userEmail={email} mode="verify" onVerified={handleVerified} />
+            </div>
           ) : mode === 'recovery' ? (
-            <EmergencyRecoveryVault
-              pinSessionToken={pinSessionToken}
-              userEmail={email}
-              sessionExpiresAt={sessionExpiresAt}
-            />
+            <div className="space-y-4">
+              <button onClick={() => { setVerified(false); setEmailEntered(false); setPinSessionToken(null); }}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back
+              </button>
+              <EmergencyRecoveryVault
+                pinSessionToken={pinSessionToken}
+                userEmail={email}
+                sessionExpiresAt={sessionExpiresAt}
+              />
+            </div>
           ) : (
             <div className="space-y-4">
+              <button onClick={() => { setVerified(false); setEmailEntered(false); setPinSessionToken(null); }}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back
+              </button>
               <EmergencyVaultViewer pinSessionToken={pinSessionToken} />
               <button onClick={() => setMode('recovery')}
                 className="w-full text-sm text-blue-400 border border-blue-700/40 rounded-xl py-2.5 hover:bg-blue-900/20 flex items-center justify-center gap-2">
