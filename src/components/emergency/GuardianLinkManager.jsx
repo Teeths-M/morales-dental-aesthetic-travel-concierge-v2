@@ -65,7 +65,7 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
           <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
             <Eye className="w-4 h-4 text-blue-600" /> Guardian View Links
           </h4>
-          <p className="text-xs text-slate-500 mt-0.5">Secure look-only links — no login required for family members</p>
+          <p className="text-xs text-slate-500 mt-0.5">Secure look-only links — shows live GPS location &amp; journey status. No login required.</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} size="sm" variant="outline" className="text-xs rounded-xl gap-1.5">
           <Plus className="w-3.5 h-3.5" /> New Link
