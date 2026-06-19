@@ -21,20 +21,31 @@ export default function LocationBreadcrumbTracker({ caseId }) {
 
   const logCurrent = async () => {
     setLogging(true);
-    let lat = null, lng = null, label = 'Manual log';
     try {
-      await new Promise(resolve => navigator.geolocation.getCurrentPosition(
-        pos => { lat = pos.coords.latitude; lng = pos.coords.longitude; resolve(); },
-        () => resolve(), { timeout: 8000 }
-      ));
-      if (lat) label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    } catch (_) {}
-
-    const res = await base44.functions.invoke('logLocationBreadcrumb', {
-      action: 'log', case_id: caseId, latitude: lat, longitude: lng, place_label: label, source: lat ? 'gps' : 'manual'
-    });
-    if (res.data?.logged) { toast({ title: '📍 Location logged', duration: 3000 }); load(); }
-    setLogging(false);
+      const pos = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+      );
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy ?? null;
+      const label = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      const res = await base44.functions.invoke('logLocationBreadcrumb', {
+        action: 'log', case_id: caseId, latitude: lat, longitude: lng,
+        accuracy_meters: accuracy, place_label: label, source: 'gps'
+      });
+      if (res.data?.logged) { toast({ title: '📍 Location logged', duration: 3000 }); load(); }
+    } catch (err) {
+      const denied = err?.code === 1 || (err instanceof GeolocationPositionError && err.code === 1);
+      toast({
+        title: denied ? 'Location permission required' : 'Could not get location',
+        description: denied
+          ? 'Location permission is required to log GPS coordinates.'
+          : 'GPS signal unavailable. Please try again outside or near a window.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLogging(false);
+    }
   };
 
   const save = async (id) => {
@@ -49,11 +60,18 @@ export default function LocationBreadcrumbTracker({ caseId }) {
     load();
   };
 
-  const shareCrumb = (crumb) => {
-    const text = crumb.latitude
-      ? `https://maps.google.com/?q=${crumb.latitude},${crumb.longitude}`
-      : crumb.place_label;
-    navigator.clipboard.writeText(text).then(() => toast({ title: 'Location coordinates copied', duration: 3000 }));
+  const openDirections = (crumb) => {
+    if (typeof crumb.latitude !== 'number' || typeof crumb.longitude !== 'number') {
+      toast({
+        title: 'No GPS coordinates available',
+        description: 'This saved location does not include latitude and longitude.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const destination = encodeURIComponent(`${crumb.latitude},${crumb.longitude}`);
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -101,7 +119,12 @@ export default function LocationBreadcrumbTracker({ caseId }) {
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => shareCrumb(crumb)} className="text-slate-400 hover:text-blue-500 p-1.5 rounded-lg hover:bg-blue-50">
+                <button
+                  onClick={() => openDirections(crumb)}
+                  className="text-slate-400 hover:text-blue-500 p-1.5 rounded-lg hover:bg-blue-50 cursor-pointer"
+                  aria-label="Open directions to saved location"
+                  title="Open directions"
+                >
                   <MapPin className="w-3.5 h-3.5" />
                 </button>
                 {!crumb.is_saved && (
