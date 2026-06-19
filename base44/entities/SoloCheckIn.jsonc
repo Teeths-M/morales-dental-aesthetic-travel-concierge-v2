@@ -7,7 +7,7 @@
     },
     "trip_id": {
       "type": "string",
-      "description": "Same as case_id for now \u2014 unique trip identifier"
+      "description": "Same as case_id \u2014 unique trip identifier"
     },
     "user_id": {
       "type": "string"
@@ -50,8 +50,25 @@
     "location_lng": {
       "type": "number"
     },
+    "location_accuracy_meters": {
+      "type": "number"
+    },
     "location_label": {
       "type": "string"
+    },
+    "location_source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "ip_geo",
+        "manual",
+        "checkin_handshake"
+      ],
+      "default": "gps"
+    },
+    "location_breadcrumb_id": {
+      "type": "string",
+      "description": "Reference to LocationBreadcrumb created at acknowledgement"
     },
     "escalation_level": {
       "type": "string",
@@ -73,19 +90,35 @@
         "acknowledged",
         "escalated_2h",
         "escalated_3h",
+        "escalated_5h",
         "resolved"
       ],
       "default": "pending"
     },
     "check_in_round": {
       "type": "number",
-      "default": 1,
-      "description": "Which check-in in the sequence (1, 2, 3...)"
+      "default": 1
+    },
+    "missed_round_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Cumulative missed rounds for this case"
+    },
+    "guardian_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "guardian_link_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "security_notified_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "is_paused_medical": {
       "type": "boolean",
-      "default": false,
-      "description": "True if paused due to medical procedure"
+      "default": false
     },
     "pause_until": {
       "type": "string",

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Users, Radio, Map, Heart } from 'lucide-react';
+import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart, Globe } from 'lucide-react';
 import { BackButton } from '@/components/nav/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import SoloSafetyBeaconStatus from '@/components/solo/SoloSafetyBeaconStatus';
 
 function SoloCheckInBanner() {
   return (
@@ -24,19 +25,45 @@ function SoloCheckInBanner() {
 
 export default function SoloCheckInSettings() {
   const [user, setUser] = useState(null);
+  const [activeCase, setActiveCase] = useState(null);
   const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
+  const [locStatus, setLocStatus] = useState('idle');
   const [stats, setStats] = useState({ total: 0, acknowledged: 0, escalated: 0 });
+  const locRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // Pre-acquire location quietly
+  useEffect(() => {
+    if (!user) return;
+    setLocStatus('acquiring');
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          locRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, source: 'gps' };
+          setLocStatus('gps');
+        },
+        () => {
+          base44.functions.invoke('getGeolocationAndCurrency', {}).then(res => {
+            const d = res?.data;
+            if (d) { locRef.current = { lat: d.latitude, lng: d.longitude, city: d.city, country: d.country, country_code: d.country_code, region: d.region, timezone: d.timezone, source: 'ip_geo' }; }
+            setLocStatus(d?.city ? 'ip_geo' : 'none');
+          }).catch(() => setLocStatus('none'));
+        },
+        { timeout: 8000, maximumAge: 60000 }
+      );
+    } else { setLocStatus('none'); }
+  }, [user]);
+
   const loadCheckIns = async () => {
     if (!user) return;
     const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10);
     const caseIds = cases.map(c => c.id);
+    if (cases.length > 0) setActiveCase(cases.find(c => c.status !== 'Completed') || cases[0]);
 
     if (caseIds.length === 0) return;
 
@@ -62,51 +89,27 @@ export default function SoloCheckInSettings() {
     if (!user) return;
     setAcknowledging(true);
     try {
-      // Get active cases for this user
       const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10);
-      if (cases.length === 0) {
-        alert('No active journey found. Please contact support.');
-        return;
-      }
-
-      // Create or acknowledge the most recent check-in
-      const activeCase = cases[0];
-      const pendingCheckIns = await base44.entities.SoloCheckIn.filter(
-        { case_id: activeCase.id, status: 'pending' },
-        '-scheduled_time',
-        1
-      );
-
-      if (pendingCheckIns.length > 0) {
-        // Acknowledge the pending check-in
-        await base44.entities.SoloCheckIn.update(pendingCheckIns[0].id, {
-          status: 'acknowledged',
-          acknowledged_at: new Date().toISOString(),
-          responded_time: new Date().toISOString(),
-          response_method: 'app'
-        });
-      } else {
-        // Create a new check-in record
-        const newCheckIn = await base44.entities.SoloCheckIn.create({
-          case_id: activeCase.id,
-          trip_id: activeCase.id,
-          user_id: user.id,
-          user_email: user.email,
-          user_name: user.full_name,
-          scheduled_time: new Date().toISOString(),
-          status: 'acknowledged',
-          acknowledged_at: new Date().toISOString(),
-          responded_time: new Date().toISOString(),
-          response_method: 'app',
-          check_in_round: 1
-        });
-      }
-
-      alert('✅ You are safe! Check-in recorded successfully.');
+      if (cases.length === 0) { alert('No active journey found.'); return; }
+      const ac = cases.find(c => c.status !== 'Completed') || cases[0];
+      const loc = locRef.current;
+      await base44.functions.invoke('acknowledgeSoloCheckIn', {
+        case_id: ac.id,
+        response_method: 'app',
+        location_lat: loc?.lat ?? null,
+        location_lng: loc?.lng ?? null,
+        accuracy_meters: loc?.accuracy ?? null,
+        location_source: loc?.source ?? 'gps',
+        country: loc?.country ?? null,
+        country_code: loc?.country_code ?? null,
+        city: loc?.city ?? null,
+        region: loc?.region ?? null,
+        timezone: loc?.timezone ?? null,
+      });
+      alert('✅ You are safe! Location and check-in recorded.');
       loadCheckIns();
     } catch (err) {
-      console.error('Check-in error:', err);
-      alert('Failed to record check-in. Please try again or contact support.');
+      alert('Failed to record check-in. Please try again.');
     } finally {
       setAcknowledging(false);
     }
@@ -140,6 +143,25 @@ export default function SoloCheckInSettings() {
               <p className="text-sm text-slate-500">Mandatory safety protocol for unaccompanied journeys</p>
             </div>
           </div>
+
+          {/* Safety Beacon Status */}
+          {activeCase && (
+            <div className="mb-5">
+              <SoloSafetyBeaconStatus
+                caseId={activeCase.id}
+                caseStatus={activeCase.status}
+                isSoloTraveler={!activeCase.requires_companion || activeCase.companion_requirement_status === 'companion_required_pending'}
+              />
+            </div>
+          )}
+
+          {/* Location status bar */}
+          {locStatus === 'ip_geo' && (
+            <div className="mb-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700">
+              <Globe className="w-3.5 h-3.5 flex-shrink-0" />
+              Precise GPS is off. We can only share approximate network location with your guardian.
+            </div>
+          )}
 
           {/* I Am Safe Button */}
           <motion.div

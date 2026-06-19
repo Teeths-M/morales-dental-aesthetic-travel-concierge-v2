@@ -6,14 +6,55 @@
       "type": "string",
       "description": "References SoloCheckIn entity ID"
     },
+    "case_id": {
+      "type": "string"
+    },
+    "solo_checkin_id": {
+      "type": "string"
+    },
+    "round_number": {
+      "type": "number",
+      "default": 1
+    },
     "token_hash": {
       "type": "string",
-      "description": "SHA-256 hash of the raw token \u2014 raw token is never stored"
+      "description": "SHA-256 hash of the raw token \u2014 raw token never stored"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "acknowledged",
+        "missed",
+        "expired",
+        "escalated"
+      ],
+      "default": "pending"
+    },
+    "due_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "24 hours from creation \u2014 token is invalid after this"
+      "description": "24 hours from creation"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reminder_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "guardian_escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "security_escalated_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "used_at": {
       "type": "string",

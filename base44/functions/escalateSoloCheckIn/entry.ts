@@ -4,7 +4,6 @@ async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
 async function getLastAuditHash(base44) {
   try {
     const logs = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
@@ -12,155 +11,276 @@ async function getLastAuditHash(base44) {
   } catch (_) { return 'GENESIS'; }
 }
 
+function generateToken(len = 32) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const buf = new Uint8Array(len);
+  crypto.getRandomValues(buf);
+  return Array.from(buf).map(b => chars[b % chars.length]).join('');
+}
+
+// Ensure an active guardian session exists for the case; returns the guardian URL.
+async function ensureGuardianLink(base44, caseRecord, patientEmail, patientName) {
+  const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
+  try {
+    const existing = await base44.asServiceRole.entities.GuardianSession.filter({
+      case_id: caseRecord.id, is_active: true,
+    });
+    const valid = existing.find(s => new Date(s.expires_at) > new Date() && s.shared_data_scope?.includes('location'));
+    if (valid) return `${appUrl}/guardian/${valid.view_token}`;
+
+    // Create new 48h guardian link
+    const token = generateToken(32);
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    await base44.asServiceRole.entities.GuardianSession.create({
+      case_id: caseRecord.id,
+      patient_email: patientEmail,
+      patient_name: patientName,
+      guardian_name: 'Emergency Contact',
+      guardian_email: caseRecord.emergency_contact || '',
+      view_token: token,
+      expires_at: expiresAt,
+      is_active: true,
+      view_count: 0,
+      shared_data_scope: ['case_status', 'journey_stage', 'location'],
+      created_at: new Date().toISOString(),
+    });
+    return `${appUrl}/guardian/${token}`;
+  } catch (_) { return null; }
+}
+
+async function getLatestLocation(base44, caseId) {
+  try {
+    const crumbs = await base44.asServiceRole.entities.LocationBreadcrumb.filter({ case_id: caseId, is_purged: false });
+    if (!crumbs?.length) return null;
+    const sorted = crumbs.sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
+    return sorted[0];
+  } catch (_) { return null; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    // SEC-05: include platform_admin — consistent with inviteAdmin.js and other admin guards
     if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+    const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
 
-    // Find all pending check-ins that were sent more than 2 hours ago
+    // Fetch all non-resolved pending/escalated check-ins
     const pendingCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
-      { status: 'pending' },
-      '-scheduled_time',
-      100
+      { status: 'pending' }, '-scheduled_time', 100
+    );
+    const escalated2hCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
+      { status: 'escalated_2h' }, '-scheduled_time', 100
+    );
+    const escalated3hCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
+      { status: 'escalated_3h' }, '-scheduled_time', 100
     );
 
-    let escalated2h = 0;
-    let escalated3h = 0;
+    const allCheckIns = [...pendingCheckIns, ...escalated2hCheckIns, ...escalated3hCheckIns];
+    let escalated2h = 0, escalated3h = 0, escalated5h = 0;
 
-    for (const checkIn of pendingCheckIns) {
+    for (const checkIn of allCheckIns) {
       if (!checkIn.sent_time) continue;
-
       const sentAt = new Date(checkIn.sent_time);
-      const hoursSinceSent = (now - sentAt) / (1000 * 60 * 60);
+      const hoursOverdue = (now - sentAt) / (1000 * 60 * 60);
 
-      // 2-hour escalation: second notification.
-      // BUG-R15-01 FIX: RACE CONDITION — status was written AFTER the email, meaning two
-      // concurrent cron runs both read status==='pending' and escalation_level==='none',
-      // both send the 2h email, then both write escalated_2h. The patient gets two emails.
-      // Fix: claim the record atomically FIRST (write escalated_2h), then send the email.
-      if (hoursSinceSent >= 2 && hoursSinceSent < 3 && checkIn.escalation_level === 'none' && checkIn.status === 'pending') {
-        // Claim atomically before any side effect
-        await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
-          status: 'escalated_2h',
-        });
-
-        const msg = `⚠️ SECOND ATTEMPT: You have not responded to your safety check-in. Please tap 'I'm Safe' immediately or your emergency contact will be notified.`;
+      // ── 2h: Second reminder ─────────────────────────────────────────────
+      if (hoursOverdue >= 2 && checkIn.status === 'pending') {
+        // Atomic claim first
+        await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { status: 'escalated_2h' });
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
             to: checkIn.user_email,
             subject: `⚠️ URGENT: Safety Check-In Overdue (2 hours)`,
-            body: `<p>${msg}</p><p><a href="${Deno.env.get('APP_URL')}/dashboard">Open Dashboard →</a></p>`,
+            body: `<p>⚠️ Second attempt: You have not responded to your safety check-in. Please open the app and tap <strong>I Am Safe</strong> immediately or your emergency contact will be notified.</p><p><a href="${appUrl}/dashboard/solo-checkin">Open Dashboard →</a></p>`,
           });
-        } catch (e) {
-          console.error('Failed to send 2h email:', e);
-        }
-
+        } catch (_) {}
         escalated2h++;
       }
 
-      // 3-hour escalation: voice call + emergency contact notification.
-      // RACE CONDITION FIX: Write the status update FIRST before any external calls.
-      // Two concurrent automation runs both read escalation_level === 'none'. Without this
-      // optimistic lock the Twilio call and emergency contact email both fire twice.
-      if (hoursSinceSent >= 3 && checkIn.escalation_level === 'none' && checkIn.status !== 'escalated_3h' && checkIn.status !== 'resolved') {
-        // Claim this check-in atomically before any side effects
+      // ── 3h: Guardian + emergency contact notification ────────────────────
+      if (hoursOverdue >= 3 && checkIn.status === 'escalated_2h') {
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
           status: 'escalated_3h',
           escalation_level: 'contact_notified',
           emergency_contact_notified_at: now.toISOString(),
         });
 
-        const emergencyContact = checkIn.emergency_contact || 'Not provided';
-
-        // Attempt Twilio voice call
-        let voiceCallSuccess = false;
-        if (checkIn.user_phone) {
-          try {
-            // Twilio voice call using environment variables
-            const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-            const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-            const twilioPhone = Deno.env.get('TWILIO_PHONE_NUMBER');
-
-            if (accountSid && authToken && twilioPhone) {
-              const authHeader = 'Basic ' + btoa(`${accountSid}:${authToken}`);
-              await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': authHeader,
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                  From: twilioPhone,
-                  To: checkIn.user_phone,
-                  Body: `This is an automated safety call from Morales Medical. You have not responded to your check-in. Please press 1 to confirm you are safe, or contact your coordinator immediately.`,
-                  StatusCallback: `${Deno.env.get('APP_URL')}/functions/soloCheckInVoiceCallback`,
-                }),
-              });
-              voiceCallSuccess = true;
-            }
-          } catch (e) {
-            console.error('Twilio voice call failed:', e);
-          }
-        }
-
-        // Send SMS/email to emergency contact
-        const alertMsg = `🚨 SAFETY ALERT: ${checkIn.user_name} has not responded to their safety check-in for 3 hours. Last known location: ${checkIn.location_label || 'Unknown'}. Please contact them immediately. Reply HELP if you cannot reach them.`;
-
+        // Get case for emergency contact + latest location
+        let guardianUrl = null;
+        let latestLoc = null;
         try {
-          // Send email to emergency contact (if available)
-          if (emergencyContact && emergencyContact.includes('@')) {
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: emergencyContact,
-              subject: `🚨 URGENT: ${checkIn.user_name} Safety Check-In Overdue`,
-              body: `<p>${alertMsg}</p><p>Contact: ${checkIn.user_phone}</p>`,
+          const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
+            { client_email: checkIn.user_email }, '-created_date', 5
+          );
+          const caseRecord = recentCases.find(c => c.id === checkIn.case_id) || recentCases[0];
+          if (caseRecord) {
+            latestLoc = await getLatestLocation(base44, caseRecord.id);
+            guardianUrl = await ensureGuardianLink(base44, caseRecord, checkIn.user_email, checkIn.user_name);
+
+            const emergencyEmail = caseRecord.emergency_contact;
+            const locStr = latestLoc?.latitude
+              ? `GPS: ${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
+              : latestLoc?.place_label || 'Unknown';
+            const mapsUrl = latestLoc?.latitude
+              ? `https://www.google.com/maps/search/?api=1&query=${latestLoc.latitude},${latestLoc.longitude}`
+              : null;
+
+            const alertBody = `<p>🚨 <strong>${checkIn.user_name}</strong> has not responded to their safety check-in for <strong>3 hours</strong>.</p>
+              <p><strong>Last Known Location:</strong> ${locStr}</p>
+              ${mapsUrl ? `<p><a href="${mapsUrl}">📍 Open in Google Maps</a></p>` : ''}
+              ${guardianUrl ? `<p><a href="${guardianUrl}">👁 View Live Safety Status</a></p>` : ''}
+              <p>Please try to contact them immediately. If you cannot reach them, reply to this email or call the Morales emergency line.</p>`;
+
+            await Promise.allSettled([
+              emergencyEmail && emergencyEmail.includes('@') ? base44.asServiceRole.integrations.Core.SendEmail({
+                to: emergencyEmail,
+                subject: `🚨 URGENT: ${checkIn.user_name} Safety Check-In Overdue`,
+                body: alertBody,
+              }) : Promise.resolve(),
+              guardianUrl && emergencyEmail && emergencyEmail.includes('@') ? base44.asServiceRole.integrations.Core.SendEmail({
+                to: emergencyEmail,
+                subject: `👁 Guardian Live Status Link for ${checkIn.user_name}`,
+                body: `<p>Use this secure link to monitor ${checkIn.user_name}'s live safety status and last known GPS location:</p><p><a href="${guardianUrl}">${guardianUrl}</a></p><p>No login required. Link expires in 48 hours.</p>`,
+              }) : Promise.resolve(),
+            ]);
+
+            await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
+              guardian_notified_at: now.toISOString(),
+              guardian_link_sent: !!guardianUrl,
             });
           }
-        } catch (e) {
-          console.error('Failed to notify emergency contact:', e);
+        } catch (_) {}
+
+        // Voice call attempt via Twilio
+        if (checkIn.user_phone) {
+          try {
+            const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+            const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
+            const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+            if (sid && auth && from) {
+              await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
+                method: 'POST',
+                headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ From: from, To: checkIn.user_phone, Twiml: `<Response><Say>This is an automated safety call from Morales Medical. You have not responded to your check-in. Please open the app and confirm you are safe. If you are in danger, trigger the SOS button immediately.</Say></Response>` }),
+              });
+              await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { voice_call_attempted_at: now.toISOString() });
+            }
+          } catch (_) {}
         }
 
-        // Update with voice call result (status/escalation_level already written above)
+        escalated3h++;
+      }
+
+      // ── 5h: Admin + private security dispatch ────────────────────────────
+      if (hoursOverdue >= 5 && checkIn.status === 'escalated_3h') {
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
-          voice_call_attempted_at: voiceCallSuccess ? now.toISOString() : null,
+          status: 'escalated_5h',
+          escalation_level: 'security_dispatched',
+          security_dispatched_at: now.toISOString(),
         });
 
-        // Log to AuditLog with real hash chain link
-        const prevHash3h = await getLastAuditHash(base44);
+        let latestLoc = await getLatestLocation(base44, checkIn.case_id);
+        const locStr = latestLoc?.latitude
+          ? `${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
+          : latestLoc?.place_label || 'Unknown';
+        const mapsUrl = latestLoc?.latitude
+          ? `https://www.google.com/maps/dir/?api=1&destination=${latestLoc.latitude},${latestLoc.longitude}&travelmode=driving`
+          : null;
+
+        // Notify admin/security
+        if (adminEmail) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              from_name: 'Morales Safe-T Emergency',
+              to: adminEmail,
+              subject: `🚨 5H ESCALATION — ${checkIn.user_name} — SECURITY DISPATCH REQUIRED`,
+              body: `<div style="background:#dc2626;color:white;padding:20px;border-radius:8px;">
+                <h2 style="margin:0;">🚨 5-Hour Safety Escalation</h2></div>
+                <div style="padding:20px;border:1px solid #fca5a5;border-top:none;border-radius:0 0 8px 8px;">
+                <p><strong>Traveler:</strong> ${checkIn.user_name}</p>
+                <p><strong>Email:</strong> ${checkIn.user_email}</p>
+                <p><strong>Phone:</strong> ${checkIn.user_phone || 'N/A'}</p>
+                <p><strong>Case ID:</strong> ${checkIn.case_id}</p>
+                <p><strong>Last Known Location:</strong> ${locStr}</p>
+                <p><strong>Hours Overdue:</strong> ${hoursOverdue.toFixed(1)}h</p>
+                <p><strong>Missed Round:</strong> ${checkIn.check_in_round}</p>
+                ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#dc2626;">📍 Get Directions</a></p>` : ''}
+                <p style="color:#dc2626;font-weight:bold;">DISPATCH PRIVATE SECURITY IMMEDIATELY</p></div>`,
+            });
+          } catch (_) {}
+        }
+
+        // Log dispatch failure if no security partner assigned (DispatchFailureLog)
+        try {
+          const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
+            { client_email: checkIn.user_email }, '-created_date', 5
+          );
+          const caseRecord = recentCases.find(c => c.id === checkIn.case_id);
+          const hasSecurityPartner = !!caseRecord?.travel_vendor_id;
+          if (!hasSecurityPartner) {
+            await base44.asServiceRole.entities.DispatchFailureLog.create({
+              case_id: checkIn.case_id,
+              partner_type: 'security',
+              reason: 'No private security partner assigned to case',
+              timestamp: now.toISOString(),
+              fallback_action: 'admin_email_sent',
+            });
+          }
+        } catch (_) {}
+
+        // Audit
+        const prevHash = await getLastAuditHash(base44);
         await base44.asServiceRole.entities.AuditLog.create({
-          event_type: 'safet_risk_status_changed',
+          event_type: 'safe_t_critical_block',
           actor_id: 'system',
           actor_role: 'automated',
-          actor_name: 'Solo Check-In Escalation System',
+          actor_name: 'Solo Safety Escalation Engine',
           resource_type: 'SoloCheckIn',
           resource_id: checkIn.id,
           resource_name: `Round ${checkIn.check_in_round}`,
           case_id: checkIn.case_id,
-          details: {
-            escalation: '3h_contact_notified',
-            voice_call_attempted: voiceCallSuccess,
-            emergency_contact,
-            hours_overdue: hoursSinceSent,
-          },
+          details: { escalation: '5h_security_dispatch', hours_overdue: hoursOverdue, last_location: locStr },
           sensitive: true,
           timestamp: now.toISOString(),
-          prev_hash: prevHash3h,
+          prev_hash: prevHash,
         });
 
-        escalated3h++;
+        escalated5h++;
       }
     }
 
-    return Response.json({ escalated2h, escalated3h, checked: pendingCheckIns.length });
-  } catch (error) {
-    console.error('[escalateSoloCheckIn]', error);
+    // ── 3 missed rounds: switch case to high-risk monitoring ─────────────
+    // Check per-case missed round totals across all rounds
+    const allCaseIds = [...new Set(allCheckIns.map(c => c.case_id))];
+    for (const cid of allCaseIds) {
+      const caseMissed = allCheckIns.filter(c => c.case_id === cid && ['escalated_3h', 'escalated_5h'].includes(c.status));
+      if (caseMissed.length >= 3) {
+        try {
+          const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
+            { client_email: caseMissed[0].user_email }, '-created_date', 5
+          );
+          const caseRecord = recentCases.find(c => c.id === cid);
+          if (caseRecord && caseRecord.case_priority !== 'Critical') {
+            await base44.asServiceRole.entities.CaseRecord.update(cid, { case_priority: 'Critical' });
+            if (adminEmail) {
+              await base44.asServiceRole.integrations.Core.SendEmail({
+                to: adminEmail,
+                subject: `🚨 CRITICAL: ${caseMissed[0].user_name} — 3 Missed Check-Ins`,
+                body: `<p>Case ${cid} has been automatically escalated to CRITICAL priority. ${caseMissed[0].user_name} has missed 3+ consecutive check-ins. Immediate human intervention required.</p>`,
+              }).catch(() => {});
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    return Response.json({ escalated2h, escalated3h, escalated5h, checked: allCheckIns.length });
+  } catch (_) {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
