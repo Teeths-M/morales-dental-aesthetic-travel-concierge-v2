@@ -108,7 +108,7 @@
     },
     "create": {
       "user_condition": {
-        "isAuthenticated": true
+        "role": "admin"
       }
     },
     "update": {
