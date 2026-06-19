@@ -1,28 +1,47 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, AlertTriangle, CheckCircle2, MapPin, Clock, RefreshCw, Navigation, UserCheck, Radio } from 'lucide-react';
+import {
+  Shield, AlertTriangle, CheckCircle2, MapPin, Clock, RefreshCw,
+  Navigation, UserCheck, Radio, MessageSquare, Phone, Globe,
+  AlertCircle, ExternalLink, ChevronDown, ChevronUp, Siren
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 const STATUS_CONFIG = {
-  pending:       { label: 'Awaiting',    color: 'bg-amber-100 text-amber-800' },
-  acknowledged:  { label: 'Safe ✓',      color: 'bg-emerald-100 text-emerald-800' },
-  escalated_2h:  { label: '2h Overdue',  color: 'bg-orange-100 text-orange-800' },
-  escalated_3h:  { label: '3h Escalated', color: 'bg-red-100 text-red-800' },
-  escalated_5h:  { label: '5h CRITICAL', color: 'bg-red-200 text-red-900 font-bold' },
-  resolved:      { label: 'Resolved',    color: 'bg-slate-100 text-slate-600' },
+  pending:       { label: 'Awaiting',    color: 'bg-amber-100 text-amber-800', priority: 3 },
+  acknowledged:  { label: 'Safe ✓',      color: 'bg-emerald-100 text-emerald-800', priority: 4 },
+  escalated_2h:  { label: 'SMS/Voice Sent', color: 'bg-orange-100 text-orange-800', priority: 2 },
+  escalated_3h:  { label: 'Guardian Alerted', color: 'bg-red-100 text-red-800', priority: 1 },
+  escalated_5h:  { label: '🚨 SECURITY DISPATCH', color: 'bg-red-200 text-red-900 font-bold', priority: 0 },
+  resolved:      { label: 'Resolved',    color: 'bg-slate-100 text-slate-600', priority: 5 },
 };
+
+const ESC_STEPS = [
+  { key: 'traveler_sms_sent_at',           label: 'SMS Sent',         icon: MessageSquare, color: 'text-amber-600' },
+  { key: 'traveler_voice_call_at',         label: 'Voice Called',     icon: Phone,         color: 'text-orange-600' },
+  { key: 'guardian_alerted_at',            label: 'Guardian Alerted', icon: UserCheck,     color: 'text-red-600' },
+  { key: 'security_dispatched_at',         label: 'Security Dispatched', icon: Shield,     color: 'text-red-700' },
+  { key: 'police_escalation_required_at',  label: 'Police Task Created', icon: Siren,      color: 'text-purple-700' },
+];
+
+function minsAgo(ts) {
+  if (!ts) return null;
+  return Math.round((Date.now() - new Date(ts).getTime()) / 60000);
+}
 
 export default function AdminSoloMonitor() {
   const [checkIns, setCheckIns] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState({});
+  const [notifLogs, setNotifLogs] = useState({});
+  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [expanded, setExpanded] = useState({});
+  const [runningEscalation, setRunningEscalation] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    // Fetch all non-resolved solo check-ins across all statuses
     const [pending, e2h, e3h, e5h] = await Promise.allSettled([
       base44.entities.SoloCheckIn.filter({ status: 'pending' }, '-scheduled_time', 50),
       base44.entities.SoloCheckIn.filter({ status: 'escalated_2h' }, '-scheduled_time', 50),
@@ -34,22 +53,32 @@ export default function AdminSoloMonitor() {
       ...(e2h.value || []),
       ...(e3h.value || []),
       ...(e5h.value || []),
-    ].sort((a, b) => {
-      const order = { escalated_5h: 0, escalated_3h: 1, escalated_2h: 2, pending: 3 };
-      return (order[a.status] ?? 9) - (order[b.status] ?? 9);
-    });
+    ].sort((a, b) => (STATUS_CONFIG[a.status]?.priority ?? 9) - (STATUS_CONFIG[b.status]?.priority ?? 9));
     setCheckIns(all);
 
-    // Load latest locations for each unique case
+    // Load latest locations (LiveLocation first, then breadcrumb)
     const caseIds = [...new Set(all.map(c => c.case_id))];
     const locMap = {};
     await Promise.allSettled(caseIds.map(async (cid) => {
-      const crumbs = await base44.entities.LocationBreadcrumb
-        .filter({ case_id: cid, is_purged: false }, '-logged_at', 1)
-        .catch(() => []);
-      if (crumbs?.[0]) locMap[cid] = crumbs[0];
+      const [liveLocs, crumbs] = await Promise.allSettled([
+        base44.entities.LiveLocation?.filter?.({ case_id: cid, is_active: true }, '-updated_at', 1).catch(() => []) || Promise.resolve([]),
+        base44.entities.LocationBreadcrumb.filter({ case_id: cid, is_purged: false }, '-logged_at', 1).catch(() => []),
+      ]);
+      const live = liveLocs.value?.[0];
+      const crumb = crumbs.value?.[0];
+      locMap[cid] = live || crumb || null;
     }));
     setLocations(locMap);
+
+    // Load notification logs per case
+    const notifMap = {};
+    await Promise.allSettled(caseIds.map(async (cid) => {
+      const logs = await base44.entities.NotificationLog
+        .filter({ case_id: cid }, '-created_at', 10)
+        .catch(() => []);
+      notifMap[cid] = logs || [];
+    }));
+    setNotifLogs(notifMap);
     setLoading(false);
   }, []);
 
@@ -60,15 +89,9 @@ export default function AdminSoloMonitor() {
     await base44.entities.SoloCheckIn.update(checkIn.id, {
       status: 'resolved',
       acknowledged_at: new Date().toISOString(),
+      resolved_at: new Date().toISOString(),
       response_method: 'app',
     }).catch(() => {});
-    await load();
-    setActionLoading(l => ({ ...l, [checkIn.id]: null }));
-  };
-
-  const manualEscalate = async (checkIn) => {
-    setActionLoading(l => ({ ...l, [checkIn.id]: 'escalate' }));
-    await base44.functions.invoke('escalateSoloCheckIn', {}).catch(() => {});
     await load();
     setActionLoading(l => ({ ...l, [checkIn.id]: null }));
   };
@@ -85,6 +108,13 @@ export default function AdminSoloMonitor() {
     setActionLoading(l => ({ ...l, [checkIn.id]: null }));
   };
 
+  const runEscalation = async () => {
+    setRunningEscalation(true);
+    await base44.functions.invoke('runSilentSafetyEscalation', {}).catch(() => {});
+    await load();
+    setRunningEscalation(false);
+  };
+
   const openMap = (loc) => {
     if (!loc) return;
     const url = loc.latitude != null
@@ -93,51 +123,87 @@ export default function AdminSoloMonitor() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const openGuardianLink = async (ci) => {
+    const res = await base44.functions.invoke('generateGuardianLink', {
+      case_id: ci.case_id,
+      guardian_name: 'Admin View',
+      expires_hours: 24,
+    }).catch(() => null);
+    if (res?.data?.guardian_url) window.open(res.data.guardian_url, '_blank', 'noopener,noreferrer');
+  };
+
   const stats = {
     total: checkIns.length,
-    critical: checkIns.filter(c => c.status === 'escalated_5h').length,
-    escalated: checkIns.filter(c => ['escalated_3h', 'escalated_2h'].includes(c.status)).length,
-    pending: checkIns.filter(c => c.status === 'pending').length,
+    police: checkIns.filter(c => c.police_escalation_required_at).length,
+    security: checkIns.filter(c => c.status === 'escalated_5h' && !c.police_escalation_required_at).length,
+    guardian: checkIns.filter(c => c.status === 'escalated_3h').length,
+    pending: checkIns.filter(c => c.status === 'pending' || c.status === 'escalated_2h').length,
   };
 
   return (
     <AdminLayout>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center">
               <Radio className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Solo Traveler Safety Monitor</h1>
-              <p className="text-sm text-slate-500">Live beacon status · Escalation management · Last known locations</p>
+              <h1 className="text-2xl font-bold text-slate-900">Silent Safety Escalation Monitor</h1>
+              <p className="text-sm text-slate-500">SMS → Voice → Guardian → Security → Police · Auto-escalation state machine</p>
             </div>
           </div>
-          <Button onClick={load} variant="outline" size="sm" className="gap-2">
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={runEscalation} disabled={runningEscalation}
+              variant="outline" size="sm" className="gap-2 border-red-300 text-red-700 hover:bg-red-50">
+              {runningEscalation
+                ? <><div className="w-3.5 h-3.5 border border-red-500 border-t-transparent rounded-full animate-spin" />Running...</>
+                : <><Siren className="w-4 h-4" />Run Escalation Now</>}
+            </Button>
+            <Button onClick={load} variant="outline" size="sm" className="gap-2">
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </Button>
+          </div>
+        </div>
+
+        {/* Escalation info bar */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-600 space-y-1">
+          <p className="font-semibold text-slate-700">Automatic escalation thresholds (from missed check-in time):</p>
+          <div className="flex flex-wrap gap-x-6 gap-y-1">
+            <span>📱 T+15min → SMS reminder</span>
+            <span>📞 T+30min → Voice call</span>
+            <span>👁 T+60min → Guardian alert + tracking link</span>
+            <span>🛡 T+120min → Security dispatch</span>
+            <span>🚔 T+180min → Admin police-escalation task</span>
+          </div>
+          <p className="text-slate-400">Runs automatically every 15 minutes via scheduler. You can also trigger manually above.</p>
         </div>
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-5 gap-3">
           {[
-            { label: 'Active Solo Travelers', val: stats.total, color: 'bg-blue-50 border-blue-200', icon: <Shield className="w-5 h-5 text-blue-600" /> },
-            { label: 'Critical (5h+)', val: stats.critical, color: 'bg-red-50 border-red-300', icon: <AlertTriangle className="w-5 h-5 text-red-600" /> },
-            { label: 'Escalated', val: stats.escalated, color: 'bg-orange-50 border-orange-200', icon: <Clock className="w-5 h-5 text-orange-600" /> },
-            { label: 'Pending Check-Ins', val: stats.pending, color: 'bg-amber-50 border-amber-200', icon: <CheckCircle2 className="w-5 h-5 text-amber-600" /> },
+            { label: 'Active Solo', val: stats.total, color: 'bg-blue-50 border-blue-200', icon: <Shield className="w-4 h-4 text-blue-600" /> },
+            { label: 'Pending/SMS', val: stats.pending, color: 'bg-amber-50 border-amber-200', icon: <Clock className="w-4 h-4 text-amber-600" /> },
+            { label: 'Guardian Active', val: stats.guardian, color: 'bg-orange-50 border-orange-200', icon: <UserCheck className="w-4 h-4 text-orange-600" /> },
+            { label: 'Security Dispatched', val: stats.security, color: 'bg-red-50 border-red-300', icon: <AlertTriangle className="w-4 h-4 text-red-600" /> },
+            { label: 'Police Task', val: stats.police, color: 'bg-purple-50 border-purple-300', icon: <Siren className="w-4 h-4 text-purple-600" /> },
           ].map(s => (
-            <div key={s.label} className={`rounded-2xl border p-4 flex items-center gap-3 ${s.color}`}>
+            <div key={s.label} className={`rounded-xl border p-3 flex items-center gap-2.5 ${s.color}`}>
               {s.icon}
               <div>
-                <p className="text-2xl font-bold text-slate-900">{s.val}</p>
-                <p className="text-xs text-slate-600">{s.label}</p>
+                <p className="text-xl font-bold text-slate-900">{s.val}</p>
+                <p className="text-[11px] text-slate-600">{s.label}</p>
               </div>
             </div>
           ))}
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+          </div>
         ) : checkIns.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <Shield className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
@@ -148,70 +214,183 @@ export default function AdminSoloMonitor() {
           <div className="space-y-3">
             {checkIns.map(ci => {
               const loc = locations[ci.case_id];
-              const isCritical = ci.status === 'escalated_5h';
+              const logs = notifLogs[ci.case_id] || [];
               const sc = STATUS_CONFIG[ci.status] || STATUS_CONFIG.pending;
+              const isExpanded = expanded[ci.id];
               const hasGPS = loc?.latitude != null;
               const locStr = hasGPS
-                ? `${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}`
-                : loc ? [loc.city, loc.country].filter(Boolean).join(', ') || loc.place_label
-                : 'No location';
+                ? `${Number(loc.latitude).toFixed(5)}, ${Number(loc.longitude).toFixed(5)}`
+                : loc ? [loc.city, loc.country].filter(Boolean).join(', ') || loc.place_label || 'Approx location'
+                : 'No location data';
+              const overdueMins = minsAgo(ci.scheduled_time);
+              const isPolicePending = !!ci.police_escalation_required_at;
+              const isSecurityPending = ci.status === 'escalated_5h';
+              const locUpdatedAt = loc?.updated_at || loc?.logged_at;
+              const locAgeMins = locUpdatedAt ? minsAgo(locUpdatedAt) : null;
 
               return (
-                <div key={ci.id} className={`bg-white rounded-2xl border p-4 sm:p-5 ${isCritical ? 'border-red-400 shadow-red-100 shadow-lg' : 'border-slate-200'}`}>
-                  <div className="flex flex-wrap items-start gap-3">
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-bold text-slate-900 text-sm">{ci.user_name || ci.user_email}</p>
-                        <Badge className={sc.color}>{sc.label}</Badge>
-                        {isCritical && <span className="text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full animate-pulse">DISPATCH REQUIRED</span>}
-                      </div>
-                      <div className="grid sm:grid-cols-3 gap-2 text-xs text-slate-600">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />
-                          Round {ci.check_in_round} · {new Date(ci.scheduled_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
-                        <span className="flex items-center gap-1">
-                          {hasGPS ? <Navigation className="w-3 h-3 text-emerald-600" /> : <MapPin className="w-3 h-3 text-blue-500" />}
-                          {locStr}
-                          {loc?.accuracy_meters != null && ` ±${Math.round(loc.accuracy_meters)}m`}
-                        </span>
-                        <span className="flex items-center gap-1"><UserCheck className="w-3 h-3" />
-                          Guardian: {ci.guardian_link_sent ? '✓ Notified' : 'Not sent'}
-                          {ci.security_dispatched_at ? ' · Security: ✓' : ''}
-                        </span>
-                      </div>
-                      {loc?.logged_at && (
-                        <p className="text-[10px] text-slate-400">Location updated: {new Date(loc.logged_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })} · {loc.source || 'gps'}</p>
-                      )}
+                <div key={ci.id} className={`bg-white rounded-2xl border shadow-sm ${
+                  isPolicePending ? 'border-purple-400 shadow-purple-100' :
+                  isSecurityPending ? 'border-red-400 shadow-red-100' :
+                  ci.status === 'escalated_3h' ? 'border-orange-300' : 'border-slate-200'
+                }`}>
+                  {/* Police escalation banner */}
+                  {isPolicePending && (
+                    <div className="bg-purple-600 text-white px-5 py-2.5 rounded-t-2xl flex items-center gap-2">
+                      <Siren className="w-4 h-4 animate-pulse" />
+                      <p className="text-sm font-bold">POLICE/ADMIN ESCALATION TASK — Human intervention required</p>
                     </div>
-                    <div className="flex gap-2 flex-wrap items-start">
-                      {loc && (
-                        <button onClick={() => openMap(loc)}
-                          className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">
-                          <MapPin className="w-3.5 h-3.5" /> Directions
+                  )}
+
+                  <div className="p-4 sm:p-5 space-y-4">
+                    {/* Top row */}
+                    <div className="flex flex-wrap items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-bold text-slate-900">{ci.user_name || ci.user_email}</p>
+                          <Badge className={sc.color}>{sc.label}</Badge>
+                          {ci.missed_round_count > 0 && (
+                            <span className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                              {ci.missed_round_count} missed rounds
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                          <span>{ci.user_email}</span>
+                          {ci.user_phone && <span>{ci.user_phone}</span>}
+                          <span>Round {ci.check_in_round}</span>
+                          {overdueMins != null && overdueMins > 0 && (
+                            <span className="text-red-600 font-semibold">Overdue {overdueMins}min</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 flex-wrap items-center">
+                        {loc && (
+                          <button onClick={() => openMap(loc)}
+                            className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">
+                            <Navigation className="w-3.5 h-3.5" /> Maps
+                          </button>
+                        )}
+                        <button onClick={() => openGuardianLink(ci)}
+                          className="flex items-center gap-1.5 text-xs text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
+                          <Globe className="w-3.5 h-3.5" /> Guardian Link
                         </button>
-                      )}
-                      <button onClick={() => markSafe(ci)} disabled={!!actionLoading[ci.id]}
-                        className="flex items-center gap-1.5 text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        {actionLoading[ci.id] === 'safe' ? 'Marking...' : 'Mark Safe'}
-                      </button>
-                      {isCritical && (
-                        <button onClick={() => manualEscalate(ci)} disabled={!!actionLoading[ci.id]}
-                          className="flex items-center gap-1.5 text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 disabled:opacity-50">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          {actionLoading[ci.id] === 'escalate' ? 'Escalating...' : 'Re-Escalate'}
+                        <button onClick={() => markSafe(ci)} disabled={!!actionLoading[ci.id]}
+                          className="flex items-center gap-1.5 text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          {actionLoading[ci.id] === 'safe' ? 'Marking...' : 'Mark Safe'}
                         </button>
-                      )}
-                      <button onClick={() => pauseCheckIn(ci)} disabled={!!actionLoading[ci.id]}
-                        className="flex items-center gap-1.5 text-xs border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 disabled:opacity-50">
-                        {actionLoading[ci.id] === 'pause' ? 'Pausing...' : 'Pause 24h'}
-                      </button>
+                        <button onClick={() => pauseCheckIn(ci)} disabled={!!actionLoading[ci.id]}
+                          className="flex items-center gap-1.5 text-xs border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 disabled:opacity-50">
+                          {actionLoading[ci.id] === 'pause' ? 'Pausing...' : 'Pause 24h'}
+                        </button>
+                        <button onClick={() => setExpanded(e => ({ ...e, [ci.id]: !e[ci.id] }))}
+                          className="flex items-center gap-1 text-xs text-slate-500 px-2 py-1.5 rounded-lg hover:bg-slate-50">
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          Details
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Escalation timeline */}
+                    <div className="flex flex-wrap gap-2">
+                      {ESC_STEPS.map(step => {
+                        const done = !!ci[step.key];
+                        const Icon = step.icon;
+                        return (
+                          <div key={step.key} className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border font-semibold ${
+                            done
+                              ? 'bg-red-50 border-red-200 text-red-700'
+                              : 'bg-slate-50 border-slate-200 text-slate-400'
+                          }`}>
+                            <Icon className={`w-3 h-3 ${done ? step.color : 'text-slate-300'}`} />
+                            {step.label}
+                            {done && ci[step.key] && (
+                              <span className="text-[10px] text-slate-500 font-normal">
+                                · {minsAgo(ci[step.key])}m ago
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Location row */}
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                      {hasGPS ? <Navigation className="w-3.5 h-3.5 text-emerald-600" /> : <MapPin className="w-3.5 h-3.5 text-blue-500" />}
+                      <span className="font-medium">{locStr}</span>
+                      {loc?.accuracy_meters != null && <span className="text-slate-400">±{Math.round(loc.accuracy_meters)}m</span>}
+                      {locAgeMins != null && (
+                        <span className={`ml-1 ${locAgeMins > 30 ? 'text-red-500 font-semibold' : locAgeMins > 15 ? 'text-amber-600' : 'text-slate-400'}`}>
+                          · {locAgeMins === 0 ? 'just now' : `${locAgeMins}m ago`}
+                          {locAgeMins > 30 ? ' ⚠️ STALE' : ''}
+                        </span>
+                      )}
+                      {loc?.source === 'ip_geo' && <span className="text-amber-500">≈ approx</span>}
+                    </div>
+
+                    {/* Police checklist */}
+                    {isPolicePending && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                        <p className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-1.5">
+                          <Siren className="w-3.5 h-3.5" /> Admin Checklist — Complete In Order:
+                        </p>
+                        <ol className="text-xs text-purple-700 space-y-1 list-decimal list-inside">
+                          <li>Verify last known location in Guardian tracking link above</li>
+                          <li>Call traveler: <span className="font-bold">{ci.user_phone || 'No phone on file'}</span></li>
+                          <li>Call emergency contact (on file in case record)</li>
+                          <li>Contact assigned private security partner</li>
+                          <li>Contact local emergency services / police using regional protocol</li>
+                        </ol>
+                        <p className="text-[10px] text-purple-500 mt-2">⚠️ Police have NOT been automatically contacted. Admin must initiate as appropriate per local jurisdiction.</p>
+                      </div>
+                    )}
+
+                    {/* Expanded: notification log */}
+                    {isExpanded && (
+                      <div className="border-t border-slate-100 pt-4 space-y-2">
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">Notification Log</p>
+                        {logs.length === 0 ? (
+                          <p className="text-xs text-slate-400">No notifications logged for this case.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {logs.map((log, i) => (
+                              <div key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                  log.status === 'sent' || log.status === 'safe_acknowledged' ? 'bg-emerald-100 text-emerald-700' :
+                                  log.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                  log.status === 'provider_not_configured' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>{log.status}</span>
+                                <span className="text-slate-500">{log.channel?.toUpperCase()}</span>
+                                <span>{log.message_type}</span>
+                                {log.notes && <span className="text-slate-400">— {log.notes}</span>}
+                                <span className="ml-auto text-slate-300 shrink-0">
+                                  {log.created_at ? new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         )}
+
+        {/* Safety copy footer */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-xs text-slate-500 space-y-1">
+          <p className="font-semibold text-slate-600">System behavior:</p>
+          <p>• Phone shares live GPS location <strong>while the app is open</strong>. When closed, last-known location is preserved.</p>
+          <p>• If signal stops, Morales uses last-known location and escalation protocols automatically.</p>
+          <p>• Guardians receive a secure tracking link — no login required, no medical/vault data exposed.</p>
+          <p>• Police are <strong>never</strong> automatically contacted. Admin must initiate via the checklist above.</p>
+        </div>
       </div>
     </AdminLayout>
   );

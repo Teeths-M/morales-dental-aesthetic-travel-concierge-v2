@@ -175,7 +175,7 @@ export default function GuardianView() {
     </div>
   );
 
-  const { session, case: caseData, latest_location: loc } = data;
+  const { session, case: caseData, latest_location: loc, escalation } = data;
   const hasGPS = loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
   const hasCityOnly = loc && !hasGPS && (loc.city || loc.country || loc.place_label);
   const currentStageIndex = STAGE_STEPS.indexOf(caseData?.journey_stage || 'consultation');
@@ -210,6 +210,44 @@ export default function GuardianView() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+
+        {/* Escalation banner — shown when silent escalation is active */}
+        {escalation && (
+          <div className={`rounded-2xl border-2 p-4 ${
+            escalation.status === 'escalated_5h' ? 'bg-red-900/40 border-red-500' :
+            escalation.status === 'escalated_3h' ? 'bg-orange-900/40 border-orange-500' :
+            'bg-amber-900/40 border-amber-500'
+          }`}>
+            <div className="flex items-start gap-3">
+              <AlertTriangle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                escalation.status === 'escalated_5h' ? 'text-red-400 animate-pulse' :
+                escalation.status === 'escalated_3h' ? 'text-orange-400' : 'text-amber-400'
+              }`} />
+              <div className="text-sm">
+                <p className="font-bold text-white">
+                  {escalation.status === 'escalated_5h' ? '🚨 Security Dispatch Active' :
+                   escalation.status === 'escalated_3h' ? '⚠️ Guardian Escalation Active' :
+                   '⚠️ Check-In Overdue — Escalation In Progress'}
+                </p>
+                <p className="text-slate-300 text-xs mt-1">
+                  Morales Safety system has been automatically notified. Emergency protocols are active.
+                </p>
+                {escalation.overdue_since && (
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Overdue since: {new Date(escalation.overdue_since).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
+                {escalation.security_dispatched_at && (
+                  <p className="text-red-300 text-xs mt-1 font-semibold">Private security has been dispatched.</p>
+                )}
+                {escalation.police_escalation_required_at && (
+                  <p className="text-purple-300 text-xs mt-1 font-bold">⚠️ Admin has been notified for police escalation review.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Safety status */}
         <div className={`rounded-2xl border p-5 text-center ${
           caseData?.safe_t_result === 'PASSED' ? 'bg-emerald-900/30 border-emerald-700/50' :

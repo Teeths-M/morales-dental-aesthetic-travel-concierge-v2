@@ -2,78 +2,113 @@
   "name": "NotificationLog",
   "type": "object",
   "properties": {
-    "case_id": {
-      "type": "string",
-      "description": "Linked CaseRecord ID"
-    },
-    "notification_type": {
+    "channel": {
       "type": "string",
       "enum": [
         "sms",
+        "voice",
         "email",
         "push",
-        "platform_alert"
-      ],
-      "description": "Channel that was suppressed"
-    },
-    "recipient_role": {
-      "type": "string",
-      "enum": [
-        "patient",
         "admin",
-        "doctor",
-        "vendor"
+        "webhook"
       ],
-      "description": "Role of the intended recipient"
+      "default": "email"
     },
-    "recipient_identifier": {
-      "type": "string",
-      "description": "Email, phone, or user ID of recipient"
+    "case_id": {
+      "type": "string"
     },
-    "event_trigger": {
-      "type": "string",
-      "description": "The pipeline event or function that triggered this notification"
-    },
-    "suppressed_payload": {
-      "type": "object",
-      "description": "Full notification payload that was suppressed (for audit/replay)"
-    },
-    "suppression_reason": {
+    "recipient_type": {
       "type": "string",
       "enum": [
-        "SURGICAL_EXECUTION_WINDOW_BLACKOUT"
+        "traveler",
+        "guardian",
+        "admin",
+        "security",
+        "system"
       ],
-      "description": "Reason the notification was suppressed"
+      "default": "traveler"
     },
-    "blackout_case_status": {
+    "recipient_phone": {
+      "type": "string"
+    },
+    "recipient_email": {
       "type": "string",
-      "description": "The CaseRecord status at time of suppression"
+      "format": "email"
     },
-    "logged_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "ISO timestamp when notification was intercepted and logged"
-    },
-    "replayed_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "ISO timestamp when notification was replayed after blackout lifted (if applicable)"
-    },
-    "replay_status": {
+    "message_type": {
       "type": "string",
       "enum": [
-        "pending",
-        "replayed",
-        "discarded"
+        "safety_reminder",
+        "voice_call",
+        "guardian_alert",
+        "security_dispatch",
+        "police_escalation_task",
+        "stale_signal_alert",
+        "inbound_sms",
+        "check_in_link",
+        "sos_alert",
+        "welcome",
+        "general"
       ],
-      "default": "pending",
-      "description": "Whether suppressed notification was later replayed"
+      "default": "general"
+    },
+    "provider_message_id": {
+      "type": "string",
+      "description": "Twilio SID or email provider ID \u2014 used for idempotency"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "delivered",
+        "failed",
+        "provider_not_configured",
+        "no_phone",
+        "no_email",
+        "received_sos",
+        "safe_acknowledged",
+        "safe_already_acked",
+        "unrecognized_command",
+        "logged"
+      ],
+      "default": "sent"
+    },
+    "escalation_level": {
+      "type": "number",
+      "default": 0,
+      "description": "1=SMS, 2=Voice, 3=Guardian, 4=Security, 5=Police"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
-    "case_id",
-    "notification_type",
-    "recipient_role",
-    "event_trigger"
-  ]
+    "channel"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

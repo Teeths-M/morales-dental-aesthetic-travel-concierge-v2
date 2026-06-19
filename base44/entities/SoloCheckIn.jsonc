@@ -70,14 +70,53 @@
       "type": "string",
       "description": "Reference to LocationBreadcrumb created at acknowledgement"
     },
+    "live_location_id": {
+      "type": "string",
+      "description": "Reference to LiveLocation record"
+    },
     "escalation_level": {
       "type": "string",
       "enum": [
         "none",
+        "sms_sent",
+        "voice_called",
         "contact_notified",
-        "security_dispatched"
+        "security_dispatched",
+        "police_required"
       ],
       "default": "none"
+    },
+    "escalation_status": {
+      "type": "string",
+      "description": "Human-readable escalation state"
+    },
+    "last_escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traveler_sms_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traveler_voice_call_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "guardian_alerted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "security_dispatched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "police_escalation_required_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "acknowledged_at": {
       "type": "string",
@@ -112,6 +151,14 @@
       "type": "boolean",
       "default": false
     },
+    "emergency_contact_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "voice_call_attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "security_notified_at": {
       "type": "string",
       "format": "date-time"
@@ -121,18 +168,6 @@
       "default": false
     },
     "pause_until": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "emergency_contact_notified_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "voice_call_attempted_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "security_dispatched_at": {
       "type": "string",
       "format": "date-time"
     },

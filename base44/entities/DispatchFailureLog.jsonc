@@ -5,43 +5,31 @@
     "case_id": {
       "type": "string"
     },
-    "case_name": {
+    "escalation_level": {
+      "type": "number",
+      "default": 1
+    },
+    "failure_reason": {
       "type": "string"
     },
-    "pipeline_stage": {
-      "type": "string",
-      "description": "Which pipeline function/action triggered this"
-    },
-    "provider_type": {
-      "type": "string",
-      "description": "patient | travel_agency | chauffeur_origin | chauffeur_destination | chauffeur | doctor | admin | hotel"
-    },
-    "provider_name": {
-      "type": "string"
-    },
-    "provider_email": {
-      "type": "string"
-    },
-    "dispatch_type": {
+    "partner_type": {
       "type": "string",
       "enum": [
-        "email",
-        "sms",
-        "webhook",
-        "api"
+        "security",
+        "taxi",
+        "travel_agency",
+        "guardian",
+        "admin"
       ]
-    },
-    "error_message": {
-      "type": "string"
     },
     "status": {
       "type": "string",
       "enum": [
-        "pending_intervention",
+        "logged",
         "resolved",
-        "retried"
+        "escalated"
       ],
-      "default": "pending_intervention"
+      "default": "logged"
     },
     "resolved_at": {
       "type": "string",
@@ -50,19 +38,35 @@
     "resolved_by": {
       "type": "string"
     },
-    "resolution_notes": {
-      "type": "string"
-    },
-    "logged_at": {
+    "created_at": {
       "type": "string",
       "format": "date-time"
     }
   },
   "required": [
     "case_id",
-    "pipeline_stage",
-    "provider_type",
-    "error_message",
-    "logged_at"
-  ]
+    "failure_reason"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

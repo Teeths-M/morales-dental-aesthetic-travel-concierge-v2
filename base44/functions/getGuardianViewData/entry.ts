@@ -103,6 +103,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Load escalation status (latest active check-in for this case)
+    let escalationInfo = null;
+    if (session.case_id) {
+      try {
+        const [esc5h, esc3h, esc2h] = await Promise.all([
+          base44.asServiceRole.entities.SoloCheckIn.filter({ case_id: session.case_id, status: 'escalated_5h' }, '-scheduled_time', 1),
+          base44.asServiceRole.entities.SoloCheckIn.filter({ case_id: session.case_id, status: 'escalated_3h' }, '-scheduled_time', 1),
+          base44.asServiceRole.entities.SoloCheckIn.filter({ case_id: session.case_id, status: 'escalated_2h' }, '-scheduled_time', 1),
+        ]);
+        const escalated = esc5h[0] || esc3h[0] || esc2h[0];
+        if (escalated) {
+          escalationInfo = {
+            status: escalated.status,
+            escalation_level: escalated.escalation_level,
+            guardian_alerted_at: escalated.guardian_alerted_at,
+            security_dispatched_at: escalated.security_dispatched_at,
+            police_escalation_required_at: escalated.police_escalation_required_at,
+            overdue_since: escalated.scheduled_time,
+          };
+        }
+      } catch (_) {}
+    }
+
     return Response.json({
       status: 'ok',
       session: {
@@ -113,6 +136,7 @@ Deno.serve(async (req) => {
       },
       case: casePublic,
       latest_location: latestLocation,
+      escalation: escalationInfo,
     });
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });
