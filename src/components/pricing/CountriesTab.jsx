@@ -7,17 +7,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
+import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatCurrency } from '@/lib/format';
 
 const EMPTY_FORM = { procedure_id: '', procedure_name: '', country: '', country_price_usd: '', price_adjustment_pct: '', is_available: true, notes: '' };
 
 export default function CountriesTab() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const { data: entries = [], isLoading } = useQuery({
+  const { data: entries = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['country-pricing'],
     queryFn: () => base44.entities.CountryPricing.list(),
   });
@@ -34,9 +39,9 @@ export default function CountriesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['country-pricing'] });
       setEditing(null);
-      toast.success(editing?.id ? 'Country pricing updated' : 'Country pricing created');
+      toast({ title: editing?.id ? 'Country pricing updated' : 'Country pricing created' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -44,9 +49,9 @@ export default function CountriesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['country-pricing'] });
       setDeleting(null);
-      toast.success('Entry deleted');
+      toast({ title: 'Entry deleted' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -60,7 +65,7 @@ export default function CountriesTab() {
 
   const handleSave = () => {
     if (!form.procedure_id || !form.country || !form.country_price_usd) {
-      toast.error('Required fields missing'); return;
+      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
     }
     saveMutation.mutate({
       ...form,
@@ -96,14 +101,16 @@ export default function CountriesTab() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {isLoading ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading...</td></tr>
+                <tr><td colSpan={6} className="px-6 py-6"><LoadingState rows={3} dark={false} /></td></tr>
+              ) : isError ? (
+                <tr><td colSpan={6} className="px-6 py-6"><ErrorState dark={false} onRetry={refetch} /></td></tr>
               ) : entries.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400">No country pricing yet.</td></tr>
+                <tr><td colSpan={6} className="px-6 py-6"><EmptyState dark={false} title="No country pricing yet" message="Add one above to get started." /></td></tr>
               ) : entries.map((e) => (
                 <tr key={e.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{e.procedure_name || e.procedure_id}</td>
                   <td className="px-6 py-4 text-slate-600">{e.country}</td>
-                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">${e.country_price_usd?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">{formatCurrency(e.country_price_usd)}</td>
                   <td className="px-6 py-4 text-right text-slate-600">{e.price_adjustment_pct != null ? `${e.price_adjustment_pct}%` : '—'}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${e.is_available ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}`}>

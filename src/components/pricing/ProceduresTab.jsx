@@ -7,7 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
+import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatCurrency } from '@/lib/format';
 
 const EMPTY_FORM = {
   procedure_name: '', category: '', subcategory: '', base_price_usd: '',
@@ -17,11 +21,12 @@ const EMPTY_FORM = {
 
 export default function ProceduresTab() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(null); // null = closed, {} = new, record = edit
   const [deleting, setDeleting] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const { data: procedures = [], isLoading } = useQuery({
+  const { data: procedures = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['procedure-pricing'],
     queryFn: () => base44.entities.ProcedurePricing.list(),
   });
@@ -33,9 +38,9 @@ export default function ProceduresTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-pricing'] });
       setEditing(null);
-      toast.success(editing?.id ? 'Procedure updated' : 'Procedure created');
+      toast({ title: editing?.id ? 'Procedure updated' : 'Procedure created' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -43,9 +48,9 @@ export default function ProceduresTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-pricing'] });
       setDeleting(null);
-      toast.success('Procedure deleted');
+      toast({ title: 'Procedure deleted' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -54,7 +59,7 @@ export default function ProceduresTab() {
 
   const handleSave = () => {
     if (!form.procedure_name || !form.category || !form.base_price_usd) {
-      toast.error('Required fields missing'); return;
+      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
     }
     saveMutation.mutate({
       ...form,
@@ -94,16 +99,18 @@ export default function ProceduresTab() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {isLoading ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading...</td></tr>
+                <tr><td colSpan={7} className="px-6 py-6"><LoadingState rows={3} dark={false} /></td></tr>
+              ) : isError ? (
+                <tr><td colSpan={7} className="px-6 py-6"><ErrorState dark={false} onRetry={refetch} /></td></tr>
               ) : procedures.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-slate-400">No procedures yet. Add one above.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-6"><EmptyState dark={false} title="No procedures yet" message="Add one above to get started." /></td></tr>
               ) : procedures.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{p.procedure_name}</td>
                   <td className="px-6 py-4 text-slate-600 capitalize">{p.category}</td>
-                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">${p.base_price_usd?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">{formatCurrency(p.base_price_usd)}</td>
                   <td className="px-6 py-4 text-right text-slate-600">
-                    {p.min_price_usd || p.max_price_usd ? `$${p.min_price_usd ?? '?'} – $${p.max_price_usd ?? '?'}` : '—'}
+                    {p.min_price_usd || p.max_price_usd ? `${formatCurrency(p.min_price_usd)} – ${formatCurrency(p.max_price_usd)}` : '—'}
                   </td>
                   <td className="px-6 py-4 text-slate-600 capitalize">{p.complexity_level}</td>
                   <td className="px-6 py-4">

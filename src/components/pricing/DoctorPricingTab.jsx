@@ -7,18 +7,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
+import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatCurrency } from '@/lib/format';
 
 const EMPTY_FORM = { doctor_id: '', doctor_name: '', procedure_id: '', procedure_name: '', doctor_price_usd: '', specialty_expertise_level: 'intermediate', promotional_discount_pct: '', approved_by_admin: false, notes: '' };
 
 export default function DoctorPricingTab() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [filter, setFilter] = useState('all'); // all | pending | approved
 
-  const { data: entries = [], isLoading } = useQuery({
+  const { data: entries = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['doctor-pricing'],
     queryFn: () => base44.entities.DoctorPricing.list(),
   });
@@ -40,9 +45,9 @@ export default function DoctorPricingTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['doctor-pricing'] });
       setEditing(null);
-      toast.success(editing?.id ? 'Doctor pricing updated' : 'Doctor pricing created');
+      toast({ title: editing?.id ? 'Doctor pricing updated' : 'Doctor pricing created' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -50,18 +55,18 @@ export default function DoctorPricingTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['doctor-pricing'] });
       setDeleting(null);
-      toast.success('Entry deleted');
+      toast({ title: 'Entry deleted' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const approveMutation = useMutation({
     mutationFn: ({ id, approved }) => base44.entities.DoctorPricing.update(id, { approved_by_admin: approved }),
     onSuccess: (_, { approved }) => {
       qc.invalidateQueries({ queryKey: ['doctor-pricing'] });
-      toast.success(approved ? 'Pricing approved' : 'Approval revoked');
+      toast({ title: approved ? 'Pricing approved' : 'Approval revoked' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -79,7 +84,7 @@ export default function DoctorPricingTab() {
 
   const handleSave = () => {
     if (!form.doctor_id || !form.procedure_id || !form.doctor_price_usd) {
-      toast.error('Required fields missing'); return;
+      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
     }
     saveMutation.mutate({
       ...form,
@@ -133,14 +138,16 @@ export default function DoctorPricingTab() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {isLoading ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading...</td></tr>
+                <tr><td colSpan={7} className="px-6 py-6"><LoadingState rows={3} dark={false} /></td></tr>
+              ) : isError ? (
+                <tr><td colSpan={7} className="px-6 py-6"><ErrorState dark={false} onRetry={refetch} /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-slate-400">No entries.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-6"><EmptyState dark={false} title="No entries" message="Add doctor pricing above." /></td></tr>
               ) : filtered.map((e) => (
                 <tr key={e.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{e.doctor_name}</td>
                   <td className="px-6 py-4 text-slate-600">{e.procedure_name}</td>
-                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">${e.doctor_price_usd?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">{formatCurrency(e.doctor_price_usd)}</td>
                   <td className="px-6 py-4 text-slate-600 capitalize">{e.specialty_expertise_level}</td>
                   <td className="px-6 py-4 text-right text-slate-600">{e.promotional_discount_pct != null ? `${e.promotional_discount_pct}%` : '—'}</td>
                   <td className="px-6 py-4 text-center">

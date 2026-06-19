@@ -27,6 +27,10 @@ import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
+import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatDate } from '@/lib/format';
 
 const notifications = [
   { type: 'warning', text: 'Lab work still required for medical clearance', time: '2h ago' },
@@ -96,11 +100,12 @@ function DashboardHome({ user, consultations, language }) {
   const outreachSent = matchedDoctorsData?.outreach_sent || false;
 
   // PERFORMANCE: Memoize countdown calculation
+  const procedureDate = latestConsultation?.procedure_date || null;
   const daysUntil = useMemo(() => {
-    const procedureDate = new Date('2026-06-14');
+    const target = procedureDate ? new Date(procedureDate) : new Date('2026-06-14');
     const today = new Date();
-    return Math.ceil((procedureDate - today) / (1000 * 60 * 60 * 24));
-  }, []);
+    return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+  }, [procedureDate]);
 
   return (
     <div className="space-y-6">
@@ -129,7 +134,7 @@ function DashboardHome({ user, consultations, language }) {
               {language === 'es' ? 'Días Hasta el Procedimiento' : language === 'fr' ? 'Jours Jusqu\'à la Procédure' : 'Days Until Procedure'}
             </p>
             <p className="font-display text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntil > 0 ? daysUntil : '—'}</p>
-            <p className="text-white/60 text-[12px] mt-1">Jun 14, 2026</p>
+            <p className="text-white/60 text-[12px] mt-1">{procedureDate ? formatDate(procedureDate) : 'Jun 14, 2026'}</p>
           </div>
         </div>
       </motion.div>
@@ -360,14 +365,14 @@ export default function Dashboard() {
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
-  const { data: consultations = [] } = useQuery({
+  const { data: consultations = [], isLoading: loadingConsultations, isError: errorConsultations, refetch: refetchConsultations } = useQuery({
     queryKey: ['my-consultations', user?.email],
     queryFn: () => base44.entities.Consultation.filter(
       user?.email ? { email: user.email } : {},
       '-created_date', 10
     ),
     enabled: !!user,
-    staleTime: 60000, // 1 minute cache
+    staleTime: 60000,
   });
 
   const getModule = () => {
@@ -382,6 +387,9 @@ export default function Dashboard() {
     if (p === '/dashboard/settings') return <SettingsModule />;
     if (p === '/dashboard/case-status') return <CaseStatusModule userEmail={user?.email} />;
     if (p === '/dashboard') return <FeatureHub />;
+    if (loadingConsultations) return <LoadingState rows={4} dark={false} label="Loading your dashboard" className="mt-4" />;
+    if (errorConsultations) return <ErrorState dark={false} title="Couldn't load your journey" message="We had trouble fetching your data. Please try again." onRetry={refetchConsultations} className="mt-8" />;
+    if (consultations.length === 0) return <EmptyState dark={false} title="No active journey yet" message="Start a consultation to begin your medical travel journey." action={<a href="/booking" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">Start a Consultation</a>} className="mt-8" />;
     return <DashboardHome user={user} consultations={consultations} language={language} />;
   };
 

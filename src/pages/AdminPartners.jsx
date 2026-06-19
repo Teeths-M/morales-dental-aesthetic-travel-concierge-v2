@@ -23,10 +23,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { useToast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/layout/AdminLayout';
+import LoadingState from '@/components/ui-system/LoadingState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatDate } from '@/lib/format';
 
 export default function AdminPartners() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [partnerType, setPartnerType] = useState('all');
@@ -121,11 +125,11 @@ export default function AdminPartners() {
       
       await base44.entities.Doctor.update(doctorId, updateData);
       console.log('Doctor approved successfully');
-      toast.success('Doctor approved successfully');
+      toast({ title: 'Doctor approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to approve doctor:', error);
-      toast.error('Failed to approve doctor: ' + error.message);
+      toast({ title: 'Failed to approve doctor', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
     }
@@ -140,11 +144,11 @@ export default function AdminPartners() {
         verification_status: 'rejected'
       });
       console.log('Doctor rejected successfully');
-      toast.success('Doctor rejected');
+      toast({ title: 'Doctor rejected' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to reject doctor:', error);
-      toast.error('Failed to reject doctor: ' + error.message);
+      toast({ title: 'Failed to reject doctor', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
     }
@@ -160,11 +164,11 @@ export default function AdminPartners() {
         insurance_verified: true
       });
       console.log('Taxi service approved successfully');
-      toast.success('Taxi service approved successfully');
+      toast({ title: 'Taxi service approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to approve taxi service:', error);
-      toast.error('Failed to approve taxi service: ' + error.message);
+      toast({ title: 'Failed to approve taxi service', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
     }
@@ -179,11 +183,11 @@ export default function AdminPartners() {
         approved_by_admin: true
       });
       console.log('Travel agency approved successfully');
-      toast.success('Travel agency approved successfully');
+      toast({ title: 'Travel agency approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to approve travel agency:', error);
-      toast.error('Failed to approve travel agency: ' + error.message);
+      toast({ title: 'Failed to approve travel agency', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
     }
@@ -198,11 +202,11 @@ export default function AdminPartners() {
         verification_status: 'verified'
       });
       console.log('Companion approved successfully');
-      toast.success('Companion approved successfully');
+      toast({ title: 'Companion approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Failed to approve companion:', error);
-      toast.error('Failed to approve companion: ' + error.message);
+      toast({ title: 'Failed to approve companion', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
     }
@@ -250,12 +254,12 @@ export default function AdminPartners() {
         }
       }
 
-      toast.success(`Successfully deleted ${selectedPartners.length} partners`);
+      toast({ title: `Successfully deleted ${selectedPartners.length} partners` });
       setSelectedIds([]);
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
       console.error('Bulk delete failed:', error);
-      toast.error('Failed to delete partners: ' + error.message);
+      toast({ title: 'Failed to delete partners', description: error.message, variant: 'destructive' });
     } finally {
       setIsDeleting(false);
     }
@@ -602,24 +606,17 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
   });
 
   if (isLoading) {
-    return (
-      <Card className="bg-white border-0 shadow-md rounded-2xl">
-        <CardContent className="pt-6 text-center py-8">
-          <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mx-auto" />
-        </CardContent>
-      </Card>
-    );
+    return <LoadingState rows={3} dark={false} label={`Loading ${title.toLowerCase()}`} />;
   }
 
   if (filteredPartners.length === 0) {
     return (
-      <Card className="bg-white border-0 shadow-md rounded-2xl">
-        <CardContent className="pt-6 text-center py-8">
-          <Icon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium">No {title.toLowerCase()} found</p>
-          <p className="text-sm text-slate-500">{searchTerm ? 'Try a different search term' : 'No partners registered yet'}</p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        dark={false}
+        icon={Icon}
+        title={`No ${title.toLowerCase()} found`}
+        message={searchTerm ? 'Try a different search term' : 'No partners registered yet'}
+      />
     );
   }
 
@@ -737,9 +734,7 @@ function PartnerCard({ partner, type, getStatusBadge, getRatingBadge, onClick, i
 
             <div className="flex items-center justify-between pt-2 border-t border-slate-100">
               {getStatusBadge(partner.status)}
-              <span className="text-xs text-slate-500">
-                {partner.created_date ? new Date(partner.created_date).toLocaleDateString() : 'Unknown'}
-              </span>
+              <span className="text-xs text-slate-500">{formatDate(partner.created_date)}</span>
             </div>
           </div>
         </CardContent>
@@ -1134,15 +1129,11 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
             <div className="flex items-center justify-between w-full pt-4">
               <div className="space-y-1">
                 <p className="text-sm text-slate-500">Registered on</p>
-                <p className="text-slate-900 font-medium">
-                  {partner.created_date ? new Date(partner.created_date).toLocaleString() : 'Unknown'}
-                </p>
+                <p className="text-slate-900 font-medium">{formatDate(partner.created_date)}</p>
               </div>
               <div className="space-y-1 text-right">
                 <p className="text-sm text-slate-500">Last Updated</p>
-                <p className="text-slate-900 font-medium">
-                  {partner.updated_date ? new Date(partner.updated_date).toLocaleString() : 'Unknown'}
-                </p>
+                <p className="text-slate-900 font-medium">{formatDate(partner.updated_date)}</p>
               </div>
             </div>
           </DialogFooter>
