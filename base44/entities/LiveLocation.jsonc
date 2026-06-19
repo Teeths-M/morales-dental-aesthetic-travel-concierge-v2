@@ -1,0 +1,116 @@
+{
+  "name": "LiveLocation",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "accuracy_meters": {
+      "type": "number"
+    },
+    "heading": {
+      "type": "number",
+      "description": "Degrees 0-360, null if unavailable"
+    },
+    "speed": {
+      "type": "number",
+      "description": "Meters per second"
+    },
+    "altitude": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "ip_geo"
+      ],
+      "default": "gps"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "stale_after": {
+      "type": "string",
+      "format": "date-time",
+      "description": "If updated_at is past this, mark stale in UI"
+    },
+    "guardian_share_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "stale_alerted_15m": {
+      "type": "boolean",
+      "default": false
+    },
+    "stale_alerted_30m": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "case_id",
+    "user_id",
+    "latitude",
+    "longitude"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

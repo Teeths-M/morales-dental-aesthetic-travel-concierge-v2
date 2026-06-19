@@ -19,13 +19,13 @@ Deno.serve(async (req) => {
     if (!session.is_active) return Response.json({ status: 'revoked', error: 'This guardian link has been revoked by the traveler.' });
     if (new Date(session.expires_at) < new Date()) return Response.json({ status: 'expired', error: 'This guardian link has expired.' });
 
-    // Increment view count (fire-and-forget, don't block response)
+    // Increment view count (fire-and-forget)
     base44.asServiceRole.entities.GuardianSession.update(session.id, {
       view_count: (session.view_count || 0) + 1,
       last_viewed_at: new Date().toISOString(),
     }).catch(() => {});
 
-    // Load case — only safe public fields
+    // Load case — only safe public fields (no medical notes, PII, admin notes)
     let casePublic = null;
     if (session.case_id) {
       const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: session.case_id });
@@ -43,31 +43,63 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Load latest unpurged LocationBreadcrumb with coordinates
+    const hasLocationScope = !session.shared_data_scope || session.shared_data_scope.includes('location');
     let latestLocation = null;
-    if (session.case_id) {
-      const crumbs = await base44.asServiceRole.entities.LocationBreadcrumb.filter({
-        case_id: session.case_id,
-        is_purged: false,
-      });
-      if (crumbs && crumbs.length > 0) {
-        // Prefer crumbs with real GPS coordinates; fall back to most recent
-        const withCoords = crumbs.filter(c => c.latitude != null && c.longitude != null);
-        const sorted = (withCoords.length > 0 ? withCoords : crumbs)
-          .sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
-        const latest = sorted[0];
-        latestLocation = {
-          latitude: latest.latitude ?? null,
-          longitude: latest.longitude ?? null,
-          accuracy_meters: latest.accuracy_meters ?? null,
-          place_label: latest.place_label ?? null,
-          source: latest.source ?? null,
-          logged_at: latest.logged_at ?? null,
-          is_saved: latest.is_saved ?? false,
-          location_precision: latest.location_precision ?? (latest.source === 'ip_geo' ? 'approximate' : 'precise'),
-          city: latest.city ?? null,
-          country: latest.country ?? null,
-        };
+
+    if (session.case_id && hasLocationScope) {
+      // 1. Try LiveLocation first — real-time moving dot
+      try {
+        const liveLocations = await base44.asServiceRole.entities.LiveLocation.filter({
+          case_id: session.case_id,
+          is_active: true,
+        });
+        const live = liveLocations[0];
+        if (live && live.latitude != null && live.longitude != null) {
+          latestLocation = {
+            latitude: live.latitude,
+            longitude: live.longitude,
+            accuracy_meters: live.accuracy_meters ?? null,
+            heading: live.heading ?? null,
+            speed: live.speed ?? null,
+            altitude: live.altitude ?? null,
+            source: live.source ?? 'gps',
+            updated_at: live.updated_at ?? null,
+            is_live: true,
+            stale_after: live.stale_after ?? null,
+            location_precision: live.source === 'ip_geo' ? 'approximate' : 'precise',
+          };
+        }
+      } catch (_) {}
+
+      // 2. Fall back to LocationBreadcrumb if no LiveLocation
+      if (!latestLocation) {
+        try {
+          const crumbs = await base44.asServiceRole.entities.LocationBreadcrumb.filter({
+            case_id: session.case_id,
+            is_purged: false,
+          });
+          if (crumbs && crumbs.length > 0) {
+            const withCoords = crumbs.filter(c => c.latitude != null && c.longitude != null);
+            const sorted = (withCoords.length > 0 ? withCoords : crumbs)
+              .sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
+            const latest = sorted[0];
+            latestLocation = {
+              latitude: latest.latitude ?? null,
+              longitude: latest.longitude ?? null,
+              accuracy_meters: latest.accuracy_meters ?? null,
+              heading: null,
+              speed: null,
+              source: latest.source ?? null,
+              updated_at: latest.logged_at ?? null,
+              is_live: false,
+              stale_after: null,
+              place_label: latest.place_label ?? null,
+              location_precision: latest.location_precision ?? (latest.source === 'ip_geo' ? 'approximate' : 'precise'),
+              city: latest.city ?? null,
+              country: latest.country ?? null,
+            };
+          }
+        } catch (_) {}
       }
     }
 
