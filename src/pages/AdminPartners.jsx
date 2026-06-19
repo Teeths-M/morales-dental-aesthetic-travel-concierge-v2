@@ -26,8 +26,9 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/layout/AdminLayout';
 import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
 import EmptyState from '@/components/ui-system/EmptyState';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatCurrency } from '@/lib/format';
 
 export default function AdminPartners() {
   const { toast } = useToast();
@@ -39,43 +40,27 @@ export default function AdminPartners() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // PERFORMANCE: Bounded queries with cache — prevents OOM at scale
-  const { data: doctors = [], isLoading: loadingDoctors } = useQuery({
+  const { data: doctors = [], isLoading: loadingDoctors, isError: errorDoctors, refetch: refetchDoctors } = useQuery({
     queryKey: ['admin_doctors'],
-    queryFn: async () => {
-      const result = await base44.entities.Doctor.list('-created_date', 500); // Reduced from 1000
-      console.log('Fetched doctors:', result);
-      return result;
-    },
-    staleTime: 60000, // 1 minute cache
+    queryFn: () => base44.entities.Doctor.list('-created_date', 500),
+    staleTime: 60000,
   });
 
-  const { data: travelAgencies = [], isLoading: loadingTravel } = useQuery({
+  const { data: travelAgencies = [], isLoading: loadingTravel, isError: errorTravel, refetch: refetchTravel } = useQuery({
     queryKey: ['admin_travel_agencies'],
-    queryFn: async () => {
-      const result = await base44.entities.TravelAgency.list('-created_date', 200);
-      console.log('Fetched travel agencies:', result);
-      return result;
-    },
+    queryFn: () => base44.entities.TravelAgency.list('-created_date', 200),
     staleTime: 60000,
   });
 
-  const { data: taxiServices = [], isLoading: loadingTaxi } = useQuery({
+  const { data: taxiServices = [], isLoading: loadingTaxi, isError: errorTaxi, refetch: refetchTaxi } = useQuery({
     queryKey: ['admin_taxi_services'],
-    queryFn: async () => {
-      const result = await base44.entities.TaxiService.list('-created_date', 200);
-      console.log('Fetched taxi services:', result);
-      return result;
-    },
+    queryFn: () => base44.entities.TaxiService.list('-created_date', 200),
     staleTime: 60000,
   });
 
-  const { data: companions = [], isLoading: loadingCompanions } = useQuery({
+  const { data: companions = [], isLoading: loadingCompanions, isError: errorCompanions, refetch: refetchCompanions } = useQuery({
     queryKey: ['admin_companions'],
-    queryFn: async () => {
-      const result = await base44.entities.Companion.list('-created_date', 200);
-      console.log('Fetched companions:', result);
-      return result;
-    },
+    queryFn: () => base44.entities.Companion.list('-created_date', 200),
     staleTime: 60000,
   });
 
@@ -111,8 +96,6 @@ export default function AdminPartners() {
   const handleApproveDoctor = async (doctorId) => {
     setIsApproving(true);
     try {
-      console.log('Approving doctor:', doctorId);
-      // First fetch the doctor to get missing required fields
       const doctors = await base44.entities.Doctor.filter({ id: doctorId });
       const doctor = doctors[0];
       
@@ -124,11 +107,9 @@ export default function AdminPartners() {
       };
       
       await base44.entities.Doctor.update(doctorId, updateData);
-      console.log('Doctor approved successfully');
       toast({ title: 'Doctor approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      console.error('Failed to approve doctor:', error);
       toast({ title: 'Failed to approve doctor', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
@@ -138,16 +119,10 @@ export default function AdminPartners() {
   const handleRejectDoctor = async (doctorId) => {
     setIsApproving(true);
     try {
-      console.log('Rejecting doctor:', doctorId);
-      await base44.entities.Doctor.update(doctorId, { 
-        status: 'inactive',
-        verification_status: 'rejected'
-      });
-      console.log('Doctor rejected successfully');
+      await base44.entities.Doctor.update(doctorId, { status: 'inactive', verification_status: 'rejected' });
       toast({ title: 'Doctor rejected' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      console.error('Failed to reject doctor:', error);
       toast({ title: 'Failed to reject doctor', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
@@ -157,17 +132,10 @@ export default function AdminPartners() {
   const handleApproveTaxiService = async (serviceId) => {
     setIsApproving(true);
     try {
-      console.log('Approving taxi service:', serviceId);
-      await base44.entities.TaxiService.update(serviceId, { 
-        status: 'active',
-        license_verified: true,
-        insurance_verified: true
-      });
-      console.log('Taxi service approved successfully');
+      await base44.entities.TaxiService.update(serviceId, { status: 'active', license_verified: true, insurance_verified: true });
       toast({ title: 'Taxi service approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      console.error('Failed to approve taxi service:', error);
       toast({ title: 'Failed to approve taxi service', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
@@ -177,16 +145,10 @@ export default function AdminPartners() {
   const handleApproveTravelAgency = async (agencyId) => {
     setIsApproving(true);
     try {
-      console.log('Approving travel agency:', agencyId);
-      await base44.entities.TravelAgency.update(agencyId, { 
-        status: 'active',
-        approved_by_admin: true
-      });
-      console.log('Travel agency approved successfully');
+      await base44.entities.TravelAgency.update(agencyId, { status: 'active', approved_by_admin: true });
       toast({ title: 'Travel agency approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      console.error('Failed to approve travel agency:', error);
       toast({ title: 'Failed to approve travel agency', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
@@ -196,16 +158,10 @@ export default function AdminPartners() {
   const handleApproveCompanion = async (companionId) => {
     setIsApproving(true);
     try {
-      console.log('Approving companion:', companionId);
-      await base44.entities.Companion.update(companionId, { 
-        status: 'active',
-        verification_status: 'verified'
-      });
-      console.log('Companion approved successfully');
+      await base44.entities.Companion.update(companionId, { status: 'active', verification_status: 'verified' });
       toast({ title: 'Companion approved successfully' });
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      console.error('Failed to approve companion:', error);
       toast({ title: 'Failed to approve companion', description: error.message, variant: 'destructive' });
     } finally {
       setIsApproving(false);
@@ -258,7 +214,6 @@ export default function AdminPartners() {
       setSelectedIds([]);
       setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-      console.error('Bulk delete failed:', error);
       toast({ title: 'Failed to delete partners', description: error.message, variant: 'destructive' });
     } finally {
       setIsDeleting(false);
@@ -423,121 +378,61 @@ export default function AdminPartners() {
 
           <TabsContent value="all" className="space-y-4">
             <PartnerSection 
-              title="Doctors" 
-              icon={Users} 
-              partners={doctors} 
-              isLoading={loadingDoctors}
-              type="doctor"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
+              title="Doctors" icon={Users} partners={doctors}
+              isLoading={loadingDoctors} isError={errorDoctors} onRetry={refetchDoctors}
+              type="doctor" searchTerm={searchTerm}
+              getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId}
             />
             <PartnerSection 
-              title="Travel Agencies" 
-              icon={Plane} 
-              partners={travelAgencies} 
-              isLoading={loadingTravel}
-              type="travel"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
+              title="Travel Agencies" icon={Plane} partners={travelAgencies}
+              isLoading={loadingTravel} isError={errorTravel} onRetry={refetchTravel}
+              type="travel" searchTerm={searchTerm}
+              getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId}
             />
             <PartnerSection 
-              title="Taxi Services" 
-              icon={Car} 
-              partners={taxiServices} 
-              isLoading={loadingTaxi}
-              type="taxi"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
+              title="Taxi Services" icon={Car} partners={taxiServices}
+              isLoading={loadingTaxi} isError={errorTaxi} onRetry={refetchTaxi}
+              type="taxi" searchTerm={searchTerm}
+              getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId}
             />
             <PartnerSection 
-              title="Companions" 
-              icon={User} 
-              partners={companions} 
-              isLoading={loadingCompanions}
-              type="companion"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
+              title="Companions" icon={User} partners={companions}
+              isLoading={loadingCompanions} isError={errorCompanions} onRetry={refetchCompanions}
+              type="companion" searchTerm={searchTerm}
+              getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId}
             />
           </TabsContent>
 
           <TabsContent value="doctors" className="space-y-4">
-            <PartnerSection 
-              title="Doctors" 
-              icon={Users} 
-              partners={doctors} 
-              isLoading={loadingDoctors}
-              type="doctor"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
-            />
+            <PartnerSection title="Doctors" icon={Users} partners={doctors}
+              isLoading={loadingDoctors} isError={errorDoctors} onRetry={refetchDoctors}
+              type="doctor" searchTerm={searchTerm} getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId} />
           </TabsContent>
 
           <TabsContent value="travel" className="space-y-4">
-            <PartnerSection 
-              title="Travel Agencies" 
-              icon={Plane} 
-              partners={travelAgencies} 
-              isLoading={loadingTravel}
-              type="travel"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
-            />
+            <PartnerSection title="Travel Agencies" icon={Plane} partners={travelAgencies}
+              isLoading={loadingTravel} isError={errorTravel} onRetry={refetchTravel}
+              type="travel" searchTerm={searchTerm} getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId} />
           </TabsContent>
 
           <TabsContent value="taxi" className="space-y-4">
-            <PartnerSection 
-              title="Taxi Services" 
-              icon={Car} 
-              partners={taxiServices} 
-              isLoading={loadingTaxi}
-              type="taxi"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
-            />
+            <PartnerSection title="Taxi Services" icon={Car} partners={taxiServices}
+              isLoading={loadingTaxi} isError={errorTaxi} onRetry={refetchTaxi}
+              type="taxi" searchTerm={searchTerm} getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId} />
           </TabsContent>
 
           <TabsContent value="companions" className="space-y-4">
-            <PartnerSection 
-              title="Companions" 
-              icon={User} 
-              partners={companions} 
-              isLoading={loadingCompanions}
-              type="companion"
-              searchTerm={searchTerm}
-              getStatusBadge={getStatusBadge}
-              getRatingBadge={getRatingBadge}
-              openPartnerDetails={openPartnerDetails}
-              selectedIds={selectedIds}
-              toggleSelectId={toggleSelectId}
-            />
+            <PartnerSection title="Companions" icon={User} partners={companions}
+              isLoading={loadingCompanions} isError={errorCompanions} onRetry={refetchCompanions}
+              type="companion" searchTerm={searchTerm} getStatusBadge={getStatusBadge} getRatingBadge={getRatingBadge}
+              openPartnerDetails={openPartnerDetails} selectedIds={selectedIds} toggleSelectId={toggleSelectId} />
           </TabsContent>
         </Tabs>
       </div>
@@ -560,20 +455,18 @@ export default function AdminPartners() {
   );
 }
 
-function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTerm, getStatusBadge, getRatingBadge, openPartnerDetails, selectedIds, toggleSelectId }) {
+function PartnerSection({ title, icon: Icon, partners, isLoading, isError, onRetry, type, searchTerm, getStatusBadge, getRatingBadge, openPartnerDetails, selectedIds, toggleSelectId }) {
   const filteredPartners = partners.filter(partner => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
     
     if (type === 'doctor' || type === 'all') {
-      const match = (
+      return (
         partner.full_name?.toLowerCase().includes(searchLower) ||
         partner.email?.toLowerCase().includes(searchLower) ||
         partner.clinic_country?.toLowerCase().includes(searchLower) ||
         partner.clinic_city?.toLowerCase().includes(searchLower)
       );
-      console.log('Doctor filter check:', { name: partner.full_name, email: partner.email, searchLower, match });
-      return match;
     }
     
     if (type === 'travel' || type === 'all') {
@@ -607,6 +500,10 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, type, searchTe
 
   if (isLoading) {
     return <LoadingState rows={3} dark={false} label={`Loading ${title.toLowerCase()}`} />;
+  }
+
+  if (isError) {
+    return <ErrorState dark={false} title={`Couldn't load ${title.toLowerCase()}`} message="Check your connection and try again." onRetry={onRetry} />;
   }
 
   if (filteredPartners.length === 0) {
@@ -989,7 +886,7 @@ function PartnerDetailsDialog({ partner, open, onOpenChange, onApproveDoctor, on
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Hourly Rate</label>
-              <p className="text-slate-900">${partner.hourly_rate_usd || 'N/A'} USD</p>
+              <p className="text-slate-900">{formatCurrency(partner.hourly_rate_usd)} / hr</p>
             </div>
           </div>
           

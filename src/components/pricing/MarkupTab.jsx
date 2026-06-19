@@ -7,18 +7,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
+import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatDate } from '@/lib/format';
 
 const RULE_TYPES = ['quantity', 'bundle', 'promotion', 'seasonal', 'referral', 'volume'];
 const EMPTY_FORM = { rule_name: '', rule_type: 'promotion', discount_pct: '', start_date: '', end_date: '', is_active: true };
 
 export default function MarkupTab() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const { data: rules = [], isLoading } = useQuery({
+  const { data: rules = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['pricing-rules'],
     queryFn: () => base44.entities.PricingRule.list(),
   });
@@ -30,9 +35,9 @@ export default function MarkupTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pricing-rules'] });
       setEditing(null);
-      toast.success(editing?.id ? 'Rule updated' : 'Rule created');
+      toast({ title: editing?.id ? 'Rule updated' : 'Rule created' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -40,15 +45,15 @@ export default function MarkupTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pricing-rules'] });
       setDeleting(null);
-      toast.success('Rule deleted');
+      toast({ title: 'Rule deleted' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, is_active }) => base44.entities.PricingRule.update(id, { is_active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pricing-rules'] }),
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); };
@@ -57,7 +62,7 @@ export default function MarkupTab() {
 
   const handleSave = () => {
     if (!form.rule_name || !form.rule_type || !form.discount_pct) {
-      toast.error('Required fields missing'); return;
+      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
     }
     saveMutation.mutate({ ...form, discount_pct: Number(form.discount_pct) });
   };
@@ -107,16 +112,18 @@ export default function MarkupTab() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {isLoading ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading...</td></tr>
+                <tr><td colSpan={6} className="px-6 py-6"><LoadingState rows={3} dark={false} label="Loading pricing rules" /></td></tr>
+              ) : isError ? (
+                <tr><td colSpan={6} className="px-6 py-6"><ErrorState dark={false} onRetry={refetch} /></td></tr>
               ) : rules.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400">No pricing rules yet.</td></tr>
+                <tr><td colSpan={6} className="px-6 py-6"><EmptyState dark={false} title="No pricing rules yet" message="Add a discount or promotion rule above." /></td></tr>
               ) : rules.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{r.rule_name}</td>
                   <td className="px-6 py-4 text-slate-600 capitalize">{r.rule_type}</td>
                   <td className="px-6 py-4 text-right font-semibold text-emerald-600">{r.discount_pct}%</td>
                   <td className="px-6 py-4 text-slate-600 text-xs">
-                    {r.start_date || r.end_date ? `${r.start_date || '—'} → ${r.end_date || '—'}` : 'No expiry'}
+                    {r.start_date || r.end_date ? `${formatDate(r.start_date)} → ${formatDate(r.end_date)}` : 'No expiry'}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button onClick={() => toggleMutation.mutate({ id: r.id, is_active: !r.is_active })}

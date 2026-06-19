@@ -7,18 +7,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
+import LoadingState from '@/components/ui-system/LoadingState';
+import ErrorState from '@/components/ui-system/ErrorState';
+import EmptyState from '@/components/ui-system/EmptyState';
+import { formatCurrency } from '@/lib/format';
 
 const EMPTY_FORM = { bundle_name: '', bundle_description: '', procedures_included: [], individual_total_usd: '', bundle_price_usd: '', bundle_discount_pct: '', savings_message: '', is_active: true };
 
 export default function BundlesTab() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [procInput, setProcInput] = useState('');
 
-  const { data: bundles = [], isLoading } = useQuery({
+  const { data: bundles = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['procedure-bundles'],
     queryFn: () => base44.entities.ProcedureBundle.list(),
   });
@@ -30,9 +35,9 @@ export default function BundlesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-bundles'] });
       setEditing(null);
-      toast.success(editing?.id ? 'Bundle updated' : 'Bundle created');
+      toast({ title: editing?.id ? 'Bundle updated' : 'Bundle created' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -40,9 +45,9 @@ export default function BundlesTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['procedure-bundles'] });
       setDeleting(null);
-      toast.success('Bundle deleted');
+      toast({ title: 'Bundle deleted' });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast({ title: e.message, variant: 'destructive' }),
   });
 
   const openNew = () => { setForm(EMPTY_FORM); setProcInput(''); setEditing({}); };
@@ -60,7 +65,7 @@ export default function BundlesTab() {
 
   const handleSave = () => {
     if (!form.bundle_name || !form.bundle_price_usd) {
-      toast.error('Required fields missing'); return;
+      toast({ title: 'Required fields missing', variant: 'destructive' }); return;
     }
     saveMutation.mutate({
       ...form,
@@ -98,15 +103,17 @@ export default function BundlesTab() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {isLoading ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading...</td></tr>
+                <tr><td colSpan={7} className="px-6 py-6"><LoadingState rows={3} dark={false} label="Loading bundles" /></td></tr>
+              ) : isError ? (
+                <tr><td colSpan={7} className="px-6 py-6"><ErrorState dark={false} onRetry={refetch} /></td></tr>
               ) : bundles.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-slate-400">No bundles yet.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-6"><EmptyState dark={false} title="No bundles yet" message="Create a combo package above." /></td></tr>
               ) : bundles.map((b) => (
                 <tr key={b.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{b.bundle_name}</td>
                   <td className="px-6 py-4 text-slate-600">{(b.procedures_included || []).length} procedures</td>
-                  <td className="px-6 py-4 text-right text-slate-600">{b.individual_total_usd ? `$${b.individual_total_usd.toLocaleString()}` : '—'}</td>
-                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">${b.bundle_price_usd?.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right text-slate-600">{formatCurrency(b.individual_total_usd)}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-emerald-600">{formatCurrency(b.bundle_price_usd)}</td>
                   <td className="px-6 py-4 text-right text-slate-600">{b.bundle_discount_pct != null ? `${b.bundle_discount_pct}%` : '—'}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${b.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
