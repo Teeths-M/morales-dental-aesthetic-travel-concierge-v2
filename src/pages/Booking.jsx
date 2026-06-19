@@ -33,6 +33,8 @@ import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate
 import { analyseCompatibility } from '@/lib/procedureCompatibility';
 import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
 import SafeTScan from '../components/booking/SafeTScan';
+import HighRiskReviewNotice from '../components/booking/HighRiskReviewNotice';
+import { checkMedicalRisk } from '@/lib/medicalSafetyGate';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -72,6 +74,8 @@ export default function Booking() {
   const [showValidation, setShowValidation] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showFeeModal, setShowFeeModal] = useState(false);
+  const [showHighRiskNotice, setShowHighRiskNotice] = useState(false);
+  const [highRiskFlag, setHighRiskFlag] = useState(null);
   const [consultationId, setConsultationId] = useState(null);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -351,6 +355,7 @@ export default function Booking() {
       return base44.entities.Consultation.create({
         ...data,
         ...safeTFlags,
+        ...(data.high_risk_medical_review ? { status: 'Admin-Review', risk_level: 'high' } : {}),
         procedure_interest: procedureEnum,
         notes: items.length > 1
           ? (data.notes ? `${data.notes}\n\nAll procedures requested: ${procedureNames}${patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''}` : `All procedures requested: ${procedureNames}${patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''}`)
@@ -442,9 +447,25 @@ export default function Booking() {
   };
 
   const handleConfirmSubmit = () => {
-    console.log("Form data submitted:", form);
-    createMutation.mutate(form);
     setShowPreview(false);
+    const { isHighRisk, flaggedCondition } = checkMedicalRisk(form.medical_conditions || []);
+    if (isHighRisk) {
+      setHighRiskFlag(flaggedCondition);
+      setShowHighRiskNotice(true);
+      return;
+    }
+    createMutation.mutate(form);
+  };
+
+  const handleHighRiskProceed = () => {
+    setShowHighRiskNotice(false);
+    // Tag consultation so admin routes it to Senior Review, not standard Doctor-Pending
+    createMutation.mutate({
+      ...form,
+      high_risk_medical_review: true,
+      high_risk_flagged_condition: highRiskFlag,
+      safet_risk_level: form.safet_risk_level || 'review',
+    });
   };
 
   // Delete draft on successful submission
@@ -675,6 +696,13 @@ export default function Booking() {
           goToDashboard();
         }}
         onCancel={() => setShowFeeModal(false)}
+      />
+
+      <HighRiskReviewNotice
+        isOpen={showHighRiskNotice}
+        flaggedCondition={highRiskFlag}
+        onProceed={handleHighRiskProceed}
+        onCancel={() => setShowHighRiskNotice(false)}
       />
 
       {/* Resume Draft Modal */}

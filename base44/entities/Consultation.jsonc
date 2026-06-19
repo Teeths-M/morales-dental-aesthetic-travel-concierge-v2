@@ -96,6 +96,15 @@
       ],
       "default": "low"
     },
+    "high_risk_medical_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when patient has a flagged medical condition requiring Senior Medical Team review before doctor assignment"
+    },
+    "high_risk_flagged_condition": {
+      "type": "string",
+      "description": "The specific condition that triggered high-risk routing"
+    },
     "age": {
       "type": "string"
     },
