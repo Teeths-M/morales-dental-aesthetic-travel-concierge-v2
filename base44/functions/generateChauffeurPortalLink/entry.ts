@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[generateChauffeurPortalLink]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

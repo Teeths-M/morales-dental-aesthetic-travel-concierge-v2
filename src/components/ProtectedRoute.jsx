@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Button } from '@/components/ui/button';
+import { hasAnyRole } from '@/lib/roles';
 
 const DefaultFallback = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -53,7 +54,7 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
     return unauthenticatedElement || <LoginRequired onLogin={navigateToLogin} />;
   }
 
-  if (allowedRoles?.length && !user?.isPreviewAdmin && !allowedRoles.includes(user?.role)) {
+  if (allowedRoles?.length && !user?.isPreviewAdmin && !hasAnyRole(user?.role, allowedRoles)) {
     return <AccessDenied />;
   }
 

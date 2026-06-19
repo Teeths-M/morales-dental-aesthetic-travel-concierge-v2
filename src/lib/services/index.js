@@ -1,7 +1,7 @@
 /**
- * Service Layer — barrel export
- * Import all services from here: import { vaultService, caseService } from '@/lib/services'
+ * lib/services barrel — kept for backwards compatibility.
+ * New code should import from '@/services' instead.
  */
 export { vaultService }  from './vaultService';
-export { caseService }   from './caseService';
+export { caseService }   from '@/services/caseService';
 export { auditService }  from './auditService';
