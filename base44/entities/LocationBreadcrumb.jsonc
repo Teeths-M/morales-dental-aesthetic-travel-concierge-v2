@@ -23,7 +23,41 @@
     },
     "place_label": {
       "type": "string",
-      "description": "Reverse-geocoded label e.g. 'Margarita Island, Venezuela'"
+      "description": "e.g. 'Margarita Island, Venezuela' or '10.4806, -66.9036'"
+    },
+    "country": {
+      "type": "string"
+    },
+    "country_code": {
+      "type": "string",
+      "description": "ISO 2-letter code"
+    },
+    "city": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "location_precision": {
+      "type": "string",
+      "enum": [
+        "precise",
+        "approximate"
+      ],
+      "default": "precise",
+      "description": "GPS = precise, IP geo = approximate"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "browser_gps",
+        "ip_geo",
+        "manual"
+      ],
+      "default": "browser_gps"
     },
     "logged_at": {
       "type": "string",

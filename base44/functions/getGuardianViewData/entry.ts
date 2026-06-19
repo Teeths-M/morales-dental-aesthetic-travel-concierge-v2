@@ -64,6 +64,9 @@ Deno.serve(async (req) => {
           source: latest.source ?? null,
           logged_at: latest.logged_at ?? null,
           is_saved: latest.is_saved ?? false,
+          location_precision: latest.location_precision ?? (latest.source === 'ip_geo' ? 'approximate' : 'precise'),
+          city: latest.city ?? null,
+          country: latest.country ?? null,
         };
       }
     }

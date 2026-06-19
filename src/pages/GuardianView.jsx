@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   Eye, Shield, CheckCircle2, Clock, AlertTriangle,
-  MapPin, Loader2, Navigation, Copy, ExternalLink,
+  MapPin, Loader2, Navigation, Copy, ExternalLink, Globe,
 } from 'lucide-react';
 
 const STAGE_STEPS = ['consultation', 'planning', 'booking', 'travel', 'procedure', 'recovery', 'aftercare'];
@@ -82,6 +82,7 @@ export default function GuardianView() {
 
   const { session, case: caseData, latest_location: loc } = data;
   const hasGPS = loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
+  const hasCityOnly = loc && !hasGPS && (loc.city || loc.country || loc.place_label);
   const currentStageIndex = STAGE_STEPS.indexOf(caseData?.journey_stage || 'consultation');
   const expiresIn = Math.round((new Date(session.expires_at) - new Date()) / (1000 * 60 * 60));
 
@@ -159,13 +160,16 @@ export default function GuardianView() {
                   <p className="text-white font-mono text-sm font-bold">
                     {loc.latitude.toFixed(6)}, {loc.longitude.toFixed(6)}
                   </p>
+                  {loc.location_precision === 'approximate' && (
+                    <p className="text-amber-400 text-[10px] font-semibold mt-0.5">⚠ Approximate location from network</p>
+                  )}
                   <div className="flex flex-wrap gap-x-3 mt-1.5 text-[11px] text-slate-400">
                     {loc.logged_at && (
                       <span>Updated {new Date(loc.logged_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                     )}
-                    {loc.source && <span>· {loc.source.toUpperCase()}</span>}
+                    {loc.source && <span>· {loc.source === 'ip_geo' ? 'Network' : loc.source.toUpperCase()}</span>}
                     {loc.accuracy_meters != null && <span>· Within {Math.round(loc.accuracy_meters)}m</span>}
-                    {loc.place_label && <span>· {loc.place_label}</span>}
+                    {loc.place_label && loc.location_precision !== 'precise' && <span>· {loc.place_label}</span>}
                   </div>
                 </div>
 
@@ -222,11 +226,29 @@ export default function GuardianView() {
                   </button>
                 </div>
               </>
+            ) : hasCityOnly ? (
+              // City/country only fallback (IP geo without coordinates)
+              <div className="text-center py-4">
+                <Globe className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                <p className="text-white font-semibold">{loc.place_label || [loc.city, loc.country].filter(Boolean).join(', ')}</p>
+                <p className="text-amber-400 text-xs mt-1">Approximate location from network</p>
+                {loc.logged_at && (
+                  <p className="text-slate-500 text-[11px] mt-1">Updated {new Date(loc.logged_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
+                )}
+                <div className="flex gap-2 justify-center mt-3">
+                  <button
+                    onClick={() => openMap(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([loc.city, loc.country].filter(Boolean).join(', '))}`)}
+                    className="flex items-center gap-1.5 bg-blue-700/20 hover:bg-blue-700/40 border border-blue-700/40 rounded-xl px-3 py-2 text-blue-300 text-xs font-semibold"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> View on Map
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="text-center py-6">
                 <MapPin className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm font-medium">No live GPS location has been shared yet.</p>
-                <p className="text-slate-500 text-xs mt-1">The traveler hasn't logged a GPS location from the app.</p>
+                <p className="text-slate-400 text-sm font-medium">No location has been shared yet.</p>
+                <p className="text-slate-500 text-xs mt-1">The traveler hasn't logged a location from the app.</p>
               </div>
             )}
           </div>
