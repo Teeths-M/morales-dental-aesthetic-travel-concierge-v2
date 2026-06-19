@@ -141,37 +141,61 @@ Deno.serve(async (req) => {
         }).catch(e => console.error('[iq200Pipeline] Slack notify failed (non-fatal):', e.message));
       }
 
-      const DENTAL_PROCEDURES = ['dental_implants', 'all_on_4', 'porcelain_veneers', 'smile_makeover', 'bone_regeneration', 'teeth_whitening'];
-      const isDentalProcedure = DENTAL_PROCEDURES.includes(consultation.procedure_interest);
-      const isVenezuela = (consultation.destination_country || '').toLowerCase().includes('venezuela') ||
-                          (consultation.procedure_country || '').toLowerCase().includes('venezuela');
+      // ── SMART DOCTOR ROUTING: Country + Procedure Load Balancer ──────────────
+      // Skip if case is already held for high-risk review
+      if (!consultation.high_risk_medical_review) {
+        const procedureInterest = consultation.procedure_interest || '';
+        const destinationCountry = (consultation.destination_country || consultation.procedure_country || '').toLowerCase().trim();
 
-      if (!consultation.high_risk_medical_review && (isDentalProcedure || isVenezuela)) {
-        // Dynamic lookup — never hardcoded
-        const defaultDoctorConfigs = await base44.asServiceRole.entities.DefaultDoctorConfig.filter({ is_active: true });
-        const defaultDoctor = defaultDoctorConfigs[0];
+        // Step 1: Find all active, verified doctors in the destination country
+        const allDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 100);
+        const countryDoctors = allDoctors.filter(d =>
+          (d.clinic_country || '').toLowerCase().trim() === destinationCountry
+        );
 
-        if (!defaultDoctor) {
-          console.error(`[iQ200] WARNING: No active DefaultDoctorConfig found for case ${caseRecord.id}. Auto-assignment skipped. Admin action required.`);
-          // Notify admin so this doesn't go unnoticed
-          const adminEmail = Deno.env.get('ADMIN_EMAIL');
-          if (adminEmail) {
-            try {
-              await base44.asServiceRole.integrations.Core.SendEmail({
-                from_name: 'iQ200 Pipeline Alert',
-                to: adminEmail,
-                subject: `⚠️ iQ200: No Default Doctor Configured — Case ${caseRecord.id}`,
-                body: `<p>A dental/Venezuela case was created but no active <strong>DefaultDoctorConfig</strong> is set in the database.</p><p><strong>Case ID:</strong> ${caseRecord.id}<br><strong>Patient:</strong> ${caseRecord.client_name}</p><p>Please configure a default doctor in the Admin Portal → Default Doctor Config panel.</p>`,
-              });
-            } catch (_) {}
+        // Step 2: Filter further by procedure specialty (if specialty data exists)
+        let specialtyDoctors = [];
+        if (countryDoctors.length > 0) {
+          const specialties = await base44.asServiceRole.entities.DoctorSpecialty.filter({}, '-created_date', 500);
+          const procedureSpecialists = specialties
+            .filter(s => s.procedure_name && procedureInterest &&
+              (s.procedure_name.toLowerCase().replace(/_/g, ' ').includes(procedureInterest.replace(/_/g, ' ')) ||
+               procedureInterest.includes(s.procedure_name.toLowerCase().replace(/ /g, '_'))))
+            .map(s => s.doctor_id);
+
+          specialtyDoctors = countryDoctors.filter(d => procedureSpecialists.includes(d.id));
+        }
+
+        // Step 3: Pick the best pool — specialty match preferred, country fallback
+        const candidatePool = specialtyDoctors.length > 0 ? specialtyDoctors : countryDoctors;
+
+        if (candidatePool.length > 0) {
+          // Step 4: Load balance — pick doctor with fewest active cases
+          const activeCases = await base44.asServiceRole.entities.CaseRecord.filter(
+            { status: 'Doctor-Pending' }, '-created_date', 200
+          );
+          const caseCountByDoctor = {};
+          for (const c of activeCases) {
+            if (c.doctor_email) {
+              caseCountByDoctor[c.doctor_email] = (caseCountByDoctor[c.doctor_email] || 0) + 1;
+            }
           }
-        } else {
+
+          // Sort by current load (ascending), then by rating (descending)
+          const sorted = [...candidatePool].sort((a, b) => {
+            const loadA = caseCountByDoctor[a.email] || 0;
+            const loadB = caseCountByDoctor[b.email] || 0;
+            if (loadA !== loadB) return loadA - loadB;
+            return (b.rating || 0) - (a.rating || 0);
+          });
+
+          const assignedDoctor = sorted[0];
+
           await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-            doctor_selected: defaultDoctor.doctor_name,
-            doctor_email: defaultDoctor.doctor_email,
-            clinic_selected: defaultDoctor.clinic_name || '',
-            procedure_country: defaultDoctor.procedure_country || caseRecord.procedure_country,
-            treatment_cost: defaultDoctor.treatment_cost || 60,
+            doctor_selected: assignedDoctor.full_name,
+            doctor_email: assignedDoctor.email,
+            clinic_selected: assignedDoctor.clinic_name || '',
+            procedure_country: assignedDoctor.clinic_country || caseRecord.procedure_country,
             status: 'Doctor-Pending',
             doctor_confirmation_status: 'PENDING',
             doctor_notified_at: new Date().toISOString(),
@@ -180,10 +204,49 @@ Deno.serve(async (req) => {
               {
                 timestamp: new Date().toISOString(),
                 action: 'auto_assigned',
-                details: `${defaultDoctor.doctor_name} automatically assigned — ${defaultDoctor.clinic_name || 'clinic'}, ${defaultDoctor.procedure_country || 'TBD'}`
+                details: `${assignedDoctor.full_name} auto-assigned via load balancer — ${assignedDoctor.clinic_country}, active cases: ${caseCountByDoctor[assignedDoctor.email] || 0}, pool size: ${candidatePool.length}`
               }
             ]
           });
+        } else {
+          // No doctor found for this country/procedure — fallback to DefaultDoctorConfig
+          const defaultDoctorConfigs = await base44.asServiceRole.entities.DefaultDoctorConfig.filter({ is_active: true });
+          const defaultDoctor = defaultDoctorConfigs.find(d =>
+            !d.procedure_country || (d.procedure_country || '').toLowerCase().includes(destinationCountry)
+          ) || defaultDoctorConfigs[0];
+
+          if (defaultDoctor) {
+            await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+              doctor_selected: defaultDoctor.doctor_name,
+              doctor_email: defaultDoctor.doctor_email,
+              clinic_selected: defaultDoctor.clinic_name || '',
+              procedure_country: defaultDoctor.procedure_country || caseRecord.procedure_country,
+              treatment_cost: defaultDoctor.treatment_cost || 60,
+              status: 'Doctor-Pending',
+              doctor_confirmation_status: 'PENDING',
+              doctor_notified_at: new Date().toISOString(),
+              timeline_log: [
+                ...(caseRecord.timeline_log || []),
+                {
+                  timestamp: new Date().toISOString(),
+                  action: 'auto_assigned_fallback',
+                  details: `${defaultDoctor.doctor_name} assigned via fallback config — no active doctors found for ${destinationCountry}`
+                }
+              ]
+            });
+          } else {
+            // No doctor anywhere — alert admin
+            console.error(`[iQ200] No doctor found for country="${destinationCountry}" procedure="${procedureInterest}" on case ${caseRecord.id}`);
+            const adminEmail = Deno.env.get('ADMIN_EMAIL');
+            if (adminEmail) {
+              base44.asServiceRole.integrations.Core.SendEmail({
+                from_name: 'iQ200 Routing Alert',
+                to: adminEmail,
+                subject: `⚠️ No Doctor Found — ${destinationCountry} / ${procedureInterest}`,
+                body: `<p>Case <strong>${caseRecord.id}</strong> for <strong>${caseRecord.client_name}</strong> could not be auto-assigned.</p><p><strong>Country:</strong> ${destinationCountry}<br><strong>Procedure:</strong> ${procedureInterest}</p><p>No active verified doctor exists for this region. Please assign manually in the Admin Portal.</p>`,
+              }).catch(() => {});
+            }
+          }
         }
       }
 
