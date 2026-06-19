@@ -117,12 +117,28 @@ Deno.serve(async (req) => {
       });
 
       // AUTO-ASSIGN: Fetch default doctor from DB (admin-configurable via DefaultDoctorConfig entity)
+      // HIGH-RISK GATE: Skip auto-assignment entirely for flagged consultations.
+      // These stay at Admin-Review until a concierge admin manually clears and assigns.
+      if (consultation.high_risk_medical_review === true) {
+        await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+          status: 'Admin-Review',
+          timeline_log: [
+            ...(caseRecord.timeline_log || []),
+            {
+              timestamp: new Date().toISOString(),
+              action: 'high_risk_hold',
+              details: `Case held for Senior Medical Review — flagged condition: ${consultation.high_risk_flagged_condition || 'high-risk condition'}. Doctor assignment blocked until admin clears.`
+            }
+          ]
+        });
+      }
+
       const DENTAL_PROCEDURES = ['dental_implants', 'all_on_4', 'porcelain_veneers', 'smile_makeover', 'bone_regeneration', 'teeth_whitening'];
       const isDentalProcedure = DENTAL_PROCEDURES.includes(consultation.procedure_interest);
       const isVenezuela = (consultation.destination_country || '').toLowerCase().includes('venezuela') ||
                           (consultation.procedure_country || '').toLowerCase().includes('venezuela');
 
-      if (isDentalProcedure || isVenezuela) {
+      if (!consultation.high_risk_medical_review && (isDentalProcedure || isVenezuela)) {
         // Dynamic lookup — never hardcoded
         const defaultDoctorConfigs = await base44.asServiceRole.entities.DefaultDoctorConfig.filter({ is_active: true });
         const defaultDoctor = defaultDoctorConfigs[0];

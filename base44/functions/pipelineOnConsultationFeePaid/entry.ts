@@ -105,13 +105,17 @@ Deno.serve(async (req) => {
     }
 
     // ── 2. NOTIFY ASSIGNED DOCTOR (if already assigned via CaseRecord) ────────
+    // HIGH-RISK GATE: Never notify the doctor on high-risk consultations.
+    // These are held at Admin-Review and only released manually by a concierge admin.
+    const isHighRiskReview = consultation.high_risk_medical_review === true;
+
     let caseRecord = null;
     try {
       const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id: consultationId });
       caseRecord = cases.length > 0 ? cases[0] : null;
     } catch(e) { /* no case record yet */ }
 
-    if (caseRecord && caseRecord.doctor_selected && caseRecord.doctor_email) {
+    if (!isHighRiskReview && caseRecord && caseRecord.doctor_selected && caseRecord.doctor_email) {
       const doctorId = caseRecord.doctor_selected;
       const doctorEmail = caseRecord.doctor_email;
 

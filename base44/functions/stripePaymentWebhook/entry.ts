@@ -455,4 +455,33 @@ async function handleConsultationFeePaid(base44, {
     processed_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
   });
+
+  // HIGH-RISK GATE: If the consultation is flagged for mandatory review,
+  // mark it as fee_paid but hold at Admin-Review — no doctor is notified yet.
+  // Only after a concierge admin manually clears it does it move to Doctor-Pending.
+  if (consultation_id) {
+    try {
+      const consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+      if (consultation?.high_risk_medical_review === true) {
+        await base44.asServiceRole.entities.Consultation.update(consultation_id, {
+          status: 'Admin-Review',
+          consultation_fee_paid: true,
+        });
+        // Alert admin — NOT the doctor
+        const adminEmail = Deno.env.get('ADMIN_EMAIL');
+        if (adminEmail) {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: 'Morales Medical — Senior Review',
+            to: adminEmail,
+            subject: `⚠️ Senior Medical Review Required — ${consultation.patient_name}`,
+            body: `<p>A patient has paid their consultation fee and requires <strong>Senior Medical Team review</strong> before doctor assignment.</p>
+              <p><strong>Patient:</strong> ${consultation.patient_name}<br/>
+              <strong>Condition Flagged:</strong> ${consultation.high_risk_flagged_condition || 'High-risk condition'}<br/>
+              <strong>Consultation ID:</strong> ${consultation_id}</p>
+              <p>Please review this case in the admin portal and manually assign a doctor once cleared.</p>`,
+          }).catch(() => {});
+        }
+      }
+    } catch (_) { /* non-blocking — main payment flow already succeeded */ }
+  }
 }
