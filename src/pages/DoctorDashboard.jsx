@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle, LogOut } from 'lucide-react';
+import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle, LogOut, ShieldAlert } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
@@ -58,6 +58,14 @@ export default function DoctorDashboard() {
   const pricing = profileData?.pricing || [];
   const user = userData;
   const loading = loadingUser || loadingProfile;
+
+  // Flagged consultations query — only runs once doctor profile is loaded
+  const { data: flaggedCases } = useQuery({
+    queryKey: ['flagged-cases', doctor?.email],
+    queryFn: () => base44.entities.CaseRecord.filter({ doctor_email: doctor.email, status: 'Admin-Review' }, '-created_date', 20),
+    enabled: !!doctor?.email,
+    staleTime: 60000,
+  });
 
   // PERFORMANCE: Memoize initial form data — prevents recreation on every render
   useMemo(() => {
@@ -172,10 +180,50 @@ export default function DoctorDashboard() {
                 <TabsTrigger value="pricing">My Pricing</TabsTrigger>
                 <TabsTrigger value="requests">Request Procedure</TabsTrigger>
                 <TabsTrigger value="verification">License Verification</TabsTrigger>
+                <TabsTrigger value="flagged" className="relative">
+                  Flagged Reviews
+                  {flaggedCases?.length > 0 && (
+                    <span className="ml-1.5 w-4 h-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {flaggedCases.length}
+                    </span>
+                  )}
+                </TabsTrigger>
               </TabsList>
             </div>
 
             <TabsContent value="profile" className="p-8">
+              {/* Flagged Case Alert — only visible when cases are waiting */}
+              {flaggedCases?.length > 0 && (
+                <div className="mb-8 p-5 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <ShieldAlert className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-amber-900">Medical Review Required</h3>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        {flaggedCases.length} consultation{flaggedCases.length > 1 ? 's' : ''} flagged for high-risk assessment {flaggedCases.length > 1 ? 'are' : 'is'} awaiting your expert review before final approval.
+                      </p>
+                      <div className="flex flex-col gap-1 mt-2">
+                        {flaggedCases.map(c => (
+                          <p key={c.id} className="text-xs text-amber-800 font-medium">
+                            • {c.client_name} — <span className="italic">{c.procedures?.join(', ')}</span>
+                            {c.high_risk_flagged_condition && (
+                              <span className="ml-1 text-amber-600">({c.high_risk_flagged_condition})</span>
+                            )}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('flagged')}
+                    className="flex-shrink-0 px-4 py-2 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    Review Now
+                  </button>
+                </div>
+              )}
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Photo */}
                 <div className="flex-shrink-0">
@@ -428,6 +476,51 @@ export default function DoctorDashboard() {
 
             <TabsContent value="requests" className="p-8">
               <ProcedureRequestForm onSuccess={() => setActiveTab('profile')} />
+            </TabsContent>
+
+            <TabsContent value="flagged" className="p-8">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-foreground">Flagged Consultations</h3>
+                <p className="text-sm text-muted-foreground mt-1">These patients have underlying medical conditions that require your expert assessment before case approval can proceed.</p>
+              </div>
+              {!flaggedCases || flaggedCases.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <ShieldAlert className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No flagged consultations</p>
+                  <p className="text-sm mt-1">You're all clear — no cases require high-risk review right now.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {flaggedCases.map(c => (
+                    <div key={c.id} className="border border-amber-200 bg-amber-50/50 rounded-xl p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-bold text-foreground">{c.client_name}</span>
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-wide">High-Risk Review</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Procedure: <span className="font-medium text-foreground">{c.procedures?.join(', ')}</span>
+                          </p>
+                          {c.high_risk_flagged_condition && (
+                            <p className="text-xs text-amber-800 bg-amber-100 rounded-lg px-3 py-1.5 inline-block">
+                              ⚠️ Flagged condition: <span className="font-semibold">{c.high_risk_flagged_condition}</span>
+                            </p>
+                          )}
+                          {c.consultation_summary && (
+                            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{c.consultation_summary}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1 text-right text-xs text-muted-foreground flex-shrink-0">
+                          <span>Case #{c.id?.slice(-6)}</span>
+                          <span>{c.procedure_country || '—'}</span>
+                          <span className="text-amber-600 font-semibold">Awaiting Admin Release</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="verification" className="p-8">
