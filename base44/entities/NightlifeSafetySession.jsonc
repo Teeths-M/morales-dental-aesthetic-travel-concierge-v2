@@ -1,0 +1,159 @@
+{
+  "name": "NightlifeSafetySession",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_phone": {
+      "type": "string"
+    },
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "nightlife",
+        "dinner",
+        "walking_tour",
+        "excursion",
+        "taxi_ride",
+        "beach",
+        "adventure",
+        "custom"
+      ],
+      "default": "nightlife"
+    },
+    "venue_name": {
+      "type": "string"
+    },
+    "venue_address": {
+      "type": "string"
+    },
+    "start_latitude": {
+      "type": "number"
+    },
+    "start_longitude": {
+      "type": "number"
+    },
+    "start_location_label": {
+      "type": "string"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expected_return_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checkin_interval_minutes": {
+      "type": "number",
+      "default": 60
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "missed_checkin",
+        "escalated",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "guardian_link_id": {
+      "type": "string"
+    },
+    "guardian_url": {
+      "type": "string"
+    },
+    "guardian_link_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "emergency_pin_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_checkin_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "missed_checkin_count": {
+      "type": "number",
+      "default": 0
+    },
+    "escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_email",
+    "activity_type",
+    "start_time"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

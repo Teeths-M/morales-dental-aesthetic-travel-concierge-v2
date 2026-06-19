@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import {
   Shield, AlertTriangle, CheckCircle2, MapPin, Clock, RefreshCw,
   Navigation, UserCheck, Radio, MessageSquare, Phone, Globe,
-  AlertCircle, ExternalLink, ChevronDown, ChevronUp, Siren
+  AlertCircle, ExternalLink, ChevronDown, ChevronUp, Siren,
+  Moon, Car, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,9 @@ export default function AdminSoloMonitor() {
   const [actionLoading, setActionLoading] = useState({});
   const [expanded, setExpanded] = useState({});
   const [runningEscalation, setRunningEscalation] = useState(false);
+  const [activeTab, setActiveTab] = useState('incidents'); // incidents | nightlife | transport
+  const [nightlifeSessions, setNightlifeSessions] = useState([]);
+  const [transportRequests, setTransportRequests] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,6 +73,14 @@ export default function AdminSoloMonitor() {
       locMap[cid] = live || crumb || null;
     }));
     setLocations(locMap);
+
+    // Load nightlife sessions + transport requests
+    const [nlSessions, transports] = await Promise.allSettled([
+      base44.entities.NightlifeSafetySession.filter({ status: 'active' }, '-created_at', 50).catch(() => []),
+      base44.entities.RecoveryTransportRequest.filter({}, '-created_at', 50).catch(() => []),
+    ]);
+    setNightlifeSessions(nlSessions.value || []);
+    setTransportRequests(transports.value || []);
 
     // Load notification logs per case
     const notifMap = {};
@@ -144,6 +156,23 @@ export default function AdminSoloMonitor() {
     <AdminLayout>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
 
+        {/* Tab Navigation */}
+        <div className="flex gap-1 bg-slate-100 rounded-2xl p-1 border border-slate-200">
+          {[
+            { id: 'incidents', label: 'Active Incidents', icon: Shield },
+            { id: 'nightlife', label: `Nightlife Modes (${nightlifeSessions.length})`, icon: Moon },
+            { id: 'transport', label: `Recovery Transport (${transportRequests.length})`, icon: Car },
+          ].map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all flex-1 justify-center ${activeTab === tab.id ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
+                <Icon className="w-4 h-4" /><span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -168,8 +197,104 @@ export default function AdminSoloMonitor() {
           </div>
         </div>
 
-        {/* Escalation info bar */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-600 space-y-1">
+        {/* Nightlife Sessions Panel */}
+        {activeTab === 'nightlife' && (
+          <div className="space-y-3">
+            {nightlifeSessions.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                <Moon className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-slate-500">No active nightlife safety sessions</p>
+              </div>
+            ) : nightlifeSessions.map(ns => (
+              <div key={ns.id} className={`bg-white rounded-2xl border shadow-sm p-4 ${ns.is_demo ? 'border-yellow-300' : 'border-purple-200'}`}>
+                {ns.is_demo && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full mb-2 inline-block">DEMO</span>}
+                <div className="flex flex-wrap items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Moon className="w-4 h-4 text-purple-500" />
+                      <p className="font-bold text-slate-900">{ns.user_name || ns.user_email}</p>
+                      <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full capitalize">{ns.activity_type?.replace('_', ' ')}</span>
+                    </div>
+                    {ns.venue_name && <p className="text-sm text-slate-600 mt-0.5">{ns.venue_name}</p>}
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-slate-500">
+                      <span>Started: {ns.start_time ? new Date(ns.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                      <span>Expected back: {ns.expected_return_time ? new Date(ns.expected_return_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                      {ns.missed_checkin_count > 0 && <span className="text-red-600 font-semibold">{ns.missed_checkin_count} missed check-ins</span>}
+                    </div>
+                    {ns.start_latitude && (
+                      <p className="text-xs text-emerald-600 mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />Start GPS: {Number(ns.start_latitude).toFixed(5)}, {Number(ns.start_longitude).toFixed(5)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {ns.guardian_url && (
+                      <a href={ns.guardian_url} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
+                        <Eye className="w-3.5 h-3.5" />Guardian Link
+                      </a>
+                    )}
+                    <button onClick={() => base44.entities.NightlifeSafetySession.update(ns.id, { status: 'completed', completed_at: new Date().toISOString() }).then(load)}
+                      className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700">
+                      Mark Safe
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Recovery Transport Panel */}
+        {activeTab === 'transport' && (
+          <div className="space-y-3">
+            {transportRequests.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+                <Car className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-slate-500">No recovery transport requests</p>
+              </div>
+            ) : transportRequests.map(tr => (
+              <div key={tr.id} className={`bg-white rounded-2xl border shadow-sm p-4 ${tr.status === 'no_driver' ? 'border-red-300' : 'border-blue-200'}`}>
+                <div className="flex flex-wrap items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Car className="w-4 h-4 text-blue-500" />
+                      <p className="font-bold text-slate-900">{tr.user_name || tr.user_email}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        tr.status === 'no_driver' ? 'bg-red-100 text-red-700' :
+                        tr.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                        'bg-blue-100 text-blue-700'
+                      } capitalize`}>{tr.status?.replace('_', ' ')}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 space-y-0.5">
+                      <p>Pickup: {tr.pickup_address || `${tr.pickup_latitude?.toFixed(5)}, ${tr.pickup_longitude?.toFixed(5)}`}</p>
+                      <p>Destination: {tr.destination_address || 'N/A'}</p>
+                      {tr.driver_name && <p>Driver: {tr.driver_name} {tr.driver_phone ? `— ${tr.driver_phone}` : ''}</p>}
+                      <p>Requested by: {tr.requested_by} · {tr.created_at ? new Date(tr.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {tr.pickup_latitude && (
+                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${tr.pickup_latitude},${tr.pickup_longitude}&travelmode=driving`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">
+                        <Navigation className="w-3.5 h-3.5" />Navigate
+                      </a>
+                    )}
+                    {tr.status !== 'completed' && (
+                      <button onClick={() => base44.entities.RecoveryTransportRequest.update(tr.id, { status: 'completed', completed_at: new Date().toISOString() }).then(load)}
+                        className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700">
+                        Mark Done
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'incidents' && <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-600 space-y-1">
           <p className="font-semibold text-slate-700">Automatic escalation thresholds (from missed check-in time):</p>
           <div className="flex flex-wrap gap-x-6 gap-y-1">
             <span>📱 T+15min → SMS reminder</span>
@@ -179,8 +304,9 @@ export default function AdminSoloMonitor() {
             <span>🚔 T+180min → Admin police-escalation task</span>
           </div>
           <p className="text-slate-400">Runs automatically every 15 minutes via scheduler. You can also trigger manually above.</p>
-        </div>
+        </div>}
 
+        {activeTab === 'incidents' && <>
         {/* Stats */}
         <div className="grid sm:grid-cols-5 gap-3">
           {[
@@ -391,6 +517,7 @@ export default function AdminSoloMonitor() {
           <p>• Guardians receive a secure tracking link — no login required, no medical/vault data exposed.</p>
           <p>• Police are <strong>never</strong> automatically contacted. Admin must initiate via the checklist above.</p>
         </div>
+        </>}
       </div>
     </AdminLayout>
   );

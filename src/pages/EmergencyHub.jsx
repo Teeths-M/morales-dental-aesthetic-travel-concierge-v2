@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation, Mic } from 'lucide-react';
+import { AlertTriangle, Globe2, MapPin, Eye, Smartphone, Shield, Navigation, Mic, Moon } from 'lucide-react';
 import { BackButtonLight } from '@/components/nav/BackButton';
 import SOSDropdown from '@/components/emergency/SOSDropdown';
 import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
@@ -79,6 +79,7 @@ export default function EmergencyHub() {
               { icon: Navigation, label: 'Auto-Purge Breadcrumbs', color: 'bg-emerald-900/40 text-emerald-300 border-emerald-800/50' },
               { icon: Smartphone, label: 'Universal 6-Digit PIN', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
               { icon: Mic, label: 'Walkie-Talkie', color: 'bg-cyan-900/40 text-cyan-300 border-cyan-800/50', link: '/walkie-talkie' },
+              { icon: Moon, label: 'Nightlife Safety', color: 'bg-purple-900/40 text-purple-300 border-purple-800/50', link: '/nightlife-safety' },
             ].map(b => {
               const Icon = b.icon;
               return b.link ? (

@@ -26,7 +26,8 @@ const SoloCheckInSettings = lazy(() => import('@/pages/SoloCheckInSettings'));
 const PatientReviews      = lazy(() => import('@/pages/PatientReviews'));
 const VisaAssist          = lazy(() => import('@/pages/VisaAssist'));
 const PaymentCheckout     = lazy(() => import('@/pages/PaymentCheckout'));
-const EstimateDashboard   = lazy(() => import('@/pages/EstimateDashboard'));
+const EstimateDashboard      = lazy(() => import('@/pages/EstimateDashboard'));
+const NightlifeSafetyMode    = lazy(() => import('@/pages/NightlifeSafetyMode'));
 
 const CHECKOUT_ROLES = [
   'client', 'user', 'platform_admin', 'admin',
@@ -59,6 +60,7 @@ export const clientRoutes = (
       <Route path="/walkie-talkie"              element={<WalkieTalkie />} />
       <Route path="/baggage-tracker"            element={<BaggageTrackerPage />} />
       <Route path="/emergency"                  element={<EmergencyHub />} />
+      <Route path="/nightlife-safety"           element={<NightlifeSafetyMode />} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>
