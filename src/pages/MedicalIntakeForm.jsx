@@ -5,13 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft, ArrowRight, CheckCircle2, Lock, Shield, HeartPulse,
   Pill, Activity, AlertTriangle, User, Loader2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import AppLayout from '@/components/layout/AppLayout';
 
 // ── Static option sets ─────────────────────────────────────────────────────
 const MEDICAL_CONDITIONS = [
@@ -389,29 +387,28 @@ export default function MedicalIntakeForm() {
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = async () => {
+    if (!user?.email) {
+      toast({ title: 'Please log in to submit your intake form', variant: 'destructive' });
+      return;
+    }
     setSubmitting(true);
     try {
       // Find most recent consultation for this user to attach intake to
-      let consultations = [];
-      if (user?.email) {
-        consultations = await base44.entities.Consultation.filter({ email: user.email }, '-created_date', 1);
-      }
+      const consultations = await base44.entities.Consultation.filter({ email: user.email }, '-created_date', 1);
 
-      const intakePayload = {
+      // Strip fields not on Consultation entity schema
+      const { intake_submitted_at: _unused, blood_type: _bt, ...intakePayload } = {
         ...form,
-        intake_submitted_at: new Date().toISOString(),
+        patient_name: form.patient_name || user.full_name || '',
       };
 
       if (consultations.length > 0) {
-        // Merge intake into existing consultation
         await base44.entities.Consultation.update(consultations[0].id, intakePayload);
       } else {
-        // Create standalone consultation record with intake data
         await base44.entities.Consultation.create({
           ...intakePayload,
-          email: user?.email || '',
+          email: user.email,
           procedure_interest: 'other',
-          status: 'pending',
         });
       }
 
@@ -441,17 +438,20 @@ export default function MedicalIntakeForm() {
     );
   }
 
-  const stepComponents = [
-    <StepPersonal form={form} update={update} />,
-    <StepConditions form={form} update={update} />,
-    <StepSurgeries form={form} update={update} />,
-    <StepMedications form={form} update={update} />,
-    <StepLifestyle form={form} update={update} />,
-    <StepReview form={form} />,
-  ];
-
   const isLast = step === STEPS.length - 1;
   const valid = canProceed(step, form);
+
+  const renderStep = () => {
+    switch (step) {
+      case 0: return <StepPersonal form={form} update={update} />;
+      case 1: return <StepConditions form={form} update={update} />;
+      case 2: return <StepSurgeries form={form} update={update} />;
+      case 3: return <StepMedications form={form} update={update} />;
+      case 4: return <StepLifestyle form={form} update={update} />;
+      case 5: return <StepReview form={form} />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -488,7 +488,7 @@ export default function MedicalIntakeForm() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.18 }}>
-              {stepComponents[step]}
+              {renderStep()}
             </motion.div>
           </AnimatePresence>
         </div>
