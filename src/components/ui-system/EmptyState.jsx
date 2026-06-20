@@ -31,7 +31,7 @@ export default function EmptyState({
       <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
         dark ? 'bg-white/[0.04] border border-white/[0.06] text-white/20' : 'bg-muted border border-border text-muted-foreground/40'
       }`}>
-        {typeof Icon === 'function' ? <Icon className="w-7 h-7" /> : Icon}
+        {React.isValidElement(Icon) ? Icon : <Icon className="w-7 h-7" />}
       </div>
       
       <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white/60' : 'text-foreground/70'}`}>
