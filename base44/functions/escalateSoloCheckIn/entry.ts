@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
               ? `GPS: ${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
               : latestLoc?.place_label || 'Unknown';
             const mapsUrl = latestLoc?.latitude
-              ? `https://www.google.com/maps/search/?api=1&query=${latestLoc.latitude},${latestLoc.longitude}`
+              ? `https://www.google.com/maps/dir/?api=1&destination=${latestLoc.latitude},${latestLoc.longitude}&travelmode=driving`
               : null;
 
             const alertBody = `<p>🚨 <strong>${checkIn.user_name}</strong> has not responded to their safety check-in for <strong>3 hours</strong>.</p>
@@ -158,19 +158,25 @@ Deno.serve(async (req) => {
 
         // Voice call attempt via Twilio
         if (checkIn.user_phone) {
-          try {
-            const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
-            const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
-            const from = Deno.env.get('TWILIO_PHONE_NUMBER');
-            if (sid && auth && from) {
-              await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
+          const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+          const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
+          const from = Deno.env.get('TWILIO_PHONE_NUMBER');
+          if (sid && auth && from) {
+            try {
+              const voiceResp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
                 method: 'POST',
                 headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ From: from, To: checkIn.user_phone, Twiml: `<Response><Say>This is an automated safety call from Morales Medical. You have not responded to your check-in. Please open the app and confirm you are safe. If you are in danger, trigger the SOS button immediately.</Say></Response>` }),
               });
+              if (!voiceResp.ok) {
+                const errText = await voiceResp.text().catch(() => '');
+                console.error(`[escalateSoloCheckIn] Voice call failed for ${checkIn.id}: ${errText}`);
+              }
               await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { voice_call_attempted_at: now.toISOString() });
+            } catch (voiceErr) {
+              console.error(`[escalateSoloCheckIn] Voice call exception for ${checkIn.id}:`, voiceErr.message);
             }
-          } catch (_) {}
+          }
         }
 
         escalated3h++;

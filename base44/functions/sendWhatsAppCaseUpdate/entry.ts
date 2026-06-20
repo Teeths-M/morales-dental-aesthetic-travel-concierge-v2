@@ -63,7 +63,8 @@ async function sendWhatsApp(to, message) {
   const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
 
   if (!accountSid || !authToken || !fromNumber) {
-    throw new Error('Twilio credentials not configured');
+    console.error('[sendWhatsAppCaseUpdate] Twilio credentials not configured');
+    return { skipped: true, sid: null };
   }
 
   const form = new URLSearchParams();
@@ -84,8 +85,9 @@ async function sendWhatsApp(to, message) {
   );
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Twilio error ${res.status}: ${err}`);
+    const err = await res.text().catch(() => '');
+    console.error(`[sendWhatsAppCaseUpdate] Twilio error ${res.status}: ${err}`);
+    return { skipped: true, sid: null };
   }
   return await res.json();
 }

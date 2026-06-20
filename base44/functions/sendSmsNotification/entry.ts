@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, message_sid: result.sid, to, type });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[sendSmsNotification]', error);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

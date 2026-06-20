@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Inline token encoder (no local imports allowed)
-async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
+function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
   const rawBytes = new Uint8Array(32);
   crypto.getRandomValues(rawBytes);
