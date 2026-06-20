@@ -1,247 +1,241 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, AlertTriangle, FileText, Plane, HeartPulse, Shield } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import {
+  CheckCircle2, Clock, FileText, Plane, HeartPulse,
+  Shield, Star, CreditCard, Stethoscope, AlertTriangle, Loader2
+} from 'lucide-react';
 
-const STATUS_CONFIG = {
-  // Initial Phase
-  'Submitted': {
-    phase: 'Initial Review',
-    color: '#3B82F6',
+// Maps pipeline CaseRecord statuses to ordered steps
+const PIPELINE_STEPS = [
+  {
+    key: 'submitted',
+    label: 'Application Received',
+    detail: 'Your request is in our system.',
     icon: FileText,
-    description: 'Your case has been submitted and is awaiting review',
-    progress: 10
+    match: ['Submitted'],
   },
-  'Safe-T-Reviewed': {
-    phase: 'Safety Assessment',
-    color: '#10B981',
+  {
+    key: 'safety',
+    label: 'Safety Assessment',
+    detail: 'SAFE-T 4LIFE™ risk check completed.',
     icon: Shield,
-    description: 'SAFE-T risk assessment completed successfully',
-    progress: 20
+    match: ['Safe-T-Reviewed'],
   },
-  // Doctor Matching Phase
-  'Doctor-Pending': {
-    phase: 'Doctor Matching',
-    color: '#8B5CF6',
-    icon: Clock,
-    description: 'We\'re matching you with the best specialist for your procedure',
-    progress: 30
+  {
+    key: 'doctor',
+    label: 'Specialist Assigned',
+    detail: 'A board-certified doctor has been matched.',
+    icon: Stethoscope,
+    match: ['Doctor-Pending', 'Vendor-Pending', 'Admin-Review'],
   },
-  'Vendor-Pending': {
-    phase: 'Vendor Coordination',
-    color: '#F59E0B',
-    icon: Clock,
-    description: 'Coordinating with travel and accommodation partners',
-    progress: 35
+  {
+    key: 'proposal',
+    label: 'Package Proposal',
+    detail: 'Your personalised travel package is ready.',
+    icon: Star,
+    match: ['Proposal-Sent', 'PMP-25', 'PMP-50'],
   },
-  // Admin Review
-  'Admin-Review': {
-    phase: 'Final Review',
-    color: '#EC4899',
-    icon: AlertTriangle,
-    description: 'Your case is under administrative review',
-    progress: 40
+  {
+    key: 'payment',
+    label: 'Payment Confirmed',
+    detail: 'Deposit received — logistics underway.',
+    icon: CreditCard,
+    match: ['Deposit-Paid'],
   },
-  // Proposal Phase
-  'Proposal-Sent': {
-    phase: 'Proposal Review',
-    color: '#3B82F6',
-    icon: FileText,
-    description: 'Your personalized treatment proposal has been sent',
-    progress: 50
-  },
-  'PMP-25': {
-    phase: 'Payment Plan (25%)',
-    color: '#10B981',
-    icon: Clock,
-    description: '25% deposit payment plan active',
-    progress: 55
-  },
-  'PMP-50': {
-    phase: 'Payment Plan (50%)',
-    color: '#10B981',
-    icon: Clock,
-    description: '50% deposit payment plan active',
-    progress: 60
-  },
-  'Deposit-Paid': {
-    phase: 'Deposit Confirmed',
-    color: '#10B981',
-    icon: CheckCircle2,
-    description: 'Your deposit has been received and confirmed',
-    progress: 65
-  },
-  // Travel Coordination
-  'Travel-Coordination': {
-    phase: 'Travel Arrangements',
-    color: '#3B82F6',
+  {
+    key: 'travel',
+    label: 'Travel Coordination',
+    detail: 'Flights, hotel and transfers being arranged.',
     icon: Plane,
-    description: 'Coordinating your flights, hotel, and transfers',
-    progress: 70
+    match: ['Travel-Coordination', 'Ready-For-Travel'],
   },
-  'Ready-For-Travel': {
-    phase: 'Ready to Travel',
-    color: '#10B981',
+  {
+    key: 'procedure',
+    label: 'Procedure',
+    detail: 'You are at the clinic for your procedure.',
+    icon: HeartPulse,
+    match: ['Procedure-In-Progress', 'SURGICAL_EXECUTION_WINDOW'],
+  },
+  {
+    key: 'recovery',
+    label: 'Recovery & Aftercare',
+    detail: 'Monitored recovery and aftercare support.',
+    icon: HeartPulse,
+    match: ['RECOVERY_PHASE_7_DAY', 'Recovery'],
+  },
+  {
+    key: 'complete',
+    label: 'Journey Complete',
+    detail: 'Your medical journey is complete!',
     icon: CheckCircle2,
-    description: 'Everything is confirmed - you\'re ready to travel!',
-    progress: 80
+    match: ['Completed'],
   },
-  // Procedure Phase
-  'Procedure-In-Progress': {
-    phase: 'Procedure Execution',
-    color: '#8B5CF6',
-    icon: HeartPulse,
-    description: 'Your procedure is currently in progress',
-    progress: 90
-  },
-  'SURGICAL_EXECUTION_WINDOW': {
-    phase: 'Surgical Phase',
-    color: '#EC4899',
-    icon: HeartPulse,
-    description: 'Active surgical procedure window',
-    progress: 92
-  },
-  // Recovery Phase
-  'RECOVERY_PHASE_7_DAY': {
-    phase: 'Critical Recovery (7 Days)',
-    color: '#F59E0B',
-    icon: HeartPulse,
-    description: 'First 7 days of recovery - critical monitoring period',
-    progress: 95
-  },
-  'Recovery': {
-    phase: 'Recovery',
-    color: '#10B981',
-    icon: HeartPulse,
-    description: 'You\'re in the recovery phase',
-    progress: 95
-  },
-  // Completion
-  'Completed': {
-    phase: 'Journey Complete',
-    color: '#10B981',
-    icon: CheckCircle2,
-    description: 'Your medical journey has been completed successfully',
-    progress: 100
-  },
-  // Special Cases
-  'waiver_refused': {
-    phase: 'Waiver Required',
-    color: '#EF4444',
-    icon: AlertTriangle,
-    description: 'A required waiver has been refused - action needed',
-    progress: 50
-  },
-  'companion_required_pending': {
-    phase: 'Companion Required',
-    color: '#F59E0B',
-    icon: AlertTriangle,
-    description: 'A travel companion is required for your case',
-    progress: 40
-  },
-  'companion_required_waived': {
-    phase: 'Companion Waived',
-    color: '#3B82F6',
-    icon: CheckCircle2,
-    description: 'Companion requirement has been waived',
-    progress: 45
-  }
+];
+
+const ALERT_STATUSES = {
+  'Admin-Review': { label: 'Under Review', color: '#EC4899', note: 'Our medical team is reviewing your case — no action needed.' },
+  'waiver_refused': { label: 'Action Required', color: '#EF4444', note: 'A required waiver was refused. Please contact your coordinator.' },
+  'companion_required_pending': { label: 'Companion Required', color: '#F59E0B', note: 'A travel companion is required for your safety. Contact us to arrange.' },
 };
 
-export default function CaseStatusIndicator({ caseStatus }) {
-  const config = useMemo(() => 
-    STATUS_CONFIG[caseStatus] || STATUS_CONFIG['Submitted'],
-    [caseStatus]
-  );
+function getStepIndex(caseStatus) {
+  for (let i = PIPELINE_STEPS.length - 1; i >= 0; i--) {
+    if (PIPELINE_STEPS[i].match.includes(caseStatus)) return i;
+  }
+  return 0;
+}
 
-  const Icon = config.icon;
+export default function CaseStatusIndicator({ caseStatus: consultationStatus, userEmail }) {
+  // Fetch the real CaseRecord status from the pipeline
+  const { data: caseRecord, isLoading } = useQuery({
+    queryKey: ['case-record-status', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return null;
+      const cases = await base44.entities.CaseRecord.filter(
+        { client_email: userEmail },
+        '-created_date',
+        1
+      );
+      return cases[0] || null;
+    },
+    enabled: !!userEmail,
+    staleTime: 60000,
+  });
+
+  const activeStatus = caseRecord?.status || consultationStatus || 'Submitted';
+  const currentStepIndex = useMemo(() => getStepIndex(activeStatus), [activeStatus]);
+  const alert = ALERT_STATUSES[activeStatus];
+  const isComplete = activeStatus === 'Completed';
+
+  if (isLoading) {
+    return (
+      <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex items-center gap-3">
+        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+        <span className="text-sm text-slate-500">Loading your journey status…</span>
+      </div>
+    );
+  }
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl border shadow-lg"
-      style={{
-        background: `linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%)`,
-        borderColor: `${config.color}40`
-      }}
-      initial={{ opacity: 0, y: 12 }}
+      className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden"
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.4 }}
     >
-      {/* Ambient glow effect */}
-      <div 
-        className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-20 blur-3xl"
-        style={{ background: config.color }}
-      />
-      
-      <div className="relative p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-4">
-            <div 
-              className="w-14 h-14 rounded-2xl flex items-center justify-center"
-              style={{ 
-                background: `${config.color}15`,
-                border: `1px solid ${config.color}40`
-              }}
-            >
-              <Icon className="w-7 h-7" style={{ color: config.color }} strokeWidth={1.5} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/50 mb-1.5">
-                Current Status
-              </p>
-              <h3 className="text-xl font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
-                {caseStatus.replace(/-/g, ' ')}
-              </h3>
-              <p className="text-[14px] text-white/60 mt-1" style={{ fontWeight: 300 }}>
-                {config.description}
-              </p>
-            </div>
+      {/* Header */}
+      <div className="px-5 pt-5 pb-4 border-b border-slate-50">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-400 mb-1">Your Journey</p>
+            <h3 className="text-base font-semibold text-slate-800" style={{ letterSpacing: '-0.01em' }}>
+              {isComplete ? '🎉 Journey Complete!' : `Step ${currentStepIndex + 1} of ${PIPELINE_STEPS.length}`}
+            </h3>
           </div>
-          
-          <div className="text-right">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-              style={{
-                background: `${config.color}20`,
-                color: config.color,
-                border: `1px solid ${config.color}30`
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: config.color }} />
-              {config.phase}
-            </div>
+          <div
+            className="text-[11px] font-bold px-3 py-1.5 rounded-full border"
+            style={{
+              background: isComplete ? '#F0FDF4' : '#EFF6FF',
+              color: isComplete ? '#16A34A' : '#2563EB',
+              borderColor: isComplete ? '#BBF7D0' : '#BFDBFE',
+            }}
+          >
+            {PIPELINE_STEPS[currentStepIndex]?.label}
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="flex justify-between text-[11px] mb-2">
-            <span className="text-white/40 uppercase tracking-[0.2em] font-semibold">Journey Progress</span>
-            <span className="text-white/70 font-bold">{config.progress}%</span>
-          </div>
-          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+        {/* Overall progress bar */}
+        <div className="mt-4">
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <motion.div
-              className="h-full rounded-full"
-              style={{ background: `linear-gradient(90deg, ${config.color} 0%, ${config.color}CC 100%)` }}
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-blue-500"
               initial={{ width: 0 }}
-              animate={{ width: `${config.progress}%` }}
-              transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              animate={{ width: `${Math.round(((currentStepIndex + 1) / PIPELINE_STEPS.length) * 100)}%` }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             />
           </div>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[10px] text-slate-400">Application Received</span>
+            <span className="text-[10px] font-semibold text-emerald-600">
+              {Math.round(((currentStepIndex + 1) / PIPELINE_STEPS.length) * 100)}% complete
+            </span>
+          </div>
         </div>
+      </div>
 
-        {/* Status Timeline Indicators */}
-        <div className="flex items-center gap-2 pt-4 border-t border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ background: config.color }} />
-            <span className="text-[12px] text-white/70 font-medium">Active Phase</span>
-          </div>
-          <div className="w-1 h-1 rounded-full bg-white/20" />
-          <div className="flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-white/40" />
-            <span className="text-[12px] text-white/50">Real-time Updates</span>
-          </div>
+      {/* Alert Banner */}
+      {alert && (
+        <div
+          className="px-5 py-3 text-xs font-medium flex items-center gap-2"
+          style={{ background: `${alert.color}12`, color: alert.color, borderBottom: `1px solid ${alert.color}20` }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+          <span><strong>{alert.label}:</strong> {alert.note}</span>
         </div>
+      )}
+
+      {/* Step list */}
+      <div className="px-5 py-4 space-y-1">
+        {PIPELINE_STEPS.map((step, i) => {
+          const Icon = step.icon;
+          const isCompleted = i < currentStepIndex;
+          const isCurrent = i === currentStepIndex;
+          const isUpcoming = i > currentStepIndex;
+
+          return (
+            <div key={step.key} className="flex items-start gap-3">
+              {/* Icon column */}
+              <div className="flex flex-col items-center" style={{ minWidth: 32 }}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all
+                    ${isCompleted ? 'bg-emerald-500' : isCurrent ? 'bg-blue-600 ring-4 ring-blue-100' : 'bg-slate-100'}`}
+                >
+                  {isCompleted
+                    ? <CheckCircle2 className="w-4 h-4 text-white" />
+                    : isCurrent
+                    ? <Icon className="w-4 h-4 text-white" />
+                    : <Icon className="w-4 h-4 text-slate-300" />}
+                </div>
+                {i < PIPELINE_STEPS.length - 1 && (
+                  <div className={`w-0.5 flex-1 my-1 rounded-full ${isCompleted ? 'bg-emerald-300' : 'bg-slate-100'}`} style={{ minHeight: 16 }} />
+                )}
+              </div>
+
+              {/* Label column */}
+              <div className={`pb-3 pt-1 flex-1 ${i < PIPELINE_STEPS.length - 1 ? '' : ''}`}>
+                <p className={`text-sm font-semibold leading-tight
+                  ${isCompleted ? 'text-emerald-700' : isCurrent ? 'text-blue-700' : 'text-slate-300'}`}>
+                  {step.label}
+                </p>
+                {isCurrent && (
+                  <motion.p
+                    className="text-xs text-slate-500 mt-0.5"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {step.detail}
+                  </motion.p>
+                )}
+              </div>
+
+              {/* Status badge */}
+              <div className="pt-1.5">
+                {isCompleted && (
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Done</span>
+                )}
+                {isCurrent && !isComplete && (
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                    Now
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </motion.div>
   );

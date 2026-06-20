@@ -196,7 +196,7 @@ function DashboardHome({ user, consultations, language }) {
       )}
 
       {/* Case Status Indicator */}
-      <CaseStatusIndicator caseStatus={caseStatus} />
+      <CaseStatusIndicator caseStatus={caseStatus} userEmail={user?.email} />
 
       {/* Vault Summary Card */}
       <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-2xl shadow-sm p-5">
