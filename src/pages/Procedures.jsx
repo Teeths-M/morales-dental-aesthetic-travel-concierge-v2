@@ -10,6 +10,7 @@ import ProcedureSearch from '@/components/procedures/ProcedureSearch';
 import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
 import SmartFallback from '@/components/procedures/SmartFallback';
+import ProcedureCompare from '@/components/procedures/ProcedureCompare';
 
 import { useCart } from '@/context/CartContext';
 import { getProcedureEnumValue } from '@/components/booking/SectionProcedure';
@@ -215,12 +216,17 @@ export default function Procedures() {
         )}
 
         {/* Full-Width AI Concierge Banner */}
-        <div className="mb-8">
+        <div className="mb-6">
           <SmartFallback 
             originalQuery=""
             onProcedureSelect={handleFallbackSelect}
             language={language}
           />
+        </div>
+
+        {/* Side-by-Side Procedure Comparison */}
+        <div className="mb-8">
+          <ProcedureCompare allProcedures={procedureCategories} />
         </div>
 
         {/* Main Grid - 2 columns on desktop (content + basket) */}
