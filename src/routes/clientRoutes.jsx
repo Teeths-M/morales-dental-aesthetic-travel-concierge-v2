@@ -29,6 +29,7 @@ const PaymentCheckout     = lazy(() => import('@/pages/PaymentCheckout'));
 const EstimateDashboard      = lazy(() => import('@/pages/EstimateDashboard'));
 const NightlifeSafetyMode    = lazy(() => import('@/pages/NightlifeSafetyMode'));
 const WildernessSafetyMode   = lazy(() => import('@/pages/WildernessSafetyMode'));
+const MedicalIntakeForm      = lazy(() => import('@/pages/MedicalIntakeForm'));
 
 const CHECKOUT_ROLES = [
   'client', 'user', 'platform_admin', 'admin',
@@ -62,7 +63,8 @@ export const clientRoutes = (
       <Route path="/baggage-tracker"            element={<BaggageTrackerPage />} />
       <Route path="/emergency"                  element={<EmergencyHub />} />
       <Route path="/nightlife-safety"           element={<NightlifeSafetyMode />} />
-      <Route path="/wilderness-safety"          element={<WildernessSafetyMode />} />
+      <Route path="/wilderness-safety"           element={<WildernessSafetyMode />} />
+      <Route path="/medical-intake"              element={<MedicalIntakeForm />} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>
