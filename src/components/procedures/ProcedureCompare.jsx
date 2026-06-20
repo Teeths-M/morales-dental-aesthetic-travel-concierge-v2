@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronDown, ArrowRight, Check, Minus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const COMPLEXITY_LABEL = { simple: 'Simple', moderate: 'Moderate', complex: 'Complex', advanced: 'Advanced' };
 const COMPLEXITY_COLOR = {
@@ -29,6 +29,7 @@ const ROWS = [
 ];
 
 export default function ProcedureCompare({ allProcedures }) {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState([null, null]);
   const [pricingData, setPricingData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -189,11 +190,12 @@ export default function ProcedureCompare({ allProcedures }) {
             <div className="px-4 py-3" />
             {[0, 1].map(slot => (
               <div key={slot} className="px-4 py-3 border-l border-slate-100">
-                <Link to="/booking">
-                  <button className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-700 to-blue-800 text-white text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5">
-                    Book {selected[slot]?.title?.split(' ').slice(0, 2).join(' ')} <ArrowRight className="w-3 h-3" />
-                  </button>
-                </Link>
+                <button
+                  onClick={() => navigate('/booking')}
+                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-700 to-blue-800 text-white text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                >
+                  Book {selected[slot]?.title?.split(' ').slice(0, 2).join(' ')} <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
             ))}
           </div>
