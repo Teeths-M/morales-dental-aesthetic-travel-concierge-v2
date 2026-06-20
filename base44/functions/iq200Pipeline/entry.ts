@@ -208,6 +208,18 @@ Deno.serve(async (req) => {
               }
             ]
           });
+
+          // Fire-and-forget Slack alert — never blocks the pipeline
+          base44.functions.invoke('notifySlackAssignment', {
+            doctor_name: assignedDoctor.full_name,
+            doctor_email: assignedDoctor.email,
+            patient_name: consultation.patient_name,
+            procedure: consultation.procedure_interest,
+            country: assignedDoctor.clinic_country || destinationCountry,
+            case_id: caseRecord.id,
+            pool_size: candidatePool.length,
+            active_cases: caseCountByDoctor[assignedDoctor.email] || 0,
+          }).catch(e => console.error('[iq200Pipeline] Slack assignment notify failed (non-fatal):', e.message));
         } else {
           // No doctor found for this country/procedure — fallback to DefaultDoctorConfig
           const defaultDoctorConfigs = await base44.asServiceRole.entities.DefaultDoctorConfig.filter({ is_active: true });
@@ -234,6 +246,18 @@ Deno.serve(async (req) => {
                 }
               ]
             });
+
+            // Fire-and-forget Slack alert for fallback assignment
+            base44.functions.invoke('notifySlackAssignment', {
+              doctor_name: defaultDoctor.doctor_name,
+              doctor_email: defaultDoctor.doctor_email,
+              patient_name: consultation.patient_name,
+              procedure: consultation.procedure_interest,
+              country: destinationCountry,
+              case_id: caseRecord.id,
+              pool_size: 0,
+              active_cases: 0,
+            }).catch(e => console.error('[iq200Pipeline] Slack fallback notify failed (non-fatal):', e.message));
           } else {
             // No doctor anywhere — alert admin
             console.error(`[iQ200] No doctor found for country="${destinationCountry}" procedure="${procedureInterest}" on case ${caseRecord.id}`);
