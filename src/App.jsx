@@ -31,16 +31,23 @@ const PageLoader = () => (
   </div>
 );
 
+// Paths that must work even when auth is loading or failing (offline/emergency use)
+const PUBLIC_BYPASS_PATHS = ['/offline', '/emergency-manifest', '/emergency-access'];
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
 
   usePushNotifications(user);
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // Allow critical public pages to render immediately without waiting for auth
+  const currentPath = window.location.pathname;
+  const isBypassPath = PUBLIC_BYPASS_PATHS.some(p => currentPath === p || currentPath.startsWith(p + '/'));
+
+  if (!isBypassPath && (isLoadingPublicSettings || isLoadingAuth)) {
     return <PageLoader />;
   }
 
-  if (authError) {
+  if (!isBypassPath && authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
