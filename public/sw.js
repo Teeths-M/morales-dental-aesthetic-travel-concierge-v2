@@ -1,72 +1,75 @@
-// ── Offline caching ───────────────────────────────────────────────────────
-// Pre-caches the pages that must work with zero connectivity (wilderness SOS,
-// emergency manifest) so they load from cache when there's no signal.
-
 const CACHE_NAME = 'morales-offline-v1';
+
+// Core shell assets to pre-cache on install
 const PRECACHE_URLS = [
+  '/',
   '/offline',
+  '/offline-guide',
   '/emergency-manifest',
   '/manifest.json',
   '/icon-192.png',
 ];
 
-self.addEventListener('install', event => {
+// ── Install: pre-cache the offline shell ─────────────────────────────────────
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => Promise.all(
-        PRECACHE_URLS.map(url =>
-          cache.add(url).catch(err => console.warn('[SW] Failed to precache', url, err))
-        )
-      ))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(PRECACHE_URLS).catch(() => {/* best effort */})
+    ).then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', event => {
+// ── Activate: remove old caches ───────────────────────────────────────────────
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
+    caches.keys().then((keys) =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
 
-// Cache-first for precached routes, network-first (with cache fallback) for everything else.
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+// ── Fetch: network-first for API, cache-first for pages ──────────────────────
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
 
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return; // don't intercept third-party requests
+  // Only handle same-origin GET requests
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  const isPrecached = PRECACHE_URLS.some(p => url.pathname === p);
+  // API calls — network only, no caching
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/functions/')) return;
 
-  if (isPrecached) {
-    event.respondWith(
-      caches.match(event.request).then(cached => cached || fetch(event.request))
-    );
-    return;
-  }
-
-  // Network-first for navigations, falling back to the offline page if nothing else is cached.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(event.request).then(cached => cached || caches.match('/offline'))
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        // Cache successful HTML/JS/CSS responses
+        if (response.ok && ['document', 'script', 'style'].includes(request.destination)) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      })
+      .catch(() =>
+        // Offline fallback — serve from cache or the /offline shell
+        caches.match(request).then((cached) =>
+          cached || caches.match('/offline')
+        )
       )
-    );
-  }
+  );
 });
 
-self.addEventListener('push', event => {
+// ── Push Notifications ────────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
   self.registration.showNotification(data.title || 'Morales Care Update', {
     body: data.body || 'You have a new update.',
-    icon: '/logo192.png',
-    badge: '/badge.png',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     data: { url: data.url || '/' },
   });
 });
 
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(clients.openWindow(event.notification.data.url));
 });

@@ -1,8 +1,8 @@
 {
-  "name": "MORALES Dental & Aesthetic Travel Concierge",
-  "short_name": "Morales Care",
-  "description": "Safety, coordination, and offline emergency tools for dental & aesthetic medical travel.",
-  "start_url": "/offline",
+  "name": "Morales Medical",
+  "short_name": "Morales",
+  "description": "Your medical travel companion — access documents, safety tools, and emergency contacts offline.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -32,7 +32,15 @@
     {
       "name": "Offline Mode",
       "short_name": "Offline",
+      "description": "Access emergency tools without internet",
       "url": "/offline",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Offline Guide",
+      "short_name": "Guide",
+      "description": "Step-by-step offline access guide",
+      "url": "/offline-guide",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {

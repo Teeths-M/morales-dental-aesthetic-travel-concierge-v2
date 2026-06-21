@@ -15,6 +15,7 @@ const CheckInConfirm     = lazy(() => import('@/pages/CheckInConfirm'));
 const ShareLinkViewer    = lazy(() => import('@/pages/ShareLinkViewer'));
 const OfflineMode        = lazy(() => import('@/pages/OfflineMode'));
 const EmergencyManifest  = lazy(() => import('@/pages/EmergencyManifest'));
+const OfflineGuide       = lazy(() => import('@/pages/OfflineGuide'));
 
 export const tokenRoutes = (
   <>
@@ -28,5 +29,6 @@ export const tokenRoutes = (
     {/* /offline is intentionally kept public so users can access it without login */}
     <Route key="offline"        path="/offline"                 element={<OfflineMode />} />
     <Route key="emergency-manifest" path="/emergency-manifest"  element={<EmergencyManifest />} />
+    <Route key="offline-guide"      path="/offline-guide"        element={<OfflineGuide />} />
   </>
 );
