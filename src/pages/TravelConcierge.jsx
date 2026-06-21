@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, FileText, AlertTriangle } from 'lucide-react';
+import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, FileText, AlertTriangle, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,10 @@ export default function TravelConcierge() {
   const [checkingVisa, setCheckingVisa] = useState(false);
   const [userVaults, setUserVaults] = useState([]);
   const [selectedPassportId, setSelectedPassportId] = useState('');
+  const [localAgencies, setLocalAgencies] = useState([]);
+  const [localTaxis, setLocalTaxis] = useState([]);
+  const [loadingPartners, setLoadingPartners] = useState(false);
+
   const [formData, setFormData] = useState({
     origin_city: '',
     origin_country: '',
@@ -60,6 +64,32 @@ export default function TravelConcierge() {
     companion_days: 0,
     special_requests: ''
   });
+
+  useEffect(() => {
+    if (!formData.origin_country) return;
+    const loadPartners = async () => {
+      setLoadingPartners(true);
+      try {
+        const [agencies, taxis] = await Promise.all([
+          base44.entities.TravelAgency.filter({ status: 'active' }),
+          base44.entities.TaxiService.filter({ status: 'active' }),
+        ]);
+        const origin = formData.origin_country.toLowerCase();
+        setLocalAgencies(agencies.filter(a =>
+          a.headquarters_country?.toLowerCase().includes(origin) ||
+          a.service_regions?.some(r => r.toLowerCase().includes(origin))
+        ));
+        setLocalTaxis(taxis.filter(t =>
+          t.operating_country?.toLowerCase().includes(origin)
+        ));
+      } catch (e) {
+        // silent
+      } finally {
+        setLoadingPartners(false);
+      }
+    };
+    loadPartners();
+  }, [formData.origin_country]);
 
   useEffect(() => {
     const loadUserPassports = async () => {
@@ -233,7 +263,7 @@ export default function TravelConcierge() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8">
           {/* Form Section */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -525,6 +555,94 @@ export default function TravelConcierge() {
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
+
+          {/* Local Partners Panel */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.25 }}
+            className="space-y-4"
+          >
+            <div className="text-white/80 text-xs uppercase tracking-widest font-semibold px-1 flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5" />
+              {formData.origin_country ? `Partners in ${formData.origin_country}` : 'Enter origin country to see local partners'}
+            </div>
+
+            {loadingPartners && (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              </div>
+            )}
+
+            {!loadingPartners && formData.origin_country && (
+              <>
+                {/* Travel Agencies */}
+                <div>
+                  <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <Plane className="w-3 h-3" /> Travel Agencies
+                  </p>
+                  {localAgencies.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white/40 text-xs">No agencies found for this region.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {localAgencies.map(a => (
+                        <div key={a.id} className="bg-white/10 border border-white/15 rounded-xl p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-white text-sm font-semibold leading-tight">{a.agency_name}</p>
+                            <span className="flex items-center gap-0.5 text-amber-300 text-xs font-bold shrink-0">
+                              <Star className="w-3 h-3 fill-amber-300" />{a.rating?.toFixed(1)}
+                            </span>
+                          </div>
+                          <p className="text-white/50 text-xs mt-0.5">{a.headquarters_country} · {a.medical_travel_experience_years}yr exp</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {a.services_offered?.slice(0, 3).map(s => (
+                              <span key={s} className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full px-2 py-0.5">{s}</span>
+                            ))}
+                          </div>
+                          {a.emergency_support_available && (
+                            <p className="text-emerald-400 text-[10px] mt-1.5 font-semibold">✓ 24/7 Emergency Support</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Taxi Services */}
+                <div>
+                  <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1 mt-4">
+                    <Car className="w-3 h-3" /> Taxi Services
+                  </p>
+                  {localTaxis.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white/40 text-xs">No taxi services found for this region.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {localTaxis.map(t => (
+                        <div key={t.id} className="bg-white/10 border border-white/15 rounded-xl p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-white text-sm font-semibold leading-tight">{t.company_name}</p>
+                            <span className="flex items-center gap-0.5 text-amber-300 text-xs font-bold shrink-0">
+                              <Star className="w-3 h-3 fill-amber-300" />{t.quality_score?.toFixed(1)}
+                            </span>
+                          </div>
+                          <p className="text-white/50 text-xs mt-0.5">{t.operating_city} · {t.service_radius_km}km radius</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {t.vehicle_types?.slice(0, 3).map(v => (
+                              <span key={v} className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full px-2 py-0.5">{v}</span>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${t.is_online ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+                            <span className="text-[10px] text-white/50">{t.is_online ? 'Online now' : 'Offline'} · {t.total_trips} trips</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </motion.div>
 
           {/* Visa Requirements Section - Full Width */}
