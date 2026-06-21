@@ -1,5 +1,5 @@
 // Morales Platform Service Worker — Offline Safety Layer
-const CACHE_NAME = 'morales-offline-v3';
+const CACHE_NAME = 'morales-offline-v4';
 const OFFLINE_FALLBACK = '/offline';
 
 // Critical routes that must work offline — cached on install
@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   '/emergency',
   '/emergency-access',
   '/emergency-manifest',
+  '/passport-vault',
   '/index.html',
 ];
 
