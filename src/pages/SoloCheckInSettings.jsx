@@ -30,6 +30,7 @@ export default function SoloCheckInSettings() {
   const [activeCase, setActiveCase] = useState(null);
   const [checkIns, setCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
   const [stats, setStats] = useState({ total: 0, acknowledged: 0, escalated: 0 });
   const locRef = useRef(null);
@@ -45,30 +46,36 @@ export default function SoloCheckInSettings() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const loadCheckIns = async () => {
-    if (!user) return;
-    const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10);
-    const caseIds = cases.map(c => c.id);
-    if (cases.length > 0) setActiveCase(cases.find(c => c.status !== 'Completed') || cases[0]);
+  const loadCheckIns = async (currentUser) => {
+    const u = currentUser || user;
+    if (!u) return;
+    setRefreshing(true);
+    try {
+      const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 10);
+      const caseIds = cases.map(c => c.id);
+      if (cases.length > 0) setActiveCase(cases.find(c => c.status !== 'Completed') || cases[0]);
 
-    if (caseIds.length === 0) return;
+      if (caseIds.length === 0) return;
 
-    const allCheckIns = await base44.entities.SoloCheckIn.filter(
-      { case_id: { $in: caseIds } },
-      '-scheduled_time',
-      50
-    );
+      const allCheckIns = await base44.entities.SoloCheckIn.filter(
+        { case_id: { $in: caseIds } },
+        '-scheduled_time',
+        50
+      );
 
-    setCheckIns(allCheckIns);
-    setStats({
-      total: allCheckIns.length,
-      acknowledged: allCheckIns.filter(c => c.status === 'acknowledged' || c.status === 'resolved').length,
-      escalated: allCheckIns.filter(c => c.status.includes('escalated')).length,
-    });
+      setCheckIns(allCheckIns);
+      setStats({
+        total: allCheckIns.length,
+        acknowledged: allCheckIns.filter(c => c.status === 'acknowledged' || c.status === 'resolved').length,
+        escalated: allCheckIns.filter(c => c.status.includes('escalated')).length,
+      });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
-    if (user) loadCheckIns();
+    if (user) loadCheckIns(user);
   }, [user]);
 
   const handleIAmSafe = async () => {
@@ -297,8 +304,8 @@ export default function SoloCheckInSettings() {
                 <Calendar className="w-4 h-4 text-slate-500" />
                 Check-In History
               </h3>
-              <Button onClick={loadCheckIns} size="sm" variant="outline" className="text-xs h-8">
-                Refresh
+              <Button onClick={() => loadCheckIns(user)} size="sm" variant="outline" className="text-xs h-8" disabled={refreshing}>
+                {refreshing ? 'Refreshing…' : 'Refresh'}
               </Button>
             </div>
 
