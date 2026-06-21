@@ -56,8 +56,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
     setError(null);
     setFileName(file.name);
     
-    // Auto-extract passport data if document type is passport
-    if (vaultMeta.document_type === 'passport' && file.type.includes('image')) {
+    // Skip auto-extraction if offline or if document type is not passport
+    if (vaultMeta.document_type === 'passport' && file.type.includes('image') && navigator.onLine) {
       setExtracting(true);
       try {
         console.log('[VaultUploader] Starting extraction for file:', file.name, file.type);
@@ -107,6 +107,9 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         // Continue without extraction - not critical, user can fill manually
       }
       setExtracting(false);
+    } else if (!navigator.onLine) {
+      // Offline - skip extraction, user fills manually
+      console.log('[VaultUploader] Offline - skipping auto-extraction');
     }
   };
 
@@ -121,6 +124,13 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      return;
+    }
+
+    // Check file size before encryption (10MB limit, but encrypted base64 will be ~33% larger)
+    const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB to allow room for base64 expansion
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File is too large. Maximum size is ${MAX_SIZE_MB}MB (original file must be under 8MB to allow for encryption overhead).`);
       return;
     }
 
@@ -154,6 +164,10 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
       console.log('[VaultUploader] Upload response:', response.data);
 
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
       const { vault_token, expires_at } = response.data;
       
       // Store salt in sessionStorage for later decryption
@@ -167,7 +181,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       }
     } catch (err) {
       console.error('[VaultUploader] Upload error:', err);
-      setError(err.response?.data?.error || err.message || 'Upload failed. Please try again.');
+      const errorMessage = err.response?.data?.error || err.message || 'Upload failed. Please try again.';
+      setError(errorMessage);
       setStep('error');
     }
   };
