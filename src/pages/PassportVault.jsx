@@ -72,9 +72,15 @@ export default function PassportVault() {
         try { localStorage.setItem(pinCacheKey, hasPinResult ? '1' : '0'); } catch (_) {}
       } catch (err) {
         console.warn('[PassportVault] PIN lookup failed, falling back to cache:', err);
-        let cachedHasPin = false;
-        try { cachedHasPin = localStorage.getItem(pinCacheKey) === '1'; } catch (_) {}
-        if (!cancelled) setHasPIN(cachedHasPin);
+        // SECURITY: don't default to "no PIN" (false) when we genuinely don't
+        // know — that silently routes into VaultPINGate's setup mode, which
+        // lets a brand-new PIN be created with zero verification against any
+        // real PIN, on a device that's simply never synced. Only resolve to a
+        // concrete true/false if we have an actual cached signal; otherwise
+        // surface 'unknown' so the gate can block instead of guessing.
+        let cachedValue = null;
+        try { cachedValue = localStorage.getItem(pinCacheKey); } catch (_) {}
+        if (!cancelled) setHasPIN(cachedValue === null ? 'unknown' : cachedValue === '1');
       }
 
       if (!cancelled) setLoading(false);
@@ -82,6 +88,32 @@ export default function PassportVault() {
 
     return () => { cancelled = true; };
   }, [user, isLoadingAuth]);
+
+  // If we landed in the 'unknown' blocked state (offline, no cached PIN
+  // signal), retry automatically the moment connectivity returns instead of
+  // requiring a manual refresh.
+  const [retryNonce, setRetryNonce] = useState(0);
+  useEffect(() => {
+    if (hasPIN !== 'unknown') return;
+    const handleOnline = () => setRetryNonce(n => n + 1);
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [hasPIN]);
+
+  useEffect(() => {
+    if (retryNonce === 0 || !user) return;
+    setLoading(true);
+    setHasPIN(null);
+    const pinCacheKey = `morales_vault_haspin_${user.id}`;
+    base44.entities.VaultPIN.filter({ user_id: user.id })
+      .then(pins => {
+        const result = pins.length > 0;
+        setHasPIN(result);
+        try { localStorage.setItem(pinCacheKey, result ? '1' : '0'); } catch (_) {}
+      })
+      .catch(() => setHasPIN('unknown'))
+      .finally(() => setLoading(false));
+  }, [retryNonce, user]);
 
   const handlePINVerified = () => {
     setPinVerified(true);
@@ -92,6 +124,27 @@ export default function PassportVault() {
       <div className="min-h-screen bg-[#060B16] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
           style={{ borderColor: `${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} transparent` }} />
+      </div>
+    );
+  }
+
+  // SECURITY: offline, no cached signal either way for whether a vault PIN
+  // already exists. Don't guess — VaultPINGate would otherwise silently
+  // drop into 4-digit *setup* mode, letting a brand-new PIN be created with
+  // zero verification against any real one on a device that's never synced.
+  if (user && hasPIN === 'unknown') {
+    return (
+      <div className="min-h-screen bg-[#060B16] flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          <div className="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-5">
+            <WifiOff className="w-8 h-8 text-amber-400" strokeWidth={1.5} />
+          </div>
+          <h2 className="font-display text-2xl text-white mb-3" style={{ letterSpacing: '-0.02em' }}>Connect Once to Unlock Vault</h2>
+          <p className="text-white/40 text-[15px] leading-relaxed">
+            This device hasn't verified your Vault PIN status yet. Connect to the internet once —
+            after that, your vault will unlock fully offline on this device.
+          </p>
+        </div>
       </div>
     );
   }
