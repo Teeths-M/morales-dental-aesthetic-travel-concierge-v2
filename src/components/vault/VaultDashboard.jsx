@@ -162,15 +162,42 @@ export default function VaultDashboard({ user }) {
         return;
       }
       
-      // OFFLINE MODE: Use cached metadata and fetch from private storage
-      const { encryption_iv_b64, encryption_salt_b64, encrypted_file_uri, file_name, mime_type } = vault;
+      // OFFLINE-FIRST: Check local cache before any network request
+      const cacheKey = `vault_encrypted_${vault.passport_token}`;
+      const cachedData = localStorage.getItem(cacheKey);
       
-      // Get signed URL for private file (this will fail offline - need to cache the actual encrypted blob too)
-      // For now, fallback to online fetch
-      const res = await vaultService.requestDownload(vault.passport_token);
-      const { signed_url } = res.data;
-      const blob = await fetch(signed_url).then(r => r.blob());
-      const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
+      let encryptedB64, encryption_iv_b64, encryption_salt_b64, file_name, mime_type;
+      
+      if (cachedData) {
+        // Use cached encrypted blob (works offline)
+        const parsed = JSON.parse(cachedData);
+        encryptedB64 = parsed.encryptedB64;
+        encryption_iv_b64 = parsed.encryption_iv_b64;
+        encryption_salt_b64 = parsed.encryption_salt_b64;
+        file_name = parsed.file_name;
+        mime_type = parsed.mime_type;
+      } else if (navigator.onLine) {
+        // Not cached, but online - fetch from server
+        const res = await vaultService.requestDownload(vault.passport_token);
+        if (res.data?.error_code === 'LEGACY_ENCRYPTION_NO_SALT') {
+          setPwModal({ open: false, vault: null, isLoading: false });
+          alert('This document was uploaded before encryption was upgraded. Please delete it and re-upload to use the latest security format.');
+          return;
+        }
+        const { signed_url, encryption_iv_b64: iv, encryption_salt_b64: salt, file_name: fname, mime_type: mime } = res.data;
+        encryption_iv_b64 = iv;
+        encryption_salt_b64 = salt;
+        file_name = fname;
+        mime_type = mime;
+        const blob = await fetch(signed_url).then(r => r.blob());
+        encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
+      } else {
+        // Offline and not cached - cannot download
+        setPwModal({ open: false, vault: null, isLoading: false });
+        alert('Offline Mode: This document was not cached for offline access. Please reconnect to the internet and download it first.');
+        return;
+      }
+      
       const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
       const url = URL.createObjectURL(decryptedBlob);
       const a = document.createElement('a'); a.href = url; a.download = file_name; a.click();
