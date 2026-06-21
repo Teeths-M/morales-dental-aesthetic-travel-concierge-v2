@@ -13,11 +13,33 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 
+async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowSeconds * 1000);
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter({ bucket_key: key });
+  const bucket = buckets[0];
+  if (!bucket) {
+    await base44.asServiceRole.entities.RateLimitBucket.create({ bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (new Date(bucket.window_start) < windowStart) {
+    await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (bucket.count >= maxRequests) return false;
+  await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { count: bucket.count + 1, updated_at: now.toISOString() });
+  return true;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // RATE LIMIT: 10 payment link requests per user per hour
+    const allowed = await checkRateLimit(base44, `${user.id}:generateStripePaymentLink`, 3600, 10);
+    if (!allowed) return Response.json({ error: 'Too many payment link requests. Please wait before trying again.' }, { status: 429 });
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) return Response.json({ error: 'Payment system not configured' }, { status: 503 });

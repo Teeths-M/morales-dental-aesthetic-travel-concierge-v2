@@ -1,5 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
 
+async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowSeconds * 1000);
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter({ bucket_key: key });
+  const bucket = buckets[0];
+  if (!bucket) {
+    await base44.asServiceRole.entities.RateLimitBucket.create({ bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (new Date(bucket.window_start) < windowStart) {
+    await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (bucket.count >= maxRequests) return false;
+  await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { count: bucket.count + 1, updated_at: now.toISOString() });
+  return true;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -54,6 +72,10 @@ Deno.serve(async (req) => {
 
     // TRANSLATE AUDIO (Transcribe + Translate + TTS)
     if (action === 'translate_audio') {
+      // RATE LIMIT: 30 translations per user per hour (LLM + TTS are expensive)
+      const allowed = await checkRateLimit(base44, `${user.id}:walkieTalkieTranslate`, 3600, 30);
+      if (!allowed) return Response.json({ error: 'Translation rate limit exceeded. Maximum 30 translations per hour.' }, { status: 429 });
+
       console.log('[walkieTalkieTranslate] translate_audio called with:', { audio_url, source_language, target_language, session_token });
       
       if (!audio_url || !source_language || !target_language || !session_token) {
