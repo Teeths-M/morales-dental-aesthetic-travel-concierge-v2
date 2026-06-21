@@ -60,8 +60,12 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
     if (vaultMeta.document_type === 'passport' && file.type.includes('image')) {
       setExtracting(true);
       try {
+        console.log('[VaultUploader] Starting extraction for file:', file.name, file.type);
+        
         // Upload file temporarily for extraction
         const uploadRes = await base44.integrations.Core.UploadFile({ file });
+        console.log('[VaultUploader] File uploaded, URL:', uploadRes.data.file_url);
+        
         const extractRes = await base44.functions.invoke('extractPassportData', { file_url: uploadRes.data.file_url });
         
         console.log('[VaultUploader] Extraction response:', extractRes.data);
@@ -71,24 +75,35 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
           const data = extractRes.data.extracted;
           console.log('[VaultUploader] Extracted data:', data);
           
-          setExtractedData({
-            ...data,
-            warnings: extractRes.data.warnings || []
-          });
-          
-          // Auto-populate fields with extracted data
-          setVaultMeta(p => ({
-            ...p,
-            last_4_digits: data.last_4 || (data.passport_number ? data.passport_number.slice(-4) : '') || '',
-            expiry_date: data.expiry_date || '',
+          // Create extracted data object with all fields
+          const extractedObj = {
+            full_name: data.full_name || '',
             nationality: data.nationality || '',
-            full_name_redacted: data.full_name || '',
-          }));
+            expiry_date: data.expiry_date || '',
+            last_4: data.last_4 || (data.passport_number ? data.passport_number.slice(-4) : '') || '',
+            warnings: extractRes.data.warnings || []
+          };
+          
+          setExtractedData(extractedObj);
+          
+          // Auto-populate fields with extracted data - force update
+          const newVaultMeta = {
+            ...vaultMeta,
+            last_4_digits: extractedObj.last_4,
+            expiry_date: extractedObj.expiry_date,
+            nationality: extractedObj.nationality,
+            full_name_redacted: extractedObj.full_name,
+          };
+          
+          console.log('[VaultUploader] Setting vault meta to:', newVaultMeta);
+          setVaultMeta(newVaultMeta);
         } else {
-          console.log('[VaultUploader] Extraction failed - no data returned');
+          console.log('[VaultUploader] Extraction failed - no data returned', extractRes.data);
+          setExtractedData({ extracted: false, error: 'Could not read passport' });
         }
       } catch (err) {
-        console.log('[VaultUploader] Auto-extract error:', err.message);
+        console.error('[VaultUploader] Auto-extract error:', err);
+        setExtractedData({ extracted: false, error: 'Extraction failed - please fill manually' });
         // Continue without extraction - not critical, user can fill manually
       }
       setExtracting(false);
@@ -240,7 +255,17 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
             </div>
           )}
           
-          {extractedData && (
+          {extractedData && extractedData.extracted === false ? (
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-900">Could not auto-fill passport</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  {extractedData.error || 'AI extraction failed. Please enter details manually.'}
+                </p>
+              </div>
+            </div>
+          ) : extractedData && (
             <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
               <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
               <div className="flex-1">
