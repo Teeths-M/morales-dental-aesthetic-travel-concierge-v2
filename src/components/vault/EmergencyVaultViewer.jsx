@@ -119,8 +119,8 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
           <WifiOff className="w-4 h-4 text-amber-600 flex-shrink-0" />
           <div>
-            <p className="text-xs font-bold text-amber-800">Offline — Cached Document List</p>
-            <p className="text-[10px] text-amber-700">Encrypted files require connection to download. This is your document index.</p>
+            <p className="text-xs font-bold text-amber-800">✓ Offline Mode Active</p>
+            <p className="text-[10px] text-amber-700">Your document information is available below - use this for border/medical emergencies</p>
           </div>
         </div>
       ) : (
@@ -137,33 +137,92 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
         </div>
       )}
 
-      <div className="space-y-2">
+      {/* Emergency Info Cards - Critical data extracted from cached metadata */}
+      <div className="space-y-3">
         {vaults.vaults?.length === 0 && (
           <p className="text-center text-xs text-slate-500 py-4">No documents found in your vault.</p>
         )}
-        {vaults.vaults?.map((vault, i) => (
-          <div key={vault.vault_id || vault.id || i} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
-            <span className="text-xl">{DOC_ICONS[vault.document_type] || '📄'}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-800 truncate">{vault.file_name || vault.document_type}</p>
-              <p className="text-xs text-slate-500 capitalize">{(vault.document_type || '').replace(/_/g, ' ')}</p>
-              {vault.redacted_for_display?.expiry_date && (
-                <p className="text-[10px] text-slate-400">Expires: {vault.redacted_for_display.expiry_date}</p>
-              )}
+        {vaults.vaults?.map((vault, i) => {
+          const docType = vault.document_type || 'other';
+          const redacted = vault.redacted_for_display || {};
+          return (
+            <div key={vault.vault_id || vault.id || i} className="p-4 rounded-xl border bg-white shadow-sm">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">{DOC_ICONS[docType] || '📄'}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-800">{redacted.full_name_redacted || vault.file_name || docType}</p>
+                  <p className="text-xs text-slate-500 capitalize">{docType.replace(/_/g, ' ')}</p>
+                </div>
+              </div>
+              
+              {/* Critical Info Grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {redacted.last_4_digits && (
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <p className="text-[10px] text-slate-500 font-semibold">Document # (last 4)</p>
+                    <p className="text-sm font-mono font-bold text-slate-800">{redacted.last_4_digits}</p>
+                  </div>
+                )}
+                {redacted.expiry_date && (
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <p className="text-[10px] text-slate-500 font-semibold">Expires</p>
+                    <p className="text-sm font-bold text-slate-800">{redacted.expiry_date}</p>
+                  </div>
+                )}
+                {redacted.nationality && (
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <p className="text-[10px] text-slate-500 font-semibold">Nationality</p>
+                    <p className="text-sm font-bold text-slate-800">{redacted.nationality}</p>
+                  </div>
+                )}
+                {redacted.booking_reference && (
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <p className="text-[10px] text-slate-500 font-semibold">Booking Reference</p>
+                    <p className="text-sm font-mono font-bold text-slate-800">{redacted.booking_reference}</p>
+                  </div>
+                )}
+                {redacted.hotel_name && (
+                  <div className="bg-slate-50 p-2 rounded-lg col-span-2">
+                    <p className="text-[10px] text-slate-500 font-semibold">Hotel</p>
+                    <p className="text-sm font-bold text-slate-800">{redacted.hotel_name}</p>
+                  </div>
+                )}
+                {redacted.airline && (
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <p className="text-[10px] text-slate-500 font-semibold">Airline</p>
+                    <p className="text-sm font-bold text-slate-800">{redacted.airline}</p>
+                  </div>
+                )}
+                {redacted.card_issuer && (
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <p className="text-[10px] text-slate-500 font-semibold">Bank</p>
+                    <p className="text-sm font-bold text-slate-800">{redacted.card_issuer}</p>
+                  </div>
+                )}
+                {redacted.bank_phone && (
+                  <div className="bg-slate-50 p-2 rounded-lg col-span-2">
+                    <p className="text-[10px] text-slate-500 font-semibold">Bank Emergency Phone</p>
+                    <p className="text-sm font-mono font-bold text-slate-800">{redacted.bank_phone}</p>
+                  </div>
+                )}
+              </div>
             </div>
-            {vaults.offline ? (
-              <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Cached</span>
-            ) : (
-              <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Online</span>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {vaults.offline && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-800">
-          <p className="font-bold mb-1">📞 Need to share your document details?</p>
-          <p>Give border/medical staff your document reference numbers from the list above. Reconnect to internet to download the full encrypted files.</p>
+      {vaults.offline && vaults.vaults?.length > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-800">
+          <p className="font-bold mb-2">✓ Your emergency information is ready:</p>
+          <ul className="space-y-1 text-emerald-700">
+            <li>• Show this screen to border control / police / medical staff</li>
+            <li>• Your passport number (last 4 digits), expiry, and nationality are visible above</li>
+            <li>• Hotel booking reference and name are visible for taxi/transport</li>
+            <li>• Bank emergency phone numbers work even without data (voice calls)</li>
+          </ul>
+          <p className="text-[10px] text-emerald-600 mt-3 font-semibold">
+            💡 Tip: Voice calls work without data - use the bank phone numbers above to report lost/stolen cards
+          </p>
         </div>
       )}
     </div>
