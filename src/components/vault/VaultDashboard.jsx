@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Clock, FileText, Share2, Trash2, Download, Plus, WifiOff } from 'lucide-react';
+import { Shield, Clock, FileText, Share2, Trash2, Download, Plus, WifiOff, CloudDownload, CheckCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
 import VaultPasswordModal from './VaultPasswordModal';
@@ -49,6 +49,7 @@ const TABS = [
 export default function VaultDashboard({ user }) {
   const { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, syncStatus, reload } = useVault(user);
   const [activeTab, setActiveTab] = useState('documents');
+  const [cacheProgress, setCacheProgress] = useState(null); // { current, total, status: 'caching' | 'complete' | 'error' }
 
   // Cache vault metadata to localStorage whenever it loads or changes — enables offline emergency access
   useEffect(() => {
@@ -79,6 +80,63 @@ export default function VaultDashboard({ user }) {
       }
     }
   }, [vaults, loading, user?.email]);
+
+  // Prepare all documents for offline use
+  const prepareAllForOffline = useCallback(async () => {
+    if (!navigator.onLine) {
+      alert('You need an internet connection to prepare documents for offline use.');
+      return;
+    }
+
+    setCacheProgress({ current: 0, total: vaults.length, status: 'caching' });
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < vaults.length; i++) {
+      const vault = vaults[i];
+      const cacheKey = `vault_encrypted_${vault.passport_token}`;
+      
+      // Skip if already cached
+      if (localStorage.getItem(cacheKey)) {
+        setCacheProgress({ current: i + 1, total: vaults.length, status: 'caching' });
+        successCount++;
+        continue;
+      }
+
+      try {
+        // Fetch and cache this document
+        const res = await vaultService.requestDownload(vault.passport_token);
+        const { signed_url, encryption_iv_b64, encryption_salt_b64, file_name, mime_type } = res.data;
+        const blob = await fetch(signed_url).then(r => r.blob());
+        const encryptedB64 = arrayBufferToBase64(await blob.arrayBuffer());
+        
+        const cacheData = {
+          encryptedB64,
+          encryption_iv_b64,
+          encryption_salt_b64,
+          file_name,
+          mime_type,
+          cached_at: new Date().toISOString()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        successCount++;
+      } catch (err) {
+        console.error('[VaultDashboard] Failed to cache', vault.file_name, err);
+        errorCount++;
+      }
+
+      setCacheProgress({ current: i + 1, total: vaults.length, status: 'caching' });
+    }
+
+    setCacheProgress({ current: vaults.length, total: vaults.length, status: errorCount === 0 ? 'complete' : 'partial' });
+    
+    setTimeout(() => setCacheProgress(null), 5000);
+    
+    if (errorCount > 0) {
+      alert(`Successfully cached ${successCount} documents. ${errorCount} documents failed to cache (may be too large).`);
+    }
+  }, [vaults, user?.email]);
 
   // Modal state
   const [pwModal, setPwModal]           = useState({ open: false, vault: null, isLoading: false });
@@ -342,19 +400,66 @@ export default function VaultDashboard({ user }) {
         </motion.div>
       )}
 
-      {/* Summary strip */}
-      <motion.div
-        className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.15]"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div>
-          <p className="text-[15px] font-bold text-emerald-50" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
-          <p className="text-[12px] text-emerald-100 mt-1 tracking-[0.15em] uppercase">PBKDF2 + AES-256-GCM · Zero-knowledge</p>
-        </div>
-        <Shield className="w-8 h-8 text-emerald-100" strokeWidth={1.3} />
-      </motion.div>
+      {/* Summary strip with offline prepare button */}
+      <div className="space-y-3">
+        <motion.div
+          className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.15]"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div>
+            <p className="text-[15px] font-bold text-emerald-50" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
+            <p className="text-[12px] text-emerald-100 mt-1 tracking-[0.15em] uppercase">PBKDF2 + AES-256-GCM · Zero-knowledge</p>
+          </div>
+          <Shield className="w-8 h-8 text-emerald-100" strokeWidth={1.3} />
+        </motion.div>
+
+        {/* Prepare for Offline Button */}
+        {navigator.onLine && vaults.length > 0 && (
+          <motion.button
+            onClick={prepareAllForOffline}
+            disabled={cacheProgress?.status === 'caching'}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl border-2 border-emerald-400/40 bg-emerald-400/20 hover:bg-emerald-400/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+          >
+            {cacheProgress?.status === 'caching' ? (
+              <>
+                <div className="w-5 h-5 border-2 border-emerald-100 border-t-transparent rounded-full animate-spin" />
+                <span className="text-[14px] font-bold text-emerald-50">
+                  Caching documents... {cacheProgress.current}/{cacheProgress.total}
+                </span>
+              </>
+            ) : cacheProgress?.status === 'complete' ? (
+              <>
+                <CheckCircle className="w-5 h-5 text-emerald-100" />
+                <span className="text-[14px] font-bold text-emerald-50">All Documents Ready for Offline!</span>
+              </>
+            ) : (
+              <>
+                <CloudDownload className="w-5 h-5 text-emerald-100" />
+                <div className="text-left">
+                  <p className="text-[14px] font-bold text-emerald-50">Prepare All Documents for Offline</p>
+                  <p className="text-[11px] text-emerald-100">Download encrypted files for airplane mode access</p>
+                </div>
+              </>
+            )}
+          </motion.button>
+        )}
+
+        {/* Cache Progress/Error Banner */}
+        {cacheProgress?.status === 'partial' && (
+          <motion.div
+            className="flex items-center gap-3 px-5 py-3 rounded-xl border border-amber-400/30 bg-amber-400/10"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <AlertCircle className="w-5 h-5 text-amber-100 flex-shrink-0" />
+            <p className="text-[13px] font-bold text-amber-100">Some documents were too large to cache. You can still access them online.</p>
+          </motion.div>
+        )}
+      </div>
 
       {/* Tab bar */}
       <motion.div
@@ -397,6 +502,7 @@ export default function VaultDashboard({ user }) {
               const meta = DOC_META[vault.document_type] || DOC_META.other;
               const cacheKey = `vault_encrypted_${vault.passport_token}`;
               const isAvailableOffline = !!localStorage.getItem(cacheKey);
+              const fileSizeMB = (vault.file_size_bytes / (1024 * 1024)).toFixed(2);
               return (
                   <motion.div
                     key={vault.id}
@@ -411,18 +517,27 @@ export default function VaultDashboard({ user }) {
                         {meta.emoji}
                       </div>
                       <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[15px] font-bold text-white truncate" style={{ letterSpacing: '-0.01em' }}>{vault.file_name}</p>
-                        {isAvailableOffline && (
+                        {isAvailableOffline ? (
                           <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-400/20 px-2 py-0.5 rounded-full">
-                            <WifiOff className="w-2.5 h-2.5" /> Offline
+                            <CheckCircle className="w-2.5 h-2.5" /> Ready for Offline
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full">
+                            <CloudDownload className="w-2.5 h-2.5" /> Online Only
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-white/80 mt-1">{meta.label} · {(vault.file_size_bytes / 1024).toFixed(1)} KB</p>
+                      <p className="text-[12px] text-white/80 mt-1">{meta.label} · {fileSizeMB} MB</p>
                         {formattedDates[vault.id] && (
                           <p className="text-[11px] text-white/70 mt-1.5 tracking-[0.15em] uppercase">
                             Added {formattedDates[vault.id]}
+                          </p>
+                        )}
+                        {!isAvailableOffline && vault.file_size_bytes > 5 * 1024 * 1024 && (
+                          <p className="text-[10px] text-amber-200/80 mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-2.5 h-2.5" /> Large file - use "Prepare for Offline" to cache
                           </p>
                         )}
                       </div>
@@ -434,7 +549,7 @@ export default function VaultDashboard({ user }) {
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
                       >
-                        <Download className="w-3.5 h-3.5" /> Download
+                        <Download className="w-3.5 h-3.5" /> {isAvailableOffline ? 'Open' : 'Download'}
                       </motion.button>
                       <motion.button
                         onClick={() => setShareModal({ open: true, vault })}
