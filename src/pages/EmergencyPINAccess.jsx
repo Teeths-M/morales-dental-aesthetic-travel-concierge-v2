@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft } from 'lucide-react';
+import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft, WifiOff } from 'lucide-react';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
 import EmergencyVaultViewer from '@/components/vault/EmergencyVaultViewer';
 import EmergencyRecoveryVault from '@/pages/EmergencyRecoveryVault';
@@ -94,6 +94,10 @@ export default function EmergencyPINAccess() {
                 <Link to="/emergency"
                   className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300">
                   <Shield className="w-3.5 h-3.5" />Set Emergency PIN →
+                </Link>
+                <Link to="/offline"
+                  className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300">
+                  <WifiOff className="w-3.5 h-3.5" />Offline Mode & Capabilities →
                 </Link>
               </div>
             </div>
