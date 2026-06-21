@@ -16,6 +16,7 @@ const STATUS_CONFIG = {
   escalated_2h:  { label: 'SMS/Voice Sent', color: 'bg-orange-100 text-orange-800', priority: 2 },
   escalated_3h:  { label: 'Guardian Alerted', color: 'bg-red-100 text-red-800', priority: 1 },
   escalated_5h:  { label: '🚨 SECURITY DISPATCH', color: 'bg-red-200 text-red-900 font-bold', priority: 0 },
+  escalated_9h:  { label: '🆘 EMERGENCY DISPATCH', color: 'bg-red-900 text-white font-bold', priority: 0 },
   resolved:      { label: 'Resolved',    color: 'bg-slate-100 text-slate-600', priority: 5 },
 };
 
@@ -46,17 +47,19 @@ export default function AdminSoloMonitor() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [pending, e2h, e3h, e5h] = await Promise.allSettled([
+    const [pending, e2h, e3h, e5h, e9h] = await Promise.allSettled([
       base44.entities.SoloCheckIn.filter({ status: 'pending' }, '-scheduled_time', 50),
       base44.entities.SoloCheckIn.filter({ status: 'escalated_2h' }, '-scheduled_time', 50),
       base44.entities.SoloCheckIn.filter({ status: 'escalated_3h' }, '-scheduled_time', 50),
       base44.entities.SoloCheckIn.filter({ status: 'escalated_5h' }, '-scheduled_time', 50),
+      base44.entities.SoloCheckIn.filter({ status: 'escalated_9h' }, '-scheduled_time', 50),
     ]);
     const all = [
       ...(pending.value || []),
       ...(e2h.value || []),
       ...(e3h.value || []),
       ...(e5h.value || []),
+      ...(e9h.value || []),
     ].sort((a, b) => (STATUS_CONFIG[a.status]?.priority ?? 9) - (STATUS_CONFIG[b.status]?.priority ?? 9));
     setCheckIns(all);
 
