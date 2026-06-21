@@ -2,60 +2,86 @@ import React, { useEffect, useState } from 'react';
 import { Shield, ArrowLeft, Lock, WifiOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import VaultDashboard from '@/components/vault/VaultDashboard';
 import VaultUploader from '@/components/vault/VaultUploader';
 import VaultPINGate from '@/components/vault/VaultPINGate';
 import { BRAND } from '@/lib/brandTokens';
 
 export default function PassportVault() {
-  const [user, setUser]       = useState(null);
+  // IMPORTANT: pull identity from the shared AuthContext instead of calling
+  // base44.auth.me() directly. AuthContext already restores a cached identity
+  // (morales_last_known_user) when offline; a page-local auth.me() call has no
+  // such fallback, so on every remount (refresh, leaving and returning, a
+  // fresh browser open) while offline it would fail/hang and the page would
+  // fall through to "Sign In Required" — looking exactly like the vault
+  // itself requiring network, when actually it was an auth check requiring it.
+  const { user, isLoadingAuth } = useAuth();
   const [hasVault, setHasVault] = useState(null);
   const [hasPIN, setHasPIN] = useState(null);
   const [pinVerified, setPinVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(async (u) => {
-      setUser(u);
-      if (u) {
-        // These are live network calls (base44.entities.*), not routed through
-        // useVault/vaultService's offline-first cache. If they throw or hang
-        // while offline, hasVault/hasPIN never get set and the page spins
-        // forever (even though VaultDashboard itself is offline-capable).
-        // Fall back to cached state so offline users can still reach the
-        // dashboard, which reads its own data from localStorage.
-        const cacheKey = `morales_vault_meta_${u.email.toLowerCase()}`;
-        const pinCacheKey = `morales_vault_haspin_${u.id}`;
+    if (isLoadingAuth) return; // wait for AuthContext to resolve (online or cached-offline)
 
-        try {
-          const vaults = await base44.entities.PassportVault.filter({ user_email: u.email, status: 'active' }, '-uploaded_at', 1);
-          setHasVault(vaults.length > 0);
-          try { localStorage.setItem(cacheKey + '_exists', vaults.length > 0 ? '1' : '0'); } catch (_) {}
-        } catch (err) {
-          console.warn('[PassportVault] vault lookup failed, falling back to cache:', err);
-          let cachedExists = false;
-          try { cachedExists = localStorage.getItem(cacheKey + '_exists') === '1'; } catch (_) {}
-          if (!cachedExists) {
-            try { cachedExists = JSON.parse(localStorage.getItem(cacheKey) || '[]').length > 0; } catch (_) {}
-          }
-          setHasVault(cachedExists);
-        }
-
-        try {
-          const pins = await base44.entities.VaultPIN.filter({ user_id: u.id });
-          const hasPinResult = pins.length > 0;
-          setHasPIN(hasPinResult);
-          try { localStorage.setItem(pinCacheKey, hasPinResult ? '1' : '0'); } catch (_) {}
-        } catch (err) {
-          console.warn('[PassportVault] PIN lookup failed, falling back to cache:', err);
-          let cachedHasPin = false;
-          try { cachedHasPin = localStorage.getItem(pinCacheKey) === '1'; } catch (_) {}
-          setHasPIN(cachedHasPin);
-        }
-      }
+    if (!user) {
       setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+      return;
+    }
+
+    let cancelled = false;
+
+    // Defensive timeout matching the PageLoader pattern: even though fetch
+    // usually rejects fast when offline, don't let a slow/hung request keep
+    // this page spinning indefinitely — fall back to cache after 6s.
+    const withTimeout = (promise, ms = 6000) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+      ]);
+
+    (async () => {
+      // These are live network calls (base44.entities.*), not routed through
+      // useVault/vaultService's offline-first cache. If they throw, hang, or
+      // time out while offline, fall back to cached state so offline users
+      // still reach the dashboard, which reads its own data from localStorage.
+      const cacheKey = `morales_vault_meta_${user.email.toLowerCase()}`;
+      const pinCacheKey = `morales_vault_haspin_${user.id}`;
+
+      try {
+        const vaults = await withTimeout(base44.entities.PassportVault.filter({ user_email: user.email, status: 'active' }, '-uploaded_at', 1));
+        if (cancelled) return;
+        setHasVault(vaults.length > 0);
+        try { localStorage.setItem(cacheKey + '_exists', vaults.length > 0 ? '1' : '0'); } catch (_) {}
+      } catch (err) {
+        console.warn('[PassportVault] vault lookup failed, falling back to cache:', err);
+        let cachedExists = false;
+        try { cachedExists = localStorage.getItem(cacheKey + '_exists') === '1'; } catch (_) {}
+        if (!cachedExists) {
+          try { cachedExists = JSON.parse(localStorage.getItem(cacheKey) || '[]').length > 0; } catch (_) {}
+        }
+        if (!cancelled) setHasVault(cachedExists);
+      }
+
+      try {
+        const pins = await withTimeout(base44.entities.VaultPIN.filter({ user_id: user.id }));
+        if (cancelled) return;
+        const hasPinResult = pins.length > 0;
+        setHasPIN(hasPinResult);
+        try { localStorage.setItem(pinCacheKey, hasPinResult ? '1' : '0'); } catch (_) {}
+      } catch (err) {
+        console.warn('[PassportVault] PIN lookup failed, falling back to cache:', err);
+        let cachedHasPin = false;
+        try { cachedHasPin = localStorage.getItem(pinCacheKey) === '1'; } catch (_) {}
+        if (!cancelled) setHasPIN(cachedHasPin);
+      }
+
+      if (!cancelled) setLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, isLoadingAuth]);
 
   const handlePINVerified = () => {
     setPinVerified(true);
