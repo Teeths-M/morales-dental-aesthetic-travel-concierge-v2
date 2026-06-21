@@ -130,6 +130,7 @@
         "escalated_2h",
         "escalated_3h",
         "escalated_5h",
+        "escalated_9h",
         "resolved"
       ],
       "default": "pending"

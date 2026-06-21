@@ -80,8 +80,12 @@ Deno.serve(async (req) => {
       { status: 'escalated_3h' }, '-scheduled_time', 100
     );
 
-    const allCheckIns = [...pendingCheckIns, ...escalated2hCheckIns, ...escalated3hCheckIns];
-    let escalated2h = 0, escalated3h = 0, escalated5h = 0;
+    const escalated5hCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
+      { status: 'escalated_5h' }, '-scheduled_time', 100
+    );
+
+    const allCheckIns = [...pendingCheckIns, ...escalated2hCheckIns, ...escalated3hCheckIns, ...escalated5hCheckIns];
+    let escalated2h = 0, escalated3h = 0, escalated5h = 0, escalated9h = 0;
 
     for (const checkIn of allCheckIns) {
       if (!checkIn.sent_time) continue;
@@ -258,13 +262,75 @@ Deno.serve(async (req) => {
 
         escalated5h++;
       }
+
+      // ── 9h: Final Emergency Dispatch — Police/Embassy ────────────────────
+      if (hoursOverdue >= 9 && checkIn.status === 'escalated_5h') {
+        await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, {
+          status: 'escalated_9h',
+          escalation_level: 'police_required',
+          police_escalation_required_at: now.toISOString(),
+        });
+
+        // Immediately flip case to Critical
+        try {
+          await base44.asServiceRole.entities.CaseRecord.update(checkIn.case_id, { case_priority: 'Critical' });
+        } catch (_) {}
+
+        let latestLoc = await getLatestLocation(base44, checkIn.case_id);
+        const locStr = latestLoc?.latitude
+          ? `${latestLoc.latitude.toFixed(5)}, ${latestLoc.longitude.toFixed(5)}`
+          : latestLoc?.place_label || 'Unknown';
+        const mapsUrl = latestLoc?.latitude
+          ? `https://www.google.com/maps/dir/?api=1&destination=${latestLoc.latitude},${latestLoc.longitude}&travelmode=driving`
+          : null;
+
+        if (adminEmail) {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              from_name: 'Morales Safe-T EMERGENCY',
+              to: adminEmail,
+              subject: `🆘 9H EMERGENCY DISPATCH — ${checkIn.user_name} — CONTACT POLICE/EMBASSY NOW`,
+              body: `<div style="background:#7f1d1d;color:white;padding:20px;border-radius:8px;">
+                <h2 style="margin:0;">🆘 9-Hour Emergency Escalation — Final Tier</h2></div>
+                <div style="padding:20px;border:2px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;">
+                <p><strong>Traveler:</strong> ${checkIn.user_name}</p>
+                <p><strong>Email:</strong> ${checkIn.user_email}</p>
+                <p><strong>Phone:</strong> ${checkIn.user_phone || 'N/A'}</p>
+                <p><strong>Case ID:</strong> ${checkIn.case_id}</p>
+                <p><strong>Last Known Location:</strong> ${locStr}</p>
+                <p><strong>Hours Overdue:</strong> ${hoursOverdue.toFixed(1)}h</p>
+                ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#7f1d1d;">📍 Get Directions</a></p>` : ''}
+                <p style="color:#7f1d1d;font-weight:bold;font-size:16px;">CONTACT LOCAL POLICE AND NEAREST EMBASSY IMMEDIATELY. Case has been set to CRITICAL priority.</p></div>`,
+            });
+          } catch (_) {}
+        }
+
+        // Audit log
+        const prevHash9 = await getLastAuditHash(base44);
+        await base44.asServiceRole.entities.AuditLog.create({
+          event_type: 'safe_t_critical_block',
+          actor_id: 'system',
+          actor_role: 'automated',
+          actor_name: 'Solo Safety Escalation Engine',
+          resource_type: 'SoloCheckIn',
+          resource_id: checkIn.id,
+          resource_name: `Round ${checkIn.check_in_round}`,
+          case_id: checkIn.case_id,
+          details: { escalation: '9h_emergency_dispatch', hours_overdue: hoursOverdue, last_location: locStr },
+          sensitive: true,
+          timestamp: now.toISOString(),
+          prev_hash: prevHash9,
+        });
+
+        escalated9h++;
+      }
     }
 
     // ── 3 missed rounds: switch case to high-risk monitoring ─────────────
     // Check per-case missed round totals across all rounds
     const allCaseIds = [...new Set(allCheckIns.map(c => c.case_id))];
     for (const cid of allCaseIds) {
-      const caseMissed = allCheckIns.filter(c => c.case_id === cid && ['escalated_3h', 'escalated_5h'].includes(c.status));
+      const caseMissed = allCheckIns.filter(c => c.case_id === cid && ['escalated_3h', 'escalated_5h', 'escalated_9h'].includes(c.status));
       if (caseMissed.length >= 3) {
         try {
           const recentCases = await base44.asServiceRole.entities.CaseRecord.filter(
@@ -285,7 +351,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ escalated2h, escalated3h, escalated5h, checked: allCheckIns.length });
+    return Response.json({ escalated2h, escalated3h, escalated5h, escalated9h, checked: allCheckIns.length });
   } catch (_) {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }

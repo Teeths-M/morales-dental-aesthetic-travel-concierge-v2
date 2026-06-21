@@ -35,9 +35,10 @@ export default function SoloCheckInSettings() {
 
   // Derive the latest actionable check-in status
   const latestActiveCheckIn = checkIns.find(c =>
-    ['pending', 'escalated_2h', 'escalated_3h', 'escalated_5h'].includes(c.status)
+    ['pending', 'escalated_2h', 'escalated_3h', 'escalated_5h', 'escalated_9h'].includes(c.status)
   );
-  const isTerminalEscalation = latestActiveCheckIn?.status === 'escalated_5h';
+  const isTerminalEscalation = ['escalated_5h', 'escalated_9h'].includes(latestActiveCheckIn?.status);
+  const is9hEmergency = latestActiveCheckIn?.status === 'escalated_9h';
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -106,6 +107,7 @@ export default function SoloCheckInSettings() {
       escalated_2h: { label: '2h Escalated', color: 'bg-orange-100 text-orange-700' },
       escalated_3h: { label: '3h Escalated', color: 'bg-red-100 text-red-700' },
       escalated_5h: { label: '5h — Security Dispatched', color: 'bg-red-200 text-red-800 font-bold' },
+      escalated_9h: { label: '9h — EMERGENCY DISPATCH', color: 'bg-red-900 text-white' },
       resolved: { label: 'Resolved', color: 'bg-slate-100 text-slate-600' },
     };
     const cfg = configs[status] || configs.pending;
@@ -148,11 +150,15 @@ export default function SoloCheckInSettings() {
             className="mb-6"
           >
             {isTerminalEscalation ? (
-              <div className="w-full h-16 bg-red-50 border-2 border-red-300 rounded-2xl flex items-center justify-center gap-3 px-6">
-                <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+              <div className={`w-full h-16 rounded-2xl flex items-center justify-center gap-3 px-6 border-2 ${is9hEmergency ? 'bg-red-900 border-red-900' : 'bg-red-50 border-red-300'}`}>
+                <AlertTriangle className={`w-6 h-6 flex-shrink-0 ${is9hEmergency ? 'text-white' : 'text-red-600'}`} />
                 <div className="text-left">
-                  <p className="text-sm font-bold text-red-700">Security Dispatched — Admin Action Required</p>
-                  <p className="text-xs text-red-500">Your emergency contact and security have been alerted. Contact your coordinator to resolve.</p>
+                  <p className={`text-sm font-bold ${is9hEmergency ? 'text-white' : 'text-red-700'}`}>
+                    {is9hEmergency ? '🆘 Emergency Dispatch Active — Police/Embassy Notified' : 'Security Dispatched — Admin Action Required'}
+                  </p>
+                  <p className={`text-xs ${is9hEmergency ? 'text-red-200' : 'text-red-500'}`}>
+                    {is9hEmergency ? 'Case escalated to CRITICAL. Local authorities have been engaged.' : 'Your emergency contact and security have been alerted. Contact your coordinator to resolve.'}
+                  </p>
                 </div>
               </div>
             ) : (
