@@ -1,166 +1,159 @@
 import React from 'react';
-import { ArrowLeft, WifiOff, Smartphone, FileText, MessageSquare, QrCode, Shield, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { WifiOff, AlertTriangle, Shield, Smartphone, MessageSquare, Download, ArrowLeft, CheckCircle } from 'lucide-react';
 
-const steps = [
-  {
-    number: '1',
-    title: 'Before You Travel — While on Wi-Fi',
-    color: 'bg-emerald-50 border-emerald-200',
-    titleColor: 'text-emerald-800',
-    icon: CheckCircle2,
-    iconColor: 'text-emerald-600',
-    items: [
-      'Open the app and go to your Dashboard.',
-      'Tap "Passport Vault" and open each document one by one — this saves them to your phone.',
-      'Visit the "Offline Mode" page so your phone downloads the emergency tools.',
-      'In Safari, tap the Share button (square with arrow) → "Add to Home Screen" for best offline access.',
-    ],
-  },
-  {
-    number: '2',
-    title: 'When You Have No Signal',
-    color: 'bg-blue-50 border-blue-200',
-    titleColor: 'text-blue-800',
-    icon: WifiOff,
-    iconColor: 'text-blue-600',
-    items: [
-      'Open the app from your Home Screen icon (not Safari directly).',
-      'Navigate to "Offline Mode" from the menu.',
-      'Your saved documents and emergency tools will load without internet.',
-      'The green/amber dot on screen shows your current connection status.',
-    ],
-  },
-  {
-    number: '3',
-    title: 'SMS Shortcodes — Works on Any Network',
-    color: 'bg-violet-50 border-violet-200',
-    titleColor: 'text-violet-800',
-    icon: MessageSquare,
-    iconColor: 'text-violet-600',
-    items: [
-      'Even with no data, SMS still works on most mobile networks.',
-      'Open your phone\'s regular text messaging app.',
-      'Text CHECKIN OK [your case ID] to confirm you are safe.',
-      'Text SOS [your case ID] to trigger an emergency escalation.',
-      'Your coordinator number is shown on the Offline Mode page.',
-    ],
-  },
-  {
-    number: '4',
-    title: 'Emergency PIN — No Internet Needed',
-    color: 'bg-amber-50 border-amber-200',
-    titleColor: 'text-amber-800',
-    icon: Smartphone,
-    iconColor: 'text-amber-600',
-    items: [
-      'Go to Offline Mode → tap the "Emergency PIN" tab.',
-      'Generate your PIN while you still have internet.',
-      'Write it down or screenshot it — keep it safe.',
-      'Give this PIN to any Morales coordinator or kiosk to identify yourself without your phone.',
-    ],
-  },
-  {
-    number: '5',
-    title: 'Offline Documents — Your Vault',
-    color: 'bg-slate-50 border-slate-200',
-    titleColor: 'text-slate-800',
-    icon: FileText,
-    iconColor: 'text-slate-600',
-    items: [
-      'Go to Offline Mode → tap the "Offline Docs" tab.',
-      'Any document you opened before losing signal is cached here.',
-      'Your passport, medical records, and travel itinerary are available.',
-      'Documents are encrypted — only you can view them.',
-    ],
-  },
-];
+const Step = ({ number, title, children }) => (
+  <div className="flex gap-4">
+    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">{number}</div>
+    <div>
+      <p className="text-white font-semibold mb-1">{title}</p>
+      <div className="text-slate-400 text-sm leading-relaxed">{children}</div>
+    </div>
+  </div>
+);
 
-const tips = [
-  { icon: '📵', text: 'Turn off Airplane Mode before you travel so the app can fully download your data.' },
-  { icon: '🔒', text: 'Never use Private/Incognito mode — it prevents the app from saving anything offline.' },
-  { icon: '🔋', text: 'Keep your phone charged. Offline mode only works if your phone is on.' },
-  { icon: '📝', text: 'Write down your Emergency PIN and Case ID on paper as a backup.' },
-];
+const Section = ({ icon: Icon, color, title, children }) => (
+  <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-5">
+    <div className={`flex items-center gap-3 mb-4`}>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <h2 className="text-white font-bold text-lg">{title}</h2>
+    </div>
+    <div className="space-y-4">{children}</div>
+  </div>
+);
 
 export default function OfflineGuide() {
-  const navigate = useNavigate();
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isAndroid = /android/i.test(navigator.userAgent);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <div className="border-b border-slate-700">
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <button onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-6">
-            <ArrowLeft className="w-3.5 h-3.5" /> Back
-          </button>
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 bg-blue-900/50 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <WifiOff className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">Traveler Guide</p>
-              <h1 className="text-2xl font-bold text-white">No Signal? No Problem.</h1>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
+      <div className="max-w-2xl mx-auto">
+
+        {/* Back */}
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white mb-6">
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+        </Link>
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-900/50 border border-blue-700/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <WifiOff className="w-8 h-8 text-blue-400" />
           </div>
-          <p className="text-slate-400 text-sm leading-relaxed">
-            Follow these simple steps to stay safe and connected even when you have no internet.
+          <h1 className="text-3xl font-bold text-white mb-2">No Signal? No Problem.</h1>
+          <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
+            Everything you need to stay safe and access your documents even when you have no internet connection.
           </p>
         </div>
-      </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+        <div className="space-y-5">
 
-        {/* Steps */}
-        {steps.map((step) => {
-          const Icon = step.icon;
-          return (
-            <div key={step.number} className={`rounded-2xl border p-5 ${step.color}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <span className="text-sm font-black text-slate-700">{step.number}</span>
+          {/* Install the app */}
+          <Section icon={Download} color="bg-emerald-700/50 text-emerald-300" title="Step 1 — Install the App on Your Phone">
+            <p className="text-slate-400 text-sm">This is the most important step. Installing the app on your home screen lets it work offline.</p>
+            <div className="space-y-3">
+              {(isIOS || (!isIOS && !isAndroid)) && (
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+                  <p className="text-white text-sm font-semibold mb-1">📱 iPhone / iPad (Safari)</p>
+                  <ol className="text-slate-400 text-sm space-y-1 list-decimal list-inside">
+                    <li>Open this page in <strong className="text-white">Safari</strong></li>
+                    <li>Tap the <strong className="text-white">Share ⬆</strong> button at the bottom</li>
+                    <li>Scroll down and tap <strong className="text-white">"Add to Home Screen"</strong></li>
+                    <li>Tap <strong className="text-white">Add</strong> — done!</li>
+                  </ol>
                 </div>
-                <Icon className={`w-4 h-4 ${step.iconColor} flex-shrink-0`} />
-                <h2 className={`font-bold text-sm ${step.titleColor}`}>{step.title}</h2>
+              )}
+              {(isAndroid || (!isIOS && !isAndroid)) && (
+                <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700">
+                  <p className="text-white text-sm font-semibold mb-1">🤖 Android (Chrome)</p>
+                  <ol className="text-slate-400 text-sm space-y-1 list-decimal list-inside">
+                    <li>Open this page in <strong className="text-white">Chrome</strong></li>
+                    <li>Tap the <strong className="text-white">⋮ menu</strong> (top right)</li>
+                    <li>Tap <strong className="text-white">"Add to Home screen"</strong></li>
+                    <li>Tap <strong className="text-white">Add</strong> — done!</li>
+                  </ol>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                <CheckCircle className="w-4 h-4" />
+                Once installed, the app loads instantly — even in Airplane Mode.
               </div>
-              <ul className="space-y-2.5">
-                {step.items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-current mt-1.5 flex-shrink-0 opacity-50" />
-                    <p className="text-sm text-slate-700 leading-relaxed">{item}</p>
-                  </li>
-                ))}
-              </ul>
             </div>
-          );
-        })}
+          </Section>
 
-        {/* Tips */}
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <h3 className="font-bold text-white text-sm">Important Reminders</h3>
-          </div>
-          <div className="space-y-3">
-            {tips.map((tip, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <span className="text-base flex-shrink-0">{tip.icon}</span>
-                <p className="text-sm text-slate-300 leading-relaxed">{tip.text}</p>
+          {/* Access SOS */}
+          <Section icon={AlertTriangle} color="bg-red-700/50 text-red-300" title="Accessing SOS Without Signal">
+            <Step number="1" title="Open the installed app">
+              Tap the Morales Medical icon on your home screen. It loads from your device — no internet needed.
+            </Step>
+            <Step number="2" title='Tap the red SOS button'>
+              A pulsing red <strong className="text-white">Emergency SOS</strong> button is always visible in the bottom-left corner of every screen. Tap it to reach the Emergency Hub.
+            </Step>
+            <Step number="3" title="Use offline emergency options">
+              The Emergency Hub works without internet and gives you:
+              <ul className="mt-2 space-y-1 list-disc list-inside text-slate-400">
+                <li>Emergency PIN vault access</li>
+                <li>SMS shortcodes to alert your guardian</li>
+                <li>Local emergency numbers</li>
+                <li>Your cached passport & documents</li>
+              </ul>
+            </Step>
+          </Section>
+
+          {/* Access Documents Offline */}
+          <Section icon={Shield} color="bg-amber-700/50 text-amber-300" title="Access Your Documents Offline">
+            <Step number="1" title="Set up your Emergency PIN before you travel">
+              Go to <Link to="/emergency" className="text-blue-400 underline">Emergency Access</Link> → set a 4-digit PIN. This lets you unlock your vault without internet.
+            </Step>
+            <Step number="2" title="Open Emergency Access when offline">
+              Navigate to <strong className="text-white">/emergency-access</strong> in the app. Enter your email and PIN — your passport, visas, and bookings will be displayed from the local cache.
+            </Step>
+          </Section>
+
+          {/* SMS Backup */}
+          <Section icon={MessageSquare} color="bg-purple-700/50 text-purple-300" title="SMS Backup — No App Needed">
+            <p className="text-slate-400 text-sm">If you have no data but have cellular signal, SMS shortcodes still work:</p>
+            <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700 space-y-3">
+              <div className="flex gap-3 items-start">
+                <code className="bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs font-mono shrink-0">SOS</code>
+                <p className="text-slate-400 text-sm">Send to your Morales number to trigger an emergency alert to your guardian</p>
               </div>
-            ))}
+              <div className="flex gap-3 items-start">
+                <code className="bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs font-mono shrink-0">CHECKIN ok</code>
+                <p className="text-slate-400 text-sm">Confirms your Solo Traveler safety check-in via SMS</p>
+              </div>
+              <div className="flex gap-3 items-start">
+                <code className="bg-purple-900/50 text-purple-300 px-2 py-1 rounded text-xs font-mono shrink-0">DRIVER [code]</code>
+                <p className="text-slate-400 text-sm">Verify your assigned driver via SMS handshake</p>
+              </div>
+            </div>
+            <p className="text-slate-500 text-xs">Your Morales SMS number is provided in your onboarding email and on the Emergency Hub page.</p>
+          </Section>
+
+          {/* Quick links */}
+          <div className="bg-slate-800/40 border border-slate-700 rounded-2xl p-5">
+            <p className="text-white font-semibold mb-3">Quick Links</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: '🆘 Emergency Hub', to: '/emergency' },
+                { label: '🔐 Emergency Access', to: '/emergency-access' },
+                { label: '📂 Offline Mode', to: '/offline' },
+                { label: '🛂 My Vault', to: '/passport-vault' },
+              ].map(({ label, to }) => (
+                <Link key={to} to={to}
+                  className="bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-sm text-white text-center transition-colors">
+                  {label}
+                </Link>
+              ))}
+            </div>
           </div>
+
         </div>
 
-        {/* CTA */}
-        <button
-          onClick={() => navigate('/offline')}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-2xl text-sm transition-colors">
-          Open Offline Mode Now →
-        </button>
-
-        <p className="text-center text-xs text-slate-500 pb-4">
-          Access this guide anytime at <span className="text-slate-300 font-mono">/offline-guide</span>
+        <p className="text-center text-xs text-slate-600 mt-8 pb-4">
+          Morales Medical · Emergency Infrastructure · No signal required after installation
         </p>
       </div>
     </div>

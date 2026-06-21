@@ -219,6 +219,9 @@ export default function Header() {
               <Link key={link.path} to={link.path} onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-white">{link.name}</Link>
             ))}
             <Link to="/visa-assist" onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-white">Visa Assist</Link>
+            <Link to="/offline-guide" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 text-red-400 hover:text-red-300 font-semibold">
+              🆘 Offline &amp; SOS Guide
+            </Link>
             <Link to="/passport-vault" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 text-white/80 hover:text-white">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               My Vault
