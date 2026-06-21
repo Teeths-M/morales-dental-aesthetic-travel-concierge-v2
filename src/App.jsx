@@ -32,7 +32,7 @@ const PageLoader = () => (
 );
 
 // Paths that must work even when auth is loading or failing (offline/emergency use)
-const PUBLIC_BYPASS_PATHS = ['/offline', '/emergency-manifest', '/emergency-access', '/emergency'];
+const PUBLIC_BYPASS_PATHS = ['/offline', '/offline-guide', '/emergency-manifest', '/emergency-access', '/emergency', '/guardian', '/survey', '/feedback', '/luggage', '/check-in', '/vault/share'];
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -51,8 +51,12 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
+      // Only redirect to login for truly protected paths — token/public routes handle their own auth
+      const isProtectedPath = ['/dashboard', '/safe-t', '/booking', '/passport-vault', '/insurance', '/travel-services', '/trip-overview', '/walkie-talkie', '/baggage-tracker', '/nightlife-safety', '/wilderness-safety', '/medical-intake', '/my-reviews'].some(p => currentPath.startsWith(p));
+      if (isProtectedPath) {
+        navigateToLogin();
+        return null;
+      }
     }
   }
 
