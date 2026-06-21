@@ -25,6 +25,20 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// SEC-04: PBKDF2 PIN hashing — 200k iterations, matches lib/vaultEncryption.js pattern.
+// Salt is derived from email so it's consistent per-user without storing it separately.
+async function pbkdf2Hash(pin, email) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
+  // Use SHA-256 of email as salt — deterministic, non-secret, avoids extra DB field
+  const saltBuf = await crypto.subtle.digest('SHA-256', enc.encode('morales-pin-salt:' + email.toLowerCase()));
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuf, iterations: 200000 },
+    keyMaterial, 256
+  );
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Generates a cryptographically random hex token
 function generateRawToken() {
   const rawBytes = new Uint8Array(32);
@@ -70,7 +84,7 @@ Deno.serve(async (req) => {
       if (!new_pin || new_pin.length !== 6 || !/^\d{6}$/.test(new_pin)) {
         return Response.json({ error: 'PIN must be exactly 6 digits' }, { status: 400 });
       }
-      const hash = await sha256(new_pin + user_email);
+      const hash = await pbkdf2Hash(new_pin, user_email);
       const existing = await base44.asServiceRole.entities.EmergencyPIN.filter({ user_email });
       const now = new Date().toISOString();
       if (existing.length > 0) {
@@ -105,7 +119,7 @@ Deno.serve(async (req) => {
         return Response.json({ verified: false, error: 'Too many failed attempts. Try again later.', locked_until: record.locked_until }, { status: 429 });
       }
 
-      const hash = await sha256(pin + user_email);
+      const hash = await pbkdf2Hash(pin, user_email);
       const isMatch = hash === record.pin_hash;
 
       if (isMatch) {
