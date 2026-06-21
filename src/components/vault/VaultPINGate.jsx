@@ -70,24 +70,64 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
 
     setLoading(true);
     
-    // OFFLINE-FIRST: Try local verification first
-    try {
-      const userEmail = localStorage.getItem('morales_user_email') || user?.email;
+    const userEmail = localStorage.getItem('morales_user_email') || user?.email;
+    
+    // OFFLINE-FIRST: If offline or no email, verify locally immediately
+    if (!navigator.onLine || !userEmail) {
+      const storedHash = localStorage.getItem(`vault_pin_hash_${userEmail?.toLowerCase()}`);
+      const storedSalt = localStorage.getItem(`vault_pin_salt_${userEmail?.toLowerCase()}`);
       
-      if (!navigator.onLine || !userEmail) {
-        // Offline mode - verify against localStorage
-        const storedHash = localStorage.getItem(`vault_pin_hash_${userEmail?.toLowerCase()}`);
-        const storedSalt = localStorage.getItem(`vault_pin_salt_${userEmail?.toLowerCase()}`);
-        
-        if (!storedHash || !storedSalt) {
-          setError('No PIN found. Please set a new PIN.');
-          setIsSettingPIN(true);
-          setLoading(false);
-          return;
-        }
-        
+      if (!storedHash || !storedSalt) {
+        setError('No PIN found. Please set a new PIN.');
+        setIsSettingPIN(true);
+        setLoading(false);
+        return;
+      }
+      
+      const isValid = await verifyPIN(pinString, storedSalt, storedHash);
+      
+      if (isValid) {
+        onPINVerified();
+      } else {
+        setError('Incorrect PIN. Please try again.');
+        setPin(['', '', '', '']);
+        inputRefs[0]?.current?.focus();
+      }
+      setLoading(false);
+      return;
+    }
+    
+    // ONLINE: Try server with 2s timeout, then fallback to local
+    const serverPromise = base44.functions.invoke('verifyVaultPIN', {
+      pin: pinString,
+      action: 'verify'
+    });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Server timeout')), 2000)
+    );
+    
+    try {
+      const response = await Promise.race([serverPromise, timeoutPromise]);
+      
+      if (response.data.valid) {
+        onPINVerified();
+      } else if (response.data.error === 'No PIN set') {
+        setIsSettingPIN(true);
+        setError('No PIN found. Please set a new PIN.');
+      } else {
+        setError('Incorrect PIN. Please try again.');
+        setPin(['', '', '', '']);
+        inputRefs[0]?.current?.focus();
+      }
+    } catch (serverErr) {
+      // Server failed or timed out - fallback to local verification
+      console.warn('Server verification failed/timed out, using local:', serverErr);
+      const storedHash = localStorage.getItem(`vault_pin_hash_${userEmail.toLowerCase()}`);
+      const storedSalt = localStorage.getItem(`vault_pin_salt_${userEmail.toLowerCase()}`);
+      
+      if (storedHash && storedSalt) {
         const isValid = await verifyPIN(pinString, storedSalt, storedHash);
-        
         if (isValid) {
           onPINVerified();
         } else {
@@ -95,49 +135,9 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
           setPin(['', '', '', '']);
           inputRefs[0]?.current?.focus();
         }
-        setLoading(false);
-        return;
+      } else {
+        setError('Network error and no local PIN found.');
       }
-      
-      // Online mode - verify with server (fallback to local if server fails)
-      try {
-        const response = await base44.functions.invoke('verifyVaultPIN', {
-          pin: pinString,
-          action: 'verify'
-        });
-
-        if (response.data.valid) {
-          onPINVerified();
-        } else if (response.data.error === 'No PIN set') {
-          setIsSettingPIN(true);
-          setError('No PIN found. Please set a new PIN.');
-        } else {
-          setError('Incorrect PIN. Please try again.');
-          setPin(['', '', '', '']);
-          inputRefs[0]?.current?.focus();
-        }
-      } catch (serverErr) {
-        // Server failed - fallback to local verification
-        console.warn('Server verification failed, trying local:', serverErr);
-        const storedHash = localStorage.getItem(`vault_pin_hash_${userEmail.toLowerCase()}`);
-        const storedSalt = localStorage.getItem(`vault_pin_salt_${userEmail.toLowerCase()}`);
-        
-        if (storedHash && storedSalt) {
-          const isValid = await verifyPIN(pinString, storedSalt, storedHash);
-          if (isValid) {
-            onPINVerified();
-          } else {
-            setError('Incorrect PIN. Please try again.');
-            setPin(['', '', '', '']);
-            inputRefs[0]?.current?.focus();
-          }
-        } else {
-          setError('Network error and no local PIN found.');
-        }
-      }
-    } catch (err) {
-      console.error('PIN verification error:', err);
-      setError('Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }

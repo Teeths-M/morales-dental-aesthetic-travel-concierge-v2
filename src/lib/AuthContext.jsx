@@ -22,11 +22,30 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   // Use module-level PREVIEW_USER — single source of truth
   const isPreviewAdmin = appParams.isPreview || (Boolean(appParams.previewToken) && window.location.hostname.includes('preview'));
 
   useEffect(() => {
+    // Listen for online/offline events globally
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Re-run auth check when back online to refresh session
+      if (!user?.isPreviewAdmin) {
+        checkAppState();
+      }
+    };
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
     checkAppState();
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const checkAppState = async () => {
@@ -200,6 +219,7 @@ export const AuthProvider = ({ children }) => {
       authError,
       appPublicSettings,
       authChecked,
+      isOffline,
       logout,
       navigateToLogin,
       checkUserAuth,

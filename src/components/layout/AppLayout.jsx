@@ -5,6 +5,7 @@ import WhatsAppButton from './WhatsAppButton';
 import SafeTCompanion from '@/components/safet/SafeTCompanion';
 import Header from './Header';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
+import OfflineBanner from './OfflineBanner';
 import { useAuth } from '@/lib/AuthContext';
 import BiometricGate from '@/components/security/BiometricGate';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
@@ -16,6 +17,9 @@ export default function AppLayout() {
   return (
     <BiometricGate>
       <div className="min-h-screen flex flex-col">
+        {/* Offline Mode Banner - self-managed via window online/offline events */}
+        <OfflineBanner />
+        
         <Header />
         <main className="flex-1 pt-[68px]">
           <Outlet />
