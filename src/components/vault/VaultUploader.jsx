@@ -64,22 +64,32 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         const uploadRes = await base44.integrations.Core.UploadFile({ file });
         const extractRes = await base44.functions.invoke('extractPassportData', { file_url: uploadRes.data.file_url });
         
-        if (extractRes.data?.status === 'success' && extractRes.data?.output) {
-          const data = extractRes.data.output;
-          setExtractedData(data);
+        console.log('[VaultUploader] Extraction response:', extractRes.data);
+        
+        // Check if extraction was successful
+        if (extractRes.data?.success && extractRes.data?.extracted) {
+          const data = extractRes.data.extracted;
+          console.log('[VaultUploader] Extracted data:', data);
           
-          // Auto-populate fields
+          setExtractedData({
+            ...data,
+            warnings: extractRes.data.warnings || []
+          });
+          
+          // Auto-populate fields with extracted data
           setVaultMeta(p => ({
             ...p,
-            last_4_digits: data.document_number ? data.document_number.slice(-4) : '',
+            last_4_digits: data.last_4 || (data.passport_number ? data.passport_number.slice(-4) : '') || '',
             expiry_date: data.expiry_date || '',
             nationality: data.nationality || '',
             full_name_redacted: data.full_name || '',
           }));
+        } else {
+          console.log('[VaultUploader] Extraction failed - no data returned');
         }
       } catch (err) {
-        console.log('[VaultUploader] Auto-extract failed:', err.message);
-        // Continue without extraction - not critical
+        console.log('[VaultUploader] Auto-extract error:', err.message);
+        // Continue without extraction - not critical, user can fill manually
       }
       setExtracting(false);
     }
@@ -228,9 +238,15 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
               <div className="flex-1">
                 <p className="text-sm font-bold text-green-900">✓ Passport details auto-filled!</p>
                 <p className="text-xs text-green-700 mt-1">
-                  We extracted: <span className="font-semibold">{extractedData.full_name || 'Name'}</span> • 
+                  Extracted: <span className="font-semibold">{extractedData.full_name || 'Name'}</span> • 
                   <span className="font-semibold"> {extractedData.nationality || 'Nationality'}</span>
+                  {extractedData.expiry_date && <span> • Expires: {extractedData.expiry_date}</span>}
                 </p>
+                {extractedData.warnings && extractedData.warnings.length > 0 && (
+                  <div className="mt-2 text-xs text-amber-700 font-semibold">
+                    ⚠ {extractedData.warnings[0]}
+                  </div>
+                )}
                 <button 
                   onClick={() => { setExtractedData(null); setVaultMeta(p => ({ ...p, last_4_digits: '', expiry_date: '', nationality: '', full_name_redacted: '' })); }}
                   className="text-xs text-green-700 underline mt-2 hover:text-green-900"
