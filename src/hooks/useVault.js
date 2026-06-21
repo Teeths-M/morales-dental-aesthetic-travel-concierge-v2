@@ -16,6 +16,17 @@ export function useVault(user) {
     if (!user?.email) return;
     setLoading(true);
     setError(null);
+
+    if (!navigator.onLine) {
+      // Offline: load from cache immediately
+      try {
+        const cached = localStorage.getItem(`morales_vault_meta_${user.email.toLowerCase()}`);
+        if (cached) setVaults(JSON.parse(cached));
+      } catch (_) {}
+      setLoading(false);
+      return;
+    }
+
     try {
       const [docs, links, logs] = await Promise.all([
         vaultService.getActiveDocuments(user.email),
@@ -27,7 +38,12 @@ export function useVault(user) {
       setAuditLogs(logs  || []);
     } catch (err) {
       console.error('[useVault] load failed:', err);
-      setError('Failed to load vault data.');
+      // Network failed mid-request — try cache
+      try {
+        const cached = localStorage.getItem(`morales_vault_meta_${user.email.toLowerCase()}`);
+        if (cached) setVaults(JSON.parse(cached));
+      } catch (_) {}
+      setError('Offline — showing cached documents.');
     } finally {
       setLoading(false);
     }
