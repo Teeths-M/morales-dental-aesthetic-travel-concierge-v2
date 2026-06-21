@@ -25,11 +25,33 @@ export default function EmergencyHub() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const CASE_CACHE_KEY = 'morales_emergency_active_case';
+    const USER_CACHE_KEY = 'morales_emergency_user';
+
+    // Load from cache immediately so offline mode has data
+    try {
+      const cachedUser = JSON.parse(localStorage.getItem(USER_CACHE_KEY) || 'null');
+      const cachedCase = JSON.parse(localStorage.getItem(CASE_CACHE_KEY) || 'null');
+      if (cachedUser) setUser(cachedUser);
+      if (cachedCase) setActiveCase(cachedCase);
+    } catch (_) {}
+
+    if (!navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     base44.auth.me().then(async (u) => {
       setUser(u);
+      try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify(u)); } catch (_) {}
       if (u) {
-        const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 1);
-        if (cases[0]) setActiveCase(cases[0]);
+        try {
+          const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 1);
+          if (cases[0]) {
+            setActiveCase(cases[0]);
+            try { localStorage.setItem(CASE_CACHE_KEY, JSON.stringify(cases[0])); } catch (_) {}
+          }
+        } catch (_) {}
       }
       setLoading(false);
     }).catch(() => setLoading(false));
