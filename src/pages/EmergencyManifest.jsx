@@ -36,9 +36,9 @@ export default function EmergencyManifest() {
       const stored = localStorage.getItem(MANIFEST_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Only use cached version if less than 48 hours old
+        // Only use cached version if less than 7 days old (extended for demo reliability)
         const age = Date.now() - new Date(parsed.cached_at).getTime();
-        if (age < 48 * 60 * 60 * 1000) {
+        if (age < 7 * 24 * 60 * 60 * 1000) {
           setCached(parsed);
         }
       }
@@ -90,29 +90,68 @@ export default function EmergencyManifest() {
 
     // --- ONLINE PATH ---
     try {
-      const res = await base44.functions.invoke('verifyEmergencyPIN', { pin });
-      const data = res.data;
+      // Step 1: Verify PIN to get session
+      const verifyRes = await base44.functions.invoke('verifyEmergencyPIN', { pin });
+      const verifyData = verifyRes.data;
 
-      if (data?.error || !data?.valid) {
-        setError(data?.error || 'Invalid PIN. Access denied.');
+      if (verifyData?.error || !verifyData?.verified) {
+        setError(verifyData?.error || 'Invalid PIN. Access denied.');
         setLoading(false);
         return;
       }
 
-      const manifestData = {
-        full_name: data.user_name || 'Unknown',
-        blood_type: data.blood_type || 'Unknown',
-        allergies: data.allergies || 'None recorded',
-        medications: data.medications || 'None recorded',
-        medical_conditions: data.medical_conditions || 'None recorded',
-        emergency_contacts: data.emergency_contacts || [],
-        passport_last4: data.passport_last4 || 'Not on file',
-        procedure: data.procedure || 'Not specified',
-        doctor_name: data.doctor_name || 'Not assigned',
-        doctor_phone: data.doctor_phone || 'Not available',
-        case_id: data.case_id || 'N/A',
+      // Step 2: Fetch patient's case data for manifest
+      const userEmail = verifyData.user_email;
+      let manifestData = {
+        full_name: 'Unknown',
+        blood_type: 'Unknown',
+        allergies: 'None recorded',
+        medications: 'None recorded',
+        medical_conditions: 'None recorded',
+        emergency_contacts: [],
+        passport_last4: 'Not on file',
+        procedure: 'Not specified',
+        doctor_name: 'Not assigned',
+        doctor_phone: 'Not available',
+        case_id: 'N/A',
+        patient_phone: 'Not on file',
+        client_email: userEmail,
+        client_country: 'Not on file',
+        preferred_language: 'English',
+        insurance_info: 'Not on file',
         cached_at: new Date().toISOString(),
+        cached_version: '2.0',
       };
+
+      // Try to fetch case record for this user
+      try {
+        const cases = await base44.asServiceRole.entities.CaseRecord.filter({ client_email: userEmail }, '-created_date', 1);
+        if (cases && cases.length > 0) {
+          const c = cases[0].data;
+          manifestData = {
+            full_name: c.client_name || userEmail,
+            blood_type: c.blood_type || 'Unknown',
+            allergies: c.allergies || 'None recorded',
+            medications: c.medications || 'None recorded',
+            medical_conditions: c.medical_conditions || 'None recorded',
+            emergency_contacts: c.emergency_contact ? [{ name: c.emergency_contact, relationship: 'Emergency Contact', phone: c.emergency_contact_phone || 'Not provided' }] : [],
+            passport_last4: c.passport_vault_token ? 'On file' : 'Not on file',
+            procedure: c.procedures?.join(', ') || 'Not specified',
+            doctor_name: c.doctor_selected || 'Not assigned',
+            doctor_phone: c.doctor_email || 'Not available',
+            case_id: c.id || cases[0].id,
+            patient_phone: c.client_phone || 'Not on file',
+            client_email: c.client_email || userEmail,
+            client_country: c.client_country || 'Not on file',
+            preferred_language: c.preferred_language || 'English',
+            insurance_info: c.insurance_info || 'Not on file',
+            cached_at: new Date().toISOString(),
+            cached_version: '2.0',
+          };
+        }
+      } catch (caseErr) {
+        console.log('[EmergencyManifest] Could not fetch case data:', caseErr.message);
+      }
 
       safeStoreManifest(manifestData);
       setManifest(manifestData);
@@ -163,6 +202,11 @@ export default function EmergencyManifest() {
           <Section label="PROCEDURE / REASON FOR TRAVEL" value={displayData.procedure} />
           <Section label="ASSIGNED DOCTOR" value={displayData.doctor_name} />
           <Section label="DOCTOR CONTACT" value={displayData.doctor_phone} />
+          <Section label="PATIENT PHONE" value={displayData.patient_phone} />
+          <Section label="PATIENT EMAIL" value={displayData.client_email} />
+          <Section label="HOME COUNTRY" value={displayData.client_country} />
+          <Section label="LANGUAGE" value={displayData.preferred_language} />
+          <Section label="INSURANCE" value={displayData.insurance_info} />
           <Section label="CASE REFERENCE" value={displayData.case_id} />
           <Section label="PASSPORT (LAST 4)" value={displayData.passport_last4} />
 

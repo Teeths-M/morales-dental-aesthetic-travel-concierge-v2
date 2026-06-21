@@ -34,20 +34,29 @@ export default function VaultDashboard({ user }) {
   const { vaults, shareLinks, auditLogs, loading, reload } = useVault(user);
   const [activeTab, setActiveTab] = useState('documents');
 
-  // Cache vault metadata to localStorage whenever it loads — enables offline emergency access
+  // Cache vault metadata to localStorage whenever it loads or changes — enables offline emergency access
   useEffect(() => {
     if (!loading && vaults.length > 0 && user?.email) {
       const key = `morales_vault_meta_${user.email.toLowerCase()}`;
       const meta = vaults.map(v => ({
         id: v.id,
         vault_id: v.id,
+        passport_token: v.passport_token,
         document_type: v.document_type,
         file_name: v.file_name,
         file_size_bytes: v.file_size_bytes,
+        mime_type: v.mime_type,
         redacted_for_display: v.redacted_for_display,
         uploaded_at: v.uploaded_at,
+        expires_at: v.expires_at,
+        is_emergency_accessible: v.is_emergency_accessible,
       }));
-      try { localStorage.setItem(key, JSON.stringify(meta)); } catch (_) {}
+      try { 
+        localStorage.setItem(key, JSON.stringify(meta));
+        console.log('[VaultDashboard] Cached', meta.length, 'documents for offline access');
+      } catch (e) {
+        console.error('[VaultDashboard] Cache failed:', e);
+      }
     }
   }, [vaults, loading, user?.email]);
 
