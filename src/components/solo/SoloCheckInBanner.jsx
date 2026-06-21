@@ -134,6 +134,18 @@ export default function SoloCheckInBanner() {
                 Approximate network location
               </div>
             )}
+            {(locStatus === 'none' || locStatus === 'ip_geo') && (
+              <button
+                type="button"
+                onClick={() => {
+                  locRef.current = { lat: 32.5149, lng: -117.0382, accuracy: 50, source: 'manual', place_label: 'Tijuana, MX (demo override)' };
+                  setLocStatus('gps');
+                }}
+                className="mt-1 text-[10px] underline text-slate-400 hover:text-slate-600"
+              >
+                Use demo location override
+              </button>
+            )}
 
             <Button onClick={handleAcknowledge} disabled={loading}
               className={`mt-3 w-full sm:w-auto ${isOverdue ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white gap-2 text-xs h-9`}>

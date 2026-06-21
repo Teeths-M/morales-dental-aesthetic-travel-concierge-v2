@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     const escalatedCheckIns = checkIns.length === 0
       ? await base44.asServiceRole.entities.SoloCheckIn.filter(
           { case_id }, '-scheduled_time', 5
-        ).then(list => list.filter(c => ['escalated_2h', 'escalated_3h', 'escalated_5h'].includes(c.status)))
+        ).then(list => list.filter(c => ['escalated_2h', 'escalated_3h', 'escalated_5h', 'escalated_9h'].includes(c.status)))
       : [];
 
     const checkIn = checkIns[0] || escalatedCheckIns[0];

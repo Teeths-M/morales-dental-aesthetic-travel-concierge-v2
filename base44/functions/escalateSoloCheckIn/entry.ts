@@ -160,8 +160,21 @@ Deno.serve(async (req) => {
           }
         } catch (_) {}
 
+        // Re-check status before calling — user may have pressed "I Am Safe" while emails were sending
+        const freshCheckIn = await base44.asServiceRole.entities.SoloCheckIn.filter(
+          { case_id: checkIn.case_id }, '-scheduled_time', 5
+        ).then(list => list.find(c => c.id === checkIn.id));
+        const stillOverdue = freshCheckIn && !['acknowledged', 'resolved'].includes(freshCheckIn.status);
+
         // Voice call attempt via Twilio
-        if (checkIn.user_phone) {
+        if (checkIn.user_phone && stillOverdue) {
+          const demoMode = Deno.env.get('DEMO_MODE') === 'true';
+          if (demoMode) {
+            console.log(`[DEMO_MODE] Would place Twilio voice call to ${checkIn.user_phone} for check-in ${checkIn.id}`);
+            await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { voice_call_attempted_at: now.toISOString() });
+          }
+        }
+        if (checkIn.user_phone && stillOverdue && Deno.env.get('DEMO_MODE') !== 'true') {
           const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
           const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
           const from = Deno.env.get('TWILIO_PHONE_NUMBER');
