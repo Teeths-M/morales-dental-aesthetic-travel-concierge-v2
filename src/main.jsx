@@ -67,3 +67,15 @@ async function mountApp() {
 }
 
 mountApp();
+
+// ── Service Worker Registration (Production Only) ───────────────────────────
+// Enables offline access to /offline and /emergency-manifest, and powers
+// "Add to Home Screen" install prompts on mobile.
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('[SW] Registration failed:', err);
+    });
+  });
+}

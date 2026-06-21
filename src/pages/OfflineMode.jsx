@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, MessageSquare, QrCode, Shield, Smartphone, ArrowLeft } from 'lucide-react';
 import OfflineCapabilitiesPanel from '@/components/offline/OfflineCapabilitiesPanel';
+import InstallBanner from '@/components/offline/InstallBanner';
 import { useNavigate } from 'react-router-dom';
 
 export default function OfflineMode() {
@@ -46,7 +47,8 @@ export default function OfflineMode() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+        <InstallBanner />
         <OfflineCapabilitiesPanel />
       </div>
     </div>
