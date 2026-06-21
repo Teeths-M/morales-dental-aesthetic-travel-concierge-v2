@@ -40,6 +40,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
   const [fileName, setFileName] = useState(null);
   const [extracting, setExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const fileRef = useRef(null);
 
   const handleFileSelect = async (e) => {
@@ -55,6 +56,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
     }
     setError(null);
     setFileName(file.name);
+    setSelectedFile(file);
     
     // Skip auto-extraction if offline or if document type is not passport
     if (vaultMeta.document_type === 'passport' && file.type.includes('image') && navigator.onLine) {
@@ -115,7 +117,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
   };
 
   const handleUpload = async () => {
-    const file = fileRef.current?.files[0];
+    const file = selectedFile || fileRef.current?.files[0];
     if (!file) { setError('Please select a file.'); return; }
 
     if (!password || password.length < 6) {
@@ -246,7 +248,14 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
               {DOCUMENT_TYPES.map(type => (
                 <button
                   key={type.value}
-                  onClick={() => setVaultMeta(p => ({ ...p, document_type: type.value }))}
+                  onClick={() => {
+                    setVaultMeta(p => ({ ...p, document_type: type.value }));
+                    // Clear file state when changing document type to prevent cross-contamination
+                    setFileName(null);
+                    setSelectedFile(null);
+                    setExtractedData(null);
+                    if (fileRef.current) fileRef.current.value = '';
+                  }}
                   className={`p-4 rounded-xl border text-[13px] font-bold transition-all ${
                     vaultMeta.document_type === type.value
                       ? 'bg-emerald-500 text-white border-emerald-400'
