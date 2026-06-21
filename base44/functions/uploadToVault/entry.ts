@@ -91,23 +91,31 @@ Deno.serve(async (req) => {
       is_emergency_accessible
     });
 
-    // Log to AuditLog — use 'passport_access_requested' which is in the allowed event type list
-    await base44.functions.invoke('logAuditEvent', {
-      event_type: 'passport_access_requested',
-      actor_id: user.id,
-      actor_role: user.role || 'client',
-      actor_name: user.full_name,
-      resource_type: 'PassportVault',
-      resource_id: vault.id,
-      resource_name: `${document_type} - ${file_name}`,
-      details: {
-        action: 'vault_upload',
-        document_type,
-        file_size_bytes,
-        is_emergency_accessible,
-      },
-      sensitive: false,
-    });
+    // Log to AuditLog — use 'passport_access_requested' which is in the allowed event type list.
+    // IMPORTANT: this must never fail the upload. The vault record above is already
+    // committed; if the audit call throws (e.g. auth context isn't forwarded on
+    // function-to-function invokes), we'd otherwise return a false "upload failed"
+    // to the user even though their document was safely vaulted.
+    try {
+      await base44.functions.invoke('logAuditEvent', {
+        event_type: 'passport_access_requested',
+        actor_id: user.id,
+        actor_role: user.role || 'client',
+        actor_name: user.full_name,
+        resource_type: 'PassportVault',
+        resource_id: vault.id,
+        resource_name: `${document_type} - ${file_name}`,
+        details: {
+          action: 'vault_upload',
+          document_type,
+          file_size_bytes,
+          is_emergency_accessible,
+        },
+        sensitive: false,
+      });
+    } catch (auditError) {
+      console.error('[uploadToVault] Non-fatal: audit log failed', auditError);
+    }
 
     return Response.json({
       success: true,
