@@ -31,7 +31,7 @@ const TABS = [
 ];
 
 export default function VaultDashboard({ user }) {
-  const { vaults, shareLinks, auditLogs, loading, reload } = useVault(user);
+  const { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, reload } = useVault(user);
   const [activeTab, setActiveTab] = useState('documents');
 
   // Cache vault metadata to localStorage whenever it loads or changes — enables offline emergency access
@@ -126,6 +126,19 @@ export default function VaultDashboard({ user }) {
 
   return (
     <div className="space-y-6">
+      {/* Offline Mode Banner */}
+      {isOfflineMode && (
+        <motion.div
+          className="flex items-center gap-3 px-5 py-3 rounded-xl border border-amber-400/30 bg-amber-400/10"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Shield className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <p className="text-[13px] font-bold text-amber-100">Offline Mode: Viewing cached data</p>
+        </motion.div>
+      )}
+
       {/* Summary strip */}
       <motion.div
         className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.15]"

@@ -11,23 +11,31 @@ export function useVault(user) {
   const [auditLogs, setAuditLogs]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.email) return;
     setLoading(true);
     setError(null);
+    setIsOfflineMode(false);
 
+    const cacheKey = `morales_vault_meta_${user.email.toLowerCase()}`;
+
+    // Check if offline first
     if (!navigator.onLine) {
-      // Offline: load from cache immediately
       try {
-        const cached = localStorage.getItem(`morales_vault_meta_${user.email.toLowerCase()}`);
-        if (cached) setVaults(JSON.parse(cached));
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          setVaults(JSON.parse(cached));
+          setIsOfflineMode(true);
+        }
       } catch (_) {}
       setLoading(false);
       return;
     }
 
     try {
+      // Attempt to fetch fresh data from the database
       const [docs, links, logs] = await Promise.all([
         vaultService.getActiveDocuments(user.email),
         vaultService.getActiveShareLinks(user.email),
@@ -36,14 +44,37 @@ export function useVault(user) {
       setVaults(docs   || []);
       setShareLinks(links || []);
       setAuditLogs(logs  || []);
+      
+      // Cache successful fetch
+      try {
+        const meta = (docs || []).map(v => ({
+          id: v.id,
+          vault_id: v.id,
+          passport_token: v.passport_token,
+          document_type: v.document_type,
+          file_name: v.file_name,
+          file_size_bytes: v.file_size_bytes,
+          mime_type: v.mime_type,
+          redacted_for_display: v.redacted_for_display,
+          uploaded_at: v.uploaded_at,
+          expires_at: v.expires_at,
+          is_emergency_accessible: v.is_emergency_accessible,
+        }));
+        localStorage.setItem(cacheKey, JSON.stringify(meta));
+      } catch (_) {}
+      
+      setIsOfflineMode(false);
     } catch (err) {
       console.error('[useVault] load failed:', err);
-      // Network failed mid-request — try cache
+      // Network failed — fallback to cache
       try {
-        const cached = localStorage.getItem(`morales_vault_meta_${user.email.toLowerCase()}`);
-        if (cached) setVaults(JSON.parse(cached));
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          setVaults(JSON.parse(cached));
+          setIsOfflineMode(true);
+        }
       } catch (_) {}
-      setError('Offline — showing cached documents.');
+      setError('Offline — viewing cached data');
     } finally {
       setLoading(false);
     }
@@ -51,5 +82,5 @@ export function useVault(user) {
 
   useEffect(() => { load(); }, [load]);
 
-  return { vaults, shareLinks, auditLogs, loading, error, reload: load };
+  return { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, reload: load };
 }
