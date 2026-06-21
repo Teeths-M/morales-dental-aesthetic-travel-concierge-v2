@@ -14,37 +14,26 @@ Deno.serve(async (req) => {
     }
 
     const extracted = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a passport document scanner. Extract all readable fields from this passport image or document.
-      
-Return ONLY the extracted data in the exact JSON schema provided. 
-- passport_number: the alphanumeric passport number (e.g. A12345678)
-- issue_date: issue date in YYYY-MM-DD format
+      prompt: `Extract all text and data fields from this passport image. Return the data in JSON format with these fields:
+- passport_number: the full passport number
 - expiry_date: expiry date in YYYY-MM-DD format
-- full_name: full name exactly as printed on passport
-- nationality: country of nationality (full name, e.g. "United States")
-- date_of_birth: in YYYY-MM-DD format
-- gender: M or F
-- issuing_country: country that issued the passport
-- last_4: last 4 characters of the passport number
+- full_name: full name as shown
+- nationality: country of citizenship
+- last_4: last 4 characters of passport number
 
-If a field cannot be clearly read, return null for that field.
-Be precise — do not guess or infer values that are not clearly visible.`,
+Return null for any field you cannot clearly read. Be accurate.`,
       file_urls: [file_url],
+      model: 'gemini_3_flash',
       response_json_schema: {
         type: 'object',
         properties: {
           passport_number: { type: 'string' },
-          issue_date: { type: 'string' },
           expiry_date: { type: 'string' },
           full_name: { type: 'string' },
           nationality: { type: 'string' },
-          date_of_birth: { type: 'string' },
-          gender: { type: 'string' },
-          issuing_country: { type: 'string' },
-          last_4: { type: 'string' },
-          confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-          unreadable_fields: { type: 'array', items: { type: 'string' } }
-        }
+          last_4: { type: 'string' }
+        },
+        required: ['full_name']
       }
     });
 
