@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Clock, FileText, Share2, Trash2, Download, Plus } from 'lucide-react';
+import { Shield, Clock, FileText, Share2, Trash2, Download, Plus, WifiOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
 import VaultPasswordModal from './VaultPasswordModal';
@@ -71,16 +71,19 @@ export default function VaultDashboard({ user }) {
   const [shareModal, setShareModal]     = useState({ open: false, vault: null });
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Stable callbacks — useCallback prevents new function refs on every render,
-  // which would otherwise cause every vault row button to re-render on modal open/close
+  // Stable callbacks — useCallback prevents new function refs on every render
   const handleDownload = useCallback((vault) => {
-    // If online and document is small enough (< 1MB), offer to cache for offline
-    if (navigator.onLine && vault.file_size_bytes < 1024 * 1024) {
-      const cacheKey = `vault_encrypted_${vault.passport_token}`;
-      if (!localStorage.getItem(cacheKey)) {
-        console.log('[VaultDashboard] Document eligible for offline caching');
-      }
+    const cacheKey = `vault_encrypted_${vault.passport_token}`;
+    const isCached = !!localStorage.getItem(cacheKey);
+    
+    if (navigator.onLine && !isCached) {
+      console.log('[VaultDashboard] Will cache document after download:', vault.file_name);
+    } else if (!navigator.onLine && isCached) {
+      console.log('[VaultDashboard] Using cached document for offline access:', vault.file_name);
+    } else if (!navigator.onLine && !isCached) {
+      console.warn('[VaultDashboard] Offline but document not cached:', vault.file_name);
     }
+    
     setPwModal({ open: true, vault, isLoading: false });
   }, []);
   const closePwModal   = useCallback(() => setPwModal({ open: false, vault: null, isLoading: false }), []);
@@ -138,8 +141,9 @@ export default function VaultDashboard({ user }) {
         const a = document.createElement('a'); a.href = url; a.download = file_name; a.click();
         URL.revokeObjectURL(url);
 
-        // Cache encrypted blob for offline use (if under 1MB)
-        if (vault.file_size_bytes < 1024 * 1024) {
+        // Cache encrypted blob for offline use (up to 5MB to fit localStorage limits)
+        const MAX_CACHE_SIZE = 5 * 1024 * 1024; // 5MB
+        if (vault.file_size_bytes < MAX_CACHE_SIZE) {
           try {
             const cacheKey = `vault_encrypted_${vault.passport_token}`;
             const cacheData = {
@@ -151,11 +155,13 @@ export default function VaultDashboard({ user }) {
               cached_at: new Date().toISOString()
             };
             localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-            console.log('[VaultDashboard] Cached document for offline access');
+            console.log('[VaultDashboard] Cached document for offline access:', file_name);
           } catch (cacheErr) {
-            console.warn('[VaultDashboard] Offline cache failed:', cacheErr);
+            console.warn('[VaultDashboard] Offline cache failed (likely storage full):', cacheErr);
             // Non-fatal - download still succeeded
           }
+        } else {
+          console.warn('[VaultDashboard] Document too large for offline cache:', vault.file_size_bytes, 'bytes');
         }
 
         setPwModal({ open: false, vault: null, isLoading: false });
@@ -320,8 +326,10 @@ export default function VaultDashboard({ user }) {
               </div>
             ) : (
               vaults.map((vault, index) => {
-                const meta = DOC_META[vault.document_type] || DOC_META.other;
-                return (
+              const meta = DOC_META[vault.document_type] || DOC_META.other;
+              const cacheKey = `vault_encrypted_${vault.passport_token}`;
+              const isAvailableOffline = !!localStorage.getItem(cacheKey);
+              return (
                   <motion.div
                     key={vault.id}
                     initial={{ opacity: 0, y: 16 }}
@@ -335,8 +343,15 @@ export default function VaultDashboard({ user }) {
                         {meta.emoji}
                       </div>
                       <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
                         <p className="text-[15px] font-bold text-white truncate" style={{ letterSpacing: '-0.01em' }}>{vault.file_name}</p>
-                        <p className="text-[12px] text-white/80 mt-1">{meta.label} · {(vault.file_size_bytes / 1024).toFixed(1)} KB</p>
+                        {isAvailableOffline && (
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-400/20 px-2 py-0.5 rounded-full">
+                            <WifiOff className="w-2.5 h-2.5" /> Offline
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-white/80 mt-1">{meta.label} · {(vault.file_size_bytes / 1024).toFixed(1)} KB</p>
                         {formattedDates[vault.id] && (
                           <p className="text-[11px] text-white/70 mt-1.5 tracking-[0.15em] uppercase">
                             Added {formattedDates[vault.id]}
