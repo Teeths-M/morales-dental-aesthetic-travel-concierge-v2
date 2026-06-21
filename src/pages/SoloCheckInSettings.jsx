@@ -33,6 +33,12 @@ export default function SoloCheckInSettings() {
   const [stats, setStats] = useState({ total: 0, acknowledged: 0, escalated: 0 });
   const locRef = useRef(null);
 
+  // Derive the latest actionable check-in status
+  const latestActiveCheckIn = checkIns.find(c =>
+    ['pending', 'escalated_2h', 'escalated_3h', 'escalated_5h'].includes(c.status)
+  );
+  const isTerminalEscalation = latestActiveCheckIn?.status === 'escalated_5h';
+
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
@@ -99,6 +105,7 @@ export default function SoloCheckInSettings() {
       acknowledged: { label: 'Acknowledged', color: 'bg-emerald-100 text-emerald-700' },
       escalated_2h: { label: '2h Escalated', color: 'bg-orange-100 text-orange-700' },
       escalated_3h: { label: '3h Escalated', color: 'bg-red-100 text-red-700' },
+      escalated_5h: { label: '5h — Security Dispatched', color: 'bg-red-200 text-red-800 font-bold' },
       resolved: { label: 'Resolved', color: 'bg-slate-100 text-slate-600' },
     };
     const cfg = configs[status] || configs.pending;
@@ -140,23 +147,33 @@ export default function SoloCheckInSettings() {
             animate={{ opacity: 1, scale: 1 }}
             className="mb-6"
           >
-            <Button
-              onClick={handleIAmSafe}
-              disabled={acknowledging}
-              className="w-full h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl text-lg font-bold shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {acknowledging ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
-                  Recording Your Safety...
-                </>
-              ) : (
-                <>
-                  <Heart className="w-6 h-6 mr-3 fill-white" />
-                  I Am Safe
-                </>
-              )}
-            </Button>
+            {isTerminalEscalation ? (
+              <div className="w-full h-16 bg-red-50 border-2 border-red-300 rounded-2xl flex items-center justify-center gap-3 px-6">
+                <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-red-700">Security Dispatched — Admin Action Required</p>
+                  <p className="text-xs text-red-500">Your emergency contact and security have been alerted. Contact your coordinator to resolve.</p>
+                </div>
+              </div>
+            ) : (
+              <Button
+                onClick={handleIAmSafe}
+                disabled={acknowledging}
+                className="w-full h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl text-lg font-bold shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {acknowledging ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
+                    Recording Your Safety...
+                  </>
+                ) : (
+                  <>
+                    <Heart className="w-6 h-6 mr-3 fill-white" />
+                    I Am Safe
+                  </>
+                )}
+              </Button>
+            )}
           </motion.div>
 
           {/* Current Status Banner */}
