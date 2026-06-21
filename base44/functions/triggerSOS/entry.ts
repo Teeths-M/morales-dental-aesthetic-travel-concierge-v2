@@ -1,5 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Sliding-window rate limiter using RateLimitBucket entity
+// Returns true if request is allowed, false if rate limit exceeded.
+async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowSeconds * 1000);
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter({ bucket_key: key });
+  const bucket = buckets[0];
+  if (!bucket) {
+    await base44.asServiceRole.entities.RateLimitBucket.create({ bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  // Reset window if expired
+  if (new Date(bucket.window_start) < windowStart) {
+    await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (bucket.count >= maxRequests) return false;
+  await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { count: bucket.count + 1, updated_at: now.toISOString() });
+  return true;
+}
+
 // Emergency routing vectors
 const SOS_ROUTES = {
   police: { label: 'Local Police', priority: 1 },
@@ -30,6 +51,13 @@ Deno.serve(async (req) => {
       if (!pinCheck?.data?.valid) {
         return Response.json({ error: 'Invalid or expired PIN session.' }, { status: 401 });
       }
+    }
+
+    // RATE LIMIT: 3 SOS triggers per 5 minutes per identity (strict — abuse floods admin + burns Twilio)
+    const rateLimitKey = `${user?.id || patient_email}:triggerSOS`;
+    const allowed = await checkRateLimit(base44, rateLimitKey, 300, 3);
+    if (!allowed) {
+      return Response.json({ error: 'Too many SOS requests. Please wait a few minutes before trying again.' }, { status: 429 });
     }
 
     if (!trigger_type || !patient_email) return Response.json({ error: 'trigger_type and patient_email required' }, { status: 400 });

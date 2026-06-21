@@ -1,5 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Sliding-window rate limiter using RateLimitBucket entity
+async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowSeconds * 1000);
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter({ bucket_key: key });
+  const bucket = buckets[0];
+  if (!bucket) {
+    await base44.asServiceRole.entities.RateLimitBucket.create({ bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (new Date(bucket.window_start) < windowStart) {
+    await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (bucket.count >= maxRequests) return false;
+  await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { count: bucket.count + 1, updated_at: now.toISOString() });
+  return true;
+}
+
 const SMS_TEMPLATES = {
   booking_confirmation: (name, procedure, date) =>
     `Hi ${name}! Your booking for ${procedure} on ${date} has been confirmed. We'll be in touch soon with your full itinerary. - Morales Dental & Aesthetics`,
@@ -36,6 +55,15 @@ Deno.serve(async (req) => {
 
     if (!to || !type) {
       return Response.json({ error: 'Missing required fields: to, type' }, { status: 400 });
+    }
+
+    // RATE LIMIT: 10 SMS per hour per user (prevents Twilio spend abuse)
+    if (!dry_run) {
+      const rateLimitKey = `${user.id}:sendSmsNotification`;
+      const allowed = await checkRateLimit(base44, rateLimitKey, 3600, 10);
+      if (!allowed) {
+        return Response.json({ error: 'SMS rate limit exceeded. Maximum 10 messages per hour.' }, { status: 429 });
+      }
     }
 
     // Blackout guard

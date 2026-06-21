@@ -1,5 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Sliding-window rate limiter using RateLimitBucket entity
+async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowSeconds * 1000);
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter({ bucket_key: key });
+  const bucket = buckets[0];
+  if (!bucket) {
+    await base44.asServiceRole.entities.RateLimitBucket.create({ bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (new Date(bucket.window_start) < windowStart) {
+    await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { window_start: now.toISOString(), count: 1, updated_at: now.toISOString() });
+    return true;
+  }
+  if (bucket.count >= maxRequests) return false;
+  await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, { count: bucket.count + 1, updated_at: now.toISOString() });
+  return true;
+}
+
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -37,6 +56,14 @@ Deno.serve(async (req) => {
     const { action, user_email, pin, new_pin, hint, pin_session_token } = await req.json();
 
     if (!action || !user_email) return Response.json({ error: 'action and user_email required' }, { status: 400 });
+
+    // RATE LIMIT: 10 requests per 15 minutes per email (covers setup, verify, validate_session)
+    // verify action has its own 5-attempt DB lockout; this is a coarser outer guard
+    const rateLimitKey = `${user_email}:verifyEmergencyPIN`;
+    const allowed = await checkRateLimit(base44, rateLimitKey, 900, 10);
+    if (!allowed) {
+      return Response.json({ error: 'Too many attempts. Please wait 15 minutes before trying again.' }, { status: 429 });
+    }
 
     // ── SETUP: Register or update a PIN ──
     if (action === 'setup') {
