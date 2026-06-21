@@ -13,6 +13,20 @@ import { useVault } from '@/hooks/useVault';
 import { vaultService } from '@/lib/services';
 import { queueSyncAction, SYNC_ACTIONS } from '@/lib/services/vaultSyncService';
 
+// Safe base64 conversion for large files - avoids "Maximum call stack size exceeded"
+const arrayBufferToBase64 = (buffer) => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 32768;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    for (let j = 0; j < chunk.length; j++) {
+      binary += String.fromCharCode(chunk[j]);
+    }
+  }
+  return btoa(binary);
+};
+
 const DOC_META = {
   passport:          { emoji: '🛂', label: 'Passport' },
   visa:              { emoji: '🛂', label: 'Visa' },
@@ -137,7 +151,7 @@ export default function VaultDashboard({ user }) {
         }
         const { signed_url, encryption_iv_b64, encryption_salt_b64, file_name, mime_type } = res.data;
         const blob = await fetch(signed_url).then(r => r.blob());
-        const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
+        const encryptedB64 = arrayBufferToBase64(await blob.arrayBuffer());
         const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
         const url = URL.createObjectURL(decryptedBlob);
         const a = document.createElement('a'); a.href = url; a.download = file_name; a.click();
@@ -227,7 +241,7 @@ export default function VaultDashboard({ user }) {
           return r.blob();
         });
         console.log('[VaultDashboard] Blob size:', blob.size, 'bytes');
-        encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
+        encryptedB64 = arrayBufferToBase64(await blob.arrayBuffer());
         console.log('[VaultDashboard] Encrypted base64 length:', encryptedB64.length);
       } else {
         // Offline and not cached - cannot download
