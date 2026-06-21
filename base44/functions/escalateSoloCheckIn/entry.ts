@@ -69,25 +69,20 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
 
-    // Fetch all non-resolved pending/escalated check-ins
-    const pendingCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
-      { status: 'pending' }, '-scheduled_time', 100
-    );
-    const escalated2hCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
-      { status: 'escalated_2h' }, '-scheduled_time', 100
-    );
-    const escalated3hCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
-      { status: 'escalated_3h' }, '-scheduled_time', 100
-    );
-
-    const escalated5hCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter(
-      { status: 'escalated_5h' }, '-scheduled_time', 100
-    );
+    // Fetch all non-resolved pending/escalated check-ins (exclude resolved, acknowledged, escalated_9h — terminal states)
+    const [pendingCheckIns, escalated2hCheckIns, escalated3hCheckIns, escalated5hCheckIns] = await Promise.all([
+      base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'pending' }, '-scheduled_time', 100),
+      base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'escalated_2h' }, '-scheduled_time', 100),
+      base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'escalated_3h' }, '-scheduled_time', 100),
+      base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'escalated_5h' }, '-scheduled_time', 100),
+    ]);
 
     const allCheckIns = [...pendingCheckIns, ...escalated2hCheckIns, ...escalated3hCheckIns, ...escalated5hCheckIns];
     let escalated2h = 0, escalated3h = 0, escalated5h = 0, escalated9h = 0;
 
     for (const checkIn of allCheckIns) {
+      // Skip terminal states — do not re-escalate resolved or already-acknowledged check-ins
+      if (['acknowledged', 'resolved', 'escalated_9h'].includes(checkIn.status)) continue;
       if (!checkIn.sent_time) continue;
       const sentAt = new Date(checkIn.sent_time);
       const hoursOverdue = (now - sentAt) / (1000 * 60 * 60);
