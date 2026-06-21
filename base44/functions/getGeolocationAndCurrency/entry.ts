@@ -36,7 +36,8 @@ Deno.serve(async (req) => {
     const timer = setTimeout(() => controller.abort(), 6000);
     let ipData;
     try {
-      const res = await fetch(`https://ipinfo.io/json?token=${ipinfoApiKey}`, { signal: controller.signal });
+      const ipPath = ip && ip !== 'unknown' ? `/${ip}` : '';
+      const res = await fetch(`https://ipinfo.io${ipPath}/json?token=${ipinfoApiKey}`, { signal: controller.signal });
       clearTimeout(timer);
       if (!res.ok) throw new Error(`ipinfo ${res.status}`);
       ipData = await res.json();

@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
           case_id: session.case_id,
           is_active: true,
         });
-        const live = liveLocations[0];
+        // Sort by updated_at descending to always get the freshest record
+        const live = liveLocations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
         if (live && live.latitude != null && live.longitude != null) {
           latestLocation = {
             latitude: live.latitude,

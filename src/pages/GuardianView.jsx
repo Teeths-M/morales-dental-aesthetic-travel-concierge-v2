@@ -377,7 +377,11 @@ export default function GuardianView() {
                     {loc.updated_at && (
                       <span>{new Date(loc.updated_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                     )}
-                    {loc.source && <span>· {loc.source === 'ip_geo' ? '≈ Network' : 'GPS'}</span>}
+                    {loc.source && (
+                      <span className={loc.source === 'ip_geo' ? 'text-amber-400 font-semibold' : 'text-emerald-400 font-semibold'}>
+                        · {loc.source === 'ip_geo' ? '≈ Network (approximate)' : '✦ GPS (precise)'}
+                      </span>
+                    )}
                     {loc.accuracy_meters != null && <span>· ±{Math.round(loc.accuracy_meters)}m</span>}
                     {loc.heading != null && <span>· {Math.round(loc.heading)}°</span>}
                     {loc.speed != null && loc.speed > 0.5 && <span>· {(loc.speed * 3.6).toFixed(1)} km/h</span>}
