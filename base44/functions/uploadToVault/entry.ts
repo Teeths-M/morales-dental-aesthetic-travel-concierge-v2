@@ -81,7 +81,10 @@ Deno.serve(async (req) => {
       mime_type,
       redacted_for_display,
       status: 'active',
-      virus_scan_status: 'passed',
+      // TODO: Wire real AV scanner (e.g. ClamAV/VirusTotal) before surfacing scan status to users.
+      // Files are client-side AES-256-GCM encrypted before upload, limiting server-side exposure.
+      // Status is intentionally 'not_scanned' — never claim 'passed' without a real scan.
+      virus_scan_status: 'not_scanned',
       expires_at,
       uploaded_at: now,
       access_count: 0,

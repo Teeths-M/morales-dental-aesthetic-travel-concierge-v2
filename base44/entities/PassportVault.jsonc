@@ -35,6 +35,10 @@
       "type": "string",
       "description": "Base64 initialization vector \u2014 not secret, required for client-side decryption"
     },
+    "encryption_salt_b64": {
+      "type": "string",
+      "description": "Base64 PBKDF2 salt \u2014 not secret, required for key derivation"
+    },
     "algorithm": {
       "type": "string",
       "default": "AES-256-GCM",
@@ -100,11 +104,13 @@
     "virus_scan_status": {
       "type": "string",
       "enum": [
+        "not_scanned",
         "pending",
         "passed",
         "quarantined"
       ],
-      "default": "passed"
+      "default": "not_scanned",
+      "description": "AV scan status. 'not_scanned' is the honest default until a real scanner is integrated. Files are client-side encrypted (AES-256-GCM) limiting server exposure."
     },
     "expires_at": {
       "type": "string",
