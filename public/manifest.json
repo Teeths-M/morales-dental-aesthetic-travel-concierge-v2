@@ -1,0 +1,35 @@
+{
+  "name": "Morales Medical",
+  "short_name": "Morales",
+  "description": "Your medical travel companion — access documents, safety tools, and emergency contacts offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Offline Mode",
+      "short_name": "Offline",
+      "description": "Access emergency tools without internet",
+      "url": "/offline",
+      "icons": [{ "src": "https://base44.com/logo_v2.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Offline Guide",
+      "short_name": "Guide",
+      "description": "Step-by-step offline access guide",
+      "url": "/offline-guide",
+      "icons": [{ "src": "https://base44.com/logo_v2.svg", "sizes": "any" }]
+    }
+  ]
+}
