@@ -30,6 +30,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    // If offline, skip network calls entirely — allow bypass paths to render
+    if (!navigator.onLine) {
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+      return;
+    }
+
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
@@ -104,11 +112,16 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingAuth(false);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
+      // Network error (offline mid-request) — fail gracefully, don't crash
+      if (!navigator.onLine || error.message === 'Network Error' || error.name === 'TypeError') {
+        console.warn('[AuthContext] Offline during auth check — skipping.');
+      } else {
+        console.error('Unexpected error:', error);
+        setAuthError({
+          type: 'unknown',
+          message: error.message || 'An unexpected error occurred'
+        });
+      }
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
     }
