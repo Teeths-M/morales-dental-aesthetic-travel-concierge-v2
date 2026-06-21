@@ -62,8 +62,9 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       try {
         console.log('[VaultUploader] Starting extraction for file:', file.name, file.type);
         
-        // Upload file temporarily for extraction
-        const uploadRes = await base44.integrations.Core.UploadFile({ file });
+        // Upload file temporarily for extraction - create a new File object to ensure proper binary data
+        const fileForUpload = new File([file], file.name, { type: file.type });
+        const uploadRes = await base44.integrations.Core.UploadFile({ file: fileForUpload });
         console.log('[VaultUploader] File uploaded, URL:', uploadRes.data.file_url);
         
         const extractRes = await base44.functions.invoke('extractPassportData', { file_url: uploadRes.data.file_url });
