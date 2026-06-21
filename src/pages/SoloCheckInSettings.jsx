@@ -29,11 +29,18 @@ export default function SoloCheckInSettings() {
   const [user, setUser] = useState(null);
   const [activeCase, setActiveCase] = useState(null);
   const [checkIns, setCheckIns] = useState([]);
+  const [allCheckIns, setAllCheckIns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
-  const [stats, setStats] = useState({ total: 0, acknowledged: 0, escalated: 0 });
   const locRef = useRef(null);
+
+  // Derive stats from all check-ins
+  const stats = {
+    total: allCheckIns.length,
+    acknowledged: allCheckIns.filter(c => c.status === 'acknowledged' || c.status === 'resolved').length,
+    escalated: allCheckIns.filter(c => c.status.includes('escalated')).length,
+  };
 
   // Derive the latest actionable check-in status
   const latestActiveCheckIn = checkIns.find(c =>
@@ -63,15 +70,8 @@ export default function SoloCheckInSettings() {
         50
       );
 
-      const activeCheckIns = allCheckIns.filter(c =>
-        !['acknowledged', 'resolved'].includes(c.status)
-      );
-      setCheckIns(activeCheckIns);
-      setStats({
-        total: allCheckIns.length,
-        acknowledged: allCheckIns.filter(c => c.status === 'acknowledged' || c.status === 'resolved').length,
-        escalated: allCheckIns.filter(c => c.status.includes('escalated')).length,
-      });
+      setAllCheckIns(allCheckIns);
+      setCheckIns(allCheckIns.filter(c => !['acknowledged', 'resolved'].includes(c.status)));
     } finally {
       setRefreshing(false);
     }
