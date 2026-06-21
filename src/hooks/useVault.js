@@ -105,8 +105,22 @@ export function useVault(user) {
   }, [user?.email, user?.id]);
 
   useEffect(() => {
-    const cleanup = load();
-    return cleanup;
+    let cleanupFn = null;
+    
+    const executeLoad = async () => {
+      const result = await load();
+      if (typeof result === 'function') {
+        cleanupFn = result;
+      }
+    };
+    
+    executeLoad();
+    
+    return () => {
+      if (cleanupFn) {
+        cleanupFn();
+      }
+    };
   }, [load]);
 
   return { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, syncStatus, reload: load };
