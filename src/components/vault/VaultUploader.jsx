@@ -113,12 +113,17 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
     setError(null);
 
     try {
+      console.log('[VaultUploader] Starting encryption, file size:', file.size, 'bytes');
+      
       // Step 1: Encrypt with PBKDF2 key derivation
       const { encryptedB64, ivB64, saltB64, hashB64, fileSizeBytes } = await encryptFileWithPassword(file, password);
+      
+      console.log('[VaultUploader] Encryption complete, encrypted size:', encryptedB64.length, 'chars');
 
       setStep('uploading');
 
       // Step 2: Upload to vault
+      console.log('[VaultUploader] Uploading to vault...');
       const response = await base44.functions.invoke('uploadToVault', {
         encrypted_file_b64: encryptedB64,
         encryption_iv_b64: ivB64,
@@ -132,6 +137,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         is_emergency_accessible: true
       });
 
+      console.log('[VaultUploader] Upload response:', response.data);
+
       const { vault_token, expires_at } = response.data;
       
       // Store salt in sessionStorage for later decryption
@@ -144,7 +151,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         onTokenIssued({ vault_token, redacted_for_display: vaultMeta, expires_at });
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Upload failed. Please try again.');
+      console.error('[VaultUploader] Upload error:', err);
+      setError(err.response?.data?.error || err.message || 'Upload failed. Please try again.');
       setStep('error');
     }
   };
