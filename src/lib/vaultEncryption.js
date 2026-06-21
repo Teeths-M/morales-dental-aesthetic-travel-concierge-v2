@@ -11,13 +11,18 @@
 const KEY_STORE_PREFIX = 'vault_key_';
 const SALT_STORE_PREFIX = 'vault_salt_';
 
-// Chunked base64 conversion to avoid "Maximum call stack size exceeded" on large files
+// Safe base64 conversion using iterative approach (no call stack overflow)
 const toBase64 = (uint8Array) => {
   let binary = '';
-  const chunkSize = 32768;
+  const chunkSize = 8192; // Smaller chunk to avoid stack overflow
   for (let i = 0; i < uint8Array.length; i += chunkSize) {
     const chunk = uint8Array.subarray(i, i + chunkSize);
-    binary += String.fromCharCode.apply(null, chunk);
+    // Use iterative approach instead of .apply() which causes stack overflow
+    let chunkStr = '';
+    for (let j = 0; j < chunk.length; j++) {
+      chunkStr += String.fromCharCode(chunk[j]);
+    }
+    binary += chunkStr;
   }
   return btoa(binary);
 };
@@ -25,10 +30,11 @@ const toBase64 = (uint8Array) => {
 const fromBase64 = (base64) => {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  const chunkSize = 32768;
+  const chunkSize = 8192; // Smaller chunk to avoid stack overflow
   for (let i = 0; i < binary.length; i += chunkSize) {
-    for (let j = 0; j < chunkSize && i + j < binary.length; j++) {
-      bytes[i + j] = binary.charCodeAt(i + j);
+    const chunkEnd = Math.min(i + chunkSize, binary.length);
+    for (let j = i; j < chunkEnd; j++) {
+      bytes[j] = binary.charCodeAt(j);
     }
   }
   return bytes;
