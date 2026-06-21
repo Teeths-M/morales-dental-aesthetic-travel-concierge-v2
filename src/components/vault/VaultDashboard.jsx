@@ -196,6 +196,8 @@ export default function VaultDashboard({ user }) {
         file_name = parsed.file_name;
         mime_type = parsed.mime_type;
         
+        console.log('[VaultDashboard] Cache parsed successfully:', { file_name, mime_type, encryptedB64Length: encryptedB64?.length });
+        
         if (!encryptedB64 || !encryption_iv_b64 || !encryption_salt_b64) {
           setPwModal({ open: false, vault: null, isLoading: false });
           console.error('[VaultDashboard] Cached data is incomplete:', parsed);
@@ -204,7 +206,10 @@ export default function VaultDashboard({ user }) {
         }
       } else if (navigator.onLine) {
         // Not cached, but online - fetch from server
+        console.log('[VaultDashboard] Fetching from server...');
         const res = await vaultService.requestDownload(vault.passport_token);
+        console.log('[VaultDashboard] Server response:', res.data);
+        
         if (res.data?.error_code === 'LEGACY_ENCRYPTION_NO_SALT') {
           setPwModal({ open: false, vault: null, isLoading: false });
           alert('This document was uploaded before encryption was upgraded. Please delete it and re-upload to use the latest security format.');
@@ -215,8 +220,15 @@ export default function VaultDashboard({ user }) {
         encryption_salt_b64 = salt;
         file_name = fname;
         mime_type = mime;
-        const blob = await fetch(signed_url).then(r => r.blob());
+        
+        console.log('[VaultDashboard] Fetching encrypted blob from:', signed_url);
+        const blob = await fetch(signed_url).then(r => {
+          console.log('[VaultDashboard] Blob response status:', r.status, 'content-type:', r.headers.get('content-type'));
+          return r.blob();
+        });
+        console.log('[VaultDashboard] Blob size:', blob.size, 'bytes');
         encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(await blob.arrayBuffer())));
+        console.log('[VaultDashboard] Encrypted base64 length:', encryptedB64.length);
       } else {
         // Offline and not cached - cannot download
         setPwModal({ open: false, vault: null, isLoading: false });
@@ -224,10 +236,22 @@ export default function VaultDashboard({ user }) {
         return;
       }
       
+      console.log('[VaultDashboard] Starting decryption...');
       const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
+      console.log('[VaultDashboard] Decryption successful! Blob size:', decryptedBlob.size, 'bytes');
+      
       const url = URL.createObjectURL(decryptedBlob);
-      const a = document.createElement('a'); a.href = url; a.download = file_name; a.click();
+      console.log('[VaultDashboard] Created object URL:', url);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      console.log('[VaultDashboard] Download triggered successfully');
       setPwModal({ open: false, vault: null, isLoading: false });
     } catch (err) {
       setPwModal(p => ({ ...p, isLoading: false }));
