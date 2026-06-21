@@ -127,7 +127,7 @@ export default function EmergencyPINAccess() {
                 className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" /> Back
               </button>
-              <EmergencyVaultViewer pinSessionToken={pinSessionToken} />
+              <EmergencyVaultViewer pinSessionToken={pinSessionToken} userEmail={email} />
               <button onClick={() => setMode('recovery')}
                 className="w-full text-sm text-blue-400 border border-blue-700/40 rounded-xl py-2.5 hover:bg-blue-900/20 flex items-center justify-center gap-2">
                 <Car className="w-4 h-4" />Switch to Recovery Mode (transport, emergency info)

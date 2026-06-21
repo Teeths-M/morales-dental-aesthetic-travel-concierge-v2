@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Clock, FileText, Share2, Trash2, Download, Plus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -33,6 +33,23 @@ const TABS = [
 export default function VaultDashboard({ user }) {
   const { vaults, shareLinks, auditLogs, loading, reload } = useVault(user);
   const [activeTab, setActiveTab] = useState('documents');
+
+  // Cache vault metadata to localStorage whenever it loads — enables offline emergency access
+  useEffect(() => {
+    if (!loading && vaults.length > 0 && user?.email) {
+      const key = `morales_vault_meta_${user.email.toLowerCase()}`;
+      const meta = vaults.map(v => ({
+        id: v.id,
+        vault_id: v.id,
+        document_type: v.document_type,
+        file_name: v.file_name,
+        file_size_bytes: v.file_size_bytes,
+        redacted_for_display: v.redacted_for_display,
+        uploaded_at: v.uploaded_at,
+      }));
+      try { localStorage.setItem(key, JSON.stringify(meta)); } catch (_) {}
+    }
+  }, [vaults, loading, user?.email]);
 
   // Modal state
   const [pwModal, setPwModal]           = useState({ open: false, vault: null, isLoading: false });
