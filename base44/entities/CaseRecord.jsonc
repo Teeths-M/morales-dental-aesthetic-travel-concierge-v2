@@ -52,6 +52,11 @@
     "client_country": {
       "type": "string"
     },
+    "whatsapp_opt_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Patient has opted in to receive WhatsApp notifications"
+    },
     "emergency_contact": {
       "type": "string"
     },
