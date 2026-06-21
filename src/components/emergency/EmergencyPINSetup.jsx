@@ -84,6 +84,12 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         if (parsed && parsed.email === userEmail.toLowerCase()) return 'verify';
       } catch {}
     }
+    // SECURITY: no local PIN copy on this device. If we're offline right now,
+    // we have no way to know whether a PIN already exists server-side on
+    // another device — silently defaulting to 'setup' here would let anyone
+    // create a brand-new PIN with zero verification against the real one,
+    // overwriting legitimate emergency access. Block instead of guessing.
+    if (!navigator.onLine) return 'blocked_needs_sync';
     return mode;
   }, [userEmail, mode]);
 
@@ -201,6 +207,40 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     setPin('');
     setLoading(false);
   };
+
+  // If connectivity returns while blocked, re-check — the user may now be
+  // able to sync their real PIN status instead of staying stuck.
+  React.useEffect(() => {
+    if (currentMode !== 'blocked_needs_sync') return;
+    const handleOnline = () => {
+      if (hasVaultPIN(userEmail)) { setCurrentMode('verify'); return; }
+      const stored = localStorage.getItem(LOCAL_PIN_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.email === userEmail.toLowerCase()) { setCurrentMode('verify'); return; }
+        } catch {}
+      }
+      setCurrentMode(mode); // genuinely no PIN anywhere — safe to allow setup now that we're online
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [currentMode, userEmail, mode]);
+
+  if (currentMode === 'blocked_needs_sync') {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto">
+          <WifiOff className="w-7 h-7 text-amber-700" />
+        </div>
+        <h3 className="font-bold text-slate-800 text-lg">Connect Once to Set Up Emergency Access</h3>
+        <p className="text-slate-500 text-sm max-w-xs mx-auto">
+          This device hasn't verified your Emergency PIN yet. Connect to the internet once to sync
+          it securely — after that, it will work fully offline on this device.
+        </p>
+      </div>
+    );
+  }
 
   if (currentMode === 'done' || currentMode === 'verified') {
     return (
