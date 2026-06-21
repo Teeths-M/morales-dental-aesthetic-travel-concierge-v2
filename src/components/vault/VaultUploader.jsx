@@ -32,6 +32,8 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
     booking_reference: '',
     hotel_name: '',
     airline: '',
+    card_issuer: '',
+    bank_phone: '',
   });
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -456,6 +458,15 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
                   placeholder="As on document"
                   className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40 focus:ring-1 focus:ring-white/20"
                 />
+              </div>
+            )}
+
+            {/* Other document type - show generic note */}
+            {vaultMeta.document_type === 'other' && (
+              <div className="mt-2 p-3 rounded-lg bg-white/5 border border-white/10">
+                <p className="text-xs text-white/70">
+                  For documents not listed above. Enter your name for verification purposes.
+                </p>
               </div>
             )}
           </div>
