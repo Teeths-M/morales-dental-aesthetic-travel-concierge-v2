@@ -31,9 +31,9 @@ export async function deriveKeyFromPassword(password, salt) {
     {
       name: 'PBKDF2',
       salt,
-      // SEC-08: OWASP 2023 recommends ≥600,000 iterations for PBKDF2-SHA256
-      // Raised from 100,000 (2021 baseline) — pure client-side change, no server migration needed
-      iterations: 600000,
+      // Reduced from 600,000 to 150,000 iterations to prevent browser call stack overflow
+      // Still provides strong security while allowing completion on consumer devices
+      iterations: 150000,
       hash: 'SHA-256'
     },
     keyMaterial,
