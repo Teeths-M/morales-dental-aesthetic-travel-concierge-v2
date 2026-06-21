@@ -63,7 +63,10 @@ export default function SoloCheckInSettings() {
         50
       );
 
-      setCheckIns(allCheckIns);
+      const activeCheckIns = allCheckIns.filter(c =>
+        !['acknowledged', 'resolved'].includes(c.status)
+      );
+      setCheckIns(activeCheckIns);
       setStats({
         total: allCheckIns.length,
         acknowledged: allCheckIns.filter(c => c.status === 'acknowledged' || c.status === 'resolved').length,
