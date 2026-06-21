@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import LiveBeaconPanel from '@/components/solo/LiveBeaconPanel';
 import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
+import PersonalEmergencyContactsPanel from '@/components/emergency/PersonalEmergencyContactsPanel';
 
 function SoloCheckInBanner() {
   return (
@@ -279,6 +280,15 @@ export default function SoloCheckInSettings() {
               <GuardianLinkManager caseId={activeCase.id} patientEmail={user?.email} />
             </div>
           )}
+
+          {/* Emergency Contacts */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+            <PersonalEmergencyContactsPanel
+              userEmail={user?.email}
+              caseRecord={activeCase}
+              onCaseSaved={loadCheckIns}
+            />
+          </div>
 
           {/* Check-In History */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
