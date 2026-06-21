@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       latitude,
       longitude,
       currency,
-      source: 'ipinfo',
+      source: 'ip_geo',
     };
 
     setCache(cacheKey, result);
