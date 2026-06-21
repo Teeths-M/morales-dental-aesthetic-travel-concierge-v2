@@ -11,6 +11,29 @@
 const KEY_STORE_PREFIX = 'vault_key_';
 const SALT_STORE_PREFIX = 'vault_salt_';
 
+// Chunked base64 conversion to avoid "Maximum call stack size exceeded" on large files
+const toBase64 = (uint8Array) => {
+  let binary = '';
+  const chunkSize = 32768;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+};
+
+const fromBase64 = (base64) => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  const chunkSize = 32768;
+  for (let i = 0; i < binary.length; i += chunkSize) {
+    for (let j = 0; j < chunkSize && i + j < binary.length; j++) {
+      bytes[i + j] = binary.charCodeAt(i + j);
+    }
+  }
+  return bytes;
+};
+
 /**
  * Derives an AES-256-GCM key from a password using PBKDF2.
  * @param {string} password - User's password
@@ -62,7 +85,7 @@ export async function encryptFileWithPassword(file, password) {
 
   // SHA-256 hash of original file for integrity verification
   const hashBuffer = await crypto.subtle.digest('SHA-256', fileBytes);
-  const hashB64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+  const hashB64 = toBase64(new Uint8Array(hashBuffer));
 
   // Generate random salt and IV
   const salt = generateSalt();
@@ -78,9 +101,9 @@ export async function encryptFileWithPassword(file, password) {
     fileBytes
   );
 
-  const encryptedB64 = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)));
-  const ivB64 = btoa(String.fromCharCode(...iv));
-  const saltB64 = btoa(String.fromCharCode(...salt));
+  const encryptedB64 = toBase64(new Uint8Array(encryptedBuffer));
+  const ivB64 = toBase64(iv);
+  const saltB64 = toBase64(salt);
 
   // Algorithm envelope
   const envelope = {
@@ -112,11 +135,10 @@ export async function decryptFileWithPassword(encryptedB64, ivB64, saltB64, pass
   // Decode envelope
   const envelopeStr = atob(encryptedB64);
   const envelope = JSON.parse(envelopeStr);
-  const encryptedBytes = Uint8Array.from(atob(envelope.ciphertext), c => c.charCodeAt(0));
-
-  // Decode IV and salt
-  const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
-  const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+  
+  const encryptedBytes = fromBase64(envelope.ciphertext);
+  const iv = fromBase64(ivB64);
+  const salt = fromBase64(saltB64);
 
   // Derive key
   const cryptoKey = await deriveKeyFromPassword(password, salt);
@@ -151,6 +173,6 @@ export function getSaltForToken(vaultToken) {
 export async function verifyFileIntegrity(file, expectedHashB64) {
   const arrayBuffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(arrayBuffer));
-  const actualHashB64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+  const actualHashB64 = toBase64(new Uint8Array(hashBuffer));
   return actualHashB64 === expectedHashB64;
 }
