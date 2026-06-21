@@ -11,7 +11,11 @@
     },
     "pin_hash": {
       "type": "string",
-      "description": "SHA-256 hash of the 4-digit PIN"
+      "description": "PBKDF2-SHA256 hash (600,000 iterations) of the 4-digit PIN"
+    },
+    "pin_salt": {
+      "type": "string",
+      "description": "Base64 encoded salt for PBKDF2 - derived from user email"
     },
     "created_at": {
       "type": "string",

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, ArrowLeft, Lock } from 'lucide-react';
+import { Shield, ArrowLeft, Lock, WifiOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import VaultDashboard from '@/components/vault/VaultDashboard';
@@ -43,7 +43,17 @@ export default function PassportVault() {
 
   // Show PIN gate - will handle both setup and verification internally
   if (user && !pinVerified) {
-    return <VaultPINGate hasExistingPIN={hasPIN === true} onPINVerified={handlePINVerified} />;
+    return (
+      <>
+        {!navigator.onLine && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/90 border border-amber-400 shadow-lg">
+            <WifiOff className="w-4 h-4 text-white" />
+            <span className="text-sm font-bold text-white">Offline Mode</span>
+          </div>
+        )}
+        <VaultPINGate hasExistingPIN={hasPIN === true} onPINVerified={handlePINVerified} user={user} />
+      </>
+    );
   }
 
   if (!user) {
@@ -94,14 +104,20 @@ export default function PassportVault() {
           <Link to="/dashboard" className="p-2.5 rounded-xl text-white/20 hover:text-white hover:bg-white/[0.04] transition-all" aria-label="Back to dashboard">
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
               <Shield className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="font-display text-2xl text-white leading-none" style={{ letterSpacing: '-0.02em' }}>Secure Document Vault</h1>
               <p className="text-[11px] text-white/30 mt-1.5 tracking-[0.2em] uppercase">Zero-knowledge · AES-256-GCM</p>
             </div>
+            {!navigator.onLine && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-400/30">
+                <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[10px] font-bold text-amber-200">Offline</span>
+              </div>
+            )}
           </div>
         </div>
 

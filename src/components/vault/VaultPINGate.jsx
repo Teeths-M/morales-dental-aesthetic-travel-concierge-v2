@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
 import { BRAND } from '@/lib/brandTokens';
+import { generatePINHash, verifyPIN, generateSalt } from '@/lib/vaultPINHashing';
 
-export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
+export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
   const [pin, setPin] = useState(['', '', '', '']);
   const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
   const [error, setError] = useState('');
@@ -17,6 +18,11 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
 
   useEffect(() => {
     if (inputRefs[0].current) inputRefs[0].current.focus();
+    
+    // Store user email in localStorage for offline PIN verification
+    if (user?.email) {
+      localStorage.setItem('morales_user_email', user.email.toLowerCase());
+    }
   }, []);
 
   useEffect(() => {
@@ -63,26 +69,75 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
     }
 
     setLoading(true);
+    
+    // OFFLINE-FIRST: Try local verification first
     try {
-      const response = await base44.functions.invoke('verifyVaultPIN', {
-        pin: pinString,
-        action: 'verify'
-      });
+      const userEmail = localStorage.getItem('morales_user_email') || user?.email;
+      
+      if (!navigator.onLine || !userEmail) {
+        // Offline mode - verify against localStorage
+        const storedHash = localStorage.getItem(`vault_pin_hash_${userEmail?.toLowerCase()}`);
+        const storedSalt = localStorage.getItem(`vault_pin_salt_${userEmail?.toLowerCase()}`);
+        
+        if (!storedHash || !storedSalt) {
+          setError('No PIN found. Please set a new PIN.');
+          setIsSettingPIN(true);
+          setLoading(false);
+          return;
+        }
+        
+        const isValid = await verifyPIN(pinString, storedSalt, storedHash);
+        
+        if (isValid) {
+          onPINVerified();
+        } else {
+          setError('Incorrect PIN. Please try again.');
+          setPin(['', '', '', '']);
+          inputRefs[0]?.current?.focus();
+        }
+        setLoading(false);
+        return;
+      }
+      
+      // Online mode - verify with server (fallback to local if server fails)
+      try {
+        const response = await base44.functions.invoke('verifyVaultPIN', {
+          pin: pinString,
+          action: 'verify'
+        });
 
-      if (response.data.valid) {
-        onPINVerified();
-      } else if (response.data.error === 'No PIN set') {
-        // No PIN exists - switch to setup mode
-        setIsSettingPIN(true);
-        setError('No PIN found. Please set a new PIN.');
-      } else {
-        setError('Incorrect PIN. Please try again.');
-        setPin(['', '', '', '']);
-        inputRefs[0]?.current?.focus();
+        if (response.data.valid) {
+          onPINVerified();
+        } else if (response.data.error === 'No PIN set') {
+          setIsSettingPIN(true);
+          setError('No PIN found. Please set a new PIN.');
+        } else {
+          setError('Incorrect PIN. Please try again.');
+          setPin(['', '', '', '']);
+          inputRefs[0]?.current?.focus();
+        }
+      } catch (serverErr) {
+        // Server failed - fallback to local verification
+        console.warn('Server verification failed, trying local:', serverErr);
+        const storedHash = localStorage.getItem(`vault_pin_hash_${userEmail.toLowerCase()}`);
+        const storedSalt = localStorage.getItem(`vault_pin_salt_${userEmail.toLowerCase()}`);
+        
+        if (storedHash && storedSalt) {
+          const isValid = await verifyPIN(pinString, storedSalt, storedHash);
+          if (isValid) {
+            onPINVerified();
+          } else {
+            setError('Incorrect PIN. Please try again.');
+            setPin(['', '', '', '']);
+            inputRefs[0]?.current?.focus();
+          }
+        } else {
+          setError('Network error and no local PIN found.');
+        }
       }
     } catch (err) {
       console.error('PIN verification error:', err);
-      setError(err.message || 'Verification failed. Please try again.');
+      setError('Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -104,21 +159,36 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
 
     setLoading(true);
     try {
-      console.log('Setting PIN...');
-      const response = await base44.functions.invoke('verifyVaultPIN', {
-        pin: pinString,
-        action: 'set'
-      });
-      
-      console.log('PIN response:', response.data);
-      if (response.data.success) {
-        onPINVerified();
-      } else {
-        setError('Failed to set PIN. Please try again.');
+      // Generate salt and hash client-side
+      const userEmail = localStorage.getItem('morales_user_email') || user?.email;
+      if (!userEmail) {
+        setError('User email not found. Please log in again.');
+        setLoading(false);
+        return;
       }
+
+      const { salt, hash } = await generatePINHash(pinString, userEmail);
+      
+      // Store hash and salt in localStorage for offline verification
+      localStorage.setItem(`vault_pin_hash_${userEmail.toLowerCase()}`, hash);
+      localStorage.setItem(`vault_pin_salt_${userEmail.toLowerCase()}`, salt);
+      
+      // Also sync to server if online
+      if (navigator.onLine) {
+        try {
+          await base44.functions.invoke('verifyVaultPIN', {
+            pin: pinString,
+            action: 'set'
+          });
+        } catch (serverErr) {
+          console.warn('Server PIN sync failed, but local PIN set successfully:', serverErr);
+        }
+      }
+      
+      onPINVerified();
     } catch (err) {
       console.error('PIN setup error:', err);
-      setError(err.response?.data?.error || err.message || 'Failed to set PIN. Please try again.');
+      setError('Failed to set PIN. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -219,7 +289,9 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN }) {
         <div className="mt-6 text-center">
           <p className="text-white/50 text-xs">
             <Lock className="w-3 h-3 inline mr-1" />
-            Your PIN is securely hashed and never stored in plain text
+            {navigator.onLine 
+              ? 'Your PIN is securely hashed (PBKDF2) and never stored in plain text' 
+              : 'Offline Mode: Verifying against local secure hash'}
           </p>
         </div>
       </div>
