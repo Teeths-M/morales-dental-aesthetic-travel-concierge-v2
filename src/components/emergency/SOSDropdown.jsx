@@ -47,11 +47,31 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
     setCountdown(null);
   };
 
+  const SOS_QUEUE_KEY = 'morales_sos_offline_queue';
+
+  // On mount: flush any queued offline SOS requests when connectivity is restored
+  useEffect(() => {
+    const flushQueue = async () => {
+      if (!navigator.onLine) return;
+      try {
+        const queue = JSON.parse(localStorage.getItem(SOS_QUEUE_KEY) || '[]');
+        if (!queue.length) return;
+        for (const payload of queue) {
+          await base44.functions.invoke('triggerSOS', payload);
+        }
+        localStorage.removeItem(SOS_QUEUE_KEY);
+      } catch (_) {}
+    };
+    window.addEventListener('online', flushQueue);
+    flushQueue(); // also attempt on initial mount
+    return () => window.removeEventListener('online', flushQueue);
+  }, []);
+
   const dispatch = async (option) => {
     setSending(true);
     setConfirming(null);
-    let latitude = null, longitude = null, locationLabel = 'Unknown';
-    // Attempt GPS
+    let latitude = null, longitude = null;
+
     try {
       await new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
@@ -62,7 +82,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
       });
     } catch (_) {}
 
-    const res = await base44.functions.invoke('triggerSOS', {
+    const payload = {
       trigger_type: option.id,
       case_id: caseId,
       patient_email: patientEmail,
@@ -70,10 +90,35 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
       patient_phone: patientPhone,
       latitude,
       longitude,
-      location_label: locationLabel,
+      location_label: 'Unknown',
       destination_country: destinationCountry,
       is_silent: option.id === 'silent_sos'
-    });
+    };
+
+    if (!navigator.onLine) {
+      // Queue for later and show confirmation immediately
+      try {
+        const queue = JSON.parse(localStorage.getItem(SOS_QUEUE_KEY) || '[]');
+        queue.push(payload);
+        localStorage.setItem(SOS_QUEUE_KEY, JSON.stringify(queue));
+      } catch (_) {}
+      setSending(false);
+      setSent({ ...option, queued: true });
+      setOpen(false);
+      setTimeout(() => setSent(null), 10000);
+      return;
+    }
+
+    try {
+      await base44.functions.invoke('triggerSOS', payload);
+    } catch (_) {
+      // Network failed mid-request — queue it
+      try {
+        const queue = JSON.parse(localStorage.getItem(SOS_QUEUE_KEY) || '[]');
+        queue.push(payload);
+        localStorage.setItem(SOS_QUEUE_KEY, JSON.stringify(queue));
+      } catch (__) {}
+    }
 
     setSending(false);
     setSent(option);
@@ -100,9 +145,16 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
       <AnimatePresence>
         {sent && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-            className="absolute top-full mt-2 right-0 z-50 bg-emerald-800 text-white rounded-2xl shadow-xl px-4 py-3 w-64">
-            <p className="text-xs font-bold flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> {sent.label} Dispatched</p>
-            <p className="text-[11px] text-emerald-200 mt-1">Emergency team alerted. Stay where you are.</p>
+            className={`absolute top-full mt-2 right-0 z-50 rounded-2xl shadow-xl px-4 py-3 w-72 ${sent.queued ? 'bg-amber-700' : 'bg-emerald-800'} text-white`}>
+            <p className="text-xs font-bold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              {sent.queued ? `${sent.label} — Queued Offline` : `${sent.label} Dispatched`}
+            </p>
+            <p className={`text-[11px] mt-1 ${sent.queued ? 'text-amber-200' : 'text-emerald-200'}`}>
+              {sent.queued
+                ? 'No connection detected. SOS saved locally — will auto-dispatch when you reconnect.'
+                : 'Emergency team alerted. Stay where you are.'}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
