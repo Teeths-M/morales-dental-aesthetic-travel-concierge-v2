@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/ui-system';
 import { BRAND } from '@/lib/brandTokens';
 import { useVault } from '@/hooks/useVault';
 import { vaultService } from '@/lib/services';
+import { queueSyncAction, SYNC_ACTIONS } from '@/lib/services/vaultSyncService';
 
 const DOC_META = {
   passport:          { emoji: '🛂', label: 'Passport' },
@@ -31,7 +32,7 @@ const TABS = [
 ];
 
 export default function VaultDashboard({ user }) {
-  const { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, reload } = useVault(user);
+  const { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, syncStatus, reload } = useVault(user);
   const [activeTab, setActiveTab] = useState('documents');
 
   // Cache vault metadata to localStorage whenever it loads or changes — enables offline emergency access
@@ -99,10 +100,19 @@ export default function VaultDashboard({ user }) {
   }, [pwModal.vault]);
 
   const handleDeleteConfirm = useCallback(async () => {
-    await vaultService.archiveDocument(deleteTarget.id);
     setDeleteTarget(null);
+    
+    // If offline, queue the action for later sync
+    if (!navigator.onLine) {
+      queueSyncAction(SYNC_ACTIONS.DELETE, { vaultId: deleteTarget.id }, user.email);
+      await reload();
+      return;
+    }
+    
+    // If online, execute immediately
+    await vaultService.archiveDocument(deleteTarget.id);
     await reload();
-  }, [deleteTarget?.id, reload]);
+  }, [deleteTarget?.id, reload, user?.email]);
 
   // Pre-format all dates once when vaults/links/logs change — not on every render
   const formattedDates = useMemo(() => {
@@ -136,6 +146,24 @@ export default function VaultDashboard({ user }) {
         >
           <Shield className="w-4 h-4 text-amber-400 flex-shrink-0" />
           <p className="text-[13px] font-bold text-amber-100">Offline Mode: Viewing cached data</p>
+          {syncStatus.pendingCount > 0 && (
+            <span className="ml-auto text-[11px] font-bold text-amber-200 bg-amber-500/20 px-2 py-0.5 rounded-full">
+              {syncStatus.pendingCount} pending
+            </span>
+          )}
+        </motion.div>
+      )}
+
+      {/* Sync Status Banner */}
+      {syncStatus.syncing && (
+        <motion.div
+          className="flex items-center gap-3 px-5 py-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <p className="text-[13px] font-bold text-emerald-100">Syncing {syncStatus.pendingCount} action{syncStatus.pendingCount !== 1 ? 's' : ''}...</p>
         </motion.div>
       )}
 

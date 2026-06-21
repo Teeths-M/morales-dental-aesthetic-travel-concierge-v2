@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { vaultService } from '@/lib/services';
+import { initBackgroundSync, getSyncStatus, processQueue } from '@/lib/services/vaultSyncService';
 
 export function useVault(user) {
   const [vaults, setVaults]         = useState([]);
@@ -12,6 +13,7 @@ export function useVault(user) {
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [syncStatus, setSyncStatus] = useState({ pendingCount: 0, syncing: false });
 
   const load = useCallback(async () => {
     if (!user?.email) return;
@@ -20,6 +22,13 @@ export function useVault(user) {
     setIsOfflineMode(false);
 
     const cacheKey = `morales_vault_meta_${user.email.toLowerCase()}`;
+
+    // Initialize background sync on first load
+    const cleanup = initBackgroundSync(user.email);
+    
+    // Update sync status
+    const status = getSyncStatus(user.email);
+    setSyncStatus(status);
 
     // Check if offline first
     if (!navigator.onLine) {
@@ -31,7 +40,7 @@ export function useVault(user) {
         }
       } catch (_) {}
       setLoading(false);
-      return;
+      return cleanup;
     }
 
     try {
@@ -64,6 +73,12 @@ export function useVault(user) {
       } catch (_) {}
       
       setIsOfflineMode(false);
+      
+      // Process any pending sync queue after successful load
+      const syncResult = await processQueue(user.email);
+      if (syncResult.synced > 0) {
+        await load(); // Reload to show synced data
+      }
     } catch (err) {
       console.error('[useVault] load failed:', err);
       // Network failed — fallback to cache
@@ -78,9 +93,14 @@ export function useVault(user) {
     } finally {
       setLoading(false);
     }
+    
+    return cleanup;
   }, [user?.email, user?.id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const cleanup = load();
+    return cleanup;
+  }, [load]);
 
-  return { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, reload: load };
+  return { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, syncStatus, reload: load };
 }

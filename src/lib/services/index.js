@@ -5,3 +5,4 @@
 export { vaultService }  from './vaultService';
 export { caseService }   from '@/services/caseService';
 export { auditService }  from './auditService';
+export * from './vaultSyncService';
