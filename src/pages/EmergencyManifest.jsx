@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+// Note: this page is intentionally in the public/token routes — no auth required
 
 // PIN-gated Emergency Manifest
 // Accessible without a login session, but requires the user's 6-digit Emergency PIN.
@@ -53,38 +54,85 @@ export default function EmergencyManifest() {
     setLoading(true);
     setError('');
 
-    const res = await base44.functions.invoke('verifyEmergencyPIN', { pin });
-    const data = res.data;
+    const isOffline = !navigator.onLine;
 
-    if (data?.error || !data?.valid) {
-      setError(data?.error || 'Invalid PIN. Access denied.');
+    // --- OFFLINE PATH: verify PIN locally using stored hash ---
+    if (isOffline) {
+      try {
+        const storedLocal = JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null');
+        if (!storedLocal) {
+          setError('No offline PIN found. You must verify once online first.');
+          setLoading(false);
+          return;
+        }
+        // Hash the entered PIN the same way EmergencyPINSetup does
+        const email = storedLocal.email || '';
+        const data = new TextEncoder().encode(pin + ':' + email);
+        const buf = await crypto.subtle.digest('SHA-256', data);
+        const enteredHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (enteredHash !== storedLocal.hash) {
+          setError('Incorrect PIN.');
+          setLoading(false);
+          return;
+        }
+        // PIN correct offline — use cached manifest directly
+        if (cached) {
+          setManifest(cached);
+        } else {
+          setError('PIN correct but no cached manifest. Connect once online to prime your offline manifest.');
+        }
+      } catch (_) {
+        setError('Offline verification failed. Try again.');
+      }
       setLoading(false);
       return;
     }
 
-    // PIN verified — fetch the user's case and profile data
-    const caseRes = await base44.functions.invoke('getSoloCheckInStatus', {});
-    const caseData = caseRes.data;
+    // --- ONLINE PATH ---
+    try {
+      const res = await base44.functions.invoke('verifyEmergencyPIN', { pin });
+      const data = res.data;
 
-    const manifestData = {
-      full_name: data.user_name || 'Unknown',
-      blood_type: data.blood_type || 'Unknown',
-      allergies: data.allergies || 'None recorded',
-      medications: data.medications || 'None recorded',
-      medical_conditions: data.medical_conditions || 'None recorded',
-      emergency_contacts: data.emergency_contacts || [],
-      passport_last4: data.passport_last4 || 'Not on file',
-      procedure: data.procedure || 'Not specified',
-      doctor_name: data.doctor_name || 'Not assigned',
-      doctor_phone: data.doctor_phone || 'Not available',
-      case_id: data.case_id || 'N/A',
-      cached_at: new Date().toISOString(),
-    };
+      if (data?.error || !data?.valid) {
+        setError(data?.error || 'Invalid PIN. Access denied.');
+        setLoading(false);
+        return;
+      }
 
-    // Cache for offline use (LRU-safe)
-    safeStoreManifest(manifestData);
+      const manifestData = {
+        full_name: data.user_name || 'Unknown',
+        blood_type: data.blood_type || 'Unknown',
+        allergies: data.allergies || 'None recorded',
+        medications: data.medications || 'None recorded',
+        medical_conditions: data.medical_conditions || 'None recorded',
+        emergency_contacts: data.emergency_contacts || [],
+        passport_last4: data.passport_last4 || 'Not on file',
+        procedure: data.procedure || 'Not specified',
+        doctor_name: data.doctor_name || 'Not assigned',
+        doctor_phone: data.doctor_phone || 'Not available',
+        case_id: data.case_id || 'N/A',
+        cached_at: new Date().toISOString(),
+      };
 
-    setManifest(manifestData);
+      safeStoreManifest(manifestData);
+      setManifest(manifestData);
+    } catch (_) {
+      // Server unreachable — try local PIN + cached manifest
+      try {
+        const storedLocal = JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null');
+        if (storedLocal) {
+          const emailKey = storedLocal.email || '';
+          const buf2 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin + ':' + emailKey));
+          const hash2 = Array.from(new Uint8Array(buf2)).map(b => b.toString(16).padStart(2, '0')).join('');
+          if (hash2 === storedLocal.hash && cached) {
+            setManifest(cached);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (_) {}
+      setError('Server unreachable and no valid offline fallback. Check your connection.');
+    }
     setLoading(false);
   };
 
@@ -148,6 +196,12 @@ export default function EmergencyManifest() {
           <div style={{ fontSize: '22px', fontWeight: 'bold', letterSpacing: '1px' }}>EMERGENCY MANIFEST</div>
           <div style={{ fontSize: '13px', color: '#aaa', marginTop: '8px' }}>Enter your 6-digit Emergency PIN to access your medical profile and emergency contacts.</div>
         </div>
+
+        {!navigator.onLine && (
+          <div style={{ backgroundColor: '#ff6600', color: '#000', padding: '8px 12px', marginBottom: '16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'center' }}>
+            ⚠ OFFLINE MODE — PIN verified from device cache
+          </div>
+        )}
 
         <form onSubmit={handlePINSubmit}>
           <input

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw } from 'lucide-react';
+import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
 
 // IndexedDB helper for offline document caching
 const OFFLINE_CACHE_KEY = 'morales_offline_vault';
@@ -40,6 +40,102 @@ const SMS_COMMANDS = [
   { cmd: 'SOS [case_id]', desc: 'Emergency escalation', color: 'text-red-700 bg-red-50 border-red-200' },
   { cmd: 'PIN [4-8 digits]', desc: 'Emergency device access', color: 'text-slate-700 bg-slate-50 border-slate-200' },
 ];
+
+const DOC_TYPE_ICONS = {
+  passport: '🛂', visa: '📋', flight_ticket: '✈️', hotel_booking: '🏨',
+  medical_record: '🏥', insurance: '🛡️', other: '📄',
+};
+
+function OfflineDocsTab() {
+  const [vaultDocs, setVaultDocs] = useState(null);
+  const [manifestCached, setManifestCached] = useState(false);
+  const [pinCached, setPinCached] = useState(false);
+
+  useEffect(() => {
+    // Check what's actually cached in localStorage
+    const allKeys = Object.keys(localStorage);
+    // Vault metadata (saved by VaultDashboard / EmergencyVaultViewer)
+    const vaultKey = allKeys.find(k => k.startsWith('morales_vault_meta_'));
+    if (vaultKey) {
+      try { setVaultDocs(JSON.parse(localStorage.getItem(vaultKey))); } catch (_) {}
+    }
+    // Emergency manifest
+    setManifestCached(!!localStorage.getItem('morales_emergency_manifest'));
+    // Local PIN hash
+    setPinCached(!!localStorage.getItem('morales_emergency_pin_hash'));
+  }, []);
+
+  const hasDocs = vaultDocs && vaultDocs.length > 0;
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Shield className="w-4 h-4 text-emerald-600" />
+        <h4 className="font-bold text-slate-800 text-sm">Offline Cache Status</h4>
+      </div>
+      <p className="text-xs text-slate-500 leading-relaxed">
+        These items are stored on your device and accessible without internet. Visit each section while online to prime your cache.
+      </p>
+
+      {/* PIN Cache */}
+      <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${pinCached ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+        <span className="text-base">🔐</span>
+        <p className={`flex-1 text-xs font-semibold ${pinCached ? 'text-emerald-800' : 'text-red-700'}`}>Emergency PIN</p>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pinCached ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+          {pinCached ? '✓ Cached' : '✗ Not Set'}
+        </span>
+      </div>
+
+      {/* Manifest Cache */}
+      <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${manifestCached ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+        <span className="text-base">🚨</span>
+        <p className={`flex-1 text-xs font-semibold ${manifestCached ? 'text-emerald-800' : 'text-amber-700'}`}>Emergency Manifest</p>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${manifestCached ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+          {manifestCached ? '✓ Cached' : '⚠ Not Cached'}
+        </span>
+      </div>
+
+      {/* Vault Documents */}
+      {hasDocs ? (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-slate-600">Vault Documents ({vaultDocs.length})</p>
+          {vaultDocs.map((doc, i) => (
+            <div key={doc.vault_id || doc.id || i} className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+              <span className="text-base">{DOC_TYPE_ICONS[doc.document_type] || '📄'}</span>
+              <p className="flex-1 text-xs font-semibold text-emerald-800 truncate">{doc.file_name || doc.document_type?.replace(/_/g, ' ')}</p>
+              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">✓ Cached</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-amber-800">No vault documents cached yet</p>
+            <p className="text-[11px] text-amber-700 mt-0.5">Open your Passport Vault while online — your document list will automatically cache for offline access.</p>
+            <a href="/passport-vault" className="flex items-center gap-1 text-[11px] text-blue-600 mt-2 font-semibold hover:underline">
+              <ExternalLink className="w-3 h-3" />Go to Passport Vault →
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* SOS & Emergency Access links */}
+      <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+        <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-xs font-bold text-slate-700">Offline Emergency Access</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">Emergency PIN page and SOS tools work without login. Ensure your PIN is cached above.</p>
+          <div className="flex flex-wrap gap-3 mt-2">
+            <a href="/emergency-access" className="text-[11px] text-blue-600 font-semibold hover:underline">Emergency PIN Access →</a>
+            <a href="/emergency-manifest" className="text-[11px] text-red-600 font-semibold hover:underline">Emergency Manifest →</a>
+            <a href="/emergency" className="text-[11px] text-purple-600 font-semibold hover:underline">SOS Hub →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function OfflineCapabilitiesPanel({ caseId, userId }) {
   const [activeTab, setActiveTab] = useState('sms');
@@ -243,37 +339,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
         {/* Offline Docs */}
         {activeTab === 'docs' && (
           <motion.div key="docs" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-4 h-4 text-emerald-600" />
-                <h4 className="font-bold text-slate-800 text-sm">Offline Document Vault</h4>
-              </div>
-              <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                Your passport and medical documents are encrypted with AES-256-GCM and cached locally in your browser's secure storage. When offline, they decrypt instantly using your session key — no internet needed.
-              </p>
-              <div className="space-y-3">
-                {[
-                  { label: 'Passport (encrypted)', status: 'cached', icon: '🛂' },
-                  { label: 'Medical Records', status: 'cached', icon: '📋' },
-                  { label: 'Travel Itinerary', status: 'cached', icon: '✈️' },
-                  { label: 'Hotel Confirmation', status: 'cached', icon: '🏨' },
-                  { label: 'Emergency Contacts', status: 'cached', icon: '📞' },
-                ].map(doc => (
-                  <div key={doc.label} className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                    <span className="text-base">{doc.icon}</span>
-                    <p className="flex-1 text-xs font-semibold text-emerald-800">{doc.label}</p>
-                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">✓ Cached</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-slate-700">Map Tiles Pre-cached</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Hotel ↔ Surgical Center route tiles cached for offline GPS navigation. Hardware GPS active.</p>
-                </div>
-              </div>
-            </div>
+            <OfflineDocsTab />
           </motion.div>
         )}
       </AnimatePresence>
