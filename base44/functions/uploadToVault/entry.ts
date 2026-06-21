@@ -56,7 +56,18 @@ Deno.serve(async (req) => {
     const encryptedBytes = Uint8Array.from(atob(encrypted_file_b64), c => c.charCodeAt(0));
     const encryptedBlob = new Blob([encryptedBytes], { type: 'application/octet-stream' });
 
-    const { file_uri } = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file: encryptedBlob });
+    let file_uri;
+    try {
+      const uploadResult = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file: encryptedBlob });
+      file_uri = uploadResult.file_uri;
+      if (!file_uri) {
+        console.error('[uploadToVault] UploadPrivateFile returned no file_uri. Full result:', JSON.stringify(uploadResult));
+        return Response.json({ error: 'DEBUG: UploadPrivateFile succeeded but returned no file_uri. Raw result: ' + JSON.stringify(uploadResult) }, { status: 500 });
+      }
+    } catch (uploadErr) {
+      console.error('[uploadToVault] UploadPrivateFile failed:', uploadErr);
+      return Response.json({ error: 'DEBUG: File storage failed — ' + (uploadErr.message || String(uploadErr)) }, { status: 500 });
+    }
 
     // Entity field is passport_token — not vault_token. Using the wrong name means
     // every downstream filter({ passport_token }) returns empty, breaking all downloads.
@@ -65,31 +76,37 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
 
     // Create vault record
-    const vault = await base44.entities.PassportVault.create({
-      passport_token,
-      user_id: user.id,
-      user_email: user.email,
-      document_type,
-      encrypted_file_uri: file_uri,
-      encryption_iv_b64,
-      encryption_salt_b64,  // Store salt (not secret, needed for PBKDF2)
-      algorithm: 'AES-256-GCM',
-      algorithm_version: 2,
-      integrity_hash: file_hash_sha256,
-      file_size_bytes,
-      file_name,
-      mime_type,
-      redacted_for_display,
-      status: 'active',
-      // TODO: Wire real AV scanner (e.g. ClamAV/VirusTotal) before surfacing scan status to users.
-      // Files are client-side AES-256-GCM encrypted before upload, limiting server-side exposure.
-      // Status is intentionally 'not_scanned' — never claim 'passed' without a real scan.
-      virus_scan_status: 'not_scanned',
-      expires_at,
-      uploaded_at: now,
-      access_count: 0,
-      is_emergency_accessible
-    });
+    let vault;
+    try {
+      vault = await base44.entities.PassportVault.create({
+        passport_token,
+        user_id: user.id,
+        user_email: user.email,
+        document_type,
+        encrypted_file_uri: file_uri,
+        encryption_iv_b64,
+        encryption_salt_b64,  // Store salt (not secret, needed for PBKDF2)
+        algorithm: 'AES-256-GCM',
+        algorithm_version: 2,
+        integrity_hash: file_hash_sha256,
+        file_size_bytes,
+        file_name,
+        mime_type,
+        redacted_for_display,
+        status: 'active',
+        // TODO: Wire real AV scanner (e.g. ClamAV/VirusTotal) before surfacing scan status to users.
+        // Files are client-side AES-256-GCM encrypted before upload, limiting server-side exposure.
+        // Status is intentionally 'not_scanned' — never claim 'passed' without a real scan.
+        virus_scan_status: 'not_scanned',
+        expires_at,
+        uploaded_at: now,
+        access_count: 0,
+        is_emergency_accessible
+      });
+    } catch (createErr) {
+      console.error('[uploadToVault] PassportVault.create failed:', createErr);
+      return Response.json({ error: 'DEBUG: Vault record creation failed — ' + (createErr.message || String(createErr)) }, { status: 500 });
+    }
 
     // Log to AuditLog — use 'passport_access_requested' which is in the allowed event type list.
     // IMPORTANT: this must never fail the upload. The vault record above is already
@@ -127,6 +144,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[uploadToVault]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
+    return Response.json({ error: 'DEBUG: ' + (error.message || String(error)) }, { status: 500 });
   }
 });
