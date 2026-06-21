@@ -18,11 +18,40 @@ export default function PassportVault() {
     base44.auth.me().then(async (u) => {
       setUser(u);
       if (u) {
-        const vaults = await base44.entities.PassportVault.filter({ user_email: u.email, status: 'active' }, '-uploaded_at', 1);
-        setHasVault(vaults.length > 0);
-        
-        const pins = await base44.entities.VaultPIN.filter({ user_id: u.id });
-        setHasPIN(pins.length > 0);
+        // These are live network calls (base44.entities.*), not routed through
+        // useVault/vaultService's offline-first cache. If they throw or hang
+        // while offline, hasVault/hasPIN never get set and the page spins
+        // forever (even though VaultDashboard itself is offline-capable).
+        // Fall back to cached state so offline users can still reach the
+        // dashboard, which reads its own data from localStorage.
+        const cacheKey = `morales_vault_meta_${u.email.toLowerCase()}`;
+        const pinCacheKey = `morales_vault_haspin_${u.id}`;
+
+        try {
+          const vaults = await base44.entities.PassportVault.filter({ user_email: u.email, status: 'active' }, '-uploaded_at', 1);
+          setHasVault(vaults.length > 0);
+          try { localStorage.setItem(cacheKey + '_exists', vaults.length > 0 ? '1' : '0'); } catch (_) {}
+        } catch (err) {
+          console.warn('[PassportVault] vault lookup failed, falling back to cache:', err);
+          let cachedExists = false;
+          try { cachedExists = localStorage.getItem(cacheKey + '_exists') === '1'; } catch (_) {}
+          if (!cachedExists) {
+            try { cachedExists = JSON.parse(localStorage.getItem(cacheKey) || '[]').length > 0; } catch (_) {}
+          }
+          setHasVault(cachedExists);
+        }
+
+        try {
+          const pins = await base44.entities.VaultPIN.filter({ user_id: u.id });
+          const hasPinResult = pins.length > 0;
+          setHasPIN(hasPinResult);
+          try { localStorage.setItem(pinCacheKey, hasPinResult ? '1' : '0'); } catch (_) {}
+        } catch (err) {
+          console.warn('[PassportVault] PIN lookup failed, falling back to cache:', err);
+          let cachedHasPin = false;
+          try { cachedHasPin = localStorage.getItem(pinCacheKey) === '1'; } catch (_) {}
+          setHasPIN(cachedHasPin);
+        }
       }
       setLoading(false);
     }).catch(() => setLoading(false));
