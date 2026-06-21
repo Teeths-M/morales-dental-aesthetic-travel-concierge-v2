@@ -197,6 +197,36 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       
       // Store salt in sessionStorage for later decryption
       storeVaultKey(vault_token, saltB64);
+
+      // AUTO-CACHE: write the encrypted blob to localStorage right now, while
+      // we already have it in memory. Without this, a document is only
+      // retrievable offline if the user separately triggers "Save Offline"
+      // or successfully downloads it once while online first — meaning a
+      // document uploaded and then immediately taken offline (e.g. airport,
+      // no Wi-Fi after upload) would be permanently unreachable until the
+      // next time the user is online. Caching here closes that gap so every
+      // uploaded document is offline-ready from the moment it's vaulted.
+      const MAX_CACHE_SIZE = 5 * 1024 * 1024; // 5MB — matches VaultDashboard's limit
+      if (fileSizeBytes < MAX_CACHE_SIZE) {
+        try {
+          const cacheKey = `vault_encrypted_${vault_token}`;
+          localStorage.setItem(cacheKey, JSON.stringify({
+            encryptedB64,
+            encryption_iv_b64: ivB64,
+            encryption_salt_b64: saltB64,
+            file_name: file.name,
+            mime_type: file.type,
+            cached_at: new Date().toISOString()
+          }));
+          console.log('[VaultUploader] Auto-cached for offline access:', file.name);
+        } catch (cacheErr) {
+          // Non-fatal — upload already succeeded; just won't be offline-ready
+          // until the user later triggers "Save Offline" while online.
+          console.warn('[VaultUploader] Auto-cache failed (non-fatal):', cacheErr);
+        }
+      } else {
+        console.warn('[VaultUploader] Document too large to auto-cache for offline use:', fileSizeBytes, 'bytes');
+      }
       
       setIssuedToken(vault_token);
       setStep('done');

@@ -81,6 +81,45 @@ export default function VaultDashboard({ user }) {
     }
   }, [vaults, loading, user?.email]);
 
+  // AUTO-CACHE: whenever the dashboard loads online, silently cache any
+  // documents that aren't yet cached for offline access. Previously this
+  // only happened if the user manually clicked "Save Offline" or downloaded
+  // each document once — meaning any document that existed before that
+  // manual step (or was uploaded right before going offline) could become
+  // permanently unreachable in airplane mode. This closes that gap without
+  // disrupting the visible progress UI, which remains for the manual button.
+  useEffect(() => {
+    if (loading || !navigator.onLine || vaults.length === 0) return;
+
+    const uncached = vaults.filter(v => !localStorage.getItem(`vault_encrypted_${v.passport_token}`));
+    if (uncached.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const vault of uncached) {
+        if (cancelled) return;
+        try {
+          const res = await vaultService.requestDownload(vault.passport_token);
+          if (res.data?.error_code === 'LEGACY_ENCRYPTION_NO_SALT') continue; // can't cache, needs re-upload
+          const { signed_url, encryption_iv_b64, encryption_salt_b64, file_name, mime_type } = res.data;
+          if (!signed_url) continue;
+          const blob = await fetch(signed_url).then(r => r.blob());
+          if (blob.size > 5 * 1024 * 1024) continue; // matches manual cache's 5MB limit
+          const encryptedB64 = arrayBufferToBase64(await blob.arrayBuffer());
+          localStorage.setItem(`vault_encrypted_${vault.passport_token}`, JSON.stringify({
+            encryptedB64, encryption_iv_b64, encryption_salt_b64, file_name, mime_type,
+            cached_at: new Date().toISOString()
+          }));
+          console.log('[VaultDashboard] Background auto-cached for offline access:', file_name);
+        } catch (err) {
+          console.warn('[VaultDashboard] Background auto-cache failed for', vault.file_name, '(non-fatal):', err);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [vaults, loading]);
+
   // Prepare all documents for offline use
   const prepareAllForOffline = useCallback(async () => {
     if (!navigator.onLine) {
