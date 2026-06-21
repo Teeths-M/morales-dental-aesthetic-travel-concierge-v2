@@ -225,12 +225,14 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
           <Smartphone className="w-7 h-7 text-blue-700" />
         </div>
         <h3 className="font-bold text-slate-800 text-lg">
-          {hasPIN && currentMode === 'setup' ? 'Update Emergency PIN' : hasPIN ? 'Emergency PIN Access' : 'Set Up Emergency PIN'}
+          {currentMode === 'verify' ? 'Emergency PIN Access' : hasPIN ? 'Update Emergency PIN' : 'Set Up Emergency PIN'}
         </h3>
         <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
-          {hasPIN && currentMode === 'setup'
-            ? 'Your universal 6-digit PIN works on any device — no app login required.'
-            : 'Enter your PIN to access your vault and SOS console on any device.'}
+          {currentMode === 'verify'
+            ? 'Enter your PIN to access your vault and SOS console on any device.'
+            : hasPIN
+            ? 'Enter and confirm your NEW 6-digit PIN below. It will replace your existing PIN immediately.'
+            : 'Choose a 6-digit PIN — works on any device without app login'}
         </p>
         {pinHint && <p className="text-xs text-blue-600 mt-2">Hint: {pinHint}</p>}
       </div>
@@ -270,12 +272,12 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         )}
 
         <Button
-          onClick={currentMode === 'verify' || hasPIN ? verifyPIN : setupPIN}
-          disabled={loading || pin.length !== 6 || ((!hasPIN || currentMode === 'setup') && confirmPin.length !== 6)}
+          onClick={currentMode === 'verify' ? verifyPIN : setupPIN}
+          disabled={loading || pin.length !== 6 || (currentMode !== 'verify' && confirmPin.length !== 6)}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 font-bold">
           {loading ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Processing...</span>
-            : currentMode === 'verify' || hasPIN ? 'Unlock Emergency Access'
-            : 'Activate Emergency PIN'}
+            : currentMode === 'verify' ? 'Unlock Emergency Access'
+            : hasPIN ? 'Update Emergency PIN' : 'Activate Emergency PIN'}
         </Button>
 
         {hasPIN && currentMode !== 'verify' && (
