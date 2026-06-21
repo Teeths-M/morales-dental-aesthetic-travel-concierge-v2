@@ -16,7 +16,14 @@ export function useVault(user) {
   const [syncStatus, setSyncStatus] = useState({ pendingCount: 0, syncing: false });
 
   const load = useCallback(async () => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      // No identity available (e.g. first-ever visit happened offline, no cached
+      // user to restore). Don't hang on the loading spinner forever — surface
+      // an empty/offline state instead.
+      setLoading(false);
+      setIsOfflineMode(!navigator.onLine);
+      return;
+    }
     setLoading(true);
     setError(null);
     setIsOfflineMode(false);

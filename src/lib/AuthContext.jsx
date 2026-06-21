@@ -30,8 +30,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
-    // If offline, skip network calls entirely — allow bypass paths to render
+    // If offline, skip network calls entirely — restore last known identity so
+    // offline-capable features (Vault, Emergency Manifest) can still render.
     if (!navigator.onLine) {
+      try {
+        const cachedUserRaw = localStorage.getItem('morales_last_known_user');
+        if (cachedUserRaw) {
+          const cachedUser = JSON.parse(cachedUserRaw);
+          setUser({ ...cachedUser, isOfflineUser: true });
+          setIsAuthenticated(true);
+        }
+      } catch (_) { /* no cached identity — proceed with user: null */ }
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
       setAuthChecked(true);
@@ -135,6 +144,19 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthChecked(true);
+
+      // Cache minimal identity for offline restoration (no sensitive tokens — just enough
+      // to key the local cache lookups in useVault, EmergencyManifest, etc.)
+      try {
+        if (currentUser?.email) {
+          localStorage.setItem('morales_last_known_user', JSON.stringify({
+            email: currentUser.email,
+            id: currentUser.id,
+            full_name: currentUser.full_name,
+            role: currentUser.role,
+          }));
+        }
+      } catch (_) { /* storage unavailable — non-fatal */ }
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
