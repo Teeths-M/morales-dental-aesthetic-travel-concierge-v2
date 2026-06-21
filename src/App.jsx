@@ -32,7 +32,7 @@ const PageLoader = () => (
 );
 
 // Paths that must work even when auth is loading or failing (offline/emergency use)
-const PUBLIC_BYPASS_PATHS = ['/offline', '/emergency-manifest', '/emergency-access'];
+const PUBLIC_BYPASS_PATHS = ['/offline', '/emergency-manifest', '/emergency-access', '/emergency'];
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();

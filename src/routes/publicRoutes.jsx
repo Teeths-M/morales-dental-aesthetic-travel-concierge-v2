@@ -22,6 +22,7 @@ const RegisterRole  = lazy(() => import('@/pages/RegisterRole'));
 const DeepPerfection = lazy(() => import('@/pages/DeepPerfection'));
 const OnboardingEducation = lazy(() => import('@/pages/OnboardingEducation'));
 const TravelConcierge = lazy(() => import('@/pages/TravelConcierge'));
+const EmergencyHub    = lazy(() => import('@/pages/EmergencyHub'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -39,5 +40,6 @@ export const publicRoutes = (
     <Route path="/deep-perfection" element={<DeepPerfection />} />
     <Route path="/onboarding"     element={<OnboardingEducation />} />
     <Route path="/travel-concierge" element={<TravelConcierge />} />
+    <Route path="/emergency"        element={<EmergencyHub />} />
   </Route>
 );

@@ -15,7 +15,6 @@ const Booking             = lazy(() => import('@/pages/Booking'));
 const Dashboard           = lazy(() => import('@/pages/Dashboard'));
 const ClientSignup        = lazy(() => import('@/pages/ClientSignup'));
 const PassportVault       = lazy(() => import('@/pages/PassportVault'));
-const EmergencyHub        = lazy(() => import('@/pages/EmergencyHub'));
 const InsuranceCoverage   = lazy(() => import('@/pages/InsuranceCoverage'));
 const TravelServices      = lazy(() => import('@/pages/TravelServices'));
 const TripOverview        = lazy(() => import('@/pages/TripOverview'));
@@ -61,7 +60,6 @@ export const clientRoutes = (
       <Route path="/trip-overview"              element={<TripOverview />} />
       <Route path="/walkie-talkie"              element={<WalkieTalkie />} />
       <Route path="/baggage-tracker"            element={<BaggageTrackerPage />} />
-      <Route path="/emergency"                  element={<EmergencyHub />} />
       <Route path="/nightlife-safety"           element={<NightlifeSafetyMode />} />
       <Route path="/wilderness-safety"           element={<WildernessSafetyMode />} />
       <Route path="/medical-intake"              element={<MedicalIntakeForm />} />
