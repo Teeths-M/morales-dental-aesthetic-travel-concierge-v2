@@ -61,26 +61,9 @@ async function mountApp() {
     } catch (_) { /* ignore — best effort */ }
   }
 
-  // ── Service Worker Registration (Production) ───────────────────────────────
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {/* best effort */});
-  }
-
   ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   );
 }
 
 mountApp();
-
-// ── Service Worker Registration (Production Only) ───────────────────────────
-// Enables offline access to /offline and /emergency-manifest, and powers
-// "Add to Home Screen" install prompts on mobile.
-
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.warn('[SW] Registration failed:', err);
-    });
-  });
-}

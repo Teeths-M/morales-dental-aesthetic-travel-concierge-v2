@@ -139,6 +139,12 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       return;
     }
 
+    // Guard: Block uploads when offline
+    if (!navigator.onLine) {
+      setError('Upload requires internet connection. Please reconnect and try again.');
+      return;
+    }
+
     setStep('encrypting');
     setError(null);
 
@@ -155,7 +161,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       // Step 2: Upload encrypted file to private storage directly from frontend
       console.log('[VaultUploader] Uploading encrypted file to private storage...');
       
-      // Convert base64 to File for UploadPrivateFile
+      // Convert base64 to File for UploadPrivateFile (preserves filename for multipart/form-data)
       const encryptedBytes = Uint8Array.from(atob(encryptedB64), c => c.charCodeAt(0));
       const encryptedFile = new File([encryptedBytes], 'vault_document.enc', { type: 'application/octet-stream' });
       

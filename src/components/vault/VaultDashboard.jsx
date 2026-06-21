@@ -6,6 +6,7 @@ import { decryptFileWithPassword } from '@/lib/vaultEncryption';
 import VaultPasswordModal from './VaultPasswordModal';
 import ShareLinkModal from './ShareLinkModal';
 import VaultUploader from './VaultUploader';
+import OfflineVaultBanner from './OfflineVaultBanner';
 import { ConfirmDialog } from '@/components/ui-system';
 import { BRAND } from '@/lib/brandTokens';
 import { useVault } from '@/hooks/useVault';
@@ -125,7 +126,8 @@ export default function VaultDashboard({ user }) {
 
   const docCount = vaults.length;
 
-  if (loading) {
+  // Only show loading if truly no data (first load with no cache)
+  if (loading && vaults.length === 0 && shareLinks.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
@@ -137,22 +139,11 @@ export default function VaultDashboard({ user }) {
   return (
     <div className="space-y-6">
       {/* Offline Mode Banner */}
-      {isOfflineMode && (
-        <motion.div
-          className="flex items-center gap-3 px-5 py-3 rounded-xl border border-amber-400/30 bg-amber-400/10"
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Shield className="w-4 h-4 text-amber-400 flex-shrink-0" />
-          <p className="text-[13px] font-bold text-amber-100">Offline Mode: Viewing cached data</p>
-          {syncStatus.pendingCount > 0 && (
-            <span className="ml-auto text-[11px] font-bold text-amber-200 bg-amber-500/20 px-2 py-0.5 rounded-full">
-              {syncStatus.pendingCount} pending
-            </span>
-          )}
-        </motion.div>
-      )}
+      <OfflineVaultBanner
+        isOffline={isOfflineMode}
+        pendingCount={syncStatus.pendingCount}
+        onSync={reload}
+      />
 
       {/* Sync Status Banner */}
       {syncStatus.syncing && (
