@@ -4,8 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { Smartphone, Lock, CheckCircle2, AlertTriangle, Eye, EyeOff, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { saveVaultPIN, verifyVaultPIN, hasVaultPIN } from '@/lib/vault/offlineVaultPIN';
 
-// ---------- Local offline PIN helpers ----------
+// ---------- Local offline PIN helpers (legacy fallback) ----------
 const LOCAL_PIN_KEY = 'morales_emergency_pin_hash';
 
 async function hashPIN(pin, email) {
@@ -101,26 +102,31 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
   }, [hasPIN, currentMode]);
 
   const checkExisting = async () => {
-    // Always check local first (works offline)
+    // Check new PBKDF2-based local PIN first (most secure)
+    const hasPBKDF2PIN = hasVaultPIN(userEmail);
+    if (hasPBKDF2PIN) {
+      setHasPIN(true);
+      setCurrentMode('verify');
+      return;
+    }
+    
+    // Fallback to legacy local PIN
     const localHint = getLocalHint(userEmail);
     if (localHint !== null) {
       setHasPIN(true);
       setPinHint(localHint);
-      // Immediately switch to verify mode when offline and PIN exists
-      if (!navigator.onLine) {
-        setCurrentMode('verify');
-      }
+      setCurrentMode('verify');
+      return;
     }
-    // Then try server (if online) to sync
+    
+    // Try server (if online)
     if (navigator.onLine) {
       try {
         const res = await base44.functions.invoke('verifyEmergencyPIN', { action: 'get_hint', user_email: userEmail });
-        if (res.data) {
-          setHasPIN(res.data.has_pin);
+        if (res.data?.has_pin) {
+          setHasPIN(true);
           setPinHint(res.data.hint || localHint);
-          if (res.data.has_pin) {
-            setCurrentMode('verify');
-          }
+          setCurrentMode('verify');
         }
       } catch (_) {}
     }
@@ -132,9 +138,15 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     setLoading(true);
     setError('');
     
-    // Step 1: Save locally FIRST (critical for offline access)
-    await saveLocalPIN(pin, userEmail, hint);
-    const localSaved = localStorage.getItem(LOCAL_PIN_KEY);
+    // Step 1: Save using PBKDF2 (secure offline access)
+    try {
+      await saveVaultPIN(userEmail, pin);
+      console.log('[EmergencyPINSetup] PBKDF2 PIN saved');
+    } catch (err) {
+      console.error('[EmergencyPINSetup] PBKDF2 save failed:', err);
+      // Fallback to legacy
+      await saveLocalPIN(pin, userEmail, hint);
+    }
     
     // Step 2: Save to server (if online)
     let serverSaved = false;
@@ -150,7 +162,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     // Step 3: Clear inputs and show success
     toast({ 
       title: '✅ Emergency PIN Saved!', 
-      description: serverSaved ? 'Stored on-device and synced to server' : 'Stored on-device (offline mode)',
+      description: 'Stored securely on-device for offline access',
       variant: 'default'
     });
     
@@ -166,45 +178,50 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     setLoading(true);
     setError('');
 
-    // Offline path: verify locally
-    if (!navigator.onLine) {
-      const ok = await verifyLocalPIN(pin, userEmail);
-      if (ok) {
+    // Try PBKDF2 verification first (most secure, works offline)
+    try {
+      const result = await verifyVaultPIN(userEmail, pin);
+      if (result.valid) {
         setCurrentMode('verified');
         if (onVerified) onVerified({ verified: true, pin_session_token: 'offline_local', expires_at: null });
-      } else {
-        setError('Incorrect PIN');
-        setAttemptsLeft(a => a - 1);
-        setPin('');
+        setLoading(false);
+        return;
       }
+    } catch (err) {
+      console.error('[EmergencyPINSetup] PBKDF2 verify failed:', err);
+    }
+
+    // Fallback to legacy local verification
+    const legacyOk = await verifyLocalPIN(pin, userEmail);
+    if (legacyOk) {
+      setCurrentMode('verified');
+      if (onVerified) onVerified({ verified: true, pin_session_token: 'offline_local', expires_at: null });
       setLoading(false);
       return;
     }
 
-    // Online path: verify via server, also save locally for next offline use
-    try {
-      const res = await base44.functions.invoke('verifyEmergencyPIN', { action: 'verify', user_email: userEmail, pin });
-      if (res.data?.verified) {
-        await saveLocalPIN(pin, userEmail, hint); // keep local in sync
-        setVerifiedToken(res.data.session_token);
-        setCurrentMode('verified');
-        if (onVerified) onVerified({ verified: true, pin_session_token: res.data.session_token, expires_at: res.data.expires_at });
-      } else {
-        setError(res.data?.error || 'Incorrect PIN');
-        setAttemptsLeft(res.data?.attempts_remaining ?? attemptsLeft - 1);
-        setPin('');
-      }
-    } catch (_) {
-      // Server unreachable — fall back to local
-      const ok = await verifyLocalPIN(pin, userEmail);
-      if (ok) {
-        setCurrentMode('verified');
-        if (onVerified) onVerified({ verified: true, pin_session_token: 'offline_local', expires_at: null });
-      } else {
-        setError('Incorrect PIN (offline verification)');
-        setPin('');
-      }
+    // If online, try server as last resort
+    if (navigator.onLine) {
+      try {
+        const res = await base44.functions.invoke('verifyEmergencyPIN', { action: 'verify', user_email: userEmail, pin });
+        if (res.data?.verified) {
+          // Save locally for next offline use
+          try {
+            await saveVaultPIN(userEmail, pin);
+          } catch (_) {}
+          setVerifiedToken(res.data.session_token);
+          setCurrentMode('verified');
+          if (onVerified) onVerified({ verified: true, pin_session_token: res.data.session_token, expires_at: res.data.expires_at });
+          setLoading(false);
+          return;
+        }
+      } catch (_) {}
     }
+
+    // All methods failed
+    setError('Incorrect PIN');
+    setAttemptsLeft(a => a - 1);
+    setPin('');
     setLoading(false);
   };
 
@@ -235,9 +252,9 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
   return (
     <div className="space-y-6">
       {isOffline && (
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-4 py-2.5 text-xs text-amber-800 font-semibold">
-          <WifiOff className="w-3.5 h-3.5 flex-shrink-0" />
-          Offline — verifying PIN from your device
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-2.5 text-xs text-emerald-800 font-semibold">
+          <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+          Offline Mode Active — PIN verified on-device
         </div>
       )}
       {/* Mode header */}

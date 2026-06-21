@@ -33,19 +33,20 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
     setLoading(true);
     setError(null);
 
-    // Offline: serve from local cache
-    if (isOffline || isOfflineToken) {
+    // OFFLINE-FIRST: Always try local cache first for offline token
+    if (isOfflineToken) {
       const cached = getLocalVaultCache(userEmail);
       if (cached) {
         setVaults({ vaults: cached, offline: true });
+        console.log('[EmergencyVaultViewer] Loaded from local cache (offline mode)');
       } else {
-        setError('No cached documents found. You must open the app while online at least once to cache your vault for offline use.');
+        setError('No cached documents found. Please go online and open "My Vault" at least once to cache your documents.');
       }
       setLoading(false);
       return;
     }
 
-    // Online: fetch from server
+    // Online with PIN session - try server first, fallback to cache
     try {
       const res = await base44.functions.invoke('emergencyVaultAccess', { pin_session_token: pinSessionToken });
       setVaults(res.data);
@@ -53,14 +54,16 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
       if (res.data?.vaults && userEmail) {
         const key = `morales_vault_meta_${userEmail.toLowerCase()}`;
         localStorage.setItem(key, JSON.stringify(res.data.vaults));
+        console.log('[EmergencyVaultViewer] Cached vault metadata for offline use');
       }
     } catch (err) {
-      // Server failed — try local cache as last resort
+      // Network failed - use cache as fallback
+      console.warn('[EmergencyVaultViewer] Network failed, using cache:', err.message);
       const cached = getLocalVaultCache(userEmail);
       if (cached) {
         setVaults({ vaults: cached, offline: true });
       } else {
-        setError(err.response?.data?.error || 'Failed to load vault. No local cache available.');
+        setError('Network error and no local cache available. Please connect to internet.');
       }
     }
     setLoading(false);
@@ -116,11 +119,11 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
   return (
     <div className="space-y-3">
       {vaults.offline ? (
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-          <WifiOff className="w-4 h-4 text-amber-600 flex-shrink-0" />
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
+          <WifiOff className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <div>
-            <p className="text-xs font-bold text-amber-800">✓ Offline Mode Active</p>
-            <p className="text-[10px] text-amber-700">Your document information is available below - use this for border/medical emergencies</p>
+            <p className="text-xs font-bold text-emerald-800">✓ Offline Mode - All Documents Ready</p>
+            <p className="text-[10px] text-emerald-700">Your cached documents are available below - works without internet</p>
           </div>
         </div>
       ) : (
@@ -222,6 +225,16 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
           </ul>
           <p className="text-[10px] text-emerald-600 mt-3 font-semibold">
             💡 Tip: Voice calls work without data - use the bank phone numbers above to report lost/stolen cards
+          </p>
+        </div>
+      )}
+
+      {vaults.offline && vaults.vaults?.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-800">
+          <p className="font-bold mb-2">🔒 Offline Access Active:</p>
+          <p className="text-blue-700">
+            You're viewing cached documents from this device. No internet connection is being used. 
+            This works even if you're logged out of the app or the network is completely unavailable.
           </p>
         </div>
       )}

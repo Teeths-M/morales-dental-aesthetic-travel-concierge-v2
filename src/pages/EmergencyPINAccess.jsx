@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft, WifiOff } from 'lucide-react';
+import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft, WifiOff, Smartphone } from 'lucide-react';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
 import EmergencyVaultViewer from '@/components/vault/EmergencyVaultViewer';
 import EmergencyRecoveryVault from '@/pages/EmergencyRecoveryVault';
+import OfflineVaultAccess from '@/components/vault/OfflineVaultAccess';
 import { Link } from 'react-router-dom';
 
 const MODES = [
   { id: 'vault', label: 'Access My Documents', desc: 'View passport, visas, bookings', icon: Shield, color: 'border-blue-600 bg-blue-900/30' },
   { id: 'recovery', label: 'I Need Help / Recovery', desc: 'Lost phone, robbed, stranded — get transport, see emergency info', icon: AlertTriangle, color: 'border-red-500 bg-red-900/30' },
+  { id: 'offline', label: 'Offline Vault Access', desc: 'No internet? Access vault with local PIN', icon: Smartphone, color: 'border-emerald-600 bg-emerald-900/30' },
 ];
 
 export default function EmergencyPINAccess() {
@@ -84,22 +86,30 @@ export default function EmergencyPINAccess() {
                 Or <Link to="/" className="text-blue-400 hover:underline">return to home</Link>
               </p>
 
-              {/* Quick links for night out prep */}
+              {/* Quick links for travel prep */}
               <div className="pt-3 border-t border-slate-700/50 space-y-2">
-                <p className="text-xs text-slate-500 font-semibold">Before you go out:</p>
-                <Link to="/nightlife-safety"
-                  className="flex items-center gap-2 text-xs text-purple-400 hover:text-purple-300">
-                  <Moon className="w-3.5 h-3.5" />Activate Nightlife Safety Mode →
+                <p className="text-xs text-slate-500 font-semibold">Before you travel:</p>
+                <Link to="/passport-vault"
+                  className="flex items-center gap-2 text-xs text-emerald-400 hover:text-emerald-300">
+                  <Shield className="w-3.5 h-3.5" />Open My Vault (cache documents) →
                 </Link>
-                <Link to="/emergency"
-                  className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300">
-                  <Shield className="w-3.5 h-3.5" />Set Emergency PIN →
+                <Link to="/offline-vault-guide"
+                  className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300">
+                  <Smartphone className="w-3.5 h-3.5" />Setup Offline Vault Access →
                 </Link>
                 <Link to="/offline"
-                  className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300">
-                  <WifiOff className="w-3.5 h-3.5" />Offline Mode & Capabilities →
+                  className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300">
+                  <WifiOff className="w-3.5 h-3.5" />Offline Mode Guide →
                 </Link>
               </div>
+            </div>
+          ) : mode === 'offline' ? (
+            <div className="space-y-4">
+              <button onClick={() => { setEmailEntered(false); setMode('vault'); }}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back
+              </button>
+              <OfflineVaultAccess userEmail={email} onVerified={handleVerified} />
             </div>
           ) : !verified ? (
             <div className="space-y-4">
@@ -137,7 +147,7 @@ export default function EmergencyPINAccess() {
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-6">
-          🔒 PIN verified server-side · SHA-256 salted · 5-attempt lockout · No SMS required
+          🔒 PIN verified locally (PBKDF2-SHA256) · Works offline · No internet required · 5-attempt lockout
         </p>
       </div>
     </div>

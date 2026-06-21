@@ -16,6 +16,7 @@ const ShareLinkViewer    = lazy(() => import('@/pages/ShareLinkViewer'));
 const OfflineMode        = lazy(() => import('@/pages/OfflineMode'));
 const EmergencyManifest  = lazy(() => import('@/pages/EmergencyManifest'));
 const OfflineGuide       = lazy(() => import('@/pages/OfflineGuide'));
+const OfflineVaultGuide  = lazy(() => import('@/components/vault/OfflineVaultGuide'));
 
 export const tokenRoutes = (
   <>
@@ -30,5 +31,6 @@ export const tokenRoutes = (
     <Route key="offline"        path="/offline"                 element={<OfflineMode />} />
     <Route key="emergency-manifest" path="/emergency-manifest"  element={<EmergencyManifest />} />
     <Route key="offline-guide"      path="/offline-guide"        element={<OfflineGuide />} />
+    <Route key="offline-vault-guide" path="/offline-vault-guide" element={<OfflineVaultGuide />} />
   </>
 );

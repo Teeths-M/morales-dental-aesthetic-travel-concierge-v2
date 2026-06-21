@@ -367,6 +367,12 @@ export default function VaultDashboard({ user }) {
   }, [vaults, shareLinks, auditLogs]);
 
   const docCount = vaults.length;
+  const offlineReadyCount = useMemo(() => {
+    return vaults.filter(v => {
+      const cacheKey = `vault_encrypted_${v.passport_token}`;
+      return !!localStorage.getItem(cacheKey);
+    }).length;
+  }, [vaults]);
 
   // Only show loading if truly no data (first load with no cache)
   if (loading && vaults.length === 0 && shareLinks.length === 0) {
@@ -400,7 +406,7 @@ export default function VaultDashboard({ user }) {
         </motion.div>
       )}
 
-      {/* Summary strip with offline prepare button */}
+      {/* Summary strip with offline readiness */}
       <div className="space-y-3">
         <motion.div
           className="flex items-center justify-between px-6 py-5 rounded-2xl border border-emerald-400/40 bg-emerald-400/[0.15]"
@@ -415,8 +421,35 @@ export default function VaultDashboard({ user }) {
           <Shield className="w-8 h-8 text-emerald-100" strokeWidth={1.3} />
         </motion.div>
 
+        {/* Offline Readiness Status */}
+        {vaults.length > 0 && (
+          <motion.div
+            className="flex items-center gap-3 px-5 py-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {offlineReadyCount === vaults.length ? (
+              <>
+                <CheckCircle className="w-5 h-5 text-emerald-100 flex-shrink-0" />
+                <div>
+                  <p className="text-[13px] font-bold text-emerald-100">✓ All Documents Ready for Offline</p>
+                  <p className="text-[11px] text-emerald-200">You can access your vault without internet</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <CloudDownload className="w-5 h-5 text-amber-100 flex-shrink-0" />
+                <div>
+                  <p className="text-[13px] font-bold text-amber-100">{offlineReadyCount}/{vaults.length} Documents Cached</p>
+                  <p className="text-[11px] text-amber-200">Prepare remaining documents for offline access</p>
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+
         {/* Prepare for Offline Button */}
-        {navigator.onLine && vaults.length > 0 && (
+        {navigator.onLine && vaults.length > 0 && offlineReadyCount < vaults.length && (
           <motion.button
             onClick={prepareAllForOffline}
             disabled={cacheProgress?.status === 'caching'}
@@ -430,11 +463,6 @@ export default function VaultDashboard({ user }) {
                 <span className="text-[14px] font-bold text-emerald-50">
                   Caching documents... {cacheProgress.current}/{cacheProgress.total}
                 </span>
-              </>
-            ) : cacheProgress?.status === 'complete' ? (
-              <>
-                <CheckCircle className="w-5 h-5 text-emerald-100" />
-                <span className="text-[14px] font-bold text-emerald-50">All Documents Ready for Offline!</span>
               </>
             ) : (
               <>
