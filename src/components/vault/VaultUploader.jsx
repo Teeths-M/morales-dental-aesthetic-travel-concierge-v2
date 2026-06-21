@@ -150,10 +150,24 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
       setStep('uploading');
 
-      // Step 2: Upload to vault
-      console.log('[VaultUploader] Uploading to vault...');
+      // Step 2: Upload encrypted file to private storage directly from frontend
+      console.log('[VaultUploader] Uploading encrypted file to private storage...');
+      
+      // Convert base64 to Blob for UploadPrivateFile
+      const encryptedBytes = Uint8Array.from(atob(encryptedB64), c => c.charCodeAt(0));
+      const encryptedBlob = new Blob([encryptedBytes], { type: 'application/octet-stream' });
+      
+      const uploadResult = await base44.integrations.Core.UploadPrivateFile({ file: encryptedBlob });
+      console.log('[VaultUploader] Private file uploaded, URI:', uploadResult.file_uri);
+      
+      if (!uploadResult.file_uri) {
+        throw new Error('UploadPrivateFile returned no file_uri');
+      }
+
+      // Step 3: Register vault record with the file URI
+      console.log('[VaultUploader] Registering vault record...');
       const response = await base44.functions.invoke('uploadToVault', {
-        encrypted_file_b64: encryptedB64,
+        encrypted_file_uri: uploadResult.file_uri,
         encryption_iv_b64: ivB64,
         encryption_salt_b64: saltB64,
         file_hash_sha256: hashB64,

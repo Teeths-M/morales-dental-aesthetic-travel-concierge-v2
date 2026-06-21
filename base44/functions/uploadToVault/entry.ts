@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     // Parse body once — req.body is a single-read stream; calling req.text() after req.json() returns ''
     const body = await req.json();
     const {
-      encrypted_file_b64,
+      encrypted_file_uri,
       encryption_iv_b64,
       encryption_salt_b64,
       file_hash_sha256,
@@ -34,40 +34,19 @@ Deno.serve(async (req) => {
     } = body;
 
     // ZERO-KNOWLEDGE: reject if encryption key fields are present in the parsed object
-    // (SEC-02: previously checked on already-consumed req.text() — always returned empty string)
-    const FORBIDDEN_FIELDS = ['encryption_key_b64', 'password', 'key', 'secret'];
+    const FORBIDDEN_FIELDS = ['encryption_key_b64', 'password', 'key', 'secret', 'encrypted_file_b64'];
     for (const field of FORBIDDEN_FIELDS) {
       if (field in body) {
         return Response.json({ error: 'Security violation: keys/passwords must never be sent to the server.' }, { status: 400 });
       }
     }
 
-    if (!encrypted_file_b64 || !encryption_iv_b64 || !encryption_salt_b64) {
-      return Response.json({ error: 'encrypted_file_b64, encryption_iv_b64, and encryption_salt_b64 are required' }, { status: 400 });
+    if (!encrypted_file_uri || !encryption_iv_b64 || !encryption_salt_b64) {
+      return Response.json({ error: 'encrypted_file_uri, encryption_iv_b64, and encryption_salt_b64 are required' }, { status: 400 });
     }
 
-    // Validate file size (max 10MB)
-    const estimatedSize = (encrypted_file_b64.length * 3) / 4;
-    if (estimatedSize > 11 * 1024 * 1024) {
-      return Response.json({ error: 'File too large. Maximum 10MB.' }, { status: 400 });
-    }
-
-    // Convert base64 to bytes and upload as private file
-    const encryptedBytes = Uint8Array.from(atob(encrypted_file_b64), c => c.charCodeAt(0));
-    const encryptedBlob = new Blob([encryptedBytes], { type: 'application/octet-stream' });
-
-    let file_uri;
-    try {
-      const uploadResult = await base44.asServiceRole.integrations.Core.UploadPrivateFile({ file: encryptedBlob });
-      file_uri = uploadResult.file_uri;
-      if (!file_uri) {
-        console.error('[uploadToVault] UploadPrivateFile returned no file_uri. Full result:', JSON.stringify(uploadResult));
-        return Response.json({ error: 'DEBUG: UploadPrivateFile succeeded but returned no file_uri. Raw result: ' + JSON.stringify(uploadResult) }, { status: 500 });
-      }
-    } catch (uploadErr) {
-      console.error('[uploadToVault] UploadPrivateFile failed:', uploadErr);
-      return Response.json({ error: 'DEBUG: File storage failed — ' + (uploadErr.message || String(uploadErr)) }, { status: 500 });
-    }
+    // File is already uploaded to private storage by the frontend
+    const file_uri = encrypted_file_uri;
 
     // Entity field is passport_token — not vault_token. Using the wrong name means
     // every downstream filter({ passport_token }) returns empty, breaking all downloads.
