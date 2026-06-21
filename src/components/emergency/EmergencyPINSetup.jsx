@@ -110,14 +110,29 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     if (pin !== confirmPin) { setError('PINs do not match'); return; }
     setLoading(true);
     setError('');
-    // Always save locally so offline verify works
+    
+    // Step 1: Save locally FIRST (critical for offline access)
     await saveLocalPIN(pin, userEmail, hint);
+    const localSaved = localStorage.getItem(LOCAL_PIN_KEY);
+    
+    // Step 2: Save to server (if online)
+    let serverSaved = false;
     if (navigator.onLine) {
       try {
         await base44.functions.invoke('verifyEmergencyPIN', { action: 'setup', user_email: userEmail, new_pin: pin, hint });
-      } catch (_) {}
+        serverSaved = true;
+      } catch (_) {
+        // Server save failed, but local save succeeded — still works offline
+      }
     }
-    toast({ title: '✅ Emergency PIN set', description: 'Saved on-device — works offline too' });
+    
+    // Step 3: Clear inputs and show success
+    toast({ 
+      title: '✅ Emergency PIN Saved!', 
+      description: serverSaved ? 'Stored on-device and synced to server' : 'Stored on-device (offline mode)',
+      variant: 'default'
+    });
+    
     setHasPIN(true);
     setPin('');
     setConfirmPin('');

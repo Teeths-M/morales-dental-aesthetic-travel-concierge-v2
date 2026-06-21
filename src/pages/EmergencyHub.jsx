@@ -8,6 +8,7 @@ import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
 import SpaceIntelPanel from '@/components/emergency/SpaceIntelPanel';
 import LocationBreadcrumbTracker from '@/components/emergency/LocationBreadcrumbTracker';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
+import PINSetupPrompt from '@/components/emergency/PINSetupPrompt';
 import { Link } from 'react-router-dom';
 
 const TABS = [
@@ -230,7 +231,11 @@ export default function EmergencyHub() {
                 <div>
                   <h3 className="text-white font-bold text-sm mb-1">Universal 6-Digit Emergency PIN</h3>
                   <p className="text-slate-400 text-xs mb-4">Cross-device access — unlocks your vault and SOS console on any device without app login</p>
-                  <div className="bg-white rounded-xl p-4">
+                  
+                  {/* Prompt if PIN not set */}
+                  <PINSetupPrompt userEmail={user?.email} />
+                  
+                  <div className="bg-white rounded-xl p-4 mt-4">
                     <EmergencyPINSetup userEmail={user?.email} mode={user ? 'setup' : 'verify'} />
                   </div>
                 </div>
