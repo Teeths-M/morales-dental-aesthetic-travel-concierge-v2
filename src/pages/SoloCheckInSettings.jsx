@@ -263,8 +263,8 @@ export default function SoloCheckInSettings() {
           </Card>
 
           {/* Last Confirmed Banner */}
-          {checkIns.some(c => c.status === 'acknowledged' || c.status === 'resolved') && (() => {
-            const last = checkIns.find(c => c.status === 'acknowledged' || c.status === 'resolved');
+          {allCheckIns.some(c => c.status === 'acknowledged' || c.status === 'resolved') && (() => {
+            const last = allCheckIns.find(c => c.status === 'acknowledged' || c.status === 'resolved');
             return (
               <motion.div
                 initial={{ opacity: 0, y: -6 }}
