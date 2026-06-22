@@ -1,0 +1,105 @@
+{
+  "name": "ProcedureRequest",
+  "type": "object",
+  "properties": {
+    "doctor_id": {
+      "type": "string",
+      "description": "Doctor who submitted the request"
+    },
+    "doctor_name": {
+      "type": "string",
+      "description": "Doctor's full name"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Doctor's email for notifications"
+    },
+    "procedure_name": {
+      "type": "string",
+      "description": "Requested procedure name"
+    },
+    "procedure_name_es": {
+      "type": "string",
+      "description": "Spanish translation"
+    },
+    "procedure_name_fr": {
+      "type": "string",
+      "description": "French translation"
+    },
+    "procedure_name_pt": {
+      "type": "string",
+      "description": "Portuguese translation"
+    },
+    "procedure_name_de": {
+      "type": "string",
+      "description": "German translation"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Facial",
+        "Breast",
+        "Body",
+        "Dental",
+        "Wellness",
+        "Other"
+      ],
+      "description": "Procedure category"
+    },
+    "category_emoji": {
+      "type": "string",
+      "default": "\ud83c\udfe5",
+      "description": "Emoji for the category"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the procedure"
+    },
+    "specialty": {
+      "type": "string",
+      "description": "Required medical specialty"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Review status"
+    },
+    "submitted_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When request was submitted"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "Admin who reviewed"
+    },
+    "reviewed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When reviewed"
+    },
+    "review_notes": {
+      "type": "string",
+      "description": "Admin notes for approval/rejection"
+    },
+    "procedure_id": {
+      "type": "string",
+      "description": "Auto-generated ID if approved (e.g., FACE-NEW-01)"
+    }
+  },
+  "required": [
+    "doctor_id",
+    "doctor_name",
+    "doctor_email",
+    "procedure_name",
+    "category",
+    "description",
+    "specialty"
+  ]
+}

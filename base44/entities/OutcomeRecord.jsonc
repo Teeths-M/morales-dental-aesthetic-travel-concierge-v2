@@ -1,0 +1,94 @@
+{
+  "name": "OutcomeRecord",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "procedure_category": {
+      "type": "string"
+    },
+    "procedure_name": {
+      "type": "string"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "complication",
+        "revision_required",
+        "cancelled",
+        "incomplete"
+      ]
+    },
+    "patient_age_bracket": {
+      "type": "string",
+      "enum": [
+        "18-30",
+        "31-45",
+        "46-60",
+        "61+"
+      ]
+    },
+    "risk_score_at_booking": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Moderate",
+        "High"
+      ]
+    },
+    "safe_t_result": {
+      "type": "string",
+      "enum": [
+        "PASSED",
+        "BLOCKED",
+        "PENDING"
+      ]
+    },
+    "recovery_days_actual": {
+      "type": "number"
+    },
+    "recovery_days_estimated": {
+      "type": "number"
+    },
+    "complication_notes": {
+      "type": "string"
+    },
+    "anonymized": {
+      "type": "boolean",
+      "default": true
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "risk_rule_triggered": {
+      "type": "string",
+      "description": "Which risk rule flagged this case"
+    },
+    "human_review_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "human_reviewed_by": {
+      "type": "string"
+    },
+    "human_reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pccp_version": {
+      "type": "string",
+      "default": "1.0",
+      "description": "PCCP version applied at time of case"
+    }
+  },
+  "required": [
+    "procedure_category",
+    "outcome"
+  ]
+}

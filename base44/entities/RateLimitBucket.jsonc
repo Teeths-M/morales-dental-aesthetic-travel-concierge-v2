@@ -1,0 +1,51 @@
+{
+  "name": "RateLimitBucket",
+  "type": "object",
+  "properties": {
+    "bucket_key": {
+      "type": "string",
+      "description": "Composite key: userId:functionName or ip:functionName"
+    },
+    "window_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start of the current sliding window"
+    },
+    "count": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of requests in the current window"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "bucket_key",
+    "window_start",
+    "count"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

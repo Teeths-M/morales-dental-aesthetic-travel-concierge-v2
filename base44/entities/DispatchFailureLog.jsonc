@@ -1,0 +1,72 @@
+{
+  "name": "DispatchFailureLog",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "escalation_level": {
+      "type": "number",
+      "default": 1
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "security",
+        "taxi",
+        "travel_agency",
+        "guardian",
+        "admin"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "logged",
+        "resolved",
+        "escalated"
+      ],
+      "default": "logged"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "failure_reason"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

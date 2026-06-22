@@ -1,0 +1,41 @@
+{
+  "name": "DoctorAvailability",
+  "type": "object",
+  "properties": {
+    "doctor_id": {
+      "type": "string",
+      "description": "Reference to Doctor entity"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Doctor's email for quick lookup"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "The specific date (YYYY-MM-DD)"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the doctor is available on this date"
+    },
+    "time_slots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Available time slots (e.g. ['09:00', '10:00', '14:00'])"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about availability"
+    }
+  },
+  "required": [
+    "doctor_id",
+    "doctor_email",
+    "date"
+  ]
+}

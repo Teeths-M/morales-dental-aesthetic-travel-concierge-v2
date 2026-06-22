@@ -1,0 +1,121 @@
+{
+  "United States": [
+    "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+    "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte", "San Francisco", "Indianapolis", "Seattle", "Denver", "Boston",
+    "El Paso", "Detroit", "Nashville", "Portland", "Memphis", "Oklahoma City", "Las Vegas", "Louisville", "Baltimore", "Milwaukee",
+    "Albuquerque", "Tucson", "Fresno", "Mesa", "Sacramento", "Atlanta", "Kansas City", "Colorado Springs", "Omaha", "Raleigh",
+    "Miami", "Long Beach", "Virginia Beach", "Oakland", "Minneapolis", "Tulsa", "Tampa", "Arlington", "New Orleans"
+  ],
+  "Canada": [
+    "Toronto", "Montreal", "Vancouver", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Quebec City", "Hamilton", "Halifax",
+    "London", "Kitchener", "Victoria", "Windsor", "Oshawa", "Saskatoon", "Regina", "St. John's", "Kelowna", "Barrie"
+  ],
+  "Mexico": [
+    "Mexico City", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "Leon", "Juarez", "Zapopan", "Merida", "Chihuahua",
+    "Nezahualcoyotl", "Cancun", "Queretaro", "San Luis Potosi", "Toluca", "Aguascalientes", "Acapulco", "Cuernavaca", "Morelia", "Veracruz"
+  ],
+  "Venezuela": [
+    "Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Ciudad Guayana", "San Cristobal", "Barcelona", "Maturin", "Petare",
+    "Porlamar", "Ciudad Bolivar", "Cumana", "San Fernando de Apure", "Guanare", "Valera", "Carupano", "Los Teques", "Turmero", "Barinas"
+  ],
+  "Colombia": [
+    "Bogota", "Medellin", "Cali", "Barranquilla", "Cartagena", "Cucuta", "Bucaramanga", "Pereira", "Santa Marta", "Ibague",
+    "Pasto", "Manizales", "Neiva", "Villavicencio", "Armenia", "Valledupar", "Monteria", "Sincelejo", "Popayan", "Tunja"
+  ],
+  "Brazil": [
+    "Sao Paulo", "Rio de Janeiro", "Brasilia", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba", "Recife", "Porto Alegre",
+    "Belem", "Goiania", "Guarulhos", "Campinas", "Sao Luis", "Sao Goncalo", "Maceio", "Duque de Caxias", "Natal", "Campo Grande"
+  ],
+  "Argentina": [
+    "Buenos Aires", "Cordoba", "Rosario", "Mendoza", "San Miguel de Tucuman", "La Plata", "Mar del Plata", "Salta", "Santa Fe", "Corrientes",
+    "San Juan", "Resistencia", "Santiago del Estero", "Neuquen", "Posadas", "San Salvador de Jujuy", "Bahia Blanca", "Parana", "Formosa", "La Rioja"
+  ],
+  "Spain": [
+    "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza", "Malaga", "Murcia", "Palma", "Las Palmas de Gran Canaria", "Bilbao",
+    "Alicante", "Cordoba", "Valladolid", "Vigo", "Gijon", "Granada", "Vitoria-Gasteiz", "Elche", "Oviedo", "Santa Cruz de Tenerife"
+  ],
+  "United Kingdom": [
+    "London", "Birmingham", "Manchester", "Glasgow", "Newcastle", "Liverpool", "Leeds", "Sheffield", "Edinburgh", "Bristol",
+    "Leicester", "Nottingham", "Cardiff", "Belfast", "Brighton", "Southampton", "Aberdeen", "Plymouth", "Reading", "Cambridge"
+  ],
+  "France": [
+    "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille",
+    "Rennes", "Reims", "Le Havre", "Saint-Etienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nimes", "Villeurbanne"
+  ],
+  "Germany": [
+    "Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt", "Stuttgart", "Dusseldorf", "Leipzig", "Dortmund", "Essen",
+    "Bremen", "Dresden", "Hanover", "Nuremberg", "Duisburg", "Bochum", "Wuppertal", "Bielefeld", "Bonn", "Munster"
+  ],
+  "Australia": [
+    "Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast", "Canberra", "Newcastle", "Wollongong", "Logan City",
+    "Hobart", "Geelong", "Townsville", "Cairns", "Darwin", "Toowoomba", "Ballarat", "Bendigo", "Albury", "Launceston"
+  ],
+  "India": [
+    "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad", "Chennai", "Kolkata", "Surat", "Pune", "Jaipur",
+    "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal", "Visakhapatnam", "Pimpri-Chinchwad", "Patna", "Vadodara"
+  ],
+  "Turkey": [
+    "Istanbul", "Ankara", "Izmir", "Bursa", "Antalya", "Adana", "Konya", "Gaziantep", "Mersin", "Diyarbakir",
+    "Kayseri", "Eskisehir", "Urfa", "Samsun", "Trabzon", "Denizli", "Malatya", "Erzurum", "Van", "Batman"
+  ],
+  "Thailand": [
+    "Bangkok", "Nonthaburi", "Nakhon Ratchasima", "Chiang Mai", "Hat Yai", "Udon Thani", "Pak Kret", "Khon Kaen", "Surat Thani", "Phuket",
+    "Nakhon Si Thammarat", "Chon Buri", "Rayong", "Pattaya", "Samut Prakan", "Lampang", "Ubon Ratchathani", "Nakhon Pathom", "Songkhla", "Chiang Rai"
+  ],
+  "Costa Rica": [
+    "San Jose", "Limon", "San Carlos", "Alajuela", "Heredia", "Puntarenas", "Liberia", "Cartago", "Quepos", "Jacó",
+    "Pérez Zeledón", "San Isidro", "Curridabat", "Desamparados", "Escazú", "Santa Ana", "Nicoya", "Golfito", "Ciudad Quesada", "Atenas"
+  ],
+  "Panama": [
+    "Panama City", "San Miguelito", "Tocumen", "David", "Arraijan", "Colon", "Las Cumbres", "La Chorrera", "Pacora", "Santiago",
+    "Chitre", "Aguadulce", "Penonome", "Volcan", "Boquete", "El Valle", "Pedasi", "Portobelo", "Yaviza", "Bocas del Toro"
+  ],
+  "Dominican Republic": [
+    "Santo Domingo", "Santiago de los Caballeros", "La Romana", "San Pedro de Macoris", "San Cristobal", "Puerto Plata", "La Vega", "Higüey", "San Francisco de Macoris", "Moca",
+    "Azua", "Baní", "Bonao", "Cotuí", "Esperanza", "Mao", "Monte Cristi", "Nagua", "Neiba", "Salcedo"
+  ],
+  "Jamaica": [
+    "Kingston", "Spanish Town", "Portmore", "Montego Bay", "May Pen", "Mandeville", "Old Harbour", "Savanna-la-Mar", "Ocho Rios", "Port Antonio",
+    "Linstead", "Half Way Tree", "New Kingston", "Constant Spring", "Bog Walk", "Lucea", "Morant Bay", "Black River", "Santa Cruz", "Falmouth"
+  ],
+  "Trinidad and Tobago": [
+    "Port of Spain", "Chaguanas", "San Fernando", "Arima", "Point Fortin", "Scarborough", "Diego Martin", "Tunapuna", "Sangre Grande", "Couva",
+    "Marabella", "Princes Town", "Rio Claro", "Siparia", "Penal", "Debe", "Moruga", "Cedros", "Mayaro", "Blanchisseuse"
+  ],
+  "South Africa": [
+    "Johannesburg", "Cape Town", "Durban", "Pretoria", "Port Elizabeth", "Bloemfontein", "East London", "Pietermaritzburg", "Benoni", "Vereeniging",
+    "Soweto", "Boksburg", "Klerksdorp", "Midrand", "George", "Rustenburg", "Nelspruit", "Polokwane", "Kimberley", "Potchefstroom"
+  ],
+  "United Arab Emirates": [
+    "Dubai", "Abu Dhabi", "Sharjah", "Al Ain", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain", "Khor Fakkan", "Dibba Al-Fujairah",
+    "Kalba", "Jebel Ali", "Madinat Zayed", "Ruwais", "Liwa", "Ghayathi", "Sila", "Mussafah", "Bani Yas", "Al Dhaid"
+  ],
+  "Singapore": [
+    "Singapore", "Jurong East", "Woodlands", "Tampines", "Sengkang", "Hougang", "Yishun", "Bedok", "Punggol", "Ang Mo Kio",
+    "Toa Payoh", "Pasir Ris", "Choa Chu Kang", "Bukit Batok", "Clementi", "Serangoon", "Bishan", "Bukit Panjang", "Sembawang", "Kallang"
+  ],
+  "Malaysia": [
+    "Kuala Lumpur", "George Town", "Ipoh", "Shah Alam", "Petaling Jaya", "Johor Bahru", "Malacca City", "Kota Kinabalu", "Kuching", "Seremban",
+    "Kuantan", "Kota Bharu", "Klang", "Sandakan", "Tawau", "Miri", "Alor Setar", "Kuala Terengganu", "Putrajaya", "Labuan"
+  ],
+  "Philippines": [
+    "Manila", "Quezon City", "Davao City", "Caloocan", "Cebu City", "Zamboanga City", "Taguig", "Antipolo", "Pasig", "Cagayan de Oro",
+    "Paranaque", "Dasmarinas", "Valenzuela", "Bacoor", "General Santos", "Las Pinas", "Makati", "Bacolod", "Muntinlupa", "San Jose del Monte"
+  ],
+  "Indonesia": [
+    "Jakarta", "Surabaya", "Bandung", "Bekasi", "Medan", "Tangerang", "Depok", "Semarang", "Palembang", "Makassar",
+    "South Tangerang", "Batam", "Bogor", "Pekanbaru", "Bandar Lampung", "Padang", "Malang", "Denpasar", "Samarinda", "Tasikmalaya"
+  ],
+  "Poland": [
+    "Warsaw", "Krakow", "Lodz", "Wroclaw", "Poznan", "Gdansk", "Szczecin", "Bydgoszcz", "Lublin", "Katowice",
+    "Bialystok", "Gdynia", "Czestochowa", "Radom", "Sosnowiec", "Torun", "Kielce", "Gliwice", "Zabrze", "Bytom"
+  ],
+  "Hungary": [
+    "Budapest", "Debrecen", "Szeged", "Miskolc", "Pecs", "Gyor", "Nyiregyhaza", "Kecskemet", "Szekesfehervar", "Szombathely",
+    "Sopron", "Eger", "Veszprem", "Zalaegerszeg", "Bekescsaba", "Kaposvar", "Tatabanya", "Nagykanizsa", "Dunaujvaros", "Hodmezovasarhely"
+  ],
+  "Czech Republic": [
+    "Prague", "Brno", "Ostrava", "Plzen", "Liberec", "Olomouc", "Ceske Budejovice", "Hradec Kralove", "Usti nad Labem", "Pardubice",
+    "Zlin", "Kladno", "Karlovy Vary", "Jihlava", "Teplice", "Decin", "Frydek-Mistek", "Chomutov", "Prerov", "Jablonec nad Nisou"
+  ]
+}

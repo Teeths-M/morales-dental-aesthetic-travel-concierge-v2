@@ -1,0 +1,33 @@
+{
+  "name": "ProcedureSearch",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user who performed the search"
+    },
+    "raw_query_text": {
+      "type": "string",
+      "description": "The exact search query text entered by the user"
+    },
+    "result_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of procedures matched by this search"
+    },
+    "is_matched": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if search returned results, false if zero results (triggered AI fallback)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the search was performed"
+    }
+  },
+  "required": [
+    "user_id",
+    "raw_query_text"
+  ]
+}

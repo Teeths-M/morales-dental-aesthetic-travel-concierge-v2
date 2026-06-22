@@ -1,0 +1,150 @@
+{
+  "name": "RecoveryTransportRequest",
+  "type": "object",
+  "properties": {
+    "request_token": {
+      "type": "string",
+      "description": "RTRANS_<hex> unique reference"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "shopkeeper",
+        "admin",
+        "guardian"
+      ],
+      "default": "patient"
+    },
+    "pickup_latitude": {
+      "type": "number"
+    },
+    "pickup_longitude": {
+      "type": "number"
+    },
+    "pickup_address": {
+      "type": "string"
+    },
+    "pickup_location_source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "ip_geo",
+        "manual"
+      ],
+      "default": "gps"
+    },
+    "destination_address": {
+      "type": "string",
+      "description": "Hotel/safe location"
+    },
+    "destination_latitude": {
+      "type": "number"
+    },
+    "destination_longitude": {
+      "type": "number"
+    },
+    "driver_id": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string"
+    },
+    "driver_phone": {
+      "type": "string"
+    },
+    "visual_verification_token_id": {
+      "type": "string"
+    },
+    "payment_transaction_id": {
+      "type": "string"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending_capture",
+        "emergency_transport_authorized",
+        "captured",
+        "failed",
+        "waived"
+      ],
+      "default": "pending_capture"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "dispatched",
+        "driver_assigned",
+        "en_route",
+        "arrived",
+        "completed",
+        "cancelled",
+        "no_driver"
+      ],
+      "default": "requested"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "dispatched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "request_token",
+    "user_email",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

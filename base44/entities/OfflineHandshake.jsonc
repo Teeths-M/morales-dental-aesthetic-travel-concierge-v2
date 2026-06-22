@@ -1,0 +1,133 @@
+{
+  "name": "OfflineHandshake",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "sms",
+        "qr_token",
+        "emergency_pin"
+      ],
+      "default": "sms"
+    },
+    "shortcode_command": {
+      "type": "string",
+      "description": "e.g. DRIVER abc123, CHECKIN ok, SOS"
+    },
+    "raw_message": {
+      "type": "string"
+    },
+    "parsed_action": {
+      "type": "string"
+    },
+    "parsed_payload": {
+      "type": "object"
+    },
+    "message_sid": {
+      "type": "string",
+      "description": "Twilio MessageSid \u2014 idempotency key, prevents duplicate processing of the same inbound SMS"
+    },
+    "checkpoint_id": {
+      "type": "string",
+      "description": "The checkpoint reference a driver/patient confirms via SMS"
+    },
+    "handshake_role": {
+      "type": "string",
+      "enum": [
+        "checkin",
+        "driver",
+        "patient",
+        "sos",
+        "unknown"
+      ],
+      "description": "Which role this handshake checkpoint expects"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "missed",
+        "escalated",
+        "expired",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "expected_phone": {
+      "type": "string",
+      "description": "If set, only this phone number may complete the checkpoint"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Checkpoint is invalid after this time"
+    },
+    "primary_driver_id": {
+      "type": "string"
+    },
+    "primary_driver_phone": {
+      "type": "string"
+    },
+    "backup_driver_id": {
+      "type": "string"
+    },
+    "backup_driver_phone": {
+      "type": "string"
+    },
+    "escalated": {
+      "type": "boolean",
+      "default": false
+    },
+    "escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "executed": {
+      "type": "boolean",
+      "default": false
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "execution_result": {
+      "type": "string"
+    },
+    "qr_token": {
+      "type": "string"
+    },
+    "emergency_pin": {
+      "type": "string"
+    },
+    "pin_used_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "from_phone": {
+      "type": "string"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "channel"
+  ]
+}

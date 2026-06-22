@@ -1,0 +1,42 @@
+{
+  "name": "EmergencyContacts",
+  "type": "object",
+  "properties": {
+    "country_name": {
+      "type": "string",
+      "description": "Country name (e.g., 'United States', 'Canada', 'United Kingdom')"
+    },
+    "emergency_number": {
+      "type": "string",
+      "description": "Local emergency phone number (e.g., '911', '999', '112')"
+    },
+    "medical_emergency": {
+      "type": "string",
+      "description": "Specific medical emergency number if different from general emergency"
+    },
+    "police": {
+      "type": "string",
+      "description": "Police emergency number"
+    },
+    "fire": {
+      "type": "string",
+      "description": "Fire department emergency number"
+    },
+    "ambulance": {
+      "type": "string",
+      "description": "Ambulance service number"
+    },
+    "poison_control": {
+      "type": "string",
+      "description": "Poison control center number"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional emergency contact notes"
+    }
+  },
+  "required": [
+    "country_name",
+    "emergency_number"
+  ]
+}

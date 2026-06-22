@@ -1,0 +1,162 @@
+{
+  "name": "TravelAgency",
+  "type": "object",
+  "properties": {
+    "agency_name": {
+      "type": "string",
+      "description": "Name of the travel agency"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "whatsapp_number": {
+      "type": "string",
+      "description": "WhatsApp number for the agency"
+    },
+    "website_url": {
+      "type": "string"
+    },
+    "headquarters_country": {
+      "type": "string"
+    },
+    "medical_travel_experience_years": {
+      "type": "number",
+      "default": 0
+    },
+    "emergency_support_available": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Geographic regions served (Caribbean, North America, Europe, Asia, etc.)"
+    },
+    "services_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Services: Flights, Hotels, Airport Transfers, Clinic Coordination"
+    },
+    "service_options": {
+      "type": "object",
+      "description": "Detailed options per service"
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ]
+    },
+    "payout_account": {
+      "type": "string"
+    },
+    "business_license_url": {
+      "type": "string"
+    },
+    "language_preference": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "verifying",
+        "verified",
+        "failed",
+        "manually_approved"
+      ],
+      "default": "pending_verification",
+      "description": "Overall verification state (blocks 'active' status)"
+    },
+    "identity_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "verification_can_be_activated": {
+      "type": "boolean",
+      "description": "Computed: true only if all three checks are passed OR manually overridden",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "sign_up_completed_at": {
+      "type": "string",
+      "description": "ISO timestamp"
+    },
+    "approved_by_admin": {
+      "type": "boolean",
+      "default": false
+    },
+    "earnings_this_month": {
+      "type": "number",
+      "default": 0
+    },
+    "rating": {
+      "type": "number",
+      "default": 5.0
+    }
+  },
+  "required": [
+    "agency_name",
+    "email",
+    "phone",
+    "headquarters_country",
+    "service_regions"
+  ]
+}

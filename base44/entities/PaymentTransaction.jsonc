@@ -1,0 +1,110 @@
+{
+  "name": "PaymentTransaction",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "stripe_session_id": {
+      "type": "string"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Stripe event ID \u2014 used for idempotency to prevent duplicate processing"
+    },
+    "event_type": {
+      "type": "string",
+      "description": "e.g. checkout.session.completed, payment_intent.succeeded, consultation_fee.session_created"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "session_created",
+        "succeeded",
+        "failed",
+        "refunded",
+        "cancelled"
+      ],
+      "default": "session_created"
+    },
+    "deposit_option": {
+      "type": "string",
+      "description": "Full | 50% | 25%"
+    },
+    "raw_amount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string",
+      "default": "usd"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "event_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.client_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    }
+  }
+}

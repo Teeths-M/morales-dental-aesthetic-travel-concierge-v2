@@ -1,0 +1,62 @@
+{
+  "name": "PartnerMatch",
+  "type": "object",
+  "properties": {
+    "consultation_id": {
+      "type": "string",
+      "description": "Reference to Consultation"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "travel_agency",
+        "taxi_service"
+      ],
+      "description": "Type of partner needed"
+    },
+    "partner_id": {
+      "type": "string",
+      "description": "ID of matched TravelAgency or TaxiService"
+    },
+    "service_type": {
+      "type": "string",
+      "description": "e.g., 'Flights', 'Hotels', 'Airport Transfer'"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "notified",
+        "accepted",
+        "declined",
+        "completed",
+        "paid"
+      ],
+      "default": "pending"
+    },
+    "notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "partner_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "consultation_id",
+    "partner_type",
+    "service_type",
+    "destination"
+  ]
+}

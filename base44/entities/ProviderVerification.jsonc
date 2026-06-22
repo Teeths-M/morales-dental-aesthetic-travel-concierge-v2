@@ -1,0 +1,161 @@
+{
+  "name": "ProviderVerification",
+  "type": "object",
+  "properties": {
+    "provider_id": {
+      "type": "string",
+      "description": "Polymorphic FK: can be doctor_id, travel_agency_id, taxi_service_id"
+    },
+    "provider_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service"
+      ],
+      "description": "Identifies which provider entity this verification links to"
+    },
+    "provider_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Denormalized for audit queries"
+    },
+    "provider_name": {
+      "type": "string",
+      "description": "Provider name for display purposes"
+    },
+    "verification_type": {
+      "type": "string",
+      "enum": [
+        "identity",
+        "background_check",
+        "license"
+      ],
+      "description": "Which check this record tracks"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "initiated",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending",
+      "description": "Current verification state"
+    },
+    "external_verification_id": {
+      "type": "string",
+      "description": "Stripe/Checkr/Evident ID for tracking - UNIQUE to prevent duplicates"
+    },
+    "verification_response": {
+      "type": "object",
+      "description": "Full API response from verification service (for audit trail)"
+    },
+    "result_summary": {
+      "type": "object",
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expiry_date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "manual_override_status": {
+      "type": "string",
+      "enum": [
+        "not_overridden",
+        "approved_by_admin",
+        "rejected_by_admin"
+      ],
+      "default": "not_overridden"
+    },
+    "override_reason": {
+      "type": "string",
+      "description": "Admin notes on why they overrode the automated result"
+    },
+    "override_approved_by": {
+      "type": "string",
+      "description": "Admin user ID who approved the override"
+    },
+    "override_approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "initiated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When license/credentials expire and need re-verification"
+    }
+  },
+  "required": [
+    "provider_id",
+    "provider_type",
+    "verification_type",
+    "provider_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.provider_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "platform_admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "PricingRule",
+  "type": "object",
+  "properties": {
+    "rule_name": {
+      "type": "string",
+      "description": "E.g., 'Quantity Discount', 'Bundle Savings', 'Early Bird Promo'"
+    },
+    "rule_type": {
+      "type": "string",
+      "enum": [
+        "quantity",
+        "bundle",
+        "promotion",
+        "seasonal",
+        "referral",
+        "volume"
+      ],
+      "description": "Type of pricing rule"
+    },
+    "conditions": {
+      "type": "object",
+      "description": "Conditions for rule to apply (e.g., min_quantity: 3)"
+    },
+    "discount_pct": {
+      "type": "number",
+      "description": "Discount percentage"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "rule_name",
+    "rule_type",
+    "discount_pct"
+  ]
+}

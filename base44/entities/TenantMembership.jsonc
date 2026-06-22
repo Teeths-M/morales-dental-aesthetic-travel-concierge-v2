@@ -1,0 +1,84 @@
+{
+  "name": "TenantMembership",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "Reference to Tenant"
+    },
+    "tenant_name": {
+      "type": "string"
+    },
+    "tenant_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "client",
+        "travel_agency",
+        "taxi_service",
+        "platform_admin"
+      ]
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_role": {
+      "type": "string",
+      "enum": [
+        "platform_admin",
+        "client",
+        "doctor",
+        "travel_agency",
+        "taxi_service"
+      ],
+      "description": "Role to apply to the User record"
+    },
+    "linked_entity_name": {
+      "type": "string",
+      "enum": [
+        "Doctor",
+        "Consultation",
+        "TravelAgency",
+        "TaxiService",
+        "User"
+      ]
+    },
+    "linked_entity_id": {
+      "type": "string",
+      "description": "Specific partner/client record this membership controls"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "suspended",
+        "removed"
+      ],
+      "default": "pending"
+    },
+    "synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "sync_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "tenant_type",
+    "user_email",
+    "user_role"
+  ]
+}

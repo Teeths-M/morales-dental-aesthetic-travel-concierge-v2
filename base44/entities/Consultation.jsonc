@@ -1,0 +1,555 @@
+{
+  "name": "Consultation",
+  "type": "object",
+  "properties": {
+    "patient_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "procedure_interest": {
+      "type": "string",
+      "enum": [
+        "dental_implants",
+        "all_on_4",
+        "porcelain_veneers",
+        "smile_makeover",
+        "bone_regeneration",
+        "teeth_whitening",
+        "rhinoplasty",
+        "breast_surgery",
+        "liposuction",
+        "tummy_tuck",
+        "facelift",
+        "brow_lift",
+        "blepharoplasty",
+        "otoplasty",
+        "thigh_arm_lift",
+        "laser_resurfacing",
+        "mole_removal",
+        "lipoma_removal",
+        "gastric_sleeve",
+        "gastric_bypass",
+        "gastric_band_revision",
+        "gynecological_exams",
+        "ivf",
+        "egg_freezing",
+        "oncology_surgery",
+        "tumor_testing",
+        "joint_replacement",
+        "spine_surgery",
+        "sports_arthroscopy",
+        "fracture_surgery",
+        "other"
+      ]
+    },
+    "preferred_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "return_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected return / departure date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "Travel-Pending",
+        "Transfer-Pending",
+        "Admin-Review"
+      ],
+      "default": "pending"
+    },
+    "journey_stage": {
+      "type": "string",
+      "enum": [
+        "consultation",
+        "planning",
+        "booking",
+        "travel",
+        "procedure",
+        "recovery",
+        "aftercare"
+      ],
+      "default": "consultation"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low"
+    },
+    "high_risk_medical_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when patient has a flagged medical condition requiring Senior Medical Team review before doctor assignment"
+    },
+    "high_risk_flagged_condition": {
+      "type": "string",
+      "description": "The specific condition that triggered high-risk routing"
+    },
+    "age": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Patient date of birth (required for age-based companion check)"
+    },
+    "gender": {
+      "type": "string"
+    },
+    "height": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "string"
+    },
+    "nationality": {
+      "type": "string",
+      "description": "Client's country of origin"
+    },
+    "client_city": {
+      "type": "string",
+      "description": "Client's city of origin (for chauffeur origin leg routing)"
+    },
+    "occupation": {
+      "type": "string"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_number": {
+      "type": "string"
+    },
+    "has_companion": {
+      "type": "boolean"
+    },
+    "companion_relationship": {
+      "type": "string"
+    },
+    "number_of_companions": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of additional persons travelling with the client"
+    },
+    "companions_details": {
+      "type": "array",
+      "description": "Passport and relationship details for each travelling companion",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Companion full name as on passport"
+          },
+          "relationship": {
+            "type": "string",
+            "description": "Relationship to patient"
+          },
+          "passport_token": {
+            "type": "string",
+            "description": "PASS_xxx token from PassportVault"
+          },
+          "passport_expiry_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    },
+    "travel_buddy_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "has_cultural_preferences": {
+      "type": "boolean"
+    },
+    "cultural_preferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cultural_notes": {
+      "type": "string"
+    },
+    "medical_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medical_conditions_other": {
+      "type": "string"
+    },
+    "had_surgery": {
+      "type": "boolean"
+    },
+    "previous_procedures": {
+      "type": "string"
+    },
+    "last_surgery_date": {
+      "type": "string"
+    },
+    "had_complications": {
+      "type": "boolean"
+    },
+    "surgery_complications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "anesthesia_complications": {
+      "type": "boolean"
+    },
+    "anesthesia_complication_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allergies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allergy_details": {
+      "type": "string"
+    },
+    "takes_medications": {
+      "type": "boolean"
+    },
+    "medication_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "medication_notes": {
+      "type": "string"
+    },
+    "lifestyle_habits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exercises_regularly": {
+      "type": "boolean"
+    },
+    "activity_level": {
+      "type": "string"
+    },
+    "emotional_concerns": {
+      "type": "boolean"
+    },
+    "emotional_concern_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emotional_notes": {
+      "type": "string"
+    },
+    "pregnancy_status": {
+      "type": "string"
+    },
+    "document_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "uploaded_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "duration_of_stay": {
+      "type": "string",
+      "description": "e.g. '7 days', '2 weeks'"
+    },
+    "destination_country": {
+      "type": "string",
+      "description": "Country where the procedure takes place"
+    },
+    "client_country": {
+      "type": "string",
+      "description": "Patient's home country"
+    },
+    "procedure_country": {
+      "type": "string",
+      "description": "Country where procedure happens"
+    },
+    "flight_cost_usd": {
+      "type": "number",
+      "description": "Flight cost quoted by travel agency (USD)"
+    },
+    "hotel_cost_usd": {
+      "type": "number",
+      "description": "Hotel cost quoted by travel agency (USD)"
+    },
+    "flight_itinerary_summary": {
+      "type": "string"
+    },
+    "hotel_selection": {
+      "type": "string"
+    },
+    "transfer_notes": {
+      "type": "string"
+    },
+    "leg_1_cost_usd": {
+      "type": "number"
+    },
+    "leg_2_cost_usd": {
+      "type": "number"
+    },
+    "leg_3_cost_usd": {
+      "type": "number"
+    },
+    "leg_4_cost_usd": {
+      "type": "number"
+    },
+    "leg_5_cost_usd": {
+      "type": "number"
+    },
+    "leg_6_cost_usd": {
+      "type": "number"
+    },
+    "travel_agency_id": {
+      "type": "string"
+    },
+    "taxi_service_id": {
+      "type": "string"
+    },
+    "passport_vault_token": {
+      "type": "string",
+      "description": "PASS_xxx \u2014 References encrypted passport in PassportVault"
+    },
+    "passport_expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Non-sensitive expiry date retained for 6-month sentinel rule"
+    },
+    "ip_country_origin": {
+      "type": "string",
+      "description": "Auto-detected country from IP geolocation at intake"
+    },
+    "visa_required_status": {
+      "type": "string",
+      "enum": [
+        "exempt",
+        "evisa",
+        "embassy",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "Visa requirement state: exempt | evisa | embassy | unknown"
+    },
+    "has_food_allergies": {
+      "type": "boolean",
+      "default": false
+    },
+    "food_allergies_details": {
+      "type": "string",
+      "description": "Required if has_food_allergies is true"
+    },
+    "has_medication_allergies": {
+      "type": "boolean",
+      "default": false
+    },
+    "medication_allergies_details": {
+      "type": "string",
+      "description": "Required if has_medication_allergies is true"
+    },
+    "dietary_restrictions": {
+      "type": "string",
+      "enum": [
+        "none",
+        "vegetarian",
+        "vegan",
+        "gluten_free",
+        "halal",
+        "kosher",
+        "diabetic_low_sugar",
+        "low_sodium",
+        "other"
+      ],
+      "default": "none"
+    },
+    "dietary_restrictions_details": {
+      "type": "string",
+      "description": "Required if dietary_restrictions is other or medically relevant"
+    },
+    "emergency_food_reaction_plan": {
+      "type": "string"
+    },
+    "dietary_accuracy_acknowledged": {
+      "type": "boolean",
+      "default": false
+    },
+    "clinical_boundary_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "description": "Patient acknowledges platform does not diagnose or prescribe"
+    },
+    "clinical_boundary_acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "clinical_boundary_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "preferred_language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it",
+        "ar",
+        "zh",
+        "ko",
+        "tr"
+      ],
+      "default": "en"
+    },
+    "secondary_language": {
+      "type": "string"
+    },
+    "needs_translator": {
+      "type": "boolean",
+      "default": false
+    },
+    "translation_contexts_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "airport, clinic, doctor_consultation, hotel_recovery, emergency"
+    },
+    "religious_or_modesty_considerations": {
+      "type": "string"
+    },
+    "communication_style_preference": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "gentle",
+        "detailed",
+        "family_included"
+      ],
+      "default": "gentle"
+    },
+    "companion_can_translate": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_translation_limitations": {
+      "type": "string"
+    },
+    "requires_companion": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_requirement_reason": {
+      "type": "string",
+      "enum": [
+        "age_threshold",
+        "safe_t_flag",
+        "medical_complexity",
+        "patient_request",
+        "admin_determined"
+      ]
+    },
+    "companion_requirement_status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "pending",
+        "assigned",
+        "companion_declined_with_waiver",
+        "companion_required_pending"
+      ],
+      "default": "not_required"
+    }
+  },
+  "required": [
+    "patient_name",
+    "email",
+    "procedure_interest"
+  ],
+  "rls": {
+    "create": {
+      "data.email": "{{user.email}}",
+      "$or": [
+        {
+          "user_condition": {
+            "isAuthenticated": true
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

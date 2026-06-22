@@ -1,0 +1,56 @@
+{
+  "name": "EmergencyPIN",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "pin_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the 6-digit PIN \u2014 never store plaintext"
+    },
+    "pin_hint": {
+      "type": "string",
+      "description": "Optional user-defined hint"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_used_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "use_count": {
+      "type": "number",
+      "default": 0
+    },
+    "failed_attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "locked_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reset_token": {
+      "type": "string"
+    },
+    "reset_token_expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_email",
+    "pin_hash"
+  ]
+}

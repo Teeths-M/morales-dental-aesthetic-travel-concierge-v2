@@ -1,0 +1,64 @@
+{
+  "name": "AiFallbackMatch",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Reference to CaseRecord entity"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "original_query": {
+      "type": "string",
+      "description": "Patient's original search query in their own words"
+    },
+    "matched_procedures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "procedure_id": {
+            "type": "string"
+          },
+          "procedure_name": {
+            "type": "string"
+          },
+          "match_confidence": {
+            "type": "number"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Top 3 AI-matched procedures with confidence scores"
+    },
+    "selected_procedure_id": {
+      "type": "string",
+      "description": "Which procedure the patient ultimately selected"
+    },
+    "patient_custom_note": {
+      "type": "string",
+      "description": "Patient's personal note to the doctor about their case"
+    },
+    "doctor_notified": {
+      "type": "boolean",
+      "default": false
+    },
+    "doctor_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "patient_email",
+    "original_query",
+    "matched_procedures"
+  ]
+}

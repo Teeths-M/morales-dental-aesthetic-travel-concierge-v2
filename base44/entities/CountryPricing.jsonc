@@ -1,0 +1,38 @@
+{
+  "name": "CountryPricing",
+  "type": "object",
+  "properties": {
+    "procedure_id": {
+      "type": "string",
+      "description": "Link to ProcedurePricing"
+    },
+    "procedure_name": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country name (Venezuela, Colombia, Turkey, Thailand, etc.)"
+    },
+    "country_price_usd": {
+      "type": "number",
+      "description": "Localized price for this country"
+    },
+    "price_adjustment_pct": {
+      "type": "number",
+      "description": "% adjustment from base price (e.g., -20 for 20% discount)"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string",
+      "description": "Any special notes (e.g., regulatory requirements)"
+    }
+  },
+  "required": [
+    "procedure_id",
+    "country",
+    "country_price_usd"
+  ]
+}

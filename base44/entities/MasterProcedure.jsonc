@@ -1,0 +1,55 @@
+{
+  "name": "MasterProcedure",
+  "type": "object",
+  "properties": {
+    "procedure_id": {
+      "type": "string",
+      "description": "Unique identifier (e.g., DENT-IMP-01)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Parent category (e.g., Dental, Cardiology, Orthopedics)"
+    },
+    "category_emoji": {
+      "type": "string",
+      "description": "Icon emoji for category (e.g., \ud83e\uddb7)"
+    },
+    "en_name": {
+      "type": "string",
+      "description": "English procedure name"
+    },
+    "es_name": {
+      "type": "string",
+      "description": "Spanish procedure name"
+    },
+    "fr_name": {
+      "type": "string",
+      "description": "French procedure name"
+    },
+    "pt_name": {
+      "type": "string",
+      "description": "Portuguese procedure name"
+    },
+    "de_name": {
+      "type": "string",
+      "description": "German procedure name"
+    },
+    "it_name": {
+      "type": "string",
+      "description": "Italian procedure name"
+    },
+    "cpt_code": {
+      "type": "string",
+      "description": "CPT code if applicable"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "procedure_id",
+    "category",
+    "en_name"
+  ]
+}

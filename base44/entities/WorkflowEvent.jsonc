@@ -1,0 +1,118 @@
+{
+  "name": "WorkflowEvent",
+  "type": "object",
+  "properties": {
+    "consultation_id": {
+      "type": "string"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "risk_check",
+        "doctor",
+        "travel",
+        "hotel",
+        "cab",
+        "completed",
+        "blocked"
+      ],
+      "default": "risk_check"
+    },
+    "risk_result": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "blocked",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "risk_summary": {
+      "type": "string"
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "doctor_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "notified",
+        "confirmed",
+        "unavailable"
+      ],
+      "default": "pending"
+    },
+    "doctor_notes": {
+      "type": "string"
+    },
+    "doctor_quoted_price": {
+      "type": "number",
+      "description": "Price quoted by doctor for the procedure (USD)"
+    },
+    "doctor_confirmed_date": {
+      "type": "string",
+      "description": "ISO timestamp when doctor confirmed"
+    },
+    "travel_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "notified",
+        "confirmed",
+        "unavailable"
+      ],
+      "default": "pending"
+    },
+    "travel_notes": {
+      "type": "string"
+    },
+    "hotel_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "notified",
+        "confirmed",
+        "unavailable"
+      ],
+      "default": "pending"
+    },
+    "hotel_notes": {
+      "type": "string"
+    },
+    "cab_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "notified",
+        "confirmed",
+        "unavailable"
+      ],
+      "default": "pending"
+    },
+    "cab_notes": {
+      "type": "string"
+    },
+    "customer_notified": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_update_summary": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "consultation_id",
+    "patient_name",
+    "patient_email"
+  ]
+}

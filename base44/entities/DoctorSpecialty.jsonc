@@ -1,0 +1,44 @@
+{
+  "name": "DoctorSpecialty",
+  "type": "object",
+  "properties": {
+    "doctor_id": {
+      "type": "string",
+      "description": "Reference to Doctor"
+    },
+    "procedure_id": {
+      "type": "string",
+      "description": "Reference to MasterProcedure (e.g., DENT-IMP-01)"
+    },
+    "procedure_name": {
+      "type": "string",
+      "description": "Friendly name of procedure (auto-filled from MasterProcedure)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Parent category (e.g., 'Dental', 'Orthopedics')"
+    },
+    "cpt_code": {
+      "type": "string",
+      "description": "CPT (Current Procedural Terminology) code if applicable"
+    },
+    "expertise_level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "expert"
+      ],
+      "default": "intermediate"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Highlight as top specialty for this doctor"
+    }
+  },
+  "required": [
+    "doctor_id",
+    "procedure_id"
+  ]
+}

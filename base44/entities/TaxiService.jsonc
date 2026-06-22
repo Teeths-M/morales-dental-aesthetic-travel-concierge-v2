@@ -1,0 +1,202 @@
+{
+  "name": "TaxiService",
+  "type": "object",
+  "properties": {
+    "agency_name": {
+      "type": "string",
+      "description": "Name of the transportation agency (required for agency signup)"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Registered company name"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person for the agency"
+    },
+    "driver_name": {
+      "type": "string",
+      "description": "Driver name or agency representative"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "operating_country": {
+      "type": "string",
+      "description": "Country where driver operates"
+    },
+    "operating_city": {
+      "type": "string",
+      "description": "City or region where driver operates"
+    },
+    "service_radius_km": {
+      "type": "number",
+      "description": "Service radius in kilometers"
+    },
+    "patient_assistance": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Patient assistance offered, such as luggage help, mobility help, wheelchair support"
+    },
+    "vehicle_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sedan, SUV, Van, Wheelchair van"
+    },
+    "fleet_size": {
+      "type": "number",
+      "description": "Number of vehicles in the agency fleet"
+    },
+    "operating_hours": {
+      "type": "object",
+      "description": "Days of week and hours"
+    },
+    "pricing_model": {
+      "type": "object",
+      "description": "Pricing info"
+    },
+    "vehicle_photo_url": {
+      "type": "string"
+    },
+    "driver_license_number": {
+      "type": "string"
+    },
+    "insurance_provider": {
+      "type": "string"
+    },
+    "insurance_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "license_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ]
+    },
+    "payout_account": {
+      "type": "string"
+    },
+    "language_preference": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "verifying",
+        "verified",
+        "failed",
+        "manually_approved"
+      ],
+      "default": "pending_verification",
+      "description": "Overall verification state (blocks 'active' status)"
+    },
+    "identity_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "verification_can_be_activated": {
+      "type": "boolean",
+      "description": "Computed: true only if all three checks are passed OR manually overridden",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "is_online": {
+      "type": "boolean",
+      "default": false
+    },
+    "quality_score": {
+      "type": "number",
+      "default": 5.0,
+      "description": "Average rating from passengers"
+    },
+    "total_trips": {
+      "type": "number",
+      "default": 0
+    },
+    "earnings_this_week": {
+      "type": "number",
+      "default": 0
+    },
+    "bonus_progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Trips toward bonus (out of 50)"
+    },
+    "is_agency": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this is an agency, false if individual driver"
+    },
+    "sign_up_completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agency_name",
+    "contact_person",
+    "email",
+    "phone",
+    "operating_country",
+    "operating_city",
+    "vehicle_types"
+  ]
+}

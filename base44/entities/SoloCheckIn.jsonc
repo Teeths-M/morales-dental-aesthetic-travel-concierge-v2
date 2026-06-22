@@ -1,0 +1,185 @@
+{
+  "name": "SoloCheckIn",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "Same as case_id \u2014 unique trip identifier"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_phone": {
+      "type": "string"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sent_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "responded_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "response_method": {
+      "type": "string",
+      "enum": [
+        "app",
+        "sms",
+        "voice",
+        "emergency_pin"
+      ],
+      "default": "app"
+    },
+    "location_lat": {
+      "type": "number"
+    },
+    "location_lng": {
+      "type": "number"
+    },
+    "location_accuracy_meters": {
+      "type": "number"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "location_source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "ip_geo",
+        "manual",
+        "checkin_handshake"
+      ],
+      "default": "gps"
+    },
+    "location_breadcrumb_id": {
+      "type": "string",
+      "description": "Reference to LocationBreadcrumb created at acknowledgement"
+    },
+    "live_location_id": {
+      "type": "string",
+      "description": "Reference to LiveLocation record"
+    },
+    "escalation_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "sms_sent",
+        "voice_called",
+        "contact_notified",
+        "security_dispatched",
+        "police_required"
+      ],
+      "default": "none"
+    },
+    "escalation_status": {
+      "type": "string",
+      "description": "Human-readable escalation state"
+    },
+    "last_escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traveler_sms_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "traveler_voice_call_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "guardian_alerted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "security_dispatched_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "police_escalation_required_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "acknowledged",
+        "escalated_2h",
+        "escalated_3h",
+        "escalated_5h",
+        "escalated_9h",
+        "resolved"
+      ],
+      "default": "pending"
+    },
+    "check_in_round": {
+      "type": "number",
+      "default": 1
+    },
+    "missed_round_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Cumulative missed rounds for this case"
+    },
+    "guardian_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "guardian_link_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "emergency_contact_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "voice_call_attempted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "security_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_paused_medical": {
+      "type": "boolean",
+      "default": false
+    },
+    "pause_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "user_email",
+    "scheduled_time"
+  ]
+}

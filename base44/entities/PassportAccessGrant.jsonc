@@ -1,0 +1,150 @@
+{
+  "name": "PassportAccessGrant",
+  "type": "object",
+  "properties": {
+    "grant_token": {
+      "type": "string",
+      "description": "GRANT_<hex> - Unique time-limited access token"
+    },
+    "passport_vault_id": {
+      "type": "string",
+      "description": "FK to PassportVault record"
+    },
+    "passport_token": {
+      "type": "string",
+      "description": "Denormalized PASS_xxx for queries"
+    },
+    "patient_id": {
+      "type": "string",
+      "description": "Owner of the passport document"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "requester_role": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "admin",
+        "hospital_staff"
+      ]
+    },
+    "requester_id": {
+      "type": "string",
+      "description": "User ID or entity ID of requester"
+    },
+    "requester_name": {
+      "type": "string"
+    },
+    "requester_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Linked CaseRecord for context"
+    },
+    "access_reason": {
+      "type": "string",
+      "enum": [
+        "flight_booking",
+        "hotel_booking",
+        "visa_processing",
+        "clinic_verification",
+        "identity_check",
+        "emergency_response",
+        "admin_audit"
+      ]
+    },
+    "access_level": {
+      "type": "string",
+      "enum": [
+        "full_document",
+        "identity_only",
+        "travel_dates_only",
+        "redacted_metadata"
+      ],
+      "default": "redacted_metadata"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_approval",
+        "approved",
+        "revoked",
+        "expired"
+      ],
+      "default": "pending_approval"
+    },
+    "granted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "access_count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "auto_approved": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "passport_token",
+    "patient_id",
+    "requester_role",
+    "access_reason",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "data.requester_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

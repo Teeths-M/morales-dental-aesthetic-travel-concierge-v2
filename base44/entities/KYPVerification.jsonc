@@ -1,0 +1,142 @@
+{
+  "name": "KYPVerification",
+  "type": "object",
+  "properties": {
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "hotel",
+        "other"
+      ]
+    },
+    "partner_name": {
+      "type": "string"
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "business_registration_number": {
+      "type": "string"
+    },
+    "business_registration_country": {
+      "type": "string"
+    },
+    "document_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sanctions_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "clear",
+        "flagged",
+        "manual_review"
+      ],
+      "default": "pending"
+    },
+    "sanctions_check_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "document_forensics_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "authentic",
+        "tampered",
+        "inconclusive"
+      ],
+      "default": "pending"
+    },
+    "document_forensics_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "document_forensics_notes": {
+      "type": "string"
+    },
+    "ai_risk_score": {
+      "type": "number",
+      "description": "0-100, higher = riskier"
+    },
+    "ai_risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_review_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "human_reviewed_by": {
+      "type": "string"
+    },
+    "human_reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "human_review_outcome": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected",
+        "escalated"
+      ]
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "approved",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending"
+    },
+    "audit_trail": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "partner_type",
+    "partner_name",
+    "partner_email"
+  ]
+}

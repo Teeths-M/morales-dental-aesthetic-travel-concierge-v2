@@ -1,0 +1,64 @@
+{
+  "name": "UserOnboardingProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the registered user"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "doctor",
+        "travel_agency",
+        "taxi_service"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "started",
+        "completed"
+      ],
+      "default": "started"
+    },
+    "linked_entity_name": {
+      "type": "string",
+      "enum": [
+        "Doctor",
+        "Consultation",
+        "TravelAgency",
+        "TaxiService",
+        ""
+      ]
+    },
+    "linked_entity_id": {
+      "type": "string"
+    },
+    "profile_data": {
+      "type": "object",
+      "description": "Saved onboarding information submitted by the user"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_email",
+    "role"
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "name": "MonetizationPlan",
+  "type": "object",
+  "properties": {
+    "partner_id": {
+      "type": "string"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi_service",
+        "companion",
+        "white_label"
+      ]
+    },
+    "partner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "partner_name": {
+      "type": "string"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "commission_only",
+        "saas_subscription",
+        "escrow_fee",
+        "white_label_license",
+        "certification_badge"
+      ],
+      "default": "commission_only"
+    },
+    "commission_rate": {
+      "type": "number",
+      "description": "Commission % e.g. 0.25 for 25%"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "professional",
+        "enterprise"
+      ],
+      "description": "For SaaS plans"
+    },
+    "subscription_amount_usd": {
+      "type": "number",
+      "description": "Monthly subscription fee"
+    },
+    "escrow_fee_rate": {
+      "type": "number",
+      "description": "Escrow % e.g. 0.025 for 2.5%",
+      "default": 0.025
+    },
+    "white_label_tier": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "pro",
+        "enterprise"
+      ]
+    },
+    "certification_badge_active": {
+      "type": "boolean",
+      "default": false
+    },
+    "certification_badge_issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "cancelled",
+        "trial"
+      ],
+      "default": "trial"
+    },
+    "billing_cycle_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_revenue_generated_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "partner_type",
+    "plan_type"
+  ]
+}

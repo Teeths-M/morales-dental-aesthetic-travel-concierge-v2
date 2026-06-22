@@ -1,0 +1,153 @@
+{
+  "name": "SafeTProfile",
+  "type": "object",
+  "properties": {
+    "consultation_id": {
+      "type": "string",
+      "description": "Link to Consultation"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "procedure": {
+      "type": "string",
+      "description": "Procedure name"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low"
+    },
+    "risk_factors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Identified risk factors from medical history"
+    },
+    "health_summary": {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "medical_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allergies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "medications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "previous_surgeries": {
+          "type": "boolean"
+        }
+      }
+    },
+    "preparation_checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "days_before": {
+            "type": "number"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "recovery_timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "number"
+          },
+          "milestone": {
+            "type": "string"
+          },
+          "restrictions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "wellness_tracker": {
+      "type": "object",
+      "properties": {
+        "pain_level": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "mood": {
+          "type": "string"
+        },
+        "activity_level": {
+          "type": "string"
+        },
+        "last_check_in": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "doctor_notes": {
+      "type": "string",
+      "description": "Personalized notes from doctor"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "archived"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "consultation_id",
+    "patient_email",
+    "patient_name",
+    "procedure"
+  ]
+}

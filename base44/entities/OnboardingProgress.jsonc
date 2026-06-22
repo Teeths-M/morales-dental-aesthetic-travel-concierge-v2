@@ -1,0 +1,73 @@
+{
+  "name": "OnboardingProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "role": {
+      "type": "string"
+    },
+    "modules_completed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "e.g. ['welcome', 'emergency_crash_course', 'preflight_sim', 'nudge_setup']"
+    },
+    "preflight_simulation_passed": {
+      "type": "boolean",
+      "default": false
+    },
+    "emergency_course_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "nudge_preferences": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "boolean",
+          "default": true
+        },
+        "push": {
+          "type": "boolean",
+          "default": true
+        },
+        "sms": {
+          "type": "boolean",
+          "default": false
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "daily",
+            "weekly",
+            "milestone_only"
+          ],
+          "default": "milestone_only"
+        }
+      }
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_nudge_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id",
+    "user_email"
+  ]
+}

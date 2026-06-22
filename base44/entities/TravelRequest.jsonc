@@ -1,0 +1,247 @@
+{
+  "name": "TravelRequest",
+  "type": "object",
+  "properties": {
+    "request_token": {
+      "type": "string",
+      "description": "TRAVEL_<hex> - Unique reference token"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_phone": {
+      "type": "string"
+    },
+    "origin_city": {
+      "type": "string"
+    },
+    "origin_country": {
+      "type": "string"
+    },
+    "destination_city": {
+      "type": "string"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "departure_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "return_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "travelers_count": {
+      "type": "number",
+      "default": 1
+    },
+    "travel_class": {
+      "type": "string",
+      "enum": [
+        "economy",
+        "premium_economy",
+        "business",
+        "first"
+      ],
+      "default": "economy"
+    },
+    "hotel_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "hotel_star_rating": {
+      "type": "number",
+      "minimum": 3,
+      "maximum": 5
+    },
+    "hotel_room_type": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "deluxe",
+        "suite",
+        "penthouse"
+      ]
+    },
+    "transfer_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "transfer_type": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "luxury",
+        "vip"
+      ],
+      "default": "standard"
+    },
+    "companion_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_type": {
+      "type": "string",
+      "enum": [
+        "tour_guide",
+        "care_companion",
+        "luxury_concierge"
+      ]
+    },
+    "companion_days": {
+      "type": "number",
+      "default": 0
+    },
+    "package_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pricing_requested",
+        "quote_sent",
+        "deposit_paid",
+        "fully_paid",
+        "confirmed",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "flight_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "hotel_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "transfer_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "companion_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "base_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "markup_percentage": {
+      "type": "number",
+      "default": 0.25
+    },
+    "total_package_price": {
+      "type": "number",
+      "default": 0
+    },
+    "profit": {
+      "type": "number",
+      "default": 0
+    },
+    "deposit_percentage": {
+      "type": "number",
+      "default": 0.25
+    },
+    "deposit_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0
+    },
+    "amount_remaining": {
+      "type": "number",
+      "default": 0
+    },
+    "stripe_payment_id": {
+      "type": "string"
+    },
+    "travel_agency_id": {
+      "type": "string"
+    },
+    "chauffeur_id": {
+      "type": "string"
+    },
+    "companion_id": {
+      "type": "string"
+    },
+    "special_requests": {
+      "type": "string"
+    },
+    "quote_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deposit_paid_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "fully_paid_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "request_token",
+    "user_email",
+    "origin_city",
+    "destination_city",
+    "departure_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

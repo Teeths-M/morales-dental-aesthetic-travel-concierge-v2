@@ -1,0 +1,91 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Shield, Award, Heart, Headphones, CheckCircle } from 'lucide-react';
+
+const trustItems = [
+  { icon: Shield, label: 'Trusted Specialists' },
+  { icon: Award, label: 'Advanced Technology' },
+  { icon: Heart, label: 'Personalized Care' },
+  { icon: Headphones, label: 'Complete Concierge' },
+  { icon: CheckCircle, label: 'Your Safety, Our Mission' },
+];
+
+export default function Footer() {
+  return (
+    <footer className="bg-foreground text-background">
+      {/* Trust Bar */}
+      <div className="border-b border-background/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-wrap justify-center gap-6 lg:gap-12">
+            {trustItems.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-2 text-sm text-background/70">
+                <Icon className="w-4 h-4 text-accent" />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Footer */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-2 mb-4">
+              <img
+                src="/morales-m-mark.png"
+                alt="Morales"
+                className="w-9 h-9 object-contain"
+              />
+              <div>
+                <p className="font-display text-base text-background">MORALES</p>
+                <p className="text-[9px] tracking-[0.15em] text-background/50 uppercase">Dental & Aesthetic Travel Concierge</p>
+              </div>
+            </div>
+            <p className="text-sm text-background/60 leading-relaxed">
+              Premium dental, aesthetic and wellness care with door-to-door concierge service.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">Services</h4>
+            <div className="space-y-2.5">
+              {['Dental Implants', 'Smile Makeover', 'All-on-4/All-on-6', 'Porcelain Veneers'].map(s => (
+                <p key={s} className="text-sm text-background/50 hover:text-background/80 cursor-pointer transition-colors">{s}</p>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">Company</h4>
+            <div className="space-y-2.5">
+              {[
+                { label: 'About Us', path: '/about' },
+                { label: 'How It Works', path: '/how-it-works' },
+              ].map(l => (
+                <Link key={l.path} to={l.path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{l.label}</Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">Contact</h4>
+            <div className="space-y-2.5">
+              <p className="text-sm text-background/50">info@moralesconcierge.com</p>
+              <p className="text-sm text-background/50">+1 (800) 555-0199</p>
+              <p className="text-sm text-background/50">Mon–Fri 8am–8pm EST</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-background/10 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-background/40">© 2026 Morales Dental & Aesthetic Travel Concierge. All rights reserved.</p>
+          <div className="flex gap-6 text-xs text-background/40">
+            <span className="hover:text-background/60 cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-background/60 cursor-pointer">Terms of Service</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

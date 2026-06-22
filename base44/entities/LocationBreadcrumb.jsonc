@@ -1,0 +1,95 @@
+{
+  "name": "LocationBreadcrumb",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "accuracy_meters": {
+      "type": "number"
+    },
+    "place_label": {
+      "type": "string",
+      "description": "e.g. 'Margarita Island, Venezuela' or '10.4806, -66.9036'"
+    },
+    "country": {
+      "type": "string"
+    },
+    "country_code": {
+      "type": "string",
+      "description": "ISO 2-letter code"
+    },
+    "city": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "location_precision": {
+      "type": "string",
+      "enum": [
+        "precise",
+        "approximate"
+      ],
+      "default": "precise",
+      "description": "GPS = precise, IP geo = approximate"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "browser_gps",
+        "ip_geo",
+        "manual"
+      ],
+      "default": "browser_gps"
+    },
+    "logged_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "auto_purge_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Purged on final journey check-in unless saved"
+    },
+    "is_saved": {
+      "type": "boolean",
+      "default": false,
+      "description": "User explicitly saved this breadcrumb"
+    },
+    "is_purged": {
+      "type": "boolean",
+      "default": false
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "gps",
+        "manual",
+        "ip_geo",
+        "checkin_handshake"
+      ],
+      "default": "gps"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email"
+  ]
+}

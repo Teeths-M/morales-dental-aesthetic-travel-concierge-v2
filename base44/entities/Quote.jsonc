@@ -1,0 +1,63 @@
+{
+  "name": "Quote",
+  "type": "object",
+  "properties": {
+    "quote_request_id": {
+      "type": "string",
+      "description": "Link to QuoteRequest"
+    },
+    "partner_id": {
+      "type": "string"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "flight",
+        "hotel",
+        "taxi",
+        "recovery_accommodation"
+      ]
+    },
+    "base_price": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "description": {
+      "type": "string"
+    },
+    "package_options": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of premium/standard options"
+    },
+    "eta_days": {
+      "type": "number",
+      "description": "Estimated arrival in days (for travel)"
+    },
+    "confirmation_deadline": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_selected": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "quote_request_id",
+    "partner_id",
+    "provider_name",
+    "base_price"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "name": "PerformanceMetric",
+  "type": "object",
+  "properties": {
+    "endpoint": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "status_code": {
+      "type": "number"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "memory_mb": {
+      "type": "number"
+    },
+    "is_slow": {
+      "type": "boolean",
+      "default": false
+    },
+    "slow_level": {
+      "type": "string",
+      "enum": [
+        "warning",
+        "critical"
+      ]
+    }
+  },
+  "required": [
+    "endpoint",
+    "method",
+    "duration_ms",
+    "timestamp"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

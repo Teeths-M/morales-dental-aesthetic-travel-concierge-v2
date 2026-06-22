@@ -1,0 +1,82 @@
+{
+  "name": "VisualVerificationToken",
+  "type": "object",
+  "properties": {
+    "token_code": {
+      "type": "string",
+      "description": "Short human-readable code (e.g. 'MANGO-7421')"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "transport_request_id": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "recovery_pickup",
+        "identity_confirm",
+        "handoff"
+      ],
+      "default": "recovery_pickup"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "verified",
+        "expired",
+        "revoked"
+      ],
+      "default": "active"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "verified_by": {
+      "type": "string",
+      "description": "Driver ID or name"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "token_code",
+    "user_email",
+    "expires_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

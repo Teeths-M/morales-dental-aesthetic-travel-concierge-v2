@@ -1,0 +1,122 @@
+{
+  "name": "ActivitySession",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "activity_name": {
+      "type": "string",
+      "description": "e.g. Zip-lining, Scuba Diving, ATV Tour"
+    },
+    "activity_category": {
+      "type": "string",
+      "enum": [
+        "water",
+        "aerial",
+        "land",
+        "extreme",
+        "wellness",
+        "other"
+      ],
+      "default": "other"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "high",
+        "extreme"
+      ],
+      "default": "moderate"
+    },
+    "iso_checklist_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "acknowledged": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "description": "ISO 21101 aligned pre-activity safety checklist"
+    },
+    "scheduled_start_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scheduled_end_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actual_start_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nudge_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handshake_due_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "2 hours after scheduled_end_at"
+    },
+    "handshake_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handshake_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "missed",
+        "escalated"
+      ],
+      "default": "pending"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "registered",
+        "active",
+        "completed",
+        "escalated",
+        "cancelled"
+      ],
+      "default": "registered"
+    },
+    "location": {
+      "type": "string"
+    },
+    "operator_name": {
+      "type": "string"
+    },
+    "emergency_escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email",
+    "activity_name"
+  ]
+}

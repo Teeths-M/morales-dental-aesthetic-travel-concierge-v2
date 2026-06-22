@@ -1,0 +1,220 @@
+{
+  "name": "Doctor",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Doctor's full name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "clinic_country": {
+      "type": "string",
+      "description": "Country where clinic is located"
+    },
+    "clinic_city": {
+      "type": "string",
+      "description": "City where clinic is located"
+    },
+    "clinic_name": {
+      "type": "string",
+      "description": "Clinic name (optional)"
+    },
+    "professional_background": {
+      "type": "string",
+      "description": "Education, certifications, and professional credentials"
+    },
+    "years_experience": {
+      "type": "number"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "license_url": {
+      "type": "string",
+      "description": "URL to uploaded medical license"
+    },
+    "license_number": {
+      "type": "string",
+      "description": "Official medical license number"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country of medical license issuance"
+    },
+    "specialty": {
+      "type": "string",
+      "description": "Medical specialty"
+    },
+    "license_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "verifying",
+        "verified",
+        "failed",
+        "manually_approved",
+        "pending_manual",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending_verification",
+      "description": "Overall verification state"
+    },
+    "verification_method": {
+      "type": "string",
+      "enum": [
+        "government_registry",
+        "advisory_team",
+        "manual_upload"
+      ],
+      "description": "How the doctor was verified"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When verification was completed"
+    },
+    "credential_verified_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date credentials were last verified"
+    },
+    "verification_confidence": {
+      "type": "number",
+      "description": "AI confidence score 0-100%"
+    },
+    "verification_notes": {
+      "type": "string",
+      "description": "AI or admin notes about verification"
+    },
+    "identity_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "license_verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "passed",
+        "failed",
+        "manual_override"
+      ],
+      "default": "pending"
+    },
+    "verification_can_be_activated": {
+      "type": "boolean",
+      "default": false,
+      "description": "True only if all checks passed or overridden"
+    },
+    "payout_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "paypal",
+        "wipay"
+      ]
+    },
+    "payout_account": {
+      "type": "string"
+    },
+    "language_preference": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "fr",
+        "pt",
+        "de",
+        "it"
+      ],
+      "default": "en"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_verification",
+        "active",
+        "inactive"
+      ],
+      "default": "pending_verification"
+    },
+    "rating": {
+      "type": "number",
+      "default": 5.0
+    },
+    "review_count": {
+      "type": "number",
+      "default": 0
+    },
+    "successful_procedures_count": {
+      "type": "number",
+      "default": 0
+    },
+    "portfolio": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sign_up_completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "phone",
+    "clinic_country",
+    "clinic_city"
+  ]
+}

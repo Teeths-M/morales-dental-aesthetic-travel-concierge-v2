@@ -1,0 +1,56 @@
+{
+  "name": "DoctorProcedureOutreach",
+  "type": "object",
+  "properties": {
+    "procedure_name": {
+      "type": "string",
+      "description": "Procedure the client is interested in"
+    },
+    "client_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the requesting client"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of doctor to notify"
+    },
+    "email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When outreach email was sent"
+    },
+    "doctor_response": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "maybe",
+        "pending"
+      ],
+      "default": "pending",
+      "description": "Doctor's response to outreach"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When doctor responded"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "converted",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Overall outreach status"
+    }
+  },
+  "required": [
+    "procedure_name",
+    "client_email",
+    "doctor_email"
+  ]
+}

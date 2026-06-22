@@ -1,0 +1,28 @@
+{
+  "name": "ComplexityModifier",
+  "type": "object",
+  "properties": {
+    "procedure_name": {
+      "type": "string"
+    },
+    "simple_factor": {
+      "type": "number",
+      "description": "Price multiplier for simple complexity (e.g., 0.9)"
+    },
+    "moderate_factor": {
+      "type": "number",
+      "description": "Multiplier for moderate (e.g., 1.0)"
+    },
+    "complex_factor": {
+      "type": "number",
+      "description": "Multiplier for complex (e.g., 1.25)"
+    },
+    "advanced_factor": {
+      "type": "number",
+      "description": "Multiplier for advanced (e.g., 1.5)"
+    }
+  },
+  "required": [
+    "procedure_name"
+  ]
+}

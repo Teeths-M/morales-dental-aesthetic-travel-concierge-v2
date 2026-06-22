@@ -1,0 +1,87 @@
+{
+  "name": "PriceQuote",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "selected_procedures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "procedure_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "material_choice": {
+            "type": "string"
+          },
+          "complexity_level": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "line_total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal_usd": {
+      "type": "number",
+      "description": "Sum before modifiers"
+    },
+    "bundle_discount_usd": {
+      "type": "number",
+      "description": "Bundle savings"
+    },
+    "quantity_discount_usd": {
+      "type": "number",
+      "description": "Bulk discount savings"
+    },
+    "promotion_discount_usd": {
+      "type": "number"
+    },
+    "estimated_total_low_usd": {
+      "type": "number",
+      "description": "Conservative estimate"
+    },
+    "estimated_total_high_usd": {
+      "type": "number",
+      "description": "Premium/seasonal estimate"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "disclaimer": {
+      "type": "string",
+      "default": "Prices shown are estimated and may vary depending on doctor assessment, medical complexity, materials, diagnostics, and final treatment plan."
+    },
+    "quote_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "viewed",
+        "accepted",
+        "consultation_scheduled"
+      ],
+      "default": "draft"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "user_email",
+    "selected_procedures",
+    "subtotal_usd"
+  ]
+}

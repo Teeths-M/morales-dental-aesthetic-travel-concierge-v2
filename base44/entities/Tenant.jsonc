@@ -1,0 +1,59 @@
+{
+  "name": "Tenant",
+  "type": "object",
+  "properties": {
+    "tenant_name": {
+      "type": "string",
+      "description": "Display name for this tenant"
+    },
+    "tenant_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "client",
+        "travel_agency",
+        "taxi_service",
+        "platform_admin"
+      ],
+      "description": "Type of tenant account"
+    },
+    "owner_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Primary owner email for this tenant"
+    },
+    "linked_entity_name": {
+      "type": "string",
+      "enum": [
+        "Doctor",
+        "Consultation",
+        "TravelAgency",
+        "TaxiService",
+        "User"
+      ],
+      "description": "Main data table connected to this tenant"
+    },
+    "linked_entity_id": {
+      "type": "string",
+      "description": "Record ID in the linked data table"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "suspended",
+        "archived"
+      ],
+      "default": "pending"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_name",
+    "tenant_type",
+    "owner_email"
+  ]
+}

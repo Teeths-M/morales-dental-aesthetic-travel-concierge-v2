@@ -1,0 +1,102 @@
+{
+  "name": "PassportAuditLog",
+  "type": "object",
+  "properties": {
+    "passport_token": {
+      "type": "string",
+      "description": "Which passport vault was accessed"
+    },
+    "patient_id": {
+      "type": "string",
+      "description": "Owner of the document"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "actor_id": {
+      "type": "string",
+      "description": "User ID of who performed the action"
+    },
+    "actor_role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "doctor",
+        "travel_agency",
+        "admin",
+        "system"
+      ]
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "upload",
+        "view",
+        "download",
+        "grant_access",
+        "revoke_access",
+        "request_access",
+        "approve_request",
+        "deny_request",
+        "access_expired",
+        "delete"
+      ]
+    },
+    "grant_token": {
+      "type": "string",
+      "description": "Related PassportAccessGrant if applicable"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "denied"
+      ],
+      "default": "success"
+    },
+    "reason_if_denied": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional context (file_size, access_level, fields_exposed, etc)"
+    }
+  },
+  "required": [
+    "passport_token",
+    "actor_role",
+    "action",
+    "timestamp"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    }
+  }
+}

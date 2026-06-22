@@ -1,0 +1,146 @@
+{
+  "name": "RecoverySession",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "surgery_type": {
+      "type": "string",
+      "description": "e.g. 'Rhinoplasty', 'Gastric Sleeve'"
+    },
+    "surgery_complexity": {
+      "type": "string",
+      "enum": [
+        "minor",
+        "moderate",
+        "major"
+      ],
+      "default": "moderate",
+      "description": "Determines check-in interval: minor=12h, moderate=8h, major=4h"
+    },
+    "recovery_start_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recovery_end_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notification_silencing_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "checkin_interval_hours": {
+      "type": "number",
+      "default": 8
+    },
+    "checkins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "missed",
+              "escalated"
+            ]
+          },
+          "pain_level": {
+            "type": "number",
+            "description": "1-10"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "escalated": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "total_checkins_scheduled": {
+      "type": "number",
+      "default": 0
+    },
+    "total_checkins_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "escalations": {
+      "type": "number",
+      "default": 0
+    },
+    "concierge_escalated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "family_contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "feedback_token": {
+      "type": "string",
+      "description": "Unique token for the feedback form link"
+    },
+    "feedback_requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "feedback_submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "feedback_rating": {
+      "type": "number",
+      "description": "1-5 star rating"
+    },
+    "feedback_comment": {
+      "type": "string",
+      "description": "Patient's written experience"
+    }
+  },
+  "required": [
+    "case_id",
+    "patient_email"
+  ]
+}

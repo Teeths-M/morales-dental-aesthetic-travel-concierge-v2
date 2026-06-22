@@ -1,0 +1,182 @@
+{
+  "name": "PassportVault",
+  "type": "object",
+  "properties": {
+    "passport_token": {
+      "type": "string",
+      "description": "PASS_<hex> - Immutable unique reference token"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "passport",
+        "visa",
+        "national_id",
+        "flight_ticket",
+        "hotel_booking",
+        "medical_record",
+        "insurance",
+        "payment_reference",
+        "other"
+      ],
+      "default": "passport"
+    },
+    "encrypted_file_uri": {
+      "type": "string",
+      "description": "Private storage URI to AES-256-GCM encrypted file"
+    },
+    "encryption_iv_b64": {
+      "type": "string",
+      "description": "Base64 initialization vector \u2014 not secret, required for client-side decryption"
+    },
+    "encryption_salt_b64": {
+      "type": "string",
+      "description": "Base64 PBKDF2 salt \u2014 not secret, required for key derivation"
+    },
+    "algorithm": {
+      "type": "string",
+      "default": "AES-256-GCM",
+      "description": "Encryption algorithm identifier"
+    },
+    "algorithm_version": {
+      "type": "number",
+      "default": 1,
+      "description": "Algorithm envelope version for future rotation"
+    },
+    "integrity_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of original file for integrity verification"
+    },
+    "file_size_bytes": {
+      "type": "number"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "redacted_for_display": {
+      "type": "object",
+      "properties": {
+        "last_4_digits": {
+          "type": "string"
+        },
+        "expiry_date": {
+          "type": "string"
+        },
+        "nationality": {
+          "type": "string"
+        },
+        "full_name_redacted": {
+          "type": "string"
+        },
+        "document_type": {
+          "type": "string"
+        },
+        "booking_reference": {
+          "type": "string"
+        },
+        "hotel_name": {
+          "type": "string"
+        },
+        "airline": {
+          "type": "string"
+        },
+        "card_issuer": {
+          "type": "string"
+        },
+        "bank_phone": {
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked",
+        "expired",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "virus_scan_status": {
+      "type": "string",
+      "enum": [
+        "not_scanned",
+        "pending",
+        "passed",
+        "quarantined"
+      ],
+      "default": "not_scanned",
+      "description": "AV scan status. 'not_scanned' is the honest default until a real scanner is integrated. Files are client-side encrypted (AES-256-GCM) limiting server exposure."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "uploaded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "access_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_emergency_accessible": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this document can be accessed via Emergency PIN"
+    }
+  },
+  "required": [
+    "passport_token",
+    "user_email",
+    "document_type",
+    "encrypted_file_uri"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "name": "SecureShareLink",
+  "type": "object",
+  "properties": {
+    "share_token": {
+      "type": "string",
+      "description": "Unique token for secure link (SHARE_<hex>)"
+    },
+    "vault_id": {
+      "type": "string",
+      "description": "Reference to PassportVault entity"
+    },
+    "passport_token": {
+      "type": "string"
+    },
+    "owner_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "recipient_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Optional: restrict to specific recipient"
+    },
+    "recipient_domain": {
+      "type": "string",
+      "description": "Optional: restrict to domain (e.g. embassy.gov)"
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "embassy",
+        "airline",
+        "hotel",
+        "insurance",
+        "medical",
+        "other"
+      ],
+      "default": "other"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "max_access_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Auto-revokes after N downloads"
+    },
+    "access_count": {
+      "type": "number",
+      "default": 0
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_by": {
+      "type": "string"
+    },
+    "last_accessed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_accessed_ip": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "share_token",
+    "vault_id",
+    "passport_token",
+    "owner_email",
+    "expires_at"
+  ]
+}

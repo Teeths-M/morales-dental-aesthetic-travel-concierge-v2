@@ -1,0 +1,137 @@
+{
+  "name": "SOSEvent",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "patient_phone": {
+      "type": "string"
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "police",
+        "ambulance",
+        "private_security",
+        "urgent_pickup",
+        "silent_sos",
+        "panic_call_simulation",
+        "manual"
+      ],
+      "default": "manual"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "triggered",
+        "dispatched",
+        "acknowledged",
+        "resolved",
+        "false_alarm"
+      ],
+      "default": "triggered"
+    },
+    "escalation_level": {
+      "type": "number",
+      "default": 1
+    },
+    "responder_name": {
+      "type": "string"
+    },
+    "responder_eta_minutes": {
+      "type": "number"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolution_notes": {
+      "type": "string"
+    },
+    "notifications_sent": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "translated_message": {
+      "type": "string",
+      "description": "Emergency message translated to local language"
+    },
+    "triggered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_silent": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "patient_email",
+    "trigger_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.patient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

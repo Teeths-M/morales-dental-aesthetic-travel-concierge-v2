@@ -1,0 +1,73 @@
+{
+  "name": "WorkflowNotification",
+  "type": "object",
+  "properties": {
+    "workflow_event_id": {
+      "type": "string"
+    },
+    "recipient_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "patient",
+        "partner",
+        "admin"
+      ],
+      "description": "Who receives this notification"
+    },
+    "recipient_email": {
+      "type": "string"
+    },
+    "recipient_phone": {
+      "type": "string"
+    },
+    "notification_type": {
+      "type": "string",
+      "enum": [
+        "quote_request",
+        "payment_reminder",
+        "booking_confirmation",
+        "itinerary",
+        "reminder",
+        "escalation"
+      ],
+      "description": "Type of notification"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "sms",
+        "whatsapp",
+        "in_app"
+      ],
+      "default": "email"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "delivered",
+        "failed",
+        "read"
+      ],
+      "default": "pending"
+    },
+    "sent_at": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "workflow_event_id",
+    "recipient_type",
+    "recipient_email",
+    "notification_type"
+  ]
+}

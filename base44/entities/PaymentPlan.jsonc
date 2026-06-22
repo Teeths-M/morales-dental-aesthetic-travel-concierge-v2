@@ -1,0 +1,67 @@
+{
+  "name": "PaymentPlan",
+  "type": "object",
+  "properties": {
+    "consultation_id": {
+      "type": "string"
+    },
+    "plan_type": {
+      "type": "string",
+      "enum": [
+        "full_payment",
+        "deposit_25",
+        "deposit_50"
+      ],
+      "description": "Payment option selected by client"
+    },
+    "total_package_cost": {
+      "type": "number",
+      "description": "Total cost before discount/adjustments"
+    },
+    "markup_pct": {
+      "type": "number",
+      "default": 35,
+      "description": "Platform markup percentage"
+    },
+    "discount_pct": {
+      "type": "number",
+      "default": 0,
+      "description": "Discount (5% for full payment)"
+    },
+    "final_cost": {
+      "type": "number",
+      "description": "Final cost after markup and discount"
+    },
+    "amount_due_today": {
+      "type": "number"
+    },
+    "amount_due_later": {
+      "type": "number"
+    },
+    "due_date_final": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "awaiting_selection",
+        "pending_payment",
+        "partial_paid",
+        "fully_paid",
+        "overdue"
+      ],
+      "default": "awaiting_selection"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "consultation_id",
+    "total_package_cost"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Provider",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "Professional title"
+    },
+    "specialty": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "years_experience": {
+      "type": "number"
+    },
+    "rating": {
+      "type": "number"
+    },
+    "review_count": {
+      "type": "number"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "credentials": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expertise_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "name",
+    "title",
+    "specialty"
+  ]
+}

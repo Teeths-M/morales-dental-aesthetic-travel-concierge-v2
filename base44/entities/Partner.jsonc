@@ -1,0 +1,43 @@
+{
+  "name": "Partner",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Partner or company name"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel",
+        "hotel",
+        "cab",
+        "other"
+      ],
+      "description": "Partner category"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "contact_person": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "email"
+  ]
+}
