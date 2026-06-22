@@ -17,11 +17,18 @@ const CRITICAL_KEYWORD_TRIGGERS = [
   { keyword: 'uncontrolled diabetes', reason: 'Uncontrolled diabetes — critical perioperative risk' },
   { keyword: 'severe heart failure', reason: 'Severe heart failure — absolute anesthesia contraindication' },
   { keyword: 'recent myocardial infarction', reason: 'Recent MI (< 6 months) — elective surgery contraindicated' },
+  // Matches both 'active cancer' (free text) and 'cancer (active' (form's "Cancer (active or recent)" option)
   { keyword: 'active cancer', reason: 'Active malignancy — requires oncology clearance before surgery' },
+  { keyword: 'cancer (active', reason: 'Active or recent cancer — requires oncology clearance before elective surgery' },
   { keyword: 'severe copd', reason: 'Severe COPD — critical respiratory risk under anesthesia' },
   { keyword: 'end stage renal', reason: 'End-stage renal disease — critical metabolic risk' },
+  // Matches form's 'General Anesthesia' allergy option and free-text variants
   { keyword: 'allergy to general anesthesia', reason: 'Anesthesia allergy — no safe administration pathway' },
+  { keyword: 'general anesthesia', reason: 'Documented anesthesia allergy — requires specialist review before any GA procedure' },
+  // Matches form's 'Blood thinners (Warfarin, Eliquis, Xarelto)' medication option
   { keyword: 'warfarin', reason: 'Warfarin use — critical bleeding/clotting risk, requires hematology review' },
+  { keyword: 'eliquis', reason: 'Eliquis (apixaban) use — critical perioperative bleeding risk, requires hematology review' },
+  { keyword: 'xarelto', reason: 'Xarelto (rivaroxaban) use — critical perioperative bleeding risk, requires hematology review' },
   { keyword: 'blood thinner', reason: 'Anticoagulation therapy — critical perioperative bleeding risk' },
 ];
 
@@ -53,27 +60,73 @@ function getBMI(height_cm, weight_kg) {
   return weight_kg / ((height_cm / 100) ** 2);
 }
 
+// Normalise an array or comma/newline-separated string to a single lowercase text blob.
+function toText(val) {
+  if (!val) return '';
+  if (Array.isArray(val)) return val.join(' ');
+  return String(val);
+}
+
 function computeRiskScore(caseRecord) {
+  // Build a single lowercase search string from every field that may contain medical data.
+  // Covers both the legacy CaseRecord field names (medications, allergies, anesthesia_history)
+  // AND the PatientIntakeTelemetry field names (medication_types, allergy_types, anesthesia_notes)
+  // so that both intake paths score correctly regardless of which fields are populated.
   const medText = [
-    caseRecord.medications || '',
-    caseRecord.allergies || '',
-    caseRecord.medical_conditions || '',
-    caseRecord.anesthesia_history || '',
-    caseRecord.mental_health_notes || '',
+    toText(caseRecord.medications),
+    toText(caseRecord.medication_types),
+    toText(caseRecord.medication_free_text),
+    toText(caseRecord.allergies),
+    toText(caseRecord.allergy_types),
+    toText(caseRecord.allergy_free_text),
+    toText(caseRecord.medical_conditions),
+    toText(caseRecord.medical_conditions_notes),
+    toText(caseRecord.anesthesia_history),
+    toText(caseRecord.anesthesia_notes),
+    toText(caseRecord.mental_health_notes),
+    toText(caseRecord.surgery_description),
+    toText(caseRecord.complication_types),
+    toText(caseRecord.reproductive_notes),
   ].join(' ').toLowerCase();
 
+  // ── CRITICAL block checks ─────────────────────────────────────────────────
   for (const trigger of CRITICAL_BLOCK_TRIGGERS) {
     if (caseRecord[trigger.field] === trigger.value) {
       return { tier: 'CRITICAL', reason: trigger.reason, score: 100, flags: [trigger.reason] };
     }
   }
+
+  // Breastfeeding with general anesthesia is a critical transfer risk
+  if (caseRecord.breastfeeding === true) {
+    return {
+      tier: 'CRITICAL',
+      reason: 'Currently breastfeeding — anesthetic agents transfer to breast milk and pose risk to infant. Elective procedures must be deferred.',
+      score: 100,
+      flags: ['Breastfeeding — critical contraindication for elective surgery'],
+    };
+  }
+
   const criticalKeyword = CRITICAL_KEYWORD_TRIGGERS.find(t => medText.includes(t.keyword.toLowerCase()));
   if (criticalKeyword) {
     return { tier: 'CRITICAL', reason: criticalKeyword.reason, score: 100, flags: [criticalKeyword.reason] };
   }
 
+  // Rule R8: 4+ procedures + age > 50 → Critical stacking block
+  const procedureCount = Array.isArray(caseRecord.procedures) ? caseRecord.procedures.length : 0;
+  const age = Number(caseRecord.age_years) || 0;
+  if (procedureCount > 3 && age > 50) {
+    return {
+      tier: 'CRITICAL',
+      reason: `${procedureCount} procedures combined with age ${age} — critical stacking and recovery risk. Maximum 3-procedure sessions permitted for patients over 50.`,
+      score: 100,
+      flags: [`${procedureCount} procedures selected — stacking limit exceeded for age ${age}`],
+    };
+  }
+
+  // ── HIGH-RISK weighted scoring ────────────────────────────────────────────
   let score = 0;
   const flags = [];
+
   for (const factor of HIGH_RISK_FACTORS) {
     if (medText.includes(factor.keyword.toLowerCase())) {
       score += factor.weight;
@@ -81,26 +134,45 @@ function computeRiskScore(caseRecord) {
     }
   }
 
+  // BMI
   const bmi = getBMI(caseRecord.height_cm, caseRecord.weight_kg);
   if (bmi && bmi >= 40) { score += 4; flags.push('BMI ≥ 40 — severe obesity'); }
   else if (bmi && bmi >= 35) { score += 2; flags.push('BMI ≥ 35 — elevated surgical risk'); }
 
-  const age = caseRecord.age_years;
+  // Age
   if (age >= 70) { score += 3; flags.push('Age ≥ 70 — elevated anesthesia risk'); }
   else if (age >= 60) { score += 1; flags.push('Age 60+ — moderate age-related risk'); }
-  else if (age <= 16) { score += 2; flags.push('Patient under 17 — parental consent and pediatric clearance required'); }
+  else if (age > 0 && age <= 16) { score += 2; flags.push('Patient under 17 — parental consent and pediatric clearance required'); }
 
-  // BUG-R6-03 FIX: CaseRecord.smoking_status schema is boolean (true/false), not a string enum.
-  // The previous string comparisons ('Heavy'/'Moderate'/'Light') never matched, silently scoring
-  // all smokers as non-smokers. Now correctly checks the boolean value from the entity schema.
-  if (caseRecord.smoking_status === true) { score += 2; flags.push('Smoker — impaired wound healing and elevated surgical risk'); }
+  // Smoking — form stores a string ('None'|'Light'|'Moderate'|'Heavy');
+  // legacy boolean records also accepted. Both paths now scored correctly.
+  const smokingStr = typeof caseRecord.smoking_status === 'string'
+    ? caseRecord.smoking_status.toLowerCase() : '';
+  if (caseRecord.smoking_status === true || smokingStr === 'heavy') {
+    score += 3; flags.push('Heavy smoker — severely impaired wound healing and elevated surgical risk');
+  } else if (smokingStr === 'moderate') {
+    score += 2; flags.push('Smoker (moderate) — impaired wound healing and elevated surgical risk');
+  } else if (smokingStr === 'light') {
+    score += 1; flags.push('Light smoker — mild wound healing risk');
+  }
 
+  // Alcohol
   if (caseRecord.alcohol_use === 'Heavy') { score += 3; flags.push('Heavy alcohol use — liver and anesthesia risk'); }
   else if (caseRecord.alcohol_use === 'Moderate') { score += 1; }
 
-  const procedureCount = Array.isArray(caseRecord.procedures) ? caseRecord.procedures.length : 0;
-  if (procedureCount >= 3) { score += 2; flags.push(`${procedureCount} procedures selected — elevated recovery load`); }
-  else if (procedureCount >= 2) { score += 1; flags.push(`${procedureCount} procedures — standard multi-procedure planning`); }
+  // Previous surgical complications (boolean field from intake form)
+  if (caseRecord.had_complications === true) {
+    score += 2; flags.push('Previous surgical complications — elevated perioperative risk');
+  }
+
+  // Anesthesia complications (boolean field from intake form — more reliable than free-text search)
+  if (caseRecord.anesthesia_complications === true) {
+    score += 3; flags.push('Previous anesthesia complications — mandatory anesthesiologist review required');
+  }
+
+  // Procedure stacking
+  if (procedureCount >= 3) { score += 2; flags.push(`${procedureCount} procedures selected — elevated combined recovery load`); }
+  else if (procedureCount >= 2) { score += 1; flags.push(`${procedureCount} procedures — multi-procedure recovery planning required`); }
 
   let tier;
   if (score >= 8) tier = 'HIGH';
