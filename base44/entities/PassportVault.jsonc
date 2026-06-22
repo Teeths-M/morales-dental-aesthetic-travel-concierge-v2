@@ -23,6 +23,7 @@
         "hotel_booking",
         "medical_record",
         "insurance",
+        "payment_reference",
         "other"
       ],
       "default": "passport"
@@ -88,6 +89,12 @@
         },
         "airline": {
           "type": "string"
+        },
+        "card_issuer": {
+          "type": "string"
+        },
+        "bank_phone": {
+          "type": "string"
         }
       }
     },
@@ -139,5 +146,57 @@
     "user_email",
     "document_type",
     "encrypted_file_uri"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "platform_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
