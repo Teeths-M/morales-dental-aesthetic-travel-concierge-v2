@@ -96,6 +96,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
   const [currentMode, setCurrentMode] = useState(initialMode);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [currentPin, setCurrentPin] = useState('');
   const [hint, setHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasPIN, setHasPIN] = useState(initialMode === 'verify');
@@ -104,6 +105,10 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
   const [attemptsLeft, setAttemptsLeft] = useState(5);
   const [verifiedToken, setVerifiedToken] = useState(null);
   const { toast } = useToast();
+  // True when the user is changing an existing PIN (reached via "Change PIN"
+  // from the done state) rather than setting one up for the first time.
+  // Changing requires the current PIN; first-time setup has none to verify.
+  const isChangingExisting = currentMode === 'setup' && hasPIN;
 
   // Load hint from legacy storage (async, non-blocking)
   React.useEffect(() => {
@@ -118,9 +123,37 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
   const setupPIN = async () => {
     if (pin.length !== 6) { setError('PIN must be exactly 6 digits'); return; }
     if (pin !== confirmPin) { setError('PINs do not match'); return; }
+    if (isChangingExisting && currentPin.length !== 6) {
+      setError('Enter your current 6-digit PIN to set a new one.');
+      return;
+    }
     setLoading(true);
     setError('');
-    
+
+    // Changing an existing PIN requires server verification of the current
+    // PIN first — local-only save isn't enough here, since the whole point
+    // is confirming the caller actually knows the real current PIN before
+    // we let them replace it.
+    if (isChangingExisting) {
+      if (!navigator.onLine) {
+        setError('Connect to the internet to change your PIN (this confirms your current PIN first).');
+        setLoading(false);
+        return;
+      }
+      try {
+        await base44.functions.invoke('verifyEmergencyPIN', {
+          action: 'setup', user_email: userEmail, pin: currentPin, new_pin: pin, hint
+        });
+      } catch (err) {
+        const serverMsg = err?.response?.data?.error || err?.message;
+        setError(serverMsg === 'current_pin_required' || !serverMsg
+          ? 'Could not verify current PIN. Please try again.'
+          : serverMsg);
+        setLoading(false);
+        return;
+      }
+    }
+
     // Step 1: Save using PBKDF2 (secure offline access)
     try {
       await saveVaultPIN(userEmail, pin);
@@ -131,12 +164,10 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       await saveLocalPIN(pin, userEmail, hint);
     }
     
-    // Step 2: Save to server (if online)
-    let serverSaved = false;
-    if (navigator.onLine) {
+    // Step 2: Save to server (if online and not already handled above)
+    if (!isChangingExisting && navigator.onLine) {
       try {
         await base44.functions.invoke('verifyEmergencyPIN', { action: 'setup', user_email: userEmail, new_pin: pin, hint });
-        serverSaved = true;
       } catch (_) {
         // Server save failed, but local save succeeded — still works offline
       }
@@ -152,6 +183,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     setHasPIN(true);
     setPin('');
     setConfirmPin('');
+    setCurrentPin('');
     setCurrentMode('done');
     setLoading(false);
   };
@@ -268,10 +300,16 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
 
   return (
     <div className="space-y-6">
-      {isOffline && (
+      {isOffline && !isChangingExisting && (
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-2.5 text-xs text-emerald-800 font-semibold">
           <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
           Offline Mode Active — PIN verified on-device
+        </div>
+      )}
+      {isOffline && isChangingExisting && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-4 py-2.5 text-xs text-amber-800 font-semibold">
+          <WifiOff className="w-3.5 h-3.5 flex-shrink-0" />
+          Changing your PIN requires an internet connection to verify your current PIN.
         </div>
       )}
       {/* Mode header */}
@@ -280,27 +318,37 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
           <Smartphone className="w-7 h-7 text-blue-700" />
         </div>
         <h3 className="font-bold text-slate-800 text-lg">
-          {hasPIN || currentMode === 'verify' ? 'Emergency PIN Access' : 'Setup Emergency PIN'}
+          {isChangingExisting ? 'Change Emergency PIN' : hasPIN || currentMode === 'verify' ? 'Emergency PIN Access' : 'Setup Emergency PIN'}
         </h3>
         <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
-          {hasPIN || currentMode === 'verify'
-            ? 'Enter your 6-digit PIN to unlock your vault and SOS console.'
-            : 'Create your 6-digit PIN for offline emergency access.'}
+          {isChangingExisting
+            ? 'Enter your current PIN, then choose a new one.'
+            : hasPIN || currentMode === 'verify'
+              ? 'Enter your 6-digit PIN to unlock your vault and SOS console.'
+              : 'Create your 6-digit PIN for offline emergency access.'}
         </p>
         {pinHint && currentMode === 'verify' && <p className="text-xs text-blue-600 mt-2">Hint: {pinHint}</p>}
       </div>
 
       {/* PIN entry */}
       <div className="space-y-4">
+        {/* Current PIN (change-existing only) */}
+        {isChangingExisting && (
+          <div>
+            <p className="text-xs font-semibold text-slate-600 text-center mb-3">Enter your current 6-digit PIN</p>
+            <PINInput value={currentPin} onChange={setCurrentPin} disabled={loading} />
+          </div>
+        )}
+
         <div>
           <p className="text-xs font-semibold text-slate-600 text-center mb-3">
-            {currentMode === 'verify' || hasPIN ? 'Enter your 6-digit PIN' : 'Choose a 6-digit PIN'}
+            {currentMode === 'verify' || hasPIN ? (isChangingExisting ? 'Choose a new 6-digit PIN' : 'Enter your 6-digit PIN') : 'Choose a 6-digit PIN'}
           </p>
           <PINInput value={pin} onChange={setPin} disabled={loading} />
         </div>
 
         {/* Confirm PIN (setup only) */}
-        {!hasPIN && currentMode !== 'verify' && (
+        {(!hasPIN || isChangingExisting) && currentMode !== 'verify' && (
           <div>
             <p className="text-xs font-semibold text-slate-600 text-center mb-3">Confirm PIN</p>
             <PINInput value={confirmPin} onChange={setConfirmPin} disabled={loading} />
@@ -308,7 +356,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         )}
 
         {/* Hint (setup only) */}
-        {!hasPIN && currentMode !== 'verify' && (
+        {(!hasPIN || isChangingExisting) && currentMode !== 'verify' && (
           <div>
             <input value={hint} onChange={e => setHint(e.target.value)}
               placeholder="Optional memory hint (e.g. Year + City)"
@@ -325,11 +373,17 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         )}
 
         <Button
-          onClick={hasPIN || currentMode === 'verify' ? verifyPIN : setupPIN}
-          disabled={loading || pin.length !== 6 || (!hasPIN && currentMode !== 'verify' && confirmPin.length !== 6)}
+          onClick={hasPIN && !isChangingExisting || currentMode === 'verify' ? verifyPIN : setupPIN}
+          disabled={
+            loading ||
+            pin.length !== 6 ||
+            ((!hasPIN || isChangingExisting) && currentMode !== 'verify' && confirmPin.length !== 6) ||
+            (isChangingExisting && currentPin.length !== 6)
+          }
           className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 font-bold">
           {loading ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Processing...</span>
-            : hasPIN || currentMode === 'verify' ? 'Unlock Emergency Access'
+            : hasPIN && !isChangingExisting || currentMode === 'verify' ? 'Unlock Emergency Access'
+            : isChangingExisting ? 'Save New PIN'
             : 'Activate Emergency PIN'}
         </Button>
       </div>
