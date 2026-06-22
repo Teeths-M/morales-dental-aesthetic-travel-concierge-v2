@@ -32,9 +32,11 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center">
-                <span className="text-accent-foreground font-display text-base font-bold">M</span>
-              </div>
+              <img
+                src="/morales-m-mark.png"
+                alt="Morales"
+                className="w-9 h-9 object-contain"
+              />
               <div>
                 <p className="font-display text-base text-background">MORALES</p>
                 <p className="text-[9px] tracking-[0.15em] text-background/50 uppercase">Dental & Aesthetic Travel Concierge</p>
