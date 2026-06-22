@@ -52,6 +52,30 @@ export default function PassportVault() {
       try {
         const vaults = await withTimeout(base44.entities.PassportVault.filter({ user_email: user.email, status: 'active' }, '-uploaded_at', 1));
         if (cancelled) return;
+
+        // TEMP DEBUG — remove once the "3 documents not showing" issue is found.
+        // If vaults.length is 0 here but allDocs below has records, the bug is
+        // a user_email mismatch (RLS hides records whose stored user_email
+        // doesn't exactly match this session's email) or a status value other
+        // than 'active'. If allDocs is also empty, RLS itself is blocking
+        // everything (user_id/user_email mismatch at the row level).
+        if (vaults.length === 0) {
+          try {
+            const allDocs = await base44.entities.PassportVault.filter({ user_email: user.email });
+            const anyStatusDocs = allDocs.length;
+            console.warn('[PassportVault][DEBUG] No active vaults found.', {
+              session_email: user.email,
+              docs_with_matching_email_any_status: anyStatusDocs,
+              statuses_found: allDocs.map(d => d.status),
+            });
+            if (anyStatusDocs === 0) {
+              console.warn('[PassportVault][DEBUG] Zero docs even without status filter — likely an RLS mismatch (stored user_email/user_id on the document differs from this session) rather than a status issue. Try base44.entities.PassportVault.filter({}) directly in console if you have admin/service-role access to compare.');
+            }
+          } catch (debugErr) {
+            console.warn('[PassportVault][DEBUG] secondary lookup failed:', debugErr);
+          }
+        }
+
         setHasVault(vaults.length > 0);
         try { localStorage.setItem(cacheKey + '_exists', vaults.length > 0 ? '1' : '0'); } catch (_) {}
       } catch (err) {
