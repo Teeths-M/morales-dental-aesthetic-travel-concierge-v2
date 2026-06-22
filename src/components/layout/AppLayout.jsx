@@ -21,7 +21,7 @@ export default function AppLayout() {
         <OfflineBanner />
         
         <Header />
-        <main className="flex-1 pt-[68px]">
+        <main className="flex-1 pt-[72px]">
           <Outlet />
         </main>
         <Footer />

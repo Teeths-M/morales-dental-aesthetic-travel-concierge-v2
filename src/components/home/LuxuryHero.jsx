@@ -57,7 +57,7 @@ export default function LuxuryHero() {
 
   return (
     <>
-      <section className="relative min-h-screen overflow-hidden" style={{ background: '#0b1219', marginTop: '-68px' }}>
+      <section className="relative min-h-screen overflow-hidden" style={{ background: '#0b1219', marginTop: '-72px' }}>
         {/* Full-bleed background with parallax effect */}
         <div className="absolute inset-0">
           <motion.img 
@@ -83,7 +83,7 @@ export default function LuxuryHero() {
           />
         </div>
 
-        <div className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-20 lg:py-0" style={{ paddingTop: '68px' }}>
+        <div className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-20 lg:py-0" style={{ paddingTop: '72px' }}>
 
           {/* LEFT CONTENT */}
           <motion.div 

@@ -8,13 +8,27 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState('EN');
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
 
+  // Only the homepage has a full-bleed hero behind the nav — everywhere else
+  // needs a solid bar from the top, since there's no image to blend into.
+  const isHomepage = location.pathname === '/';
+  const isTransparent = isHomepage && !scrolled;
+
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isHomepage) { setScrolled(true); return; }
+    setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isHomepage]);
 
   const navLinks = [
     { name: 'Discover', path: '/discover' },
@@ -30,7 +44,15 @@ export default function Header() {
 
   return (
     <>
-    <nav className="w-full min-h-[72px] border-b border-white/[0.06] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-3">
+    <nav
+      className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-3 transition-all duration-300"
+      style={{
+        background: isTransparent ? 'transparent' : '#0C1A1D',
+        borderBottom: isTransparent ? '1px solid transparent' : '1px solid rgba(255,255,255,0.06)',
+        backdropFilter: isTransparent ? 'none' : 'blur(12px)',
+        WebkitBackdropFilter: isTransparent ? 'none' : 'blur(12px)',
+      }}
+    >
       
       {/* 1. PREMIUM BRANDING IDENTITY */}
       <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group z-50">
