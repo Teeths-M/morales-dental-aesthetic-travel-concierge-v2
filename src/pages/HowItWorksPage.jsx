@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, ClipboardList, CreditCard, Plane, Stethoscope, HeartPulse, CalendarCheck, ArrowRight } from 'lucide-react';
+import PageHeroBand from '@/components/layout/PageHeroBand';
 
 const getSteps = (language) => [
   { icon: MessageSquare, num: 1, title: language === 'es' ? 'Consulta' : language === 'fr' ? 'Consultation' : 'Consultation', desc: language === 'es' ? 'Cuéntanos sobre tus objetivos e historial médico. Nuestro equipo revisará tu caso y te conectará con el especialista adecuado.' : language === 'fr' ? 'Parlez-nous de vos objectifs et de vos antécédents médicaux. Notre équipe examinera votre cas et vous connectera avec le bon spécialiste.' : 'Tell us about your goals and medical history. Our team will review your case and connect you with the right specialist.', color: 'bg-primary/10 text-primary' },
@@ -32,6 +33,7 @@ export default function HowItWorksPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
+      <PageHeroBand />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         <motion.div
           className="text-center mb-16"

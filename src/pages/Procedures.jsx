@@ -11,6 +11,7 @@ import MyProceduresList from '@/components/procedures/MyProceduresList';
 import VoiceMode from '@/components/procedures/VoiceMode';
 import SmartFallback from '@/components/procedures/SmartFallback';
 import ProcedureCompare from '@/components/procedures/ProcedureCompare';
+import PageHeroBand from '@/components/layout/PageHeroBand';
 
 import { useCart } from '@/context/CartContext';
 import { getProcedureEnumValue } from '@/components/booking/SectionProcedure';
@@ -162,6 +163,7 @@ export default function Procedures() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
+      <PageHeroBand />
       {/* Hero */}
       <div className="bg-card/50 backdrop-blur-sm border-b border-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">

@@ -13,22 +13,24 @@ export default function Header() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'platform_admin';
 
-  // Only the homepage has a full-bleed hero behind the nav — everywhere else
-  // needs a solid bar from the top, since there's no image to blend into.
-  const isHomepage = location.pathname === '/';
-  const isTransparent = isHomepage && !scrolled;
+  // Pages with a dark hero/band at the top the nav can blend into.
+  // Everywhere else keeps the solid bar, since there's no matching dark
+  // surface there for a transparent nav to sit on.
+  const DARK_HERO_PATHS = ['/', '/discover', '/procedures', '/how-it-works'];
+  const hasMatchingHero = DARK_HERO_PATHS.includes(location.pathname);
+  const isTransparent = hasMatchingHero && !scrolled;
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!isHomepage) { setScrolled(true); return; }
+    if (!hasMatchingHero) { setScrolled(true); return; }
     setScrolled(window.scrollY > 40);
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [isHomepage]);
+  }, [hasMatchingHero]);
 
   const navLinks = [
     { name: 'Discover', path: '/discover' },
