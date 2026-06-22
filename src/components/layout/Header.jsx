@@ -55,16 +55,18 @@ export default function Header() {
     >
       
       {/* 1. PREMIUM BRANDING IDENTITY */}
-      <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group z-50">
-        <div className="w-10 h-10 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-lg shadow-lg" style={{ boxShadow: '0 4px 24px rgba(212,175,55,0.35)' }}>
-          <span className="font-serif text-lg text-[#0C1A1D] font-bold">M</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="font-serif text-[18px] text-white uppercase font-bold tracking-wide leading-none">
+      <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3.5 group z-50">
+        <img
+          src="/morales-m-mark.png"
+          alt="Morales"
+          className="w-11 h-11 object-contain drop-shadow-[0_2px_10px_rgba(212,175,55,0.35)]"
+        />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-[19px] text-white uppercase font-bold tracking-[0.06em] leading-none">
             MORALES
           </span>
-          <span className="text-[9px] tracking-[0.22em] text-[#D4AF37] uppercase font-sans mt-1 font-medium">
-            Dental & Aesthetic Travel Concierge
+          <span className="text-[9px] tracking-[0.28em] text-[#D4AF37] uppercase font-sans font-medium leading-none">
+            Dental &amp; Aesthetic Travel Concierge
           </span>
         </div>
       </Link>
