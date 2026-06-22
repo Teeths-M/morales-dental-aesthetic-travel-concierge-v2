@@ -42,7 +42,7 @@ export function useVault(user) {
     if (navigator.onLine) {
       try {
         const [docs, links, logs] = await Promise.all([
-          vaultService.getActiveDocuments(user.email),
+          vaultService.getActiveDocuments(user.email, user.id),
           vaultService.getActiveShareLinks(user.email),
           vaultService.getAuditLog(user.id),
         ]);

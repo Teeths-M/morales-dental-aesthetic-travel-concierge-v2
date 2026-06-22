@@ -7,12 +7,12 @@ import { base44 } from '@/api/base44Client';
 
 export const vaultService = {
   /** Fetch all active vault documents for a user */
-  getActiveDocuments: (userEmail) =>
-    base44.entities.PassportVault.filter({ user_email: userEmail, status: 'active' }, '-uploaded_at', 50),
+  getActiveDocuments: (userEmail, userId) =>
+    base44.entities.PassportVault.filter({ user_id: userId, status: 'active' }, '-uploaded_at', 50),
 
   /** Check if a user has at least one active vault document */
-  hasDocuments: async (userEmail) => {
-    const results = await base44.entities.PassportVault.filter({ user_email: userEmail, status: 'active' }, '-uploaded_at', 1);
+  hasDocuments: async (userEmail, userId) => {
+    const results = await base44.entities.PassportVault.filter({ user_id: userId, status: 'active' }, '-uploaded_at', 1);
     return results.length > 0;
   },
 
