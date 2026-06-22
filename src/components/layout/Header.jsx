@@ -30,25 +30,25 @@ export default function Header() {
 
   return (
     <>
-    <nav className="w-full min-h-[88px] border-b border-white/[0.06] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-4">
+    <nav className="w-full min-h-[72px] border-b border-white/[0.06] bg-[#0C1A1D] backdrop-blur-md fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-3">
       
       {/* 1. PREMIUM BRANDING IDENTITY */}
-      <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-5 group z-50">
-        <div className="w-14 h-14 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-xl shadow-lg" style={{ boxShadow: '0 4px 24px rgba(212,175,55,0.35)' }}>
-          <span className="font-serif text-2xl text-[#0C1A1D] font-bold">M</span>
+      <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group z-50">
+        <div className="w-10 h-10 bg-gradient-to-br from-[#B89750] to-[#D4AF37] flex items-center justify-center rounded-lg shadow-lg" style={{ boxShadow: '0 4px 24px rgba(212,175,55,0.35)' }}>
+          <span className="font-serif text-lg text-[#0C1A1D] font-bold">M</span>
         </div>
         <div className="flex flex-col">
-          <span className="font-serif text-[26px] text-white uppercase font-bold tracking-wide leading-none">
+          <span className="font-serif text-[18px] text-white uppercase font-bold tracking-wide leading-none">
             MORALES
           </span>
-          <span className="text-[11px] tracking-[0.28em] text-[#D4AF37] uppercase font-sans mt-1.5 font-medium">
+          <span className="text-[9px] tracking-[0.22em] text-[#D4AF37] uppercase font-sans mt-1 font-medium">
             Dental & Aesthetic Travel Concierge
           </span>
         </div>
       </Link>
 
       {/* 2. PREMIUM NAVIGATION LINKS */}
-      <div className="hidden lg:flex items-center gap-12 text-[14px] font-sans">
+      <div className="hidden lg:flex items-center gap-8 text-[14px] font-sans">
         <Link 
           to={!user ? "/" : user.role === 'admin' || user.role === 'platform_admin' ? "/admin" : "/dashboard"} 
           className="transition-all duration-200 font-semibold"
@@ -67,20 +67,10 @@ export default function Header() {
             {link.name}
           </Link>
         ))}
-
-        <Link to="/visa-assist" className="flex items-center gap-2 transition-all duration-200">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#00E5FF] inline-block" style={{ boxShadow: '0 0 10px rgba(0,229,255,0.6)' }}></span>
-          <span style={{ color: '#A9A9A9', fontWeight: 400 }}>Visa Assist</span>
-        </Link>
-
-        <Link to="/passport-vault" className="flex items-center gap-2 transition-all duration-200">
-          <svg className="w-4 h-4" fill="none" stroke="#A9A9A9" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-          <span style={{ color: '#A9A9A9', fontWeight: 400 }}>My Vault</span>
-        </Link>
       </div>
 
       {/* 3. CORE UTILITIES, PORTALS, & LANGUAGE SELECTOR */}
-      <div className="hidden lg:flex items-center space-x-5">
+      <div className="hidden lg:flex items-center space-x-4">
 
         {/* Unified Portal Dropdown */}
         <div className="relative">
@@ -95,6 +85,15 @@ export default function Header() {
 
           {isPortalOpen && (
             <div className="absolute right-0 mt-2 w-60 rounded-xl bg-[#0C1A1D] border border-white/[0.08] shadow-2xl p-2 flex flex-col space-y-0.5 backdrop-blur-2xl">
+              <Link to="/visa-assist" className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">
+                <span className="w-2 h-2 rounded-full bg-[#00E5FF] inline-block" style={{ boxShadow: '0 0 8px rgba(0,229,255,0.6)' }}></span>
+                Visa Assist
+              </Link>
+              <Link to="/passport-vault" className="flex items-center gap-2 px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                My Vault
+              </Link>
+              <div className="h-[1px] bg-white/[0.08] my-1.5" />
               <Link to="/doctor-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Doctor Portal</Link>
               <Link to="/travel-agency-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Travel Agency Portal</Link>
               <Link to="/taxi-service-dashboard" className="px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors">Chauffeur Portal</Link>
@@ -131,23 +130,23 @@ export default function Header() {
         </div>
 
         {/* Premium Action Buttons */}
-        <div className="flex items-center gap-3 pl-4">
+        <div className="flex items-center gap-2.5 pl-3">
           {user ? (
             <>
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-95"
                   style={{ background: '#1A4E4E', color: '#FFFFFF', boxShadow: '0 2px 12px rgba(26,78,78,0.5)' }}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-1.066 2.573c1.543.94 3.31.826 2.37 2.37a1.724 1.724 0 00-2.573 1.066c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-1.543-.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-1.066 2.573c1.543.94 3.31.826 2.37 2.37a1.724 1.724 0 00-2.573 1.066c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-1.543-.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   Admin
                 </Link>
               )}
               
               <Link 
                 to="/dashboard" 
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-95"
                 style={{ background: 'linear-gradient(135deg, #F2D045 0%, #F9E58B 100%)', color: '#0C1A1D', boxShadow: '0 4px 20px rgba(242,208,69,0.35)' }}
               >
                 Dashboard
@@ -158,7 +157,7 @@ export default function Header() {
                   await base44.auth.logout();
                   window.location.reload();
                 }}
-                className="text-[14px] font-medium transition-all hover:text-white"
+                className="text-[13px] font-medium transition-all hover:text-white"
                 style={{ color: '#A9A9A9' }}
               >
                 Logout
@@ -166,12 +165,12 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link to="/register-role" className="text-[14px] font-medium transition-all hover:text-white" style={{ color: '#A9A9A9' }}>
+              <Link to="/register-role" className="text-[13px] font-medium transition-all hover:text-white" style={{ color: '#A9A9A9' }}>
                 Register
               </Link>
               <Link 
                 to="/dashboard" 
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-bold transition-all hover:opacity-95"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-95"
                 style={{ background: 'linear-gradient(135deg, #F2D045 0%, #F9E58B 100%)', color: '#0C1A1D', boxShadow: '0 4px 20px rgba(242,208,69,0.35)' }}
               >
                 Log In
