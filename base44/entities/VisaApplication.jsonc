@@ -1,0 +1,93 @@
+{
+  "name": "VisaApplication",
+  "description": "Tracks a patient's visa application for medical travel — status, reference, and procedure timeline.",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Linked user ID"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Optional link to CaseRecord"
+    },
+    "nationality": {
+      "type": "string",
+      "description": "Applicant's passport nationality"
+    },
+    "destination_country": {
+      "type": "string",
+      "description": "Country the patient is travelling to for treatment"
+    },
+    "visa_type": {
+      "type": "string",
+      "description": "Visa type identified (e.g. Medical e-Visa, Tourist Visa, Visa-Free)"
+    },
+    "visa_status": {
+      "type": "string",
+      "enum": ["exempt", "evisa", "on_arrival", "embassy", "unknown"],
+      "description": "Entry requirement category"
+    },
+    "application_status": {
+      "type": "string",
+      "enum": ["not_started", "preparing_documents", "applied", "in_review", "approved", "denied", "expired"],
+      "default": "not_started",
+      "description": "Current stage of the visa application process"
+    },
+    "application_reference": {
+      "type": "string",
+      "description": "Government-issued application or tracking reference number"
+    },
+    "portal_url": {
+      "type": "string",
+      "description": "Official government visa application portal URL"
+    },
+    "applied_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date the application was submitted"
+    },
+    "expected_decision_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Expected date of visa decision based on processing time"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date visa was approved (if applicable)"
+    },
+    "procedure_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of the scheduled medical procedure — used to calculate urgency"
+    },
+    "documents_ready": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether all required documents have been gathered"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-text notes from the patient or coordinator"
+    },
+    "denial_reason": {
+      "type": "string",
+      "description": "Reason for denial if application was rejected"
+    },
+    "reminder_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to send reminder notifications for this application"
+    },
+    "last_reminder_sent": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last reminder sent"
+    },
+    "coordinator_notes": {
+      "type": "string",
+      "description": "Internal notes from the Morales concierge team"
+    }
+  },
+  "required": ["nationality", "destination_country"]
+}

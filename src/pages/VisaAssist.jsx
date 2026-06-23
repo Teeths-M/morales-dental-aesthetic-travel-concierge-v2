@@ -6,7 +6,8 @@ import VisaResult from '@/components/visa/VisaResult';
 import TravelReadiness from '@/components/visa/TravelReadiness';
 import EmbassyDirectory from '@/components/visa/EmbassyDirectory';
 import VisaAIChat from '@/components/visa/VisaAIChat';
-import { Globe2, ClipboardList, Building2, Bot, FileCheck } from 'lucide-react';
+import VisaApplicationTracker from '@/components/visa/VisaApplicationTracker';
+import { Globe2, ClipboardList, Building2, Bot, FileCheck, Bookmark } from 'lucide-react';
 import ComplianceChecklistPanel from '@/components/visa/ComplianceChecklistPanel';
 
 const getSections = (language) => [
@@ -14,6 +15,7 @@ const getSections = (language) => [
   { id: 'compliance', label: language === 'es' ? 'Lista de Cumplimiento' : language === 'fr' ? 'Liste de Conformité' : 'Compliance Checklist', icon: FileCheck },
   { id: 'readiness', label: language === 'es' ? 'Preparación de Viaje' : language === 'fr' ? 'Préparation du Voyage' : 'Travel Readiness', icon: ClipboardList },
   { id: 'embassy', label: language === 'es' ? 'Buscador de Embajadas' : language === 'fr' ? 'Recherche d\'Ambassade' : 'Embassy Finder', icon: Building2 },
+  { id: 'tracker', label: language === 'es' ? 'Mis Solicitudes' : language === 'fr' ? 'Mes Demandes' : 'My Applications', icon: Bookmark },
   { id: 'assistant', label: language === 'es' ? 'Asistente IA' : language === 'fr' ? 'Assistante IA' : 'AI Assistant', icon: Bot },
 ];
 
@@ -93,6 +95,11 @@ export default function VisaAssist() {
           {activeSection === 'embassy' && (
             <motion.div key="embassy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
               <EmbassyDirectory />
+            </motion.div>
+          )}
+          {activeSection === 'tracker' && (
+            <motion.div key="tracker" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <VisaApplicationTracker />
             </motion.div>
           )}
           {activeSection === 'assistant' && (
