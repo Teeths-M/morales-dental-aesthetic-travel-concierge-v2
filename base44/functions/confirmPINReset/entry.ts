@@ -18,6 +18,11 @@ async function signToken(data: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function sha256Hex(data: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function pinHashForServer(pin: string, email: string): Promise<string> {
   const enc = new TextEncoder();
   const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
@@ -72,6 +77,22 @@ Deno.serve(async (req) => {
       if (!new_pin || String(new_pin).length !== 6 || !/^\d{6}$/.test(String(new_pin))) {
         return Response.json({ error: 'PIN must be exactly 6 digits' }, { status: 400 });
       }
+
+      // One-time-use enforcement: hash the sig and check RateLimitBucket.
+      // A used token's sig hash is stored so the same link cannot be replayed.
+      const sigHash = await sha256Hex(sig);
+      const usedKey = `pin-reset-used:${sigHash}`;
+      const alreadyUsed = await base44.asServiceRole.entities.RateLimitBucket.filter({ bucket_key: usedKey });
+      if (alreadyUsed.length > 0) {
+        return Response.json({ valid: false, reason: 'already_used' });
+      }
+      await base44.asServiceRole.entities.RateLimitBucket.create({
+        bucket_key: usedKey,
+        window_start: new Date().toISOString(),
+        count: 1,
+        updated_at: new Date().toISOString(),
+      });
+
       // Update EmergencyPIN entity directly — avoids the auth guard in verifyEmergencyPIN
       // (reset tokens are their own proof of identity; no login session needed)
       const hash = await pinHashForServer(String(new_pin), decoded.email);
