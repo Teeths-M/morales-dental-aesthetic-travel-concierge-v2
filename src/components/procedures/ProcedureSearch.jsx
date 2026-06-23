@@ -37,6 +37,14 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
 
   const clear = () => { setQuery(''); setResults([]); onQueryChange?.(''); };
 
+  const removeRecentSearch = async (idx, search) => {
+    setRecentSearches(prev => prev.filter((_, i) => i !== idx));
+    const id = search.id || search.data?.id;
+    if (id) {
+      try { await base44.entities.ProcedureSearch.delete(id); } catch (_) {}
+    }
+  };
+
   const saveRecentSearch = async (searchQuery) => {
     if (!searchQuery.trim()) return;
     try {
@@ -90,14 +98,24 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
                 const queryText = search.data?.raw_query_text || search.raw_query_text;
                 if (!queryText) return null;
                 return (
-                  <button
+                  <span
                     key={idx}
-                    onClick={() => setQuery(queryText)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 text-xs font-medium transition-all border border-slate-200 hover:border-emerald-200"
+                    className="inline-flex items-center gap-0.5 pl-2.5 pr-1 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200"
                   >
-                    {queryText}
-                    <Search className="w-3 h-3" />
-                  </button>
+                    <button
+                      onClick={() => setQuery(queryText)}
+                      className="hover:text-emerald-700 transition-colors pr-0.5"
+                    >
+                      {queryText}
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); removeRecentSearch(idx, search); }}
+                      aria-label={`Remove "${queryText}" from recent searches`}
+                      className="p-0.5 rounded-full hover:bg-slate-300 hover:text-red-500 transition-all flex-shrink-0"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </span>
                 );
               })}
             </div>
