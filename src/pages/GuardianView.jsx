@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet';
@@ -175,7 +176,7 @@ export default function GuardianView() {
     </div>
   );
 
-  const { session, case: caseData, latest_location: loc, escalation, wilderness_sos: wildernessSOS } = data;
+  const { session, case: caseData, latest_location: loc, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress } = data;
   // Only actual GPS coordinates trigger the map — IP geolocation goes to city-only view
   const hasGPS = loc && loc.source === 'gps' && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
   // IP geo or breadcrumb with city/country info → show city label instead of map
@@ -213,6 +214,14 @@ export default function GuardianView() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+
+        {/* 9-Handshake Journey Progress — read-only for guardian */}
+        {tripProgress && (tripProgress.current_step > 0 || tripProgress.trip_phase !== 'pre_departure') && (
+          <TripProgressStepper
+            currentStep={tripProgress.current_step ?? 0}
+            isComplete={tripProgress.trip_phase === 'completed'}
+          />
+        )}
 
         {/* Wilderness SOS banner */}
         {wildernessSOS && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -24,6 +24,9 @@ import JourneyModule from '@/components/dashboard/modules/JourneyModule';
 import SupportModule from '@/components/dashboard/modules/SupportModule';
 import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
+import TripProgressStepper from '@/components/journey/TripProgressStepper';
+import HandshakeButton from '@/components/journey/HandshakeButton';
+import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
@@ -56,8 +59,25 @@ const colorMap = {
 };
 
 function DashboardHome({ user, consultations, language }) {
+  const queryClient = useQueryClient();
+  const [showGoldenM, setShowGoldenM] = useState(false);
+
   // PERFORMANCE: Memoize displayName to prevent recalculation
   const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
+
+  // Active journey: load TravelRequest in an active phase to power the handshake block
+  const { data: activeTrip } = useQuery({
+    queryKey: ['active-trip', user?.email],
+    queryFn: async () => {
+      const trips = await base44.entities.TravelRequest.filter({ user_email: user.email });
+      const active = trips.find(t =>
+        ['pre_departure', 'transit_out', 'arrived', 'recovery', 'transit_return'].includes(t.trip_phase)
+      );
+      return active ?? null;
+    },
+    enabled: !!user?.email,
+    staleTime: 60_000,
+  });
 
   const latestActive = consultations.find(c => c.status !== 'Completed');
   const isSolo = latestActive && (!latestActive.requires_companion || latestActive.companion_requirement_status === 'companion_required_pending');
@@ -111,6 +131,35 @@ function DashboardHome({ user, consultations, language }) {
     <div className="space-y-6">
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
+
+      {/* 9-Handshake Journey Block — only visible during active travel */}
+      {activeTrip && (
+        <div className="space-y-3">
+          <TripProgressStepper
+            currentStep={activeTrip.current_step ?? 0}
+            isComplete={activeTrip.trip_phase === 'completed'}
+          />
+          <HandshakeButton
+            tripId={activeTrip.id}
+            caseId={activeTrip.case_id}
+            currentStep={activeTrip.current_step ?? 0}
+            user={user}
+            onComplete={({ is_complete }) => {
+              queryClient.invalidateQueries({ queryKey: ['active-trip', user?.email] });
+              if (is_complete) setShowGoldenM(true);
+            }}
+          />
+        </div>
+      )}
+
+      {showGoldenM && (
+        <GoldenMCelebration
+          visible
+          trip={activeTrip}
+          onClose={() => setShowGoldenM(false)}
+        />
+      )}
+
       {/* Welcome Header */}
       <motion.div
         className="bg-gradient-to-r from-emerald-800 to-blue-900 rounded-2xl p-6 text-white shadow-lg"

@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
 
     // Load case — only safe public fields (no medical notes, PII, admin notes)
     let casePublic = null;
+    let tripProgress = null;
     if (session.case_id) {
       const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: session.case_id });
       const c = cases[0];
@@ -40,6 +41,25 @@ Deno.serve(async (req) => {
           procedure_country: c.procedure_country,
           procedures: c.procedures,
         };
+
+        // Load 9-handshake progress for the TripProgressStepper (guardian read-only).
+        // Uses client_email from the case — returns only non-sensitive progress fields.
+        if (c.client_email) {
+          try {
+            const trips = await base44.asServiceRole.entities.TravelRequest.filter(
+              { user_email: c.client_email }, '-created_at', 3
+            );
+            const activeTrip = trips.find(t => t.trip_phase && t.trip_phase !== 'pre_departure') || trips[0];
+            if (activeTrip) {
+              tripProgress = {
+                current_step:         activeTrip.current_step ?? 0,
+                trip_phase:           activeTrip.trip_phase ?? 'pre_departure',
+                handshake_timestamps: activeTrip.handshake_timestamps ?? {},
+                departure_date:       activeTrip.departure_date ?? null,
+              };
+            }
+          } catch (_) {}
+        }
       }
     }
 
@@ -179,6 +199,7 @@ Deno.serve(async (req) => {
       latest_location: latestLocation,
       escalation: escalationInfo,
       wilderness_sos: wildernessSOS,
+      trip_progress: tripProgress,
     });
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });
