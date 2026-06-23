@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
             heading: live.heading ?? null,
             speed: live.speed ?? null,
             altitude: live.altitude ?? null,
-            source: live.source ?? 'gps',
+            source: live.source ?? null,
             updated_at: live.updated_at ?? null,
             is_live: true,
             stale_after: live.stale_after ?? null,

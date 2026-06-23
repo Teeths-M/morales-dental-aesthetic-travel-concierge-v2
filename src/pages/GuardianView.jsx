@@ -176,8 +176,11 @@ export default function GuardianView() {
   );
 
   const { session, case: caseData, latest_location: loc, escalation, wilderness_sos: wildernessSOS } = data;
-  const hasGPS = loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
-  const hasCityOnly = loc && !hasGPS && (loc.city || loc.country || loc.place_label);
+  // Only actual GPS coordinates trigger the map — IP geolocation goes to city-only view
+  const hasGPS = loc && loc.source === 'gps' && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
+  // IP geo or breadcrumb with city/country info → show city label instead of map
+  const hasCityOnly = loc && !hasGPS && (loc.city || loc.country || loc.place_label ||
+    (loc.source === 'ip_geo' && typeof loc.latitude === 'number'));
   const currentStageIndex = STAGE_STEPS.indexOf(caseData?.journey_stage || 'consultation');
   const expiresIn = Math.round((new Date(session.expires_at) - new Date()) / (1000 * 60 * 60));
   const ageMin = loc ? minutesAgo(loc.updated_at) : null;
@@ -451,8 +454,8 @@ export default function GuardianView() {
           ) : (
             <div className="px-5 pb-5 text-center py-6">
               <Wifi className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm font-medium">Waiting for first GPS fix…</p>
-              <p className="text-slate-500 text-xs mt-1">The traveler's safety beacon hasn't sent a location yet. Refreshing automatically.</p>
+              <p className="text-slate-400 text-sm font-medium">Location not yet shared. The traveler is safe.</p>
+              <p className="text-slate-500 text-xs mt-1">When the traveler shares their location, it will appear here automatically.</p>
             </div>
           )}
         </div>
