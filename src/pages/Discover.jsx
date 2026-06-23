@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -56,8 +56,9 @@ export default function Discover() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
+  const [searchText, setSearchText] = useState(() => searchParams.get("procedure") || "");
+  const debounceRef = useRef(null);
 
-  // Get filters from URL params
   const filters = useMemo(() => ({
     procedure: searchParams.get("procedure") || "",
     country: searchParams.get("country") || "",
@@ -69,41 +70,44 @@ export default function Discover() {
     limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : 12,
   }), [searchParams]);
 
-  // Fetch doctors with specialties
-  const { data: doctors, isLoading, error } = useQuery({
-    queryKey: ["doctors-search", filters],
+  // Keep local text in sync when external actions clear the filter (e.g. "Clear all")
+  useEffect(() => { setSearchText(filters.procedure); }, [filters.procedure]);
+
+  // Raw data: fetched ONCE and cached for 10 minutes.
+  // Specialty rows are indexed by doctorId so filtering is O(1) per doctor.
+  const { data: rawData, isLoading, error } = useQuery({
+    queryKey: ["discover-raw"],
     queryFn: async () => {
-      const allDoctors = await base44.entities.Doctor.filter({ status: "active" });
-      // Load up to 2000 records to avoid silent truncation at default limit
-      const allSpecialties = await base44.entities.DoctorSpecialty.list('-created_date', 2000);
-
-      // Filter doctors based on criteria
-      let filtered = allDoctors.filter(doctor => {
-        // Country filter
-        if (filters.country && doctor.clinic_country !== filters.country) return false;
-        // City filter
-        if (filters.city && doctor.clinic_city !== filters.city) return false;
-        // Rating filter — skip doctors with no rating rather than hiding them
-        if (filters.rating && doctor.rating != null && doctor.rating < filters.rating) return false;
-
-        // Procedure filter: keyword match against stored procedure_name.
-        // DB procedure_id uses DENT-* codes that don't match our filter slugs,
-        // so name-based includes is the reliable path here.
-        if (filters.procedure) {
-          const keyword = filters.procedure.toLowerCase();
-          const hasSpecialty = allSpecialties.some(
-            spec => spec.doctor_id === doctor.id &&
-            spec.procedure_name?.toLowerCase().includes(keyword)
-          );
-          if (!hasSpecialty) return false;
-        }
-
-        return true;
-      });
-
-      return filtered;
+      const [allDoctors, allSpecialties] = await Promise.all([
+        base44.entities.Doctor.filter({ status: "active" }),
+        base44.entities.DoctorSpecialty.list('-created_date', 2000),
+      ]);
+      const specialtyByDoctor = new Map();
+      for (const spec of allSpecialties) {
+        if (!specialtyByDoctor.has(spec.doctor_id)) specialtyByDoctor.set(spec.doctor_id, []);
+        specialtyByDoctor.get(spec.doctor_id).push(spec);
+      }
+      return { doctors: allDoctors, specialtyByDoctor };
     },
+    staleTime: 10 * 60 * 1000,
   });
+
+  // Filtering is pure in-memory computation — filter changes never trigger network requests.
+  const filteredDoctors = useMemo(() => {
+    if (!rawData) return [];
+    const { doctors, specialtyByDoctor } = rawData;
+    const keyword = filters.procedure.toLowerCase();
+    return doctors.filter(doctor => {
+      if (filters.country && doctor.clinic_country !== filters.country) return false;
+      if (filters.city && doctor.clinic_city !== filters.city) return false;
+      if (filters.rating && doctor.rating != null && doctor.rating < filters.rating) return false;
+      if (keyword) {
+        const specs = specialtyByDoctor.get(doctor.id) || [];
+        if (!specs.some(spec => spec.procedure_name?.toLowerCase().includes(keyword))) return false;
+      }
+      return true;
+    });
+  }, [rawData, filters.procedure, filters.country, filters.city, filters.rating]);
 
   const updateFilter = (key, value) => {
     setSearchParams(prev => {
@@ -113,12 +117,17 @@ export default function Discover() {
       } else {
         newParams.set(key, String(value));
       }
-      // Reset page to 1 when filters change
-      if (key !== "page") {
-        newParams.set("page", "1");
-      }
+      if (key !== "page") newParams.set("page", "1");
       return newParams;
     });
+  };
+
+  // Debounce text search — 400ms delay prevents URL thrashing on every keystroke
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchText(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => updateFilter("procedure", val), 400);
   };
 
   const clearAllFilters = () => {
@@ -134,8 +143,8 @@ export default function Discover() {
     return cityData[filters.country] || [];
   };
 
-  const displayedDoctors = doctors?.slice(0, filters.page * filters.limit) || [];
-  const hasMore = doctors && displayedDoctors.length < doctors.length;
+  const displayedDoctors = filteredDoctors.slice(0, filters.page * filters.limit);
+  const hasMore = displayedDoctors.length < filteredDoctors.length;
 
   return (
     <div className="min-h-screen bg-[#060B16]" style={{ background: 'linear-gradient(180deg, #060B16 0%, #0A101D 100%)' }}>
@@ -161,8 +170,8 @@ export default function Discover() {
               <Input
                 placeholder="Search procedures, doctors, or locations..."
                 className="pl-11 bg-[#0C1A1D] border-[#2A3F4A] text-white placeholder:text-white/40 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
-                value={filters.procedure}
-                onChange={(e) => updateFilter("procedure", e.target.value)}
+                value={searchText}
+                onChange={handleSearchChange}
               />
             </div>
 
