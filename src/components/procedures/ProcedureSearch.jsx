@@ -19,15 +19,25 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
     onQueryChange?.(query);
   }, [query]);
 
-  // Load recent searches on mount
+  // Load recent searches on mount — deduplicate by text (backend may have
+  // accumulated duplicates from the previous bug where no dedup check existed)
   useEffect(() => {
     base44.auth.isAuthenticated().then(async (authed) => {
       if (authed) {
         try {
-          const searches = await base44.entities.ProcedureSearch.filter({
-            user_id: (await base44.auth.me()).id
-          }, '-created_date', 5);
-          setRecentSearches(searches);
+          const searches = await base44.entities.ProcedureSearch.filter(
+            { user_id: (await base44.auth.me()).id },
+            '-created_date',
+            10 // fetch more so dedup doesn't trim the visible 5 to fewer
+          );
+          const seen = new Set();
+          const deduped = searches.filter(s => {
+            const text = (s.raw_query_text || '').toLowerCase().trim();
+            if (!text || seen.has(text)) return false;
+            seen.add(text);
+            return true;
+          });
+          setRecentSearches(deduped.slice(0, 5));
         } catch (e) {
           console.error('Failed to load recent searches:', e);
         }
@@ -37,26 +47,48 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
 
   const clear = () => { setQuery(''); setResults([]); onQueryChange?.(''); };
 
+  // Remove from state immediately and delete from backend using the real entity id.
+  // The id lives directly on the record (not nested under .data) for both
+  // backend-fetched records and records added via saveRecentSearch below.
   const removeRecentSearch = async (idx, search) => {
     setRecentSearches(prev => prev.filter((_, i) => i !== idx));
-    const id = search.id || search.data?.id;
-    if (id) {
-      try { await base44.entities.ProcedureSearch.delete(id); } catch (_) {}
+    if (search.id) {
+      try { await base44.entities.ProcedureSearch.delete(search.id); } catch (_) {}
     }
   };
 
   const saveRecentSearch = async (searchQuery) => {
-    if (!searchQuery.trim()) return;
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
     try {
       const user = await base44.auth.me();
-      await base44.entities.ProcedureSearch.create({
+
+      // Deduplicate: if this term already exists, delete the old record
+      // so we don't accumulate multiple entries for the same search.
+      const existingIdx = recentSearches.findIndex(s =>
+        (s.raw_query_text || '').toLowerCase() === trimmed.toLowerCase()
+      );
+      if (existingIdx !== -1) {
+        const existing = recentSearches[existingIdx];
+        if (existing.id) {
+          try { await base44.entities.ProcedureSearch.delete(existing.id); } catch (_) {}
+        }
+      }
+
+      // Create the new record and capture the returned entity (which has .id).
+      // Using the real id in the optimistic state means removeRecentSearch
+      // can call .delete(search.id) immediately — no reload needed.
+      const created = await base44.entities.ProcedureSearch.create({
         user_id: user.id,
-        raw_query_text: searchQuery.trim()
+        raw_query_text: trimmed,
       });
-      setRecentSearches(prev => [
-        { data: { raw_query_text: searchQuery.trim(), created_date: new Date().toISOString() } },
-        ...prev.slice(0, 4)
-      ]);
+
+      setRecentSearches(prev => {
+        const withoutDupe = existingIdx !== -1
+          ? prev.filter((_, i) => i !== existingIdx)
+          : prev;
+        return [created, ...withoutDupe.slice(0, 4)];
+      });
     } catch (e) {
       console.error('Failed to save recent search:', e);
     }
