@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { decodePortalToken, getTokenFromUrl } from '@/lib/portalToken';
-import moment from 'moment';
+import { parseISO, addDays, format as dateFnsFormat } from 'date-fns';
 
 const USD = (val) => `$${(Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -177,17 +177,17 @@ export default function PortalTravelAgency() {
   const calculateTravelDates = () => {
     if (!consultation?.preferred_date || !consultation?.duration_of_stay) return null;
     
-    const arrivalDate = moment(consultation.preferred_date);
+    const arrivalDate = parseISO(consultation.preferred_date);
     const durationMatch = consultation.duration_of_stay.match(/(\d+)\s*(day|night)s?/i);
     const days = durationMatch ? parseInt(durationMatch[1]) : 7;
-    const returnDate = arrivalDate.clone().add(days, 'days');
+    const returnDate = addDays(arrivalDate, days);
     const nights = days - 1;
-    
+
     return {
-      arrival: arrivalDate.format('MMMM D, YYYY'),
-      arrivalShort: arrivalDate.format('ddd, MMM D'),
-      return: returnDate.format('MMMM D, YYYY'),
-      returnShort: returnDate.format('ddd, MMM D'),
+      arrival: dateFnsFormat(arrivalDate, 'MMMM d, yyyy'),
+      arrivalShort: dateFnsFormat(arrivalDate, 'EEE, MMM d'),
+      return: dateFnsFormat(returnDate, 'MMMM d, yyyy'),
+      returnShort: dateFnsFormat(returnDate, 'EEE, MMM d'),
       nights: nights,
       days: days
     };

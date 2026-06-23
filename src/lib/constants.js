@@ -261,6 +261,14 @@ export const AUDIT_EVENTS = {
   SAFE_T_WAIVER: 'safe_t_high_risk_waiver_signed',
 };
 
+// ── Public Bypass Paths (render without waiting for auth) ─────────────────────
+// Keep in sync with the auth check in App.jsx's AuthenticatedApp component.
+export const PUBLIC_BYPASS_PATHS = [
+  '/offline', '/offline-guide', '/emergency-manifest', '/emergency-access',
+  '/emergency', '/guardian', '/survey', '/feedback', '/luggage',
+  '/check-in', '/vault/share', '/passport-vault',
+];
+
 // ── Feature Flags ────────────────────────────────────────────────────────────
 export const FEATURES = {
   SOLO_CHECKIN_ENABLED: true,

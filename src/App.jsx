@@ -11,6 +11,7 @@ import { PlatformModeProvider } from '@/context/PlatformModeContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { PUBLIC_BYPASS_PATHS } from '@/lib/constants';
 
 // Route modules — each owns its section of the route tree
 import { publicRoutes }  from './routes/publicRoutes';
@@ -58,9 +59,6 @@ const PageLoader = () => {
     </div>
   );
 };
-
-// Paths that must work even when auth is loading or failing (offline/emergency use)
-const PUBLIC_BYPASS_PATHS = ['/offline', '/offline-guide', '/emergency-manifest', '/emergency-access', '/emergency', '/guardian', '/survey', '/feedback', '/luggage', '/check-in', '/vault/share', '/passport-vault'];
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();

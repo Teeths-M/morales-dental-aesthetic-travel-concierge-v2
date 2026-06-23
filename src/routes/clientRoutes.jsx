@@ -8,7 +8,7 @@ import { Route } from 'react-router-dom';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { CLIENT_PORTAL_ROLES } from '@/lib/roles';
+import { CLIENT_PORTAL_ROLES, ROLES } from '@/lib/roles';
 
 const SafeT               = lazy(() => import('@/pages/SafeT'));
 const Booking             = lazy(() => import('@/pages/Booking'));
@@ -31,8 +31,8 @@ const WildernessSafetyMode   = lazy(() => import('@/pages/WildernessSafetyMode')
 const MedicalIntakeForm      = lazy(() => import('@/pages/MedicalIntakeForm'));
 
 const CHECKOUT_ROLES = [
-  'client', 'user', 'platform_admin', 'admin',
-  'travel_agency', 'doctor', 'taxi_service'
+  ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
+  ROLES.TRAVEL_AGENCY, ROLES.DOCTOR, ROLES.TAXI_SERVICE,
 ];
 
 export const clientRoutes = (
