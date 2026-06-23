@@ -61,15 +61,26 @@ Deno.serve(async (req) => {
     let verifiedBy = 'ai_auto';
     let verifiedAt = null;
 
-    // Auto-decision based on fraud score
-    if (fraud_score < 30) {
-      newStatus = 'verified';
-      autoVerified = true;
-      verifiedAt = now;
-    } else if (fraud_score >= 30 && fraud_score <= 70) {
-      newStatus = 'manual_review';
-    } else if (fraud_score > 70) {
-      newStatus = 'denied';
+    // Auto-decision based on fraud score.
+    // SECURITY: Doctors are NEVER auto-activated regardless of fraud score —
+    // patient safety requires explicit human approval via activateVerifiedDoctor.
+    // For non-doctor partners the AI decision is retained.
+    if (partner_type === 'doctor') {
+      // Doctors always go to manual review, even if AI scores them clean.
+      // Low fraud score is a positive signal that is surfaced to the admin,
+      // but it is not a substitute for a human reviewing medical credentials.
+      newStatus = fraud_score > 70 ? 'denied' : 'manual_review';
+      autoVerified = false;
+    } else {
+      if (fraud_score < 30) {
+        newStatus = 'verified';
+        autoVerified = true;
+        verifiedAt = now;
+      } else if (fraud_score >= 30 && fraud_score <= 70) {
+        newStatus = 'manual_review';
+      } else {
+        newStatus = 'denied';
+      }
     }
 
     // BUG-R16-05 FIX: use asServiceRole for update
@@ -84,15 +95,18 @@ Deno.serve(async (req) => {
       updated_at: now
     });
 
-    // Update partner verification status
-    const partnerUpdate = {
+    // Update partner verification status — doctors never get status='active' here
+    const partnerUpdate: Record<string, unknown> = {
       verification_status: newStatus,
       verification_confidence: 100 - fraud_score,
-      verification_notes: `AI Analysis: ${fraud_indicators.length} indicators detected. Score: ${fraud_score}/100`,
+      verification_notes: partner_type === 'doctor'
+        ? `AI pre-screen: ${fraud_indicators.length} indicators detected (score ${fraud_score}/100). Routed to manual review — doctor activation requires admin approval.`
+        : `AI Analysis: ${fraud_indicators.length} indicators detected. Score: ${fraud_score}/100`,
       updated_at: now
     };
 
-    if (newStatus === 'verified') {
+    // Non-doctor partners can be auto-activated on AI approval; doctors never can
+    if (newStatus === 'verified' && partner_type !== 'doctor') {
       partnerUpdate.verification_can_be_activated = true;
       partnerUpdate.status = 'active';
     }

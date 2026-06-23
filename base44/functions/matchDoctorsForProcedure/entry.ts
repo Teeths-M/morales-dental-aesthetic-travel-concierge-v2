@@ -21,7 +21,17 @@ Deno.serve(async (req) => {
     // by doctor users, not by the calling user. User-scoped entities returns empty for
     // cross-user data, so every procedure match returned 0 doctors and triggered unnecessary
     // outreach emails.
-    const allDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 500); // Bounded to 500
+    const activeDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 500);
+
+    // SECURITY: status='active' is a necessary but NOT sufficient condition.
+    // A doctor can have status='active' with verification_status='failed' if a bug or
+    // admin override set them active without completing all checks.
+    // Only doctors in a definitively approved terminal state reach patients.
+    const VERIFIED_STATUSES = new Set(['verified', 'auto_verified', 'manually_approved']);
+    const allDoctors = activeDoctors.filter(doc =>
+      doc.license_verified === true &&
+      VERIFIED_STATUSES.has(doc.verification_status)
+    );
     
     // Get doctor procedures — bounded query with early termination
     const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.list('-created_date', 2000); // Bounded to 2000

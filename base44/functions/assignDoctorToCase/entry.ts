@@ -111,8 +111,22 @@ Deno.serve(async (req) => {
       selectedDoctor = await base44.asServiceRole.entities.Doctor.get(doctorId);
     }
 
-    if (!selectedDoctor || selectedDoctor.status !== 'active') {
-      return Response.json({ error: 'Selected doctor not found or inactive' }, { status: 400 });
+    // SECURITY: status='active' is necessary but not sufficient.
+    // Enforce full credential verification before assigning a doctor to a patient.
+    const ASSIGNMENT_VERIFIED = new Set(['verified', 'auto_verified', 'manually_approved']);
+    if (!selectedDoctor) {
+      return Response.json({ error: 'Doctor not found' }, { status: 400 });
+    }
+    if (selectedDoctor.status !== 'active') {
+      return Response.json({ error: 'Doctor account is not active' }, { status: 400 });
+    }
+    if (!selectedDoctor.license_verified) {
+      return Response.json({ error: 'Doctor license has not been verified — patient assignment blocked for safety' }, { status: 400 });
+    }
+    if (!ASSIGNMENT_VERIFIED.has(selectedDoctor.verification_status)) {
+      return Response.json({
+        error: `Doctor verification is incomplete (status: ${selectedDoctor.verification_status ?? 'unset'}). Full credential approval required before patient assignment.`,
+      }, { status: 400 });
     }
 
     // Also fetch linked consultation for additional procedure context
