@@ -17,10 +17,11 @@ export default function AppLayout() {
   const { pathname } = useLocation();
   useGeoAutoAlign();
 
-  // Admin pages have their own sidebar layout — suppress patient-facing
-  // fixed FABs that would overlap the admin sidebar (they render at z-50,
-  // above the sidebar's z-20, covering lower nav items).
-  const isAdmin = pathname.startsWith('/admin');
+  // Suppress patient-facing fixed FABs on pages where they don't belong:
+  // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)
+  // - Partner signup pages: patient SOS/Vault/WhatsApp are irrelevant to
+  //   business partners and create visual noise (causes the stray red icon)
+  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup');
 
   return (
     <BiometricGate>
