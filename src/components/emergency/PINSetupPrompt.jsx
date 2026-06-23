@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, Smartphone } from 'lucide-react';
+import { hasVaultPIN } from '@/lib/vault/offlineVaultPIN';
 
 const LOCAL_PIN_KEY = 'morales_emergency_pin_hash';
 
 function hasLocalPIN(email) {
+  if (!email) return false;
+  if (hasVaultPIN(email)) return true;
   try {
     const stored = JSON.parse(localStorage.getItem(LOCAL_PIN_KEY) || 'null');
     return stored && stored.email === email?.toLowerCase();

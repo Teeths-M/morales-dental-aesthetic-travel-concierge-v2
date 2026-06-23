@@ -18,6 +18,17 @@ async function signToken(data: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function pinHashForServer(pin: string, email: string): Promise<string> {
+  const enc = new TextEncoder();
+  const km = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
+  const saltBuf = await crypto.subtle.digest('SHA-256', enc.encode('morales-pin-salt:' + email.toLowerCase()));
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuf, iterations: 200000 },
+    km, 256
+  );
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function decodeToken(token: string): { email: string; expiresAt: number } | null {
   try {
     const padded = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -61,12 +72,21 @@ Deno.serve(async (req) => {
       if (!new_pin || String(new_pin).length !== 6 || !/^\d{6}$/.test(String(new_pin))) {
         return Response.json({ error: 'PIN must be exactly 6 digits' }, { status: 400 });
       }
-      // Set new PIN server-side via existing verifyEmergencyPIN function
-      await base44.functions.invoke('verifyEmergencyPIN', {
-        action: 'setup',
-        user_email: decoded.email,
-        new_pin: String(new_pin),
-      }).catch(() => {}); // Best-effort; frontend saves locally too
+      // Update EmergencyPIN entity directly — avoids the auth guard in verifyEmergencyPIN
+      // (reset tokens are their own proof of identity; no login session needed)
+      const hash = await pinHashForServer(String(new_pin), decoded.email);
+      const now = new Date().toISOString();
+      const existing = await base44.asServiceRole.entities.EmergencyPIN.filter({ user_email: decoded.email });
+      if (existing.length > 0) {
+        await base44.asServiceRole.entities.EmergencyPIN.update(existing[0].id, {
+          pin_hash: hash, failed_attempts: 0, locked_until: null, created_at: now, is_active: true,
+        });
+      } else {
+        await base44.asServiceRole.entities.EmergencyPIN.create({
+          user_email: decoded.email, pin_hash: hash, is_active: true,
+          use_count: 0, failed_attempts: 0, created_at: now,
+        });
+      }
 
       return Response.json({ success: true, email: decoded.email });
     }

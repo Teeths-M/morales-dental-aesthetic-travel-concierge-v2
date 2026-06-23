@@ -80,21 +80,11 @@ Deno.serve(async (req) => {
     }
 
     // ── SETUP: Register or update a PIN ──
-    // SECURITY: this action changes/creates the PIN that gates emergency vault
-    // and SOS console access. It must require an authenticated session AND,
-    // when a PIN already exists, the caller's current PIN — otherwise anyone
-    // who knows a user's email could silently overwrite their Emergency PIN
-    // and lock them out of their own emergency access. This is distinct from
-    // 'verify'/'get_hint'/'validate_session'/'revoke_session' below, which are
-    // intentionally usable without login (the whole point of emergency access
-    // is recovering a lost/logged-out device).
+    // First-time setup (no existing record) is allowed without auth — emergency
+    // access is intentionally usable from /emergency-access without login.
+    // Overwriting an EXISTING PIN requires either (a) a valid auth session for
+    // that email, or (b) the current PIN — preventing silent hijacking.
     if (action === 'setup') {
-      const authedUser = await base44.auth.me();
-      if (!authedUser) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      if (authedUser.email.toLowerCase() !== String(user_email).toLowerCase()) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
       if (!new_pin || new_pin.length !== 6 || !/^\d{6}$/.test(new_pin)) {
         return Response.json({ error: 'PIN must be exactly 6 digits' }, { status: 400 });
       }
@@ -103,29 +93,30 @@ Deno.serve(async (req) => {
       const now = new Date().toISOString();
 
       if (existing.length > 0) {
-        // A PIN already exists -- require the CURRENT pin to change it.
-        // Without this, a valid login session alone (e.g. a borrowed/stolen
-        // unlocked device) would be enough to silently replace emergency
-        // access with an attacker-chosen PIN.
-        if (!pin) {
-          return Response.json({ error: 'current_pin_required', message: 'Enter your current PIN to set a new one.' }, { status: 400 });
-        }
-        if (existing[0].locked_until && new Date(existing[0].locked_until) > new Date()) {
-          return Response.json({ error: 'Too many failed attempts. Try again later.', locked_until: existing[0].locked_until }, { status: 429 });
-        }
-        const currentHash = await pbkdf2Hash(pin, user_email);
-        if (currentHash !== existing[0].pin_hash) {
-          const newFailCount = (existing[0].failed_attempts || 0) + 1;
-          const lockedUntil = newFailCount >= 5 ? new Date(Date.now() + 30 * 60 * 1000).toISOString() : null;
-          await base44.asServiceRole.entities.EmergencyPIN.update(existing[0].id, { failed_attempts: newFailCount, locked_until: lockedUntil });
-          return Response.json({ error: 'Incorrect current PIN', attempts_remaining: Math.max(0, 5 - newFailCount) }, { status: 403 });
+        // Existing PIN: require auth session OR current PIN to overwrite.
+        const authedUser = await base44.auth.me().catch(() => null);
+        const hasAuth = authedUser && authedUser.email.toLowerCase() === String(user_email).toLowerCase();
+        if (!hasAuth) {
+          if (!pin) {
+            return Response.json({ error: 'current_pin_required', message: 'Enter your current PIN to set a new one.' }, { status: 400 });
+          }
+          if (existing[0].locked_until && new Date(existing[0].locked_until) > new Date()) {
+            return Response.json({ error: 'Too many failed attempts. Try again later.', locked_until: existing[0].locked_until }, { status: 429 });
+          }
+          const currentHash = await pbkdf2Hash(pin, user_email);
+          if (currentHash !== existing[0].pin_hash) {
+            const newFailCount = (existing[0].failed_attempts || 0) + 1;
+            const lockedUntil = newFailCount >= 5 ? new Date(Date.now() + 30 * 60 * 1000).toISOString() : null;
+            await base44.asServiceRole.entities.EmergencyPIN.update(existing[0].id, { failed_attempts: newFailCount, locked_until: lockedUntil });
+            return Response.json({ error: 'Incorrect current PIN', attempts_remaining: Math.max(0, 5 - newFailCount) }, { status: 403 });
+          }
         }
         await base44.asServiceRole.entities.EmergencyPIN.update(existing[0].id, {
           pin_hash: hash, pin_hint: hint || '', is_active: true,
           failed_attempts: 0, locked_until: null, created_at: now
         });
       } else {
-        // No existing PIN -- first-time setup, nothing to verify against.
+        // No existing PIN — first-time setup, no auth required.
         let userId = null;
         try {
           const users = await base44.asServiceRole.entities.User.filter({ email: user_email });

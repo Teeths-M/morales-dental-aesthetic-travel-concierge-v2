@@ -269,9 +269,9 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
           try {
             await saveVaultPIN(userEmail, pin);
           } catch (_) {}
-          setVerifiedToken(res.data.session_token);
+          setVerifiedToken(res.data.pin_session_token);
           setCurrentMode('verified');
-          if (onVerified) onVerified({ verified: true, pin_session_token: res.data.session_token, expires_at: res.data.expires_at });
+          if (onVerified) onVerified({ verified: true, pin_session_token: res.data.pin_session_token, expires_at: res.data.expires_at });
           setLoading(false);
           return;
         }
