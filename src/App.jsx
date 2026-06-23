@@ -34,11 +34,12 @@ const PageLoader = () => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4 px-6 text-center">
-        <img
-          src="/morales-m-mark.png"
-          alt="Morales"
-          className="w-14 h-14 object-contain drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)]"
-        />
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-2xl"
+          style={{ background: '#D4AF37', color: '#060B16', fontFamily: 'serif' }}
+        >
+          M
+        </div>
         <div className="w-8 h-8 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
         {showHint && (
           <div className="mt-2 max-w-xs">
