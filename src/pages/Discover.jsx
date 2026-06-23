@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +52,6 @@ const COUNTRIES = Object.keys(cityData).sort();
 export default function Discover() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // Get filters from URL params
@@ -66,14 +65,6 @@ export default function Discover() {
     page: searchParams.get("page") ? Number(searchParams.get("page")) : 1,
     limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : 12,
   }), [searchParams]);
-
-  // Detect mobile viewport
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   // Fetch doctors with specialties
   const { data: doctors, isLoading, error } = useQuery({
@@ -171,7 +162,7 @@ export default function Discover() {
                   <SelectValue placeholder="Country" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
-                  <SelectItem value={null} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Countries</SelectItem>
+                  <SelectItem value="" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Countries</SelectItem>
                   {COUNTRIES.map(country => (
                     <SelectItem key={country} value={country} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">{country}</SelectItem>
                   ))}
@@ -183,7 +174,7 @@ export default function Discover() {
                   <SelectValue placeholder="City" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
-                  <SelectItem value={null} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Cities</SelectItem>
+                  <SelectItem value="" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Cities</SelectItem>
                   {getCityOptions().map(city => (
                     <SelectItem key={city} value={city} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">{city}</SelectItem>
                   ))}

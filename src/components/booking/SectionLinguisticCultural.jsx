@@ -108,7 +108,7 @@ export default function SectionLinguisticCultural({ form, update }) {
         <Select value={form.secondary_language || ''} onValueChange={v => update('secondary_language', v)}>
           <SelectTrigger className="mt-1.5"><SelectValue placeholder="None" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={null}>None</SelectItem>
+            <SelectItem value="">None</SelectItem>
             {LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
           </SelectContent>
         </Select>

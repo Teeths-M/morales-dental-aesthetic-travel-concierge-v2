@@ -239,7 +239,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
             <Input
               type={payoutMethod === 'paypal' ? 'email' : 'text'}
               placeholder={
-                payoutMethod === 'stripe' ? 'XXXXXXXXXX' :
+                payoutMethod === 'stripe' ? 'acct_XXXXXXXXXXXXXXXX' :
                 payoutMethod === 'paypal' ? 'your@email.com' :
                 'WiPay account number'
               }

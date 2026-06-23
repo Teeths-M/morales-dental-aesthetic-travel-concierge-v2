@@ -219,7 +219,7 @@ export default function TravelConcierge() {
           </p>
           <div className="bg-white/10 rounded-xl p-4 mb-6">
             <p className="text-white/70 text-sm mb-2">Reference Token</p>
-            <p className="text-white font-mono text-lg">TRAVEL_XXXXX</p>
+            <p className="text-white font-mono text-lg">TC-{new Date().getFullYear()}-{Math.random().toString(36).slice(2, 8).toUpperCase()}</p>
           </div>
           <Button 
             onClick={() => window.location.href = '/'}

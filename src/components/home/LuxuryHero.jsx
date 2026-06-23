@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
@@ -52,6 +52,7 @@ export default function LuxuryHero() {
   const isMedical = mode === 'medical';
   const content = isMedical ? CONTENT.medical : CONTENT.nonmedical;
 
+  const prefersReducedMotion = useReducedMotion();
   const openModal = useCallback(() => setShowModal(true), []);
   const closeModal = useCallback(() => setShowModal(false), []);
 
@@ -66,10 +67,10 @@ export default function LuxuryHero() {
             className="w-full h-full object-cover"
             style={{ objectPosition: '65% center' }} 
             loading="eager" 
-            fetchpriority="high"
-            initial={{ scale: 1.08 }}
+            fetchPriority="high"
+            initial={prefersReducedMotion ? false : { scale: 1.08 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 25, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 25, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
           />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 35%, rgba(11,18,25,0.88) 50%, rgba(11,18,25,0.5) 70%, transparent 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.6) 15%, transparent 35%)' }} />
@@ -78,8 +79,8 @@ export default function LuxuryHero() {
           <motion.div 
             className="absolute inset-0 pointer-events-none"
             style={{ background: 'radial-gradient(circle at 65% 50%, rgba(212,175,55,0.04) 0%, transparent 65%)' }}
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            animate={prefersReducedMotion ? { opacity: 0.4 } : { opacity: [0.3, 0.6, 0.3] }}
+            transition={prefersReducedMotion ? {} : { duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
 

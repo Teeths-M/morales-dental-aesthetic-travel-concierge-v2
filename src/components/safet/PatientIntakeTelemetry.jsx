@@ -59,7 +59,7 @@ function Toggle({ checked, onChange, label }) {
 function CheckGroup({ options, selected = [], onChange, columns = 2 }) {
   const toggle = (val) => onChange(selected.includes(val) ? selected.filter(v => v !== val) : [...selected, val]);
   return (
-    <div className={`grid gap-2 grid-cols-1 sm:grid-cols-${columns}`}>
+    <div className={`grid gap-2 grid-cols-1 ${{ 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4' }[columns] || 'sm:grid-cols-2'}`}>
       {options.map(opt => (
         <button key={opt} type="button" onClick={() => toggle(opt)}
           className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium text-left transition-all ${

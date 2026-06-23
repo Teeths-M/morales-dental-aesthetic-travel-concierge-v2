@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Mic, ArrowRight, ChevronRight, Plus, Check, Info, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { Mic, ArrowRight, ChevronRight, Check, Clock, Calendar, AlertCircle } from 'lucide-react';
 import ProcedureModal from '@/components/procedures/ProcedureModal';
 import SelectDoctorModal from '@/components/procedures/SelectDoctorModal';
 import { Button } from '@/components/ui/button';
@@ -95,7 +95,6 @@ export default function Procedures() {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState(null);
   const [selectDoctorProc, setSelectDoctorProc] = useState(null);
-  const [selectedCountry, setSelectedCountry] = useState(null);
   const [language, setLanguage] = useState('en');
   const { items, addItem, removeItem, clearCart, setProcedureCountry, setProcedureCity } = useCart();
 
@@ -130,8 +129,6 @@ export default function Procedures() {
         clinic_city: proc.clinic_city,
         ...proc 
       });
-      // Bridge: store procedure destination from selected doctor's clinic
-      console.log('Setting destination:', proc.clinic_country, proc.clinic_city, 'Enum:', procedureEnumValue);
       if (proc.clinic_country) setProcedureCountry(proc.clinic_country);
       if (proc.clinic_city) setProcedureCity(proc.clinic_city);
     } else {
@@ -190,9 +187,10 @@ export default function Procedures() {
             </div>
             <button
               onClick={() => setVoiceOpen(true)}
+              aria-label={language === 'es' ? 'Activar Modo de Voz' : language === 'fr' ? 'Activer le Mode Voix' : 'Activate Voice Mode'}
               className="flex-shrink-0 flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold px-5 py-3.5 rounded-2xl shadow-md text-sm transition-all"
             >
-              <Mic className="w-4 h-4" />
+              <Mic className="w-4 h-4" aria-hidden="true" />
               <span className="hidden sm:inline">{language === 'es' ? 'Modo de Voz' : language === 'fr' ? 'Mode Voix' : 'Voice Mode'}</span>
             </button>
           </div>
@@ -241,13 +239,14 @@ export default function Procedures() {
                 <button
                   key={f.id}
                   onClick={() => setActiveParent(f.id)}
+                  aria-pressed={activeParent === f.id}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                     activeParent === f.id
                       ? 'bg-gradient-to-r from-emerald-700 to-blue-800 text-white border-transparent shadow-md'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <span>{f.emoji}</span>{f.label}
+                  <span aria-hidden="true">{f.emoji}</span>{f.label}
                 </button>
               ))}
             </div>
