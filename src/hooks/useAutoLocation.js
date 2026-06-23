@@ -12,7 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 
-const IP_CACHE_KEY = 'auto_location_ip_v2';
+const IP_CACHE_KEY = 'auto_location_ip_v3'; // v3: clears stale misidentified entries from ipinfo.io era
 const IP_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 const PREFS_KEY = 'location_prefs_v1';
 

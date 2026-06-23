@@ -9,10 +9,12 @@ import OfflineBanner from './OfflineBanner';
 import { useAuth } from '@/lib/AuthContext';
 import BiometricGate from '@/components/security/BiometricGate';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
+import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import { Lock, AlertTriangle } from 'lucide-react';
 
 export default function AppLayout() {
   const { user } = useAuth();
+  useGeoAutoAlign(); // auto-detect country → align currency + language on every page load
 
   return (
     <BiometricGate>

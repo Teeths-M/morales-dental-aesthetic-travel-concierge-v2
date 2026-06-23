@@ -1,6 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const GEO_CACHE_TTL = 60 * 60 * 1000; // 1 hour in-memory
+// ── SAFE-T GEO ENGINE ───────────────────────────────────────────────────────
+// Primary:   ipapi.co   (free, no key, HTTPS, 30k req/month, good Caribbean accuracy)
+// Secondary: ipwho.is   (free, no key, HTTPS, unlimited, MaxMind database)
+// Default:   USD/Unknown fallback — never blocks the app
+//
+// ipinfo.io dropped: it misidentifies TSTT (Trinidad) IPs as Venezuelan
+// because many T&T routes share Caribbean exchange points with VE networks.
+
+const GEO_CACHE_TTL = 15 * 60 * 1000; // 15 min — shorter to avoid stale results during demos
 const cache = new Map();
 
 function getCache(key) {
@@ -11,69 +19,157 @@ function getCache(key) {
 }
 function setCache(key, data) { cache.set(key, { data, ts: Date.now() }); }
 
+// Comprehensive CURRENCY_MAP — covers Caribbean, LATAM, Europe, Asia-Pacific
 const CURRENCY_MAP = {
-  US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', NZ: 'NZD',
-  TT: 'TTD', GY: 'GYD', VE: 'USD', EU: 'EUR', DE: 'EUR',
-  FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', BE: 'EUR',
-  MX: 'MXN', BR: 'BRL', CO: 'COP', PE: 'PEN', CL: 'CLP',
-  IN: 'INR', JP: 'JPY', CN: 'CNY', SG: 'SGD', AE: 'AED',
+  // Caribbean
+  TT: 'TTD', BB: 'BBD', JM: 'JMD', GY: 'GYD', VE: 'USD',
+  DO: 'DOP', CU: 'CUP', HT: 'HTG', BZ: 'BZD', BS: 'BSD',
+  AG: 'XCD', LC: 'XCD', VC: 'XCD', GD: 'XCD', KN: 'XCD', DM: 'XCD',
+  TC: 'USD', KY: 'KYD', MS: 'XCD', AI: 'XCD',
+  // North America
+  US: 'USD', CA: 'CAD', MX: 'MXN',
+  // Central America
+  PA: 'PAB', CR: 'CRC', GT: 'GTQ', HN: 'HNL', NI: 'NIO', SV: 'USD',
+  // South America
+  CO: 'COP', PE: 'PEN', CL: 'CLP', AR: 'ARS', BR: 'BRL', EC: 'USD',
+  BO: 'BOB', PY: 'PYG', UY: 'UYU',
+  // Europe
+  GB: 'GBP', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR',
+  BE: 'EUR', AT: 'EUR', PT: 'EUR', IE: 'EUR', FI: 'EUR', GR: 'EUR',
+  CH: 'CHF', SE: 'SEK', NO: 'NOK', DK: 'DKK', PL: 'PLN', CZ: 'CZK',
+  // Asia-Pacific
+  AU: 'AUD', NZ: 'NZD', JP: 'JPY', CN: 'CNY', IN: 'INR', SG: 'SGD',
+  KR: 'KRW', TH: 'THB', MY: 'MYR', PH: 'PHP', ID: 'IDR',
+  // Middle East & Africa
+  AE: 'AED', SA: 'SAR', QA: 'QAR', KW: 'KWD', BH: 'BHD', OM: 'OMR',
+  ZA: 'ZAR', NG: 'NGN', GH: 'GHS', KE: 'KES',
 };
+
+// Extract the real client IP — handles Cloudflare, nginx, and multi-proxy setups.
+// T&T deployments often route through regional CDN nodes; picking the wrong IP
+// from the forwarded chain is the #1 cause of misidentifying T&T as Venezuelan.
+function extractClientIp(req) {
+  // Cloudflare sets this reliably (always the true client IP)
+  const cfIp = req.headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp.trim();
+
+  // nginx/load balancer sets x-real-ip to the direct client
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+
+  // x-forwarded-for: skip internal/private IPs, take first public one
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const ips = forwarded.split(',').map(s => s.trim()).filter(Boolean);
+    for (const ip of ips) {
+      if (!isPrivateIp(ip)) return ip;
+    }
+    return ips[0] || 'unknown';
+  }
+
+  return 'unknown';
+}
+
+function isPrivateIp(ip) {
+  return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|::1$|localhost)/i.test(ip);
+}
+
+async function fetchWithTimeout(url, ms = 5000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+// PRIMARY: ipapi.co — free, no key, HTTPS, accurate Caribbean coverage
+async function fromIpapiCo(ip) {
+  const url = ip && ip !== 'unknown'
+    ? `https://ipapi.co/${ip}/json/`
+    : 'https://ipapi.co/json/';
+  const res = await fetchWithTimeout(url, 5000);
+  if (!res.ok) throw new Error(`ipapi.co ${res.status}`);
+  const d = await res.json();
+  if (d.error || !d.country_code) throw new Error(`ipapi.co bad response: ${d.reason || 'unknown'}`);
+  return {
+    country: d.country_name || d.country_code,
+    country_code: d.country_code,
+    city: d.city || null,
+    region: d.region || null,
+    timezone: d.timezone || null,
+    latitude: d.latitude || null,
+    longitude: d.longitude || null,
+    currency: d.currency || CURRENCY_MAP[d.country_code] || 'USD',
+    source: 'ipapi_co',
+  };
+}
+
+// SECONDARY: ipwho.is — free, no key, HTTPS, uses MaxMind database
+async function fromIpwhoIs(ip) {
+  const url = ip && ip !== 'unknown'
+    ? `https://ipwho.is/${ip}`
+    : 'https://ipwho.is/';
+  const res = await fetchWithTimeout(url, 5000);
+  if (!res.ok) throw new Error(`ipwho.is ${res.status}`);
+  const d = await res.json();
+  if (!d.success || !d.country_code) throw new Error('ipwho.is bad response');
+  const currency = d.currency?.code || CURRENCY_MAP[d.country_code] || 'USD';
+  return {
+    country: d.country || d.country_code,
+    country_code: d.country_code,
+    city: d.city || null,
+    region: d.region || null,
+    timezone: d.timezone?.id || null,
+    latitude: d.latitude || null,
+    longitude: d.longitude || null,
+    currency,
+    source: 'ipwho_is',
+  };
+}
 
 Deno.serve(async (req) => {
   try {
-    const ipinfoApiKey = Deno.env.get('IPINFO_API_KEY');
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    const cacheKey = `geo_${ip}`;
+    const ip = extractClientIp(req);
+    const cacheKey = `geo_v3_${ip}`; // v3 — clears stale v1/v2 misidentified entries
 
     const cached = getCache(cacheKey);
     if (cached) return Response.json({ ...cached, from_cache: true });
 
-    if (!ipinfoApiKey) {
-      return Response.json({ country: 'US', currency: 'USD', source: 'default_fallback' });
-    }
+    // Try primary, then secondary, then default
+    let result = null;
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
-    let ipData;
     try {
-      const ipPath = ip && ip !== 'unknown' ? `/${ip}` : '';
-      const res = await fetch(`https://ipinfo.io${ipPath}/json?token=${ipinfoApiKey}`, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error(`ipinfo ${res.status}`);
-      ipData = await res.json();
-    } catch {
-      clearTimeout(timer);
-      return Response.json({ country: 'US', currency: 'USD', source: 'default_fallback' });
-    }
-
-    const countryCode = ipData.country || 'US';
-    const currency = CURRENCY_MAP[countryCode] || 'USD';
-
-    // ipinfo loc field is "lat,lng"
-    let latitude = null, longitude = null;
-    if (ipData.loc) {
-      const parts = ipData.loc.split(',');
-      if (parts.length === 2) {
-        latitude = parseFloat(parts[0]) || null;
-        longitude = parseFloat(parts[1]) || null;
+      result = await fromIpapiCo(ip);
+    } catch (e1) {
+      try {
+        result = await fromIpwhoIs(ip);
+      } catch (_e2) {
+        // Both failed — return safe default; never crash the caller
+        result = {
+          country: 'Unknown',
+          country_code: 'US',
+          city: null,
+          region: null,
+          timezone: null,
+          latitude: null,
+          longitude: null,
+          currency: 'USD',
+          source: 'default_fallback',
+        };
       }
     }
 
-    const result = {
-      country: ipData.country_name || countryCode,
-      country_code: countryCode,
-      city: ipData.city || null,
-      region: ipData.region || null,
-      timezone: ipData.timezone || null,
-      latitude,
-      longitude,
-      currency,
-      source: 'ip_geo',
-    };
+    if (result.source !== 'default_fallback') {
+      setCache(cacheKey, result);
+    }
 
-    setCache(cacheKey, result);
     return Response.json(result);
   } catch (_) {
-    return Response.json({ country: 'US', currency: 'USD', source: 'default_fallback' });
+    return Response.json({ country: 'Unknown', country_code: 'US', currency: 'USD', source: 'default_fallback' });
   }
 });
