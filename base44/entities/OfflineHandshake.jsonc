@@ -125,6 +125,70 @@
     "received_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "handshake_type": {
+      "type": "string",
+      "enum": [
+        "driver_pickup",
+        "airport_dropoff",
+        "hotel_checkin",
+        "clinic_arrival",
+        "clinic_departure",
+        "airport_checkin",
+        "airport_boarding",
+        "hotel_checkout",
+        "recovery_handoff"
+      ],
+      "description": "The physical event being confirmed"
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "Links to a specific trip / travel leg"
+    },
+    "method": {
+      "type": "string",
+      "enum": ["tap", "sms", "system"],
+      "description": "How this handshake was confirmed"
+    },
+    "confirmed_by": {
+      "type": "string",
+      "description": "User ID or phone number that confirmed the handshake"
+    },
+    "confirmed_by_name": {
+      "type": "string"
+    },
+    "gps_lat": {
+      "type": "number",
+      "description": "GPS latitude captured at confirmation"
+    },
+    "gps_lng": {
+      "type": "number",
+      "description": "GPS longitude captured at confirmation"
+    },
+    "gps_accuracy_m": {
+      "type": "number",
+      "description": "GPS accuracy in metres"
+    },
+    "offline_packet_id": {
+      "type": "string",
+      "description": "Links this record to an offline queue entry for reconciliation"
+    },
+    "timeout_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Auto-computed as created_date + 15 min; the cron marks status=timeout after this"
+    },
+    "rerouted": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once a replacement driver has been auto-assigned after timeout"
+    },
+    "reroute_driver_id": {
+      "type": "string"
+    },
+    "reroute_triggered_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
