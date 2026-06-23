@@ -80,8 +80,8 @@ export default function Discover() {
         if (filters.country && doctor.clinic_country !== filters.country) return false;
         // City filter
         if (filters.city && doctor.clinic_city !== filters.city) return false;
-        // Rating filter
-        if (filters.rating && doctor.rating < filters.rating) return false;
+        // Rating filter — skip doctors with no rating rather than hiding them
+        if (filters.rating && doctor.rating != null && doctor.rating < filters.rating) return false;
         
         // Procedure filter - check if doctor has this specialty
         if (filters.procedure) {
@@ -103,17 +103,19 @@ export default function Discover() {
   });
 
   const updateFilter = (key, value) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (value === "" || value === undefined || value === null) {
-      newParams.delete(key);
-    } else {
-      newParams.set(key, String(value));
-    }
-    // Reset page to 1 when filters change
-    if (key !== "page") {
-      newParams.set("page", "1");
-    }
-    setSearchParams(newParams);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (value === "" || value === undefined || value === null) {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, String(value));
+      }
+      // Reset page to 1 when filters change
+      if (key !== "page") {
+        newParams.set("page", "1");
+      }
+      return newParams;
+    });
   };
 
   const clearAllFilters = () => {
