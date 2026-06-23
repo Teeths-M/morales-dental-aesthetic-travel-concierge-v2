@@ -75,12 +75,28 @@ Deno.serve(async (req) => {
 
       const severity = newConsecutive >= 2 ? 'escalate' : 'warning';
 
-      // Update session
+      // Pause guard — still update anomaly counters, but suppress all outbound notifications
+      const tripPaused = await (async () => {
+        try {
+          const trips = await base44.asServiceRole.entities.TravelRequest.filter({
+            user_email: pEmail, package_status: 'confirmed',
+          });
+          return (trips || []).some(t => t.paused === true);
+        } catch (_) { return false; }
+      })();
+
+      // Update session (always — data must stay accurate for recalculation)
       await base44.asServiceRole.entities.RecoverySession.update(session.id, {
         anomaly_status:           severity,
         consecutive_anomaly_days: newConsecutive,
         last_anomaly_at:          nowIso,
       }).catch(() => {});
+
+      // Notifications suppressed while journey is paused — counters still updated above
+      if (tripPaused) {
+        results.push({ session_id: session.id, patient: pName, skipped: 'trip_paused' });
+        continue;
+      }
 
       // Email doctor
       if (docEmail) {

@@ -87,6 +87,14 @@ Deno.serve(async (req) => {
       const updatePayload = { last_checked: nowIso };
       if (changed) updatePayload.flight_status = newStatus;
 
+      // ── PAUSE GUARD: suppress all notifications while journey is paused ────
+      // Timings are still tracked so recalculateTripTimings can shift them on resume.
+      if (trip.paused) {
+        await base44.asServiceRole.entities.TravelRequest.update(trip.id, updatePayload);
+        results.push({ trip_id: trip.id, flight: trip.flight_number, skipped: 'trip_paused' });
+        continue;
+      }
+
       // ── DELAYED ─────────────────────────────────────────────────────────
       // LIVE: delay_minutes comes from FlightStats API; mock uses 0 for now
       if (newStatus === 'delayed' && prevStatus !== 'delayed') {

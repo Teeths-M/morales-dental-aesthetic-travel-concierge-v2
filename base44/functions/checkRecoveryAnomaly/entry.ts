@@ -182,7 +182,18 @@ Deno.serve(async (req) => {
     const ecPhone    = session.emergency_contact_phone || '';
     const ecEmail    = session.emergency_contact_email || '';
 
-    if (severity === 'warning' || severity === 'escalate') {
+    // Pause guard: suppress all notifications while the patient's trip is paused.
+    // Log is still created and rules run so data stays complete for recalculation.
+    const activeTripsPaused = await (async () => {
+      try {
+        const trips = await base44.asServiceRole.entities.TravelRequest.filter({
+          user_email: pEmail, package_status: 'confirmed',
+        });
+        return (trips || []).some(t => t.paused === true);
+      } catch (_) { return false; }
+    })();
+
+    if ((severity === 'warning' || severity === 'escalate') && !activeTripsPaused) {
       const reasonSummary = reasons.join('; ');
       const subject = severity === 'escalate'
         ? `🚨 Recovery Alert — ${pName} (ESCALATE)`

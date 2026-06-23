@@ -1,0 +1,60 @@
+{
+  "name": "PauseEvent",
+  "description": "Immutable audit record created each time a trip is resumed. Stores the full pause window for Task 5's journey log and for recalculateTripTimings to know how far to shift partner timings.",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string",
+      "description": "FK to TravelRequest"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "paused_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the patient tapped Pause"
+    },
+    "resumed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the patient tapped Resume"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Exact pause duration (resumed_at - paused_at) in minutes"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Patient-supplied pause reason"
+    },
+    "timings_recalculated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set to true once recalculateTripTimings completes successfully"
+    }
+  },
+  "required": ["trip_id", "paused_at", "resumed_at", "duration_minutes"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.user_id": "{{user.id}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "user_condition": { "isAuthenticated": true }
+    },
+    "update": {
+      "user_condition": { "role": "admin" }
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}

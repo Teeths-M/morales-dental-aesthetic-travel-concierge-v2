@@ -254,6 +254,25 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp when offline welcome payload was pre-built (at in_progress status)"
+    },
+    "paused": {
+      "type": "boolean",
+      "default": false,
+      "description": "True while the journey is paused. All outbound notifications are suppressed while this is true."
+    },
+    "paused_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the journey was last paused"
+    },
+    "pause_reason": {
+      "type": "string",
+      "description": "Patient-supplied reason for pausing (e.g. 'resting', 'family emergency')"
+    },
+    "resumed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the journey was last resumed"
     }
   },
   "required": [

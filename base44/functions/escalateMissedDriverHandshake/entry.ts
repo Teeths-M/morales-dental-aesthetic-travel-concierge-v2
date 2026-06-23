@@ -50,10 +50,21 @@ Deno.serve(async (req) => {
       status: 'pending',
     });
 
-    // Secondary filter in memory: timeout_at < now and not already rerouted
-    const timedOut = (pendings || []).filter(
+    // Secondary filter: timeout_at < now, not rerouted, and trip is NOT paused
+    // isTripPaused: check TravelRequest.paused flag — suppress reroutes while paused
+    async function isTripPaused(tripId) {
+      if (!tripId) return false;
+      try {
+        const t = await base44.asServiceRole.entities.TravelRequest.get(tripId);
+        return t?.paused === true;
+      } catch (_) { return false; }
+    }
+
+    const timedOutRaw = (pendings || []).filter(
       (h) => !h.rerouted && h.timeout_at && h.timeout_at < nowIso
     );
+    const pausedChecks = await Promise.all(timedOutRaw.map(h => isTripPaused(h.trip_id)));
+    const timedOut = timedOutRaw.filter((_, i) => !pausedChecks[i]);
 
     if (!timedOut.length) {
       return Response.json({ success: true, timed_out_count: 0 });
