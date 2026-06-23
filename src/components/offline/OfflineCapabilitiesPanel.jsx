@@ -52,7 +52,6 @@ function OfflineDocsTab() {
   const [pinCached, setPinCached] = useState(false);
 
   useEffect(() => {
-    // Check what's actually cached in localStorage
     const allKeys = Object.keys(localStorage);
     // Vault metadata (saved by VaultDashboard / EmergencyVaultViewer)
     const vaultKey = allKeys.find(k => k.startsWith('morales_vault_meta_'));
@@ -61,8 +60,13 @@ function OfflineDocsTab() {
     }
     // Emergency manifest
     setManifestCached(!!localStorage.getItem('morales_emergency_manifest'));
-    // Local PIN hash
-    setPinCached(!!localStorage.getItem('morales_emergency_pin_hash'));
+    // PIN: detect either the legacy SHA-256 hash (morales_emergency_pin_hash)
+    // OR the newer PBKDF2 vault PIN (morales_vault_pin_<email>).
+    // When PBKDF2 save succeeds, the legacy key is not written — checking only
+    // the legacy key caused "Not Set" for all users who set their PIN normally.
+    const hasPinLegacy = !!localStorage.getItem('morales_emergency_pin_hash');
+    const hasPinPbkdf2 = allKeys.some(k => k.startsWith('morales_vault_pin_'));
+    setPinCached(hasPinLegacy || hasPinPbkdf2);
   }, []);
 
   const hasDocs = vaultDocs && vaultDocs.length > 0;

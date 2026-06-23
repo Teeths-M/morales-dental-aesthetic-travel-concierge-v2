@@ -6,7 +6,45 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { saveVaultPIN, verifyVaultPIN, hasVaultPIN } from '@/lib/vault/offlineVaultPIN';
 
-// ---------- Local offline PIN helpers (legacy fallback) ----------
+// ---------- Manifest cache primer ----------
+// Called automatically after PIN setup so the offline manifest is ready without
+// requiring a separate visit to /emergency-manifest.
+async function cacheManifestLocally(userEmail) {
+  const MANIFEST_KEY = 'morales_emergency_manifest';
+  const MAX_BYTES = 50 * 1024;
+  try {
+    const cases = await base44.entities.CaseRecord.filter({ client_email: userEmail }, '-created_date', 1);
+    const c = cases?.[0];
+    const manifestData = {
+      full_name: c?.client_name || userEmail,
+      blood_type: c?.blood_type || 'Unknown',
+      allergies: c?.allergies || 'None recorded',
+      medications: c?.medications || 'None recorded',
+      medical_conditions: c?.medical_conditions || 'None recorded',
+      emergency_contacts: c?.emergency_contact
+        ? [{ name: c.emergency_contact, relationship: 'Emergency Contact', phone: c.emergency_contact_phone || 'Not provided' }]
+        : [],
+      passport_last4: c?.passport_vault_token ? 'On file' : 'Not on file',
+      procedure: Array.isArray(c?.procedures) ? c.procedures.join(', ') : (c?.procedures || 'Not specified'),
+      doctor_name: c?.doctor_selected || 'Not assigned',
+      doctor_phone: c?.doctor_email || 'Not available',
+      case_id: c?.id || 'N/A',
+      patient_phone: c?.client_phone || 'Not on file',
+      client_email: userEmail,
+      client_country: c?.client_country || 'Not on file',
+      preferred_language: c?.preferred_language || 'English',
+      insurance_info: c?.insurance_info || 'Not on file',
+      cached_at: new Date().toISOString(),
+      cached_version: '2.0',
+    };
+    const str = JSON.stringify(manifestData);
+    if (str.length <= MAX_BYTES) localStorage.setItem(MANIFEST_KEY, str);
+  } catch (_) {
+    // Non-fatal — manifest can still be cached by visiting /emergency-manifest
+  }
+}
+
+// ---------- Local offline PIN helpers ----------
 const LOCAL_PIN_KEY = 'morales_emergency_pin_hash';
 
 async function hashPIN(pin, email) {
@@ -154,16 +192,18 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       }
     }
 
-    // Step 1: Save using PBKDF2 (secure offline access)
+    // Step 1a: Save PBKDF2 hash (secure offline access via VaultPINGate)
     try {
       await saveVaultPIN(userEmail, pin);
-      console.log('[EmergencyPINSetup] PBKDF2 PIN saved');
     } catch (err) {
       console.error('[EmergencyPINSetup] PBKDF2 save failed:', err);
-      // Fallback to legacy
-      await saveLocalPIN(pin, userEmail, hint);
     }
-    
+    // Step 1b: ALWAYS save legacy SHA-256 hash regardless of PBKDF2 outcome.
+    // EmergencyManifest offline verification and OfflineCapabilitiesPanel
+    // status display both read morales_emergency_pin_hash — they would
+    // falsely show "Not Set" if only the PBKDF2 key was written.
+    await saveLocalPIN(pin, userEmail, hint);
+
     // Step 2: Save to server (if online and not already handled above)
     if (!isChangingExisting && navigator.onLine) {
       try {
@@ -173,9 +213,14 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       }
     }
     
-    // Step 3: Clear inputs and show success
-    toast({ 
-      title: '✅ Emergency PIN Saved!', 
+    // Step 3: Prime emergency manifest cache in the background (best-effort, non-blocking)
+    if (navigator.onLine) {
+      cacheManifestLocally(userEmail).catch(() => {});
+    }
+
+    // Step 4: Clear inputs and show success
+    toast({
+      title: '✅ Emergency PIN Saved!',
       description: 'Stored securely on-device for offline access',
       variant: 'default'
     });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { verifyVaultPIN } from '@/lib/vault/offlineVaultPIN';
 // Note: this page is intentionally in the public/token routes — no auth required
 
 // PIN-gated Emergency Manifest
@@ -59,27 +60,39 @@ export default function EmergencyManifest() {
     // --- OFFLINE PATH: verify PIN locally using stored hash ---
     if (isOffline) {
       try {
+        // Try legacy SHA-256 hash first (morales_emergency_pin_hash)
         const storedLocal = JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null');
-        if (!storedLocal) {
-          setError('No offline PIN found. You must verify once online first.');
-          setLoading(false);
-          return;
+        if (storedLocal?.hash) {
+          const email = storedLocal.email || '';
+          const data = new TextEncoder().encode(pin + ':' + email);
+          const buf = await crypto.subtle.digest('SHA-256', data);
+          const enteredHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+          if (enteredHash === storedLocal.hash) {
+            setManifest(cached || null);
+            if (!cached) setError('PIN correct but no cached manifest. Connect once online to prime your offline manifest.');
+            setLoading(false);
+            return;
+          }
         }
-        // Hash the entered PIN the same way EmergencyPINSetup does
-        const email = storedLocal.email || '';
-        const data = new TextEncoder().encode(pin + ':' + email);
-        const buf = await crypto.subtle.digest('SHA-256', data);
-        const enteredHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        if (enteredHash !== storedLocal.hash) {
-          setError('Incorrect PIN.');
-          setLoading(false);
-          return;
+
+        // Fallback: try PBKDF2 vault PIN (morales_vault_pin_<email>)
+        // The PIN was set via EmergencyPINSetup — scan for any PBKDF2 key
+        const pbkdf2Key = Object.keys(localStorage).find(k => k.startsWith('morales_vault_pin_'));
+        if (pbkdf2Key) {
+          const email = pbkdf2Key.replace('morales_vault_pin_', '');
+          const result = await verifyVaultPIN(email, pin);
+          if (result.valid) {
+            setManifest(cached || null);
+            if (!cached) setError('PIN correct but no cached manifest. Connect once online to prime your offline manifest.');
+            setLoading(false);
+            return;
+          }
         }
-        // PIN correct offline — use cached manifest directly
-        if (cached) {
-          setManifest(cached);
+
+        if (!storedLocal && !pbkdf2Key) {
+          setError('No offline PIN found on this device. Connect to internet once to sync your PIN.');
         } else {
-          setError('PIN correct but no cached manifest. Connect once online to prime your offline manifest.');
+          setError('Incorrect PIN.');
         }
       } catch (_) {
         setError('Offline verification failed. Try again.');
