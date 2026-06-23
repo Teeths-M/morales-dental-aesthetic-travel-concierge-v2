@@ -11,6 +11,7 @@ const PostSurgeryFeedback = lazy(() => import('@/pages/PostSurgeryFeedback'));
 const LuggageFinderPortal = lazy(() => import('@/pages/LuggageFinderPortal'));
 const GuardianView       = lazy(() => import('@/pages/GuardianView'));
 const EmergencyPINAccess = lazy(() => import('@/pages/EmergencyPINAccess'));
+const ResetPIN           = lazy(() => import('@/pages/ResetPIN'));
 const CheckInConfirm     = lazy(() => import('@/pages/CheckInConfirm'));
 const ShareLinkViewer    = lazy(() => import('@/pages/ShareLinkViewer'));
 const OfflineMode        = lazy(() => import('@/pages/OfflineMode'));
@@ -25,6 +26,7 @@ export const tokenRoutes = (
     <Route key="luggage"        path="/luggage/:token"          element={<LuggageFinderPortal />} />
     <Route key="guardian"       path="/guardian/:token"         element={<GuardianView />} />
     <Route key="emergency-access" path="/emergency-access"      element={<EmergencyPINAccess />} />
+    <Route key="reset-pin"        path="/reset-pin"             element={<ResetPIN />} />
     <Route key="checkin"        path="/check-in/:check_in_id"  element={<CheckInConfirm />} />
     <Route key="vault-share"    path="/vault/share/:share_token" element={<ShareLinkViewer />} />
     {/* /offline is intentionally kept public so users can access it without login */}

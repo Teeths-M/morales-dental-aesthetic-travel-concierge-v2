@@ -108,7 +108,7 @@ function PINInput({ value, onChange, disabled }) {
   );
 }
 
-export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerified }) {
+export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerified, onForgotPIN }) {
   // SYNCHRONOUS check on first render - no async, works 100% offline
   const initialMode = React.useMemo(() => {
     if (!userEmail) return mode;
@@ -431,6 +431,16 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
             : isChangingExisting ? 'Save New PIN'
             : 'Activate Emergency PIN'}
         </Button>
+
+        {(currentMode === 'verify' || (hasPIN && !isChangingExisting)) && onForgotPIN && (
+          <button
+            type="button"
+            onClick={onForgotPIN}
+            className="w-full text-center text-xs text-slate-400 hover:text-blue-400 transition-colors pt-1"
+          >
+            Forgot your PIN?
+          </button>
+        )}
       </div>
     </div>
   );

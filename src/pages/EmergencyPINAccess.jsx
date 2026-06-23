@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft, WifiOff, Smartphone } from 'lucide-react';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
+import ForgotPIN from '@/components/emergency/ForgotPIN';
 import EmergencyVaultViewer from '@/components/vault/EmergencyVaultViewer';
 import EmergencyRecoveryVault from '@/pages/EmergencyRecoveryVault';
 import OfflineVaultAccess from '@/components/vault/OfflineVaultAccess';
@@ -20,6 +21,7 @@ export default function EmergencyPINAccess() {
   const [pinSessionToken, setPinSessionToken] = useState(null);
   const [sessionExpiresAt, setSessionExpiresAt] = useState(null);
   const [mode, setMode] = useState('vault');
+  const [forgotPIN, setForgotPIN] = useState(false);
 
   const handleVerified = (data) => {
     if (data.verified && data.pin_session_token) {
@@ -111,13 +113,18 @@ export default function EmergencyPINAccess() {
               </button>
               <OfflineVaultAccess userEmail={email} onVerified={handleVerified} />
             </div>
+          ) : forgotPIN ? (
+            <ForgotPIN
+              userEmail={email}
+              onBack={() => setForgotPIN(false)}
+            />
           ) : !verified ? (
             <div className="space-y-4">
-              <button onClick={() => setEmailEntered(false)}
+              <button onClick={() => { setEmailEntered(false); setForgotPIN(false); }}
                 className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" /> Back
               </button>
-              <EmergencyPINSetup userEmail={email} mode="verify" onVerified={handleVerified} />
+              <EmergencyPINSetup userEmail={email} mode="verify" onVerified={handleVerified} onForgotPIN={() => setForgotPIN(true)} />
             </div>
           ) : mode === 'recovery' ? (
             <div className="space-y-4">
