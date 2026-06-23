@@ -137,7 +137,8 @@
         "airport_checkin",
         "airport_boarding",
         "hotel_checkout",
-        "recovery_handoff"
+        "recovery_handoff",
+        "home_dropoff"
       ],
       "description": "The physical event being confirmed"
     },

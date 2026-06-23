@@ -273,6 +273,34 @@
       "type": "string",
       "format": "date-time",
       "description": "When the journey was last resumed"
+    },
+    "handshake_status": {
+      "type": "object",
+      "description": "Completed flags per step — keys '1' through '9', values true/false",
+      "default": {}
+    },
+    "handshake_timestamps": {
+      "type": "object",
+      "description": "ISO timestamps per completed step — keys '1' through '9'",
+      "default": {}
+    },
+    "trip_phase": {
+      "type": "string",
+      "enum": [
+        "pre_departure",
+        "transit_out",
+        "arrived",
+        "recovery",
+        "transit_return",
+        "completed"
+      ],
+      "default": "pre_departure",
+      "description": "Current physical phase of the journey, derived from current_step"
+    },
+    "current_step": {
+      "type": "number",
+      "default": 0,
+      "description": "Last confirmed handshake number (0 = none started, 9 = journey complete)"
     }
   },
   "required": [
