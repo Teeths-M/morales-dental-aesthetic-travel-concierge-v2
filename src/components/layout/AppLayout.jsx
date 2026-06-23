@@ -45,7 +45,7 @@ export default function AppLayout() {
       <div className="min-h-screen flex flex-col">
         <OfflineBanner />
         <Header />
-        <main className="flex-1 pt-[72px]">
+        <main className="flex-1 pt-[56px] sm:pt-[72px]">
           <Outlet />
         </main>
         <Footer />

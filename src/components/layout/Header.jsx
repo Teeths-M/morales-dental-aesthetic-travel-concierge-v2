@@ -47,7 +47,7 @@ export default function Header() {
   return (
     <>
     <nav
-      className="w-full min-h-[72px] fixed top-0 left-0 z-50 px-6 lg:px-10 flex items-center justify-between py-3 transition-all duration-300"
+      className="w-full min-h-[56px] sm:min-h-[72px] fixed top-0 left-0 z-50 px-4 sm:px-6 lg:px-10 flex items-center justify-between py-2 sm:py-3 transition-all duration-300"
       style={{
         background: isTransparent ? 'transparent' : '#0C1A1D',
         borderBottom: isTransparent ? '1px solid transparent' : '1px solid rgba(255,255,255,0.06)',
@@ -61,7 +61,7 @@ export default function Header() {
         <img
           src="/morales-m-mark.png"
           alt="Morales"
-          className="w-11 h-11 object-contain drop-shadow-[0_2px_10px_rgba(212,175,55,0.35)]"
+          className="w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 object-contain drop-shadow-[0_2px_10px_rgba(212,175,55,0.35)]"
         />
         <div className="flex flex-col gap-1">
           <span className="font-serif font-normal text-[17px] text-white uppercase tracking-[0.32em] leading-none">
