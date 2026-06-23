@@ -67,6 +67,80 @@ function toText(val) {
   return String(val);
 }
 
+// Procedure name normaliser — strips doses/parentheses and lowercases
+function procName(p) {
+  if (!p) return '';
+  return (typeof p === 'string' ? p : (p.name || p.title || '')).toLowerCase();
+}
+
+// Rule R1 combo — heart disease + general anesthesia
+const GA_KEYWORDS = ['general (full)', 'general anesthesia', 'full anesthesia', 'general anaesthesia'];
+function isGeneralAnesthesia(caseRecord) {
+  const t = (caseRecord.anesthesia_type || '').toLowerCase();
+  return GA_KEYWORDS.some(k => t.includes(k)) || t.includes('general');
+}
+
+// Rule R4 — procedures that carry age-related stacking risk
+const HIGH_AGE_RISK_PROCS = ['liposuction', 'abdominoplasty', 'tummy tuck', 'body contouring', 'bbl', 'brazilian butt'];
+
+// Dangerous procedure stacking combos — ANY match triggers the level listed
+const CRITICAL_STACKS = [
+  {
+    // Brazilian Trio / Mummy Makeover with 3+ body procedures
+    must: ['liposuction'],
+    any: [['abdominoplasty', 'tummy tuck'], ['breast augmentation', 'breast lift', 'mastopexy', 'augmentation mammoplasty']],
+    reason: 'Triple body-contouring stack (liposuction + tummy tuck + breast) — combined anaesthesia load and fluid shift create life-threatening DVT and haemorrhage risk.',
+  },
+  {
+    // BBL + abdominoplasty = positioning conflict
+    must: ['bbl', 'brazilian butt'],
+    any: [['abdominoplasty', 'tummy tuck']],
+    reason: 'BBL combined with abdominoplasty — prone-to-supine positioning conflict creates critical respiratory and haemodynamic instability risk.',
+  },
+];
+
+const HIGH_STACKS = [
+  {
+    // Any two abdominal procedures
+    any: [['abdominoplasty', 'tummy tuck'], ['liposuction']],
+    minGroups: 2,
+    reason: 'Multiple abdominal procedures — combined wound tension, fluid shifts, and recovery interference require staged planning.',
+  },
+  {
+    // Three or more facial procedures
+    keywords: ['facelift', 'rhinoplasty', 'blepharoplasty', 'otoplasty', 'chin implant', 'fat transfer face'],
+    minMatch: 3,
+    reason: 'Three or more simultaneous facial procedures — combined anaesthesia time and swelling interference require staged approach.',
+  },
+];
+
+function detectStackingRisk(procedures) {
+  if (!Array.isArray(procedures) || procedures.length < 2) return null;
+  const names = procedures.map(procName);
+
+  // Critical stack detection
+  for (const rule of CRITICAL_STACKS) {
+    const hasMust = rule.must.some(k => names.some(n => n.includes(k)));
+    if (!hasMust) continue;
+    const allGroupsMatched = rule.any.every(group => group.some(k => names.some(n => n.includes(k))));
+    if (allGroupsMatched) return { tier: 'CRITICAL', reason: rule.reason };
+  }
+
+  // High stack detection
+  for (const rule of HIGH_STACKS) {
+    if (rule.keywords) {
+      const matchCount = rule.keywords.filter(k => names.some(n => n.includes(k))).length;
+      if (matchCount >= rule.minMatch) return { tier: 'HIGH', reason: rule.reason };
+    }
+    if (rule.any) {
+      const groupMatches = rule.any.filter(group => group.some(k => names.some(n => n.includes(k)))).length;
+      if (groupMatches >= (rule.minGroups || 2)) return { tier: 'HIGH', reason: rule.reason };
+    }
+  }
+
+  return null;
+}
+
 function computeRiskScore(caseRecord) {
   // Build a single lowercase search string from every field that may contain medical data.
   // Covers both the legacy CaseRecord field names (medications, allergies, anesthesia_history)
@@ -89,14 +163,14 @@ function computeRiskScore(caseRecord) {
     toText(caseRecord.reproductive_notes),
   ].join(' ').toLowerCase();
 
-  // ── CRITICAL block checks ─────────────────────────────────────────────────
+  // ── CRITICAL block checks (order: most severe first) ─────────────────────
   for (const trigger of CRITICAL_BLOCK_TRIGGERS) {
     if (caseRecord[trigger.field] === trigger.value) {
       return { tier: 'CRITICAL', reason: trigger.reason, score: 100, flags: [trigger.reason] };
     }
   }
 
-  // Breastfeeding with general anesthesia is a critical transfer risk
+  // Breastfeeding — anesthetic agents transfer to breast milk
   if (caseRecord.breastfeeding === true) {
     return {
       tier: 'CRITICAL',
@@ -106,20 +180,52 @@ function computeRiskScore(caseRecord) {
     };
   }
 
+  // R2: Bleeding or clotting disorder → absolute Critical for any invasive procedure
+  if (caseRecord.bleeding_disorder === true) {
+    return {
+      tier: 'CRITICAL',
+      reason: 'Bleeding or clotting disorder detected — critical perioperative haemorrhage risk. Haematology clearance is mandatory before any invasive procedure.',
+      score: 100,
+      flags: ['Bleeding / clotting disorder — Critical contraindication for invasive surgery'],
+    };
+  }
+
+  // Critical keyword scan (covers warfarin, eliquis, cancer-active, severe COPD, etc.)
   const criticalKeyword = CRITICAL_KEYWORD_TRIGGERS.find(t => medText.includes(t.keyword.toLowerCase()));
   if (criticalKeyword) {
     return { tier: 'CRITICAL', reason: criticalKeyword.reason, score: 100, flags: [criticalKeyword.reason] };
   }
 
-  // Rule R8: 4+ procedures + age > 50 → Critical stacking block
   const procedureCount = Array.isArray(caseRecord.procedures) ? caseRecord.procedures.length : 0;
   const age = Number(caseRecord.age_years) || 0;
+  const generalAnesthesia = isGeneralAnesthesia(caseRecord);
+
+  // R1: Heart disease + general anesthesia → Critical (cardiac arrest risk under GA)
+  const hasHeartDisease = medText.includes('heart disease') ||
+    (Array.isArray(caseRecord.medical_conditions) &&
+      caseRecord.medical_conditions.some(c => /heart disease/i.test(c)));
+  if (hasHeartDisease && generalAnesthesia) {
+    return {
+      tier: 'CRITICAL',
+      reason: 'Heart disease combined with general anesthesia — critical perioperative cardiac risk. Cardiology clearance and anaesthesiologist sign-off are mandatory.',
+      score: 100,
+      flags: ['Heart disease + general anesthesia — Critical risk combination (R1)'],
+    };
+  }
+
+  // Dangerous procedure stacking combos
+  const stackRisk = detectStackingRisk(caseRecord.procedures);
+  if (stackRisk?.tier === 'CRITICAL') {
+    return { tier: 'CRITICAL', reason: stackRisk.reason, score: 100, flags: [stackRisk.reason] };
+  }
+
+  // Rule R8: 4+ procedures + age > 50 → Critical stacking block
   if (procedureCount > 3 && age > 50) {
     return {
       tier: 'CRITICAL',
       reason: `${procedureCount} procedures combined with age ${age} — critical stacking and recovery risk. Maximum 3-procedure sessions permitted for patients over 50.`,
       score: 100,
-      flags: [`${procedureCount} procedures selected — stacking limit exceeded for age ${age}`],
+      flags: [`${procedureCount} procedures — stacking limit exceeded for age ${age}`],
     };
   }
 
@@ -160,17 +266,49 @@ function computeRiskScore(caseRecord) {
   if (caseRecord.alcohol_use === 'Heavy') { score += 3; flags.push('Heavy alcohol use — liver and anesthesia risk'); }
   else if (caseRecord.alcohol_use === 'Moderate') { score += 1; }
 
-  // Previous surgical complications (boolean field from intake form)
+  // Previous surgical complications
   if (caseRecord.had_complications === true) {
     score += 2; flags.push('Previous surgical complications — elevated perioperative risk');
   }
 
-  // Anesthesia complications (boolean field from intake form — more reliable than free-text search)
+  // Anesthesia complications (boolean — more reliable than free-text)
   if (caseRecord.anesthesia_complications === true) {
-    score += 3; flags.push('Previous anesthesia complications — mandatory anesthesiologist review required');
+    score += 3; flags.push('Previous anesthesia complications — mandatory anaesthesiologist review required');
   }
 
-  // Procedure stacking
+  // R3: Diabetes or hypertension + general anesthesia → mandatory enhanced monitoring
+  const hasDiabetes = medText.includes('diabetes') ||
+    (Array.isArray(caseRecord.medical_conditions) && caseRecord.medical_conditions.some(c => /diabetes/i.test(c)));
+  const hasHypertension = medText.includes('hypertension') ||
+    (Array.isArray(caseRecord.medical_conditions) && caseRecord.medical_conditions.some(c => /hypertension/i.test(c)));
+  if ((hasDiabetes || hasHypertension) && generalAnesthesia) {
+    score += 3;
+    flags.push(`${hasDiabetes ? 'Diabetes' : 'Hypertension'} with general anesthesia — enhanced pre-operative monitoring and endocrinology/cardiology review required (R3)`);
+  }
+
+  // R4: Age > 65 + liposuction or abdominoplasty → high perioperative risk
+  const hasHighAgeRiskProc = Array.isArray(caseRecord.procedures) &&
+    caseRecord.procedures.some(p => HIGH_AGE_RISK_PROCS.some(k => procName(p).includes(k)));
+  if (age > 65 && hasHighAgeRiskProc) {
+    score += 4;
+    flags.push(`Age ${age} with high-risk body-contouring procedure — specialist pre-operative assessment mandatory (R4)`);
+  }
+
+  // R7: Stacking > 2 + any chronic condition → staged approach required
+  const CHRONIC_KEYWORDS = ['diabetes', 'hypertension', 'heart disease', 'asthma', 'autoimmune', 'thyroid', 'kidney disease', 'liver disease', 'epilepsy', 'sleep apnea', 'stroke', 'hiv', 'cancer'];
+  const hasChronicCondition = CHRONIC_KEYWORDS.some(k => medText.includes(k));
+  if (procedureCount > 2 && hasChronicCondition) {
+    score += 3;
+    flags.push(`${procedureCount} procedures with chronic medical condition — staged procedure approach strongly recommended (R7)`);
+  }
+
+  // High procedure stacking combo (non-critical but flagged)
+  if (stackRisk?.tier === 'HIGH') {
+    score += 4;
+    flags.push(stackRisk.reason);
+  }
+
+  // Procedure stacking count
   if (procedureCount >= 3) { score += 2; flags.push(`${procedureCount} procedures selected — elevated combined recovery load`); }
   else if (procedureCount >= 2) { score += 1; flags.push(`${procedureCount} procedures — multi-procedure recovery planning required`); }
 

@@ -85,6 +85,7 @@ export default function PatientIntakeTelemetry({ onComplete, initialData = {} })
     // Medical history
     medical_conditions: initialData.medical_conditions || [],
     medical_conditions_notes: initialData.medical_conditions_notes || '',
+    bleeding_disorder: initialData.bleeding_disorder || false,
     // Medications & allergies
     takes_medications: initialData.takes_medications || false,
     medication_types: initialData.medication_types || [],
@@ -99,6 +100,7 @@ export default function PatientIntakeTelemetry({ onComplete, initialData = {} })
     complication_types: initialData.complication_types || [],
     anesthesia_complications: initialData.anesthesia_complications || false,
     anesthesia_notes: initialData.anesthesia_notes || '',
+    anesthesia_type: initialData.anesthesia_type || '',
     // Lifestyle
     smoking_status: initialData.smoking_status || 'None',
     alcohol_use: initialData.alcohol_use || 'None',
@@ -179,6 +181,20 @@ export default function PatientIntakeTelemetry({ onComplete, initialData = {} })
           <div className="space-y-4">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Known Medical Conditions</p>
             <CheckGroup options={MEDICAL_CONDITIONS} selected={form.medical_conditions} onChange={v => set('medical_conditions', v)} columns={2} />
+            <div className="border-t border-slate-100 pt-4">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Blood & Clotting Disorders</p>
+              <Toggle
+                checked={form.bleeding_disorder}
+                onChange={v => set('bleeding_disorder', v)}
+                label="I have a bleeding or clotting disorder (e.g. Haemophilia, Von Willebrand disease, DVT history, Thrombophilia)"
+              />
+              {form.bleeding_disorder && (
+                <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+                  <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 font-medium">Bleeding disorders are a critical contraindication for most invasive procedures. Your case will require haematology clearance.</p>
+                </div>
+              )}
+            </div>
             <div>
               <label className="text-[11px] font-semibold text-slate-500 mb-1.5 block">Additional notes or unlisted conditions</label>
               <textarea value={form.medical_conditions_notes} onChange={e => set('medical_conditions_notes', e.target.value)}
@@ -241,6 +257,27 @@ export default function PatientIntakeTelemetry({ onComplete, initialData = {} })
                 <textarea value={form.anesthesia_notes} onChange={e => set('anesthesia_notes', e.target.value)}
                   placeholder="Describe what happened…"
                   className="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none h-16 focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+              )}
+            </div>
+            <div className="border-t border-slate-100 pt-4">
+              <label className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-2 block">
+                <Wind className="w-3.5 h-3.5" /> Expected anesthesia type for your planned procedure
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {['None / Topical', 'Local injection', 'Sedation (twilight)', 'Regional (spinal/epidural)', 'General (full)'].map(opt => (
+                  <button key={opt} type="button" onClick={() => set('anesthesia_type', opt)}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      form.anesthesia_type === opt
+                        ? opt === 'General (full)' ? 'bg-red-700 text-white border-red-700' : 'bg-slate-800 text-white border-slate-800'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}>{opt}</button>
+                ))}
+              </div>
+              {form.anesthesia_type === 'General (full)' && (
+                <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-amber-700 font-medium">General anesthesia carries higher risk for patients with certain conditions (heart disease, diabetes, hypertension). Your risk score will factor this in.</p>
+                </div>
               )}
             </div>
           </div>
