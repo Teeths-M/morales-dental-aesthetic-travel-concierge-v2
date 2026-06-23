@@ -1,13 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --font-display: 'Instrument Serif', serif;
-    --font-body: 'Public Sans', sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 
     --background: 150 8% 97%;
     --foreground: 156 16% 7%;
@@ -83,13 +81,46 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    font-feature-settings: "kern" 1, "liga" 1;
   }
-  h1, h2, h3 {
+  h1 {
     font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
     letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+  h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  p, span, li, label, input, textarea, select, button {
+    font-family: var(--font-body);
+    letter-spacing: -0.005em;
+  }
+  button {
+    font-weight: 500;
+  }
+  .uppercase {
+    letter-spacing: 0.08em;
   }
 }

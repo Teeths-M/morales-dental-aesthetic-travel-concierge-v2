@@ -5,8 +5,9 @@ module.exports = {
   theme: {
   	extend: {
       fontFamily: {
-        display: ['var(--font-display)'],
-        body: ['var(--font-body)'],
+        display: ['var(--font-display)', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        body: ['var(--font-body)', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif'],
       },
   		borderRadius: {
   			lg: 'var(--radius)',
