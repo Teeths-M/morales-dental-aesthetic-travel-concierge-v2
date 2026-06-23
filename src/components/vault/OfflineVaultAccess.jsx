@@ -49,7 +49,7 @@ const PinInput = ({ onComplete, disabled }) => {
           onChange={e => handleChange(i, e.target.value)}
           onKeyDown={e => handleKeyDown(i, e)}
           disabled={disabled}
-          className="w-14 h-16 text-center text-2xl font-bold bg-slate-900/60 border border-slate-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+          className="w-14 h-16 text-center text-2xl font-semibold bg-slate-900/60 border border-slate-600 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
         />
       ))}
     </div>
@@ -138,7 +138,7 @@ export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
         <div className="w-16 h-16 bg-emerald-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-700/50">
           <Shield className="w-8 h-8 text-emerald-400" />
         </div>
-        <h2 className="text-xl font-bold text-white">Offline Vault Access</h2>
+        <h2 className="text-xl font-semibold text-white">Offline Vault Access</h2>
         <p className="text-slate-400 text-sm mt-2">
           {isOffline ? '📵 No internet - using local verification' : '🔒 100% local - works without internet'}
         </p>
@@ -170,7 +170,7 @@ export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
           </Button>
 
           <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-xl p-4">
-            <p className="text-xs font-bold text-emerald-200 mb-2">✓ How Offline Access Works:</p>
+            <p className="text-xs font-semibold text-emerald-200 mb-2">✓ How Offline Access Works:</p>
             <ul className="text-[11px] text-emerald-300 space-y-1">
               <li>1. Enter your email once while online to set up</li>
               <li>2. Your PIN is saved locally on this device</li>
@@ -184,7 +184,7 @@ export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
       {step === 'setup' && (
         <div className="space-y-4">
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-            <p className="text-xs font-bold text-amber-200 mb-1">⚠️ First Time Setup</p>
+            <p className="text-xs font-semibold text-amber-200 mb-1">⚠️ First Time Setup</p>
             <p className="text-[11px] text-amber-300">Create a 4-digit PIN to access your vault offline. Remember this PIN - it's stored only on this device.</p>
           </div>
 
@@ -203,7 +203,7 @@ export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
         <div className="space-y-4">
           <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
             <WifiOff className="w-4 h-4 text-emerald-400" />
-            <p className="text-xs font-bold text-emerald-200">Offline Mode Active</p>
+            <p className="text-xs font-semibold text-emerald-200">Offline Mode Active</p>
           </div>
 
           <p className="text-center text-sm text-slate-300">Enter your 4-digit PIN</p>

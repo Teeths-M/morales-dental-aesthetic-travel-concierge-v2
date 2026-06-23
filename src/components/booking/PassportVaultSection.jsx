@@ -165,7 +165,7 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <div>
-                <p className="text-xs font-bold text-emerald-800">Passport scanned successfully</p>
+                <p className="text-xs font-semibold text-emerald-800">Passport scanned successfully</p>
                 <p className="text-xs text-emerald-600">
                   Confidence: <span className="font-semibold capitalize">{extracted.confidence || 'high'}</span>
                   {extracted.unreadable_fields?.length > 0 && (
@@ -241,7 +241,7 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
               <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-amber-800">⚠️ Passport Sentinel Alert</p>
+                <p className="text-xs font-semibold text-amber-800">⚠️ Passport Sentinel Alert</p>
                 <p className="text-xs text-amber-700 mt-0.5">
                   Your passport expires in <strong>{passportWarning} days</strong> — less than the 6-month minimum required by most international destinations. Please renew before travel.
                 </p>
@@ -260,7 +260,7 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-emerald-800">✅ No visa required for this itinerary.</p>
+                <p className="text-sm font-semibold text-emerald-800">✅ No visa required for this itinerary.</p>
                 <p className="text-xs text-emerald-600 mt-0.5">{form.nationality} nationals travel visa-free to {form.procedure_country}.</p>
               </div>
             </div>
@@ -270,10 +270,10 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-amber-800">⚠️ e-Visa required – click to apply</p>
+                <p className="text-sm font-semibold text-amber-800">⚠️ e-Visa required – click to apply</p>
                 <p className="text-xs text-amber-700 mt-0.5 mb-3">{form.nationality} nationals require an electronic visa for {form.procedure_country}. Apply online before your trip.</p>
                 <a href={evisaLink} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white"
                   style={{ background: 'linear-gradient(135deg, #92400e, #b45309)' }}>
                   Apply for e-Visa <ExternalLink className="w-3 h-3" />
                 </a>
@@ -285,11 +285,11 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
               <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-red-800">❌ Visa required (embassy visit)</p>
+                <p className="text-sm font-semibold text-red-800">❌ Visa required (embassy visit)</p>
                 <p className="text-xs text-red-700 mt-0.5 mb-3">{form.nationality} nationals must obtain a tourist visa from the {form.procedure_country} embassy before travel.</p>
                 <a href="https://www.iatatravelcentre.com/passport-visa-health-travel-document-requirements.htm"
                   target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white bg-red-700 hover:bg-red-800 transition-colors">
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-red-700 hover:bg-red-800 transition-colors">
                   View Embassy Guide <ExternalLink className="w-3 h-3" />
                 </a>
               </div>

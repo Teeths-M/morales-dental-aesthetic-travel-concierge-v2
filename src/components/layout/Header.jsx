@@ -162,7 +162,7 @@ export default function Header() {
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-95"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-95"
                   style={{ background: '#1A4E4E', color: '#FFFFFF', boxShadow: '0 2px 12px rgba(26,78,78,0.5)' }}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00-1.066 2.573c1.543.94 3.31.826 2.37 2.37a1.724 1.724 0 00-2.573 1.066c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-1.543-.94-3.31-.826-2.37-2.37a1.724 1.724 0 002.573-1.066c1.756-.426 1.756-2.924 0-3.35z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -172,7 +172,7 @@ export default function Header() {
               
               <Link 
                 to="/dashboard" 
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-95"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-95"
                 style={{ background: 'linear-gradient(135deg, #F2D045 0%, #F9E58B 100%)', color: '#0C1A1D', boxShadow: '0 4px 20px rgba(242,208,69,0.35)' }}
               >
                 Dashboard
@@ -196,7 +196,7 @@ export default function Header() {
               </Link>
               <Link 
                 to="/dashboard" 
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-95"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-95"
                 style={{ background: 'linear-gradient(135deg, #F2D045 0%, #F9E58B 100%)', color: '#0C1A1D', boxShadow: '0 4px 20px rgba(242,208,69,0.35)' }}
               >
                 Log In
@@ -208,7 +208,7 @@ export default function Header() {
 
       {/* 4. MOBILE HAMBURGER TOGGLE */}
       <div className="flex lg:hidden items-center space-x-4">
-        <Link to="/consultation" className="px-5 py-2.5 text-xs font-bold text-[#0C1A1D] bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] rounded-full shadow-lg" style={{ boxShadow: '0 4px 16px rgba(212,175,55,0.35)' }}>
+        <Link to="/consultation" className="px-5 py-2.5 text-xs font-semibold text-[#0C1A1D] bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] rounded-full shadow-lg" style={{ boxShadow: '0 4px 16px rgba(212,175,55,0.35)' }}>
           Begin
         </Link>
         <button 
@@ -290,7 +290,7 @@ export default function Header() {
                     setIsMobileMenuOpen(false);
                     window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: lang.toLowerCase() } }));
                   }}
-                  className={`px-3 py-1.5 font-mono text-[11px] rounded-lg ${currentLang === lang ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-black font-bold' : 'text-white/40 hover:text-white/60'}`}
+                  className={`px-3 py-1.5 font-mono text-[11px] rounded-lg ${currentLang === lang ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-gray-900 font-semibold' : 'text-white/40 hover:text-white/60'}`}
                 >
                   {lang}
                 </button>

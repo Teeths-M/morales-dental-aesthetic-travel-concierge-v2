@@ -99,14 +99,14 @@ export default function AdminProcedureRequests() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-slate-800 mb-1">Procedure Requests</h2>
+        <h2 className="text-lg font-semibold text-slate-800 mb-1">Procedure Requests</h2>
         <p className="text-xs text-slate-500">Review and approve new procedure submissions from doctors</p>
       </div>
 
       {/* Pending */}
       {pendingRequests.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wide">Pending Review</h3>
+          <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Pending Review</h3>
           {pendingRequests.map(req => (
             <Card key={req.id} className="border-amber-200 bg-amber-50/50">
               <CardHeader className="pb-3">
@@ -161,7 +161,7 @@ export default function AdminProcedureRequests() {
       {/* Reviewed */}
       {reviewedRequests.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wide">Recently Reviewed</h3>
+          <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Recently Reviewed</h3>
           {reviewedRequests.slice(0, 5).map(req => {
             const StatusIcon = statusIcons[req.status];
             return (

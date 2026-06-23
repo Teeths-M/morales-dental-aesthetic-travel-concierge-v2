@@ -48,7 +48,7 @@ function ConsultationRow({ c, onDelete }) {
             <p className="text-sm font-semibold text-slate-800">{c.procedure_interest?.replace(/_/g, ' ') || 'General Consultation'}</p>
             <p className="text-xs text-slate-400 mt-0.5">{c.preferred_date || 'Date TBD'} · {c.patient_name}</p>
           </div>
-          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.color}`}>{cfg.label}</span>
+          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.color}`}>{cfg.label}</span>
           {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
         </button>
         {expanded && (
@@ -58,12 +58,12 @@ function ConsultationRow({ c, onDelete }) {
           >
             <div className="grid sm:grid-cols-2 gap-3 mt-4">
               <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Notes</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">Notes</p>
                 <p className="text-xs text-slate-600">{c.notes || 'No notes recorded yet.'}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Risk Level</p>
-                <p className={`text-xs font-bold capitalize ${c.risk_level === 'high' ? 'text-red-600' : c.risk_level === 'medium' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">Risk Level</p>
+                <p className={`text-xs font-semibold capitalize ${c.risk_level === 'high' ? 'text-red-600' : c.risk_level === 'medium' ? 'text-amber-600' : 'text-emerald-600'}`}>
                   {c.risk_level || 'Low'} Risk
                 </p>
               </div>
@@ -178,7 +178,7 @@ export default function ConsultationsModule({ consultations = [] }) {
                 <p className="text-[11px] text-slate-400 mt-0.5">{r.note}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-xs font-bold text-emerald-700">{r.est}</p>
+                <p className="text-xs font-semibold text-emerald-700">{r.est}</p>
                 <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{r.risk} Risk</span>
               </div>
             </div>

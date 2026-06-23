@@ -154,13 +154,13 @@ export default function SafeT4LifeScanner({ userEmail }) {
               { tier: 'Critical', color: 'text-red-400', desc: 'Hard lock + concierge' },
             ].map(t => (
               <div key={t.tier} className="bg-white/5 border border-white/10 rounded-2xl px-3 py-3 text-center">
-                <p className={`text-sm font-bold ${t.color}`}>{t.tier}</p>
+                <p className={`text-sm font-semibold ${t.color}`}>{t.tier}</p>
                 <p className="text-[10px] text-white/50 mt-0.5">{t.desc}</p>
               </div>
             ))}
           </div>
           <button onClick={() => setPhase('intake')}
-            className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-2xl hover:opacity-90 transition-all inline-flex items-center gap-2">
+            className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-2xl hover:opacity-90 transition-all inline-flex items-center gap-2">
             Begin Patient Intake <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -168,11 +168,11 @@ export default function SafeT4LifeScanner({ userEmail }) {
           <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-bold text-emerald-800">Previous scan on file — PASSED ({existingCase.risk_score} Risk)</p>
+              <p className="text-sm font-semibold text-emerald-800">Previous scan on file — PASSED ({existingCase.risk_score} Risk)</p>
               <p className="text-xs text-emerald-600">You can re-run the scan if your medical profile has changed.</p>
             </div>
             <button onClick={() => setPhase('intake')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl hover:bg-emerald-200 transition-all">
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl hover:bg-emerald-200 transition-all">
               <RefreshCw className="w-3 h-3" /> Re-scan
             </button>
           </div>
@@ -190,7 +190,7 @@ export default function SafeT4LifeScanner({ userEmail }) {
             <Activity className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-800">Patient Telemetry Intake</p>
+            <p className="text-sm font-semibold text-slate-800">Patient Telemetry Intake</p>
             <p className="text-xs text-slate-400">Complete all sections for accurate risk scoring</p>
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function SafeT4LifeScanner({ userEmail }) {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             className="w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full" />
           <div>
-            <p className="font-bold text-sm">SAFE-T 4LIFE™ Automated Scan</p>
+            <p className="font-semibold text-sm">SAFE-T 4LIFE™ Automated Scan</p>
             <p className="text-white/50 text-xs">Analyzing your complete patient telemetry…</p>
           </div>
         </div>
@@ -281,15 +281,15 @@ export default function SafeT4LifeScanner({ userEmail }) {
                 <Icon className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">SAFE-T 4LIFE™ Result</p>
-                <h3 className="text-xl font-bold">{cfg.label}</h3>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70">SAFE-T 4LIFE™ Result</p>
+                <h3 className="text-xl font-semibold">{cfg.label}</h3>
                 <p className="text-white/70 text-xs">{cfg.sublabel}</p>
               </div>
             </div>
             {scanResult.status === 'WAIVER_SIGNED' && (
               <div className="bg-white/20 border border-white/30 rounded-xl px-3 py-2 text-center">
                 <CheckCircle2 className="w-5 h-5 text-white mx-auto mb-0.5" />
-                <p className="text-[10px] text-white/80 font-bold">Waiver Signed</p>
+                <p className="text-[10px] text-white/80 font-semibold">Waiver Signed</p>
               </div>
             )}
           </div>
@@ -312,7 +312,7 @@ export default function SafeT4LifeScanner({ userEmail }) {
 
           {scanResult.flags && scanResult.flags.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
                 {tier === 'LOW' ? 'Minor Observations' : 'Risk Factors Identified'}
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -345,7 +345,7 @@ export default function SafeT4LifeScanner({ userEmail }) {
               <RefreshCw className="w-3.5 h-3.5" /> Re-scan
             </button>
             {scanResult.status === 'PASSED' && (
-              <div className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold">
+              <div className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Cleared for Next Step
               </div>
             )}

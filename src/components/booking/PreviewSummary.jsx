@@ -16,7 +16,7 @@ function SummarySection({ icon: Icon, title, color = 'text-slate-500', children,
       >
         <div className="flex items-center gap-2">
           <Icon className={`w-4 h-4 ${color}`} />
-          <span className="text-sm font-bold text-slate-700">{title}</span>
+          <span className="text-sm font-semibold text-slate-700">{title}</span>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
       </button>
@@ -67,7 +67,7 @@ export default function PreviewSummary({ isOpen, form, onEdit, onSubmit, isSubmi
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-white text-base">Complete Consultation Summary</h2>
+              <h2 className="font-semibold text-white text-base">Complete Consultation Summary</h2>
               <p className="text-white/60 text-xs">SAFE-T 4LIFE™ · Medical Review Preparation</p>
             </div>
           </div>
@@ -184,8 +184,8 @@ export default function PreviewSummary({ isOpen, form, onEdit, onSubmit, isSubmi
               return (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-slate-600">Completion</span>
-                    <span className={`text-xs font-bold ${pct >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{pct}%</span>
+                    <span className="text-xs font-semibold text-slate-600">Completion</span>
+                    <span className={`text-xs font-semibold ${pct >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{pct}%</span>
                   </div>
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <motion.div
@@ -222,7 +222,7 @@ export default function PreviewSummary({ isOpen, form, onEdit, onSubmit, isSubmi
             ← Edit
           </Button>
           <Button
-            className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-bold text-sm px-6"
+            className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold text-sm px-6"
             onClick={onSubmit}
             disabled={isSubmitting}
           >

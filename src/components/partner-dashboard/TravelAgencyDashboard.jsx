@@ -16,7 +16,7 @@ export default function TravelAgencyDashboard({ agency, language }) {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-emerald-600 font-semibold mb-1">✈️ {language === 'es' ? 'Bienvenido' : language === 'fr' ? 'Bienvenue' : 'Welcome'}</p>
-            <h1 className="text-3xl font-display font-bold text-foreground">{agency.agency_name}</h1>
+            <h1 className="text-3xl font-display font-semibold text-foreground">{agency.agency_name}</h1>
             <p className="text-sm text-muted-foreground mt-2">
               {language === 'es'
                 ? `Sirviendo a ${agency.service_regions?.length || 0} regiones`
@@ -37,7 +37,7 @@ export default function TravelAgencyDashboard({ agency, language }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Este Mes' : language === 'fr' ? 'Ce Mois' : 'This Month'}</p>
-              <p className="text-2xl font-bold text-foreground">${agency.earnings_this_month || 0}</p>
+              <p className="text-2xl font-semibold text-foreground">${agency.earnings_this_month || 0}</p>
               <p className="text-xs text-muted-foreground mt-1">{language === 'es' ? 'Pendiente' : language === 'fr' ? 'En attente' : 'Pending'}</p>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function TravelAgencyDashboard({ agency, language }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Servicios' : language === 'fr' ? 'Services' : 'Services'}</p>
-              <p className="text-2xl font-bold text-foreground">{agency.services_offered?.length || 0}</p>
+              <p className="text-2xl font-semibold text-foreground">{agency.services_offered?.length || 0}</p>
               <p className="text-xs text-muted-foreground mt-1">{agency.services_offered?.join(', ')}</p>
             </div>
           </div>

@@ -161,7 +161,7 @@ Be calm, professional, and supportive. Never cause alarm beyond what is clinical
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-bold text-sm">SAFE-T 4LIFE™ Auto-Scan</p>
+            <p className="font-semibold text-sm">SAFE-T 4LIFE™ Auto-Scan</p>
             <p className="text-white/60 text-xs">Analyzing your consultation profile…</p>
           </div>
         </div>
@@ -203,11 +203,11 @@ Be calm, professional, and supportive. Never cause alarm beyond what is clinical
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div className="text-left">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">SAFE-T 4LIFE™ Auto-Scan</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">SAFE-T 4LIFE™ Auto-Scan</p>
               <div className="flex items-center gap-2 mt-0.5">
                 <Icon className={`w-4 h-4 ${cfg.iconColor}`} />
-                <span className={`text-sm font-bold ${cfg.color}`}>{cfg.label}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>
+                <span className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</span>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.badge}`}>
                   {result.confidence}% confidence
                 </span>
               </div>
@@ -251,7 +251,7 @@ Be calm, professional, and supportive. Never cause alarm beyond what is clinical
                 {/* Flags */}
                 {result.flags && result.flags.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Factors Identified</p>
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">Factors Identified</p>
                     <div className="space-y-1">
                       {result.flags.map((flag, i) => (
                         <div key={i} className="flex items-start gap-2">
@@ -266,7 +266,7 @@ Be calm, professional, and supportive. Never cause alarm beyond what is clinical
                 {/* Recommendations */}
                 {result.recommendations && result.recommendations.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Preparation Recommendations</p>
+                    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">Preparation Recommendations</p>
                     <div className="space-y-1">
                       {result.recommendations.map((rec, i) => (
                         <div key={i} className="flex items-start gap-2">

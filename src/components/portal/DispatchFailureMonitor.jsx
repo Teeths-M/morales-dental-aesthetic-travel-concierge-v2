@@ -88,7 +88,7 @@ export default function DispatchFailureMonitor() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-500" />
-          <span className="text-sm font-bold text-red-700">{failures.length} dispatch failure{failures.length !== 1 ? 's' : ''} require manual intervention</span>
+          <span className="text-sm font-semibold text-red-700">{failures.length} dispatch failure{failures.length !== 1 ? 's' : ''} require manual intervention</span>
         </div>
         <Button size="sm" variant="outline" onClick={fetchFailures} className="gap-1.5 h-7 text-xs">
           <RefreshCw className="w-3 h-3" /> Refresh
@@ -102,7 +102,7 @@ export default function DispatchFailureMonitor() {
             <div key={f.id} className="flex items-start gap-4 px-4 py-3 bg-white hover:bg-red-50 transition-colors">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${typeInfo.color}`}>{typeInfo.label}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeInfo.color}`}>{typeInfo.label}</span>
                   <span className="text-xs text-slate-500 font-mono">{f.pipeline_stage}</span>
                 </div>
                 <p className="text-sm font-semibold text-red-800 truncate">{f.error_message}</p>

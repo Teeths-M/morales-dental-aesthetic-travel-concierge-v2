@@ -165,7 +165,7 @@ export default function VaccinationTrackerTab({ procedureCountry }) {
                 <p className="text-sm text-slate-600">{requirements.country}</p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-emerald-700">{completionRate}%</div>
+                <div className="text-3xl font-semibold text-emerald-700">{completionRate}%</div>
                 <p className="text-xs text-slate-500">{completedVaccines.length} of {allVaccines.length}</p>
               </div>
             </div>

@@ -38,7 +38,7 @@ export default function QRCodeDisplay({ bag, onClose }) {
           <span className="text-2xl">🧳</span>
         </div>
 
-        <h3 className="font-bold text-gray-900 text-lg mb-1">{bag.bag_label || `Bag ${bag.bag_number}`}</h3>
+        <h3 className="font-semibold text-gray-900 text-lg mb-1">{bag.bag_label || `Bag ${bag.bag_number}`}</h3>
         <p className="text-xs text-gray-400 font-mono mb-6">{bag.token_code}</p>
 
         {/* QR Code */}

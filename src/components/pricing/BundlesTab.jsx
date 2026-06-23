@@ -85,7 +85,7 @@ export default function BundlesTab() {
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900">Procedure Bundles</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Procedure Bundles</h2>
           <p className="text-sm text-slate-600 mt-1">Create combo packages with special pricing</p>
         </div>
         <div className="overflow-x-auto">

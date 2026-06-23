@@ -22,7 +22,7 @@ import { BRAND } from '@/lib/brandTokens';
 
 const VARIANT_CONFIG = {
   danger:  { icon: Trash2,        iconBg: 'bg-red-500/10',    iconColor: 'text-red-400',    btnClass: 'bg-red-500 hover:bg-red-600 text-white' },
-  warning: { icon: AlertTriangle, iconBg: 'bg-amber-500/10',  iconColor: 'text-amber-400',  btnClass: 'bg-amber-500 hover:bg-amber-600 text-black' },
+  warning: { icon: AlertTriangle, iconBg: 'bg-amber-500/10',  iconColor: 'text-amber-400',  btnClass: 'bg-amber-500 hover:bg-amber-600 text-gray-900' },
   primary: { icon: Info,          iconBg: 'bg-blue-500/10',   iconColor: 'text-blue-400',   btnClass: 'text-[#060B16]' },
 };
 

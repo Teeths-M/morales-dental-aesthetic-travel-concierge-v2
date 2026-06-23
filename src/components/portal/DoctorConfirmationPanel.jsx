@@ -99,7 +99,7 @@ export default function DoctorConfirmationPanel({ workflow }) {
           </p>
           {isConfirmed && localQuotedPrice && (
             <p className="text-sm text-green-700 mt-1">
-              Quoted Price: <span className="font-bold">${Number(localQuotedPrice).toLocaleString()}</span>
+              Quoted Price: <span className="font-semibold">${Number(localQuotedPrice).toLocaleString()}</span>
             </p>
           )}
           {localNotes && (

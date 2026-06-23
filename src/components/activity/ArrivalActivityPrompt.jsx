@@ -59,7 +59,7 @@ export default function ArrivalActivityPrompt({ caseId }) {
                 <Mountain className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="font-bold text-slate-900 text-base leading-tight">Adventure Activities?</p>
+                <p className="font-semibold text-slate-900 text-base leading-tight">Adventure Activities?</p>
                 <p className="text-xs text-slate-500 mt-0.5">Now that you've arrived at your destination</p>
               </div>
             </div>

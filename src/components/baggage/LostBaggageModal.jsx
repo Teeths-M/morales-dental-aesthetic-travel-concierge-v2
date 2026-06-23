@@ -26,7 +26,7 @@ export default function LostBaggageModal({ bag, onClose }) {
             <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-7 h-7 text-red-600" />
             </div>
-            <h3 className="font-bold text-gray-900 text-xl text-center mb-2">Report Lost Baggage</h3>
+            <h3 className="font-semibold text-gray-900 text-xl text-center mb-2">Report Lost Baggage</h3>
             <p className="text-gray-500 text-sm text-center mb-2">
               Bag: <strong>{bag.bag_label || `Bag ${bag.bag_number}`}</strong>
             </p>
@@ -58,10 +58,10 @@ export default function LostBaggageModal({ bag, onClose }) {
             <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-7 h-7 text-emerald-600" />
             </div>
-            <h3 className="font-bold text-gray-900 text-xl text-center mb-2">Claim Filed Successfully</h3>
+            <h3 className="font-semibold text-gray-900 text-xl text-center mb-2">Claim Filed Successfully</h3>
             <div className="bg-gray-50 rounded-xl p-4 mb-4">
               <p className="text-xs text-gray-500 mb-1">Claim Reference</p>
-              <p className="font-mono font-bold text-gray-800 text-sm">{result.claim_reference}</p>
+              <p className="font-mono font-semibold text-gray-800 text-sm">{result.claim_reference}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4 mb-4 max-h-32 overflow-y-auto">
               <div className="flex items-center gap-2 mb-2">

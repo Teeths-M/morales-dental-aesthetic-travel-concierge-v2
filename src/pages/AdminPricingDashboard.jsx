@@ -33,7 +33,7 @@ export default function AdminPricingDashboard() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold font-display">Pricing Management</h1>
+          <h1 className="text-3xl font-semibold font-display">Pricing Management</h1>
           <p className="text-muted-foreground mt-1">Manage procedures, countries, doctor pricing, bundles, and markup rules</p>
         </div>
 

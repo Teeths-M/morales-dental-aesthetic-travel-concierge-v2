@@ -229,7 +229,7 @@ export default function TripOverview() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-500 mb-1">Total Package Price</p>
-                    <p className="text-3xl font-bold text-emerald-700">
+                    <p className="text-3xl font-semibold text-emerald-700">
                       {formatCurrency(selectedTrip.total_package_price || 0)}
                     </p>
                     {selectedTrip.amount_paid > 0 && (
@@ -245,7 +245,7 @@ export default function TripOverview() {
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-5">
                   <Shield className="w-6 h-6 text-emerald-600" />
-                  <h3 className="font-bold text-slate-800 text-lg">Your Verified Travel Partners</h3>
+                  <h3 className="font-semibold text-slate-800 text-lg">Your Verified Travel Partners</h3>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -263,7 +263,7 @@ export default function TripOverview() {
                                 <Plane className="w-6 h-6 text-emerald-400" />
                               </div>
                               <div>
-                                <h4 className="font-bold text-white text-lg">
+                                <h4 className="font-semibold text-white text-lg">
                                   {selectedTrip.travel_agency.agency_name}
                                 </h4>
                                 <p className="text-xs text-emerald-300/80">Travel Agency</p>
@@ -337,7 +337,7 @@ export default function TripOverview() {
                                 <Car className="w-6 h-6 text-blue-400" />
                               </div>
                               <div>
-                                <h4 className="font-bold text-white text-lg">
+                                <h4 className="font-semibold text-white text-lg">
                                   {selectedTrip.chauffeur.company_name || selectedTrip.chauffeur.driver_name}
                                 </h4>
                                 <p className="text-xs text-blue-300/80">Ground Transportation</p>
@@ -408,7 +408,7 @@ export default function TripOverview() {
                                 <Heart className="w-6 h-6 text-violet-400" />
                               </div>
                               <div>
-                                <h4 className="font-bold text-white text-lg">
+                                <h4 className="font-semibold text-white text-lg">
                                   {selectedTrip.companion.name}
                                 </h4>
                                 <p className="text-xs text-violet-300/80">
@@ -468,7 +468,7 @@ export default function TripOverview() {
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-5">
                     <FileText className="w-6 h-6 text-blue-600" />
-                    <h3 className="font-bold text-slate-800 text-lg">Included Services</h3>
+                    <h3 className="font-semibold text-slate-800 text-lg">Included Services</h3>
                   </div>
 
                   <div className="grid sm:grid-cols-3 gap-3">

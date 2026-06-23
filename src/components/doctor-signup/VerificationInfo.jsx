@@ -80,7 +80,7 @@ export default function VerificationInfo({ language = 'en' }) {
           <Shield className="w-5 h-5 text-blue-600" />
         </div>
         <div>
-          <h3 className="font-bold text-slate-900 mb-1">{t.title}</h3>
+          <h3 className="font-semibold text-slate-900 mb-1">{t.title}</h3>
           <p className="text-sm text-slate-600">{t.description}</p>
         </div>
       </div>

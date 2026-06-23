@@ -39,7 +39,7 @@ export default function DoctorCard({ doctor }) {
               <img src={doctor.photo_url} alt={doctor.full_name} className="w-14 h-14 rounded-xl object-cover" />
             ) : (
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                <span className="text-primary font-display font-bold text-lg">{initials}</span>
+                <span className="text-primary font-display font-semibold text-lg">{initials}</span>
               </div>
             )}
           </div>

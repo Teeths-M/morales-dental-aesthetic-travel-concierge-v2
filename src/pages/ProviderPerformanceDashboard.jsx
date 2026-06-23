@@ -189,7 +189,7 @@ export default function ProviderPerformanceDashboard() {
     <AdminLayout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold font-display">Provider Performance</h1>
+          <h1 className="text-3xl font-semibold font-display">Provider Performance</h1>
           <p className="text-muted-foreground mt-1">Average patient feedback ratings and consultation response times by provider</p>
         </div>
 
@@ -202,7 +202,7 @@ export default function ProviderPerformanceDashboard() {
                   <Star className="w-5 h-5 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{overallAvgRating}</p>
+                  <p className="text-2xl font-semibold">{overallAvgRating}</p>
                   <p className="text-xs text-muted-foreground">Platform Avg Rating</p>
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function ProviderPerformanceDashboard() {
                   <Clock className="w-5 h-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{overallAvgResponse !== null ? `${overallAvgResponse}h` : '—'}</p>
+                  <p className="text-2xl font-semibold">{overallAvgResponse !== null ? `${overallAvgResponse}h` : '—'}</p>
                   <p className="text-xs text-muted-foreground">Avg Response Time</p>
                 </div>
               </div>
@@ -228,7 +228,7 @@ export default function ProviderPerformanceDashboard() {
                   <Award className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{topRated}</p>
+                  <p className="text-2xl font-semibold">{topRated}</p>
                   <p className="text-xs text-muted-foreground">Top Rated (≥4.5★)</p>
                 </div>
               </div>
@@ -241,7 +241,7 @@ export default function ProviderPerformanceDashboard() {
                   <Users className="w-5 h-5 text-violet-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{allProviders.length}</p>
+                  <p className="text-2xl font-semibold">{allProviders.length}</p>
                   <p className="text-xs text-muted-foreground">Active Providers</p>
                 </div>
               </div>

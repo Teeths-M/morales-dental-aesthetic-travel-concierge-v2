@@ -101,7 +101,7 @@ export default function KYPVerificationPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+          <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
             <Lock className="w-4 h-4 text-violet-600" /> Know Your Partner (KYP) Framework
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">Sanctions screening · Document forensics · AI risk scoring</p>
@@ -117,7 +117,7 @@ export default function KYPVerificationPanel() {
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="bg-white rounded-2xl border border-violet-200 shadow-sm p-5">
-            <p className="text-xs font-bold text-slate-700 mb-3">New KYP Verification</p>
+            <p className="text-xs font-semibold text-slate-700 mb-3">New KYP Verification</p>
             <div className="grid sm:grid-cols-2 gap-3 mb-3">
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Partner Name *</label>
@@ -182,10 +182,10 @@ export default function KYPVerificationPanel() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-800 text-sm">{rec.partner_name}</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${statusCfg.color}`}>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${statusCfg.color}`}>
                         <StatusIcon className="w-3 h-3" />{statusCfg.label}
                       </span>
-                      {rec.human_review_required && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Manual Review</span>}
+                      {rec.human_review_required && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Manual Review</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">{rec.partner_type} · {rec.partner_email}</p>
                   </div>
@@ -204,13 +204,13 @@ export default function KYPVerificationPanel() {
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div className="bg-slate-50 rounded-xl px-3 py-2.5">
                         <p className="text-slate-500 font-semibold mb-1">Sanctions Check</p>
-                        <p className={`font-bold ${SANCTIONS_CONFIG[rec.sanctions_check_status]?.color}`}>
+                        <p className={`font-semibold ${SANCTIONS_CONFIG[rec.sanctions_check_status]?.color}`}>
                           {SANCTIONS_CONFIG[rec.sanctions_check_status]?.label || '—'}
                         </p>
                       </div>
                       <div className="bg-slate-50 rounded-xl px-3 py-2.5">
                         <p className="text-slate-500 font-semibold mb-1">Document Forensics</p>
-                        <p className={`font-bold ${FORENSICS_CONFIG[rec.document_forensics_status]?.color}`}>
+                        <p className={`font-semibold ${FORENSICS_CONFIG[rec.document_forensics_status]?.color}`}>
                           {FORENSICS_CONFIG[rec.document_forensics_status]?.label || '—'}
                         </p>
                       </div>
@@ -218,7 +218,7 @@ export default function KYPVerificationPanel() {
 
                     {rec.ai_risk_flags?.length > 0 && (
                       <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-                        <p className="text-xs font-bold text-amber-800 mb-1">Risk Flags</p>
+                        <p className="text-xs font-semibold text-amber-800 mb-1">Risk Flags</p>
                         <div className="flex flex-wrap gap-1">
                           {rec.ai_risk_flags.map(f => (
                             <span key={f} className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">{f}</span>
@@ -234,7 +234,7 @@ export default function KYPVerificationPanel() {
                     {/* Audit trail */}
                     {rec.audit_trail?.length > 0 && (
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Audit Trail</p>
+                        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Audit Trail</p>
                         {rec.audit_trail.map((entry, i) => (
                           <div key={i} className="flex items-start gap-2 text-[10px] text-slate-500">
                             <span className="text-slate-400 flex-shrink-0">{entry.timestamp ? new Date(entry.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}</span>

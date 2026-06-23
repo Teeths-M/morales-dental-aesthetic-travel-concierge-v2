@@ -149,10 +149,10 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="bg-blue-900/40 border-2 border-blue-500 rounded-2xl p-6 text-center">
             <Car className="w-10 h-10 text-blue-400 mx-auto mb-3" />
-            <p className="text-white font-bold text-lg mb-1">Recovery Transport Requested</p>
+            <p className="text-white font-semibold text-lg mb-1">Recovery Transport Requested</p>
             <p className="text-blue-300 text-sm mb-4">Show this code to your driver before getting in.</p>
             <button onClick={copyCode}
-              className="inline-flex items-center gap-2 bg-white text-blue-900 font-bold text-2xl px-8 py-4 rounded-2xl mx-auto hover:bg-blue-50">
+              className="inline-flex items-center gap-2 bg-white text-blue-900 font-semibold text-2xl px-8 py-4 rounded-2xl mx-auto hover:bg-blue-50">
               {visualCode} <Copy className="w-5 h-5" />
             </button>
             <p className="text-blue-400 text-xs mt-3">
@@ -178,7 +178,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
 
         {/* Emergency contacts */}
         <div className="bg-slate-800/60 border border-red-700/30 rounded-2xl p-4">
-          <p className="text-xs font-bold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <p className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Phone className="w-3.5 h-3.5" />Emergency Numbers
           </p>
           <div className="space-y-2">
@@ -199,7 +199,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
         {/* Accommodation */}
         {(caseRecord?.hotel_name || caseRecord?.hotel_address) && (
           <div className="bg-slate-800/60 border border-slate-700/40 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-2">
               <Hotel className="w-3.5 h-3.5" />Your Accommodation
             </p>
             {caseRecord.hotel_name && <p className="text-white font-semibold">{caseRecord.hotel_name}</p>}
@@ -219,7 +219,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
         {/* Emergency docs */}
         {vaults.length > 0 && (
           <div className="bg-slate-800/60 border border-slate-700/40 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-2">
               <FileText className="w-3.5 h-3.5" />Emergency Documents ({vaults.length})
             </p>
             <div className="space-y-2">
@@ -254,7 +254,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
 
         {/* Guardian instructions */}
         <div className="bg-slate-800/60 border border-violet-700/30 rounded-2xl p-4">
-          <p className="text-xs font-bold text-violet-400 uppercase tracking-wide mb-2 flex items-center gap-2">
+          <p className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-2 flex items-center gap-2">
             <Eye className="w-3.5 h-3.5" />Guardian / Emergency Contact
           </p>
           <p className="text-slate-300 text-sm">
@@ -270,7 +270,7 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
       {/* Recovery Transport Section */}
       {step !== 'transport_success' && (
         <div className="bg-gradient-to-br from-blue-900/40 to-slate-800/60 border border-blue-700/40 rounded-2xl p-4">
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Car className="w-3.5 h-3.5" />Emergency Recovery Transport
           </p>
           <p className="text-slate-300 text-sm mb-4">

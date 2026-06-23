@@ -83,7 +83,7 @@ export default function RecoveryTab() {
                 <div key={item.label} className="flex items-start gap-3 bg-slate-50 rounded-xl px-3 py-3">
                   <Icon className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-bold text-slate-700">{item.label}</p>
+                    <p className="text-xs font-semibold text-slate-700">{item.label}</p>
                     <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{item.instruction}</p>
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export default function RecoveryTab() {
                   <button
                     key={n}
                     onClick={() => setPainLevel(n)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold border transition-all
+                    className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-all
                       ${painLevel === n ?
                         (n <= 3 ? 'bg-emerald-600 text-white border-emerald-600' :
                          n <= 6 ? 'bg-amber-500 text-white border-amber-500' :
@@ -145,7 +145,7 @@ export default function RecoveryTab() {
               <button
                 onClick={() => setSubmitted(true)}
                 disabled={painLevel === null || mood === null}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold rounded-xl py-3 transition-all"
+                className="w-full bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-semibold rounded-xl py-3 transition-all"
               >
                 Submit Daily Check-In
               </button>
@@ -211,7 +211,7 @@ export default function RecoveryTab() {
                c.type === 'hospital' ? <Hospital className="w-4 h-4 text-blue-500 flex-shrink-0" /> :
                <Phone className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
               <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{c.label}</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{c.label}</p>
                 <p className="text-xs font-semibold text-slate-800">{c.value}</p>
               </div>
             </div>

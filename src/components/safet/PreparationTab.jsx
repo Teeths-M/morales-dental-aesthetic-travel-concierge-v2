@@ -127,14 +127,14 @@ export default function PreparationTab() {
         <div className="space-y-5">
           {prepChecklist.map((section) => (
             <div key={section.category}>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{section.category}</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">{section.category}</p>
               <div className="space-y-1.5">
                 {section.items.map((item) => (
                   <div key={item.label} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border
                     ${item.done ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
                     <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${item.done ? 'text-emerald-600' : 'text-slate-200'}`} />
                     <p className={`text-xs font-medium ${item.done ? 'text-emerald-800' : 'text-slate-600'}`}>{item.label}</p>
-                    {!item.done && <span className="ml-auto text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">To Do</span>}
+                    {!item.done && <span className="ml-auto text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">To Do</span>}
                   </div>
                 ))}
               </div>
@@ -163,7 +163,7 @@ export default function PreparationTab() {
                 <div key={t.label} className={`flex items-start gap-3 rounded-xl px-3 py-3 ${c.bg}`}>
                   <Icon className={`w-4 h-4 ${c.icon} flex-shrink-0 mt-0.5`} />
                   <div>
-                    <p className={`text-[10px] font-bold uppercase tracking-wide ${c.text}`}>{t.label}</p>
+                    <p className={`text-[10px] font-semibold uppercase tracking-wide ${c.text}`}>{t.label}</p>
                     <p className="text-xs text-slate-600 mt-0.5">{t.value}</p>
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export default function PreparationTab() {
                 <div key={r.label} className={`flex items-start gap-3 rounded-xl px-3 py-3 ${c.bg}`}>
                   <Icon className={`w-4 h-4 ${c.text} flex-shrink-0 mt-0.5`} />
                   <div>
-                    <p className={`text-xs font-bold ${c.text}`}>{r.label}</p>
+                    <p className={`text-xs font-semibold ${c.text}`}>{r.label}</p>
                     <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{r.tip}</p>
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function PreparationTab() {
                 <CheckCircle2 className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
                 <p className="text-xs text-slate-700 flex-1">{p.item}</p>
                 {p.essential && (
-                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Essential</span>
+                  <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Essential</span>
                 )}
               </div>
             ))}

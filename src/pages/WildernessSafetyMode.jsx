@@ -54,8 +54,8 @@ export default function WildernessSafetyMode() {
                 <TreePine className="w-7 h-7 text-green-400" />
               </div>
               <div>
-                <p className="text-green-400 text-xs font-bold uppercase tracking-widest">Canopy Collapse Protocol</p>
-                <h1 className="text-2xl font-bold text-white">Wilderness Safety Mode</h1>
+                <p className="text-green-400 text-xs font-semibold uppercase tracking-widest">Canopy Collapse Protocol</p>
+                <h1 className="text-2xl font-semibold text-white">Wilderness Safety Mode</h1>
               </div>
             </div>
             <div className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${
@@ -92,7 +92,7 @@ export default function WildernessSafetyMode() {
               className="bg-red-900/40 border-2 border-red-500/60 rounded-2xl px-5 py-4 flex items-start gap-3">
               <WifiOff className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-red-300 font-bold text-sm">You are offline</p>
+                <p className="text-red-300 font-semibold text-sm">You are offline</p>
                 <p className="text-red-400 text-xs mt-1">
                   GPS still works. Create an SOS packet below and send via SMS if you have cellular signal.
                   When internet returns, Morales will sync automatically.
@@ -113,7 +113,7 @@ export default function WildernessSafetyMode() {
 
         {/* Info footer */}
         <div className="bg-slate-900/60 border border-slate-700/40 rounded-2xl p-5 space-y-2 text-xs text-slate-500">
-          <p className="font-bold text-slate-400 text-[11px] uppercase tracking-wider">How this works</p>
+          <p className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">How this works</p>
           <p>• <strong className="text-slate-300">GPS</strong> captures your location using hardware — works without internet.</p>
           <p>• <strong className="text-slate-300">SOS packet</strong> is stored locally the moment you press Emergency SOS.</p>
           <p>• <strong className="text-slate-300">SMS fallback</strong> opens your phone's SMS app with a pre-filled rescue message. You must press Send. SMS requires cellular signal.</p>

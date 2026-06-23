@@ -153,7 +153,7 @@ export default function DeepPerfection() {
         {/* Header */}
         <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-emerald-200">
           <div>
-            <h1 className="text-3xl font-bold text-emerald-950 mb-1">
+            <h1 className="text-3xl font-semibold text-emerald-950 mb-1">
               MORALES <span className="text-lg font-normal">Deep Perfection</span>
             </h1>
             <p className="text-sm text-emerald-700">Agentic AI Concierge with Governance Layer</p>
@@ -235,10 +235,10 @@ export default function DeepPerfection() {
                       transition={{ delay: idx * 0.1 }}
                       className="bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all"
                     >
-                      <div className="text-3xl font-bold text-emerald-600 mb-2">
+                      <div className="text-3xl font-semibold text-emerald-600 mb-2">
                         {Math.round(match.score)}% match
                       </div>
-                      <h3 className="text-xl font-bold text-emerald-900 mb-3">
+                      <h3 className="text-xl font-semibold text-emerald-900 mb-3">
                         {match.name}
                       </h3>
                       <p className="text-sm text-slate-600 mb-4 leading-relaxed">
@@ -273,7 +273,7 @@ export default function DeepPerfection() {
 
         {/* Basket */}
         <div className="bg-emerald-50 rounded-3xl p-8">
-          <h3 className="text-xl font-bold text-emerald-900 mb-4">🛒 Your Consultation Basket</h3>
+          <h3 className="text-xl font-semibold text-emerald-900 mb-4">🛒 Your Consultation Basket</h3>
           {basket.length > 0 ? (
             <div className="flex flex-wrap gap-3">
               {basket.map((item) => (

@@ -113,7 +113,7 @@ export default function VisaAIChat() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-6">
-        <h2 className="font-display text-2xl font-bold text-slate-800">AI Visa Assistant</h2>
+        <h2 className="font-display text-2xl font-semibold text-slate-800">AI Visa Assistant</h2>
         <p className="text-slate-500 text-sm mt-1">Ask anything about visas, documents, or travel requirements</p>
       </div>
 
@@ -122,10 +122,10 @@ export default function VisaAIChat() {
         {/* Header */}
         <div className="flex items-center gap-3 p-4 border-b border-slate-100 bg-gradient-to-r from-blue-600 to-emerald-600">
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-sm">AI</span>
+            <span className="text-white font-semibold text-sm">AI</span>
           </div>
           <div>
-            <p className="text-white font-bold text-sm">SAFE-T VISA ASSIST™</p>
+            <p className="text-white font-semibold text-sm">SAFE-T VISA ASSIST™</p>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
               <p className="text-white/70 text-xs">Online & Ready</p>
@@ -154,7 +154,7 @@ export default function VisaAIChat() {
               >
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-xs font-bold">AI</span>
+                    <span className="text-white text-xs font-semibold">AI</span>
                   </div>
                 )}
                 <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
@@ -182,7 +182,7 @@ export default function VisaAIChat() {
               className="flex gap-2.5 justify-start"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-bold">AI</span>
+                <span className="text-white text-xs font-semibold">AI</span>
               </div>
               <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
                 <div className="flex gap-1.5 items-center">

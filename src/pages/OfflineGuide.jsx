@@ -4,7 +4,7 @@ import { WifiOff, AlertTriangle, Shield, Smartphone, MessageSquare, Download, Ar
 
 const Step = ({ number, title, children }) => (
   <div className="flex gap-4">
-    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">{number}</div>
+    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 mt-0.5">{number}</div>
     <div>
       <p className="text-white font-semibold mb-1">{title}</p>
       <div className="text-slate-400 text-sm leading-relaxed">{children}</div>
@@ -18,7 +18,7 @@ const Section = ({ icon: Icon, color, title, children }) => (
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
         <Icon className="w-5 h-5" />
       </div>
-      <h2 className="text-white font-bold text-lg">{title}</h2>
+      <h2 className="text-white font-semibold text-lg">{title}</h2>
     </div>
     <div className="space-y-4">{children}</div>
   </div>
@@ -42,7 +42,7 @@ export default function OfflineGuide() {
           <div className="w-16 h-16 bg-blue-900/50 border border-blue-700/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <WifiOff className="w-8 h-8 text-blue-400" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">No Signal? No Problem.</h1>
+          <h1 className="text-3xl font-semibold text-white mb-2">No Signal? No Problem.</h1>
           <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
             Everything you need to stay safe and access your documents even when you have no internet connection.
           </p>

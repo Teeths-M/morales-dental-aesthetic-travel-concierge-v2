@@ -56,7 +56,7 @@ function AccountTypeCard({ type, isSelected, onSelect, icon: Icon, title, descri
         }`}>
           <Icon className="w-6 h-6" />
         </div>
-        <h3 className="font-bold text-lg">{title}</h3>
+        <h3 className="font-semibold text-lg">{title}</h3>
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </button>

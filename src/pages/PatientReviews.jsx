@@ -47,7 +47,7 @@ export default function PatientReviews() {
                 <Star className="w-8 h-8 text-emerald-600 fill-emerald-400" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-slate-900">{avgRating} <span className="text-base font-normal text-slate-500">/ 5</span></p>
+                <p className="text-3xl font-semibold text-slate-900">{avgRating} <span className="text-base font-normal text-slate-500">/ 5</span></p>
                 <p className="text-sm text-slate-600">Average across {surveys.length} review{surveys.length !== 1 ? 's' : ''}</p>
               </div>
             </CardContent>

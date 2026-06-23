@@ -60,7 +60,7 @@ export default function AdminWorkflowDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground">IQ200 Admin Center</h1>
+            <h1 className="text-3xl font-display font-semibold text-foreground">IQ200 Admin Center</h1>
             <p className="text-muted-foreground">Medical Travel Coordination Platform</p>
           </div>
           <Button onClick={() => refetch()} variant="outline">
@@ -79,7 +79,7 @@ export default function AdminWorkflowDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">TOTAL CASES</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-2xl font-semibold">{stats.total}</p>
                 </div>
               </div>
             </CardContent>
@@ -93,7 +93,7 @@ export default function AdminWorkflowDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">SUBMITTED</p>
-                  <p className="text-2xl font-bold">{stats.submitted}</p>
+                  <p className="text-2xl font-semibold">{stats.submitted}</p>
                 </div>
               </div>
             </CardContent>
@@ -107,7 +107,7 @@ export default function AdminWorkflowDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">IN PROGRESS</p>
-                  <p className="text-2xl font-bold">{stats.inProgress}</p>
+                  <p className="text-2xl font-semibold">{stats.inProgress}</p>
                 </div>
               </div>
             </CardContent>
@@ -121,7 +121,7 @@ export default function AdminWorkflowDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">COMPLETED</p>
-                  <p className="text-2xl font-bold">{stats.completed}</p>
+                  <p className="text-2xl font-semibold">{stats.completed}</p>
                 </div>
               </div>
             </CardContent>
@@ -135,7 +135,7 @@ export default function AdminWorkflowDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">BLOCKED</p>
-                  <p className="text-2xl font-bold">{stats.blocked}</p>
+                  <p className="text-2xl font-semibold">{stats.blocked}</p>
                 </div>
               </div>
             </CardContent>

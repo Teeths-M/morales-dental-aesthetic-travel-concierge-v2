@@ -42,7 +42,7 @@ export default function VisaHero() {
             className="inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-5 py-2 mb-8"
           >
             <Shield className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/70">SAFE-T VISA ASSIST™</span>
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/70">SAFE-T VISA ASSIST™</span>
             <span className="w-px h-3 bg-white/20" />
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -57,7 +57,7 @@ export default function VisaHero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="font-display text-4xl lg:text-6xl font-bold mb-5 leading-[1.1] tracking-tight"
+            className="font-display text-4xl lg:text-6xl font-semibold mb-5 leading-[1.1] tracking-tight"
           >
             {language === 'es' ? 'Tu Compañero de Viaje Médico Inteligente' : language === 'fr' ? 'Votre Compagnon Médical de Voyage Intelligent' : 'Your Intelligent Medical Travel Companion'}
             {language === 'es' ? '' : language === 'fr' ? '' : <span className="block bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent"></span>}
@@ -87,7 +87,7 @@ export default function VisaHero() {
              ].map((s, i) => (
               <div key={s.label} className={`flex flex-col items-center px-8 py-4 ${i < 3 ? 'border-r border-white/10' : ''}`}>
                 <div className="text-blue-400 mb-1.5">{s.icon}</div>
-                <div className="text-xl font-bold text-white">{s.value}</div>
+                <div className="text-xl font-semibold text-white">{s.value}</div>
                 <div className="text-xs text-white/40 mt-0.5 tracking-wide">{s.label}</div>
               </div>
             ))}

@@ -94,7 +94,7 @@ export default function TravelAddOnBuilder({ caseId, onSaved }) {
           <div className="flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-amber-500" />
             <div>
-              <p className="font-bold text-slate-800 text-sm">☮️ Peace of Mind Bundle</p>
+              <p className="font-semibold text-slate-800 text-sm">☮️ Peace of Mind Bundle</p>
               <p className="text-xs text-slate-500 mt-0.5">Full-tier coverage: transfers + companion + nutrition + insurance + Safe-T baseline</p>
             </div>
           </div>
@@ -121,7 +121,7 @@ export default function TravelAddOnBuilder({ caseId, onSaved }) {
         <div className="space-y-5">
           {Object.entries(grouped).map(([cat, addons]) => (
             <div key={cat}>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">{CATEGORY_LABELS[cat] || cat}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{CATEGORY_LABELS[cat] || cat}</p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {addons.map(addon => {
                   const isSelected = selected.has(addon.id);
@@ -133,7 +133,7 @@ export default function TravelAddOnBuilder({ caseId, onSaved }) {
                         <Icon className={`w-4 h-4 ${isSelected ? 'text-blue-600' : 'text-slate-500'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-bold ${isSelected ? 'text-blue-800' : 'text-slate-800'}`}>{addon.label}</p>
+                        <p className={`text-xs font-semibold ${isSelected ? 'text-blue-800' : 'text-slate-800'}`}>{addon.label}</p>
                         <p className="text-[10px] text-slate-500">{addon.desc}</p>
                       </div>
                       <div className="text-right flex-shrink-0">

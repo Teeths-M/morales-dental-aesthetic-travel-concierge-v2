@@ -105,7 +105,7 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
       {/* Blocked Cases - Priority */}
       {casesByStatus.blocked.length > 0 && (
         <section>
-          <h3 className="text-sm font-bold text-red-700 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
             <AlertCircle className="w-4 h-4" />
             Blocked Cases (Requires Review)
           </h3>
@@ -131,7 +131,7 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
       {/* Needs Doctor Assignment */}
       {casesByStatus.needsDoctor.length > 0 && (
         <section>
-          <h3 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-violet-700 mb-3 flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
             Ready for Doctor Assignment
           </h3>
@@ -157,7 +157,7 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
       {/* In Progress */}
       {casesByStatus.inProgress.length > 0 && (
         <section>
-          <h3 className="text-sm font-bold text-amber-700 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             In Progress
           </h3>
@@ -183,7 +183,7 @@ export default function SimpleCaseList({ cases, isLoading, onRefresh }) {
       {/* Completed */}
       {casesByStatus.completed.length > 0 && (
         <section>
-          <h3 className="text-sm font-bold text-emerald-700 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-emerald-700 mb-3 flex items-center gap-2">
             <CheckCircle className="w-4 h-4" />
             Completed
           </h3>

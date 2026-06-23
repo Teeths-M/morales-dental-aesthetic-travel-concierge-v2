@@ -66,7 +66,7 @@ export default function ProcedureRequestForm({ onSuccess }) {
           <PlusCircle className="w-4 h-4 text-emerald-700" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Request New Procedure</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Request New Procedure</h3>
           <p className="text-xs text-slate-500">Add a procedure to the Master catalog</p>
         </div>
       </div>

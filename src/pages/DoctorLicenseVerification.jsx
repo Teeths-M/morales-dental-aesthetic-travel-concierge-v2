@@ -98,7 +98,7 @@ export default function DoctorLicenseVerification() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Doctor License Verification</h1>
+            <h1 className="text-3xl font-semibold font-display">Doctor License Verification</h1>
             <p className="text-muted-foreground mt-1">
               AI-powered document verification with manual review
             </p>
@@ -113,7 +113,7 @@ export default function DoctorLicenseVerification() {
             <Card className="border-0 shadow-md">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.total}</p>
                   <p className="text-xs text-slate-500">Total</p>
                 </div>
               </CardContent>
@@ -121,7 +121,7 @@ export default function DoctorLicenseVerification() {
             <Card className="border-0 shadow-md">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-600">{stats.pending}</p>
+                  <p className="text-2xl font-semibold text-slate-600">{stats.pending}</p>
                   <p className="text-xs text-slate-500">Pending</p>
                 </div>
               </CardContent>
@@ -129,7 +129,7 @@ export default function DoctorLicenseVerification() {
             <Card className="border-0 shadow-md bg-green-50">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{stats.ai_verified}</p>
+                  <p className="text-2xl font-semibold text-green-600">{stats.ai_verified}</p>
                   <p className="text-xs text-green-600">AI Verified</p>
                 </div>
               </CardContent>
@@ -137,7 +137,7 @@ export default function DoctorLicenseVerification() {
             <Card className="border-0 shadow-md bg-amber-50">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-amber-600">{stats.manual_review}</p>
+                  <p className="text-2xl font-semibold text-amber-600">{stats.manual_review}</p>
                   <p className="text-xs text-amber-600">Needs Review</p>
                 </div>
               </CardContent>
@@ -145,7 +145,7 @@ export default function DoctorLicenseVerification() {
             <Card className="border-0 shadow-md bg-emerald-50">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-emerald-600">{stats.verified}</p>
+                  <p className="text-2xl font-semibold text-emerald-600">{stats.verified}</p>
                   <p className="text-xs text-emerald-600">Verified</p>
                 </div>
               </CardContent>
@@ -153,7 +153,7 @@ export default function DoctorLicenseVerification() {
             <Card className="border-0 shadow-md bg-red-50">
               <CardContent className="pt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+                  <p className="text-2xl font-semibold text-red-600">{stats.rejected}</p>
                   <p className="text-xs text-red-600">Rejected</p>
                 </div>
               </CardContent>

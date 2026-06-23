@@ -57,7 +57,7 @@ export default function AdminTravelRequests() {
           <div className="flex items-center gap-3">
             <div className="px-4 py-2 rounded-xl bg-emerald-500/20 border border-emerald-400/30">
               <p className="text-emerald-200 text-xs">Total Revenue</p>
-              <p className="text-emerald-100 font-bold text-lg">
+              <p className="text-emerald-100 font-semibold text-lg">
                 ${requests.reduce((sum, r) => sum + (r.profit || 0), 0).toLocaleString()}
               </p>
             </div>
@@ -88,7 +88,7 @@ export default function AdminTravelRequests() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <h3 className="text-white font-semibold text-lg">{req.user_name}</h3>
-                        <span className={`text-xs font-bold px-3 py-1 rounded-full border ${STATUS_COLORS[req.package_status]}`}>
+                        <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${STATUS_COLORS[req.package_status]}`}>
                           {req.package_status.replace('_', ' ').toUpperCase()}
                         </span>
                       </div>
@@ -127,7 +127,7 @@ export default function AdminTravelRequests() {
                     <div className="flex items-center gap-6 pt-4 border-t border-white/10">
                       <div>
                         <p className="text-white/50 text-xs">Package Total</p>
-                        <p className="text-lg font-bold text-emerald-300">${req.total_package_price?.toLocaleString() || '0'}</p>
+                        <p className="text-lg font-semibold text-emerald-300">${req.total_package_price?.toLocaleString() || '0'}</p>
                       </div>
                       <div>
                         <p className="text-white/50 text-xs">Deposit</p>

@@ -63,7 +63,7 @@ export default function PricingSidebar({ items, selectedCountry = null }) {
     >
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4">
-        <h3 className="text-white font-bold text-sm flex items-center gap-2">
+        <h3 className="text-white font-semibold text-sm flex items-center gap-2">
           <DollarSign className="w-4 h-4" />
           Estimated Cost
         </h3>
@@ -78,12 +78,12 @@ export default function PricingSidebar({ items, selectedCountry = null }) {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-600">From</span>
-              <span className="text-lg font-bold text-emerald-700">${quote.estimatedTotalLow.toLocaleString()}</span>
+              <span className="text-lg font-semibold text-emerald-700">${quote.estimatedTotalLow.toLocaleString()}</span>
             </div>
             <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full"></div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-600">To (seasonal)</span>
-              <span className="text-lg font-bold text-emerald-700">${quote.estimatedTotalHigh.toLocaleString()}</span>
+              <span className="text-lg font-semibold text-emerald-700">${quote.estimatedTotalHigh.toLocaleString()}</span>
             </div>
           </div>
         </div>

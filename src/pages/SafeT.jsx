@@ -103,7 +103,7 @@ export default function SafeT() {
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-2xl lg:text-3xl text-slate-900">SAFE-T 4LIFE™</h1>
-                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-widest">
                   {language === 'es' ? 'Sistema de Seguridad de Salud IA' : language === 'fr' ? 'Système de Sécurité Sanitaire IA' : 'AI Health Safety System'}
                 </span>
               </div>

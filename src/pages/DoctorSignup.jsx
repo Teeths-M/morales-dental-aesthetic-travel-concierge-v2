@@ -167,7 +167,7 @@ export default function DoctorSignup() {
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9h-3V8.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5V11h-3c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h3v2.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V12.5h3c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z"/>
             </svg>
           </div>
-          <h1 className="text-4xl font-display font-bold text-foreground mb-2">SAFE-T 4LIFE™</h1>
+          <h1 className="text-4xl font-display font-semibold text-foreground mb-2">SAFE-T 4LIFE™</h1>
           <p className="text-muted-foreground">Doctor Sign-Up</p>
         </div>
 

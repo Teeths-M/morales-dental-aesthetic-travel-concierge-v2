@@ -101,7 +101,7 @@ export default function SafeTHub() {
         >
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6">
             <Shield className="w-3.5 h-3.5 text-accent" />
-            <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">Safety Framework</span>
+            <span className="text-xs font-semibold text-white/80 uppercase tracking-[0.2em]">Safety Framework</span>
           </div>
           <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl text-white leading-tight mb-4">
             The <span className="text-accent italic">SAFE-T 4LIFE™</span><br />
@@ -138,7 +138,7 @@ export default function SafeTHub() {
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className={`text-sm font-bold ${isActive ? 'text-white' : 'text-white/70'}`}>{p.title}</p>
+                      <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-white/70'}`}>{p.title}</p>
                       <p className="text-xs text-white/40">{p.subtitle}</p>
                     </div>
                     {isActive && <ArrowRight className="w-4 h-4 text-accent ml-auto" />}
@@ -158,7 +158,7 @@ export default function SafeTHub() {
           >
             <div className={`inline-flex items-center gap-2 ${pillar.bg} ${pillar.border} border rounded-full px-3 py-1 mb-6`}>
               <PillarIcon className={`w-3.5 h-3.5 ${pillar.accent}`} />
-              <span className={`text-xs font-bold uppercase tracking-wider ${pillar.accent}`}>{pillar.title}</span>
+              <span className={`text-xs font-semibold uppercase tracking-wider ${pillar.accent}`}>{pillar.title}</span>
             </div>
 
             <h3 className="font-display text-3xl text-white mb-3">{pillar.subtitle}</h3>
@@ -194,7 +194,7 @@ export default function SafeTHub() {
               { label: 'Safety Score', value: '99.1%' },
             ].map(({ label, value }) => (
               <div key={label} className="text-center lg:text-left">
-                <p className="text-3xl font-display font-bold text-white">{value}</p>
+                <p className="text-3xl font-display font-semibold text-white">{value}</p>
                 <p className="text-xs text-white/40 mt-0.5 uppercase tracking-wider">{label}</p>
               </div>
             ))}
@@ -202,7 +202,7 @@ export default function SafeTHub() {
 
           <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
             <Link to="/consultation">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold px-8 h-12 shadow-xl gap-2 w-full sm:w-auto">
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 h-12 shadow-xl gap-2 w-full sm:w-auto">
                 Start Your Consultation
                 <ArrowRight className="w-4 h-4" />
               </Button>

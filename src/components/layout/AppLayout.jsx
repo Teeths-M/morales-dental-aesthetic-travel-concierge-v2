@@ -64,7 +64,7 @@ export default function AppLayout() {
               aria-label="Emergency SOS"
             >
               <AlertTriangle className="w-7 h-7" />
-              <span className="absolute -top-10 left-0 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              <span className="absolute -top-10 left-0 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                 Emergency SOS
               </span>
             </Link>
@@ -75,7 +75,7 @@ export default function AppLayout() {
               aria-label="Open My Vault"
             >
               <Lock className="w-7 h-7" />
-              <span className="absolute -top-10 right-0 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              <span className="absolute -top-10 right-0 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                 My Vault
               </span>
             </Link>

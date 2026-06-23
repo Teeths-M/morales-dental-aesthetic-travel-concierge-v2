@@ -39,8 +39,8 @@ export default function EmergencyPINAccess() {
           <div className="w-16 h-16 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Shield className="w-8 h-8 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">Morales Medical</p>
-          <h1 className="text-2xl font-bold text-white mt-1">Emergency Access</h1>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">Morales Medical</p>
+          <h1 className="text-2xl font-semibold text-white mt-1">Emergency Access</h1>
           <p className="text-slate-400 text-sm mt-2">Enter your Universal Emergency PIN — no app login, no SMS, any device</p>
         </div>
 
@@ -81,7 +81,7 @@ export default function EmergencyPINAccess() {
               <button
                 onClick={() => email && setEmailEntered(true)}
                 disabled={!email}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-2xl py-3 flex items-center justify-center gap-2">
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-2xl py-3 flex items-center justify-center gap-2">
                 Continue <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-center text-xs text-slate-500">

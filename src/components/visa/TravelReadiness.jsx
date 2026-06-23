@@ -83,7 +83,7 @@ export default function TravelReadiness() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center mb-2">
-         <h2 className="font-display text-2xl font-bold text-slate-800">
+         <h2 className="font-display text-2xl font-semibold text-slate-800">
            {language === 'es' ? 'Medidor de Preparación para el Viaje' : language === 'fr' ? 'Indicateur de Préparation aux Voyages' : 'Travel Readiness Meter'}
          </h2>
          <p className="text-slate-500 text-sm mt-1">
@@ -118,7 +118,7 @@ export default function TravelReadiness() {
               </defs>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-               <span className={`text-2xl font-bold ${getScoreColor(readiness)}`}>{readiness}%</span>
+               <span className={`text-2xl font-semibold ${getScoreColor(readiness)}`}>{readiness}%</span>
                <span className="text-xs text-slate-400">
                  {language === 'es' ? 'Listo' : language === 'fr' ? 'Prêt' : 'Ready'}
                </span>
@@ -126,7 +126,7 @@ export default function TravelReadiness() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-slate-800 text-base mb-1">{getScoreLabel(readiness)}</h3>
+            <h3 className="font-semibold text-slate-800 text-base mb-1">{getScoreLabel(readiness)}</h3>
             <p className="text-sm text-slate-500 mb-3">{earnedPoints} of {totalPoints} points earned</p>
             {missingItems.length > 0 && (
               <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
@@ -144,7 +144,7 @@ export default function TravelReadiness() {
 
       {/* Passport validity checker */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <span>🛂</span> {language === 'es' ? 'Verificador de Validez de Pasaporte' : language === 'fr' ? 'Vérificateur de Validité du Passeport' : 'Passport Validity Checker'}
         </h3>
         <div className="grid grid-cols-2 gap-4">
@@ -189,7 +189,7 @@ export default function TravelReadiness() {
 
       {/* Checklist */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-        <h3 className="font-bold text-slate-800 mb-4">
+        <h3 className="font-semibold text-slate-800 mb-4">
           {language === 'es' ? 'Lista de Verificación de Preparación para el Viaje' : language === 'fr' ? 'Liste de Contrôle de Préparation aux Voyages' : 'Travel Preparation Checklist'}
         </h3>
 
@@ -229,7 +229,7 @@ export default function TravelReadiness() {
               <span className={`flex-1 text-sm font-medium ${checked[item.id] ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                 {item.label}
               </span>
-              <span className={`text-xs font-bold ${checked[item.id] ? 'text-emerald-600' : 'text-slate-400'}`}>
+              <span className={`text-xs font-semibold ${checked[item.id] ? 'text-emerald-600' : 'text-slate-400'}`}>
                 +{item.points}pts
               </span>
             </motion.label>

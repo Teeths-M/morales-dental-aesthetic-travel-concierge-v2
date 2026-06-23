@@ -61,7 +61,7 @@ export default function HandshakeTapButton({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
         <div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Handshake</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Handshake</p>
           <p className="text-sm font-semibold text-slate-800 mt-0.5">{label}</p>
         </div>
         <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -81,7 +81,7 @@ export default function HandshakeTapButton({
             {checkpointId || '—'}
           </code>
           {/* Connectivity badge */}
-          <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${
+          <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full ${
             isOnline ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
           }`}>
             {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
@@ -120,7 +120,7 @@ export default function HandshakeTapButton({
                 onClick={tap}
                 disabled={isCapturing || isSyncing}
                 whileTap={{ scale: 0.96 }}
-                className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all shadow-lg
+                className={`w-full py-4 rounded-2xl font-semibold text-white text-base transition-all shadow-lg
                   ${isCapturing || isSyncing
                     ? 'bg-slate-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 active:scale-95'
@@ -162,7 +162,7 @@ export default function HandshakeTapButton({
             >
               <CheckCircle2 className="w-8 h-8 text-emerald-600" />
             </motion.div>
-            <p className="font-bold text-emerald-700 text-sm">Handshake Confirmed</p>
+            <p className="font-semibold text-emerald-700 text-sm">Handshake Confirmed</p>
             {!isOnline && (
               <p className="text-xs text-slate-500 text-center">
                 Saved offline — will sync to server when you reconnect.
@@ -177,7 +177,7 @@ export default function HandshakeTapButton({
             <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
               <AlertTriangle className="w-7 h-7 text-red-500" />
             </div>
-            <p className="font-bold text-red-700 text-sm">Handshake Timed Out</p>
+            <p className="font-semibold text-red-700 text-sm">Handshake Timed Out</p>
             <p className="text-xs text-slate-500 max-w-xs">
               This checkpoint was not confirmed within 15 minutes. A replacement driver has been dispatched.
             </p>
@@ -187,7 +187,7 @@ export default function HandshakeTapButton({
         {/* SMS fallback — shown when offline or as secondary option when pending */}
         {isPending && !isConfirmed && (
           <div className="border-t pt-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">
               SMS Fallback (if offline or button fails)
             </p>
             <div className="flex items-center gap-2">

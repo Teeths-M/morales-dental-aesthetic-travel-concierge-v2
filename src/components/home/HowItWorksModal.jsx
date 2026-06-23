@@ -152,7 +152,7 @@ function ConsultationVisual() {
           className="flex items-center gap-3 px-4 py-3 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
-          <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: `${GOLD}25`, color: GOLD }}>
+          <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{ background: `${GOLD}25`, color: GOLD }}>
             {i + 1}
           </div>
           <span className="text-white/80 text-[13px]">{s}</span>
@@ -198,7 +198,7 @@ function SafeTVisual() {
         >
           <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
           <span className="text-white/80 text-[12px] flex-1">{label}</span>
-          <span className="text-[11px] font-bold capitalize" style={{ color }}>
+          <span className="text-[11px] font-semibold capitalize" style={{ color }}>
             {status === 'safe' ? '✓ Safe' : status === 'review' ? '⚠ Review' : '✕ Blocked'}
           </span>
         </motion.div>
@@ -268,7 +268,7 @@ function TravelVisual() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.8 + i * 0.2 }}
-            className="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full"
+            className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: `${GOLD}20`, color: GOLD }}
           >
             ✓
@@ -393,9 +393,9 @@ function FinalVisual() {
           className="w-16 h-16 rounded-full flex items-center justify-center"
           style={{ background: `${GOLD}20`, border: `2px solid ${GOLD}`, boxShadow: `0 0 40px ${GOLD}40` }}
         >
-          <span className="font-display text-3xl font-bold" style={{ color: GOLD }}>M</span>
+          <span className="font-display text-3xl font-semibold" style={{ color: GOLD }}>M</span>
         </div>
-        <p className="text-[10px] font-bold tracking-[0.2em] uppercase mt-1" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
+        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase mt-1" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
       </motion.div>
     </div>
   );
@@ -576,7 +576,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                   className="w-7 h-7 rounded-full flex items-center justify-center"
                   style={{ background: `${GOLD}20`, border: `1px solid ${GOLD}40` }}
                 >
-                  <span className="font-display text-sm font-bold" style={{ color: GOLD }}>M</span>
+                  <span className="font-display text-sm font-semibold" style={{ color: GOLD }}>M</span>
                 </div>
                 <span className="text-white/50 text-[11px] font-medium tracking-widest uppercase">How It Works</span>
               </div>
@@ -648,7 +648,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                     className="flex flex-col"
                   >
                     <p
-                      className="text-[9px] font-bold tracking-[0.3em] uppercase mb-4"
+                      className="text-[9px] font-semibold tracking-[0.3em] uppercase mb-4"
                       style={{ color: GOLD }}
                     >
                       {current.tag}

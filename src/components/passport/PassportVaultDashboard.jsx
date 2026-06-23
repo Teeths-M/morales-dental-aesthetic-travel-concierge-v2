@@ -108,11 +108,11 @@ export default function PassportVaultDashboard({ patientEmail }) {
           <div className="flex items-start gap-3">
             <Shield className="w-8 h-8 text-emerald-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-emerald-900 text-sm">Passport Vault — Active</p>
+              <p className="font-semibold text-emerald-900 text-sm">Passport Vault — Active</p>
               <div className="mt-1.5 space-y-0.5 text-xs text-emerald-700">
-                <p>Last 4: <span className="font-mono font-bold">{vault.redacted_for_display?.last_4_digits || '—'}</span></p>
-                <p>Expires: <span className="font-bold">{vault.redacted_for_display?.expiry_date || '—'}</span></p>
-                <p>Nationality: <span className="font-bold">{vault.redacted_for_display?.nationality || '—'}</span></p>
+                <p>Last 4: <span className="font-mono font-semibold">{vault.redacted_for_display?.last_4_digits || '—'}</span></p>
+                <p>Expires: <span className="font-semibold">{vault.redacted_for_display?.expiry_date || '—'}</span></p>
+                <p>Nationality: <span className="font-semibold">{vault.redacted_for_display?.nationality || '—'}</span></p>
               </div>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function PassportVaultDashboard({ patientEmail }) {
       {/* Pending Approvals */}
       {pendingGrants.length > 0 && (
         <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 space-y-3">
-          <p className="text-sm font-bold text-amber-800 flex items-center gap-2">
+          <p className="text-sm font-semibold text-amber-800 flex items-center gap-2">
             <Clock className="w-4 h-4" /> {pendingGrants.length} Pending Access Request{pendingGrants.length > 1 ? 's' : ''}
           </p>
           {pendingGrants.map(grant => (

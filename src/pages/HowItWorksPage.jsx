@@ -40,7 +40,7 @@ export default function HowItWorksPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <p className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
+          <p className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
             {language === 'es' ? 'Tu Viaje' : language === 'fr' ? 'Votre Voyage' : 'Your Journey'}
           </p>
           <h1 className="font-display text-4xl lg:text-5xl text-white mb-6" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
@@ -62,14 +62,14 @@ export default function HowItWorksPage() {
               transition={{ delay: i * 0.05 }}
             >
               <div className="relative flex flex-col items-center">
-                <span className="absolute -top-4 -left-3 text-[72px] font-bold leading-none text-white/[0.04] select-none pointer-events-none">{num}</span>
+                <span className="absolute -top-4 -left-3 text-[72px] font-semibold leading-none text-white/[0.04] select-none pointer-events-none">{num}</span>
                 <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center flex-shrink-0 relative z-10`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 {i < steps.length - 1 && <div className="w-px flex-1 bg-white/[0.08] mt-2 relative z-10" />}
               </div>
               <div className="pb-8">
-                <div className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-2">
+                <div className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-[0.32em] mb-2">
                   {language === 'es' ? 'Paso' : language === 'fr' ? 'Étape' : 'Step'} {num}
                 </div>
                 <h3 className="font-display text-xl text-white mb-2" style={{ letterSpacing: '-0.01em' }}>{title}</h3>
@@ -80,7 +80,7 @@ export default function HowItWorksPage() {
         </div>
 
         <div className="text-center mt-16 bg-[#0C1A1D] border border-white/[0.08] rounded-2xl p-8 lg:p-12">
-          <p className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
+          <p className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
             {language === 'es' ? 'Comienza Ahora' : language === 'fr' ? 'Commencer' : 'Begin Your Journey'}
           </p>
           <h2 className="font-display text-2xl lg:text-3xl text-white mb-3" style={{ letterSpacing: '-0.02em', lineHeight: 1.1 }}>
@@ -90,7 +90,7 @@ export default function HowItWorksPage() {
             {language === 'es' ? 'Una consulta. Siete pasos. Resultados para toda la vida.' : language === 'fr' ? 'Une consultation. Sept étapes. Des résultats pour la vie.' : 'One consultation. Seven steps. A lifetime of results.'}
           </p>
           <Link to="/booking">
-            <Button size="lg" className="bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] font-bold px-10 hover:opacity-90 h-12 rounded-xl text-[15px]">
+            <Button size="lg" className="bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] font-semibold px-10 hover:opacity-90 h-12 rounded-xl text-[15px]">
               {language === 'es' ? 'Inicia Tu Viaje' : language === 'fr' ? 'Commencez Votre Voyage' : 'Start Your Journey'} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>

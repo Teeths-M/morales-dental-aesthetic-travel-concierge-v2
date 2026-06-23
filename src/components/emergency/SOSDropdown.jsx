@@ -131,7 +131,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
       {/* Trigger button */}
       <button
         onClick={() => { if (!sending) setOpen(!open); }}
-        className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-xs transition-all ${
+        className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all ${
           sent ? 'bg-emerald-600 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
         }`}
       >
@@ -146,7 +146,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
         {sent && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
             className={`absolute top-full mt-2 right-0 z-50 rounded-2xl shadow-xl px-4 py-3 w-72 ${sent.queued ? 'bg-amber-700' : 'bg-emerald-800'} text-white`}>
-            <p className="text-xs font-bold flex items-center gap-2">
+            <p className="text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               {sent.queued ? `${sent.label} — Queued Offline` : `${sent.label} Dispatched`}
             </p>
@@ -169,10 +169,10 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
               <div className={`w-20 h-20 rounded-full ${confirming.pulse} flex items-center justify-center mx-auto mb-4`}>
                 <span className="text-white text-4xl font-black">{countdown}</span>
               </div>
-              <p className="font-bold text-slate-800 text-lg mb-1">Sending {confirming.label}</p>
+              <p className="font-semibold text-slate-800 text-lg mb-1">Sending {confirming.label}</p>
               <p className="text-slate-500 text-sm mb-6">Dispatching in {countdown} second{countdown !== 1 ? 's' : ''}...</p>
               <button onClick={cancelCountdown}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl py-3">
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl py-3">
                 Cancel
               </button>
             </motion.div>
@@ -188,7 +188,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
             <div className="bg-red-600 px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-white" />
-                <p className="text-white font-bold text-sm">Emergency Response</p>
+                <p className="text-white font-semibold text-sm">Emergency Response</p>
               </div>
               <button onClick={() => setOpen(false)}>
                 <X className="w-4 h-4 text-red-200 hover:text-white" />
@@ -204,7 +204,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold">{opt.label}</p>
+                      <p className="text-xs font-semibold">{opt.label}</p>
                       <p className="text-[10px] opacity-70">{opt.desc}</p>
                     </div>
                   </button>

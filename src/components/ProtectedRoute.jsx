@@ -14,7 +14,7 @@ const DefaultFallback = () => (
 const LoginRequired = ({ onLogin }) => (
   <div className="min-h-[70vh] flex items-center justify-center px-6 bg-background">
     <div className="max-w-md w-full bg-card border border-border rounded-2xl p-8 text-center shadow-sm">
-      <h1 className="text-2xl font-bold text-foreground mb-2">Login required</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-2">Login required</h1>
       <p className="text-muted-foreground mb-6">Please sign in to access this area.</p>
       <Button onClick={onLogin} className="w-full">Login securely</Button>
     </div>
@@ -24,7 +24,7 @@ const LoginRequired = ({ onLogin }) => (
 const AccessDenied = () => (
   <div className="min-h-[70vh] flex items-center justify-center px-6 bg-background">
     <div className="max-w-md w-full bg-card border border-border rounded-2xl p-8 text-center shadow-sm">
-      <h1 className="text-2xl font-bold text-foreground mb-2">Access not available</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-2">Access not available</h1>
       <p className="text-muted-foreground">Your account does not have permission to open this portal.</p>
     </div>
   </div>

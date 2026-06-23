@@ -154,7 +154,7 @@ export default function VisaWizard({ onResult }) {
           </div>
           <button
             onClick={handleVoice}
-            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
               isListening
                 ? 'bg-red-500 text-white animate-pulse'
                 : 'bg-slate-900 text-white hover:bg-slate-700'
@@ -172,7 +172,7 @@ export default function VisaWizard({ onResult }) {
          {getSteps(language).map((s, i) => (
            <React.Fragment key={s.id}>
              <div className="flex flex-col items-center">
-               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 ${
                  step > s.id
                    ? 'bg-emerald-500 text-white'
                    : step === s.id
@@ -212,10 +212,10 @@ export default function VisaWizard({ onResult }) {
         >
           {/* Card header strip */}
           <div className="px-7 pt-7 pb-5 border-b border-slate-100">
-            <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-slate-400 mb-1">
+            <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-400 mb-1">
               {language === 'es' ? 'Paso' : language === 'fr' ? 'Étape' : 'Step'} {step} {language === 'es' ? 'de' : language === 'fr' ? 'sur' : 'of'} {getSteps(language).length}
             </p>
-            <h2 className="font-display text-xl font-bold text-slate-900">{getSteps(language)[step - 1].label}</h2>
+            <h2 className="font-display text-xl font-semibold text-slate-900">{getSteps(language)[step - 1].label}</h2>
           </div>
 
           <div className="p-7">
@@ -301,7 +301,7 @@ export default function VisaWizard({ onResult }) {
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-xl">{d.flag}</span>
                       <div>
-                        <p className={`font-bold text-sm ${destination?.code === d.code ? 'text-white' : 'text-slate-800'}`}>{d.name}</p>
+                        <p className={`font-semibold text-sm ${destination?.code === d.code ? 'text-white' : 'text-slate-800'}`}>{d.name}</p>
                         {d.island && <p className={`text-[11px] ${destination?.code === d.code ? 'text-blue-200' : 'text-slate-400'}`}>{d.island}</p>}
                       </div>
                       {destination?.code === d.code && <Check className="w-4 h-4 text-white ml-auto" />}
@@ -337,7 +337,7 @@ export default function VisaWizard({ onResult }) {
             {step === 4 && (
               <div className="space-y-6">
                 <div>
-                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                      {language === 'es' ? 'Fecha Estimada de Viaje' : language === 'fr' ? 'Date de Voyage Estimée' : 'Estimated Travel Date'}
                    </label>
                    <input
@@ -349,7 +349,7 @@ export default function VisaWizard({ onResult }) {
                    />
                  </div>
                  <div>
-                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
                      {language === 'es' ? 'Duración de la Estancia' : language === 'fr' ? 'Durée du Séjour' : 'Length of Stay'}
                    </label>
                   <div className="grid grid-cols-4 gap-2 mb-3">
@@ -357,7 +357,7 @@ export default function VisaWizard({ onResult }) {
                       <button
                         key={d}
                         onClick={() => setStayDuration(d)}
-                        className={`py-3 rounded-xl text-sm font-bold border transition-all ${
+                        className={`py-3 rounded-xl text-sm font-semibold border transition-all ${
                           stayDuration === d
                             ? 'bg-slate-900 text-white border-slate-900'
                             : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-white hover:border-slate-300'
@@ -379,7 +379,7 @@ export default function VisaWizard({ onResult }) {
                   </div>
                 </div>
                 <div>
-                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
                      {language === 'es' ? '¿Viajando con un compañero?' : language === 'fr' ? 'Voyager avec un compagnon?' : 'Traveling with a companion?'}
                    </label>
                    <div className="flex gap-3">
@@ -415,7 +415,7 @@ export default function VisaWizard({ onResult }) {
                         <Loader2 className="w-9 h-9 text-white animate-spin" />
                       </div>
                     </div>
-                    <h2 className="text-lg font-bold text-slate-800 mb-1">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-1">
                        {language === 'es' ? 'Analizando tu viaje…' : language === 'fr' ? 'Analyse de votre voyage…' : 'Analyzing your journey…'}
                      </h2>
                      <p className="text-sm text-slate-400 mb-7">
@@ -441,7 +441,7 @@ export default function VisaWizard({ onResult }) {
                     <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-5">
                       <span className="text-2xl">🌍</span>
                     </div>
-                    <h2 className="text-lg font-bold text-slate-800 mb-1">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-1">
                       {language === 'es' ? '¿Listo para verificar tu visa?' : language === 'fr' ? 'Prêt à vérifier votre visa?' : 'Ready to check your visa?'}
                     </h2>
                     <p className="text-sm text-slate-400 mb-6">
@@ -465,7 +465,7 @@ export default function VisaWizard({ onResult }) {
 
                     <button
                       onClick={handleEvaluate}
-                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-emerald-600 hover:opacity-90 text-white font-bold rounded-xl text-sm shadow-lg shadow-blue-200 transition-all"
+                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-emerald-600 hover:opacity-90 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-200 transition-all"
                     >
                       {language === 'es' ? 'Ejecutar Verificación de Visa IA →' : language === 'fr' ? 'Exécuter la Vérification Visa IA →' : 'Run AI Visa Check →'}
                     </button>
@@ -495,7 +495,7 @@ export default function VisaWizard({ onResult }) {
               (step === 2 && !destination) ||
               (step === 3 && !purpose)
             }
-            className="flex-1 flex items-center justify-center gap-1.5 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             {language === 'es' ? 'Continuar' : language === 'fr' ? 'Continuer' : 'Continue'} <ChevronRight className="w-4 h-4" />
           </button>

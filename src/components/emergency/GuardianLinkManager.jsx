@@ -62,7 +62,7 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+          <h4 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
             <Eye className="w-4 h-4 text-blue-600" /> Guardian View Links
           </h4>
           <p className="text-xs text-slate-500 mt-0.5">Secure look-only links — shows live GPS location &amp; journey status. No login required.</p>
@@ -76,7 +76,7 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-3">
-            <p className="text-xs font-bold text-blue-800">Create Guardian View Link</p>
+            <p className="text-xs font-semibold text-blue-800">Create Guardian View Link</p>
             <div className="grid sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Guardian Name *</label>
@@ -121,9 +121,9 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
             return (
               <div key={session.id} className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${expired ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white border-slate-200'}`}>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-800 flex items-center gap-2">
                     {session.guardian_name}
-                    {expired && <span className="text-[10px] font-bold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">Expired</span>}
+                    {expired && <span className="text-[10px] font-semibold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">Expired</span>}
                   </p>
                   <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
                     <Clock className="w-3 h-3" />

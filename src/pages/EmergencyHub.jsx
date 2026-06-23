@@ -77,8 +77,8 @@ export default function EmergencyHub() {
                 <AlertTriangle className="w-7 h-7 text-red-400" />
               </div>
               <div>
-                <p className="text-red-400 text-xs font-bold uppercase tracking-widest">Safe-T Emergency Suite</p>
-                <h1 className="text-2xl font-bold text-white">Emergency & Security Center</h1>
+                <p className="text-red-400 text-xs font-semibold uppercase tracking-widest">Safe-T Emergency Suite</p>
+                <h1 className="text-2xl font-semibold text-white">Emergency & Security Center</h1>
               </div>
             </div>
             {/* Live SOS button always visible in hero */}
@@ -150,7 +150,7 @@ export default function EmergencyHub() {
               {activeTab === 'sos' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-white font-bold text-sm mb-1">Emergency Dispatch Console</h3>
+                    <h3 className="text-white font-semibold text-sm mb-1">Emergency Dispatch Console</h3>
                     <p className="text-slate-400 text-xs">5-second countdown before dispatch. GPS auto-attached. Emergency team alerted via email + SMS.</p>
                   </div>
                   {/* Full SOS options grid */}
@@ -167,7 +167,7 @@ export default function EmergencyHub() {
                         <div key={opt.id} className={`rounded-xl border p-4 ${opt.colors}`}>
                           <div className="flex items-center gap-3 mb-2">
                             <Icon className="w-5 h-5" />
-                            <p className="font-bold text-sm">{opt.label}</p>
+                            <p className="font-semibold text-sm">{opt.label}</p>
                           </div>
                           <p className="text-xs opacity-70 mb-3">{opt.desc}</p>
                           <SOSDropdown
@@ -183,7 +183,7 @@ export default function EmergencyHub() {
                   </div>
                   {/* Discreet safety net info */}
                   <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-4">
-                    <p className="text-slate-300 text-xs font-bold mb-2">🛡️ Discreet Safety Net</p>
+                    <p className="text-slate-300 text-xs font-semibold mb-2">🛡️ Discreet Safety Net</p>
                     <ul className="space-y-1 text-xs text-slate-400">
                       <li>• <strong>Silent SOS</strong> — no sound, vibration, or screen change when triggered</li>
                       <li>• <strong>Guardian links</strong> — expiring, look-only tracking URLs for family</li>
@@ -196,7 +196,7 @@ export default function EmergencyHub() {
 
               {activeTab === 'intel' && (
                 <div>
-                  <h3 className="text-white font-bold text-sm mb-1">Know Your Space™ Intelligence</h3>
+                  <h3 className="text-white font-semibold text-sm mb-1">Know Your Space™ Intelligence</h3>
                   <p className="text-slate-400 text-xs mb-4">AI-powered real-time safety briefings — crime analytics, health alerts, scam warnings, emergency numbers</p>
                   <div className="bg-white rounded-xl p-4">
                     <SpaceIntelPanel
@@ -209,7 +209,7 @@ export default function EmergencyHub() {
 
               {activeTab === 'guardian' && (
                 <div>
-                  <h3 className="text-white font-bold text-sm mb-1">Guardian View Links</h3>
+                  <h3 className="text-white font-semibold text-sm mb-1">Guardian View Links</h3>
                   <p className="text-slate-400 text-xs mb-4">Secure look-only journey tracking for family — no app download, no login required</p>
                   <div className="bg-white rounded-xl p-4">
                     <GuardianLinkManager caseId={activeCase?.id} patientEmail={user?.email} />
@@ -219,7 +219,7 @@ export default function EmergencyHub() {
 
               {activeTab === 'location' && (
                 <div>
-                  <h3 className="text-white font-bold text-sm mb-1">Mark My Last Location</h3>
+                  <h3 className="text-white font-semibold text-sm mb-1">Mark My Last Location</h3>
                   <p className="text-slate-400 text-xs mb-4">Auto-purging breadcrumb trail — scrubbed on final check-in unless you save them</p>
                   <div className="bg-white rounded-xl p-4">
                     <LocationBreadcrumbTracker caseId={activeCase?.id} />
@@ -229,7 +229,7 @@ export default function EmergencyHub() {
 
               {activeTab === 'pin' && (
                 <div>
-                  <h3 className="text-white font-bold text-sm mb-1">Universal 6-Digit Emergency PIN</h3>
+                  <h3 className="text-white font-semibold text-sm mb-1">Universal 6-Digit Emergency PIN</h3>
                   <p className="text-slate-400 text-xs mb-4">Cross-device access — unlocks your vault and SOS console on any device without app login</p>
                   
                   {/* Prompt if PIN not set */}

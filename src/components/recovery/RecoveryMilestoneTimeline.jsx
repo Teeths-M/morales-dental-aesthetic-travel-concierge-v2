@@ -153,12 +153,12 @@ export default function RecoveryMilestoneTimeline({ session }) {
                 {/* Phase content */}
                 <div className="flex-1 pt-0.5">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs font-bold ${isCompleted ? 'text-emerald-700' : isActive ? 'text-violet-700' : 'text-slate-400'}`}>
+                    <span className={`text-xs font-semibold ${isCompleted ? 'text-emerald-700' : isActive ? 'text-violet-700' : 'text-slate-400'}`}>
                       {phase.label}
                     </span>
                     {isCompleted && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
                     {isActive && (
-                      <span className="text-[10px] bg-violet-100 text-violet-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                      <span className="text-[10px] bg-violet-100 text-violet-700 font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                         Current
                       </span>
                     )}

@@ -125,7 +125,7 @@ export default function AdminAuditLog() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Audit Log Dashboard</h1>
+            <h1 className="text-2xl font-display font-semibold text-foreground">Audit Log Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">Forensic event trail with hash-chain integrity verification</p>
           </div>
           <div className="flex items-center gap-3">

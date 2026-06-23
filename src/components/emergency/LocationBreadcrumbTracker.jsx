@@ -212,7 +212,7 @@ export default function LocationBreadcrumbTracker({ caseId }) {
       {/* Header + controls */}
       <div className="flex items-start justify-between flex-wrap gap-2">
         <div>
-          <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <p className="text-sm font-semibold text-slate-800 flex items-center gap-2">
             <Navigation className="w-4 h-4 text-emerald-600" /> Last Known Locations
           </p>
           <div className={`flex items-center gap-1.5 mt-0.5 text-xs ${status.color}`}>

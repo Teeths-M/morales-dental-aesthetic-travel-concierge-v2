@@ -151,7 +151,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
                       )}
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <p className="text-lg font-bold text-primary">${price.doctor_price_usd}</p>
+                      <p className="text-lg font-semibold text-primary">${price.doctor_price_usd}</p>
                       {selected === price.id && (
                         <Check className="w-4 h-4 text-primary mt-1 ml-auto" />
                       )}

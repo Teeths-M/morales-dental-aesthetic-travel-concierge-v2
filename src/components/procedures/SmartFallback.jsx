@@ -103,7 +103,7 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[10px] font-bold text-emerald-600">
+                      <span className="text-[10px] font-semibold text-emerald-600">
                         {match.match_confidence}% match
                       </span>
                     </div>

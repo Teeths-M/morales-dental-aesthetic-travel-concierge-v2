@@ -133,7 +133,7 @@ export default function PricingQuoteBuilder({ initialProcedures = [] }) {
               {/* Price */}
               <div>
                 <label className="text-xs text-slate-600 font-medium">Unit Price</label>
-                <p className="text-lg font-bold text-slate-900 mt-2">
+                <p className="text-lg font-semibold text-slate-900 mt-2">
                   ${quote.lineItems[idx]?.unitPrice.toLocaleString() || '0'}
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function PricingQuoteBuilder({ initialProcedures = [] }) {
               {/* Line Total */}
               <div>
                 <label className="text-xs text-slate-600 font-medium">Line Total</label>
-                <p className="text-lg font-bold text-emerald-600 mt-2">
+                <p className="text-lg font-semibold text-emerald-600 mt-2">
                   ${quote.lineItems[idx]?.finalPrice.toLocaleString() || '0'}
                 </p>
               </div>
@@ -174,7 +174,7 @@ export default function PricingQuoteBuilder({ initialProcedures = [] }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <h3 className="text-lg font-bold text-slate-900 mb-6">Cost Breakdown</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-6">Cost Breakdown</h3>
 
         <div className="space-y-4">
           {/* Subtotal */}
@@ -217,11 +217,11 @@ export default function PricingQuoteBuilder({ initialProcedures = [] }) {
           <div className="border-t border-emerald-200 pt-4 space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-600">Estimated Low</span>
-              <span className="text-xl font-bold text-slate-900">${quote.estimatedTotalLow.toLocaleString()}</span>
+              <span className="text-xl font-semibold text-slate-900">${quote.estimatedTotalLow.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-600">Estimated High (with seasonals)</span>
-              <span className="text-xl font-bold text-slate-900">${quote.estimatedTotalHigh.toLocaleString()}</span>
+              <span className="text-xl font-semibold text-slate-900">${quote.estimatedTotalHigh.toLocaleString()}</span>
             </div>
           </div>
         </div>

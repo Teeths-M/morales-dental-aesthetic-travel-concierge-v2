@@ -32,10 +32,10 @@ function SidebarContent({ activeTab, setActiveTab, onClose }) {
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-serif text-lg font-bold">PH</span>
+            <span className="text-primary-foreground font-serif text-lg font-semibold">PH</span>
           </div>
           <div>
-            <div className="text-sm font-bold text-foreground">PORTAL HUB™</div>
+            <div className="text-sm font-semibold text-foreground">PORTAL HUB™</div>
             <div className="text-xs text-muted-foreground">Admin</div>
           </div>
         </div>
@@ -102,9 +102,9 @@ export default function PortalHubSidebar({ activeTab, setActiveTab }) {
         </button>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-serif text-xs font-bold">PH</span>
+            <span className="text-primary-foreground font-serif text-xs font-semibold">PH</span>
           </div>
-          <span className="text-sm font-bold text-foreground">PORTAL HUB™</span>
+          <span className="text-sm font-semibold text-foreground">PORTAL HUB™</span>
         </div>
         <span className="ml-auto text-xs text-muted-foreground capitalize">
           {navItems.find(n => n.id === activeTab)?.label}

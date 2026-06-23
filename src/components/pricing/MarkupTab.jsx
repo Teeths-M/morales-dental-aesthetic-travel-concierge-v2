@@ -75,15 +75,15 @@ export default function MarkupTab() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-200">
           <p className="text-sm text-slate-600 mb-1">Active Rules</p>
-          <p className="text-2xl font-bold text-emerald-600">{activeCount}</p>
+          <p className="text-2xl font-semibold text-emerald-600">{activeCount}</p>
         </div>
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
           <p className="text-sm text-slate-600 mb-1">Avg Discount</p>
-          <p className="text-2xl font-bold text-blue-600">{avgDiscount}%</p>
+          <p className="text-2xl font-semibold text-blue-600">{avgDiscount}%</p>
         </div>
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
           <p className="text-sm text-slate-600 mb-1">Total Rules</p>
-          <p className="text-2xl font-bold text-purple-600">{rules.length}</p>
+          <p className="text-2xl font-semibold text-purple-600">{rules.length}</p>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export default function MarkupTab() {
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900">Pricing Rules</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Pricing Rules</h2>
           <p className="text-sm text-slate-600 mt-1">Manage discount rules, promotions, and seasonal pricing</p>
         </div>
         <div className="overflow-x-auto">

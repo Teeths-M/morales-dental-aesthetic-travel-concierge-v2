@@ -81,7 +81,7 @@ export default function ActivityNudgeBanner({ sessions = [], onRefresh }) {
             <div className="flex items-center gap-3 px-4 py-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 animate-pulse" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-amber-900">
+                <p className="text-sm font-semibold text-amber-900">
                   ⚠️ Pre-Activity Safety Check — {session.activity_name}
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">
@@ -105,7 +105,7 @@ export default function ActivityNudgeBanner({ sessions = [], onRefresh }) {
                   className="border-t border-amber-200 bg-white"
                 >
                   <div className="px-4 py-4 space-y-2">
-                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3">
+                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
                       ISO 21101 Safety Checklist — Tap to acknowledge all
                     </p>
                     {checklist.map((item, i) => (
@@ -117,7 +117,7 @@ export default function ActivityNudgeBanner({ sessions = [], onRefresh }) {
                     <button
                       onClick={() => acknowledgeAll(session)}
                       disabled={saving}
-                      className="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-60"
+                      className="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-60"
                     >
                       {saving ? 'Saving...' : '✅ I have checked all items — I am ready to go'}
                     </button>

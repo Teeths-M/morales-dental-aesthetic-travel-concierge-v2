@@ -56,7 +56,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">{t.step1Title}</h2>
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">{t.step1Title}</h2>
         <p className="text-muted-foreground text-sm">{t.step1Subtitle}</p>
       </div>
 

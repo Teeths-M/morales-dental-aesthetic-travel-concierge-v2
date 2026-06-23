@@ -157,7 +157,7 @@ export default function PassportVault() {
         {!navigator.onLine && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/90 border border-amber-400 shadow-lg">
             <WifiOff className="w-4 h-4 text-white" />
-            <span className="text-sm font-bold text-white">Offline Mode</span>
+            <span className="text-sm font-semibold text-white">Offline Mode</span>
           </div>
         )}
         <VaultPINGate hasExistingPIN={hasPIN === true} onPINVerified={handlePINVerified} user={user} />
@@ -201,7 +201,7 @@ export default function PassportVault() {
               Lost your phone? Access documents from any device — no login required.
             </p>
             <Link to="/emergency-access"
-              className="inline-block mt-3 px-5 py-2 rounded-lg text-xs font-bold text-amber-900 transition-all hover:opacity-90"
+              className="inline-block mt-3 px-5 py-2 rounded-lg text-xs font-semibold text-amber-900 transition-all hover:opacity-90"
               style={{ background: '#f59e0b' }}>
               Go to Emergency Access →
             </Link>
@@ -224,7 +224,7 @@ export default function PassportVault() {
             {!navigator.onLine && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-400/30">
                 <WifiOff className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[10px] font-bold text-amber-200">Offline</span>
+                <span className="text-[10px] font-semibold text-amber-200">Offline</span>
               </div>
             )}
           </div>

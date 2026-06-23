@@ -310,7 +310,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto">
           <WifiOff className="w-7 h-7 text-amber-700" />
         </div>
-        <h3 className="font-bold text-slate-800 text-lg">Connect Once to Set Up Emergency Access</h3>
+        <h3 className="font-semibold text-slate-800 text-lg">Connect Once to Set Up Emergency Access</h3>
         <p className="text-slate-500 text-sm max-w-xs mx-auto">
           This device hasn't verified your Emergency PIN yet. Connect to the internet once to sync
           it securely — after that, it will work fully offline on this device.
@@ -323,7 +323,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     return (
       <div className="text-center py-8">
         <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-        <h3 className="font-bold text-slate-800 text-lg mb-1">
+        <h3 className="font-semibold text-slate-800 text-lg mb-1">
           {currentMode === 'done' ? 'Emergency PIN Active' : 'Identity Verified'}
         </h3>
         <p className="text-slate-500 text-sm">
@@ -362,7 +362,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
           <Smartphone className="w-7 h-7 text-blue-700" />
         </div>
-        <h3 className="font-bold text-slate-800 text-lg">
+        <h3 className="font-semibold text-slate-800 text-lg">
           {isChangingExisting ? 'Change Emergency PIN' : hasPIN || currentMode === 'verify' ? 'Emergency PIN Access' : 'Setup Emergency PIN'}
         </h3>
         <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
@@ -413,7 +413,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
         {error && (
           <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />{error}
-            {attemptsLeft < 5 && <span className="ml-auto font-bold">{attemptsLeft} left</span>}
+            {attemptsLeft < 5 && <span className="ml-auto font-semibold">{attemptsLeft} left</span>}
           </div>
         )}
 
@@ -425,7 +425,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
             ((!hasPIN || isChangingExisting) && currentMode !== 'verify' && confirmPin.length !== 6) ||
             (isChangingExisting && currentPin.length !== 6)
           }
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 font-bold">
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-3 font-semibold">
           {loading ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Processing...</span>
             : hasPIN && !isChangingExisting || currentMode === 'verify' ? 'Unlock Emergency Access'
             : isChangingExisting ? 'Save New PIN'

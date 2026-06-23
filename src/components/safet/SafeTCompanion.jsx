@@ -312,7 +312,7 @@ const SafeTCompanionComponent = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <p className="text-white font-bold text-sm tracking-wide">SAFE-T 4LIFE™</p>
+                    <p className="text-white font-semibold text-sm tracking-wide">SAFE-T 4LIFE™</p>
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
                   <p className="text-white/60 text-[10px] tracking-wider uppercase">{labels.online}</p>

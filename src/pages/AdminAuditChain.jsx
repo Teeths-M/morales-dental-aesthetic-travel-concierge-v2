@@ -29,7 +29,7 @@ export default function AdminAuditChain() {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold">Audit Chain Integrity</h1>
+            <h1 className="text-2xl font-display font-semibold">Audit Chain Integrity</h1>
             <p className="text-muted-foreground text-sm mt-1">
               Verifies that no audit log entries have been tampered with or deleted.
             </p>
@@ -68,11 +68,11 @@ export default function AdminAuditChain() {
               <CardContent className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Total Entries</p>
-                  <p className="text-xl font-bold">{result.total_entries}</p>
+                  <p className="text-xl font-semibold">{result.total_entries}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Broken Links</p>
-                  <p className={`text-xl font-bold ${result.broken_count > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                  <p className={`text-xl font-semibold ${result.broken_count > 0 ? 'text-destructive' : 'text-green-600'}`}>
                     {result.broken_count}
                   </p>
                 </div>
@@ -96,7 +96,7 @@ export default function AdminAuditChain() {
                   {result.broken_entries.map((entry, idx) => (
                     <div key={idx} className="bg-destructive/10 rounded-lg p-4 text-sm space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono font-bold text-destructive">Entry #{entry.index + 1}</span>
+                        <span className="font-mono font-semibold text-destructive">Entry #{entry.index + 1}</span>
                         <Badge variant="destructive">{entry.event_type || 'unknown'}</Badge>
                       </div>
                       <div className="grid grid-cols-1 gap-1">

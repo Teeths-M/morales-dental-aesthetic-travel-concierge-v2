@@ -121,8 +121,8 @@ export default function PreparationChecklist({ userEmail }) {
       className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden"
     >
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 className="font-bold text-slate-800 text-sm">Preparation Tasks</h3>
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+        <h3 className="font-semibold text-slate-800 text-sm">Preparation Tasks</h3>
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
           doneCount === checklist.length ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
         }`}>
           {doneCount}/{checklist.length} done
@@ -142,7 +142,7 @@ export default function PreparationChecklist({ userEmail }) {
       <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
         <div className="flex items-center justify-between text-xs mb-1">
           <span className="text-slate-500">Progress</span>
-          <span className="font-bold text-slate-700">{progress}%</span>
+          <span className="font-semibold text-slate-700">{progress}%</span>
         </div>
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <motion.div
@@ -180,7 +180,7 @@ export default function PreparationChecklist({ userEmail }) {
                   {item.label}
                 </p>
                 {item.priority === 'high' && !item.done && (
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full mt-1 inline-block">
+                  <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full mt-1 inline-block">
                     High Priority
                   </span>
                 )}

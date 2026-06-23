@@ -17,7 +17,7 @@ export default function SecurityAgencyCard({ agency }) {
         <div className="flex items-start gap-4">
           {/* Avatar */}
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-display font-bold text-lg">{initials}</span>
+            <span className="text-white font-display font-semibold text-lg">{initials}</span>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -75,7 +75,7 @@ export default function SecurityAgencyCard({ agency }) {
         {/* Services */}
         {agency.services_offered?.length > 0 && (
           <div className="pt-2 border-t border-border/40">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Services</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Services</p>
             <div className="flex flex-wrap gap-1">
               {agency.services_offered.slice(0, 4).map(s => (
                 <span key={s} className="text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">

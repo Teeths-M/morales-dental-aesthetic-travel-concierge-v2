@@ -79,7 +79,7 @@ export default function MedicalSlideshow({ step }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-1.5">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-bold text-white/90 uppercase tracking-widest">SAFE-T 4LIFE™</span>
+            <span className="text-[10px] font-semibold text-white/90 uppercase tracking-widest">SAFE-T 4LIFE™</span>
           </div>
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 py-1.5">
             <span className="text-[10px] font-semibold text-white/70">Step {step + 1} / 12</span>
@@ -95,7 +95,7 @@ export default function MedicalSlideshow({ step }) {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.45, delay: 0.15 }}
             >
-              <h3 className="font-display text-lg text-white font-bold leading-tight drop-shadow-lg mb-1">
+              <h3 className="font-display text-lg text-white font-semibold leading-tight drop-shadow-lg mb-1">
                 {slide.headline}
               </h3>
               <p className="text-xs text-white/70 leading-relaxed">{slide.sub}</p>

@@ -53,10 +53,10 @@ export default function CheckInConfirm() {
         {/* Branding */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-10 h-10 bg-emerald-800 rounded-xl flex items-center justify-center">
-            <span className="text-white font-serif font-bold text-lg">M</span>
+            <span className="text-white font-serif font-semibold text-lg">M</span>
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold text-slate-800 leading-tight">Morales</p>
+            <p className="text-sm font-semibold text-slate-800 leading-tight">Morales</p>
             <p className="text-[10px] text-slate-400 uppercase tracking-widest">Solo Traveler Safety</p>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function CheckInConfirm() {
         {status === 'loading' && (
           <>
             <Loader2 className="w-16 h-16 text-emerald-600 animate-spin mx-auto mb-6" />
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">Confirming Your Safety…</h1>
+            <h1 className="text-2xl font-semibold text-slate-800 mb-2">Confirming Your Safety…</h1>
             <p className="text-slate-500 text-sm">Verifying your secure link. Just a moment.</p>
           </>
         )}
@@ -74,7 +74,7 @@ export default function CheckInConfirm() {
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-12 h-12 text-emerald-600" />
             </div>
-            <h1 className="text-3xl font-bold text-emerald-700 mb-3">You're Marked Safe!</h1>
+            <h1 className="text-3xl font-semibold text-emerald-700 mb-3">You're Marked Safe!</h1>
             <p className="text-slate-600 text-base mb-6">
               ✅ You have been marked as safe. Thank you for confirming. Your emergency contacts will not be notified.
             </p>
@@ -91,7 +91,7 @@ export default function CheckInConfirm() {
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-12 h-12 text-blue-500" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-3">Already Confirmed</h1>
+            <h1 className="text-2xl font-semibold text-slate-800 mb-3">Already Confirmed</h1>
             <p className="text-slate-600 text-base mb-6">
               ✅ You have already confirmed you're safe for this check-in. No further action needed.
             </p>
@@ -108,7 +108,7 @@ export default function CheckInConfirm() {
             <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="w-12 h-12 text-amber-500" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-3">Link Expired</h1>
+            <h1 className="text-2xl font-semibold text-slate-800 mb-3">Link Expired</h1>
             <p className="text-slate-600 text-base mb-6">
               ❌ This link has expired (valid for 24 hours). Please log in to your dashboard to confirm you're safe.
             </p>
@@ -125,7 +125,7 @@ export default function CheckInConfirm() {
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="w-12 h-12 text-red-500" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-3">Invalid Link</h1>
+            <h1 className="text-2xl font-semibold text-slate-800 mb-3">Invalid Link</h1>
             <p className="text-slate-600 text-base mb-6">
               ❌ This link is invalid or has already been used. Please log in to your dashboard to confirm you're safe.
             </p>

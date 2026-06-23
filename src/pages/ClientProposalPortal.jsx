@@ -80,7 +80,7 @@ export default function ClientProposalPortal() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #022C22, #0F3A20)' }}>
       <div className="text-center max-w-sm p-6">
         <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-        <p className="text-white font-bold mb-2">Proposal Unavailable</p>
+        <p className="text-white font-semibold mb-2">Proposal Unavailable</p>
         <p className="text-white/60 text-sm">{error}</p>
       </div>
     </div>
@@ -111,8 +111,8 @@ export default function ClientProposalPortal() {
             <Plane className="w-4 h-4" style={{ color: '#C5A059' }} />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>MORALES CONCIERGE</p>
-            <p className="text-white font-bold text-sm">Your Medical Travel Proposal</p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>MORALES CONCIERGE</p>
+            <p className="text-white font-semibold text-sm">Your Medical Travel Proposal</p>
           </div>
           <div className="ml-auto flex items-center gap-1.5 text-[10px] text-white/40">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -125,13 +125,13 @@ export default function ClientProposalPortal() {
         {/* Patient greeting */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <p className="text-white/50 text-xs uppercase tracking-widest mb-1">Welcome,</p>
-          <h1 className="font-bold text-white text-2xl">{caseData.client_name}</h1>
+          <h1 className="font-semibold text-white text-2xl">{caseData.client_name}</h1>
           <p className="text-white/60 text-sm mt-1">{(caseData.procedures || []).join(' · ')}</p>
         </motion.div>
 
         {/* Journey tracker */}
         <div className="rounded-2xl p-5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: '#C5A059' }}>Your Journey Status</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-4" style={{ color: '#C5A059' }}>Your Journey Status</p>
           <div className="space-y-2">
             {PIPELINE_STAGES.map((stage, i) => {
               const isDone = i < pipelineIndex;
@@ -146,7 +146,7 @@ export default function ClientProposalPortal() {
                     <p className={`text-xs font-semibold ${isActive ? 'text-white' : isDone ? 'text-white/70' : 'text-white/30'}`}>{stage.label}</p>
                   </div>
                   {isActive && (
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(250,204,21,0.2)', color: '#facc15', border: '1px solid rgba(250,204,21,0.3)' }}>
+                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(250,204,21,0.2)', color: '#facc15', border: '1px solid rgba(250,204,21,0.3)' }}>
                       Current
                     </span>
                   )}
@@ -160,9 +160,9 @@ export default function ClientProposalPortal() {
         {finalPrice > 0 && (
           <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(197,160,89,0.12), rgba(197,160,89,0.06))', border: '1px solid rgba(197,160,89,0.35)' }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(197,160,89,0.2)' }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#C5A059' }}>Package Investment</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#C5A059' }}>Package Investment</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-white">{fmt(effectiveTotal)}</span>
+                <span className="text-3xl font-semibold text-white">{fmt(effectiveTotal)}</span>
                 {finalPrice !== effectiveTotal && <span className="text-white/40 line-through text-sm">{fmt(finalPrice)}</span>}
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function ClientProposalPortal() {
               <div className="px-5 py-3 flex items-center gap-3" style={{ background: 'rgba(197,160,89,0.08)', borderBottom: '1px solid rgba(197,160,89,0.15)' }}>
                 <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: '#C5A059' }} />
                 <div>
-                  <p className="text-xs font-bold" style={{ color: '#C5A059' }}>✨ Morales Luxury Credit Applied</p>
+                  <p className="text-xs font-semibold" style={{ color: '#C5A059' }}>✨ Morales Luxury Credit Applied</p>
                   <p className="text-[10px] text-white/60">Your $49 USD consultation retainer has been fully refunded and credited back to your itinerary total.</p>
                 </div>
               </div>
@@ -191,7 +191,7 @@ export default function ClientProposalPortal() {
                     <p className="text-xs text-white/70">{label}</p>
                     {sub && <p className="text-[10px] text-white/40">{sub}</p>}
                   </div>
-                  <p className="text-xs font-bold text-white">{fmt(value)}</p>
+                  <p className="text-xs font-semibold text-white">{fmt(value)}</p>
                 </div>
               ))}
             </div>
@@ -201,7 +201,7 @@ export default function ClientProposalPortal() {
         {/* Payment options */}
         {!alreadyPaid && caseData.status === 'Proposal-Sent' && (
           <div className="space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Choose Your Payment Plan</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Choose Your Payment Plan</p>
             {paymentOptions.map(opt => (
               <button
                 key={opt.key}
@@ -218,13 +218,13 @@ export default function ClientProposalPortal() {
                       {depositChoice === opt.key && <div className="w-2 h-2 rounded-full bg-yellow-400" />}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{opt.label}</p>
+                      <p className="text-sm font-semibold text-white">{opt.label}</p>
                       <p className="text-[10px] text-white/50">{opt.sublabel}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-base font-bold" style={{ color: '#C5A059' }}>{fmt(opt.amount)}</p>
-                    {opt.badge && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(197,160,89,0.2)', color: '#C5A059' }}>{opt.badge}</span>}
+                    <p className="text-base font-semibold" style={{ color: '#C5A059' }}>{fmt(opt.amount)}</p>
+                    {opt.badge && <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(197,160,89,0.2)', color: '#C5A059' }}>{opt.badge}</span>}
                   </div>
                 </div>
               </button>
@@ -233,7 +233,7 @@ export default function ClientProposalPortal() {
             <Button
               onClick={handlePayment}
               disabled={!depositChoice || paying}
-              className="w-full py-3 font-bold rounded-xl text-sm"
+              className="w-full py-3 font-semibold rounded-xl text-sm"
               style={{ background: depositChoice ? 'linear-gradient(135deg, #C5A059, #a8863c)' : undefined, color: depositChoice ? '#022C22' : undefined }}
             >
               <Lock className="w-4 h-4 mr-2" />
@@ -255,11 +255,11 @@ export default function ClientProposalPortal() {
             style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}
           >
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-            <p className="text-white font-bold text-lg mb-1">Payment Confirmed</p>
+            <p className="text-white font-semibold text-lg mb-1">Payment Confirmed</p>
             <p className="text-white/60 text-sm">Your travel coordination is now underway. Your coordinator will be in touch shortly.</p>
             {creditAmount > 0 && (
               <div className="mt-4 rounded-xl px-4 py-3 text-left" style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.25)' }}>
-                <p className="text-xs font-bold flex items-center gap-2" style={{ color: '#C5A059' }}>
+                <p className="text-xs font-semibold flex items-center gap-2" style={{ color: '#C5A059' }}>
                   <Sparkles className="w-3.5 h-3.5" /> ✨ Morales Luxury Credit Applied
                 </p>
                 <p className="text-[10px] text-white/60 mt-1">Your $49 USD consultation retainer has been fully refunded and credited back to your itinerary total.</p>

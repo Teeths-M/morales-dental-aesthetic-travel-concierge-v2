@@ -59,7 +59,7 @@ export default function AdminSosSyncMonitor() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">SOS Sync Monitor</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">SOS Sync Monitor</h1>
           <p className="text-sm text-slate-500 mt-1">
             Tracks offline-cached SOS events that synced once connectivity was restored.
           </p>
@@ -101,7 +101,7 @@ export default function AdminSosSyncMonitor() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <WifiOff className="w-4 h-4 text-amber-600" />
-            <h2 className="text-sm font-bold text-amber-700 uppercase tracking-wider">Synced from Offline Cache</h2>
+            <h2 className="text-sm font-semibold text-amber-700 uppercase tracking-wider">Synced from Offline Cache</h2>
           </div>
           {syncedEvents.map(ev => (
             <SosEventRow key={ev.id} ev={ev} isSynced={true} />
@@ -113,7 +113,7 @@ export default function AdminSosSyncMonitor() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Live Dispatches</h2>
+          <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Live Dispatches</h2>
         </div>
         {loading && liveEvents.length === 0 ? (
           <div className="flex justify-center py-12">
@@ -143,13 +143,13 @@ function SosEventRow({ ev, isSynced }) {
             ? <WifiOff className="w-4 h-4 text-amber-500 flex-shrink-0" />
             : <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
           <div>
-            <p className="text-sm font-bold text-slate-800">
+            <p className="text-sm font-semibold text-slate-800">
               {ev.patient_name || ev.patient_email || 'Unknown traveler'}
             </p>
             <p className="text-xs text-slate-500 capitalize">{ev.trigger_type?.replace(/_/g, ' ')}</p>
           </div>
         </div>
-        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusMeta.color}`}>
+        <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${statusMeta.color}`}>
           {statusMeta.label}
         </span>
       </div>
@@ -164,7 +164,7 @@ function SosEventRow({ ev, isSynced }) {
           {ev.created_date ? format(new Date(ev.created_date), 'MMM d, h:mm:ss a') : '—'}
         </span>
         {isSynced && lagSeconds !== null && (
-          <span className="font-bold text-amber-600">
+          <span className="font-semibold text-amber-600">
             ⚡ Synced {lagSeconds}s after trigger
           </span>
         )}

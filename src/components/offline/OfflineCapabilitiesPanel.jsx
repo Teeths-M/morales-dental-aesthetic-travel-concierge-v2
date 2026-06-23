@@ -75,7 +75,7 @@ function OfflineDocsTab() {
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Shield className="w-4 h-4 text-emerald-600" />
-        <h4 className="font-bold text-slate-800 text-sm">Offline Cache Status</h4>
+        <h4 className="font-semibold text-slate-800 text-sm">Offline Cache Status</h4>
       </div>
       <p className="text-xs text-slate-500 leading-relaxed">
         These items are stored on your device and accessible without internet. Visit each section while online to prime your cache.
@@ -85,7 +85,7 @@ function OfflineDocsTab() {
       <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${pinCached ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
         <span className="text-base">🔐</span>
         <p className={`flex-1 text-xs font-semibold ${pinCached ? 'text-emerald-800' : 'text-red-700'}`}>Emergency PIN</p>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pinCached ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${pinCached ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
           {pinCached ? '✓ Cached' : '✗ Not Set'}
         </span>
       </div>
@@ -94,7 +94,7 @@ function OfflineDocsTab() {
       <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${manifestCached ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
         <span className="text-base">🚨</span>
         <p className={`flex-1 text-xs font-semibold ${manifestCached ? 'text-emerald-800' : 'text-amber-700'}`}>Emergency Manifest</p>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${manifestCached ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${manifestCached ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
           {manifestCached ? '✓ Cached' : '⚠ Not Cached'}
         </span>
       </div>
@@ -107,7 +107,7 @@ function OfflineDocsTab() {
             <div key={doc.vault_id || doc.id || i} className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
               <span className="text-base">{DOC_TYPE_ICONS[doc.document_type] || '📄'}</span>
               <p className="flex-1 text-xs font-semibold text-emerald-800 truncate">{doc.file_name || doc.document_type?.replace(/_/g, ' ')}</p>
-              <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">✓ Cached</span>
+              <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">✓ Cached</span>
             </div>
           ))}
         </div>
@@ -115,7 +115,7 @@ function OfflineDocsTab() {
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
           <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-bold text-amber-800">No vault documents cached yet</p>
+            <p className="text-xs font-semibold text-amber-800">No vault documents cached yet</p>
             <p className="text-[11px] text-amber-700 mt-0.5">Open your Passport Vault while online — your document list will automatically cache for offline access.</p>
             <a href="/passport-vault" className="flex items-center gap-1 text-[11px] text-blue-600 mt-2 font-semibold hover:underline">
               <ExternalLink className="w-3 h-3" />Go to Passport Vault →
@@ -128,7 +128,7 @@ function OfflineDocsTab() {
       <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
         <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-bold text-slate-700">Offline Emergency Access</p>
+          <p className="text-xs font-semibold text-slate-700">Offline Emergency Access</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Emergency PIN page and SOS tools work without login. Ensure your PIN is cached above.</p>
           <div className="flex flex-wrap gap-3 mt-2">
             <a href="/emergency-access" className="text-[11px] text-blue-600 font-semibold hover:underline">Emergency PIN Access →</a>
@@ -203,13 +203,13 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
       {syncing && (
         <div className="flex items-center gap-3 rounded-xl px-4 py-3 border bg-blue-50 border-blue-300">
           <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-          <p className="text-xs font-bold text-blue-800 flex-1">Syncing offline actions to server — please wait…</p>
+          <p className="text-xs font-semibold text-blue-800 flex-1">Syncing offline actions to server — please wait…</p>
           <RefreshCw className="w-4 h-4 text-blue-500 animate-spin ml-auto" />
         </div>
       )}
       <div className={`flex items-center gap-3 rounded-xl px-4 py-3 border ${isOnline ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-300'}`}>
         <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
-        <p className={`text-xs font-bold ${isOnline ? 'text-emerald-800' : 'text-amber-800'}`}>
+        <p className={`text-xs font-semibold ${isOnline ? 'text-emerald-800' : 'text-amber-800'}`}>
           {isOnline ? 'Connected — All systems online' : '⚠️ Offline mode active — SMS fallback available'}
         </p>
         {!isOnline && <WifiOff className="w-4 h-4 text-amber-600 ml-auto" />}
@@ -235,7 +235,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
               <div className="flex items-center gap-2 mb-4">
                 <MessageSquare className="w-4 h-4 text-blue-600" />
-                <h4 className="font-bold text-slate-800 text-sm">iQ200 SMS Shortcode Layer</h4>
+                <h4 className="font-semibold text-slate-800 text-sm">iQ200 SMS Shortcode Layer</h4>
               </div>
               <p className="text-xs text-slate-500 mb-4 leading-relaxed">
                 During data blackouts, send SMS to your coordinator's shortcode number. Commands execute instantly upon reconnect.
@@ -244,7 +244,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
                 {SMS_COMMANDS.map(c => (
                   <div key={c.cmd} className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border ${c.color}`}>
                     <div>
-                      <code className="text-xs font-bold">{c.cmd}</code>
+                      <code className="text-xs font-semibold">{c.cmd}</code>
                       <p className="text-[10px] opacity-70 mt-0.5">{c.desc}</p>
                     </div>
                     <button onClick={() => copyToClipboard(c.cmd.split(' [')[0], c.cmd)}
@@ -267,7 +267,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
           <motion.div key="qr" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
               <QrCode className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-              <h4 className="font-bold text-slate-800 text-sm mb-1">Encrypted QR Profile Token</h4>
+              <h4 className="font-semibold text-slate-800 text-sm mb-1">Encrypted QR Profile Token</h4>
               <p className="text-xs text-slate-500 mb-5 leading-relaxed">
                 Generate an encrypted offline QR token. Partner devices scan this to access your case profile and clear payments on reconnect — no internet required during scan.
               </p>
@@ -310,7 +310,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
           <motion.div key="pin" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
               <Smartphone className="w-8 h-8 text-violet-600 mx-auto mb-3" />
-              <h4 className="font-bold text-slate-800 text-sm mb-1">Device-Agnostic Emergency PIN</h4>
+              <h4 className="font-semibold text-slate-800 text-sm mb-1">Device-Agnostic Emergency PIN</h4>
               <p className="text-xs text-slate-500 mb-5 leading-relaxed">
                 Works from any borrowed phone or partner console. Send "PIN [code]" via SMS, or enter at any Morales Medical kiosk to authenticate without your personal device.
               </p>
@@ -321,7 +321,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
                     <p className="text-xs text-violet-600 mt-2">Your Emergency PIN</p>
                   </div>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
-                    <p className="font-bold mb-1">⚠️ Security Notice</p>
+                    <p className="font-semibold mb-1">⚠️ Security Notice</p>
                     <p>Never share this PIN except with a Morales Medical coordinator. This PIN expires in 24 hours or upon first use.</p>
                   </div>
                   <button onClick={() => copyToClipboard(emergencyPin, 'pin')}

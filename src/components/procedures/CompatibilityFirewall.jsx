@@ -63,7 +63,7 @@ export default function CompatibilityFirewall({ items, compact = false }) {
           <StatusIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${colors.icon}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${colors.label}`}>
+              <span className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded border ${colors.label}`}>
                 SAFE-T4LIFE™ {copy.label}
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function CompatibilityFirewall({ items, compact = false }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${colors.label}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${colors.label}`}>
               SAFE-T4LIFE™
             </span>
             <span className={`text-[10px] font-semibold ${colors.headline}`}>{copy.label}</span>
@@ -147,13 +147,13 @@ export default function CompatibilityFirewall({ items, compact = false }) {
                 <div className="flex gap-3">
                   {result.totalAnesthesiaHrs > 0 && (
                     <div className="flex-1 bg-white/50 rounded-lg px-2.5 py-2 text-center">
-                      <p className={`text-[10px] font-bold ${colors.headline}`}>~{result.totalAnesthesiaHrs.toFixed(1)}h</p>
+                      <p className={`text-[10px] font-semibold ${colors.headline}`}>~{result.totalAnesthesiaHrs.toFixed(1)}h</p>
                       <p className="text-[9px] text-slate-500">Est. anesthesia</p>
                     </div>
                   )}
                   {result.totalRecoveryDays > 0 && (
                     <div className="flex-1 bg-white/50 rounded-lg px-2.5 py-2 text-center">
-                      <p className={`text-[10px] font-bold ${colors.headline}`}>{result.totalRecoveryDays}d</p>
+                      <p className={`text-[10px] font-semibold ${colors.headline}`}>{result.totalRecoveryDays}d</p>
                       <p className="text-[9px] text-slate-500">Max recovery</p>
                     </div>
                   )}

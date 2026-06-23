@@ -28,8 +28,8 @@ export default function OfflineMode() {
               <WifiOff className="w-7 h-7 text-blue-400" />
             </div>
             <div>
-              <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">iQ200 Offline Layer</p>
-              <h1 className="text-2xl font-bold text-white">Offline Capabilities</h1>
+              <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">iQ200 Offline Layer</p>
+              <h1 className="text-2xl font-semibold text-white">Offline Capabilities</h1>
             </div>
           </div>
           <p className="text-slate-400 text-sm max-w-xl leading-relaxed">
@@ -41,15 +41,15 @@ export default function OfflineMode() {
               <div className="flex items-start gap-3">
                 <Download className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white mb-1">Add to Your Home Screen</p>
+                  <p className="text-sm font-semibold text-white mb-1">Add to Your Home Screen</p>
                   {isIOS && (
                     <p className="text-xs text-blue-300 leading-relaxed">
-                      Tap the <span className="font-bold">Share</span> button (⬆) at the bottom of Safari → <span className="font-bold">"Add to Home Screen"</span>. This lets you open the app offline.
+                      Tap the <span className="font-semibold">Share</span> button (⬆) at the bottom of Safari → <span className="font-semibold">"Add to Home Screen"</span>. This lets you open the app offline.
                     </p>
                   )}
                   {isAndroid && (
                     <p className="text-xs text-blue-300 leading-relaxed">
-                      Tap the <span className="font-bold">⋮ menu</span> in Chrome → <span className="font-bold">"Add to Home screen"</span>. This lets you open the app offline.
+                      Tap the <span className="font-semibold">⋮ menu</span> in Chrome → <span className="font-semibold">"Add to Home screen"</span>. This lets you open the app offline.
                     </p>
                   )}
                   {!isIOS && !isAndroid && (
@@ -93,7 +93,7 @@ export default function OfflineMode() {
           className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 hover:bg-slate-700 transition-colors">
           <BookOpen className="w-5 h-5 text-blue-400 flex-shrink-0" />
           <div>
-            <p className="text-sm font-bold text-white">Traveler Offline Guide</p>
+            <p className="text-sm font-semibold text-white">Traveler Offline Guide</p>
             <p className="text-xs text-slate-400">Step-by-step setup instructions for your phone</p>
           </div>
           <span className="ml-auto text-slate-500 text-lg">›</span>

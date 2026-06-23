@@ -71,7 +71,7 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-800 to-blue-900 px-5 py-4 flex items-center justify-between flex-shrink-0">
         <div>
-          <p className="text-white font-bold text-sm">My Procedures</p>
+          <p className="text-white font-semibold text-sm">My Procedures</p>
           <p className="text-white/70 text-xs mt-0.5">{items.length} treatment{items.length !== 1 ? 's' : ''} selected</p>
           {totalPrice && (
             <p className="text-emerald-200 text-xs mt-1.5 font-semibold flex items-center gap-1">
@@ -117,7 +117,7 @@ export default function MyProceduresList({ items, onRemove, onClear }) {
       {/* 2. Continue to Consultation CTA — flows naturally below treatment list */}
       <div className="px-4 pb-4">
         <Link to="/booking">
-          <button className="w-full py-3 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-95 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
+          <button className="w-full py-3 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-95 text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
             <Sparkles className="w-4 h-4" />
             Continue to Consultation
             <ArrowRight className="w-4 h-4" />

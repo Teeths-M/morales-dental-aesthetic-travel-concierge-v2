@@ -62,7 +62,7 @@ export default function MonetizationDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Monetization Engine</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Monetization Engine</h1>
             <p className="text-sm text-gray-500 mt-1">Revenue matrices, commissions, and partner subscriptions</p>
           </div>
           <div className="flex gap-3">
@@ -85,7 +85,7 @@ export default function MonetizationDashboard() {
               <div className={`w-10 h-10 ${kpi.bg} rounded-xl flex items-center justify-center mb-3`}>
                 <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
               </div>
-              <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
               <p className="text-xs text-gray-500 mt-1">{kpi.label}</p>
             </div>
           ))}
@@ -93,7 +93,7 @@ export default function MonetizationDashboard() {
 
         {/* Revenue breakdown */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-          <h3 className="font-bold text-gray-800 mb-4">Revenue Model Breakdown</h3>
+          <h3 className="font-semibold text-gray-800 mb-4">Revenue Model Breakdown</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { label: 'Medical Commissions', desc: '20–35%', color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
@@ -103,9 +103,9 @@ export default function MonetizationDashboard() {
               { label: 'Certification Badges', desc: 'Morales Safe™', color: 'bg-rose-50 border-rose-200 text-rose-700' }
             ].map(r => (
               <div key={r.label} className={`border rounded-xl p-3 ${r.color}`}>
-                <p className="text-xs font-bold">{r.label}</p>
+                <p className="text-xs font-semibold">{r.label}</p>
                 <p className="text-xs opacity-70 mt-0.5">{r.desc}</p>
-                <p className="text-lg font-bold mt-1">{planTypeStats[Object.keys(PLAN_LABELS).find(k => PLAN_LABELS[k] === r.label.split(' ')[0])] || 0}</p>
+                <p className="text-lg font-semibold mt-1">{planTypeStats[Object.keys(PLAN_LABELS).find(k => PLAN_LABELS[k] === r.label.split(' ')[0])] || 0}</p>
               </div>
             ))}
           </div>
@@ -114,7 +114,7 @@ export default function MonetizationDashboard() {
         {/* Plans table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="p-5 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800">Partner Plans ({plans.length})</h3>
+            <h3 className="font-semibold text-gray-800">Partner Plans ({plans.length})</h3>
           </div>
           {loading ? (
             <div className="p-10 text-center text-gray-400">Loading...</div>
@@ -152,7 +152,7 @@ export default function MonetizationDashboard() {
                   )}
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Revenue</p>
-                    <p className="text-sm font-bold text-gray-900">${(p.total_revenue_generated_usd || 0).toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-gray-900">${(p.total_revenue_generated_usd || 0).toLocaleString()}</p>
                   </div>
                   <Badge className={p.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}>
                     {p.status}
@@ -168,7 +168,7 @@ export default function MonetizationDashboard() {
       {showAdd && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">New Partner Plan</h3>
+            <h3 className="font-semibold text-gray-900 text-lg mb-4">New Partner Plan</h3>
             <div className="space-y-3">
               {[
                 { label: 'Partner Name', key: 'partner_name', type: 'text' },

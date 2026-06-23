@@ -41,7 +41,7 @@ function ScoreRing({ score, label, color }) {
             strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-base font-bold text-slate-800">{score}%</span>
+          <span className="text-base font-semibold text-slate-800">{score}%</span>
         </div>
       </div>
       <span className="text-xs font-medium text-slate-500 text-center leading-tight">{label}</span>
@@ -221,7 +221,7 @@ export default function OverviewTab() {
                   {step.done ? (
                     <CheckCircle2 className="w-4 h-4 text-white" />
                   ) : (
-                    <span className={`text-xs font-bold ${step.active ? 'text-blue-600' : 'text-slate-300'}`}>{i + 1}</span>
+                    <span className={`text-xs font-semibold ${step.active ? 'text-blue-600' : 'text-slate-300'}`}>{i + 1}</span>
                   )}
                 </div>
                 <div>

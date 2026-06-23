@@ -116,7 +116,7 @@ export default function ProcedureModal({ procedure, onClose }) {
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-lg font-bold text-primary">${price.doctor_price_usd}</p>
+                        <p className="text-lg font-semibold text-primary">${price.doctor_price_usd}</p>
                         <p className="text-xs text-muted-foreground">{price.specialty_expertise_level}</p>
                       </div>
                     </div>

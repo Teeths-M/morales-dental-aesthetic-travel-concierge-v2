@@ -119,7 +119,7 @@ function DashboardHome({ user, consultations, language }) {
       >
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <p className="text-white/70 text-[11px] font-bold uppercase tracking-[0.28em] mb-2">
+            <p className="text-white/70 text-[11px] font-semibold uppercase tracking-[0.28em] mb-2">
               {language === 'es' ? 'Bienvenido de vuelta' : language === 'fr' ? 'Bienvenue' : 'Welcome back'}
             </p>
             <h1 className="font-display text-3xl lg:text-4xl" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
@@ -130,7 +130,7 @@ function DashboardHome({ user, consultations, language }) {
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-4 text-center">
-            <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.25em] mb-2">
+            <p className="text-white/70 text-[10px] font-semibold uppercase tracking-[0.25em] mb-2">
               {language === 'es' ? 'Días Hasta el Procedimiento' : language === 'fr' ? 'Jours Jusqu\'à la Procédure' : 'Days Until Procedure'}
             </p>
             <p className="font-display text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntil > 0 ? daysUntil : '—'}</p>
@@ -147,7 +147,7 @@ function DashboardHome({ user, consultations, language }) {
               <Users className="w-5 h-5 text-emerald-700" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-emerald-800">We Found {matchedDoctors.length} Specialist{matchedDoctors.length > 1 ? 's' : ''}</p>
+              <p className="text-sm font-semibold text-emerald-800">We Found {matchedDoctors.length} Specialist{matchedDoctors.length > 1 ? 's' : ''}</p>
               <p className="text-xs text-emerald-600 mt-0.5">Based on your interest in {latestConsultation?.procedure_interest}</p>
             </div>
           </div>
@@ -159,11 +159,11 @@ function DashboardHome({ user, consultations, language }) {
                     <img src={doc.photo_url} alt={doc.name} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <span className="text-emerald-700 font-bold text-xs">{doc.name?.charAt(0)}</span>
+                      <span className="text-emerald-700 font-semibold text-xs">{doc.name?.charAt(0)}</span>
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate">{doc.name}</p>
+                    <p className="text-xs font-semibold text-slate-800 truncate">{doc.name}</p>
                     <p className="text-[10px] text-slate-500">{doc.clinic_city}, {doc.clinic_country}</p>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ function DashboardHome({ user, consultations, language }) {
               <Clock className="w-5 h-5 text-amber-700" />
             </div>
             <div>
-              <p className="text-sm font-bold text-amber-800">We're Finding Specialists for You</p>
+              <p className="text-sm font-semibold text-amber-800">We're Finding Specialists for You</p>
               <p className="text-xs text-amber-700 mt-1">
                 We've notified our doctor network about your interest in <strong>{latestConsultation?.procedure_interest}</strong>. 
                 You'll receive an email when a specialist joins.
@@ -206,7 +206,7 @@ function DashboardHome({ user, consultations, language }) {
               <Lock className="w-6 h-6 text-emerald-700" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-xl" style={{ letterSpacing: '-0.01em' }}>Secure Document Vault</h3>
+              <h3 className="font-semibold text-slate-800 text-xl" style={{ letterSpacing: '-0.01em' }}>Secure Document Vault</h3>
               <p className="text-[14px] text-slate-500 mt-1" style={{ fontWeight: 300 }}>
                 {vaultCount === 0 
                   ? 'No documents yet — upload your passport, tickets, and medical records' 
@@ -230,13 +230,13 @@ function DashboardHome({ user, consultations, language }) {
       {/* Coordinator Card */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-bold text-lg">A</span>
+          <span className="text-white font-semibold text-lg">A</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">
             {language === 'es' ? 'Tu Coordinador Asignado' : language === 'fr' ? 'Votre Coordinateur Assigné' : 'Your Assigned Coordinator'}
           </p>
-          <p className="text-sm font-bold text-slate-800">Ana Morales — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
+          <p className="text-sm font-semibold text-slate-800">Ana Morales — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-full" />
             <span className="text-[11px] text-emerald-600 font-medium">
@@ -258,8 +258,8 @@ function DashboardHome({ user, consultations, language }) {
             <Shield className="w-4 h-4 text-emerald-700" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-800">SAFE-T 4LIFE™ {language === 'es' ? 'Estado' : language === 'fr' ? 'Statut' : 'Status'}</p>
-            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+            <p className="text-xs font-semibold text-slate-800">SAFE-T 4LIFE™ {language === 'es' ? 'Estado' : language === 'fr' ? 'Statut' : 'Status'}</p>
+            <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
               {language === 'es' ? 'Riesgo Bajo' : language === 'fr' ? 'Risque Faible' : 'Low Risk'}
             </span>
           </div>
@@ -272,7 +272,7 @@ function DashboardHome({ user, consultations, language }) {
             <div key={s.label}>
               <div className="flex justify-between text-[11px] mb-1">
                 <span className="text-slate-500">{s.label}</span>
-                <span className="font-bold" style={{ color: s.color }}>{s.val}%</span>
+                <span className="font-semibold" style={{ color: s.color }}>{s.val}%</span>
               </div>
               <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-1.5 rounded-full" style={{ width: `${s.val}%`, backgroundColor: s.color }} />
@@ -301,7 +301,7 @@ function DashboardHome({ user, consultations, language }) {
 
       {/* Quick Actions */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.28em] mb-5">
+        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.28em] mb-5">
           {language === 'es' ? 'Acciones Rápidas' : language === 'fr' ? 'Actions Rapides' : 'Quick Actions'}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -326,7 +326,7 @@ function DashboardHome({ user, consultations, language }) {
           <p className="text-[15px] font-semibold text-slate-800" style={{ letterSpacing: '-0.01em' }}>
             {language === 'es' ? 'Notificaciones' : language === 'fr' ? 'Notifications' : 'Notifications'}
           </p>
-          <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{notifications.length}</span>
+          <span className="text-[10px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{notifications.length}</span>
         </div>
         <div className="space-y-2">
           {notifications.map((n, i) => (

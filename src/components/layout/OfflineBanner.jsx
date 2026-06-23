@@ -29,7 +29,7 @@ export default function OfflineBanner() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-2.5">
         <WifiOff className="w-4 h-4 text-amber-200" />
-        <p className="text-[13px] font-bold text-amber-100 tracking-wide">
+        <p className="text-[13px] font-semibold text-amber-100 tracking-wide">
           Offline Mode: Syncing paused
         </p>
       </div>

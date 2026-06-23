@@ -64,7 +64,7 @@ export default function ProcedurePricingDisplay({ procedure, selectedCountry = n
       <div className="p-6 border-b border-emerald-200">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-emerald-600" />
               Pricing & Cost Estimate
             </h3>
@@ -83,14 +83,14 @@ export default function ProcedurePricingDisplay({ procedure, selectedCountry = n
           <div className="grid grid-cols-3 gap-4">
             <div>
               <p className="text-xs text-slate-500 mb-1">From</p>
-              <p className="text-2xl font-bold text-slate-900">${priceRange.minPrice.toLocaleString()}</p>
+              <p className="text-2xl font-semibold text-slate-900">${priceRange.minPrice.toLocaleString()}</p>
             </div>
             <div className="flex items-center justify-center">
               <div className="w-full h-1 bg-gradient-to-r from-emerald-400 to-blue-400 rounded"></div>
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-500 mb-1">To</p>
-              <p className="text-2xl font-bold text-slate-900">${priceRange.maxPrice.toLocaleString()}</p>
+              <p className="text-2xl font-semibold text-slate-900">${priceRange.maxPrice.toLocaleString()}</p>
             </div>
           </div>
         </div>

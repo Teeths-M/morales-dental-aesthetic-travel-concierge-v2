@@ -14,7 +14,7 @@ export default function TravelAgencySuccess({ agency, language, onDashboard }) {
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
         </div>
-        <h2 className="text-3xl font-display font-bold text-foreground">
+        <h2 className="text-3xl font-display font-semibold text-foreground">
           {language === 'es' ? '¡Bienvenido!' : language === 'fr' ? 'Bienvenue!' : 'Welcome!'}
         </h2>
         <p className="text-muted-foreground">

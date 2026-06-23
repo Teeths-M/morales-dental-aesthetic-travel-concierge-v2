@@ -75,7 +75,7 @@ export default function WildernessSOSPanel({
         {/* Offline notice */}
         {!isOnline && (
           <div className="bg-amber-900/40 border border-amber-600/50 rounded-xl px-4 py-3 text-xs text-amber-300">
-            <p className="font-bold mb-0.5">No internet detected</p>
+            <p className="font-semibold mb-0.5">No internet detected</p>
             <p>Morales can still create an SOS packet with your GPS coordinates. If SMS is available, send the emergency packet by text. When internet returns, the app will sync automatically.</p>
           </div>
         )}
@@ -96,7 +96,7 @@ export default function WildernessSOSPanel({
           <div className="flex items-center justify-center gap-3 py-6">
             <Loader2 className="w-6 h-6 text-red-400 animate-spin" />
             <div>
-              <p className="text-white font-bold text-sm">Creating SOS Packet…</p>
+              <p className="text-white font-semibold text-sm">Creating SOS Packet…</p>
               <p className="text-slate-400 text-xs">Capturing GPS coordinates</p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function WildernessSOSPanel({
             <div className="flex-1 min-w-0">
               {gpsCoords ? (
                 <>
-                  <p className="text-emerald-300 text-xs font-bold">GPS Captured ✓</p>
+                  <p className="text-emerald-300 text-xs font-semibold">GPS Captured ✓</p>
                   <p className="text-emerald-400 font-mono text-xs">
                     {gpsCoords.latitude.toFixed(5)}, {gpsCoords.longitude.toFixed(5)}
                     {gpsCoords.accuracy && <span className="ml-1 text-emerald-600">±{Math.round(gpsCoords.accuracy)}m</span>}
@@ -129,7 +129,7 @@ export default function WildernessSOSPanel({
                 </>
               ) : (
                 <>
-                  <p className="text-amber-300 text-xs font-bold">No GPS Fix</p>
+                  <p className="text-amber-300 text-xs font-semibold">No GPS Fix</p>
                   <p className="text-amber-400 text-xs">Packet created without coordinates. Include your location in SMS if known.</p>
                 </>
               )}
@@ -139,7 +139,7 @@ export default function WildernessSOSPanel({
 
         {/* State label */}
         {STATE_LABELS[sosState] && (
-          <div className={`text-center text-sm font-bold py-1 ${
+          <div className={`text-center text-sm font-semibold py-1 ${
             sosState === 'synced' ? 'text-emerald-400' :
             sosState === 'error' ? 'text-red-400' :
             'text-white'
@@ -153,7 +153,7 @@ export default function WildernessSOSPanel({
         {/* Packet ID */}
         {packet && (
           <div className="bg-slate-800/60 border border-slate-600/40 rounded-xl px-4 py-2.5">
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">SOS Packet ID</p>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">SOS Packet ID</p>
             <p className="text-white font-mono text-sm">{packet.packet_id}</p>
             <p className="text-slate-500 text-[10px] mt-0.5">Created: {new Date(packet.created_at).toLocaleTimeString()}</p>
           </div>
@@ -168,14 +168,14 @@ export default function WildernessSOSPanel({
               className="space-y-3"
             >
               <div className="bg-blue-900/30 border border-blue-700/40 rounded-xl px-4 py-3">
-                <p className="text-blue-300 text-[10px] font-bold uppercase tracking-wider mb-1.5">Emergency SMS Payload</p>
+                <p className="text-blue-300 text-[10px] font-semibold uppercase tracking-wider mb-1.5">Emergency SMS Payload</p>
                 <p className="text-white font-mono text-xs break-all leading-relaxed">{smsPayload}</p>
               </div>
 
               {/* Primary: Open SMS app */}
               <a
                 href={smsLink}
-                className="flex items-center justify-center gap-2.5 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors"
+                className="flex items-center justify-center gap-2.5 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-colors"
                 aria-label="Send SOS by SMS"
               >
                 <MessageSquare className="w-5 h-5" />
@@ -184,7 +184,7 @@ export default function WildernessSOSPanel({
 
               {!hasTwilioNumber && (
                 <div className="bg-amber-900/30 border border-amber-700/40 rounded-xl px-4 py-3 text-xs text-amber-300">
-                  <p className="font-bold mb-1">⚠️ No emergency number configured</p>
+                  <p className="font-semibold mb-1">⚠️ No emergency number configured</p>
                   <p>Send this message to your emergency contact or local rescue services. Copy the coordinates and share them any way available.</p>
                 </div>
               )}

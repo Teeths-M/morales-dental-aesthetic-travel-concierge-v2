@@ -129,13 +129,13 @@ export default function CaseStatusIndicator({ caseStatus: consultationStatus, us
       <div className="px-5 pt-5 pb-4 border-b border-slate-50">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-400 mb-1">Your Journey</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400 mb-1">Your Journey</p>
             <h3 className="text-base font-semibold text-slate-800" style={{ letterSpacing: '-0.01em' }}>
               {isComplete ? '🎉 Journey Complete!' : `Step ${currentStepIndex + 1} of ${PIPELINE_STEPS.length}`}
             </h3>
           </div>
           <div
-            className="text-[11px] font-bold px-3 py-1.5 rounded-full border"
+            className="text-[11px] font-semibold px-3 py-1.5 rounded-full border"
             style={{
               background: isComplete ? '#F0FDF4' : '#EFF6FF',
               color: isComplete ? '#16A34A' : '#2563EB',
@@ -224,10 +224,10 @@ export default function CaseStatusIndicator({ caseStatus: consultationStatus, us
               {/* Status badge */}
               <div className="pt-1.5">
                 {isCompleted && (
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Done</span>
+                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Done</span>
                 )}
                 {isCurrent && !isComplete && (
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
                     Now
                   </span>

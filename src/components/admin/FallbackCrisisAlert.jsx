@@ -131,7 +131,7 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
               <AlertTriangle className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-lg leading-none">HUMAN INTERVENTION</h3>
+              <h3 className="font-semibold text-lg leading-none">HUMAN INTERVENTION</h3>
               <p className="text-red-200 text-xs mt-0.5">Immediate coordinator action required</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
         <div className="p-6 space-y-5">
           {/* Case Summary */}
           <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="font-bold text-red-900 text-base">{caseRecord.client_name}</p>
+            <p className="font-semibold text-red-900 text-base">{caseRecord.client_name}</p>
             <p className="text-red-700 text-sm mt-0.5">{caseRecord.procedures?.join(', ')} — {caseRecord.procedure_country}</p>
             <div className="flex items-center gap-2 mt-2">
               <Badge className="bg-red-100 text-red-700 border-red-200 border text-xs">
@@ -162,7 +162,7 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
 
           {/* Direct Contacts */}
           <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Direct Emergency Contacts</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Direct Emergency Contacts</p>
             {contacts.length > 0 ? (
               contacts.map((c, i) => (
                 <a
@@ -175,7 +175,7 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-slate-500">{c.label}</p>
-                    <p className="font-mono font-bold text-slate-900 text-lg leading-none mt-0.5">{c.phone}</p>
+                    <p className="font-mono font-semibold text-slate-900 text-lg leading-none mt-0.5">{c.phone}</p>
                   </div>
                   <span className="text-xs text-green-600 font-semibold bg-green-50 border border-green-200 px-2 py-1 rounded-lg">
                     Tap to Call
@@ -192,7 +192,7 @@ function EscalateModal({ caseRecord, onClose, onLogged }) {
           {/* Action Buttons */}
           <div className="space-y-2 pt-1">
             <Button
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold h-11"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold h-11"
               onClick={handleLogIntervention}
               disabled={loading}
             >
@@ -231,7 +231,7 @@ export default function FallbackCrisisAlert({ cases, onRefresh }) {
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 flex items-center gap-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-white animate-pulse" />
-            <span className="text-white font-bold text-sm uppercase tracking-wide">
+            <span className="text-white font-semibold text-sm uppercase tracking-wide">
               IN-FLUX: Fallback Routing Active
             </span>
           </div>
@@ -268,7 +268,7 @@ export default function FallbackCrisisAlert({ cases, onRefresh }) {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-slate-900 text-base">{c.client_name}</span>
+                      <span className="font-semibold text-slate-900 text-base">{c.client_name}</span>
                       {humanRequired ? (
                         <Badge className="bg-red-600 text-white text-xs animate-pulse">🔴 HUMAN REQUIRED</Badge>
                       ) : (
@@ -289,7 +289,7 @@ export default function FallbackCrisisAlert({ cases, onRefresh }) {
                   </div>
                   <Button
                     size="sm"
-                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold shrink-0 h-9 px-3"
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shrink-0 h-9 px-3"
                     onClick={() => setEscalatingCase(c)}
                   >
                     🚨 Escalate
@@ -302,10 +302,10 @@ export default function FallbackCrisisAlert({ cases, onRefresh }) {
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-semibold">
                     <User className="w-3 h-3 shrink-0" />
                     <span className="line-through">{missedPartner}</span>
-                    <span className="no-underline font-bold ml-0.5">❌ MISSED</span>
+                    <span className="no-underline font-semibold ml-0.5">❌ MISSED</span>
                   </div>
 
-                  <span className="text-slate-400 font-bold">→</span>
+                  <span className="text-slate-400 font-semibold">→</span>
 
                   {/* Active backup */}
                   {activeBackup ? (

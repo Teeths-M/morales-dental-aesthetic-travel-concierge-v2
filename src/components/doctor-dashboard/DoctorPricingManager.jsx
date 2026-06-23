@@ -130,7 +130,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
     <div className="space-y-6">
       {/* Current Pricing */}
       <div className="bg-gradient-to-br from-accent/10 to-primary/10 border border-accent/20 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-foreground mb-4">{t.title}</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">{t.title}</h3>
         {pricing.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t.noPricing}</p>
         ) : (
@@ -169,7 +169,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {t.yourPrice} <span className="font-bold text-primary">${p.doctor_price_usd.toLocaleString()}</span> USD
+                        {t.yourPrice} <span className="font-semibold text-primary">${p.doctor_price_usd.toLocaleString()}</span> USD
                       </p>
                     )}
                   </div>
@@ -195,7 +195,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
                         </Button>
                       </>
                     )}
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                       p.approved_by_admin 
                         ? 'bg-emerald-100 text-emerald-700' 
                         : 'bg-amber-100 text-amber-700'
@@ -212,7 +212,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
 
       {/* Add New Pricing */}
       <div className="bg-card border border-border rounded-lg p-6">
-        <h4 className="font-bold text-foreground mb-4">{t.addNewPricing}</h4>
+        <h4 className="font-semibold text-foreground mb-4">{t.addNewPricing}</h4>
         <p className="text-sm text-muted-foreground mb-4">{t.selectProcedure}</p>
         <div className="grid gap-2 max-h-64 overflow-y-auto">
           {procedures

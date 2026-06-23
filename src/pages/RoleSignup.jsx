@@ -72,7 +72,7 @@ export default function RoleSignup() {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background px-4 py-12">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-10">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary mb-3">Account setup</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary mb-3">Account setup</p>
           <h1 className="font-display text-4xl lg:text-5xl text-foreground mb-3">Choose your role</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Select the account type that fits you. Platform Admin is protected and cannot be selected during signup.
@@ -87,7 +87,7 @@ export default function RoleSignup() {
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">{role.title}</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-2">{role.title}</h2>
                 <p className="text-sm text-muted-foreground min-h-[72px]">{role.description}</p>
                 <Button
                   className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground"

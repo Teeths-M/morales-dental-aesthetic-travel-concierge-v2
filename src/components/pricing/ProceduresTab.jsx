@@ -81,7 +81,7 @@ export default function ProceduresTab() {
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900">All Procedures</h2>
+          <h2 className="text-lg font-semibold text-slate-900">All Procedures</h2>
           <p className="text-sm text-slate-600 mt-1">Manage base pricing, complexity, and recovery settings</p>
         </div>
         <div className="overflow-x-auto">

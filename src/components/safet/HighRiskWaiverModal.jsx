@@ -64,7 +64,7 @@ export default function HighRiskWaiverModal({ caseId, flags, patientName, onWaiv
             className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </motion.div>
-          <h3 className="font-bold text-slate-800 text-lg mb-2">Waiver Signed & Recorded</h3>
+          <h3 className="font-semibold text-slate-800 text-lg mb-2">Waiver Signed & Recorded</h3>
           <p className="text-sm text-slate-500">Your acknowledgement has been cryptographically timestamped and logged. Proceeding to next step.</p>
         </motion.div>
       </div>
@@ -85,15 +85,15 @@ export default function HighRiskWaiverModal({ caseId, flags, patientName, onWaiv
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-white/70">SAFE-T 4LIFE™</p>
-              <h2 className="text-lg font-bold">High-Risk Acknowledgement Required</h2>
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/70">SAFE-T 4LIFE™</p>
+              <h2 className="text-lg font-semibold">High-Risk Acknowledgement Required</h2>
             </div>
           </div>
         </div>
 
         {/* Risk Flags */}
         <div className="px-6 py-4 bg-red-50 border-b border-red-100 flex-shrink-0">
-          <p className="text-xs font-bold text-red-700 uppercase tracking-widest mb-2">Elevated Risk Factors Identified</p>
+          <p className="text-xs font-semibold text-red-700 uppercase tracking-widest mb-2">Elevated Risk Factors Identified</p>
           <div className="flex flex-wrap gap-1.5">
             {(flags || []).map((f, i) => (
               <span key={i} className="bg-red-100 text-red-700 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-red-200">{f}</span>
@@ -106,14 +106,14 @@ export default function HighRiskWaiverModal({ caseId, flags, patientName, onWaiv
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4">
             <div className="flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-slate-500" />
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Legal Waiver Document</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Legal Waiver Document</p>
             </div>
             <pre className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">{WAIVER_TEXT}</pre>
           </div>
 
           {/* Cryptographic metadata */}
           <div className="bg-slate-900 text-white rounded-2xl p-4 mb-4 space-y-2">
-            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5"><Lock className="w-3 h-3" /> Cryptographic Record</p>
+            <p className="text-[10px] font-semibold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5"><Lock className="w-3 h-3" /> Cryptographic Record</p>
             {[
               { icon: Clock, label: 'Timestamp', val: new Date(timestamp).toLocaleString() },
               { icon: MapPin, label: 'IP Address', val: ipAddress },
@@ -145,7 +145,7 @@ export default function HighRiskWaiverModal({ caseId, flags, patientName, onWaiv
 
           {/* Signature field */}
           <div>
-            <label className="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-slate-600 mb-1.5 flex items-center gap-1.5">
               <PenLine className="w-3.5 h-3.5" /> Electronic Signature — Type your full legal name
             </label>
             <input
@@ -166,7 +166,7 @@ export default function HighRiskWaiverModal({ caseId, flags, patientName, onWaiv
           </button>
           <button onClick={handleSign}
             disabled={!agreed || !signature.trim() || signing}
-            className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-40 transition-all flex items-center justify-center gap-2">
+            className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-all flex items-center justify-center gap-2">
             {signing ? (
               <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing…</>
             ) : (

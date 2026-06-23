@@ -73,7 +73,7 @@ export default function BookingsModule() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-800">{item.label}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sc.cls}`}>{sc.label}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sc.cls}`}>{sc.label}</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">{item.detail}</p>
                 </div>
@@ -104,7 +104,7 @@ export default function BookingsModule() {
         </p>
         <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
           <div>
-            <p className="text-sm font-bold text-slate-800">Add Companion Package</p>
+            <p className="text-sm font-semibold text-slate-800">Add Companion Package</p>
             <p className="text-xs text-slate-500">+$650 — includes all logistics</p>
           </div>
           <button
@@ -143,8 +143,8 @@ export default function BookingsModule() {
                 <p className="text-xs font-semibold text-slate-700">{p.label}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Due: {p.date}</p>
               </div>
-              <p className="text-sm font-bold text-slate-800">{p.amount}</p>
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+              <p className="text-sm font-semibold text-slate-800">{p.amount}</p>
+              <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${
                 p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' :
                 p.status === 'due' ? 'bg-amber-100 text-amber-700' :
                 'bg-slate-100 text-slate-500'

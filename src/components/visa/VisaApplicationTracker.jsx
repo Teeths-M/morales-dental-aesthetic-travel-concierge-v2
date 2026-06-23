@@ -67,7 +67,7 @@ function ApplicationCard({ app, onStatusChange, onDelete }) {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 ml-3">
           {urgency && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${urgency.cls}`}>{urgency.label}</span>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${urgency.cls}`}>{urgency.label}</span>
           )}
           <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
           {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -105,7 +105,7 @@ function ApplicationCard({ app, onStatusChange, onDelete }) {
                 <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
                   <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-bold text-red-700">Application Denied</p>
+                    <p className="text-xs font-semibold text-red-700">Application Denied</p>
                     {app.denial_reason && <p className="text-xs text-red-600 mt-0.5">{app.denial_reason}</p>}
                     <p className="text-xs text-red-600 mt-1">Contact your Morales coordinator to discuss next steps or reapplication options.</p>
                   </div>
@@ -114,14 +114,14 @@ function ApplicationCard({ app, onStatusChange, onDelete }) {
 
               {/* Application reference */}
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Application Reference</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5">Application Reference</p>
                 {editingRef ? (
                   <div className="flex gap-2">
                     <input value={refValue} onChange={e => setRefValue(e.target.value)}
                       placeholder="e.g. EVISA-2026-XXXXX"
                       className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
                     <button onClick={saveRef} disabled={saving}
-                      className="px-3 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 disabled:opacity-50">
+                      className="px-3 py-2 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-700 disabled:opacity-50">
                       {saving ? '…' : 'Save'}
                     </button>
                     <button onClick={() => setEditingRef(false)} className="px-3 py-2 border border-slate-200 rounded-lg text-xs text-slate-600">Cancel</button>
@@ -167,7 +167,7 @@ function ApplicationCard({ app, onStatusChange, onDelete }) {
 
               {/* Status update buttons */}
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Update Status</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Update Status</p>
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(STATUS_CONFIG).filter(([k]) => k !== app.application_status).map(([key, s]) => (
                     <button key={key} onClick={() => onStatusChange(app.id, key)}
@@ -240,11 +240,11 @@ export default function VisaApplicationTracker() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-800">My Visa Applications</h2>
+          <h2 className="text-lg font-semibold text-slate-800">My Visa Applications</h2>
           <p className="text-sm text-slate-500 mt-0.5">Track your application status and get reminders before your procedure date.</p>
         </div>
         <button onClick={() => setShowNew(s => !s)}
-          className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all">
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-700 transition-all">
           <Plus className="w-4 h-4" /> Track New
         </button>
       </div>
@@ -254,7 +254,7 @@ export default function VisaApplicationTracker() {
         {showNew && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-3">
-            <p className="text-sm font-bold text-blue-800">Track a New Visa Application</p>
+            <p className="text-sm font-semibold text-blue-800">Track a New Visa Application</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { label: 'Your Nationality', key: 'nationality', placeholder: 'e.g. Trinidadian' },
@@ -277,7 +277,7 @@ export default function VisaApplicationTracker() {
             </div>
             <div className="flex gap-2 pt-1">
               <button onClick={handleCreate} disabled={!newForm.nationality || !newForm.destination_country}
-                className="px-5 py-2.5 bg-blue-700 text-white rounded-xl text-sm font-bold hover:bg-blue-800 disabled:opacity-40 transition-all">
+                className="px-5 py-2.5 bg-blue-700 text-white rounded-xl text-sm font-semibold hover:bg-blue-800 disabled:opacity-40 transition-all">
                 Start Tracking
               </button>
               <button onClick={() => setShowNew(false)} className="px-4 py-2.5 border border-blue-200 rounded-xl text-sm text-blue-700 hover:bg-blue-100">Cancel</button>
@@ -292,7 +292,7 @@ export default function VisaApplicationTracker() {
           <p className="text-sm font-semibold text-slate-600 mb-1">No applications tracked yet</p>
           <p className="text-xs text-slate-400 mb-4">After running a visa check, track your application here to receive timely reminders.</p>
           <button onClick={() => setShowNew(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700">
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-700">
             <Plus className="w-4 h-4" /> Track Your First Application
           </button>
         </div>

@@ -68,7 +68,7 @@ export default function WaiverAdminPanel({ caseRecord }) {
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-bold text-red-800">TRAVEL COORDINATION PAUSED</p>
+              <p className="text-xs font-semibold text-red-800">TRAVEL COORDINATION PAUSED</p>
               <p className="text-xs text-red-700 mt-1">Patient refused required waiver. Case cannot progress until waiver is reissued and signed.</p>
             </div>
           </div>

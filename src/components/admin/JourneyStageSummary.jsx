@@ -36,7 +36,7 @@ export default function JourneyStageSummary({ cases }) {
                 <div className={`w-9 h-9 rounded-xl ${stage.bg} flex items-center justify-center flex-shrink-0`}>
                   <Icon className={`w-4 h-4 ${stage.text}`} />
                 </div>
-                <span className={`text-2xl font-bold ${stage.count > 0 ? 'text-slate-900' : 'text-slate-300'}`}>
+                <span className={`text-2xl font-semibold ${stage.count > 0 ? 'text-slate-900' : 'text-slate-300'}`}>
                   {stage.count}
                 </span>
                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">

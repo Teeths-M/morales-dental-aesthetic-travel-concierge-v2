@@ -95,7 +95,7 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">
           {language === 'es' ? 'Disponibilidad y Precios' : language === 'fr' ? 'Disponibilité et Tarifs' : 'Availability & Pricing'}
         </h2>
         <p className="text-muted-foreground text-sm">
@@ -149,7 +149,7 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
           <div className="flex items-center justify-between mb-4">
             <label className="text-sm font-medium text-foreground">💰 {language === 'es' ? 'Modelo de Precios' : language === 'fr' ? 'Modèle de Tarification' : 'Pricing Model'}</label>
             {driverRegionType !== 'other' && (
-              <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${
+              <span className={`text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${
                 driverRegionType === 'origin'
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-emerald-100 text-emerald-700'
@@ -194,7 +194,7 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
               <span className="text-sm font-semibold text-foreground">
                 {driverRegionType === 'origin' ? 'Round-Trip Total' : 'Full Transit Package'}
               </span>
-              <span className="text-lg font-bold text-primary">
+              <span className="text-lg font-semibold text-primary">
                 ${activeLegKeys.reduce((sum, k) => sum + (pricingModel[k] || 0), 0).toFixed(2)} USD
               </span>
             </div>

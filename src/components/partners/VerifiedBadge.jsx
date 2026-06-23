@@ -9,7 +9,7 @@ export default function VerifiedBadge({ partnerType, verifiedAt }) {
         <Shield className="w-3 h-3 text-white" />
       </div>
       <div>
-        <p className="text-xs font-bold text-emerald-800">Verified by Morales</p>
+        <p className="text-xs font-semibold text-emerald-800">Verified by Morales</p>
         <p className="text-[10px] text-emerald-600">
           {partnerType === 'doctor' ? 'Medical Professional' : 
            partnerType === 'travel_agency' ? 'Travel Partner' :

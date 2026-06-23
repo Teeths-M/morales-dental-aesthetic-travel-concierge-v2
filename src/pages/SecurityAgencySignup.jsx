@@ -126,7 +126,7 @@ export default function SecurityAgencySignup() {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-display font-bold text-slate-900 mb-2">Application Submitted</h2>
+          <h2 className="text-2xl font-display font-semibold text-slate-900 mb-2">Application Submitted</h2>
           <p className="text-slate-500 text-sm mb-6">
             Your agency has been submitted for KYP verification. Our compliance team will review your credentials and reach out within 2–3 business days.
           </p>
@@ -151,7 +151,7 @@ export default function SecurityAgencySignup() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 border border-white/20 mb-4">
             <Shield className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-white mb-1">Security Agency Partner</h1>
+          <h1 className="text-3xl font-display font-semibold text-white mb-1">Security Agency Partner</h1>
           <p className="text-slate-300 text-sm">SAFE-T 4LIFE™ Platform Registration</p>
         </div>
 
@@ -160,7 +160,7 @@ export default function SecurityAgencySignup() {
           {STEPS.map((s, i) => (
             <React.Fragment key={s}>
               <div className={`flex items-center gap-1.5 ${i <= step ? 'text-white' : 'text-slate-500'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${i < step ? 'bg-green-500 border-green-500' : i === step ? 'bg-white text-slate-900 border-white' : 'bg-transparent border-slate-600'}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${i < step ? 'bg-green-500 border-green-500' : i === step ? 'bg-white text-slate-900 border-white' : 'bg-transparent border-slate-600'}`}>
                   {i < step ? '✓' : i + 1}
                 </div>
                 <span className="text-xs font-medium hidden sm:block">{s}</span>
@@ -183,7 +183,7 @@ export default function SecurityAgencySignup() {
             {/* Step 0 — Agency Info */}
             {step === 0 && (
               <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <h2 className="text-lg font-bold text-slate-800 mb-4">Agency Information</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">Agency Information</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <Field label="Agency Name" required>
@@ -218,7 +218,7 @@ export default function SecurityAgencySignup() {
             {/* Step 1 — Capabilities */}
             {step === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                <h2 className="text-lg font-bold text-slate-800">Capabilities & Services</h2>
+                <h2 className="text-lg font-semibold text-slate-800">Capabilities & Services</h2>
 
                 <Field label="Personnel Count" required>
                   <div className="flex gap-2 flex-wrap">
@@ -269,7 +269,7 @@ export default function SecurityAgencySignup() {
             {/* Step 2 — Documents */}
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                <h2 className="text-lg font-bold text-slate-800">Documents</h2>
+                <h2 className="text-lg font-semibold text-slate-800">Documents</h2>
                 <p className="text-slate-500 text-sm">Upload your business license and insurance certificate for KYP compliance screening.</p>
 
                 {[
@@ -300,7 +300,7 @@ export default function SecurityAgencySignup() {
             {/* Step 3 — Review */}
             {step === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <h2 className="text-lg font-bold text-slate-800">Review & Submit</h2>
+                <h2 className="text-lg font-semibold text-slate-800">Review & Submit</h2>
                 <div className="bg-slate-50 rounded-2xl p-5 space-y-3 text-sm">
                   <Row label="Agency" value={form.agency_name} />
                   <Row label="Contact" value={form.contact_person} />

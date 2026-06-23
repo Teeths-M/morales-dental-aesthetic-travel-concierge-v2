@@ -238,7 +238,7 @@ export default function AdminPartners() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Partner Management</h1>
+            <h1 className="text-3xl font-semibold font-display">Partner Management</h1>
             <p className="text-muted-foreground mt-1">
               View and manage all registered partners
             </p>
@@ -253,7 +253,7 @@ export default function AdminPartners() {
                   <Users className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.doctors}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.doctors}</p>
                   <p className="text-xs text-slate-500">Doctors</p>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export default function AdminPartners() {
                   <Plane className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.travelAgencies}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.travelAgencies}</p>
                   <p className="text-xs text-slate-500">Travel Agencies</p>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export default function AdminPartners() {
                   <Car className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.taxiServices}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.taxiServices}</p>
                   <p className="text-xs text-slate-500">Taxi Services</p>
                 </div>
               </div>
@@ -295,7 +295,7 @@ export default function AdminPartners() {
                   <CheckCircle className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.active}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.active}</p>
                   <p className="text-xs text-slate-500">Active Partners</p>
                 </div>
               </div>
@@ -309,7 +309,7 @@ export default function AdminPartners() {
                   <User className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.companions}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.companions}</p>
                   <p className="text-xs text-slate-500">Companions</p>
                 </div>
               </div>
@@ -520,7 +520,7 @@ function PartnerSection({ title, icon: Icon, partners, isLoading, isError, onRet
   return (
     <Card className="bg-white border-0 shadow-md rounded-2xl">
       <CardContent className="pt-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <Icon className="w-5 h-5 text-slate-600" />
           {title} ({filteredPartners.length})
         </h3>

@@ -159,7 +159,7 @@ export default function BiometricGate({ children }) {
             <Shield className="w-8 h-8 text-emerald-400" />
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-2">Session Locked</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Session Locked</h2>
           <p className="text-gray-400 text-sm mb-6">
             {isMaxed
               ? `Too many failed attempts. Auto-logout in ${autoLogoutCountdown}s...`

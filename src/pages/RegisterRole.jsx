@@ -73,7 +73,7 @@ export default function RegisterRole() {
 
       {/* Header Info Cluster */}
       <div className="text-center max-w-2xl mx-auto mb-16 z-10 animate-fade-in">
-        <span className="text-xs font-mono font-bold tracking-[0.3em] text-[#D4AF37] uppercase">
+        <span className="text-xs font-mono font-semibold tracking-[0.3em] text-[#D4AF37] uppercase">
           Choose Your Role
         </span>
         <h1 className="font-display text-3xl md:text-4xl mt-3 mb-4 tracking-wide font-medium text-white">

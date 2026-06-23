@@ -12,7 +12,7 @@ function SliderRow({ label, value, min, max, onChange, colorFn }) {
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-slate-700">{label}</span>
-        <span className={`text-base font-bold ${color}`}>{value}</span>
+        <span className={`text-base font-semibold ${color}`}>{value}</span>
       </div>
       <input
         type="range" min={min} max={max} value={value}
@@ -99,7 +99,7 @@ export default function RecoveryCheckIn({ sessionId, tripId, caseId }) {
         <div className="flex items-start gap-3">
           <Icon className={`w-6 h-6 flex-shrink-0 mt-0.5 ${cfg.color}`} />
           <div>
-            <p className={`font-bold ${cfg.color}`}>{cfg.label}</p>
+            <p className={`font-semibold ${cfg.color}`}>{cfg.label}</p>
             {anomalyResult.anomaly_reasons?.length > 0 && (
               <ul className={`mt-2 space-y-0.5 text-xs ${cfg.color}`}>
                 {anomalyResult.anomaly_reasons.map((r, i) => <li key={i}>• {r}</li>)}
@@ -206,7 +206,7 @@ export default function RecoveryCheckIn({ sessionId, tripId, caseId }) {
       <button
         onClick={submit}
         disabled={isSubmitting || !sessionId}
-        className={`w-full py-4 rounded-2xl font-bold text-white text-base transition-all ${
+        className={`w-full py-4 rounded-2xl font-semibold text-white text-base transition-all ${
           isSubmitting || !sessionId
             ? 'bg-slate-400 cursor-not-allowed'
             : 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-lg'
@@ -227,7 +227,7 @@ export default function RecoveryCheckIn({ sessionId, tripId, caseId }) {
 
       {/* SMS fallback */}
       <div className="border-t pt-3">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5">
           SMS Alternative (no internet needed)
         </p>
         <code className="block text-xs bg-slate-100 text-slate-700 font-mono px-3 py-2 rounded-xl">

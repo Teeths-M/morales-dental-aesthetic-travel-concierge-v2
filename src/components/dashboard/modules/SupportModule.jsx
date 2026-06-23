@@ -125,7 +125,7 @@ export default function SupportModule() {
           <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-4 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             <div>
-              <p className="text-sm font-bold text-emerald-800">Ticket Submitted</p>
+              <p className="text-sm font-semibold text-emerald-800">Ticket Submitted</p>
               <p className="text-xs text-emerald-700">Your coordinator will respond within 24 hours.</p>
             </div>
           </div>

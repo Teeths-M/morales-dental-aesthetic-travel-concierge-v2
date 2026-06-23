@@ -133,7 +133,7 @@ export default function ComplianceChecklistPanel({ caseId }) {
             <div className={`flex items-center gap-4 rounded-2xl border px-5 py-4 ${visaConfig.color}`}>
               <span className="text-2xl">{visaConfig.icon}</span>
               <div className="flex-1">
-                <p className="font-bold text-sm">{visaConfig.label}</p>
+                <p className="font-semibold text-sm">{visaConfig.label}</p>
                 <p className="text-xs mt-0.5 opacity-80">{result?.visa_summary || checklist?.policy_snapshot?.visa_summary}</p>
               </div>
               {result?.evisa_url && (
@@ -150,7 +150,7 @@ export default function ComplianceChecklistPanel({ caseId }) {
                 <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" /> Compliance Progress
                 </span>
-                <span className="text-xs font-bold text-emerald-700">{completedCount}/{totalCount} complete</span>
+                <span className="text-xs font-semibold text-emerald-700">{completedCount}/{totalCount} complete</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2">
                 <div className="bg-gradient-to-r from-emerald-500 to-blue-500 h-2 rounded-full transition-all"
@@ -168,7 +168,7 @@ export default function ComplianceChecklistPanel({ caseId }) {
                   <button onClick={() => toggleCat(cat)}
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${colorClass}`}>{cat}</span>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${colorClass}`}>{cat}</span>
                       <span className="text-xs text-slate-500">{catDone}/{tasks.length} done</span>
                     </div>
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -204,7 +204,7 @@ export default function ComplianceChecklistPanel({ caseId }) {
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
                 <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-amber-800 mb-1">Medical Traveler Note</p>
+                  <p className="text-xs font-semibold text-amber-800 mb-1">Medical Traveler Note</p>
                   <p className="text-xs text-amber-700 leading-relaxed">{result.medical_notes}</p>
                 </div>
               </div>

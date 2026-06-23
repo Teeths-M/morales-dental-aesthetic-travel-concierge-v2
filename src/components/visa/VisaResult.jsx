@@ -91,13 +91,13 @@ export default function VisaResult({ result, onReset }) {
         <div className="p-6 lg:p-7">
           {/* Status badge */}
           <div className="flex items-center gap-3 mb-5">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold tracking-widest uppercase ${cfg.badge}`}>
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold tracking-widest uppercase ${cfg.badge}`}>
               <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
               {cfg.label}
             </div>
           </div>
 
-          <h2 className="font-display text-2xl lg:text-3xl font-bold leading-tight mb-2">{cfg.headline}</h2>
+          <h2 className="font-display text-2xl lg:text-3xl font-semibold leading-tight mb-2">{cfg.headline}</h2>
           <p className="text-white/60 text-sm mb-6">{cfg.sub}</p>
 
           {/* Journey pills */}
@@ -131,7 +131,7 @@ export default function VisaResult({ result, onReset }) {
               href={rule.applyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 py-3 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl text-sm font-bold text-white transition-all"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl text-sm font-semibold text-white transition-all"
             >
               <span>🔗</span> Apply / Start Application Online →
             </a>
@@ -142,10 +142,10 @@ export default function VisaResult({ result, onReset }) {
         <div className="bg-black/20 border-t border-white/10 p-5">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-[10px] font-bold tracking-wide">AI</span>
+              <span className="text-white text-[10px] font-semibold tracking-wide">AI</span>
             </div>
             <div>
-              <p className="text-[11px] font-bold tracking-widest uppercase text-white/40 mb-1.5">AI Visa Advisor</p>
+              <p className="text-[11px] font-semibold tracking-widest uppercase text-white/40 mb-1.5">AI Visa Advisor</p>
               <p className="text-sm text-white/80 leading-relaxed">{aiSummary}</p>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function VisaResult({ result, onReset }) {
               <PlayCircle className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-[11px] font-bold tracking-widest uppercase text-white/40">Step-by-Step Tutorial</p>
+              <p className="text-[11px] font-semibold tracking-widest uppercase text-white/40">Step-by-Step Tutorial</p>
               <p className="text-sm font-semibold text-white leading-tight">{video.title}</p>
             </div>
           </div>
@@ -272,13 +272,13 @@ export default function VisaResult({ result, onReset }) {
           <div className="flex items-center gap-3">
             <FileText className="w-4 h-4 text-slate-500" />
             <div>
-              <h3 className="font-bold text-slate-800 text-sm">Document Checklist</h3>
+              <h3 className="font-semibold text-slate-800 text-sm">Document Checklist</h3>
               <p className="text-xs text-slate-400">{checkedCount} of {allDocs.length} completed</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <div className={`text-lg font-bold ${readiness >= 80 ? 'text-emerald-600' : readiness >= 50 ? 'text-amber-600' : 'text-slate-500'}`}>{readiness}%</div>
+              <div className={`text-lg font-semibold ${readiness >= 80 ? 'text-emerald-600' : readiness >= 50 ? 'text-amber-600' : 'text-slate-500'}`}>{readiness}%</div>
             </div>
             {/* Mini arc */}
             <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
@@ -304,7 +304,7 @@ export default function VisaResult({ result, onReset }) {
 
         <div className="p-5 space-y-1">
           {/* Travel docs */}
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Travel Documents</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 px-1">Travel Documents</p>
           {rule.requirements.map((doc, i) => (
             <label key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
               <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
@@ -319,7 +319,7 @@ export default function VisaResult({ result, onReset }) {
           ))}
 
           {/* Medical docs */}
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2 px-1">Medical Travel Documents</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-4 mb-2 px-1">Medical Travel Documents</p>
           {MEDICAL_DOCS.map((doc, i) => (
             <label key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
               <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
@@ -336,7 +336,7 @@ export default function VisaResult({ result, onReset }) {
 
           {hasCompanion && (
             <>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2 px-1">Companion Documents</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-4 mb-2 px-1">Companion Documents</p>
               {['Companion passport copy', 'Companion return ticket'].map((doc, i) => (
                 <label key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
@@ -363,7 +363,7 @@ export default function VisaResult({ result, onReset }) {
           <RotateCcw className="w-3.5 h-3.5" /> New Check
         </button>
         <Link to="/booking">
-          <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all">
+          <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">
             Book Consultation <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </Link>

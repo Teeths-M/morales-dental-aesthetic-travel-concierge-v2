@@ -62,7 +62,7 @@ export default function PaymentDashboard({ paymentPlans = [] }) {
             <Card className="p-6 border-l-4" style={{
               borderLeftColor: { green: '#22c55e', orange: '#f97316', blue: '#3b82f6' }[stat.color]
             }}>
-              <div className="text-3xl font-bold text-foreground">{stat.value}</div>
+              <div className="text-3xl font-semibold text-foreground">{stat.value}</div>
               <p className="text-sm text-muted-foreground mt-2">{stat.label}</p>
             </Card>
           </motion.div>
@@ -94,7 +94,7 @@ export default function PaymentDashboard({ paymentPlans = [] }) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-foreground">${plan.final_cost.toLocaleString()}</p>
+                      <p className="font-semibold text-foreground">${plan.final_cost.toLocaleString()}</p>
                       <p className="text-sm text-muted-foreground">
                         Due: ${plan.amount_due_today.toLocaleString()}
                       </p>

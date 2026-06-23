@@ -376,8 +376,8 @@ export default function PaymentCheckout() {
                 )}
                 {caseRecord?.final_package_price > 0 && (
                   <div className="pt-4 border-t border-border flex items-center justify-between">
-                    <p className="font-bold text-foreground text-base">Total Package Price</p>
-                    <p className="font-bold text-foreground text-xl">${caseRecord.final_package_price.toLocaleString()}</p>
+                    <p className="font-semibold text-foreground text-base">Total Package Price</p>
+                    <p className="font-semibold text-foreground text-xl">${caseRecord.final_package_price.toLocaleString()}</p>
                   </div>
                 )}
               </div>
@@ -420,7 +420,7 @@ export default function PaymentCheckout() {
 
                     <div className="space-y-2">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-foreground">
+                        <span className="text-3xl font-semibold text-foreground">
                           ${plan.amount.toLocaleString()}
                         </span>
                         {plan.originalAmount > plan.amount && (

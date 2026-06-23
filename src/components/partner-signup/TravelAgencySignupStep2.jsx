@@ -78,7 +78,7 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">
           {language === 'es' ? '¿Qué puedes reservar?' : language === 'fr' ? 'Que pouvez-vous réserver?' : 'What can you book?'}
         </h2>
         <p className="text-muted-foreground text-sm">

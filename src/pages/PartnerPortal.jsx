@@ -124,7 +124,7 @@ export default function PartnerPortal() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-serif text-lg font-bold">M</span>
+            <span className="text-primary-foreground font-serif text-lg font-semibold">M</span>
           </div>
           <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
         </div>
@@ -159,7 +159,7 @@ export default function PartnerPortal() {
                 <RoleIcon className={`w-6 h-6 ${roleConfig.color}`} />
               </div>
               <div>
-                <h1 className="text-2xl font-display font-bold text-foreground">
+                <h1 className="text-2xl font-display font-semibold text-foreground">
                   {partnerProfile.agency_name || partnerProfile.company_name || partnerProfile.full_name}
                 </h1>
                 <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -193,7 +193,7 @@ export default function PartnerPortal() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Upcoming Bookings</p>
-                  <p className="text-2xl font-bold">{stats.upcomingBookings}</p>
+                  <p className="text-2xl font-semibold">{stats.upcomingBookings}</p>
                 </div>
               </div>
             </CardContent>
@@ -207,7 +207,7 @@ export default function PartnerPortal() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Completed This Month</p>
-                  <p className="text-2xl font-bold">{stats.completedThisMonth}</p>
+                  <p className="text-2xl font-semibold">{stats.completedThisMonth}</p>
                 </div>
               </div>
             </CardContent>
@@ -221,7 +221,7 @@ export default function PartnerPortal() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Pending Actions</p>
-                  <p className="text-2xl font-bold">{stats.pendingActions}</p>
+                  <p className="text-2xl font-semibold">{stats.pendingActions}</p>
                 </div>
               </div>
             </CardContent>
@@ -235,7 +235,7 @@ export default function PartnerPortal() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">This Month's Earnings</p>
-                  <p className="text-2xl font-bold">${stats.totalEarnings}</p>
+                  <p className="text-2xl font-semibold">${stats.totalEarnings}</p>
                 </div>
               </div>
             </CardContent>

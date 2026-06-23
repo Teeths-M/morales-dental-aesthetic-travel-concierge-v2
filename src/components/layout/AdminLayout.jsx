@@ -95,7 +95,7 @@ function SidebarContent({ location, onClose }) {
           <Users className="w-4.5 h-4.5 text-white" />
         </div>
         <div>
-          <p className="font-bold text-slate-900 text-sm leading-tight">Admin Portal</p>
+          <p className="font-semibold text-slate-900 text-sm leading-tight">Admin Portal</p>
           <p className="text-[11px] text-slate-400 leading-tight mt-0.5">Management Console</p>
         </div>
       </div>
@@ -105,7 +105,7 @@ function SidebarContent({ location, onClose }) {
         {NAV_SECTIONS.map((section, sIdx) => (
           <div key={sIdx} className={sIdx > 0 ? 'pt-4' : ''}>
             {section.label && (
-              <p className="px-3 mb-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400 select-none">
+              <p className="px-3 mb-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400 select-none">
                 {section.label}
               </p>
             )}

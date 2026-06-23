@@ -94,7 +94,7 @@ export default function Providers() {
                   <div className="flex flex-col md:flex-row gap-8">
                     {/* Photo */}
                     <div className="flex-shrink-0">
-                      <div className="w-40 h-40 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-4xl font-bold overflow-hidden flex-shrink-0">
+                      <div className="w-40 h-40 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-4xl font-semibold overflow-hidden flex-shrink-0">
                         {doctor.photo_url && doctor.photo_url.trim() ? (
                           <img src={doctor.photo_url} alt={doctor.full_name} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
                         ) : null}
@@ -107,7 +107,7 @@ export default function Providers() {
                     {/* Content */}
                     <div className="flex-1">
                       <div className="mb-3">
-                        <h3 className="text-2xl font-bold text-foreground">{doctor.full_name}</h3>
+                        <h3 className="text-2xl font-semibold text-foreground">{doctor.full_name}</h3>
                         {doctorSpecs.length > 0 && (
                           <p className="text-muted-foreground text-lg mt-1">{doctorSpecs[0].category || 'Specialist'}</p>
                         )}
@@ -124,7 +124,7 @@ export default function Providers() {
                         {doctor.rating && (
                           <div className="flex items-center gap-2 text-sm font-medium">
                             <span>⭐</span>
-                            <span className="font-bold">{doctor.rating.toFixed(1)}</span>
+                            <span className="font-semibold">{doctor.rating.toFixed(1)}</span>
                             <span className="text-muted-foreground">({doctor.review_count || 0})</span>
                           </div>
                         )}
@@ -167,7 +167,7 @@ export default function Providers() {
                       {/* Specialties */}
                       {doctorSpecs.length > 0 && (
                         <div>
-                          <h4 className="font-bold text-foreground text-sm mb-3">Areas of Expertise</h4>
+                          <h4 className="font-semibold text-foreground text-sm mb-3">Areas of Expertise</h4>
                           <div className="flex flex-wrap gap-2 mb-6">
                             {doctorSpecs.slice(0, 5).map(spec => (
                               <span key={spec.id} className="px-3 py-1.5 bg-secondary text-foreground text-xs font-medium rounded-full">

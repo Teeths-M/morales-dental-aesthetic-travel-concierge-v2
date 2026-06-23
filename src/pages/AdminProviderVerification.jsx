@@ -142,7 +142,7 @@ export default function AdminProviderVerification() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Provider Verification Dashboard</h1>
+            <h1 className="text-3xl font-semibold font-display">Provider Verification Dashboard</h1>
             <p className="text-muted-foreground mt-1">
               Monitor and manage provider trust & safety verifications
             </p>
@@ -160,7 +160,7 @@ export default function AdminProviderVerification() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-semibold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -168,7 +168,7 @@ export default function AdminProviderVerification() {
             <CardTitle className="text-sm font-medium text-green-600">Verified</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.verified}</div>
+            <div className="text-2xl font-semibold">{stats.verified}</div>
           </CardContent>
         </Card>
         <Card>
@@ -176,7 +176,7 @@ export default function AdminProviderVerification() {
             <CardTitle className="text-sm font-medium text-blue-600">Verifying</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.verifying}</div>
+            <div className="text-2xl font-semibold">{stats.verifying}</div>
           </CardContent>
         </Card>
         <Card>
@@ -184,7 +184,7 @@ export default function AdminProviderVerification() {
             <CardTitle className="text-sm font-medium text-red-600">Failed</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.failed}</div>
+            <div className="text-2xl font-semibold">{stats.failed}</div>
           </CardContent>
         </Card>
         <Card>
@@ -192,7 +192,7 @@ export default function AdminProviderVerification() {
             <CardTitle className="text-sm font-medium text-amber-600">Manual Override</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.manually_approved}</div>
+            <div className="text-2xl font-semibold">{stats.manually_approved}</div>
           </CardContent>
         </Card>
       </div>

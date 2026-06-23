@@ -22,7 +22,7 @@ export default function CrisisCountdownTimer({ deadline, onExpired }) {
   if (timeLeft === 0) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-red-700 bg-red-100 border border-red-300 px-3 py-1.5 rounded-lg animate-pulse">
+        <span className="text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-3 py-1.5 rounded-lg animate-pulse">
           ⏰ WINDOW EXPIRED — ACTION REQUIRED NOW
         </span>
       </div>
@@ -69,14 +69,14 @@ export default function CrisisCountdownTimer({ deadline, onExpired }) {
     <div className={`${s.bg} ${s.border} border rounded-lg p-3`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className={`text-2xl font-mono font-bold tabular-nums ${s.text} ${s.pulse ? 'animate-pulse' : ''}`}>
+          <span className={`text-2xl font-mono font-semibold tabular-nums ${s.text} ${s.pulse ? 'animate-pulse' : ''}`}>
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </span>
           <span className={`text-xs font-medium ${s.label}`}>
             remaining for confirmation
           </span>
         </div>
-        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
           urgency === 'critical' ? 'bg-red-100 text-red-700' :
           urgency === 'warning' ? 'bg-orange-100 text-orange-700' :
           'bg-amber-100 text-amber-700'

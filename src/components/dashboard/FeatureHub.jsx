@@ -162,7 +162,7 @@ export default function FeatureHub() {
                         <CategoryIcon className={`w-5 h-5 ${theme.iconText}`} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-slate-800 text-lg tracking-tight">{category.title}</h3>
+                        <h3 className="font-semibold text-slate-800 text-lg tracking-tight">{category.title}</h3>
                         <p className="text-xs text-slate-500 font-medium">{category.features.length} curated features</p>
                       </div>
                     </div>
@@ -253,7 +253,7 @@ export default function FeatureHub() {
             <Star className="w-5 h-5 text-white fill-white" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 text-xl tracking-tight">Most Used Features</h3>
+            <h3 className="font-semibold text-slate-800 text-xl tracking-tight">Most Used Features</h3>
             <p className="text-xs text-slate-500 font-medium">Quick access to popular services</p>
           </div>
         </div>

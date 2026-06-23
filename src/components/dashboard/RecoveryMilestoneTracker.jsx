@@ -78,11 +78,11 @@ export default function RecoveryMilestoneTracker({ caseRecord }) {
           <Heart className="w-4.5 h-4.5 text-white" />
         </div>
         <div>
-          <h3 className="font-bold text-slate-800 text-sm">Recovery Milestone Tracker</h3>
+          <h3 className="font-semibold text-slate-800 text-sm">Recovery Milestone Tracker</h3>
           <p className="text-xs text-slate-400">Track your healing journey</p>
         </div>
         <div className="ml-auto text-right">
-          <p className="text-xs font-bold text-emerald-700">{progress}% Complete</p>
+          <p className="text-xs font-semibold text-emerald-700">{progress}% Complete</p>
           <p className="text-[10px] text-slate-400">{completedMilestones.length}/{MILESTONES.length}</p>
         </div>
       </div>

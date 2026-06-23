@@ -108,14 +108,14 @@ export default function LiveBeaconPanel({ caseId, caseStatus, guardianToken, isA
         {!isRunning ? (
           <button
             onClick={() => { setBeaconEnabled(true); if (isPaused) resume(); }}
-            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
           >
             <Play className="w-3.5 h-3.5" /> Start Safety Beacon
           </button>
         ) : (
           <button
             onClick={() => { pause(); }}
-            className="flex items-center gap-1.5 bg-amber-600/80 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 bg-amber-600/80 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
           >
             <Pause className="w-3.5 h-3.5" /> Pause Beacon
           </button>

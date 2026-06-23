@@ -43,7 +43,7 @@ export default function LuxuryHowItWorks() {
 
           {/* Left */}
           <div>
-            <p className="text-[11px] font-bold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
+            <p className="text-[11px] font-semibold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
               HOW IT WORKS
             </p>
             <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-5" style={{ letterSpacing: '-0.02em' }}>
@@ -74,7 +74,7 @@ export default function LuxuryHowItWorks() {
                 className="relative p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.055] transition-all duration-300 group"
         style={{ boxShadow: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.3)' }}
               >
-                <p className="text-[12px] font-bold tracking-[0.25em] mb-5" style={{ color: GOLD }}>
+                <p className="text-[12px] font-semibold tracking-[0.25em] mb-5" style={{ color: GOLD }}>
                   {number}
                 </p>
                 <Icon

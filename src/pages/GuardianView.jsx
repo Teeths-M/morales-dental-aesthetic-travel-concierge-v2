@@ -159,7 +159,7 @@ export default function GuardianView() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
         <Clock className="w-16 h-16 text-amber-400 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Guardian Link Expired</h2>
+        <h2 className="text-xl font-semibold text-white mb-2">Guardian Link Expired</h2>
         <p className="text-slate-400 text-sm">This tracking link has expired. Ask the traveler to generate a new one.</p>
       </div>
     </div>
@@ -169,7 +169,7 @@ export default function GuardianView() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
         <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Link Unavailable</h2>
+        <h2 className="text-xl font-semibold text-white mb-2">Link Unavailable</h2>
         <p className="text-slate-400 text-sm">{errorMsg}</p>
       </div>
     </div>
@@ -196,8 +196,8 @@ export default function GuardianView() {
           <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Eye className="w-7 h-7 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-bold uppercase tracking-widest mb-1">Guardian View — Read Only</p>
-          <h1 className="text-2xl font-bold text-white">{session.patient_name}'s Journey</h1>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">Guardian View — Read Only</p>
+          <h1 className="text-2xl font-semibold text-white">{session.patient_name}'s Journey</h1>
           <p className="text-slate-400 text-sm mt-1">Shared with {session.guardian_name}</p>
           <div className="flex items-center justify-center gap-2 mt-2 text-xs text-slate-500">
             <Clock className="w-3.5 h-3.5" />
@@ -276,7 +276,7 @@ export default function GuardianView() {
                 escalation.status === 'escalated_3h' ? 'text-orange-400' : 'text-amber-400'
               }`} />
               <div className="text-sm">
-                <p className="font-bold text-white">
+                <p className="font-semibold text-white">
                   {escalation.status === 'escalated_5h' ? '🚨 Security Dispatch Active' :
                    escalation.status === 'escalated_3h' ? '⚠️ Guardian Escalation Active' :
                    '⚠️ Check-In Overdue — Escalation In Progress'}
@@ -293,7 +293,7 @@ export default function GuardianView() {
                   <p className="text-red-300 text-xs mt-1 font-semibold">Private security has been dispatched.</p>
                 )}
                 {escalation.police_escalation_required_at && (
-                  <p className="text-purple-300 text-xs mt-1 font-bold">⚠️ Admin has been notified for police escalation review.</p>
+                  <p className="text-purple-300 text-xs mt-1 font-semibold">⚠️ Admin has been notified for police escalation review.</p>
                 )}
               </div>
             </div>
@@ -309,12 +309,12 @@ export default function GuardianView() {
           {caseData?.safe_t_result === 'PASSED'
             ? <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
             : <Shield className="w-10 h-10 text-slate-400 mx-auto mb-2" />}
-          <p className="font-bold text-white text-lg">{session.patient_name}</p>
+          <p className="font-semibold text-white text-lg">{session.patient_name}</p>
           <p className="text-slate-400 text-sm mt-1">
             Status: <span className="font-semibold text-white">{caseData?.status || 'Active Journey'}</span>
           </p>
           {caseData?.safe_t_result && (
-            <span className={`inline-block mt-2 text-xs font-bold px-3 py-1 rounded-full ${
+            <span className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${
               caseData.safe_t_result === 'PASSED' ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-700 text-slate-300'
             }`}>Safe-T: {caseData.safe_t_result}</span>
           )}
@@ -323,7 +323,7 @@ export default function GuardianView() {
         {/* Journey stage */}
         {caseData && (
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5">
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-wide mb-4">Journey Stage</p>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-4">Journey Stage</p>
             <div className="flex gap-1 flex-wrap">
               {STAGE_STEPS.map((step, i) => (
                 <div key={step} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold border ${
@@ -344,7 +344,7 @@ export default function GuardianView() {
           <div className="px-5 pt-5 pb-3 flex items-center gap-2 justify-between flex-wrap">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-blue-400" />
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wide">
+              <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">
                 {loc?.is_live ? 'Live GPS Location' : 'Last Known Location'}
               </p>
             </div>
@@ -356,7 +356,7 @@ export default function GuardianView() {
             <div className="mx-5 mb-3 flex items-start gap-2 bg-red-900/40 border border-red-600/50 rounded-xl px-4 py-3 text-sm text-red-300">
               <WifiOff className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="font-bold">Location signal lost ({ageMin} minutes)</p>
+                <p className="font-semibold">Location signal lost ({ageMin} minutes)</p>
                 <p className="text-xs mt-0.5 text-red-400">This is an active solo journey. Escalation check-ins have been triggered. Contact the traveler or emergency services immediately if unreachable.</p>
               </div>
             </div>
@@ -373,7 +373,7 @@ export default function GuardianView() {
               {/* Coords bar */}
               <div className="bg-slate-900/60 rounded-xl px-4 py-3 flex items-center gap-3">
                 <div className="flex-1">
-                  <p className="text-white font-mono text-sm font-bold">
+                  <p className="text-white font-mono text-sm font-semibold">
                     {loc.latitude.toFixed(6)}, {loc.longitude.toFixed(6)}
                   </p>
                   <div className="flex flex-wrap gap-x-3 mt-1 text-[11px] text-slate-400">
@@ -463,7 +463,7 @@ export default function GuardianView() {
         {/* Procedure details */}
         {caseData && (
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 space-y-3">
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-wide">Procedure Details</p>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Procedure Details</p>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Destination', val: caseData.procedure_country },
@@ -473,7 +473,7 @@ export default function GuardianView() {
               ].filter(i => i.val).map(item => (
                 <div key={item.label} className="bg-slate-900/50 rounded-xl px-3 py-2.5">
                   <p className="text-[10px] text-slate-500 font-semibold">{item.label}</p>
-                  <p className="text-sm font-bold text-white mt-0.5 capitalize">{item.val}</p>
+                  <p className="text-sm font-semibold text-white mt-0.5 capitalize">{item.val}</p>
                 </div>
               ))}
             </div>

@@ -66,8 +66,8 @@ function PricingWorkbench({ caseRecord, onApprove, isLoading }) {
         <div className="flex items-center gap-3">
           <DollarSign className="w-5 h-5" style={{ color: '#C5A059' }} />
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>Pricing Workbench</p>
-            <p className="text-white font-bold text-sm">IQ200 Financial Calculator</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>Pricing Workbench</p>
+            <p className="text-white font-semibold text-sm">IQ200 Financial Calculator</p>
           </div>
         </div>
       </div>
@@ -84,21 +84,21 @@ function PricingWorkbench({ caseRecord, onApprove, isLoading }) {
             { label: 'Local Transfer', value: caseRecord.local_transfer_cost },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">{label}</p>
-              <p className="text-sm font-bold text-white">{fmt(value)}</p>
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-white/40">{label}</p>
+              <p className="text-sm font-semibold text-white">{fmt(value)}</p>
             </div>
           ))}
         </div>
 
         {/* Base cost */}
         <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: 'rgba(197,160,89,0.1)', border: '1px solid rgba(197,160,89,0.3)' }}>
-          <p className="text-sm font-bold text-white/80">Base Cost Total</p>
-          <p className="text-lg font-bold" style={{ color: '#C5A059' }}>{fmt(base)}</p>
+          <p className="text-sm font-semibold text-white/80">Base Cost Total</p>
+          <p className="text-lg font-semibold" style={{ color: '#C5A059' }}>{fmt(base)}</p>
         </div>
 
         {/* Markup selector */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Select Markup Tier</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50 mb-2">Select Markup Tier</p>
           <div className="grid grid-cols-3 gap-2">
             {MARKUP_OPTIONS.map(opt => (
               <button
@@ -110,8 +110,8 @@ function PricingWorkbench({ caseRecord, onApprove, isLoading }) {
                   borderColor: markup === opt.value ? '#facc15' : 'transparent',
                 }}
               >
-                <p className="text-xs font-bold text-white">{opt.label}</p>
-                <p className="text-[10px] font-bold" style={{ color: '#C5A059' }}>{(opt.value * 100).toFixed(0)}%</p>
+                <p className="text-xs font-semibold text-white">{opt.label}</p>
+                <p className="text-[10px] font-semibold" style={{ color: '#C5A059' }}>{(opt.value * 100).toFixed(0)}%</p>
               </button>
             ))}
           </div>
@@ -121,27 +121,27 @@ function PricingWorkbench({ caseRecord, onApprove, isLoading }) {
         <div className="space-y-2">
           <div className="flex items-center justify-between px-4 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <p className="text-xs text-white/60">Final Package Price</p>
-            <p className="text-sm font-bold text-white">{fmt(finalPrice)}</p>
+            <p className="text-sm font-semibold text-white">{fmt(finalPrice)}</p>
           </div>
           {creditAmount > 0 && (
             <div className="flex items-center justify-between px-4 py-2.5 rounded-xl" style={{ background: 'rgba(197,160,89,0.08)', border: '1px solid rgba(197,160,89,0.2)' }}>
               <p className="text-xs" style={{ color: '#C5A059' }}>✨ Consultation Credit (−$49)</p>
-              <p className="text-sm font-bold" style={{ color: '#C5A059' }}>−{fmt(creditAmount)}</p>
+              <p className="text-sm font-semibold" style={{ color: '#C5A059' }}>−{fmt(creditAmount)}</p>
             </div>
           )}
           <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)' }}>
-            <p className="text-sm font-bold text-white">Client Pays</p>
-            <p className="text-xl font-bold" style={{ color: '#C5A059' }}>{fmt(effectiveTotal)}</p>
+            <p className="text-sm font-semibold text-white">Client Pays</p>
+            <p className="text-xl font-semibold" style={{ color: '#C5A059' }}>{fmt(effectiveTotal)}</p>
           </div>
           <div className="flex items-center justify-between px-4 py-2 rounded-xl" style={{ background: 'rgba(16,185,129,0.1)' }}>
             <p className="text-xs text-emerald-400">Profit</p>
-            <p className="text-sm font-bold text-emerald-400">{fmt(profit)}</p>
+            <p className="text-sm font-semibold text-emerald-400">{fmt(profit)}</p>
           </div>
         </div>
 
         {/* Payment tiers preview */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">Payment Options Preview</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50 mb-2">Payment Options Preview</p>
           <div className="space-y-1.5">
             {[
               { label: 'Full Payment (5% discount)', amount: parseFloat((effectiveTotal * 0.95).toFixed(2)) },
@@ -150,7 +150,7 @@ function PricingWorkbench({ caseRecord, onApprove, isLoading }) {
             ].map(({ label, amount }) => (
               <div key={label} className="flex justify-between items-center px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
                 <p className="text-xs text-white/60">{label}</p>
-                <p className="text-sm font-bold text-white">{fmt(amount)}</p>
+                <p className="text-sm font-semibold text-white">{fmt(amount)}</p>
               </div>
             ))}
           </div>
@@ -159,7 +159,7 @@ function PricingWorkbench({ caseRecord, onApprove, isLoading }) {
         <Button
           onClick={() => onApprove(caseRecord.id, markup)}
           disabled={isLoading}
-          className="w-full font-bold text-sm py-3 rounded-xl border-0"
+          className="w-full font-semibold text-sm py-3 rounded-xl border-0"
           style={{ background: 'linear-gradient(135deg, #C5A059, #a8863c)', color: '#0F3A20' }}
         >
           <Send className="w-4 h-4 mr-2" />
@@ -201,25 +201,25 @@ function CaseCard({ caseRecord, onRefresh }) {
       <div className="px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setExpanded(!expanded)}>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ${isBlocked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold ${isBlocked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'}`}>
               {caseRecord.client_name?.charAt(0)?.toUpperCase() || '?'}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-bold text-slate-800">{caseRecord.client_name}</p>
-                {isUrgent && <span className="text-[9px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full uppercase">⚠️ {caseRecord.case_priority}</span>}
-                {isBlocked && <span className="text-[9px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase">🔴 BLOCKED</span>}
+                <p className="font-semibold text-slate-800">{caseRecord.client_name}</p>
+                {isUrgent && <span className="text-[9px] font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full uppercase">⚠️ {caseRecord.case_priority}</span>}
+                {isBlocked && <span className="text-[9px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase">🔴 BLOCKED</span>}
               </div>
               <p className="text-xs text-slate-500">{caseRecord.client_email} · {(caseRecord.procedures || []).join(', ')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {caseRecord.risk_score && (
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${RISK_COLORS[caseRecord.risk_score] || 'bg-slate-100 text-slate-700'}`}>
+              <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${RISK_COLORS[caseRecord.risk_score] || 'bg-slate-100 text-slate-700'}`}>
                 {caseRecord.risk_score} Risk
               </span>
             )}
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[caseRecord.status] || 'bg-slate-100 text-slate-700'}`}>
+            <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${STATUS_COLORS[caseRecord.status] || 'bg-slate-100 text-slate-700'}`}>
               {caseRecord.status}
             </span>
             {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -251,7 +251,7 @@ function CaseCard({ caseRecord, onRefresh }) {
               {/* SAFE-T flags */}
               {(caseRecord.safe_t_flags || []).length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">SAFE-T™ Flags</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">SAFE-T™ Flags</p>
                   <div className="flex flex-wrap gap-1.5">
                     {caseRecord.safe_t_flags.map((flag, i) => (
                       <span key={i} className="text-[10px] bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-full">{flag}</span>
@@ -268,8 +268,8 @@ function CaseCard({ caseRecord, onRefresh }) {
                   { label: 'Profit',      value: caseRecord.profit },
                 ].map(({ label, value }) => (
                   <div key={label} className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 text-center">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-                    <p className="text-sm font-bold text-slate-800">{fmt(value)}</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+                    <p className="text-sm font-semibold text-slate-800">{fmt(value)}</p>
                   </div>
                 ))}
               </div>
@@ -282,8 +282,8 @@ function CaseCard({ caseRecord, onRefresh }) {
                   { label: 'Transfer', status: caseRecord.transfer_status },
                 ].map(({ label, status }) => (
                   <div key={label} className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2 text-center">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase">{label}</p>
-                    <p className={`text-[10px] font-bold mt-0.5 ${status === 'CONFIRMED' || status === 'SUBMITTED' ? 'text-emerald-600' : 'text-amber-600'}`}>{status || 'PENDING'}</p>
+                    <p className="text-[9px] font-semibold text-slate-400 uppercase">{label}</p>
+                    <p className={`text-[10px] font-semibold mt-0.5 ${status === 'CONFIRMED' || status === 'SUBMITTED' ? 'text-emerald-600' : 'text-amber-600'}`}>{status || 'PENDING'}</p>
                   </div>
                 ))}
               </div>
@@ -295,13 +295,13 @@ function CaseCard({ caseRecord, onRefresh }) {
 
               {/* Manual stage override */}
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Manual Stage Override</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Manual Stage Override</p>
                 <div className="flex gap-2 flex-wrap">
                   {PIPELINE_STAGES.filter((_, i) => i !== pipelineIndex).map(stage => (
                     <button
                       key={stage}
                       onClick={() => escalate(caseRecord.id, stage)}
-                      className="text-[9px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-600"
+                      className="text-[9px] font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-600"
                     >
                       → {stage}
                     </button>
@@ -312,11 +312,11 @@ function CaseCard({ caseRecord, onRefresh }) {
               {/* Audit log */}
               {(caseRecord.timeline_log || []).length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Audit Log</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Audit Log</p>
                   <div className="space-y-1.5 max-h-40 overflow-y-auto">
                     {[...(caseRecord.timeline_log || [])].reverse().map((log, i) => (
                       <div key={i} className="flex gap-2 text-[10px]">
-                        <span className={`font-bold flex-shrink-0 ${log.execution_status === 'SUCCESS' ? 'text-emerald-600' : log.execution_status === 'ESCALATED' ? 'text-orange-600' : 'text-red-600'}`}>{log.execution_status}</span>
+                        <span className={`font-semibold flex-shrink-0 ${log.execution_status === 'SUCCESS' ? 'text-emerald-600' : log.execution_status === 'ESCALATED' ? 'text-orange-600' : 'text-red-600'}`}>{log.execution_status}</span>
                         <span className="text-slate-500">{new Date(log.timestamp).toLocaleString()}</span>
                         <span className="text-slate-700 font-medium">{log.action_performed}</span>
                         {log.log_details && <span className="text-slate-400 truncate">{log.log_details}</span>}
@@ -396,7 +396,7 @@ export default function IQ200AdminCenter() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">IQ-200 Intelligence Center</h1>
+            <h1 className="text-3xl font-semibold font-display">IQ-200 Intelligence Center</h1>
             <p className="text-muted-foreground mt-1">Executive operations and pipeline management</p>
           </div>
           <div className="flex gap-2">
@@ -423,7 +423,7 @@ export default function IQ200AdminCenter() {
                   <BarChart2 className="w-5 h-5 text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+                  <p className="text-2xl font-semibold text-slate-900">{stats.total}</p>
                   <p className="text-xs text-slate-500">Total Cases</p>
                 </div>
               </div>
@@ -436,7 +436,7 @@ export default function IQ200AdminCenter() {
                   <FileText className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-orange-600">{stats.adminReview}</p>
+                  <p className="text-2xl font-semibold text-orange-600">{stats.adminReview}</p>
                   <p className="text-xs text-slate-500">Admin Review</p>
                 </div>
               </div>
@@ -449,7 +449,7 @@ export default function IQ200AdminCenter() {
                   <XCircle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-red-600">{stats.blocked}</p>
+                  <p className="text-2xl font-semibold text-red-600">{stats.blocked}</p>
                   <p className="text-xs text-slate-500">Blocked</p>
                 </div>
               </div>
@@ -462,7 +462,7 @@ export default function IQ200AdminCenter() {
                   <AlertTriangle className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-amber-600">{stats.urgent}</p>
+                  <p className="text-2xl font-semibold text-amber-600">{stats.urgent}</p>
                   <p className="text-xs text-slate-500">Urgent Cases</p>
                 </div>
               </div>
@@ -475,7 +475,7 @@ export default function IQ200AdminCenter() {
                   <TrendingUp className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-emerald-600">{fmt(stats.revenue)}</p>
+                  <p className="text-2xl font-semibold text-emerald-600">{fmt(stats.revenue)}</p>
                   <p className="text-xs text-slate-500">Revenue</p>
                 </div>
               </div>
@@ -488,7 +488,7 @@ export default function IQ200AdminCenter() {
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="w-4 h-4 text-amber-600" />
-              <p className="text-sm font-bold text-amber-800">Consultations Awaiting IQ200 Intake ({pendingConsultations.length})</p>
+              <p className="text-sm font-semibold text-amber-800">Consultations Awaiting IQ200 Intake ({pendingConsultations.length})</p>
             </div>
             <div className="space-y-2">
               {pendingConsultations.map(c => (
@@ -513,14 +513,14 @@ export default function IQ200AdminCenter() {
 
         {/* Filter tabs */}
         <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setFilterStatus('all')} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${filterStatus === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+          <button onClick={() => setFilterStatus('all')} className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${filterStatus === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
             All ({cases.length})
           </button>
           {['Admin-Review', 'Doctor-Pending', 'Vendor-Pending', 'Proposal-Sent', 'Travel-Coordination', 'Completed'].map(s => {
             const count = cases.filter(c => c.status === s).length;
             if (!count && filterStatus !== s) return null;
             return (
-              <button key={s} onClick={() => setFilterStatus(s)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${filterStatus === s ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+              <button key={s} onClick={() => setFilterStatus(s)} className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${filterStatus === s ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
                 {s} ({count})
               </button>
             );

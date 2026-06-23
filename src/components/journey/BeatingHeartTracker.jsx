@@ -179,12 +179,12 @@ export default function BeatingHeartTracker({ statuses = [], completed = 0, tota
       {/* Header with beating heart */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">iQ200 Coordination Engine</h3>
+          <h3 className="text-sm font-semibold text-slate-800">iQ200 Coordination Engine</h3>
           <p className="text-[11px] text-slate-400 mt-0.5">8 Touchpoint Travel Lifecycle · Dual-Factor Handshakes</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-xs font-bold text-slate-700">{completed}/{total} complete</p>
+            <p className="text-xs font-semibold text-slate-700">{completed}/{total} complete</p>
             <p className="text-[10px] text-slate-400">{progressPct}% journey</p>
           </div>
           <HeartPulse color={heartColor} size={44} active={!goldenReached} proximity={proximity} />
@@ -206,7 +206,7 @@ export default function BeatingHeartTracker({ statuses = [], completed = 0, tota
             >
               💛
             </motion.div>
-            <p className="text-sm font-bold text-yellow-800">Golden M Achieved!</p>
+            <p className="text-sm font-semibold text-yellow-800">Golden M Achieved!</p>
             <p className="text-[11px] text-yellow-600 mt-0.5">All 8 hearts merged. Journey complete.</p>
           </motion.div>
         )}
@@ -277,7 +277,7 @@ export default function BeatingHeartTracker({ statuses = [], completed = 0, tota
                           <Icon className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-800">{selected.label}</p>
+                          <p className="text-sm font-semibold text-slate-800">{selected.label}</p>
                           <p className={`text-[11px] font-medium ${role.text}`}>{role.label}</p>
                         </div>
                       </div>
@@ -308,7 +308,7 @@ export default function BeatingHeartTracker({ statuses = [], completed = 0, tota
                           <button
                             onClick={handleConfirm}
                             disabled={confirming}
-                            className={`flex-1 py-2.5 text-xs font-bold rounded-xl text-white transition-all ${role.bg} hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5`}
+                            className={`flex-1 py-2.5 text-xs font-semibold rounded-xl text-white transition-all ${role.bg} hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5`}
                           >
                             {confirming ? (
                               <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Confirming…</>
@@ -346,10 +346,10 @@ export default function BeatingHeartTracker({ statuses = [], completed = 0, tota
           className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
           <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-xs font-bold text-red-700">Missed Window: {s.label}</p>
+            <p className="text-xs font-semibold text-red-700">Missed Window: {s.label}</p>
             <p className="text-[10px] text-red-500">Contingency auto-rerouting initiated. Concierge alerted.</p>
           </div>
-          <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">OVERDUE</span>
+          <span className="text-[10px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">OVERDUE</span>
         </motion.div>
       ))}
     </div>

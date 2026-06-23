@@ -94,7 +94,7 @@ export default function BaggageTracker({ caseId }) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-slate-800 text-sm">{bag.bag_label || `Bag ${bag.bag_number}`}</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.label}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.color}`}>{cfg.label}</span>
                       </div>
                       <p className="text-xs text-slate-400 font-mono mt-0.5">{bag.token_code}</p>
                       {bag.flight_number && (
@@ -157,7 +157,7 @@ export default function BaggageTracker({ caseId }) {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}>
-              <h3 className="font-bold text-gray-900 text-lg mb-4 flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900 text-lg mb-4 flex items-center gap-2">
                 <Luggage className="w-5 h-5 text-blue-600" /> Register Luggage
               </h3>
               <div className="space-y-3">

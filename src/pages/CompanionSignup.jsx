@@ -105,7 +105,7 @@ export default function CompanionSignup() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 border-4 border-emerald-300 mb-4">
             <User className="w-10 h-10 text-emerald-600" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
             {accountType === ACCOUNT_TYPES.INDIVIDUAL 
               ? 'Join Our Caregiver Family 💚' 
               : 'Partner With Us 🤝'}

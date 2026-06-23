@@ -127,7 +127,7 @@ export default function AdminWildernessRescue() {
               <TreePine className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Wilderness Search & Rescue</h1>
+              <h1 className="text-2xl font-semibold text-slate-900">Wilderness Search & Rescue</h1>
               <p className="text-sm text-slate-500">Canopy Collapse Protocol · Active wilderness SOS incidents</p>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function AdminWildernessRescue() {
             <div key={s.label} className={`rounded-xl border p-3 flex items-center gap-2.5 ${s.color}`}>
               {s.icon}
               <div>
-                <p className="text-xl font-bold text-slate-900">{s.val}</p>
+                <p className="text-xl font-semibold text-slate-900">{s.val}</p>
                 <p className="text-[11px] text-slate-600">{s.label}</p>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function AdminWildernessRescue() {
                   {incident.status === 'triggered' && (
                     <div className="bg-red-600 text-white px-5 py-2.5 rounded-t-2xl flex items-center gap-2">
                       <Siren className="w-4 h-4 animate-pulse" />
-                      <p className="text-sm font-bold">WILDERNESS SOS — RESCUE REQUIRED</p>
+                      <p className="text-sm font-semibold">WILDERNESS SOS — RESCUE REQUIRED</p>
                     </div>
                   )}
 
@@ -191,8 +191,8 @@ export default function AdminWildernessRescue() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sc.dot}`} />
-                          <p className="font-bold text-slate-900">{incident.patient_name || incident.patient_email}</p>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sc.color}`}>{sc.label}</span>
+                          <p className="font-semibold text-slate-900">{incident.patient_name || incident.patient_email}</p>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sc.color}`}>{sc.label}</span>
                         </div>
                         <div className="text-xs text-slate-500 space-x-3">
                           <span>{incident.patient_email}</span>
@@ -304,7 +304,7 @@ export default function AdminWildernessRescue() {
                         {/* Admin checklist for unresolved incidents */}
                         {isActive && (
                           <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <p className="text-xs font-bold text-red-800 mb-2 flex items-center gap-1.5">
+                            <p className="text-xs font-semibold text-red-800 mb-2 flex items-center gap-1.5">
                               <Siren className="w-3.5 h-3.5" /> Rescue Checklist
                             </p>
                             <ol className="text-xs text-red-700 space-y-1 list-decimal list-inside">

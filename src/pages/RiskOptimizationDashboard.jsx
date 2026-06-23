@@ -68,7 +68,7 @@ export default function RiskOptimizationDashboard() {
               <Brain className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Self-Learning Risk Optimization</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Self-Learning Risk Optimization</h1>
               <p className="text-xs text-gray-500">FDA-aligned PCCP v1.0 · Human-in-the-loop oversight active</p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function RiskOptimizationDashboard() {
             { label: 'PCCP Version', value: '1.0', color: 'text-blue-700', bg: 'bg-blue-50' }
           ].map(kpi => (
             <div key={kpi.label} className={`${kpi.bg} rounded-2xl p-4`}>
-              <p className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
+              <p className={`text-2xl font-semibold ${kpi.color}`}>{kpi.value}</p>
               <p className="text-xs text-gray-500 mt-1">{kpi.label}</p>
             </div>
           ))}
@@ -112,7 +112,7 @@ export default function RiskOptimizationDashboard() {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h3 className="font-bold text-gray-800 mb-4">Outcome Distribution</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">Outcome Distribution</h3>
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -125,7 +125,7 @@ export default function RiskOptimizationDashboard() {
               ) : <p className="text-gray-400 text-sm text-center py-12">No outcome data yet</p>}
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h3 className="font-bold text-gray-800 mb-4">Success by Category</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">Success by Category</h3>
               {barData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={barData}>

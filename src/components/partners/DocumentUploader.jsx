@@ -58,13 +58,13 @@ export default function DocumentUploader({ partnerType, onComplete }) {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold text-blue-800">Document Upload Progress</p>
+            <p className="text-sm font-semibold text-blue-800">Document Upload Progress</p>
             <p className="text-xs text-blue-700 mt-0.5">
               {requiredUploaded}/{requiredDocs.length} required documents uploaded
             </p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-blue-600">{Math.round((requiredUploaded / requiredDocs.length) * 100)}%</p>
+            <p className="text-2xl font-semibold text-blue-600">{Math.round((requiredUploaded / requiredDocs.length) * 100)}%</p>
           </div>
         </div>
         <div className="w-full bg-blue-100 rounded-full h-2 mt-3">
@@ -77,7 +77,7 @@ export default function DocumentUploader({ partnerType, onComplete }) {
 
       {/* Required Documents */}
       <div>
-        <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
           <FileText className="w-4 h-4" />
           Required Documents
         </h4>
@@ -124,7 +124,7 @@ export default function DocumentUploader({ partnerType, onComplete }) {
 
       {/* Optional Documents */}
       <div>
-        <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+        <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
           <FileText className="w-4 h-4" />
           Optional Documents (Recommended)
         </h4>

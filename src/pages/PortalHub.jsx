@@ -71,7 +71,7 @@ function WorkflowCard({ workflow, onRerun, onDelete }) {
               <p className="text-xs text-muted-foreground">{workflow.patient_email}</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${isBlocked ? 'bg-red-100 text-red-700' : isApproved ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
+              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${isBlocked ? 'bg-red-100 text-red-700' : isApproved ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
                 {isBlocked ? '🔴 BLOCKED' : isApproved ? '✅ APPROVED' : '⏳ PENDING'}
               </span>
               <span className="text-[11px] text-muted-foreground capitalize bg-secondary px-2 py-0.5 rounded-full">
@@ -222,8 +222,8 @@ export default function PortalHub() {
                   <ShieldCheck className="w-4 h-4" style={{ color: '#C5A059' }} />
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>NEW</p>
-                  <p className="text-white font-bold text-sm">IQ200 Executive Operations Center</p>
+                  <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>NEW</p>
+                  <p className="text-white font-semibold text-sm">IQ200 Executive Operations Center</p>
                   <p className="text-white/50 text-[10px]">Full pipeline state machine · Pricing workbench · Audit logs</p>
                 </div>
               </div>

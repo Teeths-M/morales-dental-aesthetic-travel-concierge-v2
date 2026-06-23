@@ -71,7 +71,7 @@ export default function PassportVisaChecker({ destinationCountry, selectedPasspo
               <Shield className="w-6 h-6 text-blue-300 flex-shrink-0" />
             )}
             <div>
-              <p className="font-bold text-white" style={{ letterSpacing: '-0.01em' }}>
+              <p className="font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
                 {visaResult.visa_required === 'no' 
                   ? 'No Visa Required' 
                   : visaResult.visa_required === 'yes'

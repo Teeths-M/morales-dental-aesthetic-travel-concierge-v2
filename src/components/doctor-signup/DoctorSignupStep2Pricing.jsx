@@ -38,7 +38,7 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">Set Procedure Prices</h2>
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">Set Procedure Prices</h2>
         <p className="text-muted-foreground text-sm">
           Enter base prices for each of your selected procedures. These will be used to estimate costs for patients.
         </p>

@@ -43,7 +43,7 @@ export default function SoloSafetyBeaconStatus({ caseId, caseStatus, isSoloTrave
           isGPS ? 'bg-emerald-500' : isIpFallback ? 'bg-blue-500' : 'bg-amber-500'
         }`} />
         <Radio className={`w-3.5 h-3.5 flex-shrink-0 ${isGPS ? 'text-emerald-600' : isIpFallback ? 'text-blue-600' : 'text-amber-600'}`} />
-        <span className={`font-bold ${isGPS ? 'text-emerald-800' : isIpFallback ? 'text-blue-800' : 'text-amber-800'}`}>
+        <span className={`font-semibold ${isGPS ? 'text-emerald-800' : isIpFallback ? 'text-blue-800' : 'text-amber-800'}`}>
           Safety beacon active
           {isGPS && ' · Precise GPS'}
           {isIpFallback && ' · Approximate network location'}

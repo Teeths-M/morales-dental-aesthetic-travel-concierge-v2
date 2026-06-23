@@ -44,7 +44,7 @@ export default function AssessmentFlow() {
   return (
     <div className="mb-16" ref={ref}>
       <div className="text-center mb-10">
-        <p className="text-xs font-bold text-white/40 uppercase tracking-[0.25em]">The Assessment Flow</p>
+        <p className="text-xs font-semibold text-white/40 uppercase tracking-[0.25em]">The Assessment Flow</p>
       </div>
 
       <div className="relative">
@@ -160,7 +160,7 @@ export default function AssessmentFlow() {
                   {num}
                 </motion.div>
                 <motion.p
-                  className="text-xs font-bold transition-colors duration-500"
+                  className="text-xs font-semibold transition-colors duration-500"
                   animate={{ color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)' }}
                 >
                   {label}

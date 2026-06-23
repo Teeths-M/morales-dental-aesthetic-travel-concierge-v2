@@ -477,7 +477,7 @@ export default function Hero() {
 
       {/* MORALES branding — top left */}
       <div className="absolute left-5 top-5 z-50 hidden lg:block">
-        <p className="font-bold text-white tracking-[0.12em]" style={{ fontSize: '1.05rem', letterSpacing: '0.15em' }}>MORALES</p>
+        <p className="font-semibold text-white tracking-[0.12em]" style={{ fontSize: '1.05rem', letterSpacing: '0.15em' }}>MORALES</p>
         <p className="text-[9px] font-semibold tracking-[0.08em] leading-[1.5]" style={{ color: GOLD }}>
           DENTAL &amp; AESTHETIC<br />TRAVEL CONCIERGE
         </p>
@@ -489,7 +489,7 @@ export default function Hero() {
         {/* Top center label — desktop only */}
         <motion.div className="text-center mb-4 hidden lg:block"
           initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="text-sm font-bold tracking-[0.28em]" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
+          <p className="text-sm font-semibold tracking-[0.28em]" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
           <p className="text-[10px] text-slate-400 tracking-[0.2em] mt-1">SAFETY INTELLIGENCE ENGINE</p>
         </motion.div>
 
@@ -505,7 +505,7 @@ export default function Hero() {
             style={{ background: 'rgba(255,255,255,0.05)' }}
           >
             {/* Headline */}
-            <h1 className="font-bold text-white leading-[1.15] mb-3"
+            <h1 className="font-semibold text-white leading-[1.15] mb-3"
               style={{ fontSize: 'clamp(1.8rem, 2.8vw, 2.5rem)' }}>
               {language === 'es' ? 'Tu cuidado seguro comienza aquí.'
                : language === 'fr' ? 'Vos soins sûrs commencent ici.'
@@ -559,7 +559,7 @@ export default function Hero() {
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = ''; }}
                 >
                   <Icon className="w-4 h-4 mx-auto mb-1.5 transition-colors duration-200 group-hover:drop-shadow-[0_0_6px_rgba(212,175,55,0.8)]" style={{ color: GOLD }} />
-                  <p className="text-[10px] font-bold leading-tight transition-colors duration-200" style={{ color: GOLD }}>{label}</p>
+                  <p className="text-[10px] font-semibold leading-tight transition-colors duration-200" style={{ color: GOLD }}>{label}</p>
                   <p className="text-[9px] text-slate-400 mt-0.5 leading-tight">{sub}</p>
                 </div>
               ))}
@@ -638,7 +638,7 @@ export default function Hero() {
             >
               <div className="flex items-center gap-3 mb-2">
                 <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: shieldState.titleColor }} />
-                <p className="font-bold text-base" style={{ color: shieldState.titleColor }}>{shieldState.title}</p>
+                <p className="font-semibold text-base" style={{ color: shieldState.titleColor }}>{shieldState.title}</p>
               </div>
               <p className="text-slate-300 text-sm mb-3">Your care plan is verified and secure.</p>
               <div className="border-t border-white/10 pt-3 flex items-center gap-2">
@@ -719,7 +719,7 @@ export default function Hero() {
                         <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                           <activeCard.icon className="w-5 h-5 text-slate-300" />
                         </div>
-                        <p className="font-bold text-sm" style={{ color: GOLD }}>{activeCard.title}</p>
+                        <p className="font-semibold text-sm" style={{ color: GOLD }}>{activeCard.title}</p>
                       </div>
                       <button onClick={() => setActiveCard(null)} className="text-slate-500 hover:text-white transition-colors">
                         <X className="w-4 h-4" />
@@ -744,13 +744,13 @@ export default function Hero() {
                 ))}
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-bold text-sm" style={{ color: GOLD }}>4.9 ★★★★★</span>
+                <span className="font-semibold text-sm" style={{ color: GOLD }}>4.9 ★★★★★</span>
                 <span className="text-xs text-slate-400">Based on 1,200+ journeys</span>
               </div>
 
               {/* JOIN OUR NETWORK - Provider signup cards */}
               <div className="mt-6 pt-6 border-t border-white/10">
-                <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: GOLD }}>JOIN OUR NETWORK</p>
+                <p className="text-[10px] font-semibold tracking-widest mb-3" style={{ color: GOLD }}>JOIN OUR NETWORK</p>
                 <div className="space-y-2">
                   {/* Doctor */}
                   <Link to="/doctor-signup" className="group flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-yellow-500/40 transition-all duration-200 cursor-pointer">

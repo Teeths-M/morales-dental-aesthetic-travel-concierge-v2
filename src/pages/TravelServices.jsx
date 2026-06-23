@@ -15,8 +15,8 @@ export default function TravelServices() {
               <Plane className="w-7 h-7 text-white" />
             </div>
             <div>
-              <p className="text-blue-200 text-xs font-bold uppercase tracking-widest">A La Carte Services</p>
-              <h1 className="text-2xl font-bold">Travel & Non-Medical Services</h1>
+              <p className="text-blue-200 text-xs font-semibold uppercase tracking-widest">A La Carte Services</p>
+              <h1 className="text-2xl font-semibold">Travel & Non-Medical Services</h1>
             </div>
           </div>
           <p className="text-blue-100 text-sm max-w-xl leading-relaxed">

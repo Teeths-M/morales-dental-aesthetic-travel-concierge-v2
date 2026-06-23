@@ -135,7 +135,7 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
             {/* Header */}
             <div className="flex items-start justify-between p-5 border-b border-slate-100 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold truncate">{caseRecord.client_name}</h2>
+                <h2 className="text-lg font-semibold truncate">{caseRecord.client_name}</h2>
                 <p className="text-blue-100 text-xs mt-0.5 truncate">{caseRecord.client_email}</p>
               </div>
               <button onClick={onClose} className="ml-3 p-1.5 rounded-lg hover:bg-white/20 transition-colors shrink-0">

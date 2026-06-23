@@ -43,7 +43,7 @@ export default function LuxuryWhyMorales() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <p className="text-[11px] font-bold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
+            <p className="text-[11px] font-semibold tracking-[0.32em] uppercase mb-6" style={{ color: GOLD }}>
               WHY PATIENTS CHOOSE MORALES
             </p>
             <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-6" style={{ letterSpacing: '-0.02em' }}>

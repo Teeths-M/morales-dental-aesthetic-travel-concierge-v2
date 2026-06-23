@@ -137,12 +137,12 @@ export default function JourneyTimelineTab() {
         <div className="absolute -left-12 bottom-0 h-32 w-32 rounded-full bg-emerald-200/40 blur-3xl" />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-800/70">Journey Progress</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-800/70">Journey Progress</p>
             <h2 className="mt-2 font-display text-3xl text-slate-950">Your Healthcare Journey</h2>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">Stage 3 of 7 — travel, lodging, and arrival support are being coordinated by your care team.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-right shadow-sm">
-            <div className="text-4xl font-bold text-slate-950">{progress}%</div>
+            <div className="text-4xl font-semibold text-slate-950">{progress}%</div>
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Complete</p>
           </div>
         </div>
@@ -191,14 +191,14 @@ export default function JourneyTimelineTab() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className={`text-base font-bold tracking-tight ${stage.status === 'upcoming' ? 'text-slate-600' : 'text-slate-950'}`}>
+                          <h3 className={`text-base font-semibold tracking-tight ${stage.status === 'upcoming' ? 'text-slate-600' : 'text-slate-950'}`}>
                             {stage.label}
                           </h3>
-                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${s.chip}`}>
+                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${s.chip}`}>
                             {stage.date}
                           </span>
                           {stage.status === 'active' && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white shadow-sm">
                               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                               Current
                             </span>
@@ -208,7 +208,7 @@ export default function JourneyTimelineTab() {
                       </div>
 
                       <div className="flex flex-shrink-0 items-center gap-3 pt-1">
-                        <div className="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 sm:block">
+                        <div className="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500 sm:block">
                           {doneCount}/{stage.tasks.length}
                         </div>
                         <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />

@@ -590,7 +590,7 @@ export default function TravelConcierge() {
                         <div key={a.id} className="bg-white/10 border border-white/15 rounded-xl p-3">
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-white text-sm font-semibold leading-tight">{a.agency_name}</p>
-                            <span className="flex items-center gap-0.5 text-amber-300 text-xs font-bold shrink-0">
+                            <span className="flex items-center gap-0.5 text-amber-300 text-xs font-semibold shrink-0">
                               <Star className="w-3 h-3 fill-amber-300" />{a.rating?.toFixed(1)}
                             </span>
                           </div>
@@ -622,7 +622,7 @@ export default function TravelConcierge() {
                         <div key={t.id} className="bg-white/10 border border-white/15 rounded-xl p-3">
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-white text-sm font-semibold leading-tight">{t.company_name}</p>
-                            <span className="flex items-center gap-0.5 text-amber-300 text-xs font-bold shrink-0">
+                            <span className="flex items-center gap-0.5 text-amber-300 text-xs font-semibold shrink-0">
                               <Star className="w-3 h-3 fill-amber-300" />{t.quality_score?.toFixed(1)}
                             </span>
                           </div>
@@ -712,7 +712,7 @@ export default function TravelConcierge() {
                       <span>${(pricing.base_cost * 0.25).toLocaleString()}</span>
                     </div>
                     <div className="border-t border-white/20 pt-3">
-                      <div className="flex justify-between text-white text-lg font-bold">
+                      <div className="flex justify-between text-white text-lg font-semibold">
                         <span>Total Package</span>
                         <span>${pricing.base_cost * 1.25.toLocaleString()}</span>
                       </div>
@@ -720,7 +720,7 @@ export default function TravelConcierge() {
                     <div className="bg-emerald-500/20 border border-emerald-400/30 rounded-xl p-4">
                       <div className="flex justify-between text-emerald-100">
                         <span className="font-semibold">Deposit Required (25%)</span>
-                        <span className="font-bold">${(pricing.base_cost * 1.25 * 0.25).toLocaleString()}</span>
+                        <span className="font-semibold">${(pricing.base_cost * 1.25 * 0.25).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

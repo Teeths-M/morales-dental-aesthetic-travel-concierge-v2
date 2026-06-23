@@ -128,7 +128,7 @@ export default function DoctorDashboard() {
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-amber-600" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">No Doctor Profile Found</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-2">No Doctor Profile Found</h2>
             <p className="text-muted-foreground mb-6">
               Your account ({user?.email}) is not registered as a doctor in our system.
             </p>
@@ -151,8 +151,8 @@ export default function DoctorDashboard() {
 
           <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-          <h1 className="text-4xl font-bold text-foreground">My Dashboard</h1>
-          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Secure Access</span>
+          <h1 className="text-4xl font-semibold text-foreground">My Dashboard</h1>
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full">Secure Access</span>
           </div>
             <div className="flex items-center gap-2">
               <Link to="/partner-reviews" className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-secondary/20 flex items-center gap-1.5">
@@ -183,7 +183,7 @@ export default function DoctorDashboard() {
                 <TabsTrigger value="flagged" className="relative">
                   Flagged Reviews
                   {flaggedCases?.length > 0 && (
-                    <span className="ml-1.5 w-4 h-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    <span className="ml-1.5 w-4 h-4 bg-amber-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
                       {flaggedCases.length}
                     </span>
                   )}
@@ -200,7 +200,7 @@ export default function DoctorDashboard() {
                       <ShieldAlert className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-amber-900">Medical Review Required</h3>
+                      <h3 className="text-sm font-semibold text-amber-900">Medical Review Required</h3>
                       <p className="text-xs text-amber-700 mt-0.5">
                         {flaggedCases.length} consultation{flaggedCases.length > 1 ? 's' : ''} flagged for high-risk assessment {flaggedCases.length > 1 ? 'are' : 'is'} awaiting your expert review before final approval.
                       </p>
@@ -245,7 +245,7 @@ export default function DoctorDashboard() {
                       />
                     </label>
                   ) : (
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold overflow-hidden flex-shrink-0">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-semibold overflow-hidden flex-shrink-0">
                       {formData.photo_url && formData.photo_url.trim() ? (
                         <img src={formData.photo_url} alt={formData.full_name} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
                       ) : null}
@@ -264,7 +264,7 @@ export default function DoctorDashboard() {
                         type="text"
                         value={formData.full_name || ''}
                         onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        className="w-full px-3 py-2 border border-border rounded-lg text-lg font-bold"
+                        className="w-full px-3 py-2 border border-border rounded-lg text-lg font-semibold"
                         placeholder="Full Name"
                       />
                       <input
@@ -360,7 +360,7 @@ export default function DoctorDashboard() {
                       <div className="mb-4">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h2 className="text-2xl font-bold text-foreground">{formData.full_name}</h2>
+                            <h2 className="text-2xl font-semibold text-foreground">{formData.full_name}</h2>
                             {specialties.length > 0 && (
                               <p className="text-muted-foreground mt-1">{specialties[0].category || 'Specialist'}</p>
                             )}
@@ -394,7 +394,7 @@ export default function DoctorDashboard() {
                         {formData.rating && (
                           <div className="flex items-center gap-2 text-sm">
                             <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                            <span className="font-bold">{formData.rating.toFixed(1)}</span>
+                            <span className="font-semibold">{formData.rating.toFixed(1)}</span>
                           </div>
                         )}
                         {formData.review_count !== undefined && (
@@ -416,7 +416,7 @@ export default function DoctorDashboard() {
 
                       {/* Credentials */}
                       <div className="mb-6">
-                        <h4 className="font-bold text-foreground mb-3">Credentials & Certifications</h4>
+                        <h4 className="font-semibold text-foreground mb-3">Credentials & Certifications</h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
                           <li className="flex items-start gap-3">
                             <span className="text-primary mt-1">•</span>
@@ -438,7 +438,7 @@ export default function DoctorDashboard() {
                       {/* Specialties */}
                       {specialties.length > 0 && (
                         <div>
-                          <h4 className="font-bold text-foreground mb-3">Areas of Expertise</h4>
+                          <h4 className="font-semibold text-foreground mb-3">Areas of Expertise</h4>
                           <div className="flex flex-wrap gap-2">
                             {specialties.slice(0, 5).map(spec => (
                               <span
@@ -480,7 +480,7 @@ export default function DoctorDashboard() {
 
             <TabsContent value="flagged" className="p-8">
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-foreground">Flagged Consultations</h3>
+                <h3 className="text-lg font-semibold text-foreground">Flagged Consultations</h3>
                 <p className="text-sm text-muted-foreground mt-1">These patients have underlying medical conditions that require your expert assessment before case approval can proceed.</p>
               </div>
               {!flaggedCases || flaggedCases.length === 0 ? (
@@ -496,8 +496,8 @@ export default function DoctorDashboard() {
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-foreground">{c.client_name}</span>
-                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-wide">High-Risk Review</span>
+                            <span className="text-sm font-semibold text-foreground">{c.client_name}</span>
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">High-Risk Review</span>
                           </div>
                           <p className="text-xs text-muted-foreground mb-2">
                             Procedure: <span className="font-medium text-foreground">{c.procedures?.join(', ')}</span>
@@ -524,7 +524,7 @@ export default function DoctorDashboard() {
             </TabsContent>
 
             <TabsContent value="verification" className="p-8">
-              <h3 className="text-lg font-bold text-foreground mb-4">Medical License Verification</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Medical License Verification</h3>
               <p className="text-sm text-muted-foreground mb-6">Verify your medical license against your country's official government registry. Verified doctors receive a "✅ Verified by Morales" badge on their profile.</p>
               <DoctorVerificationPanel user={user} />
             </TabsContent>

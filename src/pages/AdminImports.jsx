@@ -152,7 +152,7 @@ export default function AdminImports() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Data Import</h1>
+            <h1 className="text-3xl font-semibold font-display">Data Import</h1>
             <p className="text-muted-foreground mt-1">
               Bulk upload partners, procedures, and pricing data
             </p>
@@ -178,7 +178,7 @@ export default function AdminImports() {
                         <Icon className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-slate-900">{config.title}</h3>
+                        <h3 className="font-semibold text-slate-900">{config.title}</h3>
                         <p className="text-sm text-slate-500 mt-1">{config.description}</p>
                         <div className="flex gap-2 mt-3">
                           <Button
@@ -220,7 +220,7 @@ export default function AdminImports() {
                       {React.createElement(IMPORT_CONFIGS[selectedType].icon, { className: "w-5 h-5 text-white" })}
                     </div>
                     <div>
-                      <h2 className="text-lg font-bold text-slate-900">Import {IMPORT_CONFIGS[selectedType].title}</h2>
+                      <h2 className="text-lg font-semibold text-slate-900">Import {IMPORT_CONFIGS[selectedType].title}</h2>
                       <p className="text-sm text-slate-500">Upload CSV or JSON file</p>
                     </div>
                   </div>
@@ -318,7 +318,7 @@ export default function AdminImports() {
         {/* Instructions */}
         <Card className="border-0 shadow-md rounded-2xl bg-white">
           <CardContent className="pt-6">
-            <h3 className="font-bold text-slate-900 mb-4">Import Guidelines</h3>
+            <h3 className="font-semibold text-slate-900 mb-4">Import Guidelines</h3>
             <div className="space-y-3 text-sm text-slate-600">
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5" />

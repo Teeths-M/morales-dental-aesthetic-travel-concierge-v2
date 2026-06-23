@@ -72,8 +72,8 @@ export default function ResetPIN() {
           <div className="w-14 h-14 bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/50">
             <Shield className="w-7 h-7 text-blue-400" />
           </div>
-          <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">Morales Medical</p>
-          <h1 className="text-2xl font-bold text-white mt-1">Reset Emergency PIN</h1>
+          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest">Morales Medical</p>
+          <h1 className="text-2xl font-semibold text-white mt-1">Reset Emergency PIN</h1>
         </div>
 
         <div className="bg-slate-800/70 border border-slate-700 rounded-3xl p-6 space-y-5">
@@ -86,7 +86,7 @@ export default function ResetPIN() {
           {verifyState === 'expired' && (
             <div className="text-center py-4 space-y-3">
               <Clock className="w-12 h-12 text-amber-400 mx-auto" />
-              <p className="text-white font-bold">Link expired</p>
+              <p className="text-white font-semibold">Link expired</p>
               <p className="text-slate-400 text-sm">This reset link is only valid for 15 minutes. Please request a new one.</p>
               <Link to="/emergency-access" className="inline-block mt-2 text-blue-400 text-sm hover:underline">
                 Request a new reset link
@@ -97,7 +97,7 @@ export default function ResetPIN() {
           {verifyState === 'invalid' && (
             <div className="text-center py-4 space-y-3">
               <AlertTriangle className="w-12 h-12 text-red-400 mx-auto" />
-              <p className="text-white font-bold">Link not valid</p>
+              <p className="text-white font-semibold">Link not valid</p>
               <p className="text-slate-400 text-sm">This link has already been used or is not valid. Please request a new one.</p>
               <Link to="/emergency-access" className="inline-block mt-2 text-blue-400 text-sm hover:underline">
                 Back to Emergency Access
@@ -120,7 +120,7 @@ export default function ResetPIN() {
               <button
                 onClick={handleSave}
                 disabled={saveState === 'saving' || pin.length < 6 || pinConfirm.length < 6}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-2xl py-3 flex items-center justify-center gap-2 transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-2xl py-3 flex items-center justify-center gap-2 transition-colors"
               >
                 {saveState === 'saving'
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
@@ -132,7 +132,7 @@ export default function ResetPIN() {
           {saveState === 'done' && (
             <div className="text-center py-4 space-y-3">
               <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto" />
-              <p className="text-white font-bold text-lg">PIN updated!</p>
+              <p className="text-white font-semibold text-lg">PIN updated!</p>
               <p className="text-slate-400 text-sm">Your new 6-digit PIN is active. Use it on any device for emergency access.</p>
               <Link to="/emergency-access" className="inline-block mt-3 text-blue-400 text-sm hover:underline">
                 Go to Emergency Access

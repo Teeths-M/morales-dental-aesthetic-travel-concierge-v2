@@ -441,7 +441,7 @@ export default function VaultDashboard({ user }) {
           transition={{ duration: 0.3 }}
         >
           <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          <p className="text-[13px] font-bold text-emerald-100">Syncing {syncStatus.pendingCount} action{syncStatus.pendingCount !== 1 ? 's' : ''}...</p>
+          <p className="text-[13px] font-semibold text-emerald-100">Syncing {syncStatus.pendingCount} action{syncStatus.pendingCount !== 1 ? 's' : ''}...</p>
         </motion.div>
       )}
 
@@ -454,7 +454,7 @@ export default function VaultDashboard({ user }) {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
           <div>
-            <p className="text-[15px] font-bold text-emerald-50" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
+            <p className="text-[15px] font-semibold text-emerald-50" style={{ letterSpacing: '-0.01em' }}>{docCount} Document{docCount !== 1 ? 's' : ''} Secured</p>
             <p className="text-[12px] text-emerald-100 mt-1 tracking-[0.15em] uppercase">PBKDF2 + AES-256-GCM · Zero-knowledge</p>
           </div>
           <Shield className="w-8 h-8 text-emerald-100" strokeWidth={1.3} />
@@ -471,7 +471,7 @@ export default function VaultDashboard({ user }) {
               <>
                 <CheckCircle className="w-5 h-5 text-emerald-100 flex-shrink-0" />
                 <div>
-                  <p className="text-[13px] font-bold text-emerald-100">✓ All Documents Ready for Offline</p>
+                  <p className="text-[13px] font-semibold text-emerald-100">✓ All Documents Ready for Offline</p>
                   <p className="text-[11px] text-emerald-200">You can access your vault without internet</p>
                 </div>
               </>
@@ -479,7 +479,7 @@ export default function VaultDashboard({ user }) {
               <>
                 <CloudDownload className="w-5 h-5 text-amber-100 flex-shrink-0" />
                 <div>
-                  <p className="text-[13px] font-bold text-amber-100">{offlineReadyCount}/{vaults.length} Documents Cached</p>
+                  <p className="text-[13px] font-semibold text-amber-100">{offlineReadyCount}/{vaults.length} Documents Cached</p>
                   <p className="text-[11px] text-amber-200">Prepare remaining documents for offline access</p>
                 </div>
               </>
@@ -499,7 +499,7 @@ export default function VaultDashboard({ user }) {
             {cacheProgress?.status === 'caching' ? (
               <>
                 <div className="w-5 h-5 border-2 border-emerald-100 border-t-transparent rounded-full animate-spin" />
-                <span className="text-[14px] font-bold text-emerald-50">
+                <span className="text-[14px] font-semibold text-emerald-50">
                   Caching documents... {cacheProgress.current}/{cacheProgress.total}
                 </span>
               </>
@@ -507,7 +507,7 @@ export default function VaultDashboard({ user }) {
               <>
                 <CloudDownload className="w-5 h-5 text-emerald-100" />
                 <div className="text-left">
-                  <p className="text-[14px] font-bold text-emerald-50">Prepare All Documents for Offline</p>
+                  <p className="text-[14px] font-semibold text-emerald-50">Prepare All Documents for Offline</p>
                   <p className="text-[11px] text-emerald-100">Download encrypted files for airplane mode access</p>
                 </div>
               </>
@@ -523,7 +523,7 @@ export default function VaultDashboard({ user }) {
             animate={{ opacity: 1, y: 0 }}
           >
             <AlertCircle className="w-5 h-5 text-amber-100 flex-shrink-0" />
-            <p className="text-[13px] font-bold text-amber-100">Some documents were too large to cache. You can still access them online.</p>
+            <p className="text-[13px] font-semibold text-amber-100">Some documents were too large to cache. You can still access them online.</p>
           </motion.div>
         )}
       </div>
@@ -541,13 +541,13 @@ export default function VaultDashboard({ user }) {
             <motion.button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-bold transition-colors ${activeTab === key ? 'bg-white/25 text-white' : 'bg-transparent text-white/80 hover:text-white hover:bg-white/15'}`}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold transition-colors ${activeTab === key ? 'bg-white/25 text-white' : 'bg-transparent text-white/80 hover:text-white hover:bg-white/15'}`}
               whileHover={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
               whileTap={{ scale: 0.98 }}
             >
               <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span className="hidden sm:inline">{label}</span>
-              {count !== null && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === key ? 'bg-white/30 text-white' : 'bg-white/20 text-white/80'}`}>{count}</span>}
+              {count !== null && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${activeTab === key ? 'bg-white/30 text-white' : 'bg-white/20 text-white/80'}`}>{count}</span>}
             </motion.button>
           );
         })}
@@ -561,7 +561,7 @@ export default function VaultDashboard({ user }) {
             {vaults.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-5 text-2xl" style={{ boxShadow: '0 0 40px rgba(212,175,55,0.15)' }}>🔒</div>
-                <p className="text-[15px] font-bold text-white/80" style={{ letterSpacing: '-0.01em' }}>No documents yet</p>
+                <p className="text-[15px] font-semibold text-white/80" style={{ letterSpacing: '-0.01em' }}>No documents yet</p>
                 <p className="text-[13px] text-white/70 mt-2 max-w-xs leading-relaxed">Add your first document using the "Add New" tab above.</p>
               </div>
             ) : (
@@ -585,13 +585,13 @@ export default function VaultDashboard({ user }) {
                       </div>
                       <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[15px] font-bold text-white truncate" style={{ letterSpacing: '-0.01em' }}>{vault.file_name}</p>
+                        <p className="text-[15px] font-semibold text-white truncate" style={{ letterSpacing: '-0.01em' }}>{vault.file_name}</p>
                         {isAvailableOffline ? (
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-400/20 px-2 py-0.5 rounded-full">
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-300 bg-emerald-400/20 px-2 py-0.5 rounded-full">
                             <CheckCircle className="w-2.5 h-2.5" /> Ready for Offline
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full">
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full">
                             <CloudDownload className="w-2.5 h-2.5" /> Online Only
                           </span>
                         )}
@@ -612,7 +612,7 @@ export default function VaultDashboard({ user }) {
                     <div className="flex items-center gap-2.5 w-full sm:w-auto">
                       <motion.button
                         onClick={() => handleDownload(vault)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/25 text-white/90 hover:text-white hover:border-white/40 hover:bg-white/15 text-[13px] font-bold transition-all"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/25 text-white/90 hover:text-white hover:border-white/40 hover:bg-white/15 text-[13px] font-semibold transition-all"
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
                       >
@@ -620,7 +620,7 @@ export default function VaultDashboard({ user }) {
                       </motion.button>
                       <motion.button
                         onClick={() => setShareModal({ open: true, vault })}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/25 text-white/90 hover:text-white hover:border-white/40 hover:bg-white/15 text-[13px] font-bold transition-all"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/25 text-white/90 hover:text-white hover:border-white/40 hover:bg-white/15 text-[13px] font-semibold transition-all"
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
                       >
@@ -649,7 +649,7 @@ export default function VaultDashboard({ user }) {
             {shareLinks.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-5"><Share2 className="w-7 h-7 text-white/40" /></div>
-                <p className="text-[15px] font-bold text-white/80" style={{ letterSpacing: '-0.01em' }}>No active share links</p>
+                <p className="text-[15px] font-semibold text-white/80" style={{ letterSpacing: '-0.01em' }}>No active share links</p>
                 <p className="text-[13px] text-white/70 mt-2 max-w-xs leading-relaxed">Create a share link from any document to securely share with embassies, airlines, or hotels.</p>
               </div>
             ) : shareLinks.map((link, index) => (
@@ -662,13 +662,13 @@ export default function VaultDashboard({ user }) {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[14px] font-bold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{link.purpose?.replace(/_/g, ' ')} Share Link</p>
+                    <p className="text-[14px] font-semibold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{link.purpose?.replace(/_/g, ' ')} Share Link</p>
                     <p className="text-[12px] text-white/80 mt-1.5">
                       {link.access_count}/{link.max_access_count} downloads ·{' '}
                       Expires {formattedDates[`sl-${link.id}`] || '—'}
                     </p>
                   </div>
-                  <span className={`flex-shrink-0 text-[10px] font-bold px-3 py-1 rounded-full ring-1 tracking-[0.15em] uppercase ${link.is_active ? 'bg-emerald-400/30 text-emerald-100 ring-emerald-400/40' : 'bg-red-400/30 text-red-100 ring-red-400/40'}`}>
+                  <span className={`flex-shrink-0 text-[10px] font-semibold px-3 py-1 rounded-full ring-1 tracking-[0.15em] uppercase ${link.is_active ? 'bg-emerald-400/30 text-emerald-100 ring-emerald-400/40' : 'bg-red-400/30 text-red-100 ring-red-400/40'}`}>
                     {link.is_active ? 'Active' : 'Expired'}
                   </span>
                 </div>
@@ -688,7 +688,7 @@ export default function VaultDashboard({ user }) {
             {auditLogs.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-5"><Clock className="w-7 h-7 text-white/40" /></div>
-                <p className="text-[15px] font-bold text-white/80" style={{ letterSpacing: '-0.01em' }}>No activity yet</p>
+                <p className="text-[15px] font-semibold text-white/80" style={{ letterSpacing: '-0.01em' }}>No activity yet</p>
               </div>
             ) : auditLogs.map((log, index) => (
               <motion.div
@@ -699,11 +699,11 @@ export default function VaultDashboard({ user }) {
                 className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-white/15 bg-white/10"
               >
                 <div>
-                  <p className="text-[13px] font-bold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{log.event_type?.replace(/_/g, ' ')}</p>
+                  <p className="text-[13px] font-semibold text-white capitalize" style={{ letterSpacing: '-0.01em' }}>{log.event_type?.replace(/_/g, ' ')}</p>
                   {formattedDates[`al-${log.id}`] && <p className="text-[11px] text-white/70 mt-1 tracking-[0.15em] uppercase">{formattedDates[`al-${log.id}`]}</p>}
                 </div>
                 {log.sensitive && (
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-400/30 text-red-100 ring-1 ring-red-400/40 flex-shrink-0 tracking-[0.15em] uppercase">Sensitive</span>
+                  <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-red-400/30 text-red-100 ring-1 ring-red-400/40 flex-shrink-0 tracking-[0.15em] uppercase">Sensitive</span>
                 )}
               </motion.div>
             ))}

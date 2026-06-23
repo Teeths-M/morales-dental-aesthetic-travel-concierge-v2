@@ -31,7 +31,7 @@ function TimelineEntry({ entry }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="font-mono text-[10px] text-slate-400">{new Date(entry.timestamp).toLocaleString()}</span>
-          {entry.non_repudiable && <span className="bg-blue-100 text-blue-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full">NON-REPUDIABLE</span>}
+          {entry.non_repudiable && <span className="bg-blue-100 text-blue-700 text-[9px] font-semibold px-1.5 py-0.5 rounded-full">NON-REPUDIABLE</span>}
         </div>
         <p className="font-semibold text-slate-700">{entry.action?.replace(/_/g, ' ').toUpperCase()}</p>
         <p className="text-slate-500 leading-relaxed">{entry.details}</p>
@@ -58,7 +58,7 @@ function DisputeCard({ txn, caseRecord }) {
         className="w-full flex items-start gap-4 px-5 py-4 text-left hover:bg-slate-50 transition-colors">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${statusColor}`}>{txn.status}</span>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase ${statusColor}`}>{txn.status}</span>
             <span className="text-xs text-slate-500 font-mono">{txn.event_type}</span>
             {txn.case_id && <span className="text-[10px] text-slate-400">Case: {txn.case_id?.slice(0, 8)}…</span>}
           </div>
@@ -87,7 +87,7 @@ function DisputeCard({ txn, caseRecord }) {
                   { label: 'Deposit Option', val: txn.deposit_option },
                 ].filter(r => r.val).map(r => (
                   <div key={r.label} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{r.label}</p>
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">{r.label}</p>
                     <p className="font-mono text-slate-700 break-all text-[10px] mt-0.5">{r.val}</p>
                   </div>
                 ))}
@@ -98,8 +98,8 @@ function DisputeCard({ txn, caseRecord }) {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Shield className="w-3.5 h-3.5 text-blue-500" />
-                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">iQ200 Handshake Audit Log</p>
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">IMMUTABLE</span>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">iQ200 Handshake Audit Log</p>
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">IMMUTABLE</span>
                   </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {relevantTimeline.map((entry, i) => (
@@ -112,7 +112,7 @@ function DisputeCard({ txn, caseRecord }) {
               {/* Metadata */}
               {txn.metadata && Object.keys(txn.metadata).length > 0 && (
                 <div className="bg-slate-900 text-white rounded-xl px-4 py-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Metadata</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase mb-2">Metadata</p>
                   <pre className="text-[10px] text-slate-300 overflow-x-auto">{JSON.stringify(txn.metadata, null, 2)}</pre>
                 </div>
               )}
@@ -166,7 +166,7 @@ export default function DisputeArbitrationPanel() {
           <Scale className="w-5 h-5 text-blue-700" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-slate-800">Dispute Arbitration Center</h2>
+          <h2 className="text-lg font-semibold text-slate-800">Dispute Arbitration Center</h2>
           <p className="text-xs text-slate-400">Resolve transactional anomalies via immutable iQ200 handshake validation logs</p>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function DisputeArbitrationPanel() {
           { label: 'Refunded', val: stats.refunded, color: 'text-purple-700', bg: 'bg-purple-50' },
         ].map(s => (
           <div key={s.label} className={`${s.bg} rounded-2xl px-4 py-3`}>
-            <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
+            <p className={`text-xl font-semibold ${s.color}`}>{s.val}</p>
             <p className="text-[11px] text-slate-500 mt-0.5">{s.label}</p>
           </div>
         ))}

@@ -205,7 +205,7 @@ export default function MessagesModule() {
           {/* Contact list */}
           <div className="w-64 border-r border-slate-100 flex flex-col flex-shrink-0">
             <div className="px-4 py-3 border-b border-slate-100">
-              <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">{labels.conversations}</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{labels.conversations}</p>
             </div>
             <div className="flex-1 overflow-y-auto">
               {contacts.map(c => (
@@ -218,7 +218,7 @@ export default function MessagesModule() {
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {c.photo_url
                         ? <img src={c.photo_url} alt={c.name} className="w-full h-full object-cover" />
-                        : <span className="text-white font-bold text-sm">{c.avatar}</span>}
+                        : <span className="text-white font-semibold text-sm">{c.avatar}</span>}
                     </div>
                     {c.online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />}
                   </div>
@@ -254,7 +254,7 @@ export default function MessagesModule() {
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center overflow-hidden">
                 {contact?.photo_url
                   ? <img src={contact.photo_url} alt={contact.name} className="w-full h-full object-cover" />
-                  : <span className="text-white font-bold text-xs">{contact?.avatar}</span>}
+                  : <span className="text-white font-semibold text-xs">{contact?.avatar}</span>}
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">{contact?.name}</p>

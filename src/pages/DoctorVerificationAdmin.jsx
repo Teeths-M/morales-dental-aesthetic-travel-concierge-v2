@@ -82,7 +82,7 @@ export default function DoctorVerificationAdmin() {
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Doctor Verification Queue</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Doctor Verification Queue</h1>
               <p className="text-sm text-gray-500">
                 {loading ? 'Loading...' : `${queue.length} pending review${queue.length !== 1 ? 's' : ''}`}
               </p>
@@ -122,7 +122,7 @@ export default function DoctorVerificationAdmin() {
 
                       {/* Doctor name + urgency badges */}
                       <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <h3 className="text-lg font-bold text-gray-900">{item.doctor_name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{item.doctor_name}</h3>
                         <Badge
                           variant="outline"
                           className={timeRemaining.urgent

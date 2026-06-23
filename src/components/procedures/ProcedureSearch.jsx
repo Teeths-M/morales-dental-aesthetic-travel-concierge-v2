@@ -189,7 +189,7 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
                 )
               ) : (
                 <div className="p-4">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Popular Procedures</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Popular Procedures</p>
                   <div className="flex flex-wrap gap-2">
                     {popular.map(name => (
                       <button

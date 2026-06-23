@@ -106,7 +106,7 @@ export default function ProcedureSafetyTab() {
                 <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${item.done ? 'text-emerald-600' : 'text-slate-200'}`} />
                 <p className={`text-xs font-medium ${item.done ? 'text-emerald-800' : 'text-slate-500'}`}>{item.label}</p>
                 {!item.done && (
-                  <span className="ml-auto text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Pending</span>
+                  <span className="ml-auto text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Pending</span>
                 )}
               </div>
             ))}

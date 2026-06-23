@@ -232,7 +232,7 @@ export default function DoctorCasesDashboard() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Assigned Cases</h1>
+          <h1 className="text-3xl font-display font-semibold text-foreground">Assigned Cases</h1>
           <p className="text-muted-foreground mt-1">
             Welcome, Dr. {doctor?.full_name || user?.email} · {consultations.length} case{consultations.length !== 1 ? 's' : ''} assigned
           </p>

@@ -111,7 +111,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">
           {language === 'es' ? 'Información de la Agencia' : language === 'fr' ? 'Informations de l\'Agence' : 'Agency Information'}
         </h2>
         <p className="text-muted-foreground text-sm">

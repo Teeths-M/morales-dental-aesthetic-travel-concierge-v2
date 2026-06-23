@@ -135,7 +135,7 @@ export default function PartnerVerificationHub() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Partner Verification Hub</h1>
+            <h1 className="text-3xl font-semibold font-display">Partner Verification Hub</h1>
             <p className="text-muted-foreground mt-1">
               AI-powered fraud detection + manual review workflow
             </p>
@@ -149,7 +149,7 @@ export default function PartnerVerificationHub() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-2xl font-semibold">{stats.total}</div>
             </CardContent>
           </Card>
           <Card>
@@ -157,7 +157,7 @@ export default function PartnerVerificationHub() {
               <CardTitle className="text-sm font-medium text-blue-600">Pending</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
+              <div className="text-2xl font-semibold">{stats.pending}</div>
             </CardContent>
           </Card>
           <Card>
@@ -165,7 +165,7 @@ export default function PartnerVerificationHub() {
               <CardTitle className="text-sm font-medium text-amber-600">Manual Review</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.manual_review}</div>
+              <div className="text-2xl font-semibold">{stats.manual_review}</div>
             </CardContent>
           </Card>
           <Card>
@@ -173,7 +173,7 @@ export default function PartnerVerificationHub() {
               <CardTitle className="text-sm font-medium text-green-600">Verified</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.verified}</div>
+              <div className="text-2xl font-semibold">{stats.verified}</div>
             </CardContent>
           </Card>
           <Card>
@@ -181,7 +181,7 @@ export default function PartnerVerificationHub() {
               <CardTitle className="text-sm font-medium text-red-600">Denied</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.denied}</div>
+              <div className="text-2xl font-semibold">{stats.denied}</div>
             </CardContent>
           </Card>
           <Card>
@@ -189,7 +189,7 @@ export default function PartnerVerificationHub() {
               <CardTitle className="text-sm font-medium text-red-600">High Risk (≥70)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.high_risk}</div>
+              <div className="text-2xl font-semibold">{stats.high_risk}</div>
             </CardContent>
           </Card>
         </div>

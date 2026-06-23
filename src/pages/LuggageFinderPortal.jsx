@@ -86,7 +86,7 @@ export default function LuggageFinderPortal() {
         {submitted ? (
           <div className="text-center">
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Thank You!</h2>
             <p className="text-gray-500 text-sm">
               The owner has been notified anonymously. A Morales Medical coordinator will contact you shortly to arrange the return.
             </p>
@@ -100,7 +100,7 @@ export default function LuggageFinderPortal() {
               <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Luggage className="w-8 h-8 text-blue-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Found a Bag?</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Found a Bag?</h2>
               <p className="text-gray-500 text-sm leading-relaxed">
                 You've scanned a <strong>Morales Medical</strong> luggage tag. Please fill in the details below — the owner will be notified <em>without sharing your personal information</em>.
               </p>

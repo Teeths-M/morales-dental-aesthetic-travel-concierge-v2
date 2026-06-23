@@ -152,8 +152,8 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
               <Mountain className="w-5 h-5 text-emerald-300" />
             </div>
             <div className="flex-1">
-              <p className="text-emerald-300 text-xs font-bold uppercase tracking-wider">Adventure Mode Active</p>
-              <p className="text-white font-bold">{act.label}</p>
+              <p className="text-emerald-300 text-xs font-semibold uppercase tracking-wider">Adventure Mode Active</p>
+              <p className="text-white font-semibold">{act.label}</p>
               {(venueName || activeProfile?.venue_name) && (
                 <p className="text-emerald-400 text-xs flex items-center gap-1 mt-0.5">
                   <MapPin className="w-3 h-3" />{venueName || activeProfile.venue_name}
@@ -180,7 +180,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
         {/* SOS toggle */}
         <button
           onClick={() => setShowSOS(!showSOS)}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all text-sm ${
+          className={`w-full flex items-center justify-center gap-2 font-semibold py-3.5 rounded-xl transition-all text-sm ${
             showSOS
               ? 'bg-slate-700/50 border border-slate-600 text-slate-300'
               : 'bg-red-700 hover:bg-red-800 text-white shadow-lg shadow-red-900/40'
@@ -225,7 +225,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <Shield className="w-4 h-4 text-emerald-400" />
-          <p className="text-white font-bold text-sm">Pre-Activity Safety Checklist</p>
+          <p className="text-white font-semibold text-sm">Pre-Activity Safety Checklist</p>
         </div>
         {PREP_ITEMS.map(item => (
           <button key={item.id} onClick={() => togglePrep(item.id)}
@@ -249,7 +249,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
           <Button
             onClick={startActivity}
             disabled={starting}
-            className={`flex-2 text-white font-bold text-sm flex-1 ${
+            className={`flex-2 text-white font-semibold text-sm flex-1 ${
               allPrepDone ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-600 hover:bg-slate-500'
             }`}
           >
@@ -272,7 +272,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-white font-bold text-sm mb-1">Select Wilderness Activity</p>
+        <p className="text-white font-semibold text-sm mb-1">Select Wilderness Activity</p>
         <p className="text-slate-400 text-xs">Morales will activate the appropriate safety protocol and GPS beacon.</p>
       </div>
 
@@ -290,7 +290,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
             >
               <Icon className={`w-5 h-5 ${isSelected ? 'text-red-400' : 'text-slate-400'}`} />
               <span className="text-[10px] font-semibold text-slate-300 leading-tight">{type.label}</span>
-              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
                 type.risk === 'high' ? 'bg-red-900/60 text-red-400 border border-red-700/50' :
                 type.risk === 'medium' ? 'bg-amber-900/50 text-amber-400 border border-amber-700/50' :
                 'bg-emerald-900/40 text-emerald-400 border border-emerald-700/40'
@@ -326,7 +326,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
               />
             </div>
 
-            <Button onClick={() => setStep('prep')} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl py-3">
+            <Button onClick={() => setStep('prep')} className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl py-3">
               <Shield className="w-4 h-4 mr-2" />
               Start Activity + Safety Checklist
             </Button>

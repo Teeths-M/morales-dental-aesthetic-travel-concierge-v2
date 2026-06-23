@@ -129,7 +129,7 @@ export default function JourneyModule() {
                     {phase.steps.map((step, i) => (
                       <div key={step} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${c.bg} border ${c.border}`}>
                         <div className={`w-6 h-6 rounded-full ${c.dot} flex items-center justify-center flex-shrink-0`}>
-                          <span className="text-white text-[10px] font-bold">{i + 1}</span>
+                          <span className="text-white text-[10px] font-semibold">{i + 1}</span>
                         </div>
                         <p className={`text-xs font-medium ${c.text}`}>{step}</p>
                       </div>
@@ -160,7 +160,7 @@ export default function JourneyModule() {
                       ? <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />
                       : <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />}
                     <p className={`text-xs font-medium ${r.status === 'ready' ? 'text-emerald-800' : r.status === 'pending' ? 'text-amber-800' : 'text-red-800'}`}>{r.label}</p>
-                    <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                       r.status === 'ready' ? 'bg-emerald-100 text-emerald-700' :
                       r.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                     }`}>{r.status === 'ready' ? 'Ready' : r.status === 'pending' ? 'Pending' : 'Missing'}</span>
@@ -177,7 +177,7 @@ export default function JourneyModule() {
                 </div>
                 <h3 className="font-semibold text-slate-800 text-sm">Destination Guide</h3>
               </div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Margarita Island, Venezuela</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Margarita Island, Venezuela</p>
               <div className="space-y-3 mb-4">
                 {destTips.map((t, i) => {
                   const Icon = t.icon;
@@ -190,7 +190,7 @@ export default function JourneyModule() {
                 })}
               </div>
               <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                <p className="text-xs font-bold text-blue-800 mb-1">Visa Information</p>
+                <p className="text-xs font-semibold text-blue-800 mb-1">Visa Information</p>
                 <p className="text-[11px] text-blue-700">Most nationalities receive a tourist visa on arrival valid for 90 days. Your coordinator will confirm requirements for your passport.</p>
               </div>
             </div>

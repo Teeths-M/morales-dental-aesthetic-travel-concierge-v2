@@ -162,7 +162,7 @@ export default function Section10Documents({ form, update }) {
           <span className="text-lg">📎</span>
           <h3 className="font-display text-lg text-foreground">Upload Your Medical Documents</h3>
         </div>
-        <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+        <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
           isOnline
             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
             : 'bg-amber-50  text-amber-600  border border-amber-200'
@@ -218,7 +218,7 @@ export default function Section10Documents({ form, update }) {
               </p>
             )}
           </div>
-          <span className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity">
+          <span className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             Choose Files
           </span>
         </label>

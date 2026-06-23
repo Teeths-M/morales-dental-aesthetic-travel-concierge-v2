@@ -495,8 +495,8 @@ export default function Booking() {
               {steps[step].emoji}
             </div>
             <div>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Step {step + 1} {translations[language].stepOf} {steps.length}</p>
-              <h2 className="font-bold text-slate-800 text-base">{steps[step].label}</h2>
+              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">Step {step + 1} {translations[language].stepOf} {steps.length}</p>
+              <h2 className="font-semibold text-slate-800 text-base">{steps[step].label}</h2>
             </div>
           </div>
 
@@ -617,15 +617,15 @@ export default function Booking() {
               {steps[step].emoji}
             </div>
             <div>
-              <p className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest">Step {step + 1}</p>
-              <h3 className="font-bold text-white text-xs drop-shadow">{steps[step].label}</h3>
+              <p className="text-[9px] font-semibold text-emerald-300 uppercase tracking-widest">Step {step + 1}</p>
+              <h3 className="font-semibold text-white text-xs drop-shadow">{steps[step].label}</h3>
             </div>
           </div>
 
           {/* Progress */}
           <div className="space-y-2">
             <div>
-              <p className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
+              <p className="text-[9px] font-semibold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-emerald-400 to-blue-400"
@@ -642,7 +642,7 @@ export default function Booking() {
               {steps.map((s, i) => (
                 <div
                   key={i}
-                  className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap transition-all ${
+                  className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-md whitespace-nowrap transition-all ${
                     i < step
                       ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
                       : i === step

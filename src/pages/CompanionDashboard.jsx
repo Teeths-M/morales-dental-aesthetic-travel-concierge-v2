@@ -115,7 +115,7 @@ export default function CompanionDashboard() {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">No Companion Profile Found</h2>
+            <h2 className="text-xl font-semibold mb-2">No Companion Profile Found</h2>
             <p className="text-muted-foreground mb-4">
               You haven't created a companion profile yet.
             </p>
@@ -139,7 +139,7 @@ export default function CompanionDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+            <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
               Companion Dashboard
             </h1>
             <p className="text-muted-foreground">
@@ -180,7 +180,7 @@ export default function CompanionDashboard() {
                   <User className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{companion.total_bookings || 0}</p>
+                  <p className="text-2xl font-semibold">{companion.total_bookings || 0}</p>
                   <p className="text-xs text-muted-foreground">Total Bookings</p>
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function CompanionDashboard() {
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">${companion.earnings_this_month?.toLocaleString() || 0}</p>
+                  <p className="text-2xl font-semibold">${companion.earnings_this_month?.toLocaleString() || 0}</p>
                   <p className="text-xs text-muted-foreground">This Month</p>
                 </div>
               </div>
@@ -206,7 +206,7 @@ export default function CompanionDashboard() {
                   <Star className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{companion.rating?.toFixed(1) || '5.0'}</p>
+                  <p className="text-2xl font-semibold">{companion.rating?.toFixed(1) || '5.0'}</p>
                   <p className="text-xs text-muted-foreground">Rating</p>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function CompanionDashboard() {
                   <TrendingUp className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{companion.review_count || 0}</p>
+                  <p className="text-2xl font-semibold">{companion.review_count || 0}</p>
                   <p className="text-xs text-muted-foreground">Reviews</p>
                 </div>
               </div>

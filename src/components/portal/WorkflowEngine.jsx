@@ -64,7 +64,7 @@ export default function WorkflowEngine({ cases, onExecuteWorkflow, onViewCase })
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-display font-bold">Workflow Engine</h2>
+          <h2 className="text-2xl font-display font-semibold">Workflow Engine</h2>
           <p className="text-muted-foreground">Manage and execute case workflows</p>
         </div>
       </div>

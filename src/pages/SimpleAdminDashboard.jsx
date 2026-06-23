@@ -147,7 +147,7 @@ export default function SimpleAdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Patient Journey Dashboard</h1>
+            <h1 className="text-3xl font-semibold font-display">Patient Journey Dashboard</h1>
             <p className="text-muted-foreground mt-1">Monitor active medical travel cases</p>
           </div>
           <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function SimpleAdminDashboard() {
                       <Activity className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">{stats.active}</p>
+                      <p className="text-2xl font-semibold text-slate-900">{stats.active}</p>
                       <p className="text-xs text-slate-500">Active Cases</p>
                     </div>
                   </div>
@@ -188,7 +188,7 @@ export default function SimpleAdminDashboard() {
                       <Plane className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">{stats.inTravel}</p>
+                      <p className="text-2xl font-semibold text-slate-900">{stats.inTravel}</p>
                       <p className="text-xs text-slate-500">Travel Phase</p>
                     </div>
                   </div>
@@ -202,7 +202,7 @@ export default function SimpleAdminDashboard() {
                       <Activity className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">{stats.inProcedure}</p>
+                      <p className="text-2xl font-semibold text-slate-900">{stats.inProcedure}</p>
                       <p className="text-xs text-slate-500">In Procedure</p>
                     </div>
                   </div>
@@ -216,7 +216,7 @@ export default function SimpleAdminDashboard() {
                       <CheckCircle className="w-5 h-5 text-violet-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">{stats.inRecovery}</p>
+                      <p className="text-2xl font-semibold text-slate-900">{stats.inRecovery}</p>
                       <p className="text-xs text-slate-500">In Recovery</p>
                     </div>
                   </div>
@@ -230,7 +230,7 @@ export default function SimpleAdminDashboard() {
                       <Archive className="w-5 h-5 text-slate-600" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">{stats.completed}</p>
+                      <p className="text-2xl font-semibold text-slate-900">{stats.completed}</p>
                       <p className="text-xs text-slate-500">Completed</p>
                     </div>
                   </div>

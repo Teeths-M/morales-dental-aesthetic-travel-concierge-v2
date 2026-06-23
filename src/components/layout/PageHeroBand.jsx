@@ -29,7 +29,7 @@ export default function PageHeroBand({ eyebrow, title, subtitle }) {
       {hasContent ? (
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 lg:pt-20 lg:pb-14">
           {eyebrow && (
-            <p className="text-[11px] font-bold uppercase tracking-[0.32em] mb-4" style={{ color: '#D4AF37' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] mb-4" style={{ color: '#D4AF37' }}>
               {eyebrow}
             </p>
           )}

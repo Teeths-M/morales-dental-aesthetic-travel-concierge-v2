@@ -19,7 +19,7 @@ export default function BaggageTrackerPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Baggage Tracker</h1>
+              <h1 className="text-2xl font-semibold text-slate-800">Baggage Tracker</h1>
               <p className="text-sm text-slate-500">QR-based luggage tracking & recovery</p>
             </div>
           </div>
@@ -34,22 +34,22 @@ export default function BaggageTrackerPage() {
 
         {/* Info Card */}
         <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
-          <h3 className="font-bold text-blue-800 mb-3">How It Works</h3>
+          <h3 className="font-semibold text-blue-800 mb-3">How It Works</h3>
           <ul className="space-y-2 text-sm text-blue-700">
             <li className="flex items-start gap-2">
-              <span className="font-bold text-blue-600">1.</span>
+              <span className="font-semibold text-blue-600">1.</span>
               <span>Register your luggage to generate a unique QR code</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-bold text-blue-600">2.</span>
+              <span className="font-semibold text-blue-600">2.</span>
               <span>Print and attach the QR tag to your bag</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-bold text-blue-600">3.</span>
+              <span className="font-semibold text-blue-600">3.</span>
               <span>If lost, anyone can scan it to notify you anonymously</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-bold text-blue-600">4.</span>
+              <span className="font-semibold text-blue-600">4.</span>
               <span>Track your bag's status in real-time</span>
             </li>
           </ul>

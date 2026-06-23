@@ -28,7 +28,7 @@ export default function EmbassyDirectory() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
        <div className="text-center">
-         <h2 className="font-display text-2xl font-bold text-slate-800">
+         <h2 className="font-display text-2xl font-semibold text-slate-800">
            {language === 'es' ? 'Buscador de Embajadas y Consulados' : language === 'fr' ? 'Recherche d\'Ambassade et de Consulat' : 'Embassy & Consulate Finder'}
          </h2>
          <p className="text-slate-500 text-sm mt-1">
@@ -100,7 +100,7 @@ export default function EmbassyDirectory() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-lg">{destEmbassies.flag}</span>
-                        <h3 className="font-bold text-slate-800">{destEmbassies.name} Embassy</h3>
+                        <h3 className="font-semibold text-slate-800">{destEmbassies.name} Embassy</h3>
                       </div>
                       <p className="text-sm text-slate-500">{embassy.country}</p>
                     </div>

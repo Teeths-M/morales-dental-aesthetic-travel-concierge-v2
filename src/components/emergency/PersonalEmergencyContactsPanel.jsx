@@ -71,7 +71,7 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-slate-800 text-sm">Personal Emergency Contacts</h3>
+          <h3 className="font-semibold text-slate-800 text-sm">Personal Emergency Contacts</h3>
           <p className="text-xs text-slate-500 mt-0.5">These people are notified when an SOS is triggered.</p>
         </div>
         <Button size="sm" variant="outline" className="text-xs h-8 gap-1.5" onClick={() => setForm({ ...BLANK })}>
@@ -140,13 +140,13 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
         <div className="space-y-2">
           {contacts.map(c => (
             <div key={c.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${c.isPrimary ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
-              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold text-slate-600 flex-shrink-0">
                 {c.name?.[0]?.toUpperCase() || '?'}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-bold text-slate-800 truncate">{c.name}</p>
-                  {c.isPrimary && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Primary</span>}
+                  <p className="text-sm font-semibold text-slate-800 truncate">{c.name}</p>
+                  {c.isPrimary && <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Primary</span>}
                   {c.relationship && <span className="text-[10px] text-slate-500">{c.relationship}</span>}
                 </div>
                 <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
@@ -174,7 +174,7 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
       {contacts.length > 0 && caseRecord && (
         <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
           <div className="text-xs text-blue-700">
-            <span className="font-bold">SOS primary: </span>
+            <span className="font-semibold">SOS primary: </span>
             {primaryContact ? `${primaryContact.name} · ${primaryContact.phone}` : '—'}
           </div>
           <Button size="sm" className="text-xs h-8 bg-blue-600 hover:bg-blue-700" onClick={handleSyncToCase} disabled={saving}>

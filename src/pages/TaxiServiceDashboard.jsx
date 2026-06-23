@@ -41,7 +41,7 @@ export default function TaxiServiceDashboard() {
       <div className="min-h-screen bg-background py-12 px-6">
         <div className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-8 text-center">
           <AlertCircle className="w-10 h-10 text-amber-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">No Taxi Service Profile Found</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-2">No Taxi Service Profile Found</h1>
           <p className="text-muted-foreground mb-6">Your account ({user?.email}) is not linked to a taxi service profile yet.</p>
           <a href="/partner-signup/taxi-service" className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90">
             Create Taxi Service Profile

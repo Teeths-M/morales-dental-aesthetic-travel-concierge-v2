@@ -96,7 +96,7 @@ export default function PortalHubAdmin() {
                       red: '#ef4444'
                     }[stat.color]
                   }}>
-                    <div className="text-3xl font-bold text-foreground">{stat.value}</div>
+                    <div className="text-3xl font-semibold text-foreground">{stat.value}</div>
                     <p className="text-sm text-muted-foreground mt-2">{stat.label}</p>
                   </Card>
                 </motion.div>

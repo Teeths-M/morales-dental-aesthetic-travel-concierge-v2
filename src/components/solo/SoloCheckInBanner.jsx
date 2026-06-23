@@ -86,7 +86,7 @@ export default function SoloCheckInBanner() {
         <div className="flex items-center gap-3">
           <CheckCircle2 className="w-8 h-8 text-emerald-600 flex-shrink-0" />
           <div>
-            <p className="font-bold text-emerald-800 text-sm">✅ You're Marked Safe</p>
+            <p className="font-semibold text-emerald-800 text-sm">✅ You're Marked Safe</p>
             <p className="text-emerald-700 text-xs mt-0.5">Your location and safety status have been recorded. Next check-in in 12 hours.</p>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function SoloCheckInBanner() {
               : <Shield className="w-5 h-5 text-emerald-600" />}
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`font-bold text-sm ${isOverdue ? 'text-red-800' : 'text-emerald-800'}`}>
+            <p className={`font-semibold text-sm ${isOverdue ? 'text-red-800' : 'text-emerald-800'}`}>
               {isOverdue ? '🚨 Safety Check-In Overdue' : '🛡️ Solo Traveler Check-In Due'}
             </p>
             <p className={`text-xs mt-0.5 ${isOverdue ? 'text-red-700' : 'text-emerald-700'}`}>

@@ -45,7 +45,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0C1A1D]/80 via-transparent to-transparent" />
-          <span className={`absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm bg-[#0C1A1D]/80 ${c.text}`}>{proc.tag}</span>
+          <span className={`absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm bg-[#0C1A1D]/80 ${c.text}`}>{proc.tag}</span>
           {isSelected && (
             <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
               <Check className="w-3.5 h-3.5 text-white" />
@@ -76,7 +76,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
           </button>
           <button
             onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
               isSelected
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
                 : 'bg-white/[0.06] text-white/70 border border-white/[0.10] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] hover:border-[#D4AF37]/30'
@@ -169,7 +169,7 @@ export default function Procedures() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
+            <p className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
               {language === 'es' ? 'Nuestros Servicios' : language === 'fr' ? 'Nos Services' : 'Our Services'}
             </p>
             <h1 className="font-display text-4xl lg:text-5xl text-white mb-6" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
@@ -257,7 +257,7 @@ export default function Procedures() {
                 <div key={cat.id}>
                   <div className="flex items-center gap-3 mb-5">
                     <span className="text-xl">{cat.icon}</span>
-                    <h2 className={`text-sm font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border ${cat.color.bg} ${cat.color.text} ${cat.color.border}`}>
+                    <h2 className={`text-sm font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full border ${cat.color.bg} ${cat.color.text} ${cat.color.border}`}>
                       {cat.label}
                     </h2>
                     <div className="flex-1 h-px bg-slate-100" />
@@ -290,7 +290,7 @@ export default function Procedures() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              <p className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-3">
+              <p className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-[0.32em] mb-3">
                 {language === 'es' ? '¿No Estás Seguro Por Dónde Empezar?' : language === 'fr' ? 'Vous Ne Savez Pas Où Commencer?' : 'Not Sure Where to Start?'}
               </p>
               <h2 className="font-display text-3xl lg:text-4xl text-white mb-4" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
@@ -347,7 +347,7 @@ export default function Procedures() {
                 <Mic className="w-5 h-5 text-white" />
               </div>
               <div className="text-left">
-                <p className="text-white font-bold text-xs">
+                <p className="text-white font-semibold text-xs">
                   {language === 'es' ? 'Modo de Voz' : language === 'fr' ? 'Mode Voix' : 'Voice Mode'}
                 </p>
                 <p className="text-white/70 text-[10px]">

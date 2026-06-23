@@ -154,7 +154,7 @@ export default function TravelAgencySignup() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-sky-600/20 border border-sky-600/40 mb-4">
             <Plane className="w-6 h-6 text-sky-600" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-foreground mb-2">
+          <h1 className="text-4xl font-display font-semibold text-foreground mb-2">
             {language === 'es' ? 'Agencia de Viajes' : language === 'fr' ? 'Agence de Voyages' : 'Travel Agency'}
           </h1>
           <p className="text-muted-foreground">{language === 'es' ? 'Registro de Socio' : language === 'fr' ? 'Enregistrement des Partenaires' : 'Partner Sign-Up'}</p>

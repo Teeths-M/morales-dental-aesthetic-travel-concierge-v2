@@ -66,18 +66,18 @@ function PartnerCard({ partner, isSelected, onClick }) {
           />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-slate-800 truncate">{partner.name}</p>
+          <p className="text-xs font-semibold text-slate-800 truncate">{partner.name}</p>
           <p className={`text-[10px] font-medium ${cfg.text}`}>{cfg.label}</p>
           <p className="text-[10px] text-slate-400 truncate">{partner.vehicle}</p>
         </div>
         <div className="text-right flex-shrink-0">
           {partner.eta_min > 0 ? (
             <>
-              <p className="text-sm font-bold text-slate-800">{Math.ceil(partner.eta_min)}<span className="text-[10px] font-normal text-slate-400"> min</span></p>
+              <p className="text-sm font-semibold text-slate-800">{Math.ceil(partner.eta_min)}<span className="text-[10px] font-normal text-slate-400"> min</span></p>
               <p className="text-[10px] text-slate-400">ETA</p>
             </>
           ) : (
-            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${cfg.light} ${cfg.text}`}>{partner.status}</span>
+            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${cfg.light} ${cfg.text}`}>{partner.status}</span>
           )}
         </div>
       </div>
@@ -86,7 +86,7 @@ function PartnerCard({ partner, isSelected, onClick }) {
       <div className="mt-2.5 space-y-1">
         <div className="flex justify-between text-[9px] text-slate-400">
           <span>Proximity</span>
-          <span className={`font-bold ${cfg.text}`}>{proximityPct}%</span>
+          <span className={`font-semibold ${cfg.text}`}>{proximityPct}%</span>
         </div>
         <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <motion.div
@@ -117,7 +117,7 @@ function MapVisualization({ partners, selected }) {
     <div className="bg-slate-900 rounded-2xl overflow-hidden relative">
       <div className="absolute top-2 left-3 flex items-center gap-1.5 z-10">
         <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Live · 4s refresh</span>
+        <span className="text-[9px] text-emerald-400 font-semibold uppercase tracking-widest">Live · 4s refresh</span>
       </div>
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="block">
         {/* Grid lines */}
@@ -173,12 +173,12 @@ export default function LiveTrackingMap() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Live Partner Tracking</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Live Partner Tracking</h3>
           <p className="text-[11px] text-slate-400 mt-0.5">Real-time telemetry · {secAgo}s ago</p>
         </div>
         <button
           onClick={() => setIsLive(!isLive)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all ${
             isLive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
           }`}
         >

@@ -24,7 +24,7 @@ export default function OfflineVaultBanner({ isOffline, pendingCount, onSync }) 
       )}
       
       <div className="flex-1">
-        <p className="text-[13px] font-bold text-amber-100">
+        <p className="text-[13px] font-semibold text-amber-100">
           {isOffline
             ? 'Offline Mode: Viewing cached vault data'
             : `Syncing ${pendingCount} pending action${pendingCount !== 1 ? 's' : ''}...`}

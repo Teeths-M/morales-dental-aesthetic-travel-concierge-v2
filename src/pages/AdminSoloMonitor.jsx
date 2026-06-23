@@ -15,8 +15,8 @@ const STATUS_CONFIG = {
   acknowledged:  { label: 'Safe ✓',      color: 'bg-emerald-100 text-emerald-800', priority: 4 },
   escalated_2h:  { label: 'SMS/Voice Sent', color: 'bg-orange-100 text-orange-800', priority: 2 },
   escalated_3h:  { label: 'Guardian Alerted', color: 'bg-red-100 text-red-800', priority: 1 },
-  escalated_5h:  { label: '🚨 SECURITY DISPATCH', color: 'bg-red-200 text-red-900 font-bold', priority: 0 },
-  escalated_9h:  { label: '🆘 EMERGENCY DISPATCH', color: 'bg-red-900 text-white font-bold', priority: 0 },
+  escalated_5h:  { label: '🚨 SECURITY DISPATCH', color: 'bg-red-200 text-red-900 font-semibold', priority: 0 },
+  escalated_9h:  { label: '🆘 EMERGENCY DISPATCH', color: 'bg-red-900 text-white font-semibold', priority: 0 },
   resolved:      { label: 'Resolved',    color: 'bg-slate-100 text-slate-600', priority: 5 },
 };
 
@@ -183,7 +183,7 @@ export default function AdminSoloMonitor() {
               <Radio className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Silent Safety Escalation Monitor</h1>
+              <h1 className="text-2xl font-semibold text-slate-900">Silent Safety Escalation Monitor</h1>
               <p className="text-sm text-slate-500">SMS → Voice → Guardian → Security → Police · Auto-escalation state machine</p>
             </div>
           </div>
@@ -210,13 +210,13 @@ export default function AdminSoloMonitor() {
               </div>
             ) : nightlifeSessions.map(ns => (
               <div key={ns.id} className={`bg-white rounded-2xl border shadow-sm p-4 ${ns.is_demo ? 'border-yellow-300' : 'border-purple-200'}`}>
-                {ns.is_demo && <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full mb-2 inline-block">DEMO</span>}
+                {ns.is_demo && <span className="text-[10px] font-semibold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full mb-2 inline-block">DEMO</span>}
                 <div className="flex flex-wrap items-start gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Moon className="w-4 h-4 text-purple-500" />
-                      <p className="font-bold text-slate-900">{ns.user_name || ns.user_email}</p>
-                      <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full capitalize">{ns.activity_type?.replace('_', ' ')}</span>
+                      <p className="font-semibold text-slate-900">{ns.user_name || ns.user_email}</p>
+                      <span className="text-[10px] font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full capitalize">{ns.activity_type?.replace('_', ' ')}</span>
                     </div>
                     {ns.venue_name && <p className="text-sm text-slate-600 mt-0.5">{ns.venue_name}</p>}
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-slate-500">
@@ -262,8 +262,8 @@ export default function AdminSoloMonitor() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Car className="w-4 h-4 text-blue-500" />
-                      <p className="font-bold text-slate-900">{tr.user_name || tr.user_email}</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      <p className="font-semibold text-slate-900">{tr.user_name || tr.user_email}</p>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                         tr.status === 'no_driver' ? 'bg-red-100 text-red-700' :
                         tr.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
                         'bg-blue-100 text-blue-700'
@@ -322,7 +322,7 @@ export default function AdminSoloMonitor() {
             <div key={s.label} className={`rounded-xl border p-3 flex items-center gap-2.5 ${s.color}`}>
               {s.icon}
               <div>
-                <p className="text-xl font-bold text-slate-900">{s.val}</p>
+                <p className="text-xl font-semibold text-slate-900">{s.val}</p>
                 <p className="text-[11px] text-slate-600">{s.label}</p>
               </div>
             </div>
@@ -367,7 +367,7 @@ export default function AdminSoloMonitor() {
                   {isPolicePending && (
                     <div className="bg-purple-600 text-white px-5 py-2.5 rounded-t-2xl flex items-center gap-2">
                       <Siren className="w-4 h-4 animate-pulse" />
-                      <p className="text-sm font-bold">POLICE/ADMIN ESCALATION TASK — Human intervention required</p>
+                      <p className="text-sm font-semibold">POLICE/ADMIN ESCALATION TASK — Human intervention required</p>
                     </div>
                   )}
 
@@ -376,10 +376,10 @@ export default function AdminSoloMonitor() {
                     <div className="flex flex-wrap items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-slate-900">{ci.user_name || ci.user_email}</p>
+                          <p className="font-semibold text-slate-900">{ci.user_name || ci.user_email}</p>
                           <Badge className={sc.color}>{sc.label}</Badge>
                           {ci.missed_round_count > 0 && (
-                            <span className="text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-semibold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
                               {ci.missed_round_count} missed rounds
                             </span>
                           )}
@@ -463,12 +463,12 @@ export default function AdminSoloMonitor() {
                     {/* Police checklist */}
                     {isPolicePending && (
                       <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                        <p className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-1.5">
+                        <p className="text-xs font-semibold text-purple-800 mb-2 flex items-center gap-1.5">
                           <Siren className="w-3.5 h-3.5" /> Admin Checklist — Complete In Order:
                         </p>
                         <ol className="text-xs text-purple-700 space-y-1 list-decimal list-inside">
                           <li>Verify last known location in Guardian tracking link above</li>
-                          <li>Call traveler: <span className="font-bold">{ci.user_phone || 'No phone on file'}</span></li>
+                          <li>Call traveler: <span className="font-semibold">{ci.user_phone || 'No phone on file'}</span></li>
                           <li>Call emergency contact (on file in case record)</li>
                           <li>Contact assigned private security partner</li>
                           <li>Contact local emergency services / police using regional protocol</li>
@@ -480,14 +480,14 @@ export default function AdminSoloMonitor() {
                     {/* Expanded: notification log */}
                     {isExpanded && (
                       <div className="border-t border-slate-100 pt-4 space-y-2">
-                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">Notification Log</p>
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Notification Log</p>
                         {logs.length === 0 ? (
                           <p className="text-xs text-slate-400">No notifications logged for this case.</p>
                         ) : (
                           <div className="space-y-1.5">
                             {logs.map((log, i) => (
                               <div key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
                                   log.status === 'sent' || log.status === 'safe_acknowledged' ? 'bg-emerald-100 text-emerald-700' :
                                   log.status === 'failed' ? 'bg-red-100 text-red-700' :
                                   log.status === 'provider_not_configured' ? 'bg-amber-100 text-amber-700' :

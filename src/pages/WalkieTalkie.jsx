@@ -45,20 +45,20 @@ function MicDeniedCard({ onRetry }) {
     <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 border border-red-800/30 rounded-2xl p-6 space-y-4">
       <div className="flex items-center gap-3">
         <HelpCircle className="w-6 h-6 text-red-400 flex-shrink-0" />
-        <p className="text-red-300 font-bold">Microphone access is blocked</p>
+        <p className="text-red-300 font-semibold">Microphone access is blocked</p>
       </div>
       <p className="text-red-400/80 text-sm">
         This app needs your microphone to record voice messages. Here's how to allow it:
       </p>
       <ol className="space-y-2 text-sm text-red-300/90">
-        <li className="flex gap-2"><span className="font-bold text-amber-400">1.</span> Look for a microphone or camera icon in your browser's address bar (top of the screen).</li>
-        <li className="flex gap-2"><span className="font-bold text-amber-400">2.</span> Tap it and choose <strong>"Allow"</strong> for this site.</li>
-        <li className="flex gap-2"><span className="font-bold text-amber-400">3.</span> If you don't see it, open your phone or browser <strong>Settings → Privacy → Microphone</strong> and switch it on for this browser.</li>
-        <li className="flex gap-2"><span className="font-bold text-amber-400">4.</span> Come back here and tap <strong>Try Again</strong>.</li>
+        <li className="flex gap-2"><span className="font-semibold text-amber-400">1.</span> Look for a microphone or camera icon in your browser's address bar (top of the screen).</li>
+        <li className="flex gap-2"><span className="font-semibold text-amber-400">2.</span> Tap it and choose <strong>"Allow"</strong> for this site.</li>
+        <li className="flex gap-2"><span className="font-semibold text-amber-400">3.</span> If you don't see it, open your phone or browser <strong>Settings → Privacy → Microphone</strong> and switch it on for this browser.</li>
+        <li className="flex gap-2"><span className="font-semibold text-amber-400">4.</span> Come back here and tap <strong>Try Again</strong>.</li>
       </ol>
       <button
         onClick={onRetry}
-        className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold text-sm hover:from-amber-500 hover:to-amber-400 transition-all"
+        className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-white font-semibold text-sm hover:from-amber-500 hover:to-amber-400 transition-all"
       >
         Try Again
       </button>
@@ -239,8 +239,8 @@ export default function WalkieTalkie() {
                 <Radio className="w-7 h-7 text-amber-400" />
               </div>
               <div>
-                <p className="text-amber-400/90 text-xs font-bold uppercase tracking-widest">Real-Time Translation</p>
-                <h1 className="text-2xl font-bold text-white">Walkie-Talkie</h1>
+                <p className="text-amber-400/90 text-xs font-semibold uppercase tracking-widest">Real-Time Translation</p>
+                <h1 className="text-2xl font-semibold text-white">Walkie-Talkie</h1>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -251,7 +251,7 @@ export default function WalkieTalkie() {
 
           {sessionToken && (
             <div className="mt-4">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
                 sessionType === 'medical'
                   ? 'bg-emerald-900/50 text-emerald-300 border-emerald-700/40'
                   : 'bg-amber-900/50 text-amber-300 border-amber-700/40'
@@ -271,7 +271,7 @@ export default function WalkieTalkie() {
           <div className="flex items-center gap-3 bg-amber-900/30 border border-amber-700/40 rounded-2xl px-5 py-4">
             <WifiOff className="w-5 h-5 text-amber-400 flex-shrink-0" />
             <div>
-              <p className="text-amber-300 font-bold text-sm">You're offline</p>
+              <p className="text-amber-300 font-semibold text-sm">You're offline</p>
               <p className="text-amber-400/70 text-xs mt-0.5">
                 Voice translation requires an internet connection. Your session will resume when you reconnect.
               </p>
@@ -286,7 +286,7 @@ export default function WalkieTalkie() {
           /* ── Session Setup ── */
           <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-8 space-y-6 shadow-xl shadow-amber-900/10">
             <div>
-              <h2 className="text-white font-bold text-lg mb-1">Start a Translation Session</h2>
+              <h2 className="text-white font-semibold text-lg mb-1">Start a Translation Session</h2>
               <p className="text-slate-400 text-sm">Choose your languages, then press the big button below to speak.</p>
             </div>
 
@@ -316,7 +316,7 @@ export default function WalkieTalkie() {
             <button
               onClick={createSession}
               disabled={connectionStatus === 'connecting' || !isOnline}
-              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:via-amber-400 hover:to-amber-500 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-amber-900/30 active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:via-amber-400 hover:to-amber-500 text-white font-semibold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-amber-900/30 active:scale-[0.98]"
             >
               <Radio className="w-5 h-5" />
               {connectionStatus === 'connecting' ? 'Connecting…' : 'Start Session'}
@@ -399,7 +399,7 @@ export default function WalkieTalkie() {
                   className="bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-6 space-y-4 shadow-xl shadow-amber-900/10"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-amber-400/90 font-bold text-sm uppercase tracking-wider">Latest Translation</h3>
+                    <h3 className="text-amber-400/90 font-semibold text-sm uppercase tracking-wider">Latest Translation</h3>
                     {isPlaying && (
                       <span className="flex items-center gap-2 text-amber-400 text-xs font-semibold">
                         <Volume2 className="w-4 h-4 animate-pulse" /> Playing…
@@ -452,12 +452,12 @@ export default function WalkieTalkie() {
 
         {/* How it works */}
         <div className="bg-gradient-to-br from-slate-900/60 to-slate-800/40 backdrop-blur-sm border border-amber-900/20 rounded-2xl p-6 shadow-lg shadow-amber-900/5">
-          <h3 className="text-amber-400/90 font-bold text-sm mb-3">How It Works</h3>
+          <h3 className="text-amber-400/90 font-semibold text-sm mb-3">How It Works</h3>
           <ul className="space-y-2 text-slate-400 text-sm">
-            <li className="flex items-start gap-2"><span className="text-amber-500 font-bold">1.</span><span>Choose your language and tap <strong>Start Session</strong>.</span></li>
-            <li className="flex items-start gap-2"><span className="text-amber-500 font-bold">2.</span><span><strong>Hold the button</strong> and speak, then <strong>release</strong> to send.</span></li>
-            <li className="flex items-start gap-2"><span className="text-amber-500 font-bold">3.</span><span>Your words appear in both languages with audio playback.</span></li>
-            <li className="flex items-start gap-2"><span className="text-amber-500 font-bold">4.</span><span>Medical package users: unlimited free usage · Others: pay-per-session.</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-500 font-semibold">1.</span><span>Choose your language and tap <strong>Start Session</strong>.</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-500 font-semibold">2.</span><span><strong>Hold the button</strong> and speak, then <strong>release</strong> to send.</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-500 font-semibold">3.</span><span>Your words appear in both languages with audio playback.</span></li>
+            <li className="flex items-start gap-2"><span className="text-amber-500 font-semibold">4.</span><span>Medical package users: unlimited free usage · Others: pay-per-session.</span></li>
           </ul>
         </div>
       </div>

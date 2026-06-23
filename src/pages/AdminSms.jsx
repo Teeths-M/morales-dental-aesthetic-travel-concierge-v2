@@ -11,7 +11,7 @@ export default function AdminSms() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold font-display">Communications Center</h1>
+          <h1 className="text-3xl font-semibold font-display">Communications Center</h1>
           <p className="text-muted-foreground mt-1">Send portal links, SMS alerts & email notifications to partners and patients</p>
         </div>
 

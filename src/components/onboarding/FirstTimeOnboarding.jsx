@@ -44,7 +44,7 @@ function StepWelcome({ onNext }) {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Welcome to Morales</h2>
+        <h2 className="text-2xl font-semibold text-white mb-2">Welcome to Morales</h2>
         <p className="text-slate-400 text-base leading-relaxed max-w-xs mx-auto">
           Your personal medical travel concierge. We'll guide you every step of the way — from choosing a procedure to recovering safely at home.
         </p>
@@ -65,7 +65,7 @@ function StepWelcome({ onNext }) {
 
       <button
         onClick={onNext}
-        className="w-full max-w-xs py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-amber-500 text-[#060B16] font-bold text-base hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-amber-900/30"
+        className="w-full max-w-xs py-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-amber-500 text-[#060B16] font-semibold text-base hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-amber-900/30"
       >
         Start Your Journey <ChevronRight className="w-5 h-5" />
       </button>
@@ -79,7 +79,7 @@ function StepName({ name, setName, onNext, onBack }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-white mb-1">What's your name?</h2>
+        <h2 className="text-xl font-semibold text-white mb-1">What's your name?</h2>
         <p className="text-slate-400 text-sm">We'll use this to personalise your experience.</p>
       </div>
 
@@ -108,14 +108,14 @@ function StepProcedure({ procedure, setProcedure, onNext, onBack }) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-white mb-1">What procedure interests you?</h2>
+        <h2 className="text-xl font-semibold text-white mb-1">What procedure interests you?</h2>
         <p className="text-slate-400 text-sm">Tap one to select. You can always change this later.</p>
       </div>
 
       <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
         {groups.map(group => (
           <div key={group}>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{group}</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">{group}</p>
             <div className="space-y-1.5">
               {PROCEDURES.filter(p => p.group === group).map(p => (
                 <button
@@ -157,7 +157,7 @@ function StepPIN({ pin, setPin, pinConfirm, setPinConfirm, onNext, onBack }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-white mb-1">Set your Emergency PIN</h2>
+        <h2 className="text-xl font-semibold text-white mb-1">Set your Emergency PIN</h2>
         <p className="text-slate-400 text-sm leading-relaxed">
           This 4-digit PIN unlocks emergency features when you're offline or in a crisis. Choose something you'll remember easily.
         </p>
@@ -209,7 +209,7 @@ function NavButtons({ onBack, onNext, nextDisabled = false, nextLabel = 'Continu
       <button
         onClick={onNext}
         disabled={nextDisabled}
-        className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-amber-500 text-[#060B16] font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-amber-500 text-[#060B16] font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {nextLabel} <ChevronRight className="w-4 h-4" />
       </button>

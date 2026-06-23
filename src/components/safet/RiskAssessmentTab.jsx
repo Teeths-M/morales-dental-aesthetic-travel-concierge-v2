@@ -125,7 +125,7 @@ export default function RiskAssessmentTab() {
           <div className="p-6 sm:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-800">
                   <ShieldCheck className="h-3.5 w-3.5" /> Safety Review
                 </div>
                 <h2 className="font-display text-3xl text-slate-950">Clinical risk snapshot</h2>
@@ -134,7 +134,7 @@ export default function RiskAssessmentTab() {
                 </p>
               </div>
               <div className="hidden rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-center sm:block">
-                <div className="text-3xl font-bold text-slate-950">{reviewItems}</div>
+                <div className="text-3xl font-semibold text-slate-950">{reviewItems}</div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Review items</p>
               </div>
             </div>
@@ -151,8 +151,8 @@ export default function RiskAssessmentTab() {
                     className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                   >
                     <div className="mb-4 space-y-2">
-                      <p className="min-h-8 text-[11px] font-bold uppercase tracking-[0.16em] leading-snug text-slate-500">{risk.label}</p>
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${tone.badge}`}>
+                      <p className="min-h-8 text-[11px] font-semibold uppercase tracking-[0.16em] leading-snug text-slate-500">{risk.label}</p>
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest ${tone.badge}`}>
                         {risk.level}
                       </span>
                     </div>
@@ -193,7 +193,7 @@ export default function RiskAssessmentTab() {
               <ClipboardCheck className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-950">Health profile review</h3>
+              <h3 className="text-base font-semibold text-slate-950">Health profile review</h3>
               <p className="text-sm text-slate-500">Clear items stay quiet. Items needing attention are highlighted.</p>
             </div>
           </div>
@@ -213,9 +213,9 @@ export default function RiskAssessmentTab() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-bold text-slate-900">{item.label}</p>
+                        <p className="text-sm font-semibold text-slate-900">{item.label}</p>
                         {isReview ? (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-700">Review</span>
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-700">Review</span>
                         ) : (
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                         )}
@@ -236,7 +236,7 @@ export default function RiskAssessmentTab() {
                 <Brain className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-950">Readiness notes</h3>
+                <h3 className="text-base font-semibold text-slate-950">Readiness notes</h3>
                 <p className="text-sm text-slate-500">Emotional and expectation-based planning signals.</p>
               </div>
             </div>
@@ -246,8 +246,8 @@ export default function RiskAssessmentTab() {
                 return (
                   <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-bold text-slate-900">{item.label}</p>
-                      <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${tone.badge}`}>{item.value}</span>
+                      <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                      <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest ${tone.badge}`}>{item.value}</span>
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-slate-600">{item.detail}</p>
                   </div>
@@ -262,7 +262,7 @@ export default function RiskAssessmentTab() {
                 <Plane className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-950">Travel safeguards</h3>
+                <h3 className="text-base font-semibold text-slate-950">Travel safeguards</h3>
                 <p className="text-sm text-slate-500">Flight, mobility, companion, and emergency planning.</p>
               </div>
             </div>
@@ -270,8 +270,8 @@ export default function RiskAssessmentTab() {
               {travelRisks.map((item) => (
                 <div key={item.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-bold text-slate-900">{item.label}</p>
-                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
+                    <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest ${
                       item.risk === 'Low' || item.risk === 'None' ? 'bg-emerald-100 text-emerald-700' :
                       item.risk === 'Recommended' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
                     }`}>{item.risk}</span>
@@ -287,7 +287,7 @@ export default function RiskAssessmentTab() {
       <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-900/8 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-base font-bold text-slate-950">Personal risk guidance</h3>
+            <h3 className="text-base font-semibold text-slate-950">Personal risk guidance</h3>
             <p className="mt-1 text-sm text-slate-500">Short, practical education based on the signals in your profile.</p>
           </div>
           <Info className="h-5 w-5 text-slate-400" />
@@ -309,7 +309,7 @@ export default function RiskAssessmentTab() {
                   </div>
                   <ArrowUpRight className="h-4 w-4 text-slate-400" />
                 </div>
-                <h4 className="text-sm font-bold text-slate-950">{card.title}</h4>
+                <h4 className="text-sm font-semibold text-slate-950">{card.title}</h4>
                 <p className="mt-2 text-xs leading-relaxed text-slate-600">{card.body}</p>
               </motion.div>
             );

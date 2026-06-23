@@ -80,7 +80,7 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
             <DollarSign className="w-4 h-4 text-emerald-700" />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-800">Escrow & Partner Payout</p>
+            <p className="text-sm font-semibold text-slate-800">Escrow & Partner Payout</p>
             <p className="text-xs text-slate-400">iQ200-gated release · Stripe Connect · Take-rate engine</p>
           </div>
         </div>
@@ -95,27 +95,27 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
               {/* Config */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Partner Type</label>
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 block">Partner Type</label>
                   <select value={partnerType} onChange={e => setPartnerType(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
                     {PARTNER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Partner ID (optional)</label>
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 block">Partner ID (optional)</label>
                   <input value={partnerId} onChange={e => setPartnerId(e.target.value)} placeholder="partner record ID"
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Stripe Connect Account ID (optional)</label>
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 block">Stripe Connect Account ID (optional)</label>
                 <input value={stripeAccountId} onChange={e => setStripeAccountId(e.target.value)} placeholder="acct_xxxxxxxxxxxxx"
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-300" />
               </div>
 
               <button onClick={checkEscrow} disabled={checking}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 disabled:opacity-50 transition-all">
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-700 disabled:opacity-50 transition-all">
                 {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                 Check Escrow & Milestone Status
               </button>
@@ -128,8 +128,8 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
                   <div className={`rounded-xl border p-4 ${escrowData.escrow_cleared ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
                     <div className="flex items-center gap-2 mb-3">
                       {escrowData.escrow_cleared
-                        ? <><Unlock className="w-4 h-4 text-emerald-600" /><p className="text-sm font-bold text-emerald-700">Escrow Cleared — All Milestones Complete</p></>
-                        : <><Lock className="w-4 h-4 text-amber-600" /><p className="text-sm font-bold text-amber-700">Escrow HOLD — Pending Milestones</p></>
+                        ? <><Unlock className="w-4 h-4 text-emerald-600" /><p className="text-sm font-semibold text-emerald-700">Escrow Cleared — All Milestones Complete</p></>
+                        : <><Lock className="w-4 h-4 text-amber-600" /><p className="text-sm font-semibold text-amber-700">Escrow HOLD — Pending Milestones</p></>
                       }
                     </div>
                     <div className="space-y-1.5">
@@ -142,7 +142,7 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
                               : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                             }
                             <span className={missing ? 'text-amber-700' : 'text-emerald-700'}>{label}</span>
-                            {missing && <span className="ml-auto text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">PENDING</span>}
+                            {missing && <span className="ml-auto text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">PENDING</span>}
                           </div>
                         );
                       })}
@@ -152,7 +152,7 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
                   {/* Payout breakdown */}
                   {escrowData.breakdown && (
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Payout Breakdown</p>
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Payout Breakdown</p>
                       <div className="space-y-1.5 text-sm">
                         {[
                           { label: 'Package Price', val: escrowData.breakdown.package_price, color: 'text-slate-700' },
@@ -164,7 +164,7 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
                             <span className={`font-semibold ${r.color}`}>${Math.abs(r.val).toFixed(2)}</span>
                           </div>
                         ))}
-                        <div className="border-t border-slate-200 pt-1.5 flex justify-between font-bold">
+                        <div className="border-t border-slate-200 pt-1.5 flex justify-between font-semibold">
                           <span className="text-slate-700">Partner Net Payout</span>
                           <span className="text-emerald-700">${escrowData.breakdown.partner_payout?.toFixed(2)}</span>
                         </div>
@@ -175,7 +175,7 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
                   {/* Release button */}
                   {escrowData.can_release && (
                     <button onClick={() => releasePayout(false)} disabled={releasing}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
                       {releasing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       Release Payout — ${escrowData.breakdown.partner_payout?.toFixed(2)}
                     </button>
@@ -193,13 +193,13 @@ export default function PayoutEscrowPanel({ caseId, caseRecord }) {
                           <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                             <div className="mt-2 space-y-2">
                               <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                                <p className="text-xs font-bold text-red-700 mb-1">⚠️ Override creates an immutable audit record. Use only with director approval.</p>
+                                <p className="text-xs font-semibold text-red-700 mb-1">⚠️ Override creates an immutable audit record. Use only with director approval.</p>
                                 <textarea value={overrideReason} onChange={e => setOverrideReason(e.target.value)}
                                   placeholder="Required: State reason for override (e.g. 'Client confirmed procedure complete via phone — director approved')"
                                   className="w-full border border-red-200 rounded-lg px-3 py-2 text-xs resize-none h-16 focus:outline-none focus:ring-1 focus:ring-red-400" />
                               </div>
                               <button onClick={() => releasePayout(true)} disabled={releasing || !overrideReason.trim()}
-                                className="w-full py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-40 transition-all flex items-center justify-center gap-2">
+                                className="w-full py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 disabled:opacity-40 transition-all flex items-center justify-center gap-2">
                                 {releasing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unlock className="w-4 h-4" />}
                                 Force Release Override
                               </button>

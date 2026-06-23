@@ -139,7 +139,7 @@ export default function MedicalRiskDisclosure({ signatureData, onSignatureChange
             className={`rounded-xl border p-4 ${pillar.num === '5' ? 'border-amber-300 bg-amber-50' : 'border-border bg-white'}`}
           >
             <div className="flex items-start gap-3">
-              <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+              <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
                 pillar.num === '5' ? 'bg-amber-200 text-amber-900' : 'bg-primary/10 text-primary'
               }`}>
                 {pillar.num}
@@ -192,7 +192,7 @@ export default function MedicalRiskDisclosure({ signatureData, onSignatureChange
         <div className="flex items-center justify-between px-4 py-2.5 bg-primary/5 border-b border-primary/20">
           <div className="flex items-center gap-2">
             <PenLine className="w-4 h-4 text-primary" />
-            <p className="text-xs font-bold text-primary uppercase tracking-wide">Digital Signature — Required</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide">Digital Signature — Required</p>
           </div>
           <Button
             type="button"

@@ -28,7 +28,7 @@ export default function PINSetupPrompt({ userEmail }) {
       <div className="flex items-center gap-3 bg-emerald-900/40 border border-emerald-700/50 rounded-xl px-4 py-3">
         <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
         <div>
-          <p className="text-emerald-300 text-xs font-bold">✅ Emergency PIN Active</p>
+          <p className="text-emerald-300 text-xs font-semibold">✅ Emergency PIN Active</p>
           <p className="text-emerald-400/80 text-[10px]">Your PIN is saved on this device and synced to the server.</p>
         </div>
       </div>
@@ -39,7 +39,7 @@ export default function PINSetupPrompt({ userEmail }) {
     <div className="flex items-start gap-3 bg-amber-900/40 border border-amber-700/50 rounded-xl px-4 py-3">
       <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
       <div className="flex-1">
-        <p className="text-amber-300 text-xs font-bold mb-1">⚠️ Emergency PIN Not Set</p>
+        <p className="text-amber-300 text-xs font-semibold mb-1">⚠️ Emergency PIN Not Set</p>
         <p className="text-amber-400/80 text-[10px] leading-relaxed">
           <strong>Required for offline safety.</strong> Set your 6-digit PIN now to access your vault, manifest, and SOS tools without internet or app login.
         </p>

@@ -118,7 +118,7 @@ export default function PauseResumeControl({ tripId, initialPaused = false, onPa
             {paused ? 'Journey paused — notifications suppressed' : 'Journey active'}
           </p>
         </div>
-        <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+        <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
           isOnline ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                    : 'bg-amber-50  text-amber-600  border border-amber-200'
         }`}>
@@ -144,7 +144,7 @@ export default function PauseResumeControl({ tripId, initialPaused = false, onPa
                 />
                 <div className="flex gap-2">
                   <button onClick={handlePause}
-                    className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+                    className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors">
                     <Pause className="w-4 h-4" /> Confirm Pause
                   </button>
                   <button onClick={() => { setShowReason(false); setReason(''); }}
@@ -155,7 +155,7 @@ export default function PauseResumeControl({ tripId, initialPaused = false, onPa
               </div>
             ) : (
               <button onClick={() => setShowReason(true)}
-                className="w-full py-3.5 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+                className="w-full py-3.5 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-sm flex items-center justify-center gap-2 transition-colors">
                 <Pause className="w-4 h-4" /> Pause Journey
               </button>
             )}
@@ -168,7 +168,7 @@ export default function PauseResumeControl({ tripId, initialPaused = false, onPa
             exit={{ opacity: 0 }}
             onClick={handleResume}
             disabled={syncState === 'syncing'}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-60"
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-60"
           >
             {syncState === 'syncing'
               ? <><RefreshCw className="w-4 h-4 animate-spin" /> Resuming…</>

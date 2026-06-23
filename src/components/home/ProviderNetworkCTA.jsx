@@ -35,7 +35,7 @@ export default function ProviderNetworkCTA() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-10">
-          <h2 className="font-display text-3xl font-bold mb-2" style={{ color: GOLD }}>
+          <h2 className="font-display text-3xl font-semibold mb-2" style={{ color: GOLD }}>
             JOIN OUR NETWORK
           </h2>
           <p className="text-slate-600 text-sm">
@@ -73,7 +73,7 @@ export default function ProviderNetworkCTA() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-slate-900 transition-colors">
+                  <h3 className="font-semibold text-lg text-slate-800 mb-2 group-hover:text-slate-900 transition-colors">
                     {title}
                   </h3>
 

@@ -122,7 +122,7 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
   return (
     <form onSubmit={handlePayPalPayment} className="space-y-4">
       <div className="p-4 border border-blue-200 rounded-xl bg-blue-50 flex items-center justify-center">
-        <span className="text-3xl font-bold text-blue-600">P</span>
+        <span className="text-3xl font-semibold text-blue-600">P</span>
       </div>
       {error && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -174,7 +174,7 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
   return (
     <form onSubmit={handleWipayPayment} className="space-y-4">
       <div className="p-4 border border-orange-200 rounded-xl bg-orange-50 flex items-center justify-center">
-        <span className="text-2xl font-bold text-orange-600">WIPAY</span>
+        <span className="text-2xl font-semibold text-orange-600">WIPAY</span>
       </div>
       {error && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -235,7 +235,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
           <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
             <Lock className="w-6 h-6 text-blue-600" />
           </div>
-          <h2 className="font-display text-xl font-bold text-slate-800">Secure Your Consultation</h2>
+          <h2 className="font-display text-xl font-semibold text-slate-800">Secure Your Consultation</h2>
           <p className="text-sm text-muted-foreground mt-2">
             Pay the consultation fee to confirm your booking and prevent no-shows.
           </p>
@@ -244,7 +244,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
         {/* Fee Amount */}
         <div className="bg-slate-50 rounded-xl p-4 text-center">
           <p className="text-sm text-muted-foreground mb-1">Consultation Fee</p>
-          <p className="font-display text-3xl font-bold text-slate-800">$49</p>
+          <p className="font-display text-3xl font-semibold text-slate-800">$49</p>
           <p className="text-xs text-slate-500 mt-2">
             Refundable when you book your procedure package
           </p>
@@ -252,7 +252,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
 
         {/* Benefits */}
         <div className="space-y-2 bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-          <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide mb-2">Why This Fee?</p>
+          <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wide mb-2">Why This Fee?</p>
           <div className="space-y-2 text-xs text-emerald-700">
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
@@ -271,7 +271,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
 
         {/* Payment Method Selection */}
         <div className="space-y-2">
-          <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Choose Payment Method</p>
+          <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Choose Payment Method</p>
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: 'stripe', label: 'Card', icon: '💳' },

@@ -211,7 +211,7 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
             value={digit}
             onChange={(e) => onChange(index, e.target.value)}
             onKeyDown={(e) => onKeyDown(index, e, isConfirm)}
-            className="w-14 h-16 text-center text-2xl font-bold bg-white/10 border-white/20 text-white focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+            className="w-14 h-16 text-center text-2xl font-semibold bg-white/10 border-white/20 text-white focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
             maxLength={1}
           />
         ))}

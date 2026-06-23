@@ -269,7 +269,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
       <div className="flex items-start gap-4 bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4">
         <Lock className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="text-[13px] font-bold text-emerald-800" style={{ letterSpacing: '-0.01em' }}>Zero-Knowledge Encryption</p>
+          <p className="text-[13px] font-semibold text-emerald-800" style={{ letterSpacing: '-0.01em' }}>Zero-Knowledge Encryption</p>
           <p className="text-[13px] text-emerald-700 mt-1.5 leading-relaxed">
             Your document is encrypted <strong>on your device</strong> using PBKDF2 + AES-256-GCM.
             Your password never leaves your browser. Only you can decrypt.
@@ -281,7 +281,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         <div className="flex flex-col items-center gap-4 py-8 bg-green-50 border border-green-200 rounded-xl">
           <CheckCircle2 className="w-12 h-12 text-green-600" />
           <div className="text-center">
-            <p className="text-[15px] font-bold text-green-800" style={{ letterSpacing: '-0.01em' }}>Document Vaulted Successfully</p>
+            <p className="text-[15px] font-semibold text-green-800" style={{ letterSpacing: '-0.01em' }}>Document Vaulted Successfully</p>
             <p className="text-[13px] text-green-700 mt-2">Secure reference token:</p>
             <code className="mt-3 block text-[12px] bg-white border border-green-200 rounded-lg px-4 py-2.5 font-mono text-green-800 break-all">
               {issuedToken}
@@ -295,7 +295,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
         <>
           {/* Document Type Selection */}
           <div>
-            <Label className="text-[13px] font-bold text-white/90" style={{ letterSpacing: '-0.01em' }}>Document Type</Label>
+            <Label className="text-[13px] font-semibold text-white/90" style={{ letterSpacing: '-0.01em' }}>Document Type</Label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3">
               {DOCUMENT_TYPES.map(type => (
                 <button
@@ -308,7 +308,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
                     setExtractedData(null);
                     if (fileRef.current) fileRef.current.value = '';
                   }}
-                  className={`p-4 rounded-xl border text-[13px] font-bold transition-all ${
+                  className={`p-4 rounded-xl border text-[13px] font-semibold transition-all ${
                     vaultMeta.document_type === type.value
                       ? 'bg-emerald-500 text-white border-emerald-400'
                       : 'bg-white/10 text-white/90 border-white/20 hover:border-white/40 hover:bg-white/15'
@@ -326,7 +326,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
             <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
               <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
               <div>
-                <p className="text-sm font-bold text-blue-900">Reading passport...</p>
+                <p className="text-sm font-semibold text-blue-900">Reading passport...</p>
                 <p className="text-xs text-blue-700">Auto-filling your details</p>
               </div>
             </div>
@@ -336,7 +336,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
             <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-amber-900">Could not auto-fill passport</p>
+                <p className="text-sm font-semibold text-amber-900">Could not auto-fill passport</p>
                 <p className="text-xs text-amber-700 mt-1">
                   {extractedData.error || 'AI extraction failed. Please enter details manually.'}
                 </p>
@@ -346,7 +346,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
             <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
               <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-green-900">✓ Passport details auto-filled!</p>
+                <p className="text-sm font-semibold text-green-900">✓ Passport details auto-filled!</p>
                 <p className="text-xs text-green-700 mt-1">
                   Extracted: <span className="font-semibold">{extractedData.full_name || 'Name'}</span> • 
                   <span className="font-semibold"> {extractedData.nationality || 'Nationality'}</span>
@@ -369,7 +369,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
           {/* Dynamic Metadata Fields */}
           <div className="space-y-4">
-            <h4 className="text-[14px] font-bold text-white flex items-center gap-2" style={{ letterSpacing: '-0.01em' }}>
+            <h4 className="text-[14px] font-semibold text-white flex items-center gap-2" style={{ letterSpacing: '-0.01em' }}>
               <Eye className="w-4 h-4 text-white/70" />
               Document Reference Info
             </h4>
@@ -379,7 +379,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
               <div className="flex items-start gap-3 bg-amber-900/40 border border-amber-400/30 rounded-xl p-4">
                 <AlertTriangle className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[13px] font-bold text-amber-100" style={{ letterSpacing: '-0.01em' }}>Security Notice</p>
+                  <p className="text-[13px] font-semibold text-amber-100" style={{ letterSpacing: '-0.01em' }}>Security Notice</p>
                   <p className="text-[12px] text-amber-200/90 mt-1.5 leading-relaxed">
                     <strong>Do NOT upload images showing full card numbers or CVV codes.</strong> This vault is for emergency reference only. 
                     Before uploading, physically cover the middle 8 digits and CVV on your card. Store only the last 4 digits below.
@@ -390,7 +390,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('last_4_digits') && (
               <div>
-                <Label className="text-[13px] font-bold text-white/90">Last 4 Characters of Document Number</Label>
+                <Label className="text-[13px] font-semibold text-white/90">Last 4 Characters of Document Number</Label>
                 <Input
                   value={vaultMeta.last_4_digits}
                   onChange={e => setVaultMeta(p => ({ ...p, last_4_digits: e.target.value.slice(-4).toUpperCase() }))}
@@ -403,7 +403,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('expiry_date') && (
               <div>
-                <Label className="text-xs font-bold text-white/90">Expiry Date</Label>
+                <Label className="text-xs font-semibold text-white/90">Expiry Date</Label>
                 <Input
                   type="date"
                   value={vaultMeta.expiry_date}
@@ -415,7 +415,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('nationality') && (
               <div>
-                <Label className="text-xs font-bold text-white/90">Nationality</Label>
+                <Label className="text-xs font-semibold text-white/90">Nationality</Label>
                 <Input
                   value={vaultMeta.nationality}
                   onChange={e => setVaultMeta(p => ({ ...p, nationality: e.target.value }))}
@@ -427,7 +427,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('booking_reference') && (
               <div>
-                <Label className="text-xs font-bold text-white/90">Booking/Policy Number</Label>
+                <Label className="text-xs font-semibold text-white/90">Booking/Policy Number</Label>
                 <Input
                   value={vaultMeta.booking_reference}
                   onChange={e => setVaultMeta(p => ({ ...p, booking_reference: e.target.value.toUpperCase() }))}
@@ -439,7 +439,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('hotel_name') && (
               <div>
-                <Label className="text-xs font-bold text-white/90">Hotel Name</Label>
+                <Label className="text-xs font-semibold text-white/90">Hotel Name</Label>
                 <Input
                   value={vaultMeta.hotel_name}
                   onChange={e => setVaultMeta(p => ({ ...p, hotel_name: e.target.value }))}
@@ -451,7 +451,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('airline') && (
               <div>
-                <Label className="text-xs font-bold text-white/90">Airline</Label>
+                <Label className="text-xs font-semibold text-white/90">Airline</Label>
                 <Input
                   value={vaultMeta.airline}
                   onChange={e => setVaultMeta(p => ({ ...p, airline: e.target.value }))}
@@ -463,7 +463,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('card_issuer') && (
               <div>
-                <Label className="text-[13px] font-bold text-white/90">Card Issuer / Bank Name</Label>
+                <Label className="text-[13px] font-semibold text-white/90">Card Issuer / Bank Name</Label>
                 <Input
                   value={vaultMeta.card_issuer}
                   onChange={e => setVaultMeta(p => ({ ...p, card_issuer: e.target.value }))}
@@ -475,7 +475,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('bank_phone') && (
               <div>
-                <Label className="text-[13px] font-bold text-white/90">Bank Emergency Phone</Label>
+                <Label className="text-[13px] font-semibold text-white/90">Bank Emergency Phone</Label>
                 <Input
                   value={vaultMeta.bank_phone}
                   onChange={e => setVaultMeta(p => ({ ...p, bank_phone: e.target.value }))}
@@ -487,7 +487,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
             {relevantFields.includes('full_name_redacted') && (
               <div>
-                <Label className="text-xs font-bold text-white/90">Full Name (for verification)</Label>
+                <Label className="text-xs font-semibold text-white/90">Full Name (for verification)</Label>
                 <Input
                   value={vaultMeta.full_name_redacted}
                   onChange={e => setVaultMeta(p => ({ ...p, full_name_redacted: e.target.value }))}
@@ -511,7 +511,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
           <div className="bg-blue-900/40 border border-blue-400/30 rounded-xl p-5 space-y-3.5">
             <div className="flex items-center gap-2.5">
               <Lock className="w-4 h-4 text-blue-300" />
-              <p className="text-[14px] font-bold text-blue-100" style={{ letterSpacing: '-0.01em' }}>Set Encryption Password</p>
+              <p className="text-[14px] font-semibold text-blue-100" style={{ letterSpacing: '-0.01em' }}>Set Encryption Password</p>
             </div>
             <p className="text-[13px] text-blue-200/90 leading-relaxed">
               This password encrypts your document. You'll need it to decrypt later. 
@@ -519,7 +519,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
             </p>
             <div className="grid sm:grid-cols-2 gap-3.5">
               <div>
-                <Label className="text-[13px] font-bold text-blue-100">Password</Label>
+                <Label className="text-[13px] font-semibold text-blue-100">Password</Label>
                 <Input
                   type="password"
                   value={password}
@@ -529,7 +529,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
                 />
               </div>
               <div>
-                <Label className="text-[13px] font-bold text-blue-100">Confirm Password</Label>
+                <Label className="text-[13px] font-semibold text-blue-100">Confirm Password</Label>
                 <Input
                   type="password"
                   value={confirmPassword}
@@ -543,7 +543,7 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
 
           {/* File Upload */}
           <div>
-            <Label className="text-[13px] font-bold text-white/90" style={{ letterSpacing: '-0.01em' }}>Upload Document</Label>
+            <Label className="text-[13px] font-semibold text-white/90" style={{ letterSpacing: '-0.01em' }}>Upload Document</Label>
             <div
               className="mt-2 border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all"
               onClick={() => fileRef.current?.click()}
@@ -551,9 +551,9 @@ export default function VaultUploader({ onTokenIssued, consultationId }) {
               <Upload className="w-7 h-7 text-white/60 mx-auto mb-3" />
               <p className="text-[14px] text-white/80">
                 {fileName ? (
-                  <span className="text-emerald-300 font-bold">{fileName}</span>
+                  <span className="text-emerald-300 font-semibold">{fileName}</span>
                 ) : (
-                  <>Click to select <span className="font-bold text-white">JPEG, PNG, or PDF</span></>
+                  <>Click to select <span className="font-semibold text-white">JPEG, PNG, or PDF</span></>
                 )}
               </p>
               <p className="text-[12px] text-white/60 mt-2">Max {MAX_SIZE_MB}MB · Encrypted before upload</p>

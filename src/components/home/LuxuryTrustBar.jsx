@@ -27,7 +27,7 @@ export default function LuxuryTrustBar() {
 
           {/* Stars */}
           <div className="flex flex-col items-center lg:items-start gap-0.5">
-            <p className="text-sm" style={{ color: GOLD }}>★★★★★ <span className="text-white font-bold text-lg ml-1">4.9/5</span></p>
+            <p className="text-sm" style={{ color: GOLD }}>★★★★★ <span className="text-white font-semibold text-lg ml-1">4.9/5</span></p>
             <p className="text-[11px] text-white/50">From 1,200+ reviews</p>
           </div>
 

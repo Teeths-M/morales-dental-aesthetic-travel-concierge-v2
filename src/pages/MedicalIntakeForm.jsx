@@ -328,7 +328,7 @@ function SectionTitle({ emoji, title, subtitle }) {
     <div className="flex items-start gap-3 mb-2">
       <span className="text-2xl">{emoji}</span>
       <div>
-        <h3 className="font-bold text-slate-800 text-lg" style={{ letterSpacing: '-0.01em' }}>{title}</h3>
+        <h3 className="font-semibold text-slate-800 text-lg" style={{ letterSpacing: '-0.01em' }}>{title}</h3>
         {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
       </div>
     </div>
@@ -427,7 +427,7 @@ export default function MedicalIntakeForm() {
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-5">
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Intake Submitted</h2>
+          <h2 className="text-2xl font-semibold text-slate-800 mb-2">Intake Submitted</h2>
           <p className="text-slate-500 text-sm mb-6">Your medical history has been securely delivered to your care team. Your doctor will review it before your procedure.</p>
           <div className="flex gap-3">
             <Button onClick={() => navigate('/dashboard')} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white">Go to Dashboard</Button>
@@ -458,10 +458,10 @@ export default function MedicalIntakeForm() {
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-1.5 text-emerald-800 text-xs font-bold uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-1.5 text-emerald-800 text-xs font-semibold uppercase tracking-widest mb-4">
             <Lock className="w-3 h-3" /> Secure Medical Intake
           </div>
-          <h1 className="text-3xl font-bold text-slate-900" style={{ letterSpacing: '-0.02em' }}>Medical History Form</h1>
+          <h1 className="text-3xl font-semibold text-slate-900" style={{ letterSpacing: '-0.02em' }}>Medical History Form</h1>
           <p className="text-slate-500 text-sm mt-2">Completed once · Reviewed by your doctor before your procedure</p>
         </div>
 

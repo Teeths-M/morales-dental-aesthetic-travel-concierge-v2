@@ -50,7 +50,7 @@ const MODULES = [
 function ModuleStep({ step, onNext, isLast }) {
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-      <h3 className="text-lg font-bold text-gray-900">{step.title}</h3>
+      <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
       <p className="text-gray-600 leading-relaxed">{step.content}</p>
       <Button onClick={onNext} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
         {isLast ? 'Complete Module ✓' : 'Continue →'}
@@ -139,7 +139,7 @@ export default function OnboardingEducation() {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
           <div className="text-4xl mb-3">🎓</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Pre-Journey Education</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2">Pre-Journey Education</h1>
           <p className="text-gray-500">Complete all modules before your procedure date.</p>
           {allCompleted && (
             <div className="mt-4 inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full font-semibold">
@@ -164,7 +164,7 @@ export default function OnboardingEducation() {
                   <div className="text-3xl">{module.icon}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">{module.title}</h3>
+                      <h3 className="font-semibold text-gray-900">{module.title}</h3>
                       {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                     </div>
                     <p className="text-sm text-gray-500 mt-0.5">{module.description}</p>
@@ -192,7 +192,7 @@ export default function OnboardingEducation() {
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-3xl">{activeModule.icon}</span>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">{activeModule.title}</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{activeModule.title}</h2>
                   {!activeModule.isPreferences && (
                     <p className="text-xs text-gray-400">Step {moduleStep + 1} of {activeModule.steps.length}</p>
                   )}

@@ -105,7 +105,7 @@ export default function SupportTab() {
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg">Support & Escalation</h2>
+            <h2 className="font-semibold text-lg">Support & Escalation</h2>
             <p className="text-white/60 text-sm">Real people are always available when you need them</p>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function SupportTab() {
                     <Icon className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-slate-800 text-sm">{ch.title}</h3>
+                    <h3 className="font-semibold text-slate-800 text-sm">{ch.title}</h3>
                     <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{ch.desc}</p>
                   </div>
                 </div>
@@ -177,7 +177,7 @@ export default function SupportTab() {
                     </div>
                     <div className="text-[10px] text-emerald-600 font-semibold">Response: {ch.responseTime}</div>
                   </div>
-                  <span className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg bg-gradient-to-r ${ch.color} text-white`}>
+                  <span className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-gradient-to-r ${ch.color} text-white`}>
                     {ch.action} {isEmergency && ch.phone && `(${ch.phone})`} <ChevronRight className="w-3 h-3" />
                   </span>
                 </div>
@@ -189,7 +189,7 @@ export default function SupportTab() {
 
       {/* Contact Info */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-        <h3 className="font-bold text-slate-800 text-sm mb-4">Direct Contact</h3>
+        <h3 className="font-semibold text-slate-800 text-sm mb-4">Direct Contact</h3>
         <div className="space-y-3">
           {[
             { icon: MessageCircle, label: 'WhatsApp', value: '+1 868-748-1100', href: 'https://wa.me/18687481100', color: 'text-emerald-600' },
@@ -202,7 +202,7 @@ export default function SupportTab() {
                 <Icon className={`w-4 h-4 ${color}`} />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
                 {href
                   ? <a href={href} className={`text-sm font-semibold ${color} hover:underline`}>{value}</a>
                   : <p className="text-sm font-semibold text-slate-700">{value}</p>
@@ -216,7 +216,7 @@ export default function SupportTab() {
       {/* FAQs */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800 text-sm">Frequently Asked Questions</h3>
+          <h3 className="font-semibold text-slate-800 text-sm">Frequently Asked Questions</h3>
         </div>
         <div className="divide-y divide-slate-100">
           {FAQS.map((faq, i) => (

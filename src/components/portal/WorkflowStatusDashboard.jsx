@@ -64,7 +64,7 @@ export default function WorkflowStatusDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-4">Workflow Status Dashboard</h2>
+        <h2 className="text-2xl font-semibold mb-4">Workflow Status Dashboard</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Monitor consultation workflow stages from risk assessment to completion.
         </p>

@@ -55,7 +55,7 @@ export default function HeartToast({ notification, onDismiss }) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-bold tracking-widest uppercase mb-0.5" style={{ color: primary.color }}>
+        <p className="text-[11px] font-semibold tracking-widest uppercase mb-0.5" style={{ color: primary.color }}>
           {secondary ? `${primary.label} + ${secondary.label}` : primary.label}
         </p>
         <p className="text-white/80 text-[13px] leading-snug truncate">{message}</p>

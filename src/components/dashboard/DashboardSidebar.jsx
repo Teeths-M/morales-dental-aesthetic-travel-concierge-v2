@@ -37,7 +37,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
       <div className={`${LUXURY_COLORS.header} px-5 py-8 mb-2`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-serif font-bold text-xl">M</span>
+            <span className="text-white font-serif font-semibold text-xl">M</span>
           </div>
           <div>
             <p className="text-white font-serif font-semibold text-sm tracking-wide">MORALES</p>
@@ -64,7 +64,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
               <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
               <span className="flex-1">{label}</span>
               {badge && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                   isActive ? 'bg-white/20 text-white' : `${LUXURY_COLORS.badge} text-white`
                 }`}>
                   {badge}
@@ -82,7 +82,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl px-4 py-3 text-white text-center hover:opacity-90 transition-all shadow-lg shadow-amber-500/20">
             <div className="flex items-center justify-center gap-2 mb-1">
               <Globe className="w-4 h-4" />
-              <p className="text-xs font-bold">My Trip Overview</p>
+              <p className="text-xs font-semibold">My Trip Overview</p>
             </div>
             <p className="text-[10px] text-white/80">View itinerary & partners</p>
           </div>
@@ -95,7 +95,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-emerald-800 tracking-wide">SAFE-T 4LIFE™</p>
+              <p className="text-[10px] font-semibold text-emerald-800 tracking-wide">SAFE-T 4LIFE™</p>
               <p className="text-[9px] text-emerald-600 font-medium">Active Protection</p>
             </div>
           </div>

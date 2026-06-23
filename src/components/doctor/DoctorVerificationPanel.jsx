@@ -77,7 +77,7 @@ export default function DoctorVerificationPanel({ user }) {
         <div className="bg-amber-50 border border-amber-300 rounded-xl px-4 py-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-bold text-amber-800">Verification Required</p>
+            <p className="text-sm font-semibold text-amber-800">Verification Required</p>
             <p className="text-xs text-amber-700 mt-0.5">You must be verified before you can receive patient referrals on the Morales Platform.</p>
           </div>
           <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white flex-shrink-0"
@@ -92,7 +92,7 @@ export default function DoctorVerificationPanel({ user }) {
         <div className={`border rounded-xl px-4 py-4 flex items-center gap-4 ${cfg?.bg}`}>
           {Icon && <Icon className={`w-6 h-6 flex-shrink-0 ${cfg?.color}`} />}
           <div className="flex-1">
-            <p className={`font-bold text-sm ${cfg?.color}`}>{cfg?.label}</p>
+            <p className={`font-semibold text-sm ${cfg?.color}`}>{cfg?.label}</p>
             <p className="text-xs text-slate-600 mt-0.5">
               {record.registry_name} · {record.country} · Reg# {record.registration_number}
             </p>

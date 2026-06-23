@@ -75,7 +75,7 @@ export default function PostSurgeryFeedback() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl border border-border p-10 text-center max-w-md w-full shadow-lg">
           <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <h2 className="font-display text-xl font-bold text-foreground mb-2">Invalid Link</h2>
+          <h2 className="font-display text-xl font-semibold text-foreground mb-2">Invalid Link</h2>
           <p className="text-muted-foreground text-sm">This feedback link is invalid or has expired.</p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function PostSurgeryFeedback() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl border border-border p-10 text-center max-w-md w-full shadow-lg">
           <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h2 className="font-display text-xl font-bold text-foreground mb-2">Already Submitted</h2>
+          <h2 className="font-display text-xl font-semibold text-foreground mb-2">Already Submitted</h2>
           <p className="text-muted-foreground text-sm">You've already shared your feedback. Thank you!</p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function PostSurgeryFeedback() {
           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
             <Heart className="w-8 h-8 text-emerald-600 fill-emerald-600" />
           </div>
-          <h2 className="font-display text-2xl font-bold text-foreground mb-3">Thank You!</h2>
+          <h2 className="font-display text-2xl font-semibold text-foreground mb-3">Thank You!</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
             Your feedback means the world to us and helps us provide even better care for patients on their medical journey.
           </p>
@@ -132,7 +132,7 @@ export default function PostSurgeryFeedback() {
           <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
             <Heart className="w-6 h-6 text-white fill-white" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-white mb-1">Share Your Experience</h1>
+          <h1 className="font-display text-2xl font-semibold text-white mb-1">Share Your Experience</h1>
           <p className="text-primary-foreground/70 text-sm">Your recovery feedback helps us improve care for every patient</p>
         </div>
 

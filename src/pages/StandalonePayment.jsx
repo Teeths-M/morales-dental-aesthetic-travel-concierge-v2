@@ -190,7 +190,7 @@ export default function StandalonePayment() {
                    <span className="text-muted-foreground">Platform Fee ({(caseRecord.markup_percentage * 100 || 35).toFixed(0)}%)</span>
                    <span className="font-semibold">${caseRecord.profit?.toLocaleString() || '0'}</span>
                  </div>
-                 <div className="flex justify-between text-base font-bold text-foreground pt-2">
+                 <div className="flex justify-between text-base font-semibold text-foreground pt-2">
                    <span>Total Package</span>
                    <span>${caseRecord.final_package_price?.toLocaleString() || '0'}</span>
                  </div>
@@ -251,7 +251,7 @@ export default function StandalonePayment() {
 
                     <div className="space-y-2">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-foreground">
+                        <span className="text-3xl font-semibold text-foreground">
                           ${plan.amount.toLocaleString()}
                         </span>
                         {plan.originalAmount > plan.amount && (

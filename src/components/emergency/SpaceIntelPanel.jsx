@@ -61,7 +61,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
             <div className={`rounded-2xl border p-4 ${crimeRisk?.color}`}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-bold text-sm flex items-center gap-2">
+                  <p className="font-semibold text-sm flex items-center gap-2">
                     <Globe2 className="w-4 h-4" />
                     {briefing.destination_city ? `${briefing.destination_city}, ` : ''}{briefing.destination_country}
                   </p>
@@ -78,8 +78,8 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
               {[{ label: 'Geopolitical Risk', config: geoRisk }, { label: 'Crime Risk', config: crimeRisk }].map(r => (
                 <div key={r.label} className="bg-white border border-slate-100 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-bold text-slate-700">{r.label}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${r.config?.color}`}>{r.config?.label}</span>
+                    <p className="text-xs font-semibold text-slate-700">{r.label}</p>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${r.config?.color}`}>{r.config?.label}</span>
                   </div>
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${r.config?.bar}`} style={{ width: r.config?.width }} />
@@ -91,7 +91,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
             {/* Emergency Numbers */}
             {briefing.emergency_numbers && Object.keys(briefing.emergency_numbers).length > 0 && (
               <div className="bg-white border border-slate-100 rounded-2xl p-4">
-                <p className="text-xs font-bold text-slate-700 flex items-center gap-2 mb-3"><Phone className="w-3.5 h-3.5 text-red-600" /> Emergency Numbers</p>
+                <p className="text-xs font-semibold text-slate-700 flex items-center gap-2 mb-3"><Phone className="w-3.5 h-3.5 text-red-600" /> Emergency Numbers</p>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(briefing.emergency_numbers).map(([key, val]) => val && (
                     <a key={key} href={`tel:${val}`}
@@ -107,7 +107,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
             {/* Health Alerts */}
             {briefing.health_alerts?.length > 0 && (
               <div className="bg-white border border-slate-100 rounded-2xl p-4">
-                <p className="text-xs font-bold text-slate-700 flex items-center gap-2 mb-3"><Heart className="w-3.5 h-3.5 text-rose-500" /> Health Alerts</p>
+                <p className="text-xs font-semibold text-slate-700 flex items-center gap-2 mb-3"><Heart className="w-3.5 h-3.5 text-rose-500" /> Health Alerts</p>
                 <div className="space-y-1.5">
                   {briefing.health_alerts.map((a, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-rose-800 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">
@@ -121,7 +121,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
             {/* Scam Warnings */}
             {briefing.scam_warnings?.length > 0 && (
               <div className="bg-white border border-slate-100 rounded-2xl p-4">
-                <p className="text-xs font-bold text-slate-700 flex items-center gap-2 mb-3"><ShieldAlert className="w-3.5 h-3.5 text-amber-500" /> Tourist Scam Warnings</p>
+                <p className="text-xs font-semibold text-slate-700 flex items-center gap-2 mb-3"><ShieldAlert className="w-3.5 h-3.5 text-amber-500" /> Tourist Scam Warnings</p>
                 <div className="space-y-1.5">
                   {briefing.scam_warnings.map((s, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
@@ -136,7 +136,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
             <div className="grid sm:grid-cols-2 gap-3">
               {briefing.safe_zones?.length > 0 && (
                 <div className="bg-white border border-slate-100 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-emerald-700 flex items-center gap-2 mb-3"><MapPin className="w-3.5 h-3.5" /> Safe Zones</p>
+                  <p className="text-xs font-semibold text-emerald-700 flex items-center gap-2 mb-3"><MapPin className="w-3.5 h-3.5" /> Safe Zones</p>
                   {briefing.safe_zones.map((z, i) => (
                     <p key={i} className="text-xs text-emerald-800 flex items-center gap-1.5 mb-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />{z}
@@ -146,7 +146,7 @@ export default function SpaceIntelPanel({ defaultCountry, defaultCity }) {
               )}
               {briefing.avoid_areas?.length > 0 && (
                 <div className="bg-white border border-slate-100 rounded-2xl p-4">
-                  <p className="text-xs font-bold text-red-700 flex items-center gap-2 mb-3"><AlertTriangle className="w-3.5 h-3.5" /> Avoid Areas</p>
+                  <p className="text-xs font-semibold text-red-700 flex items-center gap-2 mb-3"><AlertTriangle className="w-3.5 h-3.5" /> Avoid Areas</p>
                   {briefing.avoid_areas.map((z, i) => (
                     <p key={i} className="text-xs text-red-800 flex items-center gap-1.5 mb-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />{z}

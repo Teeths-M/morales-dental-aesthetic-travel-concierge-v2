@@ -87,7 +87,7 @@ function ChangeCard({ change, currentUser, onAction }) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="font-bold text-slate-900 text-sm">{change.config_label || change.config_key}</span>
+              <span className="font-semibold text-slate-900 text-sm">{change.config_label || change.config_key}</span>
               <Badge className={`text-xs ${cfg.color}`}><Icon className="w-3 h-3 mr-1" />{cfg.label}</Badge>
               {change.status === 'pending' && hoursLeft !== null && (
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${hoursLeft < 12 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
@@ -183,14 +183,14 @@ function ChangeCard({ change, currentUser, onAction }) {
             <div className="grid sm:grid-cols-2 gap-4">
               {change.previous_value && (
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Previous Value</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Previous Value</p>
                   <pre className="text-xs bg-white border border-slate-200 rounded-xl p-3 overflow-auto max-h-32">
                     {JSON.stringify(change.previous_value, null, 2)}
                   </pre>
                 </div>
               )}
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Requested Value</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Requested Value</p>
                 <pre className="text-xs bg-white border border-emerald-200 rounded-xl p-3 overflow-auto max-h-32">
                   {JSON.stringify(change.requested_value, null, 2)}
                 </pre>
@@ -257,7 +257,7 @@ function RequestChangeModal({ onClose, onSuccess }) {
             <ShieldCheck className="w-5 h-5 text-amber-700" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900">Request Config Change</h3>
+            <h3 className="font-semibold text-slate-900">Request Config Change</h3>
             <p className="text-xs text-slate-400">Requires two separate admin approvals within 72 hours</p>
           </div>
         </div>
@@ -327,7 +327,7 @@ export default function AdminConfigApprovals() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold font-display flex items-center gap-2">
+            <h1 className="text-2xl font-semibold font-display flex items-center gap-2">
               <ShieldCheck className="w-6 h-6 text-amber-600" /> Config Approval Queue
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -353,7 +353,7 @@ export default function AdminConfigApprovals() {
             { label: 'Expired', value: allChanges.filter(c => c.status === 'expired').length, color: 'text-slate-600 bg-slate-50' },
           ].map(s => (
             <div key={s.label} className={`rounded-2xl p-4 ${s.color} border border-current/10`}>
-              <p className="text-2xl font-bold">{s.value}</p>
+              <p className="text-2xl font-semibold">{s.value}</p>
               <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{s.label}</p>
             </div>
           ))}

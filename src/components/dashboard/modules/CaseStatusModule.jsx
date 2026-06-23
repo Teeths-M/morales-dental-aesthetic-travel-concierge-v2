@@ -93,8 +93,8 @@ export default function CaseStatusModule({ userEmail }) {
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">IQ200 Case Pipeline</p>
-          <h2 className="font-bold text-slate-900 text-lg">Your Journey Status</h2>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">IQ200 Case Pipeline</p>
+          <h2 className="font-semibold text-slate-900 text-lg">Your Journey Status</h2>
         </div>
         <button onClick={() => { fetchCase(); setLastRefresh(new Date()); }} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors">
           <RefreshCw className="w-3.5 h-3.5" /> Refresh
@@ -113,8 +113,8 @@ export default function CaseStatusModule({ userEmail }) {
             {isBlocked ? '🔴' : currentStage?.icon || '⏳'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-0.5">Current Stage</p>
-            <p className="text-lg font-bold text-white leading-tight">{isBlocked ? 'Safety Review Required' : currentStage?.label || caseData.status}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50 mb-0.5">Current Stage</p>
+            <p className="text-lg font-semibold text-white leading-tight">{isBlocked ? 'Safety Review Required' : currentStage?.label || caseData.status}</p>
             <p className="text-xs text-white/60 mt-0.5 leading-relaxed">
               {isBlocked
                 ? 'Our elite safety standards require manual administrative review of your medical profile. A coordinator will contact you within 24 hours.'
@@ -176,7 +176,7 @@ export default function CaseStatusModule({ userEmail }) {
         <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #0F3A20, #1a4f2e)', border: '1px solid rgba(197,160,89,0.3)' }}>
           <Sparkles className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#C5A059' }} />
           <div>
-            <p className="text-sm font-bold" style={{ color: '#C5A059' }}>✨ Morales Luxury Credit Applied</p>
+            <p className="text-sm font-semibold" style={{ color: '#C5A059' }}>✨ Morales Luxury Credit Applied</p>
             <p className="text-xs text-white/70 mt-0.5">Your $49 USD consultation retainer has been fully refunded and credited back to your itinerary total.</p>
           </div>
         </div>
@@ -185,19 +185,19 @@ export default function CaseStatusModule({ userEmail }) {
       {/* Payment status */}
       {caseData.payment_status && caseData.payment_status !== 'Pending' && (
         <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Payment Summary</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-3">Payment Summary</p>
           <div className="flex items-center justify-between mb-3">
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${paymentBadge.color}`}>{paymentBadge.label}</span>
-            <span className="text-sm font-bold text-slate-800">{fmt(caseData.final_package_price)}</span>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${paymentBadge.color}`}>{paymentBadge.label}</span>
+            <span className="text-sm font-semibold text-slate-800">{fmt(caseData.final_package_price)}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center">
-              <p className="text-[9px] text-slate-400 uppercase font-bold">Paid</p>
-              <p className="text-sm font-bold text-emerald-600">{fmt(caseData.amount_paid)}</p>
+              <p className="text-[9px] text-slate-400 uppercase font-semibold">Paid</p>
+              <p className="text-sm font-semibold text-emerald-600">{fmt(caseData.amount_paid)}</p>
             </div>
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center">
-              <p className="text-[9px] text-slate-400 uppercase font-bold">Remaining</p>
-              <p className="text-sm font-bold text-slate-800">{fmt(caseData.amount_remaining)}</p>
+              <p className="text-[9px] text-slate-400 uppercase font-semibold">Remaining</p>
+              <p className="text-sm font-semibold text-slate-800">{fmt(caseData.amount_remaining)}</p>
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function CaseStatusModule({ userEmail }) {
       {/* Proposal CTA */}
       {caseData.status === 'Proposal-Sent' && caseData.proposal_token && (
         <a href={`/portal/proposal?token=${caseData.proposal_token}`} target="_blank" rel="noopener noreferrer">
-          <Button className="w-full font-bold py-3 rounded-xl text-sm" style={{ background: 'linear-gradient(135deg, #C5A059, #a8863c)', color: '#022C22' }}>
+          <Button className="w-full font-semibold py-3 rounded-xl text-sm" style={{ background: 'linear-gradient(135deg, #C5A059, #a8863c)', color: '#022C22' }}>
             ✨ View & Pay Your Proposal
           </Button>
         </a>
@@ -214,7 +214,7 @@ export default function CaseStatusModule({ userEmail }) {
 
       {/* Timeline checklist */}
       <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Journey Milestones</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-4">Journey Milestones</p>
         <div className="space-y-2">
           {PIPELINE_STAGES.map((stage, i) => {
             const isDone = i < pipelineIndex;
@@ -225,8 +225,8 @@ export default function CaseStatusModule({ userEmail }) {
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs ${isDone ? 'bg-emerald-500' : isActive ? 'bg-yellow-400' : 'bg-slate-100'}`}>
                   {isDone ? <CheckCircle2 className="w-3 h-3 text-white" /> : <span>{stage.icon}</span>}
                 </div>
-                <p className={`text-xs ${isActive ? 'font-bold text-slate-900' : isDone ? 'text-slate-500 line-through' : 'text-slate-400'}`}>{stage.label}</p>
-                {isActive && <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Active</span>}
+                <p className={`text-xs ${isActive ? 'font-semibold text-slate-900' : isDone ? 'text-slate-500 line-through' : 'text-slate-400'}`}>{stage.label}</p>
+                {isActive && <span className="ml-auto text-[9px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Active</span>}
               </div>
             );
           })}

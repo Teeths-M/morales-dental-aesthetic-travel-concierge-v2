@@ -138,7 +138,7 @@ export default function PriceCarousel({ onCardClick }) {
                         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                           Package Cost
                         </p>
-                        <p className="text-3xl font-bold text-foreground">
+                        <p className="text-3xl font-semibold text-foreground">
                           ${cards[currentIndex].cost.toLocaleString()}
                         </p>
                       </div>

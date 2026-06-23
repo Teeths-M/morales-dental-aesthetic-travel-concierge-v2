@@ -41,7 +41,7 @@ export default function TravelAgencyDashboard() {
       <div className="min-h-screen bg-background py-12 px-6">
         <div className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-8 text-center">
           <AlertCircle className="w-10 h-10 text-amber-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">No Travel Agency Profile Found</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-2">No Travel Agency Profile Found</h1>
           <p className="text-muted-foreground mb-6">Your account ({user?.email}) is not linked to a travel agency profile yet.</p>
           <a href="/partner-signup/travel-agency" className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90">
             Create Travel Agency Profile

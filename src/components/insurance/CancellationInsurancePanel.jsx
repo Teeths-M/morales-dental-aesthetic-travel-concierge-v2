@@ -91,7 +91,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
     <div className="space-y-6">
       {/* Refund Ladder Visual */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
           <Shield className="w-4 h-4 text-blue-600" /> Sliding-Scale Refund Policy
         </h3>
         <div className="space-y-3">
@@ -101,7 +101,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
               <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
                 <div className={`h-3 rounded-full ${tier.color} ${tier.width} transition-all`} />
               </div>
-              <span className={`text-xs font-bold w-12 text-right ${tier.pct === 100 ? 'text-emerald-700' : tier.pct === 0 ? 'text-red-600' : 'text-amber-700'}`}>{tier.pct}%</span>
+              <span className={`text-xs font-semibold w-12 text-right ${tier.pct === 100 ? 'text-emerald-700' : tier.pct === 0 ? 'text-red-600' : 'text-amber-700'}`}>{tier.pct}%</span>
             </div>
           ))}
         </div>
@@ -120,7 +120,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
               </div>
             )}
             <div className={`px-4 py-3 ${tier.headerColor}`}>
-              <p className={`font-bold text-sm ${tier.id !== 'standard' ? 'text-white' : 'text-slate-800'}`}>{tier.label}</p>
+              <p className={`font-semibold text-sm ${tier.id !== 'standard' ? 'text-white' : 'text-slate-800'}`}>{tier.label}</p>
               <p className={`text-lg font-black mt-0.5 ${tier.id !== 'standard' ? 'text-white' : 'text-slate-900'}`}>{tier.price}</p>
               <p className={`text-[10px] ${tier.id !== 'standard' ? 'text-white/70' : 'text-slate-500'}`}>{tier.priceNote}</p>
             </div>
@@ -128,7 +128,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
               {tier.features.map((f, i) => (
                 <div key={i} className="flex items-center justify-between gap-2">
                   <span className="text-[11px] text-slate-600">{f.label}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                     f.good ? 'bg-emerald-100 text-emerald-700' :
                     f.warn ? 'bg-amber-100 text-amber-700' :
                     'bg-red-100 text-red-600'
@@ -138,7 +138,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
             </div>
             {selected === tier.id && (
               <div className="px-4 pb-3">
-                <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+                <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-semibold">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Selected
                 </div>
               </div>
@@ -151,7 +151,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-start gap-3">
         <BadgeCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-bold text-slate-700 mb-1">Embedded Insurance Ecosystem</p>
+          <p className="text-xs font-semibold text-slate-700 mb-1">Embedded Insurance Ecosystem</p>
           <p className="text-xs text-slate-500 leading-relaxed">Your coverage is backed by leading digital insurance carriers including <strong>Cover Genius</strong> and <strong>battleface</strong>. Policy documentation is issued automatically upon booking confirmation.</p>
         </div>
       </div>

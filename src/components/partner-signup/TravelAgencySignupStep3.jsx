@@ -99,7 +99,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">
           {language === 'es' ? 'Pago y Acuerdos' : language === 'fr' ? 'Paiement et Accords' : 'Payout & Agreements'}
         </h2>
         <p className="text-muted-foreground text-sm">

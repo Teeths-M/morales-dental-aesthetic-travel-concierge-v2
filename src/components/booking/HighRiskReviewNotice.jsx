@@ -34,8 +34,8 @@ export default function HighRiskReviewNotice({ isOpen, flaggedCondition, onProce
                 <ShieldCheck className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Senior Medical Review</p>
-                <h3 className="text-white font-bold text-lg leading-tight">Enhanced Care Assurance</h3>
+                <p className="text-white/80 text-xs font-semibold uppercase tracking-widest">Senior Medical Review</p>
+                <h3 className="text-white font-semibold text-lg leading-tight">Enhanced Care Assurance</h3>
               </div>
             </div>
           </div>
@@ -60,7 +60,7 @@ export default function HighRiskReviewNotice({ isOpen, flaggedCondition, onProce
                 'You receive a personalised safety brief within 24–48 hours',
               ].map((point, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{i + 1}</span>
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5">{i + 1}</span>
                   {point}
                 </div>
               ))}

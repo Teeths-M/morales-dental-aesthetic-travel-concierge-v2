@@ -204,7 +204,7 @@ export default function AdventureSafetyCenter() {
                 className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 mb-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Bell className="w-5 h-5 text-red-600 animate-pulse" />
-                  <p className="font-bold text-red-800 text-sm">Safety Check-In Overdue</p>
+                  <p className="font-semibold text-red-800 text-sm">Safety Check-In Overdue</p>
                 </div>
                 {pendingHandshakes.map(s => (
                   <div key={s.id} className="bg-white rounded-xl p-3 flex items-center gap-3 mb-2">
@@ -214,11 +214,11 @@ export default function AdventureSafetyCenter() {
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => submitHandshake(s.id, true)} disabled={handshaking === s.id}
-                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-60">
+                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-60">
                         ✅ I'm Safe
                       </button>
                       <button onClick={() => submitHandshake(s.id, false)} disabled={handshaking === s.id}
-                        className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 disabled:opacity-60">
+                        className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 disabled:opacity-60">
                         🆘 Help
                       </button>
                     </div>
@@ -233,7 +233,7 @@ export default function AdventureSafetyCenter() {
             {showForm && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                 className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-6">
-                <p className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wide">Select Activity</p>
+                <p className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wide">Select Activity</p>
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4">
                   {ACTIVITY_TYPES.map(a => {
                     const Icon = a.icon;
@@ -244,7 +244,7 @@ export default function AdventureSafetyCenter() {
                         }`}>
                         <Icon className="w-5 h-5 text-slate-600" />
                         <span className="text-[10px] font-semibold text-slate-700 leading-tight">{a.label}</span>
-                        <span className={`text-[9px] font-bold px-1 py-0.5 rounded-full border ${RISK_COLORS[a.risk]}`}>{a.risk}</span>
+                        <span className={`text-[9px] font-semibold px-1 py-0.5 rounded-full border ${RISK_COLORS[a.risk]}`}>{a.risk}</span>
                       </button>
                     );
                   })}
@@ -284,7 +284,7 @@ export default function AdventureSafetyCenter() {
                       placeholder="Tour operator / company (optional)"
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
                     <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-800">
-                      <p className="font-bold mb-1">🔔 Automated Safety Protocol</p>
+                      <p className="font-semibold mb-1">🔔 Automated Safety Protocol</p>
                       <p>• Nudge 1 hour before: "Before you jump: Make sure your core is hooked."</p>
                       <p>• Safety check-in required 2 hours after activity ends</p>
                       <p>• Missed check-in → coordinator alert auto-triggered</p>
@@ -328,8 +328,8 @@ export default function AdventureSafetyCenter() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-slate-800 text-sm">{s.activity_name}</p>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskCfg}`}>{s.risk_level} risk</span>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${riskCfg}`}>{s.risk_level} risk</span>
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 flex-wrap">
                           <span className="flex items-center gap-1">
@@ -342,7 +342,7 @@ export default function AdventureSafetyCenter() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {allDone
-                          ? <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> All Clear</span>
+                          ? <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> All Clear</span>
                           : <span className="text-xs text-slate-400">{doneItems}/{items.length} checks</span>
                         }
                         {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -351,7 +351,7 @@ export default function AdventureSafetyCenter() {
 
                     {isExpanded && (
                       <div className="px-5 pb-5 border-t border-slate-100 pt-4 space-y-3">
-                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">ISO 21101 Safety Checklist</p>
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ISO 21101 Safety Checklist</p>
                         <div className="space-y-1.5">
                           {items.map((item, idx) => (
                             <button key={idx} onClick={() => toggleCheckItem(s, idx)}
@@ -366,14 +366,14 @@ export default function AdventureSafetyCenter() {
 
                         {s.handshake_status === 'pending' && s.handshake_due_at && new Date(s.handshake_due_at) < new Date() && (
                           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                            <p className="text-xs font-bold text-amber-800 mb-2">
+                            <p className="text-xs font-semibold text-amber-800 mb-2">
                               ⏰ Safety check-in overdue: {new Date(s.handshake_due_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                             </p>
                             <div className="flex gap-2">
                               <button onClick={() => submitHandshake(s.id, true)} disabled={handshaking === s.id}
-                                className="flex-1 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-60">✅ I'm Safe</button>
+                                className="flex-1 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-60">✅ I'm Safe</button>
                               <button onClick={() => submitHandshake(s.id, false)} disabled={handshaking === s.id}
-                                className="flex-1 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 disabled:opacity-60">🆘 Need Help</button>
+                                className="flex-1 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 disabled:opacity-60">🆘 Need Help</button>
                             </div>
                           </div>
                         )}

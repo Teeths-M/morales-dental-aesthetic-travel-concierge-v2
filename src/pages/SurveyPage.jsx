@@ -111,7 +111,7 @@ export default function SurveyPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl p-10 max-w-md text-center">
         <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Survey Status</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Survey Status</h2>
         <p className="text-gray-500">{error}</p>
       </div>
     </div>
@@ -133,7 +133,7 @@ export default function SurveyPage() {
           {step === 0 && (
             <div className="text-center">
               <div className="text-5xl mb-4">⭐</div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">How was your experience?</h1>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-3">How was your experience?</h1>
               <p className="text-gray-500 mb-6">Hi {survey?.patient_name || 'there'}! 5 quick questions — takes about 2 minutes.</p>
               <Button onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full rounded-xl py-3">
                 Start Survey →
@@ -172,7 +172,7 @@ export default function SurveyPage() {
           {isDone && (
             <div className="text-center">
               <div className="text-5xl mb-4">{isPositive ? '🌟' : '🙏'}</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-3">
                 {isPositive ? 'Thank you so much!' : 'Thank you for your feedback'}
               </h2>
               <p className="text-gray-500 mb-6">

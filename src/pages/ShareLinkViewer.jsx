@@ -63,7 +63,7 @@ export default function ShareLinkViewer() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-red-200 p-6 text-center">
           <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-slate-800">Share Link Error</h1>
+          <h1 className="text-xl font-semibold text-slate-800">Share Link Error</h1>
           <p className="text-sm text-slate-500 mt-2">{error}</p>
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function ShareLinkViewer() {
           <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <Shield className="w-8 h-8 text-emerald-600" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">Secure Document Share</h1>
+          <h1 className="text-2xl font-semibold text-slate-800">Secure Document Share</h1>
           <p className="text-sm text-slate-500 mt-1">
             Purpose: {vaultData?.purpose?.replace(/_/g, ' ') || 'Document Sharing'}
           </p>
@@ -91,7 +91,7 @@ export default function ShareLinkViewer() {
               {vaultData?.redacted_for_display?.document_type === 'passport' ? '🛂' : '📄'}
             </div>
             <div className="flex-1">
-              <p className="font-bold text-slate-800">{vaultData?.file_name || 'Document'}</p>
+              <p className="font-semibold text-slate-800">{vaultData?.file_name || 'Document'}</p>
               <p className="text-xs text-slate-500">
                 {(vaultData?.redacted_for_display?.full_name_redacted) || 'Shared Document'}
               </p>

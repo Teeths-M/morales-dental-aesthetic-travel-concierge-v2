@@ -7,7 +7,7 @@ export default function AdminDispatchMonitor() {
     <AdminLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold font-display">Dispatch Failure Monitor</h1>
+          <h1 className="text-3xl font-semibold font-display">Dispatch Failure Monitor</h1>
           <p className="text-muted-foreground mt-1">Real-time view of isolated pipeline dispatch failures requiring manual intervention</p>
         </div>
 

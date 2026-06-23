@@ -70,7 +70,7 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-foreground">Showcase Your Work</h3>
+            <h3 className="text-lg font-semibold text-foreground">Showcase Your Work</h3>
           </div>
           {portfolioItems.length > 0 && (
             <div className="flex items-center gap-2">

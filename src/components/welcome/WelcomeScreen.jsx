@@ -79,7 +79,7 @@ export default function WelcomeScreen({
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Header bar */}
       <div className="flex items-center justify-between px-5 pt-10 pb-4">
-        <div className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+        <div className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
           Morales Concierge
         </div>
         <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
@@ -92,7 +92,7 @@ export default function WelcomeScreen({
 
       <div className="px-5 pb-10 space-y-5 max-w-md mx-auto">
         {/* Flight status pill */}
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${status.bg} ${status.color}`}>
+        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${status.bg} ${status.color}`}>
           <div className={`w-1.5 h-1.5 rounded-full ${isInProgress || isLanded ? 'animate-pulse' : ''} bg-current`} />
           {status.label}
           {isDelayed && delayMinutes > 0 && ` · +${delayMinutes} min`}
@@ -118,7 +118,7 @@ export default function WelcomeScreen({
               transition={{ duration: 0.5 }}
               className="space-y-3"
             >
-              <h1 className="text-2xl font-bold leading-snug text-white">
+              <h1 className="text-2xl font-semibold leading-snug text-white">
                 {greeting}
               </h1>
               {driverLine && (
@@ -180,8 +180,8 @@ export default function WelcomeScreen({
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Your Driver</p>
-            <p className="font-bold text-white text-base truncate">{driverName}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Your Driver</p>
+            <p className="font-semibold text-white text-base truncate">{driverName}</p>
             <p className="text-xs text-slate-400 mt-0.5">Waiting at the arrivals exit</p>
           </div>
         </div>
@@ -190,13 +190,13 @@ export default function WelcomeScreen({
         {callLink ? (
           <a
             href={callLink}
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 font-bold text-white transition-colors"
+            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 font-semibold text-white transition-colors"
           >
             <Phone className="w-5 h-5" />
             Call Concierge
           </a>
         ) : (
-          <div className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl bg-slate-700 text-slate-400 font-bold text-sm">
+          <div className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-2xl bg-slate-700 text-slate-400 font-semibold text-sm">
             <Phone className="w-5 h-5" />
             {/* STUB — concierge phone not configured for this destination */}
             Call Concierge (Contact coordinator for number)
@@ -206,7 +206,7 @@ export default function WelcomeScreen({
         {/* Tap-to-handshake — Task 1 component reused directly */}
         {pickupCheckpointId && (
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
               Confirm Driver Pickup
             </p>
             <HandshakeTapButton

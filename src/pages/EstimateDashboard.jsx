@@ -84,14 +84,14 @@ export default function EstimateDashboard() {
                 </p>
                 <div className="flex items-baseline gap-4">
                   <div>
-                    <p className="text-4xl font-bold text-foreground">
+                    <p className="text-4xl font-semibold text-foreground">
                       ${estimate.estimated_total_low.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Low estimate</p>
                   </div>
                   <div className="text-muted-foreground">–</div>
                   <div>
-                    <p className="text-4xl font-bold text-foreground">
+                    <p className="text-4xl font-semibold text-foreground">
                       ${estimate.estimated_total_high.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">High estimate (seasonal)</p>
@@ -125,8 +125,8 @@ export default function EstimateDashboard() {
                   </motion.div>
                 ))}
                 <div className="flex items-center justify-between p-3 border-t-2 border-border pt-4 mt-4">
-                  <span className="font-bold text-foreground">Subtotal</span>
-                  <span className="text-xl font-bold text-foreground">
+                  <span className="font-semibold text-foreground">Subtotal</span>
+                  <span className="text-xl font-semibold text-foreground">
                     ${totalBase.toLocaleString()}
                   </span>
                 </div>
@@ -147,7 +147,7 @@ export default function EstimateDashboard() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary">
                     1
                   </div>
                   <div>
@@ -157,7 +157,7 @@ export default function EstimateDashboard() {
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary">
                     {estimate.recovery_days}
                   </div>
                   <div>
@@ -209,7 +209,7 @@ export default function EstimateDashboard() {
                 </p>
 
                 <div className="space-y-2">
-                  <p className="text-3xl font-bold text-foreground">$49</p>
+                  <p className="text-3xl font-semibold text-foreground">$49</p>
                   <p className="text-xs text-muted-foreground">
                     🔄 <strong>100% refundable</strong> – deducted from your final package if you book
                   </p>

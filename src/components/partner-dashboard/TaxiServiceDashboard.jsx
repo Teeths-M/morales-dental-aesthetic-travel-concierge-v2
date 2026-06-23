@@ -20,7 +20,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
             <p className="text-sm text-blue-600 font-semibold mb-1">
               🚕 {isOnline ? (language === 'es' ? 'En Línea' : language === 'fr' ? 'En Ligne' : 'Online') : (language === 'es' ? 'Desconectado' : language === 'fr' ? 'Hors ligne' : 'Offline')}
             </p>
-            <h1 className="text-3xl font-display font-bold text-foreground">{taxi.driver_name || taxi.company_name}</h1>
+            <h1 className="text-3xl font-display font-semibold text-foreground">{taxi.driver_name || taxi.company_name}</h1>
             <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
               <MapPin className="w-4 h-4" />
               {language === 'es' ? 'Zona:' : language === 'fr' ? 'Zone:' : 'Zone:'} {taxi.operating_city}
@@ -59,7 +59,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Viajes Esta Semana' : language === 'fr' ? 'Trajets Cette Semaine' : 'This Week\'s Trips'}</p>
-              <p className="text-2xl font-bold text-foreground">{taxi.total_trips || 0}</p>
+              <p className="text-2xl font-semibold text-foreground">{taxi.total_trips || 0}</p>
             </div>
           </div>
         </Card>
@@ -71,7 +71,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Ganancias' : language === 'fr' ? 'Revenus' : 'Earnings'}</p>
-              <p className="text-2xl font-bold text-foreground">${taxi.earnings_this_week || 0}</p>
+              <p className="text-2xl font-semibold text-foreground">${taxi.earnings_this_week || 0}</p>
               <p className="text-xs text-emerald-600 mt-1">+ ${Math.round((taxi.earnings_this_week || 0) * 0.1)} tips</p>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Calificación' : language === 'fr' ? 'Évaluation' : 'Rating'}</p>
-              <p className="text-2xl font-bold text-foreground">{taxi.quality_score?.toFixed(1) || '5.0'} ⭐</p>
+              <p className="text-2xl font-semibold text-foreground">{taxi.quality_score?.toFixed(1) || '5.0'} ⭐</p>
               <p className="text-xs text-yellow-600 mt-1">{language === 'es' ? 'Top 10% de conductores' : 'Top 10% drivers'}</p>
             </div>
           </div>

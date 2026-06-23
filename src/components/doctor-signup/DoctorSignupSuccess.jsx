@@ -13,7 +13,7 @@ export default function DoctorSignupSuccess({ doctor, specialties, language = 'e
         <div className="flex justify-center mb-4">
           <CheckCircle2 className="w-16 h-16 text-emerald-600" />
         </div>
-        <h2 className="text-4xl font-display font-bold text-foreground">{t.successTitle}</h2>
+        <h2 className="text-4xl font-display font-semibold text-foreground">{t.successTitle}</h2>
         <p className="text-lg text-muted-foreground">{t.successMessage}</p>
       </div>
 

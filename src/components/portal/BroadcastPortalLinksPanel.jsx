@@ -115,15 +115,15 @@ export default function BroadcastPortalLinksPanel() {
           {/* Summary */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-green-700">{result.summary?.total_sent}</p>
+              <p className="text-2xl font-semibold text-green-700">{result.summary?.total_sent}</p>
               <p className="text-xs text-green-600 mt-1">Sent / Queued</p>
             </div>
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-red-700">{result.summary?.total_failed}</p>
+              <p className="text-2xl font-semibold text-red-700">{result.summary?.total_failed}</p>
               <p className="text-xs text-red-600 mt-1">Failed</p>
             </div>
             <div className="bg-muted border border-border rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-muted-foreground">{result.summary?.total_skipped}</p>
+              <p className="text-2xl font-semibold text-muted-foreground">{result.summary?.total_skipped}</p>
               <p className="text-xs text-muted-foreground mt-1">Skipped</p>
             </div>
           </div>

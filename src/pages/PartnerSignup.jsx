@@ -87,7 +87,7 @@ function PartnerCard({ card, language }) {
     >
       {/* Differentiated badge */}
       <div className="absolute top-4 right-4 z-10">
-        <div className={`bg-gradient-to-r ${card.badgeClass} text-white text-[9px] font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 tracking-wide`}>
+        <div className={`bg-gradient-to-r ${card.badgeClass} text-white text-[9px] font-semibold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 tracking-wide`}>
           <Sparkles className="w-2.5 h-2.5" />
           {card.badge}
         </div>
@@ -111,7 +111,7 @@ function PartnerCard({ card, language }) {
 
       {/* Content */}
       <div className="p-6">
-        <h2 className="font-display text-xl font-bold text-slate-900 mb-2 tracking-tight">{card.title}</h2>
+        <h2 className="font-display text-xl font-semibold text-slate-900 mb-2 tracking-tight">{card.title}</h2>
         <p className="text-sm text-slate-600 mb-5 leading-relaxed">{card.desc}</p>
         <Button
           onClick={card.onClick}
@@ -196,7 +196,7 @@ export default function PartnerSignup() {
             <Crown className="w-4 h-4 text-amber-600" />
             <span className="text-xs font-semibold text-amber-800 tracking-wide">EXCLUSIVE PARTNER NETWORK</span>
           </div>
-          <h1 className="font-display text-5xl sm:text-6xl font-bold text-slate-900 mb-5 tracking-tight">
+          <h1 className="font-display text-5xl sm:text-6xl font-semibold text-slate-900 mb-5 tracking-tight">
             {language === 'es' ? 'Únete a la Excelencia' : language === 'fr' ? "Rejoignez l'Excellence" : 'Join Excellence'}
           </h1>
           <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
@@ -232,7 +232,7 @@ export default function PartnerSignup() {
           <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 rounded-2xl border border-emerald-200/60">
             <Shield className="w-5 h-5 text-emerald-700" />
             <div>
-              <p className="text-sm font-bold text-emerald-800 tracking-wide">SAFE-T 4LIFE™</p>
+              <p className="text-sm font-semibold text-emerald-800 tracking-wide">SAFE-T 4LIFE™</p>
               <p className="text-xs text-emerald-600">Verified Medical Tourism Platform</p>
             </div>
           </div>

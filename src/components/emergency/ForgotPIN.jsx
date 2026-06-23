@@ -26,7 +26,7 @@ export default function ForgotPIN({ userEmail = '', onBack }) {
     return (
       <div className="space-y-4 text-center py-4">
         <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-        <p className="text-slate-100 font-bold text-lg">Check your email</p>
+        <p className="text-slate-100 font-semibold text-lg">Check your email</p>
         <p className="text-slate-400 text-sm">
           We sent a PIN reset link to{' '}
           <span className="text-white font-semibold">{email}</span>.
@@ -63,7 +63,7 @@ export default function ForgotPIN({ userEmail = '', onBack }) {
         <div className="w-12 h-12 bg-blue-900/40 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-700/40">
           <Mail className="w-6 h-6 text-blue-400" />
         </div>
-        <h3 className="font-bold text-slate-100 text-lg">Reset your PIN</h3>
+        <h3 className="font-semibold text-slate-100 text-lg">Reset your PIN</h3>
         <p className="text-slate-400 text-sm mt-1 max-w-xs mx-auto">
           Enter your account email. We'll send a secure link to set a new PIN.
         </p>
@@ -88,7 +88,7 @@ export default function ForgotPIN({ userEmail = '', onBack }) {
         <button
           onClick={handleSend}
           disabled={state === 'sending' || !email.includes('@')}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-2xl py-3 flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-2xl py-3 flex items-center justify-center gap-2 transition-colors"
         >
           {state === 'sending'
             ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>

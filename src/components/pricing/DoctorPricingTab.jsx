@@ -120,7 +120,7 @@ export default function DoctorPricingTab() {
 
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900">Doctor Pricing</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Doctor Pricing</h2>
           <p className="text-sm text-slate-600 mt-1">Manage and approve doctor-specific procedure pricing</p>
         </div>
         <div className="overflow-x-auto">

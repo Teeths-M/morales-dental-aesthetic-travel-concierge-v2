@@ -137,7 +137,7 @@ export default function DoctorProfilesManager() {
                           className="w-24 h-24 rounded-full object-cover border-2 border-border"
                         />
                       ) : (
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-bold">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-semibold">
                           {data.full_name?.charAt(0) || 'D'}
                         </div>
                       )}
@@ -151,10 +151,10 @@ export default function DoctorProfilesManager() {
                             <Input
                               value={data.full_name || ''}
                               onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
-                              className="text-xl font-bold mb-1"
+                              className="text-xl font-semibold mb-1"
                             />
                           ) : (
-                            <h3 className="text-xl font-bold text-foreground">{data.full_name}</h3>
+                            <h3 className="text-xl font-semibold text-foreground">{data.full_name}</h3>
                           )}
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="w-3 h-3" />
@@ -236,7 +236,7 @@ export default function DoctorProfilesManager() {
                             {data.rating && (
                               <div className="flex items-center gap-1 text-sm">
                                 <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                <span className="font-bold">{data.rating.toFixed(1)}</span>
+                                <span className="font-semibold">{data.rating.toFixed(1)}</span>
                               </div>
                             )}
                             {data.years_experience && (
@@ -476,7 +476,7 @@ function DoctorPortfolioManager({ doctorId, onClose }) {
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-foreground">Upload Photos & Videos</h3>
+            <h3 className="text-lg font-semibold text-foreground">Upload Photos & Videos</h3>
             <p className="text-sm text-muted-foreground">Showcase before/after results and procedures</p>
           </div>
         </div>

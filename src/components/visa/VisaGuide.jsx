@@ -326,8 +326,8 @@ function StepCard({ step, index }) {
           <Icon className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${expanded ? step.textColor : 'text-slate-400'}`}>{step.badge}</p>
-          <p className="font-bold text-slate-800 text-sm leading-tight">{step.title}</p>
+          <p className={`text-[10px] font-semibold uppercase tracking-widest mb-0.5 ${expanded ? step.textColor : 'text-slate-400'}`}>{step.badge}</p>
+          <p className="font-semibold text-slate-800 text-sm leading-tight">{step.title}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {watched && (
@@ -358,7 +358,7 @@ function StepCard({ step, index }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setWatched(true)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white ${step.color} hover:opacity-90 shadow-sm transition-all`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white ${step.color} hover:opacity-90 shadow-sm transition-all`}
                   >
                     <Play className="w-3.5 h-3.5" />
                     {step.cta}
@@ -399,9 +399,9 @@ export default function VisaGuide({ destination, rule }) {
       <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
         <div className="flex items-center gap-3 mb-1">
           <span className="text-xl">{guide.flag}</span>
-          <p className="text-[11px] font-bold tracking-widest uppercase text-slate-400">{guide.label}</p>
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-slate-400">{guide.label}</p>
         </div>
-        <h3 className="font-display text-lg font-bold text-slate-800">We've broken it down into 3 simple steps.</h3>
+        <h3 className="font-display text-lg font-semibold text-slate-800">We've broken it down into 3 simple steps.</h3>
         <p className="text-xs text-slate-500 mt-1">Follow each step in order — it's easier than you think! 😊</p>
       </div>
 
@@ -414,7 +414,7 @@ export default function VisaGuide({ destination, rule }) {
       <div className="mx-4 mb-4 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-start gap-3">
         <span className="text-lg flex-shrink-0">🤝</span>
         <p className="text-xs text-slate-600 leading-relaxed">
-          <span className="font-bold text-slate-800">Need help?</span> Our concierge team has guided hundreds of patients through this exact process. You're never alone — book a consultation and we'll walk you through every step.
+          <span className="font-semibold text-slate-800">Need help?</span> Our concierge team has guided hundreds of patients through this exact process. You're never alone — book a consultation and we'll walk you through every step.
         </p>
       </div>
     </motion.div>

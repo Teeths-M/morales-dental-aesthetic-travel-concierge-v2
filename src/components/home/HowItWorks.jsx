@@ -62,7 +62,7 @@ export default function HowItWorks() {
                 <div className="w-16 h-16 rounded-full bg-card border-2 border-border mx-auto flex items-center justify-center relative z-10 mb-3">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <div className="inline-block bg-accent text-accent-foreground text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
+                <div className="inline-block bg-accent text-accent-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2">
                   {language === 'es' ? 'Paso' : language === 'fr' ? 'Étape' : 'Step'} {num}
                 </div>
                 <p className="text-sm font-semibold text-foreground">{title}</p>

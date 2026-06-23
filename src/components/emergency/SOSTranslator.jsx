@@ -49,7 +49,7 @@ export default function SOSTranslator({ destinationCountry, patientName, onClose
             <AlertTriangle className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-white">Emergency SOS Translator</h3>
+            <h3 className="font-semibold text-white">Emergency SOS Translator</h3>
             <p className="text-red-200 text-xs">Real-time translation for {destinationCountry || 'local'} first responders</p>
           </div>
         </div>
@@ -103,9 +103,9 @@ export default function SOSTranslator({ destinationCountry, patientName, onClose
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Globe className={`w-4 h-4 ${urgencyStyle.text}`} />
-                  <span className={`font-bold text-sm ${urgencyStyle.text}`}>{result.local_language}</span>
+                  <span className={`font-semibold text-sm ${urgencyStyle.text}`}>{result.local_language}</span>
                 </div>
-                <span className={`text-xs font-bold text-white px-2 py-0.5 rounded-full uppercase ${urgencyStyle.badge}`}>
+                <span className={`text-xs font-semibold text-white px-2 py-0.5 rounded-full uppercase ${urgencyStyle.badge}`}>
                   {result.urgency_level}
                 </span>
               </div>
@@ -126,7 +126,7 @@ export default function SOSTranslator({ destinationCountry, patientName, onClose
                   <div className="flex flex-wrap gap-2">
                     {result.emergency_numbers.map((num, i) => (
                       <a key={i} href={`tel:${num}`}
-                        className={`flex items-center gap-1.5 ${urgencyStyle.text} bg-white/70 border ${urgencyStyle.border} rounded-full px-3 py-1 text-xs font-bold hover:bg-white transition-colors`}>
+                        className={`flex items-center gap-1.5 ${urgencyStyle.text} bg-white/70 border ${urgencyStyle.border} rounded-full px-3 py-1 text-xs font-semibold hover:bg-white transition-colors`}>
                         <Phone className="w-3 h-3" /> {num}
                       </a>
                     ))}

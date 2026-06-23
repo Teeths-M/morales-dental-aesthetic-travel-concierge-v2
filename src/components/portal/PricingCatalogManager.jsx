@@ -210,7 +210,7 @@ export default function PricingCatalogManager() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-display font-bold text-foreground mb-2">Pricing Catalog</h2>
+        <h2 className="text-2xl font-display font-semibold text-foreground mb-2">Pricing Catalog</h2>
         <p className="text-sm text-muted-foreground">
           Manage prices for each doctor's procedures. This unified catalog powers patient quotes and marketplace pricing.
         </p>
@@ -325,7 +325,7 @@ export default function PricingCatalogManager() {
                       </div>
                       <div className="flex items-center gap-4 flex-shrink-0">
                         <div className="text-right">
-                          <p className="text-lg font-bold text-foreground">${price.doctor_price_usd}</p>
+                          <p className="text-lg font-semibold text-foreground">${price.doctor_price_usd}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(price.id)}>

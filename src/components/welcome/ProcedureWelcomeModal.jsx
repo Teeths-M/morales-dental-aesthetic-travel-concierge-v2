@@ -138,7 +138,7 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail, isFi
                     <Sparkles className="w-6 h-6 text-emerald-700" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Welcome to SAFE-T 4LIFE™</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Welcome to SAFE-T 4LIFE™</p>
                     <h2 className="font-display text-2xl font-medium text-slate-800">Let's begin your journey</h2>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail, isFi
                     {/* Procedure Categories */}
                     {Object.entries(grouped).map(([category, procs]) => (
                       <div key={category}>
-                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3 flex items-center gap-2">
                           {procs[0]?.category_emoji || '🏥'} {category}
                         </h3>
                         <div className="grid sm:grid-cols-2 gap-3">

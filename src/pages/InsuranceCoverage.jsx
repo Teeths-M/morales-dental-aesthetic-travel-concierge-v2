@@ -44,8 +44,8 @@ export default function InsuranceCoverage() {
               <ShieldCheck className="w-7 h-7 text-white" />
             </div>
             <div>
-              <p className="text-blue-200 text-xs font-bold uppercase tracking-widest">Morales Medical</p>
-              <h1 className="text-2xl font-bold">Cancellation & Insurance</h1>
+              <p className="text-blue-200 text-xs font-semibold uppercase tracking-widest">Morales Medical</p>
+              <h1 className="text-2xl font-semibold">Cancellation & Insurance</h1>
             </div>
           </div>
           <p className="text-blue-100 text-sm max-w-xl leading-relaxed">
@@ -86,14 +86,14 @@ export default function InsuranceCoverage() {
                     <Umbrella className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-slate-800">Request a Cancellation</h2>
+                    <h2 className="font-semibold text-slate-800">Request a Cancellation</h2>
                     <p className="text-xs text-slate-500">Enter your Case ID to initiate the refund process</p>
                   </div>
                 </div>
                 {claimSubmitted ? (
                   <div className="text-center py-6">
                     <ShieldCheck className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                    <h3 className="font-bold text-slate-800 mb-2">Cancellation Submitted</h3>
+                    <h3 className="font-semibold text-slate-800 mb-2">Cancellation Submitted</h3>
                     <p className="text-sm text-slate-500">Your refund calculation has been processed. Check your email for confirmation and refund details.</p>
                   </div>
                 ) : (

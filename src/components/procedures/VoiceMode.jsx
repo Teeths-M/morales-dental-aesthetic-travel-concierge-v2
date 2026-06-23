@@ -184,7 +184,7 @@ Examples:
               <Mic className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-white font-bold text-sm">Voice Mode</p>
+              <p className="text-white font-semibold text-sm">Voice Mode</p>
               <p className="text-white/70 text-xs">Speak your treatment goals naturally</p>
             </div>
           </div>
@@ -294,12 +294,12 @@ Examples:
             <div className="py-2">
               {transcript && (
                 <div className="bg-slate-50 rounded-xl px-4 py-3 mb-4">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">You said</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">You said</p>
                   <p className="text-xs text-slate-600 italic">"{transcript}"</p>
                 </div>
               )}
               <div className="mb-4">
-                <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-2">
+                <p className="text-[10px] font-semibold text-emerald-700 uppercase tracking-widest mb-2">
                   {detected.length} procedure{detected.length !== 1 ? 's' : ''} detected
                 </p>
                 {detected.length === 0 ? (
@@ -327,9 +327,9 @@ Examples:
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <DollarSign className="w-4 h-4 text-emerald-600" />
-                          <p className="text-[10px] font-bold text-emerald-700 uppercase">Estimated Cost</p>
+                          <p className="text-[10px] font-semibold text-emerald-700 uppercase">Estimated Cost</p>
                         </div>
-                        <p className="text-lg font-bold text-emerald-700">
+                        <p className="text-lg font-semibold text-emerald-700">
                           From ${estimatedPrice.toLocaleString()}
                         </p>
                         <p className="text-[10px] text-emerald-600 mt-1">

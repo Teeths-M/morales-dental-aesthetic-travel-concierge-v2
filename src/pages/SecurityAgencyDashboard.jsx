@@ -59,7 +59,7 @@ export default function SecurityAgencyDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center p-6">
         <div className="bg-white rounded-3xl p-10 text-center max-w-md w-full shadow-2xl">
           <Shield className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-800 mb-2">No Application Found</h2>
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">No Application Found</h2>
           <p className="text-slate-500 text-sm mb-6">You haven't registered a security agency yet.</p>
           <Button onClick={() => window.location.href = '/security-signup'} className="w-full bg-slate-800 hover:bg-slate-900 text-white">
             Register Now
@@ -85,7 +85,7 @@ export default function SecurityAgencyDashboard() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">{agency.agency_name}</h1>
+              <h1 className="text-xl font-semibold text-white">{agency.agency_name}</h1>
               <p className="text-slate-300 text-xs">Security Agency Dashboard</p>
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function SecurityAgencyDashboard() {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           >
             <div>
-              <p className="font-bold text-slate-800 text-lg">SOS Availability</p>
+              <p className="font-semibold text-slate-800 text-lg">SOS Availability</p>
               <p className="text-slate-500 text-sm">
                 {agency.is_available ? 'You are online and receiving SOS alerts' : 'You are currently offline'}
               </p>
@@ -158,7 +158,7 @@ export default function SecurityAgencyDashboard() {
               <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mx-auto mb-2`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <p className="text-2xl font-bold text-slate-800">{value}</p>
+              <p className="text-2xl font-semibold text-slate-800">{value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{label}</p>
             </div>
           ))}
@@ -166,7 +166,7 @@ export default function SecurityAgencyDashboard() {
 
         {/* Profile Details */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-4">Agency Profile</h3>
+          <h3 className="font-semibold text-slate-800 mb-4">Agency Profile</h3>
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             {[
               { label: 'Contact Person', value: agency.contact_person },

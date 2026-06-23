@@ -56,7 +56,7 @@ export default function PaymentsPayoutsDashboard() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold font-display">Payments & Partner Payouts</h1>
+          <h1 className="text-3xl font-semibold font-display">Payments & Partner Payouts</h1>
           <p className="text-muted-foreground mt-1">PCI-compliant tokenization · Escrow release engine · Stripe Connect marketplace · Dispute arbitration</p>
         </div>
 
@@ -76,7 +76,7 @@ export default function PaymentsPayoutsDashboard() {
                   <Icon className={`w-5 h-5 ${s.color}`} />
                 </div>
                 <div>
-                  <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
+                  <p className={`text-2xl font-semibold ${s.color}`}>{s.val}</p>
                   <p className="text-xs text-slate-500">{s.label}</p>
                 </div>
               </motion.div>
@@ -104,7 +104,7 @@ export default function PaymentsPayoutsDashboard() {
           <div className="grid lg:grid-cols-[320px_1fr] gap-5">
             {/* Case picker */}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 space-y-3 h-fit">
-              <p className="text-sm font-bold text-slate-700">Select Case</p>
+              <p className="text-sm font-semibold text-slate-700">Select Case</p>
               <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2">
                 <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                 <input value={caseSearch} onChange={e => setCaseSearch(e.target.value)} placeholder="Search patient…"
@@ -119,7 +119,7 @@ export default function PaymentsPayoutsDashboard() {
                     <p className="font-semibold truncate">{c.client_name}</p>
                     <div className="flex items-center justify-between mt-0.5">
                       <span className="opacity-60 truncate">{c.status}</span>
-                      {c.final_package_price && <span className="font-bold">${c.final_package_price.toLocaleString()}</span>}
+                      {c.final_package_price && <span className="font-semibold">${c.final_package_price.toLocaleString()}</span>}
                     </div>
                   </button>
                 ))}
@@ -134,11 +134,11 @@ export default function PaymentsPayoutsDashboard() {
                     <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-slate-800">{selectedCase.client_name}</p>
+                          <p className="font-semibold text-slate-800">{selectedCase.client_name}</p>
                           <p className="text-xs text-slate-400">{selectedCase.client_email} · {selectedCase.status}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-slate-800">${selectedCase.final_package_price?.toLocaleString() || '—'}</p>
+                          <p className="text-lg font-semibold text-slate-800">${selectedCase.final_package_price?.toLocaleString() || '—'}</p>
                           <p className="text-xs text-slate-400">{selectedCase.payment_status}</p>
                         </div>
                       </div>

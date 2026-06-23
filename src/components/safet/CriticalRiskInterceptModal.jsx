@@ -21,8 +21,8 @@ export default function CriticalRiskInterceptModal({ reason, flags, patientName,
           >
             <AlertOctagon className="w-8 h-8 text-white" />
           </motion.div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-red-200 mb-1">SAFE-T 4LIFE™ · Critical Intercept</p>
-          <h2 className="text-xl font-bold">Procedure Hold — Concierge Dispatched</h2>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-red-200 mb-1">SAFE-T 4LIFE™ · Critical Intercept</p>
+          <h2 className="text-xl font-semibold">Procedure Hold — Concierge Dispatched</h2>
           <p className="text-red-200 text-sm mt-2">A critical safety factor has been detected. Your case has been placed on hold.</p>
         </div>
 
@@ -32,7 +32,7 @@ export default function CriticalRiskInterceptModal({ reason, flags, patientName,
             <div className="flex items-start gap-3">
               <Lock className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-red-800 mb-1">Administrative Hard Lock — No Override Permitted</p>
+                <p className="text-sm font-semibold text-red-800 mb-1">Administrative Hard Lock — No Override Permitted</p>
                 <p className="text-xs text-red-700 leading-relaxed">{reason}</p>
               </div>
             </div>
@@ -41,7 +41,7 @@ export default function CriticalRiskInterceptModal({ reason, flags, patientName,
           {/* Flags */}
           {flags && flags.length > 0 && (
             <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identified Factors</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2">Identified Factors</p>
               <div className="space-y-1.5">
                 {flags.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
@@ -55,7 +55,7 @@ export default function CriticalRiskInterceptModal({ reason, flags, patientName,
 
           {/* What happens next */}
           <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4">
-            <p className="text-xs font-bold text-blue-800 mb-2">What happens next</p>
+            <p className="text-xs font-semibold text-blue-800 mb-2">What happens next</p>
             <div className="space-y-2">
               {[
                 { icon: Mail, text: 'A confirmation email has been sent to your registered address.' },
@@ -79,7 +79,7 @@ export default function CriticalRiskInterceptModal({ reason, flags, patientName,
 
           <button
             onClick={() => { setAcknowledged(true); onDismiss(); }}
-            className="w-full py-3 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all"
+            className="w-full py-3 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-700 transition-all"
           >
             I Understand — Return to Dashboard
           </button>

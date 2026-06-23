@@ -17,7 +17,7 @@ function SoloCheckInBanner() {
       <div className="flex items-start gap-3">
         <Radio className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="font-bold text-blue-800 text-sm">Solo Check-In Active</p>
+          <p className="font-semibold text-blue-800 text-sm">Solo Check-In Active</p>
           <p className="text-xs text-blue-700 mt-0.5">Mandatory safety protocol for your unaccompanied journey. Check-ins occur every 12 hours.</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function SoloCheckInSettings() {
       acknowledged: { label: 'Acknowledged', color: 'bg-emerald-100 text-emerald-700' },
       escalated_2h: { label: '2h Escalated', color: 'bg-orange-100 text-orange-700' },
       escalated_3h: { label: '3h Escalated', color: 'bg-red-100 text-red-700' },
-      escalated_5h: { label: '5h — Security Dispatched', color: 'bg-red-200 text-red-800 font-bold' },
+      escalated_5h: { label: '5h — Security Dispatched', color: 'bg-red-200 text-red-800 font-semibold' },
       escalated_9h: { label: '9h — EMERGENCY DISPATCH', color: 'bg-red-900 text-white' },
       resolved: { label: 'Resolved', color: 'bg-slate-100 text-slate-600' },
     };
@@ -164,7 +164,7 @@ export default function SoloCheckInSettings() {
               <div className={`w-full h-16 rounded-2xl flex items-center justify-center gap-3 px-6 border-2 ${is9hEmergency ? 'bg-red-900 border-red-900' : 'bg-red-50 border-red-300'}`}>
                 <AlertTriangle className={`w-6 h-6 flex-shrink-0 ${is9hEmergency ? 'text-white' : 'text-red-600'}`} />
                 <div className="text-left">
-                  <p className={`text-sm font-bold ${is9hEmergency ? 'text-white' : 'text-red-700'}`}>
+                  <p className={`text-sm font-semibold ${is9hEmergency ? 'text-white' : 'text-red-700'}`}>
                     {is9hEmergency ? '🆘 Emergency Dispatch Active — Police/Embassy Notified' : 'Security Dispatched — Admin Action Required'}
                   </p>
                   <p className={`text-xs ${is9hEmergency ? 'text-red-200' : 'text-red-500'}`}>
@@ -176,7 +176,7 @@ export default function SoloCheckInSettings() {
               <Button
                 onClick={handleIAmSafe}
                 disabled={acknowledging}
-                className="w-full h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl text-lg font-bold shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-16 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl text-lg font-semibold shadow-lg shadow-emerald-200 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {acknowledging ? (
                   <>
@@ -205,7 +205,7 @@ export default function SoloCheckInSettings() {
                     <Clock className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+                    <p className="text-2xl font-semibold text-slate-900">{stats.total}</p>
                     <p className="text-xs text-slate-500">Total Check-Ins</p>
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function SoloCheckInSettings() {
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-900">{stats.acknowledged}</p>
+                    <p className="text-2xl font-semibold text-slate-900">{stats.acknowledged}</p>
                     <p className="text-xs text-slate-500">Acknowledged</p>
                   </div>
                 </div>
@@ -233,7 +233,7 @@ export default function SoloCheckInSettings() {
                     <AlertTriangle className="w-5 h-5 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-slate-900">{stats.escalated}</p>
+                    <p className="text-2xl font-semibold text-slate-900">{stats.escalated}</p>
                     <p className="text-xs text-slate-500">Escalated</p>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export default function SoloCheckInSettings() {
               <div className="flex items-start gap-3">
                 <Bell className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-emerald-800 text-sm mb-2">How Solo Check-Ins Work</p>
+                  <p className="font-semibold text-emerald-800 text-sm mb-2">How Solo Check-Ins Work</p>
                   <ul className="text-xs text-emerald-700 space-y-1">
                     <li>• <strong>Frequency:</strong> Every 12 hours (configurable, max 24h)</li>
                     <li>• <strong>First check-in:</strong> 6 hours after destination handshake</li>
@@ -275,7 +275,7 @@ export default function SoloCheckInSettings() {
                   <CheckCircle2 className="w-7 h-7 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-emerald-800 text-sm">✅ Last Check-In Confirmed</p>
+                  <p className="font-semibold text-emerald-800 text-sm">✅ Last Check-In Confirmed</p>
                   <p className="text-emerald-700 text-xs mt-0.5">
                     Round #{last.check_in_round || 1} — confirmed{last.responded_time ? ` on ${new Date(last.responded_time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : ''}. Your safety is recorded.
                   </p>
@@ -303,7 +303,7 @@ export default function SoloCheckInSettings() {
           {/* Check-In History */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-500" />
                 Check-In History
               </h3>
@@ -353,7 +353,7 @@ export default function SoloCheckInSettings() {
                     </div>
                     <div className="flex-shrink-0 text-right">
                       {checkIn.escalation_level !== 'none' && (
-                        <p className="text-[10px] font-bold text-red-600">
+                        <p className="text-[10px] font-semibold text-red-600">
                           ⚠️ {checkIn.escalation_level.replace('_', ' ').toUpperCase()}
                         </p>
                       )}

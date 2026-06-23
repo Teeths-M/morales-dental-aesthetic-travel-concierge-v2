@@ -78,7 +78,7 @@ export default function AdminAnalyticsDashboard() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display">Analytics Dashboard</h1>
+            <h1 className="text-3xl font-semibold font-display">Analytics Dashboard</h1>
             <p className="text-muted-foreground mt-1">Real-time insights into case pipeline and performance</p>
           </div>
           <Button onClick={loadAnalytics} variant="outline" size="sm" className="gap-2">
@@ -131,7 +131,7 @@ export default function AdminAnalyticsDashboard() {
               <Activity className="w-4 h-4 text-emerald-700" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">Pipeline Funnel</h3>
+              <h3 className="font-semibold text-slate-800">Pipeline Funnel</h3>
               <p className="text-xs text-slate-400">Cases at each stage</p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function AdminAnalyticsDashboard() {
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">Bottleneck Detection</h3>
+                <h3 className="font-semibold text-slate-800">Bottleneck Detection</h3>
                 <p className="text-xs text-slate-400">Stages where cases get stuck (avg &gt; 3 days)</p>
               </div>
             </div>
@@ -188,7 +188,7 @@ export default function AdminAnalyticsDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-amber-700">{stage.avgDays} days</p>
+                    <p className="text-lg font-semibold text-amber-700">{stage.avgDays} days</p>
                     <p className="text-[10px] text-amber-500">avg time in stage</p>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export default function AdminAnalyticsDashboard() {
           className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden"
         >
           <div className="px-6 py-5 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 text-sm">Doctor Performance</h3>
+            <h3 className="font-semibold text-slate-800 text-sm">Doctor Performance</h3>
             <p className="text-xs text-slate-400 mt-0.5">Response rates and turnaround times</p>
           </div>
           <div className="overflow-x-auto">
@@ -251,7 +251,7 @@ export default function AdminAnalyticsDashboard() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {doc.avg_response_time_hours !== null ? (
-                          <span className={`text-sm font-bold ${
+                          <span className={`text-sm font-semibold ${
                             doc.avg_response_time_hours < 24 ? 'text-emerald-700' :
                             doc.avg_response_time_hours < 48 ? 'text-amber-700' : 'text-red-700'
                           }`}>
@@ -270,7 +270,7 @@ export default function AdminAnalyticsDashboard() {
                           ) : (
                             <ArrowDown className="w-3 h-3 text-red-600" />
                           )}
-                          <span className={`text-sm font-bold ${
+                          <span className={`text-sm font-semibold ${
                             responseRate >= 80 ? 'text-emerald-700' :
                             responseRate >= 50 ? 'text-amber-700' : 'text-red-700'
                           }`}>
@@ -308,7 +308,7 @@ function SummaryCard({ title, value, icon: Icon, color, subtext }) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{title}</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
+          <p className="text-2xl font-semibold text-slate-800 mt-1">{value}</p>
         </div>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClasses[color]}`}>
           <Icon className="w-5 h-5" />

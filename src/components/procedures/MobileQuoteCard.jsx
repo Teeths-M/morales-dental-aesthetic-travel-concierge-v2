@@ -56,7 +56,7 @@ export default function MobileQuoteCard({ items }) {
       >
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-white font-bold text-sm">{items.length} Treatment{items.length !== 1 ? 's' : ''} Selected</p>
+            <p className="text-white font-semibold text-sm">{items.length} Treatment{items.length !== 1 ? 's' : ''} Selected</p>
             {totalPrice ? (
               <p className="text-emerald-200 text-xs mt-1 font-semibold flex items-center gap-1">
                 <DollarSign className="w-3 h-3" />

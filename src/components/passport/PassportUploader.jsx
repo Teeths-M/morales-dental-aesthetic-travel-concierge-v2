@@ -81,7 +81,7 @@ export default function PassportUploader({ onTokenIssued, consultationId }) {
       <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
         <Lock className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="text-xs font-bold text-emerald-800">End-to-End Encrypted</p>
+          <p className="text-xs font-semibold text-emerald-800">End-to-End Encrypted</p>
           <p className="text-xs text-emerald-700 mt-0.5">
             Your passport is encrypted <strong>on your device</strong> with AES-256-GCM before upload.
             We never store or access the unencrypted document. Only you control access.
@@ -93,7 +93,7 @@ export default function PassportUploader({ onTokenIssued, consultationId }) {
         <div className="flex flex-col items-center gap-3 py-6 bg-green-50 border border-green-200 rounded-xl">
           <CheckCircle2 className="w-10 h-10 text-green-600" />
           <div className="text-center">
-            <p className="text-sm font-bold text-green-800">Passport Vault Created</p>
+            <p className="text-sm font-semibold text-green-800">Passport Vault Created</p>
             <p className="text-xs text-green-700 mt-1">Secured with your unique token:</p>
             <code className="mt-2 block text-xs bg-white border border-green-200 rounded-lg px-3 py-2 font-mono text-green-800 break-all">
               {issuedToken}

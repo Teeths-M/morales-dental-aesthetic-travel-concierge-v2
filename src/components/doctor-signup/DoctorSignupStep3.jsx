@@ -168,7 +168,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-display font-bold text-foreground mb-2">{t.step3Title}</h2>
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-2">{t.step3Title}</h2>
         <p className="text-muted-foreground text-sm">{t.step3Subtitle}</p>
       </div>
 

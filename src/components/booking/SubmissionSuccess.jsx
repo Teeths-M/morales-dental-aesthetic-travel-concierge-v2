@@ -95,7 +95,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           >
             <CheckCircle2 className="w-9 h-9 text-white" />
           </motion.div>
-          <h1 className="font-display text-2xl lg:text-3xl font-bold mb-2">Consultation Submitted</h1>
+          <h1 className="font-display text-2xl lg:text-3xl font-semibold mb-2">Consultation Submitted</h1>
           <p className="text-white/70 text-sm leading-relaxed max-w-md mx-auto">
             Your consultation has been successfully submitted for professional medical review. Your healthcare journey has officially begun.
           </p>
@@ -125,7 +125,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
               </svg>
             </div>
             <div>
-              <p className="font-bold text-emerald-900 text-sm">Your $49 Consultation Fee is Refundable</p>
+              <p className="font-semibold text-emerald-900 text-sm">Your $49 Consultation Fee is Refundable</p>
               <p className="text-xs text-emerald-800 mt-1.5 leading-relaxed">When you book your full procedure package, the $49 consultation fee will be fully credited back to you. No fees are lost — only your commitment secured.</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
               <Heart className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <p className="font-bold text-slate-800 text-sm">A message from SAFE-T 4LIFE™</p>
+              <p className="font-semibold text-slate-800 text-sm">A message from SAFE-T 4LIFE™</p>
               <p className="text-xs text-slate-400">Your personal healthcare companion</p>
             </div>
           </div>
@@ -163,7 +163,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           >
             <div className="px-5 py-3.5 border-b border-emerald-100 bg-emerald-50 flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-600" />
-              <p className="text-sm font-bold text-emerald-800">Personalized Preparation from SAFE-T 4LIFE™</p>
+              <p className="text-sm font-semibold text-emerald-800">Personalized Preparation from SAFE-T 4LIFE™</p>
             </div>
             <div className="p-5">
               {preparation.split('\n').filter(l => l.trim()).map((line, i) => (
@@ -181,7 +181,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
         >
           <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 text-sm">What Happens Next</h3>
+            <h3 className="font-semibold text-slate-800 text-sm">What Happens Next</h3>
           </div>
           <div className="divide-y divide-slate-100">
             {NEXT_STEPS.map((s, i) => (
@@ -210,8 +210,8 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
         >
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 text-sm">Smart Preparation Checklist</h3>
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${doneCount === checklist.length ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+            <h3 className="font-semibold text-slate-800 text-sm">Smart Preparation Checklist</h3>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${doneCount === checklist.length ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
               {doneCount}/{checklist.length} done
             </span>
           </div>
@@ -236,7 +236,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
                 </div>
                 <span className={`text-sm flex-1 ${item.done ? 'line-through text-slate-400' : 'text-slate-700'}`}>{item.label}</span>
                 {item.priority === 'high' && !item.done && (
-                  <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0">Priority</span>
+                  <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0">Priority</span>
                 )}
               </label>
             ))}
@@ -250,7 +250,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           transition={{ delay: 0.35 }}
           className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
         >
-          <h3 className="font-bold text-slate-800 text-sm mb-4">Your Coordination Team</h3>
+          <h3 className="font-semibold text-slate-800 text-sm mb-4">Your Coordination Team</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { icon: MessageCircle, label: 'WhatsApp', value: '+1 868-748-1100', href: 'https://wa.me/18687481100', color: 'text-emerald-600 bg-emerald-50' },
@@ -264,7 +264,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
                   <Icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
                   <p className="text-xs font-semibold text-slate-700">{value}</p>
                 </div>
               </a>
@@ -284,7 +284,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
         <div className="text-center pb-6">
           <button
             onClick={() => window.location.href = '/'}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm"
           >
             Return to Home <ChevronRight className="w-4 h-4" />
           </button>

@@ -148,12 +148,12 @@ export default function ShareLinkModal({ isOpen, vault, onClose }) {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-2">Max Downloads</p>
               <div className="flex items-center gap-3">
                 <button onClick={() => setMaxAccess(m => Math.max(1, m - 1))}
-                  className="w-9 h-9 rounded-xl border border-white/[0.10] text-white/50 hover:text-white hover:bg-white/[0.05] flex items-center justify-center text-lg font-bold transition-all">
+                  className="w-9 h-9 rounded-xl border border-white/[0.10] text-white/50 hover:text-white hover:bg-white/[0.05] flex items-center justify-center text-lg font-semibold transition-all">
                   −
                 </button>
                 <span className="text-xl font-display font-semibold text-white min-w-[2ch] text-center tabular-nums">{maxAccess}</span>
                 <button onClick={() => setMaxAccess(m => Math.min(10, m + 1))}
-                  className="w-9 h-9 rounded-xl border border-white/[0.10] text-white/50 hover:text-white hover:bg-white/[0.05] flex items-center justify-center text-lg font-bold transition-all">
+                  className="w-9 h-9 rounded-xl border border-white/[0.10] text-white/50 hover:text-white hover:bg-white/[0.05] flex items-center justify-center text-lg font-semibold transition-all">
                   +
                 </button>
                 <span className="text-xs text-white/25 ml-1">Auto-revokes after {maxAccess} download{maxAccess > 1 ? 's' : ''}</span>

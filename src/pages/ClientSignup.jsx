@@ -146,7 +146,7 @@ export default function ClientSignup() {
             <UserRound className="w-7 h-7" />
           </div>
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary mb-3">Client profile</p>
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">Tell us about you</h1>
+          <h1 className="text-4xl md:text-5xl font-display font-semibold text-foreground mb-4">Tell us about you</h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Complete your client profile first. You can book a consultation anytime from your dashboard.
           </p>
@@ -191,7 +191,7 @@ export default function ClientSignup() {
           <div className="rounded-2xl bg-secondary/60 border border-border p-5">
             <div className="flex items-center gap-2 mb-4">
               <ShieldCheck className="w-5 h-5 text-primary" />
-              <h2 className="font-bold text-foreground">Emergency contact</h2>
+              <h2 className="font-semibold text-foreground">Emergency contact</h2>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>

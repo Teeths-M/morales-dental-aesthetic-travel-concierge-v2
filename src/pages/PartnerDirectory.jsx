@@ -64,7 +64,7 @@ export default function PartnerDirectory() {
       <div className="bg-card border-b border-border/30">
         <div className="max-w-6xl mx-auto px-4 py-12 lg:py-16">
           <motion.div className="text-center mb-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-4">
               <Award className="w-3.5 h-3.5" />
               SAFE-T 4LIFE™ Verified Network
             </div>
@@ -153,7 +153,7 @@ export default function PartnerDirectory() {
                   <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
                     <Stethoscope className="w-4 h-4 text-emerald-700" />
                   </div>
-                  <h2 className="text-xl font-display font-bold text-foreground">Doctors & Clinics</h2>
+                  <h2 className="text-xl font-display font-semibold text-foreground">Doctors & Clinics</h2>
                   <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">{filteredDoctors.length}</span>
                 </div>
                 {filteredDoctors.length === 0 ? (
@@ -177,7 +177,7 @@ export default function PartnerDirectory() {
                   <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
                     <Shield className="w-4 h-4 text-slate-700" />
                   </div>
-                  <h2 className="text-xl font-display font-bold text-foreground">Security Agencies</h2>
+                  <h2 className="text-xl font-display font-semibold text-foreground">Security Agencies</h2>
                   <span className="text-xs font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">{filteredAgencies.length}</span>
                 </div>
                 {filteredAgencies.length === 0 ? (
@@ -196,7 +196,7 @@ export default function PartnerDirectory() {
 
             {/* CTA */}
             <div className="bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 rounded-2xl p-8 text-center">
-              <h3 className="font-display text-xl font-bold text-foreground mb-2">Want to Join Our Network?</h3>
+              <h3 className="font-display text-xl font-semibold text-foreground mb-2">Want to Join Our Network?</h3>
               <p className="text-muted-foreground text-sm mb-5">Apply as a verified partner and reach international medical travel patients.</p>
               <Link to="/partner-signup" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary/90 transition-all">
                 Apply as a Partner <ChevronRight className="w-4 h-4" />

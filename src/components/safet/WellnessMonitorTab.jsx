@@ -53,7 +53,7 @@ export default function WellnessMonitorTab() {
             <Heart className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg">Daily Wellness Check-In</h2>
+            <h2 className="font-semibold text-lg">Daily Wellness Check-In</h2>
             <p className="text-white/60 text-sm">Recovery monitoring · SAFE-T 4LIFE™</p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function WellnessMonitorTab() {
       {!submitted ? (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800">Today's Check-In</h3>
+            <h3 className="font-semibold text-slate-800">Today's Check-In</h3>
             <p className="text-xs text-slate-500 mt-0.5">How are you feeling today? Be honest — we're here to help.</p>
           </div>
           <div className="p-5 space-y-5">
@@ -102,7 +102,7 @@ export default function WellnessMonitorTab() {
                         onChange={e => setValues(v => ({ ...v, [metric.id]: e.target.value }))}
                         className="flex-1 accent-emerald-600"
                       />
-                      <span className="w-8 text-center font-bold text-slate-700 text-sm">
+                      <span className="w-8 text-center font-semibold text-slate-700 text-sm">
                         {values[metric.id] || 0}{metric.unit}
                       </span>
                     </div>
@@ -124,7 +124,7 @@ export default function WellnessMonitorTab() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
             >
               {loading ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Analyzing...</>
@@ -143,7 +143,7 @@ export default function WellnessMonitorTab() {
           <div className="px-5 py-4 border-b border-emerald-100 bg-emerald-50 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             <div>
-              <p className="font-bold text-emerald-800 text-sm">Check-In Received</p>
+              <p className="font-semibold text-emerald-800 text-sm">Check-In Received</p>
               <p className="text-xs text-emerald-600">SAFE-T 4LIFE™ AI Response</p>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function WellnessMonitorTab() {
       {/* Previous Check-ins */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800 text-sm">Previous Check-Ins</h3>
+          <h3 className="font-semibold text-slate-800 text-sm">Previous Check-Ins</h3>
         </div>
         <div className="divide-y divide-slate-100">
           {CHECKINS.map((c, i) => (

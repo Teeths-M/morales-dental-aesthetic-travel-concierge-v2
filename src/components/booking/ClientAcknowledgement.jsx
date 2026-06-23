@@ -62,16 +62,16 @@ export default function ClientAcknowledgement({ acknowledged, onChange, visaStat
             {/* Header banner */}
             <div className="flex items-center gap-2.5 px-4 py-2.5 bg-amber-100 border-b border-amber-300">
               <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0" />
-              <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">
                 International Visa Compliance — Required
               </p>
               {visaStatus === 'embassy' && (
-                <span className="ml-auto text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                <span className="ml-auto text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
                   Embassy Visa
                 </span>
               )}
               {visaStatus === 'evisa' && (
-                <span className="ml-auto text-[10px] font-bold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
+                <span className="ml-auto text-[10px] font-semibold bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
                   e-Visa Required
                 </span>
               )}

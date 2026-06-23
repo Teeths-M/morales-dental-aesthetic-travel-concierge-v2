@@ -33,7 +33,7 @@ export default function About() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.32em] mb-5" style={{ color: '#D4AF37' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] mb-5" style={{ color: '#D4AF37' }}>
             {language === 'es' ? 'Acerca de Nosotros' : language === 'fr' ? 'À Propos de Nous' : 'About Us'}
           </p>
           <h1 className="font-display text-4xl lg:text-5xl text-white mb-8" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>

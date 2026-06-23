@@ -107,7 +107,7 @@ export default function ActivitySafetyAdvisor({ caseId }) {
             className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
             <div className="flex items-center gap-3 mb-3">
               <Bell className="w-5 h-5 text-amber-600 animate-pulse" />
-              <p className="font-bold text-amber-800 text-sm">Safety Check-In Required</p>
+              <p className="font-semibold text-amber-800 text-sm">Safety Check-In Required</p>
             </div>
             {pendingHandshakes.map(s => (
               <div key={s.id} className="bg-white rounded-xl p-3 flex items-center gap-3">
@@ -117,11 +117,11 @@ export default function ActivitySafetyAdvisor({ caseId }) {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => submitHandshake(s.id, true)} disabled={handshaking === s.id}
-                    className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700">
+                    className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700">
                     ✅ I'm Safe
                   </button>
                   <button onClick={() => submitHandshake(s.id, false)} disabled={handshaking === s.id}
-                    className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700">
+                    className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700">
                     🆘 Need Help
                   </button>
                 </div>
@@ -134,7 +134,7 @@ export default function ActivitySafetyAdvisor({ caseId }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+          <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
             <Shield className="w-4 h-4 text-emerald-600" /> Adventure Safety Advisor
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">ISO 21101 aligned — with automated safety check-ins</p>
@@ -150,7 +150,7 @@ export default function ActivitySafetyAdvisor({ caseId }) {
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <p className="text-xs font-bold text-slate-700 mb-3">Select Activity Type</p>
+            <p className="text-xs font-semibold text-slate-700 mb-3">Select Activity Type</p>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
               {ACTIVITY_TYPES.map(a => {
                 const Icon = a.icon;
@@ -161,7 +161,7 @@ export default function ActivitySafetyAdvisor({ caseId }) {
                     }`}>
                     <Icon className="w-5 h-5 text-slate-600" />
                     <span className="text-[10px] font-semibold text-slate-700 leading-tight">{a.label}</span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${RISK_COLORS[a.risk]}`}>{a.risk}</span>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${RISK_COLORS[a.risk]}`}>{a.risk}</span>
                   </button>
                 );
               })}
@@ -201,7 +201,7 @@ export default function ActivitySafetyAdvisor({ caseId }) {
                   placeholder="Operator / Tour company name (optional)"
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
                 <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-800">
-                  <p className="font-bold mb-1">🔔 Automated Safety Protocol</p>
+                  <p className="font-semibold mb-1">🔔 Automated Safety Protocol</p>
                   <p>• Nudge 1 hour before: <em>"Make sure your core is hooked. We are here to protect you."</em></p>
                   <p>• Safety check-in 2 hours after your activity ends</p>
                   <p>• Missed check-in triggers automatic care coordinator alert</p>
@@ -240,8 +240,8 @@ export default function ActivitySafetyAdvisor({ caseId }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-800 text-sm">{s.activity_name}</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${riskCfg}`}>{s.risk_level} risk</span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusCfg.color}`}>{statusCfg.label}</span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${riskCfg}`}>{s.risk_level} risk</span>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{s.scheduled_start_at ? new Date(s.scheduled_start_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'TBD'}</span>
@@ -256,7 +256,7 @@ export default function ActivitySafetyAdvisor({ caseId }) {
 
                 {isExpanded && (
                   <div className="px-5 pb-5 space-y-3 border-t border-slate-100 pt-4">
-                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">ISO 21101 Safety Checklist</p>
+                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">ISO 21101 Safety Checklist</p>
                     <div className="space-y-1.5">
                       {(s.iso_checklist_items || []).map((item, idx) => (
                         <div key={idx} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border ${item.acknowledged ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
@@ -271,16 +271,16 @@ export default function ActivitySafetyAdvisor({ caseId }) {
                     {/* Handshake zone */}
                     {s.handshake_status === 'pending' && s.handshake_due_at && (
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                        <p className="text-xs font-bold text-amber-800 mb-2">
+                        <p className="text-xs font-semibold text-amber-800 mb-2">
                           ⏰ Safety check-in due: {new Date(s.handshake_due_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                         </p>
                         <div className="flex gap-2">
                           <button onClick={() => submitHandshake(s.id, true)} disabled={handshaking === s.id}
-                            className="flex-1 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700">
+                            className="flex-1 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700">
                             ✅ I'm Safe
                           </button>
                           <button onClick={() => submitHandshake(s.id, false)} disabled={handshaking === s.id}
-                            className="flex-1 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700">
+                            className="flex-1 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700">
                             🆘 Need Help
                           </button>
                         </div>

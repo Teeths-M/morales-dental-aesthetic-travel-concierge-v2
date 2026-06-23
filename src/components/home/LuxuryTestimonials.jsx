@@ -99,7 +99,7 @@ export default function LuxuryTestimonials() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-14 gap-6">
           <div>
-            <p className="text-[11px] font-bold tracking-[0.32em] uppercase mb-5" style={{ color: GOLD }}>
+            <p className="text-[11px] font-semibold tracking-[0.32em] uppercase mb-5" style={{ color: GOLD }}>
               PATIENT STORIES
             </p>
             <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-1" style={{ letterSpacing: '-0.02em' }}>
@@ -221,7 +221,7 @@ export default function LuxuryTestimonials() {
                 <div
                   className="pt-6 border-t border-white/[0.07]"
                 >
-                  <p className="text-[12px] font-bold tracking-[0.25em] uppercase" style={{ color: GOLD }}>
+                  <p className="text-[12px] font-semibold tracking-[0.25em] uppercase" style={{ color: GOLD }}>
                     {t.procedure}
                   </p>
                 </div>

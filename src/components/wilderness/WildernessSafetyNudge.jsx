@@ -87,7 +87,7 @@ export default function WildernessSafetyNudge({
       <div className="px-5 py-3 flex items-center gap-3 border-b border-white/10">
         <AlertTriangle className={`w-5 h-5 flex-shrink-0 ${style.icon} ${assessment.risk === 'high' ? 'animate-pulse' : ''}`} />
         <div>
-          <p className="font-bold text-sm">Safety Assessment: {style.label}</p>
+          <p className="font-semibold text-sm">Safety Assessment: {style.label}</p>
           {assessment.certWarning && (
             <p className="text-[10px] opacity-75 mt-0.5">{assessment.certWarning}</p>
           )}
@@ -107,7 +107,7 @@ export default function WildernessSafetyNudge({
 
       {assessment.checks.length > 0 && (
         <div className="px-5 pb-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-2">Recommended Checks</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider opacity-60 mb-2">Recommended Checks</p>
           <div className="space-y-1.5">
             {assessment.checks.map((check, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">

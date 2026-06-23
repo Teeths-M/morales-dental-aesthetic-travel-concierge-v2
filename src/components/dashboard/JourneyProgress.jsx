@@ -29,7 +29,7 @@ export default function JourneyProgress({ currentStage = 'consultation' }) {
           return (
             <React.Fragment key={stage.key}>
               <div className="flex flex-col items-center min-w-[64px]">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all
                   ${isComplete ? 'bg-emerald-600 border-emerald-600 text-white' :
                     isCurrent ? 'bg-white border-blue-600 text-blue-700 ring-4 ring-blue-50' :
                     'bg-slate-50 border-slate-200 text-slate-400'}`}>

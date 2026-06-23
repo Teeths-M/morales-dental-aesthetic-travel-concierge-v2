@@ -119,7 +119,7 @@ export default function RecoveryModePanel({ caseId }) {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full"
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}>
-              <h3 className="font-bold text-gray-900 mb-4">Activate Recovery Mode</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Activate Recovery Mode</h3>
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1 block">Surgery Type</label>
@@ -167,9 +167,9 @@ export default function RecoveryModePanel({ caseId }) {
         <div className="text-center mb-4">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Moon className={`w-4 h-4 ${cc.text}`} />
-            <span className={`text-xs font-bold uppercase tracking-wider ${cc.text}`}>Recovery Mode Active</span>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${cc.text}`}>Recovery Mode Active</span>
           </div>
-          <p className="font-bold text-gray-900 text-lg">{session.surgery_type}</p>
+          <p className="font-semibold text-gray-900 text-lg">{session.surgery_type}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {COMPLEXITY_LABELS[complexity]} · {session.checkin_interval_hours}h check-ins · 
             Ends {new Date(session.recovery_end_at).toLocaleDateString()}
@@ -237,7 +237,7 @@ export default function RecoveryModePanel({ caseId }) {
           </div>
           {nextCheckin && (
             <button onClick={() => { setShowCheckin(nextCheckin.idx); setCheckinData({ ...checkinData }); }}
-              className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-1">
+              className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5" /> SOS
             </button>
           )}
@@ -252,7 +252,7 @@ export default function RecoveryModePanel({ caseId }) {
             <motion.div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full"
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9 }}>
               <GentlePulse />
-              <h3 className="font-bold text-gray-900 text-xl text-center mb-1">Recovery Check-in</h3>
+              <h3 className="font-semibold text-gray-900 text-xl text-center mb-1">Recovery Check-in</h3>
               <p className="text-gray-400 text-xs text-center mb-6">Take a moment. How are you feeling?</p>
 
               <div className="mb-5">

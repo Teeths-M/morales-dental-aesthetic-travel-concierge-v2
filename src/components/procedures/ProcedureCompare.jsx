@@ -78,7 +78,7 @@ export default function ProcedureCompare({ allProcedures }) {
       {/* Header */}
       <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600 mb-1">Side-by-Side</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-600 mb-1">Side-by-Side</p>
           <h3 className="text-base font-semibold text-slate-800" style={{ letterSpacing: '-0.01em' }}>Compare Procedures</h3>
         </div>
         <span className="text-xs text-slate-400">Pick any two treatments to compare</span>
@@ -162,7 +162,7 @@ export default function ProcedureCompare({ allProcedures }) {
                     {/* Value 0 */}
                     <div className="px-4 py-3 border-l border-slate-100 flex items-center">
                       {row.badge && v0 ? (
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${row.badge[v0] || 'text-slate-500 bg-slate-100'}`}>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${row.badge[v0] || 'text-slate-500 bg-slate-100'}`}>
                           {label0}
                         </span>
                       ) : (
@@ -172,7 +172,7 @@ export default function ProcedureCompare({ allProcedures }) {
                     {/* Value 1 */}
                     <div className="px-4 py-3 border-l border-slate-100 flex items-center">
                       {row.badge && v1 ? (
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${row.badge[v1] || 'text-slate-500 bg-slate-100'}`}>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${row.badge[v1] || 'text-slate-500 bg-slate-100'}`}>
                           {label1}
                         </span>
                       ) : (
@@ -192,7 +192,7 @@ export default function ProcedureCompare({ allProcedures }) {
               <div key={slot} className="px-4 py-3 border-l border-slate-100">
                 <button
                   onClick={() => navigate('/booking')}
-                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-700 to-blue-800 text-white text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-700 to-blue-800 text-white text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
                 >
                   Book {selected[slot]?.title?.split(' ').slice(0, 2).join(' ')} <ArrowRight className="w-3 h-3" />
                 </button>

@@ -14,7 +14,7 @@ function ScoreBar({ label, value, color }) {
     <div>
       <div className="flex justify-between mb-1.5">
         <span className="text-xs font-medium text-slate-600">{label}</span>
-        <span className="text-xs font-bold" style={{ color }}>{value}%</span>
+        <span className="text-xs font-semibold" style={{ color }}>{value}%</span>
       </div>
       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
         <motion.div
@@ -69,7 +69,7 @@ export default function MedicalProfileModule() {
         <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
           <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-bold text-amber-800">2 Active Risk Alerts</p>
+            <p className="text-xs font-semibold text-amber-800">2 Active Risk Alerts</p>
             <p className="text-[11px] text-amber-700 mt-0.5">Smoking cessation recommended · Medication review required</p>
           </div>
         </div>

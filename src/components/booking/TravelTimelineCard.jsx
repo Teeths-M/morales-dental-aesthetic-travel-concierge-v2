@@ -103,8 +103,8 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <Plane className="w-4 h-4" style={{ color: '#C5A059' }} />
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#C5A059' }}>SAFE-T4LIFE™ Engine</p>
-          <h4 className="text-sm font-bold text-white">Recommended Medical Travel Timeline</h4>
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>SAFE-T4LIFE™ Engine</p>
+          <h4 className="text-sm font-semibold text-white">Recommended Medical Travel Timeline</h4>
         </div>
         {/* Trip duration badge + stepper */}
         <div className="ml-auto flex-shrink-0 flex items-center gap-2">
@@ -116,7 +116,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           >
             <Minus className="w-3 h-3" />
           </button>
-          <div className="px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5" style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}>
+          <div className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5" style={{ background: 'rgba(197,160,89,0.15)', border: '1px solid rgba(197,160,89,0.4)', color: '#C5A059' }}>
             <Moon className="w-3 h-3" />
             {totalDays} Days · {totalNights} Nights
           </div>
@@ -169,7 +169,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <div className="flex gap-3">
             <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C5A059' }} />
             <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ Extended Stay Selected (+{extraDays} day{extraDays !== 1 ? 's' : ''})</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#C5A059' }}>✨ Extended Stay Selected (+{extraDays} day{extraDays !== 1 ? 's' : ''})</p>
               <p className="text-xs leading-relaxed text-white/70">
                 Your return date has been adjusted. Use − to reduce your stay back to the 3-day minimum.
               </p>
@@ -179,7 +179,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <div className="flex gap-3">
             <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C5A059' }} />
             <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Minimum Window</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Minimum Window</p>
               <p className="text-xs leading-relaxed text-white/70">
                 Arrive on the nearest flight day before your procedure, then fly home on the next available flight day. Use + to extend your stay if you'd like more recovery time.
               </p>
@@ -207,11 +207,11 @@ function TimelineRow({ icon, label, value, sub, accent, highlight }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>{label}</p>
-        <p className="text-sm font-bold text-white truncate">{value}</p>
+        <p className="text-sm font-semibold text-white truncate">{value}</p>
         <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{sub}</p>
       </div>
       {highlight && (
-        <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: 'rgba(197,160,89,0.2)', color: '#C5A059', border: '1px solid rgba(197,160,89,0.4)' }}>
+        <span className="text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: 'rgba(197,160,89,0.2)', color: '#C5A059', border: '1px solid rgba(197,160,89,0.4)' }}>
           Surgery Day
         </span>
       )}
