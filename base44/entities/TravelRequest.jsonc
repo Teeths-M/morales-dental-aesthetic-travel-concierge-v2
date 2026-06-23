@@ -199,6 +199,61 @@
     "updated_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "flight_number": {
+      "type": "string",
+      "description": "IATA flight number, e.g. AA123 or TK45"
+    },
+    "scheduled_departure": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Original scheduled departure (UTC)"
+    },
+    "scheduled_arrival": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Original scheduled arrival (UTC)"
+    },
+    "flight_status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "delayed",
+        "in_progress",
+        "landed",
+        "cancelled",
+        "unknown"
+      ],
+      "default": "scheduled"
+    },
+    "delay_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Positive = delayed; 0 = on time; negative = early"
+    },
+    "last_checked": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time checkFlightStatus polled this record"
+    },
+    "arrival_terminal": {
+      "type": "string"
+    },
+    "arrival_gate": {
+      "type": "string"
+    },
+    "driver_name": {
+      "type": "string",
+      "description": "Display name of assigned pickup driver"
+    },
+    "driver_photo_url": {
+      "type": "string",
+      "description": "URL for driver headshot shown on WelcomeScreen"
+    },
+    "welcome_cached_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when offline welcome payload was pre-built (at in_progress status)"
     }
   },
   "required": [

@@ -1,0 +1,62 @@
+{
+  "name": "LocalizedGreeting",
+  "description": "Destination-specific welcome message templates for the WelcomeScreen. Seeded with 4 starter rows (Thailand, Mexico, Turkey, Hungary). Template variables: {{patient_name}}, {{driver_name}}, {{destination_city}}, {{clinic_name}}, {{gate}}, {{terminal}}.",
+  "type": "object",
+  "properties": {
+    "country_code": {
+      "type": "string",
+      "description": "ISO-3166-1 alpha-2, e.g. TH, MX, TR, HU"
+    },
+    "language": {
+      "type": "string",
+      "description": "ISO 639-1 preferred language for this greeting, e.g. en, es, th, tr, hu"
+    },
+    "language_name": {
+      "type": "string",
+      "description": "Human-readable label, e.g. English, Spanish"
+    },
+    "greeting_template": {
+      "type": "string",
+      "description": "Primary welcome text with {{patient_name}}, {{driver_name}}, {{destination_city}}, {{clinic_name}} placeholders"
+    },
+    "driver_line": {
+      "type": "string",
+      "description": "Short driver-specific line, e.g. 'Your driver {{driver_name}} is waiting at the arrivals exit.'"
+    },
+    "cultural_note": {
+      "type": "string",
+      "description": "Admin-visible cultural context used when crafting or reviewing this greeting (e.g. 'wai greeting custom in Thailand')"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "country_code",
+    "language",
+    "greeting_template"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
