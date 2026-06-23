@@ -137,6 +137,43 @@
     "feedback_comment": {
       "type": "string",
       "description": "Patient's written experience"
+    },
+    "anomaly_status": {
+      "type": "string",
+      "enum": ["none", "warning", "escalate"],
+      "default": "none",
+      "description": "Current anomaly severity from the latest checkRecoveryAnomaly run"
+    },
+    "consecutive_anomaly_days": {
+      "type": "number",
+      "default": 0,
+      "description": "How many consecutive days an anomaly has been detected — >=2 triggers emergency contact"
+    },
+    "last_anomaly_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_log_date": {
+      "type": "string",
+      "description": "YYYY-MM-DD of the most recently submitted RecoveryLog — used by missed check-in cron"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Treating doctor — receives anomaly notifications"
+    },
+    "doctor_phone": {
+      "type": "string"
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "emergency_contact_email": {
+      "type": "string",
+      "format": "email"
     }
   },
   "required": [
