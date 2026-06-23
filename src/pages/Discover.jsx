@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import DoctorSearchCard from "@/components/discover/DoctorSearchCard";
 import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
+import PageHeroBand from "@/components/layout/PageHeroBand";
 import cityData from "@/lib/cityData.json";
 
 const PROCEDURES = [
@@ -133,7 +134,12 @@ export default function Discover() {
 
   return (
     <div className="min-h-screen bg-[#060B16]" style={{ background: 'linear-gradient(180deg, #060B16 0%, #0A101D 100%)' }}>
-      {/* Search Header - Desktop */}
+      <PageHeroBand
+        eyebrow="Find Your Specialist"
+        title="Discover"
+        subtitle="Browse verified specialists across 10 destinations. Filter by procedure, location, and rating."
+      />
+      {/* Search Header */}
       <div className="sticky top-[72px] z-40 bg-[#060B16]/95 backdrop-blur-md border-b border-white/[0.06]">
         <div className="container mx-auto px-6 py-5">
           <div className="flex items-center gap-4 mb-4">

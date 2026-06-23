@@ -31,7 +31,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
   const c = proc.categoryColor;
   return (
     <motion.div
-      className={`relative bg-white rounded-2xl border overflow-hidden transition-all group ${isSelected ? 'border-emerald-400 shadow-md shadow-emerald-100' : 'border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200'}`}
+      className={`relative bg-[#0C1A1D] rounded-2xl border overflow-hidden transition-all group ${isSelected ? 'border-emerald-400 shadow-md shadow-emerald-400/20' : 'border-white/[0.08] hover:border-white/[0.16]'}`}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -44,8 +44,8 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
             alt={proc.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent" />
-          <span className={`absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm bg-white/70 ${c.text}`}>{proc.tag}</span>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0C1A1D]/80 via-transparent to-transparent" />
+          <span className={`absolute top-2.5 left-2.5 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full backdrop-blur-sm bg-[#0C1A1D]/80 ${c.text}`}>{proc.tag}</span>
           {isSelected && (
             <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-emerald-600 rounded-full flex items-center justify-center">
               <Check className="w-3.5 h-3.5 text-white" />
@@ -55,14 +55,14 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
       )}
 
       <div className="p-4">
-        <h3 className="font-semibold text-slate-800 text-sm mb-1 leading-tight">{proc.title}</h3>
-        {proc.desc && <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2 mb-3">{proc.desc}</p>}
+        <h3 className="font-semibold text-white text-sm mb-1 leading-tight">{proc.title}</h3>
+        {proc.desc && <p className="text-[11px] text-white/55 leading-relaxed line-clamp-2 mb-3">{proc.desc}</p>}
 
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-1 text-[10px] text-slate-400">
+          <div className="flex items-center gap-1 text-[10px] text-white/35">
             <Clock className="w-3 h-3" />{proc.duration}
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-slate-400">
+          <div className="flex items-center gap-1 text-[10px] text-white/35">
             <Calendar className="w-3 h-3" />{proc.recovery}
           </div>
         </div>
@@ -70,7 +70,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
         <div className="flex gap-2">
           <button
             onClick={() => onLearnMore(proc)}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-1"
+            className="flex-1 py-2 rounded-xl text-xs font-semibold border border-white/[0.12] text-white/60 hover:bg-white/[0.06] transition-all flex items-center justify-center gap-1"
           >
             {proc.language === 'es' ? 'Estimado Precios' : proc.language === 'fr' ? 'Devis Tarifs' : 'Estimate Pricing'} <ChevronRight className="w-3 h-3" />
           </button>
@@ -78,8 +78,8 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore }) {
             onClick={() => isSelected ? onRemove(proc) : onAdd(proc)}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
               isSelected
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
-                : `${c.bg} ${c.text} border ${c.border} hover:opacity-80`
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
+                : 'bg-white/[0.06] text-white/70 border border-white/[0.10] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] hover:border-[#D4AF37]/30'
             }`}
           >
             {isSelected ? (proc.language === 'es' ? '✓ Añadido' : proc.language === 'fr' ? '✓ Ajouté' : '✓ Added') : (proc.language === 'es' ? '+ Seleccionar' : proc.language === 'fr' ? '+ Sélectionner' : '+ Select')}
@@ -159,24 +159,24 @@ export default function Procedures() {
     : procedureCategories.filter(c => c.parent === activeParent);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
+    <div className="min-h-screen bg-[#060B16]">
       <PageHeroBand />
       {/* Hero */}
-      <div className="bg-card/50 backdrop-blur-sm border-b border-border/30">
+      <div className="bg-[#0C1A1D]/80 backdrop-blur-md border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
           <motion.div
             className="text-center max-w-3xl mx-auto mb-8"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-[0.32em] mb-4">
+            <p className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-4">
               {language === 'es' ? 'Nuestros Servicios' : language === 'fr' ? 'Nos Services' : 'Our Services'}
             </p>
-            <h1 className="font-display text-4xl lg:text-5xl text-slate-900 mb-6" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
+            <h1 className="font-display text-4xl lg:text-5xl text-white mb-6" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
               {language === 'es' ? 'Procedimientos y Tratamientos' : language === 'fr' ? 'Procédures et Traitements' : 'Procedures & Treatments'}
             </h1>
-            <p className="text-[17px] text-slate-500 max-w-xl mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
-              {language === 'es' ? 'Cuidado dental, estético y de bienestar de clase mundial. Busca abajo, o simplemente ' : language === 'fr' ? 'Soins dentaires, esthétiques et de bien-être de classe mondiale. Parcourez ci-dessous, ou simplement ' : 'World-class dental, aesthetic, and wellness care. Browse below, search, or simply '}<span className="font-semibold text-emerald-700">{language === 'es' ? 'habla tus objetivos' : language === 'fr' ? 'parlez vos objectifs' : 'speak your goals'}</span> {language === 'es' ? 'usando el modo de voz.' : language === 'fr' ? 'en utilisant le mode voix.' : 'using Voice Mode.'}
+            <p className="text-[17px] text-white/55 max-w-xl mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
+              {language === 'es' ? 'Cuidado dental, estético y de bienestar de clase mundial. Busca abajo, o simplemente ' : language === 'fr' ? 'Soins dentaires, esthétiques et de bien-être de classe mondiale. Parcourez ci-dessous, ou simplement ' : 'World-class dental, aesthetic, and wellness care. Browse below, search, or simply '}<span className="font-semibold text-[#D4AF37]">{language === 'es' ? 'habla tus objetivos' : language === 'fr' ? 'parlez vos objectifs' : 'speak your goals'}</span> {language === 'es' ? 'usando el modo de voz.' : language === 'fr' ? 'en utilisant le mode voix.' : 'using Voice Mode.'}
             </p>
           </motion.div>
 
@@ -196,7 +196,7 @@ export default function Procedures() {
           </div>
 
           {/* Voice hint */}
-          <p className="text-center text-xs text-slate-400 mt-3">
+          <p className="text-center text-xs text-white/35 mt-3">
             💡 {language === 'es' ? 'Prueba el Modo de Voz: ' : language === 'fr' ? 'Essayez le Mode Voix: ' : 'Try Voice Mode: '}<em>{language === 'es' ? '"Quiero carillas, blanqueamiento e implantes en la mandíbula superior"' : language === 'fr' ? '"Je veux des facettes, un blanchiment et des implants à la mâchoire supérieure"' : '"I want veneers, whitening, and implants on the upper jaw"'}</em>
           </p>
         </div>
@@ -242,8 +242,8 @@ export default function Procedures() {
                   aria-pressed={activeParent === f.id}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                     activeParent === f.id
-                      ? 'bg-gradient-to-r from-emerald-700 to-blue-800 text-white border-transparent shadow-md'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/40'
+                      : 'bg-white/[0.04] text-white/60 border border-white/[0.08] hover:bg-white/[0.08] hover:text-white/80'
                   }`}
                 >
                   <span aria-hidden="true">{f.emoji}</span>{f.label}
@@ -285,22 +285,22 @@ export default function Procedures() {
 
             {/* CTA */}
             <motion.div
-              className="text-center bg-white border border-slate-100 rounded-2xl p-8 lg:p-12 mt-12 shadow-sm"
+              className="text-center bg-[#0C1A1D] border border-white/[0.08] rounded-2xl p-8 lg:p-12 mt-12"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-[0.32em] mb-3">
+              <p className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-[0.32em] mb-3">
                 {language === 'es' ? '¿No Estás Seguro Por Dónde Empezar?' : language === 'fr' ? 'Vous Ne Savez Pas Où Commencer?' : 'Not Sure Where to Start?'}
               </p>
-              <h2 className="font-display text-3xl lg:text-4xl text-slate-900 mb-4" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
+              <h2 className="font-display text-3xl lg:text-4xl text-white mb-4" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
                 {language === 'es' ? 'Habla Con Nuestro Equipo de Conserjería' : language === 'fr' ? 'Parlez à Notre Équipe de Conciergerie' : 'Talk to Our Concierge Team'}
               </h2>
-              <p className="text-[15px] text-slate-500 mb-6 max-w-md mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
+              <p className="text-[15px] text-white/55 mb-6 max-w-md mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
                 {language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.'}
               </p>
               <Link to="/booking">
-                <Button size="lg" className={`font-semibold px-10 shadow-md ${items.length > 0 ? 'bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`} disabled={items.length === 0}>
+                <Button size="lg" className={`font-semibold px-10 ${items.length > 0 ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] hover:opacity-90' : 'bg-white/[0.06] text-white/30 cursor-not-allowed'}`} disabled={items.length === 0}>
                 {language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation'} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </Link>
@@ -325,14 +325,14 @@ export default function Procedures() {
                 />
               </>
             ) : (
-              <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center">
-                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <div className="bg-white/[0.03] border border-dashed border-white/[0.12] rounded-2xl p-6 text-center">
+                <div className="w-12 h-12 bg-white/[0.08] rounded-xl flex items-center justify-center mx-auto mb-3">
                   <span className="text-2xl">🗒️</span>
                 </div>
-                <p className="text-sm font-semibold text-slate-700 mb-1">
+                <p className="text-sm font-semibold text-white/80 mb-1">
                   {language === 'es' ? 'Mis Procedimientos' : language === 'fr' ? 'Mes Procédures' : 'My Procedures'}
                 </p>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-white/40 leading-relaxed">
                   {language === 'es' ? 'Selecciona procedimientos de la lista o usa el Modo de Voz para construir tu plan de tratamiento.' : language === 'fr' ? 'Sélectionnez des procédures dans la liste ou utilisez le Mode Voix pour construire votre plan de traitement.' : 'Select procedures from the list or use Voice Mode to build your treatment plan.'}
                 </p>
               </div>
