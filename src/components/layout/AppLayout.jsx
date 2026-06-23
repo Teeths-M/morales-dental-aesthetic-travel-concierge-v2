@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
@@ -11,11 +11,20 @@ import BiometricGate from '@/components/security/BiometricGate';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import { Lock, AlertTriangle } from 'lucide-react';
+import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
+
+// Paths where the onboarding wizard should never appear
+const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
 
 export default function AppLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
   useGeoAutoAlign();
+
+  const suppressOnboarding = NO_ONBOARDING_PATHS.some(p => pathname.startsWith(p));
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !suppressOnboarding && !!user && !isOnboardingComplete()
+  );
 
   // Suppress patient-facing fixed FABs on pages where they don't belong:
   // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)
@@ -25,6 +34,14 @@ export default function AppLayout() {
 
   return (
     <BiometricGate>
+      {/* First-time onboarding wizard — shown once per account */}
+      {showOnboarding && !suppressOnboarding && (
+        <FirstTimeOnboarding
+          userDisplayName={user?.full_name || user?.name || ''}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
+
       <div className="min-h-screen flex flex-col">
         <OfflineBanner />
         <Header />
