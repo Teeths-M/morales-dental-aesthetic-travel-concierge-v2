@@ -31,21 +31,23 @@ import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
 import PageHeroBand from "@/components/layout/PageHeroBand";
 import cityData from "@/lib/cityData.json";
 
+// id = keyword matched against DoctorSpecialty.procedure_name (case-insensitive includes)
+// Must align with en_name values in MasterProcedure entity (see seedMasterProcedures)
 const PROCEDURES = [
-  { id: "dental_implants", name: "Dental Implants", category: "Dental" },
-  { id: "all_on_4", name: "All on 4", category: "Dental" },
-  { id: "porcelain_veneers", name: "Porcelain Veneers", category: "Dental" },
-  { id: "smile_makeover", name: "Smile Makeover", category: "Dental" },
-  { id: "teeth_whitening", name: "Teeth Whitening", category: "Dental" },
-  { id: "rhinoplasty", name: "Rhinoplasty", category: "Aesthetic" },
-  { id: "breast_surgery", name: "Breast Surgery", category: "Aesthetic" },
-  { id: "liposuction", name: "Liposuction", category: "Aesthetic" },
-  { id: "tummy_tuck", name: "Tummy Tuck", category: "Aesthetic" },
-  { id: "facelift", name: "Facelift", category: "Aesthetic" },
-  { id: "gastric_sleeve", name: "Gastric Sleeve", category: "Bariatric" },
-  { id: "gastric_bypass", name: "Gastric Bypass", category: "Bariatric" },
-  { id: "joint_replacement", name: "Joint Replacement", category: "Orthopedics" },
-  { id: "spine_surgery", name: "Spine Surgery", category: "Orthopedics" },
+  { id: "implant", name: "Dental Implants", category: "Dental" },
+  { id: "All-on-4", name: "All-on-4 Implants", category: "Dental" },
+  { id: "Porcelain Veneers", name: "Porcelain Veneers", category: "Dental" },
+  { id: "Smile Makeover", name: "Smile Makeover", category: "Dental" },
+  { id: "Teeth Whitening", name: "Teeth Whitening", category: "Dental" },
+  { id: "Rhinoplasty", name: "Rhinoplasty", category: "Aesthetic" },
+  { id: "Breast", name: "Breast Surgery", category: "Aesthetic" },
+  { id: "Liposuction", name: "Liposuction", category: "Aesthetic" },
+  { id: "Tummy Tuck", name: "Tummy Tuck", category: "Aesthetic" },
+  { id: "Facelift", name: "Facelift", category: "Aesthetic" },
+  { id: "Gastric Sleeve", name: "Gastric Sleeve", category: "Bariatric" },
+  { id: "Gastric Bypass", name: "Gastric Bypass", category: "Bariatric" },
+  { id: "Replacement", name: "Joint Replacement", category: "Orthopedics" },
+  { id: "Spinal", name: "Spine Surgery", category: "Orthopedics" },
 ];
 
 const COUNTRIES = Object.keys(cityData).sort();
@@ -72,8 +74,9 @@ export default function Discover() {
     queryKey: ["doctors-search", filters],
     queryFn: async () => {
       const allDoctors = await base44.entities.Doctor.filter({ status: "active" });
-      const allSpecialties = await base44.entities.DoctorSpecialty.list();
-      
+      // Load up to 2000 records to avoid silent truncation at default limit
+      const allSpecialties = await base44.entities.DoctorSpecialty.list('-created_date', 2000);
+
       // Filter doctors based on criteria
       let filtered = allDoctors.filter(doctor => {
         // Country filter
@@ -82,22 +85,22 @@ export default function Discover() {
         if (filters.city && doctor.clinic_city !== filters.city) return false;
         // Rating filter — skip doctors with no rating rather than hiding them
         if (filters.rating && doctor.rating != null && doctor.rating < filters.rating) return false;
-        
-        // Procedure filter - check if doctor has this specialty
+
+        // Procedure filter: keyword match against stored procedure_name.
+        // DB procedure_id uses DENT-* codes that don't match our filter slugs,
+        // so name-based includes is the reliable path here.
         if (filters.procedure) {
+          const keyword = filters.procedure.toLowerCase();
           const hasSpecialty = allSpecialties.some(
-            spec => spec.doctor_id === doctor.id && 
-            (spec.procedure_id === filters.procedure || spec.procedure_name.toLowerCase().includes(filters.procedure.toLowerCase()))
+            spec => spec.doctor_id === doctor.id &&
+            spec.procedure_name?.toLowerCase().includes(keyword)
           );
           if (!hasSpecialty) return false;
         }
-        
+
         return true;
       });
 
-      // Price filtering would require joining with ProcedurePricing - simplified for now
-      // In production, create a backend function for efficient filtering
-      
       return filtered;
     },
   });
@@ -226,7 +229,7 @@ export default function Discover() {
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               {filters.procedure && (
                 <Badge variant="secondary" className="gap-1 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:bg-[#0E2A2A]">
-                  {PROCEDURES.find(p => p.id === filters.procedure)?.name || filters.procedure}
+                  {PROCEDURES.find(p => p.id === filters.procedure)?.name || filters.procedure.charAt(0).toUpperCase() + filters.procedure.slice(1)}
                   <X className="h-3 w-3 text-white/70 hover:text-white cursor-pointer" onClick={() => updateFilter("procedure", "")} />
                 </Badge>
               )}
@@ -310,9 +313,9 @@ export default function Discover() {
 
       {/* Filters Sheet (Mobile & Desktop Advanced) */}
       <Sheet open={showFilters} onOpenChange={setShowFilters}>
-        <SheetContent className="w-full sm:max-w-md">
+        <SheetContent className="w-full sm:max-w-md bg-[#0C1A1D] border-[#2A3F4A] text-white">
           <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
+            <SheetTitle className="text-white">Filters</SheetTitle>
           </SheetHeader>
           <DoctorFilterPanel
             filters={filters}
