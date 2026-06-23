@@ -157,24 +157,24 @@ export default function Discover() {
 
             {/* Desktop Filters */}
             <div className="hidden md:flex items-center gap-2">
-              <Select value={filters.country} onValueChange={(v) => updateFilter("country", v)}>
+              <Select value={filters.country || "all"} onValueChange={(v) => updateFilter("country", v === "all" ? "" : v)}>
                 <SelectTrigger className="w-40 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:border-[#D4AF37]/50 hover:bg-[#0E2A2A]">
                   <SelectValue placeholder="Country" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
-                  <SelectItem value="" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Countries</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Countries</SelectItem>
                   {COUNTRIES.map(country => (
                     <SelectItem key={country} value={country} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">{country}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={filters.city} onValueChange={(v) => updateFilter("city", v)} disabled={!filters.country}>
+              <Select value={filters.city || "all"} onValueChange={(v) => updateFilter("city", v === "all" ? "" : v)} disabled={!filters.country}>
                 <SelectTrigger className="w-40 bg-[#0C1A1D] border-[#2A3F4A] text-white hover:border-[#D4AF37]/50 hover:bg-[#0E2A2A] disabled:opacity-40 disabled:border-white/[0.08]">
                   <SelectValue placeholder="City" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0C1A1D] border-[#2A3F4A] text-white">
-                  <SelectItem value="" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Cities</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">All Cities</SelectItem>
                   {getCityOptions().map(city => (
                     <SelectItem key={city} value={city} className="text-white hover:bg-[#D4AF37]/10 hover:text-white focus:bg-[#D4AF37]/10 focus:text-white">{city}</SelectItem>
                   ))}
