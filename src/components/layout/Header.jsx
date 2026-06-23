@@ -58,11 +58,12 @@ export default function Header() {
       
       {/* 1. PREMIUM BRANDING IDENTITY */}
       <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-3.5 group z-50">
-        <img
-          src="/morales-m-mark.png"
-          alt="Morales"
-          className="w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 object-contain drop-shadow-[0_2px_10px_rgba(212,175,55,0.35)]"
-        />
+        <div
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold shrink-0 text-[18px] leading-none"
+          style={{ background: '#D4AF37', color: '#060B16' }}
+        >
+          M
+        </div>
         <div className="flex flex-col gap-1">
           <span className="font-serif font-normal text-[17px] text-white uppercase tracking-[0.32em] leading-none">
             MORALES
