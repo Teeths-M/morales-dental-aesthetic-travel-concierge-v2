@@ -34,12 +34,15 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+
     if (!ACCEPTED.includes(file.type)) {
-      setScanError('Only JPEG, PNG, WEBP, or PDF files are accepted.');
+      setScanError('That file type isn\'t supported. Please choose a photo (JPG or PNG) or a PDF.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setScanError('File must be under 10MB.');
+      setScanError(`Your file is ${sizeMB} MB — too large. Please choose a file under 10 MB.`);
       return;
     }
 
@@ -47,26 +50,33 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
     setWarnings([]);
     setScanState('uploading');
 
-    // Upload file publicly to get a URL for vision API
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-    setScanState('scanning');
+      setScanState('scanning');
 
-    // Extract passport data via AI vision
-    const res = await base44.functions.invoke('extractPassportData', { file_url });
-    const { extracted: data, warnings: w } = res.data;
+      const res = await base44.functions.invoke('extractPassportData', { file_url });
+      const { extracted: data, warnings: w } = res.data;
 
-    // Populate form fields
-    if (data.passport_number) update('passport_number', data.passport_number);
-    if (data.issue_date) update('passport_issue_date', data.issue_date);
-    if (data.expiry_date) update('passport_expiry_date', data.expiry_date);
-    if (data.nationality) update('nationality', data.nationality);
-    if (data.full_name && !form.patient_name) update('patient_name', data.full_name);
+      if (data.passport_number) update('passport_number', data.passport_number);
+      if (data.issue_date) update('passport_issue_date', data.issue_date);
+      if (data.expiry_date) update('passport_expiry_date', data.expiry_date);
+      if (data.nationality) update('nationality', data.nationality);
+      if (data.full_name && !form.patient_name) update('patient_name', data.full_name);
 
-    setExtracted(data);
-    setWarnings(w || []);
-    setScanState('done');
-    setEditMode(false);
+      setExtracted(data);
+      setWarnings(w || []);
+      setScanState('done');
+      setEditMode(false);
+    } catch (err) {
+      const isOffline = !navigator.onLine;
+      setScanError(
+        isOffline
+          ? "You're offline. Please connect to the internet and try again."
+          : "We couldn't read your passport. That's okay — please try again, or enter your details manually below."
+      );
+      setScanState('error');
+    }
   };
 
   const handleRescan = () => {
@@ -103,8 +113,8 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
         </div>
       )}
 
-      {/* Upload Zone */}
-      {scanState === 'idle' && (
+      {/* Upload Zone — shown for idle and after a scan error so user can retry */}
+      {(scanState === 'idle' || scanState === 'error') && (
         <div>
           <div
             onClick={() => fileRef.current?.click()}
