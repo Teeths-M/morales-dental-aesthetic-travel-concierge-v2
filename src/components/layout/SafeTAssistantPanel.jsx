@@ -65,7 +65,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
     } catch (_) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I'm having trouble connecting right now. If this is an emergency, tap **Secure Line** below immediately.",
+        content: "I'm initializing — please try again in a moment.\n\n**For immediate assistance:**\n• Tap **Secure Line** below for emergency support\n• Contact your Morales coordinator directly\n• Call local emergency services if needed (112 in Europe, 911 in North America)",
       }]);
     } finally {
       setLoading(false);

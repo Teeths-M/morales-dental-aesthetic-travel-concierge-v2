@@ -82,11 +82,20 @@ Deno.serve(createHandler(async ({ body }) => {
     return err('messages array is required');
   }
 
-  // Trim to last 20 messages to stay within token limits
-  const conversation = messages.slice(-20).map((m: any) => ({
+  // Trim to last 20 messages and map roles
+  let conversation = messages.slice(-20).map((m: any) => ({
     role:    m.role === 'user' ? 'user' : 'assistant',
     content: String(m.content ?? '').slice(0, 2000),
   }));
+
+  // Anthropic requires the first message to have role 'user'.
+  // The client includes a synthetic assistant welcome message — drop it and any
+  // other leading assistant turns before the first real user message.
+  const firstUserIdx = conversation.findIndex((m) => m.role === 'user');
+  if (firstUserIdx === -1) {
+    return ok({ reply: "Please send a message and I'll be right with you." });
+  }
+  if (firstUserIdx > 0) conversation = conversation.slice(firstUserIdx);
 
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) {
@@ -101,20 +110,28 @@ Deno.serve(createHandler(async ({ body }) => {
     ? `\n\n## Current User\nName: ${user_name}${user_email ? `\nEmail: ${user_email}` : ''}${trip_phase ? `\nJourney Phase: ${trip_phase}` : ''}`
     : '';
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method:  'POST',
-    headers: {
-      'x-api-key':         apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type':      'application/json',
-    },
-    body: JSON.stringify({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      system:     SYSTEM_PROMPT + userCtx,
-      messages:   conversation,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch('https://api.anthropic.com/v1/messages', {
+      method:  'POST',
+      headers: {
+        'x-api-key':         apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type':      'application/json',
+      },
+      body: JSON.stringify({
+        model:      'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system:     SYSTEM_PROMPT + userCtx,
+        messages:   conversation,
+      }),
+    });
+  } catch (fetchErr) {
+    console.error('[safeTAssist] network error reaching Anthropic:', fetchErr);
+    return ok({
+      reply: "I'm having a moment of difficulty connecting. If this is urgent, please tap **Secure Line** below or contact your Morales coordinator. I'll be back shortly.",
+    });
+  }
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '');
