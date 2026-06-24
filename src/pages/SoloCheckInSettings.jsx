@@ -39,7 +39,7 @@ export default function SoloCheckInSettings() {
   const stats = {
     total: allCheckIns.length,
     acknowledged: allCheckIns.filter(c => c.status === 'acknowledged' || c.status === 'resolved').length,
-    escalated: allCheckIns.filter(c => c.status.includes('escalated')).length,
+    escalated: allCheckIns.filter(c => c.status?.includes('escalated')).length,
   };
 
   // Derive the latest actionable check-in status
@@ -352,7 +352,7 @@ export default function SoloCheckInSettings() {
                       </div>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      {checkIn.escalation_level !== 'none' && (
+                      {checkIn.escalation_level && checkIn.escalation_level !== 'none' && (
                         <p className="text-[10px] font-semibold text-red-600">
                           ⚠️ {checkIn.escalation_level.replace('_', ' ').toUpperCase()}
                         </p>

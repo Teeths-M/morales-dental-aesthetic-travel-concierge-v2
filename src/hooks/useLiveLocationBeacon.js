@@ -51,28 +51,9 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
     } catch (_) {}
   }, [caseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When connectivity returns, flush the latest cached position to the backend
-  // so the Guardian map updates without waiting for the next GPS watchPosition event.
-  useEffect(() => {
-    if (!caseId) return;
-    const onOnline = () => {
-      try {
-        const raw = localStorage.getItem(`morales_loc_cache_${caseId}`);
-        if (!raw) return;
-        const cached = JSON.parse(raw);
-        if (!cached?.lat || !cached?.ts) return;
-        const ageMs = Date.now() - new Date(cached.ts).getTime();
-        if (ageMs < 30 * 60_000 && mountedRef.current) {
-          sendUpdate(cached.lat, cached.lng, cached.accuracy, cached.heading, cached.speed, cached.altitude, cached.source || 'gps');
-        }
-      } catch (_) {}
-    };
-    window.addEventListener('online', onOnline);
-    return () => window.removeEventListener('online', onOnline);
-  }, [caseId, sendUpdate]);
-
-  const shouldRun = enabled && caseId && !COMPLETED_STATUSES.has(caseStatus) && !isPaused;
-
+  // cacheKey and sendUpdate must be defined before the online-flush useEffect
+  // that references sendUpdate in its dependency array — otherwise they'd be in
+  // the JavaScript temporal dead zone when React evaluates the dep array.
   const cacheKey = caseId ? `morales_loc_cache_${caseId}` : null;
 
   const sendUpdate = useCallback(async (lat, lng, accuracy, heading, speed, altitude, source = 'gps') => {
@@ -116,6 +97,28 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
       if (mountedRef.current) setCurrentLocation(locSnapshot);
     }
   }, [caseId, cacheKey]);
+
+  // When connectivity returns, flush the latest cached position to the backend
+  // so the Guardian map updates without waiting for the next GPS watchPosition event.
+  useEffect(() => {
+    if (!caseId) return;
+    const onOnline = () => {
+      try {
+        const raw = localStorage.getItem(`morales_loc_cache_${caseId}`);
+        if (!raw) return;
+        const cached = JSON.parse(raw);
+        if (!cached?.lat || !cached?.ts) return;
+        const ageMs = Date.now() - new Date(cached.ts).getTime();
+        if (ageMs < 30 * 60_000 && mountedRef.current) {
+          sendUpdate(cached.lat, cached.lng, cached.accuracy, cached.heading, cached.speed, cached.altitude, cached.source || 'gps');
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [caseId, sendUpdate]);
+
+  const shouldRun = enabled && caseId && !COMPLETED_STATUSES.has(caseStatus) && !isPaused;
 
   const stopWatch = useCallback(() => {
     if (watchIdRef.current != null) {
