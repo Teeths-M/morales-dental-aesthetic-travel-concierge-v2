@@ -64,7 +64,7 @@ export default function AppLayout() {
 
             <Link
               to="/passport-vault"
-              className="fixed bottom-[88px] right-6 z-50 w-12 h-12 bg-emerald-800/90 hover:bg-emerald-700 rounded-full shadow-xl backdrop-blur flex items-center justify-center text-white transition-all hover:scale-105 group"
+              className="fixed bottom-28 right-6 z-50 w-12 h-12 bg-emerald-800/90 hover:bg-emerald-700 rounded-full shadow-xl backdrop-blur flex items-center justify-center text-white transition-all hover:scale-105 group"
               aria-label="Open My Vault"
               style={{ border: '1px solid rgba(255,255,255,0.1)' }}
             >
