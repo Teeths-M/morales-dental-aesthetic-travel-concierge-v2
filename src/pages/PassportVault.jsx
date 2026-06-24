@@ -21,6 +21,7 @@ export default function PassportVault() {
   const [hasPIN, setHasPIN] = useState(null);
   const [pinVerified, setPinVerified] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [vaultError, setVaultError] = useState(null);
 
   useEffect(() => {
     if (isLoadingAuth) return; // wait for AuthContext to resolve (online or cached-offline)
@@ -58,11 +59,15 @@ export default function PassportVault() {
       } catch (err) {
         console.warn('[PassportVault] vault lookup failed, falling back to cache:', err);
         let cachedExists = false;
-        try { cachedExists = localStorage.getItem(cacheKey + '_exists') === '1'; } catch (_) {}
-        if (!cachedExists) {
-          try { cachedExists = JSON.parse(localStorage.getItem(cacheKey) || '[]').length > 0; } catch (_) {}
+        let hasCachedData = false;
+        try { const v = localStorage.getItem(cacheKey + '_exists'); if (v !== null) { cachedExists = v === '1'; hasCachedData = true; } } catch (_) {}
+        if (!hasCachedData) {
+          try { const parsed = JSON.parse(localStorage.getItem(cacheKey) || '[]'); cachedExists = parsed.length > 0; hasCachedData = parsed.length > 0; } catch (_) {}
         }
-        if (!cancelled) setHasVault(cachedExists);
+        if (!cancelled) {
+          setHasVault(cachedExists);
+          if (!hasCachedData) setVaultError(err);
+        }
       }
 
       try {
@@ -125,6 +130,23 @@ export default function PassportVault() {
       <div className="min-h-screen bg-[#060B16] flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
           style={{ borderColor: `${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} ${BRAND.goldAlpha(0.4)} transparent` }} />
+      </div>
+    );
+  }
+
+  if (vaultError) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">🔒</span>
+          </div>
+          <h2 className="text-white font-semibold text-lg mb-2">Vault Unavailable</h2>
+          <p className="text-slate-400 text-sm mb-4">Your vault couldn&apos;t be loaded. Your documents are safe — please try again.</p>
+          <button onClick={() => window.location.reload()} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm">
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }

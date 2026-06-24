@@ -142,6 +142,20 @@ Deno.serve(async (req) => {
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const portalUrl = `${appUrl}/portal/doctor/${portalToken}`;
 
+    // Stale check: re-fetch fresh state before updating to avoid concurrent edit race
+    const freshCases = await base44.asServiceRole.entities.CaseRecord.filter({ id: caseId }, '-created_date', 1);
+    const freshCase = freshCases?.[0];
+    if (!freshCase) {
+      return Response.json({ error: 'Case not found' }, { status: 404 });
+    }
+    const expectedStatus = caseRecord.status;
+    if (freshCase.status !== expectedStatus) {
+      return Response.json({
+        error: `Case status has changed (expected ${expectedStatus}, got ${freshCase.status}). Please refresh and try again.`,
+        stale: true,
+      }, { status: 409 });
+    }
+
     await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       status: 'Doctor-Pending',
       doctor_email: selectedDoctor.email,

@@ -47,12 +47,32 @@ Deno.serve(async (req) => {
 
     const newStatus = action === 'approve' ? 'approved' : 'revoked';
 
-    await base44.asServiceRole.entities.PassportAccessGrant.update(grant.id, {
-      status: newStatus,
-      granted_at: action === 'approve' ? new Date().toISOString() : grant.granted_at,
-      revoked_at: action !== 'approve' ? new Date().toISOString() : null,
-      revoked_reason: action !== 'approve' ? `${action}d by ${isAdmin ? 'admin' : 'patient'}` : null
-    });
+    if (action === 'approve') {
+      await base44.asServiceRole.entities.PassportAccessGrant.update(grant.id, {
+        status: newStatus,
+        granted_at: new Date().toISOString(),
+      });
+    } else {
+      // Instead of mutating the original grant, create an immutable revocation record
+      await base44.asServiceRole.entities.PassportAccessGrant.create({
+        original_grant_id: grant.id,
+        patient_email: grant.patient_email,
+        requester_email: grant.requester_email,
+        passport_token: grant.passport_token,
+        status: 'revoked',
+        revoked_at: new Date().toISOString(),
+        revoked_by: user.email,
+        revoked_reason: `${action}d by ${isAdmin ? 'admin' : 'patient'}`,
+        is_revocation_record: true,
+      }).catch(e => console.error('[approveRevokePassportAccess] Failed to create revocation record:', e?.message));
+
+      // Mark original as revoked (keep both records for audit)
+      await base44.asServiceRole.entities.PassportAccessGrant.update(grant.id, {
+        is_active: false,
+        revoked_at: new Date().toISOString(),
+        revoked_by: user.email,
+      });
+    }
 
     const auditAction = action === 'approve' ? 'approve_request' : 'revoke_access';
 

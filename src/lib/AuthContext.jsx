@@ -196,17 +196,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = async (shouldRedirect = true) => {
+    try {
+      if (shouldRedirect) {
+        // Use the SDK's logout method which handles token cleanup and redirect
+        await base44.auth.logout(window.location.href);
+      } else {
+        // Just remove the token without redirect
+        await base44.auth.logout();
+      }
+    } catch (_) {}
+
+    // Explicitly clear sensitive auth data from localStorage
+    try {
+      localStorage.removeItem('morales_last_known_user');
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+      // Clear any session-specific location caches
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('morales_loc_cache_') || key.startsWith('morales_trail_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch (_) {}
+
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
-    }
   };
 
   const navigateToLogin = (nextUrl = `${window.location.origin}/dashboard`) => {

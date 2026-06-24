@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) return Response.json({ error: 'Payment system not configured' }, { status: 503 });
 
-    const { case_id, deposit_option, proposal_token } = await req.json();
+    const { case_id, deposit_option, proposal_token, amount: clientAmountRaw } = await req.json();
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 
     const validOptions = ['Full', '50%', '25%'];
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       } catch (_) { /* session expired — create new one */ }
     }
 
-    // Calculate amount
+    // SECURITY: Always calculate amount from server-side data, never trust client
     const finalPrice = caseRecord.final_package_price || 0;
     if (finalPrice <= 0) return Response.json({ error: 'Invalid package price' }, { status: 400 });
 
@@ -97,6 +97,14 @@ Deno.serve(async (req) => {
     if (deposit_option === 'Full') { amountDue = finalPrice * 0.95; planType = 'full_payment'; }
     else if (deposit_option === '50%') { amountDue = finalPrice * 0.50; planType = 'deposit_50'; }
     else { amountDue = finalPrice * 0.25; planType = 'deposit_25'; }
+
+    // If client sent an amount, validate it matches the server-calculated value (fraud detection).
+    const clientAmount = typeof clientAmountRaw === 'number' ? Math.round(clientAmountRaw * 100) : null;
+    const serverAmount = Math.round(amountDue * 100);
+    if (clientAmount !== null && Math.abs(clientAmount - serverAmount) > 1) {
+      console.error(`[generateStripePaymentLink] Amount mismatch! Client sent ${clientAmount} cents, server expects ${serverAmount} cents for case ${case_id}`);
+      return Response.json({ error: 'Payment amount mismatch — please refresh and try again' }, { status: 400 });
+    }
 
     const stripe = new Stripe(stripeKey);
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');

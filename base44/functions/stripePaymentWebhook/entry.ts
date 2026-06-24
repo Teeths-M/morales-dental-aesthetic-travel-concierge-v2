@@ -167,9 +167,15 @@ Deno.serve(async (req) => {
         });
         const refundedCaseId = priorTxns[0]?.case_id;
         if (refundedCaseId) {
-          await base44.asServiceRole.entities.CaseRecord.update(refundedCaseId, {
-            payment_status: 'Refunded',
-          });
+          // Guard: never modify financial fields on a completed case
+          const refundFreshCase = await base44.asServiceRole.entities.CaseRecord.get(refundedCaseId).catch(() => null);
+          if (refundFreshCase?.is_finalized) {
+            console.warn(`[stripePaymentWebhook] Attempted to update finalized case ${refundedCaseId} on refund — skipping`);
+          } else {
+            await base44.asServiceRole.entities.CaseRecord.update(refundedCaseId, {
+              payment_status: 'Refunded',
+            });
+          }
         }
         await base44.asServiceRole.entities.PaymentTransaction.create({
           case_id: refundedCaseId || null,
@@ -298,10 +304,41 @@ async function handlePackagePaymentSuccess(base44, {
     }
   }
 
-  const caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id);
+  // Guard: never modify financial fields on a completed case
+  const freshCase = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
+  if (freshCase?.is_finalized) {
+    console.warn(`[stripePaymentWebhook] Attempted to update finalized case ${case_id} — skipping`);
+    return;
+  }
+
+  const caseRecord = freshCase;
   if (!caseRecord) {
     console.warn(`[handlePackagePaymentSuccess] Case ${case_id} not found`);
     return;
+  }
+
+  // Validate payment amount matches expected price from CaseRecord
+  if (amount_total != null) {
+    const paidAmountCents = Math.round(amount_total * 100); // convert dollars → cents
+    const expectedAmountCents = Math.round((caseRecord.final_package_price || 0) * 100);
+    const toleranceCents = 100; // $1 tolerance
+
+    // Only validate full payments — deposits are partial by design
+    if (plan_type === 'full_payment' && expectedAmountCents > 0 && Math.abs(paidAmountCents - expectedAmountCents) > toleranceCents) {
+      console.error(`[stripePaymentWebhook] Amount mismatch: paid ${paidAmountCents} cents, expected ${expectedAmountCents} cents for case ${case_id}`);
+      // Log but don't reject — Stripe already charged; flag for manual review
+      await base44.asServiceRole.entities.PaymentTransaction.create({
+        case_id,
+        amount_paid: amount_total,
+        expected_amount: caseRecord.final_package_price || 0,
+        status: 'flagged_amount_mismatch',
+        stripe_event_id: event_id,
+        requires_manual_review: true,
+        flagged_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      }).catch(() => {});
+      // Continue processing — Stripe already charged; review record created above
+    }
   }
 
   let paymentStatus, newCaseStatus;
@@ -324,6 +361,10 @@ async function handlePackagePaymentSuccess(base44, {
     stripe_payment_id: stripe_payment_intent_id || stripe_session_id,
     status: newCaseStatus,
     deposit_option: deposit_option || (plan_type === 'full_payment' ? 'Full' : plan_type === 'deposit_50' ? '50%' : '25%'),
+    ...(newCaseStatus === 'Completed' ? {
+      is_finalized: true,
+      finalized_at: new Date().toISOString(),
+    } : {}),
     timeline_log: [
       ...(caseRecord.timeline_log || []),
       {

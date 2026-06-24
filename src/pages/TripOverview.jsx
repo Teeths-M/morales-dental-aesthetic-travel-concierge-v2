@@ -16,6 +16,7 @@ export default function TripOverview() {
   const [user, setUser] = useState(null);
   const [travelRequests, setTravelRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedTrip, setSelectedTrip] = useState(null);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function TripOverview() {
       }
     } catch (err) {
       console.error('Error loading travel requests:', err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -117,6 +119,20 @@ export default function TripOverview() {
             <p className="text-slate-600">Loading your trip details...</p>
           </div>
         </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <p className="text-slate-600 font-medium mb-2">Unable to load your trip</p>
+          <p className="text-slate-400 text-sm mb-4">Please check your connection and try again</p>
+          <button onClick={() => window.location.reload()} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm">
+            Reload
+          </button>
+        </div>
       </div>
     );
   }
