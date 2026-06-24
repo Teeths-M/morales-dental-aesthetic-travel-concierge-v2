@@ -37,6 +37,7 @@ export default function AdminSoloMonitor() {
   const [locations, setLocations] = useState({});
   const [notifLogs, setNotifLogs] = useState({});
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
   const [expanded, setExpanded] = useState({});
   const [runningEscalation, setRunningEscalation] = useState(false);
@@ -46,6 +47,8 @@ export default function AdminSoloMonitor() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
+    try {
     const [pending, e2h, e3h, e5h, e9h] = await Promise.allSettled([
       base44.entities.SoloCheckIn.filter({ status: 'pending' }, '-scheduled_time', 50),
       base44.entities.SoloCheckIn.filter({ status: 'escalated_2h' }, '-scheduled_time', 50),
@@ -93,6 +96,10 @@ export default function AdminSoloMonitor() {
       notifMap[cid] = logs || [];
     }));
     setNotifLogs(notifMap);
+    } catch (err) {
+      console.error('[AdminSoloMonitor] Failed to load:', err?.message);
+      setFetchError('Failed to load solo monitoring data. Please refresh.');
+    }
     setLoading(false);
   }, []);
 
@@ -157,6 +164,13 @@ export default function AdminSoloMonitor() {
   return (
     <AdminLayout>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-red-700 text-sm flex items-center gap-2">
+            <span>⚠️</span> {fetchError}
+            <button onClick={() => { setFetchError(null); load(); }} className="ml-auto text-xs underline">Retry</button>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex gap-1 bg-slate-100 rounded-2xl p-1 border border-slate-200">

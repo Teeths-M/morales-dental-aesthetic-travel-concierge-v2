@@ -445,8 +445,40 @@ export default function Booking() {
     navigate({ pathname: '/dashboard', search: window.location.search });
   };
 
+  const [error, setError] = useState(null);
+
+  const validateForm = (formData) => {
+    const errors = [];
+
+    if (!formData.procedure_interest) errors.push('Please select a procedure');
+    if (!formData.procedure_country) errors.push('Please select a destination country');
+
+    // Email validation
+    if (formData.emergency_contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emergency_contact_email)) {
+      errors.push('Emergency contact email is invalid');
+    }
+
+    // Date validation
+    if (formData.preferred_date) {
+      const date = new Date(formData.preferred_date);
+      if (isNaN(date.getTime()) || date < new Date()) {
+        errors.push('Preferred date must be in the future');
+      }
+    }
+
+    return errors;
+  };
+
   const handleConfirmSubmit = () => {
     setShowPreview(false);
+
+    const validationErrors = validateForm(form);
+    if (validationErrors.length > 0) {
+      setError(validationErrors[0]);
+      return;
+    }
+    setError(null);
+
     const { isHighRisk, flaggedCondition } = checkMedicalRisk(form.medical_conditions || []);
     if (isHighRisk) {
       setHighRiskFlag(flaggedCondition);
@@ -564,6 +596,9 @@ export default function Booking() {
               Your SAFE-T assessment requires review before proceeding.
               A member of our team will contact you within 24 hours.
             </p>
+          )}
+          {error && (
+            <p className="text-sm text-red-600 px-6 pt-4">{error}</p>
           )}
           <div className="flex items-center justify-between px-6 py-4">
             <Button

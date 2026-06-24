@@ -43,37 +43,37 @@ const AdminSosSyncMonitor       = lazy(() => import('@/pages/AdminSosSyncMonitor
 export const adminRoutes = (
   <Route key="admin-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
     <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
-      <Route path="/admin"                           element={<SimpleAdminDashboard />} />
-      <Route path="/admin/partners"                  element={<AdminPartners />} />
-      <Route path="/admin/imports"                   element={<AdminImports />} />
-      <Route path="/admin/doctor-verification"       element={<DoctorLicenseVerification />} />
-      <Route path="/admin/doctor-verification-queue" element={<DoctorVerificationAdmin />} />
-      <Route path="/admin/procedure-requests"        element={<AdminProcedureRequests />} />
-      <Route path="/admin/portal-viewer"             element={<AdminPortalViewer />} />
-      <Route path="/admin/sms"                       element={<AdminSms />} />
-      <Route path="/admin/sms-handshake"             element={<AdminSmsHandshake />} />
-      <Route path="/admin/dispatch-monitor"          element={<AdminDispatchMonitor />} />
-      <Route path="/admin/iq200"                     element={<IQ200AdminCenter />} />
-      <Route path="/admin/pricing"                   element={<AdminPricingDashboard />} />
-      <Route path="/admin/analytics"                 element={<AdminAnalyticsDashboard />} />
-      <Route path="/admin/provider-verification"     element={<AdminProviderVerification />} />
-      <Route path="/admin/companions"                element={<AdminCompanions />} />
-      <Route path="/admin/monetization"              element={<MonetizationDashboard />} />
-      <Route path="/admin/payments"                  element={<PaymentsPayoutsDashboard />} />
-      <Route path="/admin/risk-optimization"         element={<RiskOptimizationDashboard />} />
-      <Route path="/admin/partner-verification"      element={<PartnerVerificationHub />} />
-      <Route path="/admin/partner-verification/:id"  element={<PartnerVerificationHub />} />
-      <Route path="/admin/audit-log"                 element={<AdminAuditLog />} />
-      <Route path="/admin/provider-performance"      element={<ProviderPerformanceDashboard />} />
-      <Route path="/admin/config-approvals"          element={<AdminConfigApprovals />} />
-      <Route path="/admin/audit-chain"               element={<AdminAuditChain />} />
-      <Route path="/admin/travel-requests"           element={<AdminTravelRequests />} />
-      <Route path="/admin/solo-monitor"              element={<AdminSoloMonitor />} />
-      <Route path="/admin/wilderness-rescue"         element={<AdminWildernessRescue />} />
-      <Route path="/admin/sos-sync-monitor"          element={<AdminSosSyncMonitor />} />
+      <Route path="/admin"                           element={<ErrorBoundary><SimpleAdminDashboard /></ErrorBoundary>} />
+      <Route path="/admin/partners"                  element={<ErrorBoundary><AdminPartners /></ErrorBoundary>} />
+      <Route path="/admin/imports"                   element={<ErrorBoundary><AdminImports /></ErrorBoundary>} />
+      <Route path="/admin/doctor-verification"       element={<ErrorBoundary><DoctorLicenseVerification /></ErrorBoundary>} />
+      <Route path="/admin/doctor-verification-queue" element={<ErrorBoundary><DoctorVerificationAdmin /></ErrorBoundary>} />
+      <Route path="/admin/procedure-requests"        element={<ErrorBoundary><AdminProcedureRequests /></ErrorBoundary>} />
+      <Route path="/admin/portal-viewer"             element={<ErrorBoundary><AdminPortalViewer /></ErrorBoundary>} />
+      <Route path="/admin/sms"                       element={<ErrorBoundary><AdminSms /></ErrorBoundary>} />
+      <Route path="/admin/sms-handshake"             element={<ErrorBoundary><AdminSmsHandshake /></ErrorBoundary>} />
+      <Route path="/admin/dispatch-monitor"          element={<ErrorBoundary><AdminDispatchMonitor /></ErrorBoundary>} />
+      <Route path="/admin/iq200"                     element={<ErrorBoundary><IQ200AdminCenter /></ErrorBoundary>} />
+      <Route path="/admin/pricing"                   element={<ErrorBoundary><AdminPricingDashboard /></ErrorBoundary>} />
+      <Route path="/admin/analytics"                 element={<ErrorBoundary><AdminAnalyticsDashboard /></ErrorBoundary>} />
+      <Route path="/admin/provider-verification"     element={<ErrorBoundary><AdminProviderVerification /></ErrorBoundary>} />
+      <Route path="/admin/companions"                element={<ErrorBoundary><AdminCompanions /></ErrorBoundary>} />
+      <Route path="/admin/monetization"              element={<ErrorBoundary><MonetizationDashboard /></ErrorBoundary>} />
+      <Route path="/admin/payments"                  element={<ErrorBoundary><PaymentsPayoutsDashboard /></ErrorBoundary>} />
+      <Route path="/admin/risk-optimization"         element={<ErrorBoundary><RiskOptimizationDashboard /></ErrorBoundary>} />
+      <Route path="/admin/partner-verification"      element={<ErrorBoundary><PartnerVerificationHub /></ErrorBoundary>} />
+      <Route path="/admin/partner-verification/:id"  element={<ErrorBoundary><PartnerVerificationHub /></ErrorBoundary>} />
+      <Route path="/admin/audit-log"                 element={<ErrorBoundary><AdminAuditLog /></ErrorBoundary>} />
+      <Route path="/admin/provider-performance"      element={<ErrorBoundary><ProviderPerformanceDashboard /></ErrorBoundary>} />
+      <Route path="/admin/config-approvals"          element={<ErrorBoundary><AdminConfigApprovals /></ErrorBoundary>} />
+      <Route path="/admin/audit-chain"               element={<ErrorBoundary><AdminAuditChain /></ErrorBoundary>} />
+      <Route path="/admin/travel-requests"           element={<ErrorBoundary><AdminTravelRequests /></ErrorBoundary>} />
+      <Route path="/admin/solo-monitor"              element={<ErrorBoundary><AdminSoloMonitor /></ErrorBoundary>} />
+      <Route path="/admin/wilderness-rescue"         element={<ErrorBoundary><AdminWildernessRescue /></ErrorBoundary>} />
+      <Route path="/admin/sos-sync-monitor"          element={<ErrorBoundary><AdminSosSyncMonitor /></ErrorBoundary>} />
       {/* Dev/test tools */}
-      <Route path="/test-portal-link"                element={<TestPortalLink />} />
-      <Route path="/portal-test-hub"                 element={<PortalTestHub />} />
+      <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
+      <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />
     </Route>
   </Route>
 );

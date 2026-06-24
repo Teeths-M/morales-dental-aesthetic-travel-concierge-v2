@@ -18,6 +18,29 @@ const MAX_TRAIL_POINTS  = 5000;  // ~41h at 30s intervals
 
 function trailKey(caseId) { return `morales_trail_${caseId}`; }
 
+function safeLocalStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (err) {
+    if (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+      // Storage full — try to make room by trimming trail
+      console.warn('[useLocationHistory] localStorage quota exceeded, trimming old data');
+      try {
+        // Remove oldest 20% of trail to make room
+        const trailRaw = localStorage.getItem(key);
+        if (trailRaw) {
+          const trail = JSON.parse(trailRaw);
+          const trimmed = trail.slice(Math.floor(trail.length * 0.2)); // Remove oldest 20%
+          localStorage.setItem(key, JSON.stringify(trimmed));
+          return true;
+        }
+      } catch (_) {}
+    }
+    return false;
+  }
+}
+
 function distanceM(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -39,7 +62,7 @@ function persistTrail(caseId, trail) {
   if (!caseId) return trail;
   try {
     const trimmed = trail.length > MAX_TRAIL_POINTS ? trail.slice(-MAX_TRAIL_POINTS) : trail;
-    localStorage.setItem(trailKey(caseId), JSON.stringify(trimmed));
+    safeLocalStorageSet(trailKey(caseId), JSON.stringify(trimmed));
     return trimmed;
   } catch (_) { return trail; }
 }

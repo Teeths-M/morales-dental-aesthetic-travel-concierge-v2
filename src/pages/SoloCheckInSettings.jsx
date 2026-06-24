@@ -11,6 +11,39 @@ import LiveBeaconPanel from '@/components/solo/LiveBeaconPanel';
 import GuardianLinkManager from '@/components/emergency/GuardianLinkManager';
 import PersonalEmergencyContactsPanel from '@/components/emergency/PersonalEmergencyContactsPanel';
 
+const PENDING_SAFE_KEY = 'morales_pending_safe_checkins';
+
+function queueSafeCheckin(caseId) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(PENDING_SAFE_KEY) || '[]');
+    existing.push({ caseId, queuedAt: new Date().toISOString() });
+    localStorage.setItem(PENDING_SAFE_KEY, JSON.stringify(existing));
+  } catch (_) {}
+}
+
+async function syncPendingSafeCheckins() {
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_SAFE_KEY) || '[]');
+    if (!pending.length || !navigator.onLine) return;
+
+    const synced = [];
+    for (const item of pending) {
+      try {
+        await base44.functions.invoke('acknowledgeSoloCheckIn', {
+          case_id: item.caseId,
+          response_method: 'app_offline_sync',
+        });
+        synced.push(item);
+      } catch (_) {}
+    }
+
+    if (synced.length) {
+      const remaining = pending.filter(p => !synced.includes(p));
+      localStorage.setItem(PENDING_SAFE_KEY, JSON.stringify(remaining));
+    }
+  } catch (_) {}
+}
+
 function SoloCheckInBanner() {
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
@@ -83,6 +116,13 @@ export default function SoloCheckInSettings() {
     if (user) loadCheckIns(user);
   }, [user]);
 
+  useEffect(() => {
+    syncPendingSafeCheckins();
+    const handleOnline = () => syncPendingSafeCheckins();
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
   const handleIAmSafe = async () => {
     if (!user) return;
     setAcknowledging(true);
@@ -107,7 +147,16 @@ export default function SoloCheckInSettings() {
       alert('✅ You are safe! Location and check-in recorded.');
       loadCheckIns();
     } catch (err) {
-      alert('Failed to record check-in. Please try again.');
+      const isNetworkError = !navigator.onLine
+        || (err?.message && (err.message.toLowerCase().includes('network') || err.message.toLowerCase().includes('fetch')));
+      if (isNetworkError) {
+        const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10).catch(() => []);
+        const ac = cases.find(c => c.status !== 'Completed') || cases[0];
+        if (ac) queueSafeCheckin(ac.id);
+        alert('Queued — will sync when online');
+      } else {
+        alert('Failed to record check-in. Please try again.');
+      }
     } finally {
       setAcknowledging(false);
     }

@@ -27,21 +27,27 @@ const statusConfig = {
   'ESCALATED': { color: 'bg-red-50 border-red-200', icon: AlertCircle, label: 'Escalated', textColor: 'text-red-700' }
 };
 
+const PAGE_SIZE = 20;
+
 export default function PortalHubAdmin() {
   const [activeTab, setActiveTab] = useState('doctors');
   const [subTab, setSubTab] = useState('workflows');
   const [filters, setFilters] = useState({ status: null });
+  const [page, setPage] = useState(1);
   const isMobile = useIsMobile();
 
   const { data: workflows = [], isLoading } = useQuery({
     queryKey: ['portal_workflows'],
-    queryFn: () => base44.entities.WorkflowEvent.list(),
+    queryFn: () => base44.entities.WorkflowEvent.filter({}, '-created_date', 50),
   });
 
   const { data: paymentPlans = [] } = useQuery({
     queryKey: ['portal_payments'],
-    queryFn: () => base44.entities.PaymentPlan.list(),
+    queryFn: () => base44.entities.PaymentPlan.filter({}, '-created_date', 50),
   });
+
+  const paginatedWorkflows = workflows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(workflows.length / PAGE_SIZE));
 
   const stats = {
     fully_confirmed: workflows.filter(w => w.status === 'FULLY_CONFIRMED').length,
@@ -103,7 +109,30 @@ export default function PortalHubAdmin() {
 
           {/* Content */}
           <div className="p-4 md:p-8">
-            {activeTab === 'workflows' && <WorkflowDashboard workflows={workflows} isLoading={isLoading} />}
+            {activeTab === 'workflows' && (
+              <>
+                <WorkflowDashboard workflows={paginatedWorkflows} isLoading={isLoading} />
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 mt-6">
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-slate-600">Page {page} of {totalPages}</span>
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
             {activeTab === 'doctors' && <DoctorProfilesManager />}
             {activeTab === 'providers' && <ProviderManager />}
             {activeTab === 'payments' && <PaymentDashboard paymentPlans={paymentPlans} />}
