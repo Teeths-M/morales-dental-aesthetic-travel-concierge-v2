@@ -80,19 +80,19 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
 
   const handleSelect = () => {
     const selectedPrice = doctorPrices.find(p => p.id === selected);
-    if (selectedPrice) {
-      onSelect({
-        ...procedure,
-        doctor_id: selectedPrice.doctor_id,
-        doctor_name: selectedPrice.doctor_name,
-        doctor_price_usd: selectedPrice.doctor_price_usd,
-        clinic_country: selectedPrice.clinic_country,
-        clinic_city: selectedPrice.clinic_city,
-        patient_custom_note: patientNote,
-      });
-      onClose();
-      setPatientNote('');
-    }
+    // If a doctor is selected, use their details. Otherwise add the procedure
+    // without a doctor assignment (unassigned cases go to coordinator review).
+    onSelect({
+      ...procedure,
+      doctor_id:        selectedPrice?.doctor_id        || null,
+      doctor_name:      selectedPrice?.doctor_name      || null,
+      doctor_price_usd: selectedPrice?.doctor_price_usd || null,
+      clinic_country:   selectedPrice?.clinic_country   || null,
+      clinic_city:      selectedPrice?.clinic_city      || null,
+      patient_custom_note: patientNote,
+    });
+    onClose();
+    setPatientNote('');
   };
 
   return (
@@ -106,7 +106,9 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
           {loading ? (
             <div className="text-center py-6 text-muted-foreground text-sm">Loading doctors...</div>
           ) : doctorPrices.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground text-sm">No doctors available for this procedure</div>
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              No doctors assigned yet — you can still add this procedure and a coordinator will match you with a specialist.
+            </div>
           ) : (
             <>
               {doctorPrices.map(price => (
@@ -179,7 +181,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
           <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
           <Button
             onClick={handleSelect}
-            disabled={!selected || loading}
+            disabled={loading}
             className="flex-1 bg-accent text-accent-foreground"
           >
             Add to List
