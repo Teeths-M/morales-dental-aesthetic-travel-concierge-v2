@@ -17,7 +17,7 @@ export default function FloatingSOSButton() {
       initial={{ opacity: 0, y: 16, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 1.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed bottom-6 right-6 z-[80]"
+      style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999 }}
     >
       <Link to="/emergency" aria-label="Emergency secure line">
         <motion.div

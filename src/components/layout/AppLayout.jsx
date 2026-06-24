@@ -11,7 +11,6 @@ import { useAuth } from '@/lib/AuthContext';
 import BiometricGate from '@/components/security/BiometricGate';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
-import { Lock } from 'lucide-react';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 
 // Paths where the onboarding wizard should never appear
@@ -59,20 +58,8 @@ export default function AppLayout() {
             <HeartNotificationCenter user={user} />
             <GuardianTicker />
 
-            {/* Premium floating SOS — replaces old clunky emergency square */}
+            {/* Premium floating SOS — global, always on top */}
             <FloatingSOSButton />
-
-            <Link
-              to="/passport-vault"
-              className="fixed bottom-28 right-6 z-50 w-12 h-12 bg-emerald-800/90 hover:bg-emerald-700 rounded-full shadow-xl backdrop-blur flex items-center justify-center text-white transition-all hover:scale-105 group"
-              aria-label="Open My Vault"
-              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              <Lock className="w-5 h-5" />
-              <span className="absolute -top-8 right-0 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                My Vault
-              </span>
-            </Link>
           </>
         )}
       </div>
