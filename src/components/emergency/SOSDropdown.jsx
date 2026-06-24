@@ -131,6 +131,9 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
       {/* Trigger button */}
       <button
         onClick={() => { if (!sending) setOpen(!open); }}
+        aria-label="Activate SOS emergency alert — notifies your guardian and Morales team"
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all ${
           sent ? 'bg-emerald-600 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
         }`}
@@ -190,7 +193,7 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
                 <AlertTriangle className="w-4 h-4 text-white" />
                 <p className="text-white font-semibold text-sm">Emergency Response</p>
               </div>
-              <button onClick={() => setOpen(false)}>
+              <button onClick={() => setOpen(false)} aria-label="Close emergency response menu">
                 <X className="w-4 h-4 text-red-200 hover:text-white" />
               </button>
             </div>

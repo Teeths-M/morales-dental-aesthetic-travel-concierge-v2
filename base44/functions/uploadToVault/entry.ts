@@ -18,6 +18,26 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // Rate limit: max 20 uploads per hour per user
+    const uploadKey = `vault_upload_${user.id}_${Math.floor(Date.now() / (60 * 60 * 1000))}`;
+    const uploadBuckets = await base44.asServiceRole.entities.RateLimitBucket.filter(
+      { bucket_key: uploadKey }, '-created_date', 1
+    ).catch(() => []);
+
+    const uploadBucket = uploadBuckets?.[0];
+    if (uploadBucket && uploadBucket.count >= 20) {
+      return Response.json({
+        error: 'Upload limit reached. Maximum 20 uploads per hour.'
+      }, { status: 429 });
+    }
+
+    // Increment counter (fire and forget)
+    base44.asServiceRole.entities.RateLimitBucket.create({
+      bucket_key: uploadKey,
+      count: (uploadBucket?.count || 0) + 1,
+      window_start: new Date().toISOString(),
+    }).catch(() => {});
+
     // Parse body once — req.body is a single-read stream; calling req.text() after req.json() returns ''
     const body = await req.json();
     const {

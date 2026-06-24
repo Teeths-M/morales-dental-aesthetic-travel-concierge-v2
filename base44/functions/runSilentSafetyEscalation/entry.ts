@@ -261,18 +261,29 @@ Deno.serve(async (req) => {
       skipped: allActive.length - workable.length,
     };
 
+    // Batch load all case records upfront to avoid N+1 queries in the loop
+    const allCaseIds = [...new Set(workable.map(ci => ci.case_id).filter(Boolean))];
+    const caseRecordMap = new Map();
+
+    if (allCaseIds.length > 0) {
+      // Load in batches of 50
+      for (let i = 0; i < allCaseIds.length; i += 50) {
+        const batch = allCaseIds.slice(i, i + 50);
+        const batchCases = await base44.asServiceRole.entities.CaseRecord.filter(
+          { id: { $in: batch } }, '-created_date', 50
+        ).catch(() => []);
+        for (const c of (batchCases || [])) {
+          caseRecordMap.set(c.id, c);
+        }
+      }
+    }
+
     for (const ci of workable) {
       results.processed++;
       const overdueMins = minutesSince(ci.scheduled_time);
 
-      // Load case for contact info (best-effort, don't crash if missing)
-      let caseRecord = null;
-      try {
-        const cases = await base44.asServiceRole.entities.CaseRecord.filter(
-          { client_email: ci.user_email }, '-created_date', 5
-        );
-        caseRecord = cases.find(c => c.id === ci.case_id) || cases[0] || null;
-      } catch (_) {}
+      // Load case for contact info from pre-fetched map (best-effort, don't crash if missing)
+      let caseRecord = caseRecordMap.get(ci.case_id) || null;
 
       // Skip if case is in a procedure window (surgical pause)
       if (caseRecord && (

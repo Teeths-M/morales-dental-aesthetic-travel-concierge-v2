@@ -133,6 +133,29 @@ Deno.serve(async (req) => {
     // ── VERIFY: Authenticate with PIN → issue a server-side PinSession ──
     if (action === 'verify') {
       if (!pin) return Response.json({ error: 'pin required' }, { status: 400 });
+
+      // Rate limit: max 5 attempts per user per 30 minutes
+      const normalizedEmail = String(user_email).toLowerCase();
+      const rateLimitKey = `pin_verify_${normalizedEmail}_${Math.floor(Date.now() / (30 * 60 * 1000))}`;
+      const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter(
+        { bucket_key: rateLimitKey }, '-created_date', 1
+      ).catch(() => []);
+
+      const bucket = buckets?.[0];
+      if (bucket && bucket.count >= 5) {
+        return Response.json({
+          error: 'Too many PIN attempts. Please wait 30 minutes before trying again.',
+          locked: true
+        }, { status: 429 });
+      }
+
+      // Increment counter
+      await base44.asServiceRole.entities.RateLimitBucket.create({
+        bucket_key: rateLimitKey,
+        count: (bucket?.count || 0) + 1,
+        window_start: new Date().toISOString(),
+      }).catch(() => {});
+
       const records = await base44.asServiceRole.entities.EmergencyPIN.filter({ user_email, is_active: true });
       if (records.length === 0) return Response.json({ verified: false, error: 'No PIN registered for this account' }, { status: 404 });
 

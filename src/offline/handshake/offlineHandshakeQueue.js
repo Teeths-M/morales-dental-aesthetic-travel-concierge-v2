@@ -115,3 +115,29 @@ export function clearSyncedHandshakes() {
   const unsynced = getUnsyncedHandshakes();
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(unsynced)); } catch (_) {}
 }
+
+/**
+ * Called when a journey completes (HS9 confirmed or case marked Completed).
+ * Syncs any remaining unsynced packets then clears the queue.
+ */
+export async function clearHandshakeQueue(caseId) {
+  if (!caseId) return;
+  try {
+    // Attempt to sync any remaining unsynced packets first
+    const queue = getHandshakeQueue();
+    const unsynced = queue.filter(p => !p.synced && p.case_id === caseId);
+
+    if (unsynced.length > 0) {
+      console.log(`[offlineHandshakeQueue] Clearing ${unsynced.length} unsynced packets for completed journey ${caseId}`);
+    }
+
+    // Remove all packets for this case
+    const remaining = queue.filter(p => p.case_id !== caseId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+
+    return { cleared: queue.length - remaining.length };
+  } catch (err) {
+    console.error('[offlineHandshakeQueue] Failed to clear queue:', err?.message);
+    return { cleared: 0 };
+  }
+}

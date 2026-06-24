@@ -49,6 +49,10 @@ export default function FloatingSOSButton() {
         {/* ── Safe-T4life Assistance (top) ── */}
         <motion.div
           onClick={() => setIsPanelOpen(true)}
+          role="button"
+          tabIndex={0}
+          aria-label="Open Safe-T4life AI Assistant"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsPanelOpen(true); } }}
           style={{
             ...PILL_BASE,
             border: '1px solid rgba(52, 211, 153, 0.22)',
@@ -80,6 +84,7 @@ export default function FloatingSOSButton() {
         {/* ── Secure Line / SOS (bottom) ── */}
         <Link to="/emergency" aria-label="Emergency Secure Line" style={{ textDecoration: 'none' }}>
           <motion.div
+            aria-label="Emergency Secure Line — tap for immediate emergency access"
             style={{
               ...PILL_BASE,
               border: '1px solid rgba(212, 175, 55, 0.22)',

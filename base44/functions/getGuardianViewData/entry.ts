@@ -23,6 +23,28 @@ Deno.serve(async (req) => {
     }
     if (new Date(session.expires_at) < new Date()) return Response.json({ status: 'expired', error: 'This guardian link has expired.' });
 
+    // Rate limit: max 100 requests per hour per token
+    const tokenKey = `guardian_view_${token}_${Math.floor(Date.now() / (60 * 60 * 1000))}`;
+    const tokenBuckets = await base44.asServiceRole.entities.RateLimitBucket.filter(
+      { bucket_key: tokenKey }, '-created_date', 1
+    ).catch(() => []);
+
+    const tokenBucket = tokenBuckets?.[0];
+    if (tokenBucket && tokenBucket.count >= 100) {
+      console.warn(`[getGuardianViewData] Rate limit hit for token ${token.slice(0, 8)}...`);
+      return Response.json({
+        status: 'rate_limited',
+        error: 'Too many requests. Please wait before refreshing.'
+      }, { status: 429 });
+    }
+
+    // Increment (fire and forget — never block guardian access on rate limit write failure)
+    base44.asServiceRole.entities.RateLimitBucket.create({
+      bucket_key: tokenKey,
+      count: (tokenBucket?.count || 0) + 1,
+      window_start: new Date().toISOString(),
+    }).catch(() => {});
+
     // Rate limit: max 100 views per hour per token
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const recentViews = await base44.asServiceRole.entities.GuardianSession.filter({

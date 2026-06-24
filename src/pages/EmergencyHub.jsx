@@ -132,6 +132,8 @@ export default function EmergencyHub() {
             const active = activeTab === tab.id;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                aria-label={tab.label}
+                aria-pressed={active}
                 className={`relative flex items-center gap-2 px-5 py-4 text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
                   active ? 'text-red-400' : 'text-slate-500 hover:text-slate-300'
                 }`}>
