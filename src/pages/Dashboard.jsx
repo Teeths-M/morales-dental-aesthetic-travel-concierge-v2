@@ -476,8 +476,17 @@ export default function Dashboard() {
         console.error('[Dashboard] Auth check failed:', err?.message);
         setUser(null); // Stop infinite loading — show empty state
       });
-    const savedLang = localStorage.getItem('appLanguage') || 'en';
-    setLanguage(savedLang);
+    const savedLang = localStorage.getItem('appLanguage');
+    if (savedLang) {
+      setLanguage(savedLang);
+    } else {
+      const browserLang = (navigator.languages?.[0] || navigator.language || 'en')
+        .split('-')[0].toLowerCase();
+      const SUPPORTED = ['en', 'es', 'fr'];
+      const detected = SUPPORTED.includes(browserLang) ? browserLang : 'en';
+      setLanguage(detected);
+      try { localStorage.setItem('appLanguage', detected); } catch (_) {}
+    }
     
     const handleLanguageChange = (event) => {
       setLanguage(event.detail.language);
