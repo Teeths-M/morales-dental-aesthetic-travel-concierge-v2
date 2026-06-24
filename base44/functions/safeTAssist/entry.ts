@@ -87,16 +87,22 @@ Deno.serve(async (req) => {
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
       model: 'gpt_5_mini',
       prompt: fullPrompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          reply: { type: 'string', description: 'Safe-T4life assistant response' },
-        },
-        required: ['reply'],
-      },
     });
 
-    const reply = llmResponse?.reply ?? "I'm here to help. Could you give me a bit more detail?";
+    // InvokeLLM returns a raw string when no JSON schema is provided
+    let reply: string;
+    if (typeof llmResponse === 'string' && llmResponse.trim()) {
+      reply = llmResponse.trim();
+    } else if (llmResponse?.reply) {
+      reply = String(llmResponse.reply);
+    } else if (llmResponse?.content) {
+      reply = String(llmResponse.content);
+    } else if (llmResponse?.text) {
+      reply = String(llmResponse.text);
+    } else {
+      reply = "I'm here to help. Could you give me a bit more detail?";
+    }
+
     return Response.json({ reply });
 
   } catch (error) {
