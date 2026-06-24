@@ -30,7 +30,8 @@ import ClientAcknowledgement, { getRequiredAckCount } from '../components/bookin
 import MedicalRiskDisclosure from '../components/booking/MedicalRiskDisclosure';
 import { checkVisaRequirement } from '@/lib/visaMatrix';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
-import { analyseCompatibility } from '@/lib/procedureCompatibility';
+import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
+import ProcedureStackingBlocker from '../components/safety/ProcedureStackingBlocker';
 import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
 import SafeTScan from '../components/booking/SafeTScan';
 import HighRiskReviewNotice from '../components/booking/HighRiskReviewNotice';
@@ -76,6 +77,8 @@ export default function Booking() {
   const [showFeeModal, setShowFeeModal] = useState(false);
   const [showHighRiskNotice, setShowHighRiskNotice] = useState(false);
   const [highRiskFlag, setHighRiskFlag] = useState(null);
+  const [showStackingBlock, setShowStackingBlock] = useState(false);
+  const [stackingViolations, setStackingViolations] = useState([]);
   const [consultationId, setConsultationId] = useState(null);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -510,6 +513,21 @@ export default function Booking() {
 
   const progressPct = Math.round((step / (steps.length - 1)) * 100);
 
+  if (showStackingBlock) {
+    return (
+      <ProcedureStackingBlocker
+        violations={stackingViolations}
+        patientEmail={userEmail}
+        patientName={form.patient_name}
+        consultationId={consultationId}
+        onBack={() => {
+          setShowStackingBlock(false);
+          setStackingViolations([]);
+        }}
+      />
+    );
+  }
+
   return (
     <ProcedureSelectionGate>
     <div className="min-h-screen bg-transparent">
@@ -628,6 +646,15 @@ export default function Booking() {
                     setShowValidation(true);
                     toast.error('Please complete all required fields before continuing.');
                     return;
+                  }
+                  // Stacking safety check — fires when leaving Procedure & Date step
+                  if (step === 10 && items.length >= 2) {
+                    const { violations, isBlocked } = getViolations(items);
+                    if (isBlocked) {
+                      setStackingViolations(violations);
+                      setShowStackingBlock(true);
+                      return;
+                    }
                   }
                   setShowValidation(false);
                   setStep(s => s + 1);

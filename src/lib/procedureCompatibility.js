@@ -122,23 +122,92 @@ const GREEN_COMBINATIONS = [
   new Set(['Sinus Lift', 'Multiple Dental Implants']),
 ];
 
-// ─── Known RED (high-concern) pairs ──────────────────────────────────────────
-// These pairs require a strong enhanced-review notice.
-const RED_COMBINATIONS = [
-  new Set(['Full Mouth Implants', 'Facelift']),
-  new Set(['Full Mouth Implants', 'Tummy Tuck']),
-  new Set(['Full Mouth Implants', 'Rhinoplasty']),
-  new Set(['All-on-4 Implants', 'Tummy Tuck']),
-  new Set(['All-on-6 Implants', 'Tummy Tuck']),
-  new Set(['All-on-4 Implants', 'Mommy Makeover']),
-  new Set(['All-on-6 Implants', 'Mommy Makeover']),
-  new Set(['Mommy Makeover', 'Rhinoplasty']),
-  new Set(['Mommy Makeover', 'Facelift']),
-  new Set(['Tummy Tuck', 'Brazilian Butt Lift']),
-  new Set(['Breast Reduction', 'Tummy Tuck']),
-  new Set(['Breast Reduction', 'Mommy Makeover']),
-  new Set(['Bone Grafting', 'Sinus Lift']),   // back-to-back high surgical stress
+// ─── Known RED (high-concern) pairs with clinical reasons ────────────────────
+// Each entry includes the pair and the specific clinical rationale for blocking.
+export const RED_VIOLATION_RULES = [
+  {
+    pair: ['Full Mouth Implants', 'Facelift'],
+    reason: 'Full-mouth implants require 8–10 weeks of jaw healing. Facelift pulls facial tissue that overlaps the surgical field — combining them risks implant failure and delayed healing in both sites.',
+    code: 'ORAL_FACIAL_CONFLICT',
+  },
+  {
+    pair: ['Full Mouth Implants', 'Tummy Tuck'],
+    reason: 'Full-mouth implants require 7–8 hrs anesthesia alone. Adding abdominoplasty pushes total anesthesia past safe thresholds (>12 hrs) and dramatically increases infection risk across two distant surgical fields.',
+    code: 'ANESTHESIA_OVERLOAD',
+  },
+  {
+    pair: ['Full Mouth Implants', 'Rhinoplasty'],
+    reason: 'Both procedures share the maxillofacial blood supply. Simultaneous surgery creates vascular competition that can cause implant rejection and nasal tip necrosis.',
+    code: 'SHARED_VASCULAR_FIELD',
+  },
+  {
+    pair: ['All-on-4 Implants', 'Tummy Tuck'],
+    reason: 'All-on-4 carries ~5 hrs anesthesia. Tummy tuck adds 3.5 hrs — total ~8.5 hrs under general anesthesia in a single session, exceeding the safe ceiling for most patients and raising DVT risk 6×.',
+    code: 'ANESTHESIA_OVERLOAD',
+  },
+  {
+    pair: ['All-on-6 Implants', 'Tummy Tuck'],
+    reason: 'All-on-6 requires 6+ hrs in prone position with the airway fully instrumented. Tummy tuck demands supine positioning — the positional conflict alone makes same-session surgery impossible without ICU-level monitoring.',
+    code: 'POSITIONING_CONFLICT',
+  },
+  {
+    pair: ['All-on-4 Implants', 'Mommy Makeover'],
+    reason: 'Mommy Makeover (breast + abdomen) combined with All-on-4 creates simultaneous surgical trauma in three anatomical zones. Blood loss compounds across all sites; recovery conflicts are irresolvable in a single session.',
+    code: 'MULTI_ZONE_TRAUMA',
+  },
+  {
+    pair: ['All-on-6 Implants', 'Mommy Makeover'],
+    reason: 'All-on-6 alone places the patient at maximum safe anesthesia duration. Adding a Mommy Makeover is contraindicated — total operating time would exceed 11 hrs with compounding infection, hemorrhage, and aspiration risk.',
+    code: 'ANESTHESIA_OVERLOAD',
+  },
+  {
+    pair: ['Mommy Makeover', 'Rhinoplasty'],
+    reason: 'Mommy Makeover requires the patient supine with abdominal binders for 6 weeks. Rhinoplasty requires head elevation and no abdominal pressure. These recovery protocols are physically incompatible.',
+    code: 'RECOVERY_CONFLICT',
+  },
+  {
+    pair: ['Mommy Makeover', 'Facelift'],
+    reason: 'Combined anesthesia time exceeds 9 hrs. Facelift requires head-of-bed elevation; Mommy Makeover requires flat supine positioning. The recovery postures directly contradict each other and cannot be reconciled.',
+    code: 'RECOVERY_CONFLICT',
+  },
+  {
+    pair: ['Tummy Tuck', 'Brazilian Butt Lift'],
+    reason: 'Tummy Tuck requires strict supine recovery. BBL requires the patient to avoid sitting or lying supine for 8 weeks to protect the transferred fat graft. These positions are mutually exclusive — combining them guarantees graft failure.',
+    code: 'POSITIONING_CONFLICT',
+  },
+  {
+    pair: ['Breast Reduction', 'Tummy Tuck'],
+    reason: 'Both procedures require separate prone and supine periods with high blood loss potential. Combined, total blood loss can exceed safe transfusion thresholds. DVT risk increases 4× with dual lower + upper trunk surgery.',
+    code: 'HEMORRHAGE_RISK',
+  },
+  {
+    pair: ['Breast Reduction', 'Mommy Makeover'],
+    reason: 'Mommy Makeover already includes breast work. Adding a separate Breast Reduction creates redundant incisions in the same anatomical zone — this combination is a contraindication, not a combination.',
+    code: 'REDUNDANT_FIELD',
+  },
+  {
+    pair: ['Bone Grafting', 'Sinus Lift'],
+    reason: 'Both procedures operate in overlapping maxillary bone and sinus membrane territory. Simultaneous grafting in the same field doubles the infection pathway and prevents proper clot formation in either graft site.',
+    code: 'SHARED_SURGICAL_FIELD',
+  },
+  {
+    pair: ['Gastric Sleeve', 'Breast Augmentation'],
+    reason: 'Post-bariatric tissue is metabolically stressed — fat cells are actively being reduced. Introducing a breast implant during this phase causes unpredictable capsule formation and implant displacement as body composition changes.',
+    code: 'METABOLIC_CONFLICT',
+  },
+  {
+    pair: ['Gastric Bypass', 'Liposuction'],
+    reason: 'Gastric Bypass causes significant nutritional malabsorption. Liposuction removes fat while the body is already in a catabolic state — electrolyte depletion, protein deficiency, and impaired wound healing make this combination high-risk.',
+    code: 'METABOLIC_CONFLICT',
+  },
+  {
+    pair: ['Spine Surgery', 'Joint Replacement'],
+    reason: 'Multi-site orthopedic surgery requires prolonged immobilization across different recovery protocols. Spinal recovery needs movement restriction; joint replacement needs immediate mobilization. These requirements directly conflict.',
+    code: 'RECOVERY_CONFLICT',
+  },
 ];
+
+const RED_COMBINATIONS = RED_VIOLATION_RULES.map(r => new Set(r.pair));
 
 // ─── Helper: check if two titles match a rule set ────────────────────────────
 function pairMatchesAnySet(titleA, titleB, rulesets) {
@@ -270,3 +339,51 @@ export const COMPATIBILITY_COPY = {
 };
 
 export const DISCLAIMER = 'Procedure compatibility guidance is informational only and does not replace evaluation by a licensed medical professional.';
+
+/**
+ * Returns specific clinical violations for a given cart.
+ * Used to power the ProcedureStackingBlocker hard-block UI.
+ *
+ * @param {Array} items  Cart items with .title or .name
+ * @returns {{ violations: Array<{pairLabel: string, reason: string, code: string}>, isBlocked: boolean }}
+ */
+export function getViolations(items) {
+  if (!items || items.length < 2) return { violations: [], isBlocked: false };
+
+  const titles = items.map(i => i.title || i.name).filter(Boolean);
+  const violations = [];
+
+  for (const rule of RED_VIOLATION_RULES) {
+    const [a, b] = rule.pair;
+    if (titles.includes(a) && titles.includes(b)) {
+      violations.push({
+        pairLabel: `${a} + ${b}`,
+        reason: rule.reason,
+        code: rule.code,
+      });
+    }
+  }
+
+  // Also flag 3+ major surgeries as a violation (anesthesia overload)
+  const profiles = titles.map(t => PROCEDURE_PROFILES[t] || { stress: 3 });
+  const majorSurgeries = profiles.filter(p => p.stress >= 6).length;
+  if (majorSurgeries >= 3 && violations.length === 0) {
+    violations.push({
+      pairLabel: `${majorSurgeries} Major Surgeries Simultaneously`,
+      reason: `${majorSurgeries} high-complexity procedures scheduled in a single session. Safe anesthesia limits are typically exceeded beyond 2 concurrent major surgeries. A staged treatment plan (6–8 weeks between sessions) is the clinical standard.`,
+      code: 'ANESTHESIA_OVERLOAD',
+    });
+  }
+
+  // Extreme anesthesia as a catch-all violation
+  const totalAnesthesiaHrs = profiles.reduce((s, p) => s + (p.anesthesiaHrs || 0), 0);
+  if (totalAnesthesiaHrs > 8 && violations.length === 0) {
+    violations.push({
+      pairLabel: `Combined Anesthesia > ${totalAnesthesiaHrs.toFixed(1)} Hours`,
+      reason: `Total estimated anesthesia time (~${totalAnesthesiaHrs.toFixed(1)} hrs) exceeds the safe ceiling for elective procedures. Beyond 8 hours, the risk of anesthesia awareness, hypothermia, and post-operative cognitive dysfunction increases significantly.`,
+      code: 'ANESTHESIA_OVERLOAD',
+    });
+  }
+
+  return { violations, isBlocked: violations.length > 0 };
+}
