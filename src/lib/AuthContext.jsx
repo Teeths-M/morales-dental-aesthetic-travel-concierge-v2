@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
@@ -226,6 +226,34 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
   };
+
+  // Auto-logout after 2 hours of inactivity
+  const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 hours
+  const inactivityTimerRef = useRef(null);
+
+  const resetInactivityTimer = useCallback(() => {
+    clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => {
+      if (isAuthenticated) {
+        console.log('[AuthContext] Session expired due to inactivity');
+        logout();
+      }
+    }, INACTIVITY_TIMEOUT_MS);
+  }, [isAuthenticated, logout]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Reset timer on user activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, resetInactivityTimer, { passive: true }));
+    resetInactivityTimer(); // Start timer on mount
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetInactivityTimer));
+      clearTimeout(inactivityTimerRef.current);
+    };
+  }, [isAuthenticated, resetInactivityTimer]);
 
   const navigateToLogin = (nextUrl = `${window.location.origin}/dashboard`) => {
     const safeNextUrl = typeof nextUrl === 'string' ? nextUrl : `${window.location.origin}/dashboard`;

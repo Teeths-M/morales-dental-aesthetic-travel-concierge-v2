@@ -103,6 +103,13 @@ Deno.serve(async (req) => {
       }
       const h = records[0];
 
+      if (user.role === 'doctor') {
+        // Doctors can only confirm handshakes for cases assigned to them
+        if (h.assigned_doctor_id && h.assigned_doctor_id !== user.id) {
+          return Response.json({ error: 'Unauthorized — this handshake is not assigned to you' }, { status: 403 });
+        }
+      }
+
       if (h.status !== 'pending') {
         return Response.json({ error: `Cannot confirm — handshake is already ${h.status}` }, { status: 409 });
       }

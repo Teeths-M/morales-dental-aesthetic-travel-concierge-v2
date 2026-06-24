@@ -74,6 +74,27 @@ Deno.serve(async (req) => {
       }
 
       if (shouldComplete) {
+        // Valid status transitions — prevent invalid state jumps
+        const VALID_TRANSITIONS: Record<string, string[]> = {
+          'Submitted':        ['Doctor-Pending', 'Cancelled'],
+          'Doctor-Pending':   ['Doctor-Confirmed', 'Doctor-Declined', 'Cancelled'],
+          'Doctor-Confirmed': ['Deposit-Paid', 'Cancelled'],
+          'Deposit-Paid':     ['PMP-25', 'In-Progress', 'Cancelled'],
+          'PMP-25':           ['In-Progress', 'Cancelled'],
+          'In-Progress':      ['Completed', 'Cancelled'],
+          'Recovery':         ['Completed', 'Cancelled'],
+          'RECOVERY_PHASE_7_DAY': ['Completed', 'Cancelled'],
+          'Completed':        [], // Terminal — no transitions allowed
+          'Cancelled':        [], // Terminal
+        };
+
+        const targetStatus = 'Completed';
+        const allowedNext = VALID_TRANSITIONS[caseRecord.status] || [];
+        if (!allowedNext.includes(targetStatus)) {
+          console.error(`[autoCompletePatientJourney] Invalid transition: ${caseRecord.status} → ${targetStatus} for case ${caseRecord.id}`);
+          continue;
+        }
+
         // Update case status to Completed
         await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
           status: 'Completed',

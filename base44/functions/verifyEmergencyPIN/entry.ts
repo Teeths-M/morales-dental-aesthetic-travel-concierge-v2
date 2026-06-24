@@ -208,6 +208,16 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.EmergencyPIN.update(record.id, {
           failed_attempts: newFailCount, locked_until: lockedUntil
         });
+
+        // Log failed PIN attempt to audit trail
+        await base44.functions.invoke('logAuditEvent', {
+          event_type: 'emergency_pin_failed',
+          performed_by: normalizedEmail,
+          target_email: normalizedEmail,
+          timestamp: new Date().toISOString(),
+          ip_address: req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || 'unknown',
+        }).catch(() => {});
+
         return Response.json({ verified: false, error: 'Incorrect PIN', attempts_remaining: Math.max(0, 5 - newFailCount) });
       }
     }

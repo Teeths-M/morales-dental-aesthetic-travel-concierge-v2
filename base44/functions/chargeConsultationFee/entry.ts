@@ -9,6 +9,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 
+// Sanitize text fields — strip HTML tags to prevent stored XSS
+function sanitizeText(input: unknown, maxLen = 2000): string {
+  if (!input || typeof input !== 'string') return '';
+  return input
+    .replace(/<[^>]*>/g, '') // Strip HTML tags
+    .replace(/javascript:/gi, '') // Strip JS protocol
+    .trim()
+    .slice(0, maxLen);
+}
+
+// Validate email format
+function isValidEmail(email: unknown): boolean {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
+}
+
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
   const windowStart = new Date(now.getTime() - windowSeconds * 1000);
@@ -47,6 +62,9 @@ Deno.serve(async (req) => {
 
     const { consultation_id, email, procedure, destination } = await req.json();
     if (!email) return Response.json({ error: 'email is required' }, { status: 400 });
+    if (!isValidEmail(email)) return Response.json({ error: 'Invalid email address' }, { status: 400 });
+    const sanitizedProcedure = sanitizeText(procedure, 200);
+    const sanitizedDestination = sanitizeText(destination, 200);
 
     // Idempotency: already paid?
     if (consultation_id) {
@@ -130,8 +148,8 @@ Deno.serve(async (req) => {
     const feeRecord = await base44.asServiceRole.entities.ConsultationFee.create({
       user_id: user.id,
       email,
-      procedure: procedure || 'Consultation',
-      destination: destination || 'TBD',
+      procedure: sanitizedProcedure || 'Consultation',
+      destination: sanitizedDestination || 'TBD',
       consultation_fee_amount: 49,
       fee_paid: false,
       stripe_charge_id: session.id,

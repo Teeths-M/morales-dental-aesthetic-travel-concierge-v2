@@ -108,7 +108,11 @@ export function createHandler(fn: HandlerFn, opts: HandlerOptions = {}) {
 function respond(data: unknown, status: number, requestId: string): Response {
   return Response.json(data, {
     status,
-    headers: { 'X-Request-Id': requestId },
+    headers: {
+      'X-Request-Id': requestId,
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+    },
   });
 }
 
@@ -116,7 +120,12 @@ function respond(data: unknown, status: number, requestId: string): Response {
  * ok — shorthand for a 200 success response.
  * Import and use in handlers to keep them terse.
  */
-export const ok = (data: unknown): Response => Response.json(data);
+export const ok = (data: unknown): Response => Response.json(data, {
+  headers: {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+  },
+});
 
 /**
  * err — shorthand for an error response with a user-safe message.

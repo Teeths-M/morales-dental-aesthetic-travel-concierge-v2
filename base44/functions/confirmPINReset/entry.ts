@@ -114,6 +114,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      await base44.functions.invoke('logAuditEvent', {
+        event_type: 'emergency_pin_reset',
+        performed_by: decoded.email,
+        target_email: decoded.email,
+        timestamp: new Date().toISOString(),
+        ip_address: req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || 'unknown',
+      }).catch(() => {});
+
       return Response.json({ success: true, email: decoded.email });
     }
 

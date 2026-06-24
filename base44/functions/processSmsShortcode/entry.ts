@@ -58,18 +58,27 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     // Parse incoming Twilio webhook (form-encoded or JSON)
-    let body, from;
+    let rawBody, rawFrom;
     const contentType = req.headers.get('content-type') || '';
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const text = await req.text();
       const params = new URLSearchParams(text);
-      body = params.get('Body') || '';
-      from = params.get('From') || '';
+      rawBody = params.get('Body') || '';
+      rawFrom = params.get('From') || '';
     } else {
       const json = await req.json();
-      body = json.Body || json.body || '';
-      from = json.From || json.from || '';
+      rawBody = json.Body || json.body || '';
+      rawFrom = json.From || json.from || '';
     }
+
+    // Sanitize incoming SMS body — strip non-printable chars, limit length
+    const body = (rawBody as string)
+      .replace(/[^\x20-\x7E-￿]/g, '') // Remove non-printable ASCII (keep extended Unicode)
+      .trim()
+      .slice(0, 500); // Max 500 chars — SMS is 160 chars anyway
+
+    // Sanitize phone number — allow only digits, +, spaces, hyphens, parens
+    const from = (rawFrom as string).replace(/[^\d+\s\-()]/g, '').trim().slice(0, 20);
 
     // SECURITY: Validate Twilio signature on every inbound webhook
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');

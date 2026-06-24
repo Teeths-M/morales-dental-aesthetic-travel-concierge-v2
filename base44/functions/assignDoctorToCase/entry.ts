@@ -156,6 +156,28 @@ Deno.serve(async (req) => {
       }, { status: 409 });
     }
 
+    // Valid status transitions — prevent invalid state jumps
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      'Submitted':        ['Doctor-Pending', 'Cancelled'],
+      'Doctor-Pending':   ['Doctor-Confirmed', 'Doctor-Declined', 'Cancelled'],
+      'Doctor-Confirmed': ['Deposit-Paid', 'Cancelled'],
+      'Deposit-Paid':     ['PMP-25', 'In-Progress', 'Cancelled'],
+      'PMP-25':           ['In-Progress', 'Cancelled'],
+      'In-Progress':      ['Completed', 'Cancelled'],
+      'Completed':        [], // Terminal — no transitions allowed
+      'Cancelled':        [], // Terminal
+    };
+
+    const targetStatus = 'Doctor-Pending';
+    const allowedNext = VALID_TRANSITIONS[freshCase.status] || [];
+    if (!allowedNext.includes(targetStatus)) {
+      console.error(`[assignDoctorToCase] Invalid transition: ${freshCase.status} → ${targetStatus}`);
+      return Response.json({
+        error: `Cannot assign doctor: case is in ${freshCase.status} status`,
+        current_status: freshCase.status,
+      }, { status: 409 });
+    }
+
     await base44.asServiceRole.entities.CaseRecord.update(caseId, {
       status: 'Doctor-Pending',
       doctor_email: selectedDoctor.email,

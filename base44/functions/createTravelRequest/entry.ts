@@ -1,5 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Sanitize text fields — strip HTML tags to prevent stored XSS
+function sanitizeText(input: unknown, maxLen = 2000): string {
+  if (!input || typeof input !== 'string') return '';
+  return input
+    .replace(/<[^>]*>/g, '') // Strip HTML tags
+    .replace(/javascript:/gi, '') // Strip JS protocol
+    .trim()
+    .slice(0, maxLen);
+}
+
+// Validate email format
+function isValidEmail(email: unknown): boolean {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -15,10 +30,24 @@ Deno.serve(async (req) => {
       special_requests
     } = await req.json();
 
-    // Validate required fields
-    if (!origin_city || !destination_city || !departure_date) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+    // Input validation
+    const requiredFields: Array<[string, unknown]> = [
+      ['origin_city', origin_city],
+      ['destination_city', destination_city],
+      ['departure_date', departure_date],
+    ];
+    for (const [field, val] of requiredFields) {
+      if (!val || typeof val !== 'string' || !val.trim()) {
+        return Response.json({ error: `${field} is required` }, { status: 400 });
+      }
     }
+
+    if (user.email && !isValidEmail(user.email)) {
+      return Response.json({ error: 'Invalid email address' }, { status: 400 });
+    }
+
+    // Sanitize text fields
+    const sanitizedSpecialRequests = sanitizeText(special_requests);
 
     // Generate unique token
     const request_token = `TRAVEL_${Date.now().toString(36).toUpperCase()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -45,7 +74,7 @@ Deno.serve(async (req) => {
       companion_required,
       companion_type,
       companion_days,
-      special_requests,
+      special_requests: sanitizedSpecialRequests,
       package_status: 'pricing_requested'
     });
 
@@ -103,6 +132,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[createTravelRequest] Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
