@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
@@ -176,7 +176,15 @@ export default function GuardianView() {
     </div>
   );
 
-  const { session, case: caseData, latest_location: loc, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress } = data;
+  const { session, case: caseData, latest_location: loc, location_trail: locationTrail, escalation, wilderness_sos: wildernessSOS, trip_progress: tripProgress } = data;
+
+  // Build polyline positions from breadcrumb trail (oldest → newest)
+  const trailPositions = (locationTrail || []).map(p => [p.lat, p.lng]);
+  // Start marker = first trail point, if trail has 2+ points
+  const trailStart = trailPositions.length >= 2 ? trailPositions[0] : null;
+
+  // Country label from trip progress
+  const currentCountry = tripProgress?.current_country || null;
   // Only actual GPS coordinates trigger the map — IP geolocation goes to city-only view
   const hasGPS = loc && loc.source === 'gps' && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
   // IP geo or breadcrumb with city/country info → show city label instead of map
@@ -404,7 +412,15 @@ export default function GuardianView() {
                 )}
               </div>
 
-              {/* Leaflet Map */}
+              {/* Country label */}
+              {currentCountry && (
+                <div className="flex items-center gap-2 bg-slate-900/60 rounded-xl px-4 py-2.5 text-sm text-slate-200 font-semibold">
+                  <Globe className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  Patient is currently in <span className="text-white">{currentCountry}</span>
+                </div>
+              )}
+
+              {/* Leaflet Map with breadcrumb trail */}
               <div className="rounded-xl overflow-hidden border border-slate-700/50" style={{ height: 260 }}>
                 <MapContainer
                   center={[loc.latitude, loc.longitude]}
@@ -415,6 +431,29 @@ export default function GuardianView() {
                 >
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   <MapRecenter lat={loc.latitude} lng={loc.longitude} />
+
+                  {/* Breadcrumb trail polyline */}
+                  {trailPositions.length >= 2 && (
+                    <Polyline
+                      positions={trailPositions}
+                      pathOptions={{ color: '#3b82f6', weight: 2.5, opacity: 0.75, lineJoin: 'round' }}
+                    />
+                  )}
+
+                  {/* Start-of-journey marker */}
+                  {trailStart && (
+                    <Marker
+                      position={trailStart}
+                      icon={new L.DivIcon({
+                        className: '',
+                        html: `<div style="width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid white;box-shadow:0 0 0 2px #16a34a;"></div>`,
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6],
+                      })}
+                    />
+                  )}
+
+                  {/* Live position marker */}
                   <Marker position={[loc.latitude, loc.longitude]} icon={markerIcon} />
                   {loc.accuracy_meters != null && loc.accuracy_meters > 0 && (
                     <Circle
@@ -425,6 +464,14 @@ export default function GuardianView() {
                   )}
                 </MapContainer>
               </div>
+
+              {/* Trail info badge */}
+              {trailPositions.length >= 2 && (
+                <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="w-2 h-0.5 inline-block rounded bg-blue-500" />
+                  {trailPositions.length} GPS checkpoints recorded · trail shown on map
+                </p>
+              )}
 
               {/* Action buttons */}
               <div className="grid grid-cols-4 gap-2">

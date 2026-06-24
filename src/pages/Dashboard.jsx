@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,9 +27,12 @@ import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
+import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
+import { useLocationHistory } from '@/hooks/useLocationHistory';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 import LoadingState from '@/components/ui-system/LoadingState';
 import ErrorState from '@/components/ui-system/ErrorState';
 import EmptyState from '@/components/ui-system/EmptyState';
@@ -60,7 +63,9 @@ const colorMap = {
 
 function DashboardHome({ user, consultations, language }) {
   const queryClient = useQueryClient();
-  const [showGoldenM, setShowGoldenM] = useState(false);
+  const navigate    = useNavigate();
+  const [showGoldenM,       setShowGoldenM]       = useState(false);
+  const [showWelcomeCountry, setShowWelcomeCountry] = useState(false);
 
   // PERFORMANCE: Memoize displayName to prevent recalculation
   const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
@@ -82,7 +87,26 @@ function DashboardHome({ user, consultations, language }) {
   const latestActive = consultations.find(c => c.status !== 'Completed');
   const isSolo = latestActive && (!latestActive.requires_companion || latestActive.companion_requirement_status === 'companion_required_pending');
   // Auto-start live beacon for solo travelers with an active journey
-  const { status: locationStatus } = useLiveLocationBeacon({ caseId: latestActive?.id, caseStatus: latestActive?.status, enabled: !!isSolo });
+  const { status: locationStatus, currentLocation } = useLiveLocationBeacon({
+    caseId: latestActive?.id,
+    caseStatus: latestActive?.status,
+    enabled: !!isSolo,
+  });
+
+  // GPS breadcrumb trail — captures every 30s or 50m; syncs to Base44 when online
+  useLocationHistory({ caseId: latestActive?.id, enabled: !!isSolo });
+
+  // Country detection — triggers WelcomeCountryModal on new country arrival
+  const { country, flag, isNewCountry, acknowledgeCountry } = useCountryDetection({
+    lat: currentLocation?.lat,
+    lng: currentLocation?.lng,
+    enabled: !!isSolo,
+  });
+
+  // Show welcome modal whenever the patient lands in a new country
+  useEffect(() => {
+    if (isNewCountry) setShowWelcomeCountry(true);
+  }, [isNewCountry]);
   const latestConsultation = consultations[0];
   const caseStatus = latestConsultation?.status || 'Submitted';
 
@@ -186,6 +210,16 @@ function DashboardHome({ user, consultations, language }) {
           onClose={() => setShowGoldenM(false)}
         />
       )}
+
+      <WelcomeCountryModal
+        visible={showWelcomeCountry}
+        country={country}
+        flag={flag}
+        onViewHotel={() => { acknowledgeCountry(); setShowWelcomeCountry(false); navigate('/dashboard/bookings'); }}
+        onCallDriver={() => { acknowledgeCountry(); setShowWelcomeCountry(false); navigate('/dashboard/messages'); }}
+        onOpenVault={() => { acknowledgeCountry(); setShowWelcomeCountry(false); navigate('/passport-vault'); }}
+        onDismiss={() => { acknowledgeCountry(); setShowWelcomeCountry(false); }}
+      />
 
       {/* Welcome Header */}
       <motion.div
