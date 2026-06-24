@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
-  Shield, MapPin, Bell, Lock, Heart, Zap, CheckCircle2,
-  AlertTriangle, Plane, Hotel, Stethoscope, Home, Star,
-  ArrowRight, ChevronRight, Play, Users, Globe, Clock, Radio
+  Shield, MapPin, Bell, Lock, Zap, CheckCircle2,
+  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio
 } from 'lucide-react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import { BRAND } from '@/lib/brandTokens';
