@@ -73,8 +73,27 @@ Deno.serve(async (req) => {
           case_id: session.case_id,
           is_active: true,
         });
-        // Sort by updated_at descending to always get the freshest record
-        const live = liveLocations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
+
+        // Prefer GPS records over IP geo. IP geo resolves to the ISP's registered city
+        // (not the patient's physical location) and caused Guardians to see the wrong
+        // city (e.g. Caracas) when the patient was abroad. GPS-source records are always
+        // preferred; IP geo is only used if no GPS record exists AND it is recent (< 10 min).
+        const sorted = liveLocations.sort((a, b) => {
+          const aIsGps = a.source === 'gps';
+          const bIsGps = b.source === 'gps';
+          if (aIsGps !== bIsGps) return aIsGps ? -1 : 1;  // GPS first
+          return new Date(b.updated_at) - new Date(a.updated_at);  // then most recent
+        });
+
+        let live = sorted[0] ?? null;
+
+        // Discard IP geo records older than 10 minutes — they are city-level guesses
+        // and become misleading once the patient has moved.
+        if (live && live.source === 'ip_geo') {
+          const ageMs = Date.now() - new Date(live.updated_at || 0).getTime();
+          if (ageMs > 10 * 60 * 1000) live = null;
+        }
+
         if (live && live.latitude != null && live.longitude != null) {
           latestLocation = {
             latitude: live.latitude,
