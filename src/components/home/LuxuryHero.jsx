@@ -4,244 +4,342 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
-import { BadgeCheck, Shield, Plane, Heart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BadgeCheck, Shield, Plane, Map, CheckCircle } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
 
-const GOLD = BRAND.gold;
+const GOLD       = BRAND.gold;
 const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
 
+/* ── Content by mode ──────────────────────────────────────────────────────── */
 const CONTENT = {
   medical: {
-    eyebrow: 'Your Journey. Perfected.',
-    headline: (
-      <>
-        World-Class Dental & Aesthetic Care.<br />
-        <span style={{ color: GOLD }}>Zero Compromises.</span>
-      </>
-    ),
-    body: 'From consultation to recovery, Morales orchestrates every detail. Exceptional results, zero stress.',
-    cta: { label: 'Start Your Journey →', path: '/booking' },
-    trustPills: [
-      { icon: BadgeCheck, label: 'Verified Experts', sub: 'Top 1% specialists' },
-      { icon: Shield, label: 'All-Inclusive Pricing', sub: 'No surprises' },
-      { icon: Heart, label: 'End-to-End Care', sub: '24/7 until home' },
-    ],
+    headline:    'YOUR JOURNEY.\nPERFECTED.',
+    subheadline: 'World-Class Dental & Aesthetic Care. Zero Compromises.',
+    body:        'From consultation to recovery, Morales orchestrates every detail. Exceptional results, zero stress.',
+    cta:         { label: 'Start Your Journey', path: '/booking' },
   },
   nonmedical: {
-    eyebrow: 'Travel Without Limits.',
-    headline: (
-      <>
-        The World,{' '}
-        <span style={{ color: GOLD }}>Effortlessly Yours.</span>
-      </>
-    ),
-    body: 'Private jets, exclusive hotels, personal companions — seamlessly integrated. Travel designed entirely around you.',
-    cta: { label: 'Plan My Journey →', path: '/travel-concierge' },
-    trustPills: [
-      { icon: Plane, label: 'Global Access', sub: '190+ countries' },
-      { icon: BadgeCheck, label: 'Vetted Partners', sub: 'Excellence guaranteed' },
-      { icon: Heart, label: 'White-Glove Care', sub: 'Every detail handled' },
-    ],
+    headline:    'THE WORLD,\nEFFORTLESSLY YOURS.',
+    subheadline: 'Private jets. Exclusive hotels. Personal companions.',
+    body:        'Travel designed entirely around you — seamlessly integrated, impeccably executed.',
+    cta:         { label: 'Plan My Journey', path: '/travel-concierge' },
   },
 };
 
+/* ── Trust badges (ISO, surgeons, concierge) ──────────────────────────────── */
+const TRUST_BADGES = [
+  { icon: BadgeCheck, label: 'ISO 21101 Certified' },
+  { icon: BadgeCheck, label: '100+ Verified Surgeons' },
+  { icon: Shield,     label: '24/7 Global Concierge' },
+];
+
+/* ── Feature cards below hero ─────────────────────────────────────────────── */
+const FEATURES = [
+  { icon: Map,         title: 'End-to-End Concierge',   desc: 'Every logistics detail handled from departure to return.' },
+  { icon: Shield,      title: 'Offline Safety Net',     desc: 'Safe-T4life protection works even without internet.' },
+  { icon: CheckCircle, title: 'Verified Specialists',   desc: 'Only the top 1% of surgeons and aesthetic doctors.' },
+];
+
+/* ── Floating SOS Capsule ─────────────────────────────────────────────────── */
+function SOSCapsule() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.8, duration: 0.6 }}
+      className="fixed bottom-6 right-6 z-[90]"
+    >
+      <Link to="/emergency-access" aria-label="Emergency secure line">
+        <motion.div
+          className="flex items-center gap-2.5 rounded-full px-5 py-3 cursor-pointer select-none"
+          style={{
+            background:     'rgba(6, 11, 22, 0.82)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            border:     '1px solid rgba(212, 175, 55, 0.22)',
+            boxShadow:  '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}
+          whileHover={{ scale: 1.04, transition: { duration: 0.2 } }}
+          whileTap={{ scale: 0.97 }}
+        >
+          {/* Pulse dot */}
+          <div className="relative flex items-center justify-center w-3 h-3 shrink-0">
+            <motion.span
+              className="absolute inset-0 rounded-full"
+              style={{ background: '#ef4444' }}
+              animate={{ scale: [1, 2, 1], opacity: [0.6, 0, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+            />
+            <span className="relative w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
+          </div>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: GOLD,
+              lineHeight: 1,
+            }}
+          >
+            Secure Line
+          </span>
+        </motion.div>
+      </Link>
+    </motion.div>
+  );
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
-  const { mode } = usePlatformMode();
-  const isMedical = mode === 'medical';
-  const content = isMedical ? CONTENT.medical : CONTENT.nonmedical;
-
+  const { mode }    = usePlatformMode();
+  const isMedical   = mode === 'medical';
+  const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
-  const openModal = useCallback(() => setShowModal(true), []);
-  const closeModal = useCallback(() => setShowModal(false), []);
+  const openModal   = useCallback(() => setShowModal(true), []);
+  const closeModal  = useCallback(() => setShowModal(false), []);
 
   return (
     <>
-      <section className="relative min-h-screen overflow-hidden" style={{ background: '#0b1219', marginTop: '-72px' }}>
-        {/* Full-bleed background with parallax effect */}
+      {/* ── HERO SECTION ── */}
+      <section
+        className="relative overflow-hidden"
+        style={{ background: '#0b1219', marginTop: '-72px', minHeight: '100svh' }}
+      >
+        {/* Full-bleed background — slow parallax zoom */}
         <div className="absolute inset-0">
-          <motion.img 
-            src={HERO_IMAGE} 
-            alt="Premium medical travel concierge" 
+          <motion.img
+            src={HERO_IMAGE}
+            alt="Premium medical travel concierge"
             className="w-full h-full object-cover"
-            style={{ objectPosition: '65% center' }} 
-            loading="eager" 
+            style={{ objectPosition: '65% center' }}
+            loading="eager"
             fetchPriority="high"
             initial={prefersReducedMotion ? false : { scale: 1.08 }}
             animate={{ scale: 1 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 25, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 28, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 35%, rgba(11,18,25,0.88) 50%, rgba(11,18,25,0.5) 70%, transparent 100%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.6) 15%, transparent 35%)' }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.85) 15%, transparent 35%)' }} />
-          {/* Subtle animated shimmer overlay */}
-          <motion.div 
+          {/* Gradient overlays */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0b1219 0%, #0b1219 32%, rgba(11,18,25,0.88) 50%, rgba(11,18,25,0.45) 72%, transparent 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b1219 0%, rgba(11,18,25,0.55) 12%, transparent 32%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0b1219 0%, rgba(11,18,25,0.8) 12%, transparent 32%)' }} />
+          {/* Gold shimmer */}
+          <motion.div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(circle at 65% 50%, rgba(212,175,55,0.04) 0%, transparent 65%)' }}
-            animate={prefersReducedMotion ? { opacity: 0.4 } : { opacity: [0.3, 0.6, 0.3] }}
-            transition={prefersReducedMotion ? {} : { duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ background: `radial-gradient(circle at 65% 50%, ${BRAND.goldAlpha(0.04)} 0%, transparent 65%)` }}
+            animate={prefersReducedMotion ? { opacity: 0.4 } : { opacity: [0.25, 0.55, 0.25] }}
+            transition={prefersReducedMotion ? {} : { duration: 10, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
 
-        <div className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center min-h-screen py-20 lg:py-0" style={{ paddingTop: '72px' }}>
-
-          {/* LEFT CONTENT */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }} 
+        {/* ── CONTENT GRID ── */}
+        <div
+          className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center"
+          style={{ minHeight: '100svh', paddingTop: '72px' }}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: -28 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} 
-            className="flex flex-col z-10 lg:pr-16"
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col z-10 lg:pr-20 py-20 lg:py-0"
           >
-            <AnimatePresence mode="wait">
-              <motion.p 
-                key={`eyebrow-${mode}`} 
-                initial={{ opacity: 0, y: 12 }} 
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }} 
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="font-body uppercase mb-9" 
-                style={{ 
-                  color: GOLD, 
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  letterSpacing: '0.35em',
-                  textShadow: `0 0 24px ${GOLD}44`
-                }}
-              >
-                {content.eyebrow}
-              </motion.p>
-            </AnimatePresence>
-
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
+            {/* Mode toggle — mobile only, above headline */}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-7 lg:hidden"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="mb-10 lg:hidden"
             >
               <ModeToggle />
             </motion.div>
 
+            {/* ── COMMANDING HEADLINE ── */}
             <AnimatePresence mode="wait">
-              <motion.h1 
-                key={`headline-${mode}`} 
-                initial={{ opacity: 0, y: 16 }} 
+              <motion.h1
+                key={`headline-${mode}`}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }} 
-                transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                className="font-display text-white mb-8"
-                style={{ 
-                  fontSize: 'clamp(2.25rem, 7vw, 5rem)',
-                  lineHeight: 1.02,
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                className="text-white mb-6"
+                style={{
+                  fontSize:      'clamp(2.6rem, 8.5vw, 6.2rem)',
+                  fontWeight:    900,
+                  lineHeight:    1.0,
                   letterSpacing: '-0.03em',
-                  fontWeight: 400,
-                  textShadow: '0 4px 60px rgba(0,0,0,0.6)',
-                  fontSmooth: 'antialiased'
-                }}>
+                  fontFamily:    '"SF Pro Display", system-ui, -apple-system, sans-serif',
+                  textTransform: 'uppercase',
+                  whiteSpace:    'pre-line',
+                  textShadow:    '0 2px 40px rgba(0,0,0,0.5)',
+                }}
+              >
                 {content.headline}
               </motion.h1>
             </AnimatePresence>
 
+            {/* ── SUBHEADLINE ── */}
             <AnimatePresence mode="wait">
-              <motion.p 
-                key={`body-${mode}`} 
-                initial={{ opacity: 0, y: 8 }} 
+              <motion.p
+                key={`sub-${mode}`}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }} 
-                transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                className="text-white/65 mb-8 max-w-[480px]"
-                style={{ 
-                  fontSize: '18px',
-                  lineHeight: 1.8,
-                  fontWeight: 300,
-                  letterSpacing: '0.01em',
-                  fontSmooth: 'antialiased'
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                className="mb-3"
+                style={{
+                  fontSize:      'clamp(1.1rem, 2.5vw, 1.35rem)',
+                  fontWeight:    400,
+                  color:         'rgba(255,255,255,0.72)',
+                  lineHeight:    1.5,
+                  letterSpacing: '-0.01em',
                 }}
+              >
+                {content.subheadline}
+              </motion.p>
+            </AnimatePresence>
+
+            {/* Body text */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`body-${mode}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                className="mb-9 max-w-[440px]"
+                style={{ fontSize: '16px', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
               >
                 {content.body}
               </motion.p>
             </AnimatePresence>
 
-            {/* CTA Button */}
-            <motion.div 
-              initial={{ opacity: 0, y: 12 }}
+            {/* ── CTA BUTTON — pill style ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="mb-10"
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="mb-5"
             >
               <Link to={content.cta.path}>
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group relative h-14 px-10 rounded-xl text-base font-semibold overflow-hidden"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`, 
-                    color: '#060B16',
-                    boxShadow: `0 8px 40px ${GOLD}40, 0 0 0 1px ${GOLD}33 inset`,
-                    textShadow: '0 1px 2px rgba(255,255,255,0.2)'
+                  className="group relative h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
+                  style={{
+                    background:  `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
+                    color:       '#060B16',
+                    boxShadow:   `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
+                    letterSpacing: '0.02em',
                   }}
                 >
-                  <span className="relative z-10 flex items-center gap-2">
+                  <span className="relative z-10 flex items-center gap-2.5">
                     {content.cta.label}
-                    <motion.span 
+                    <motion.span
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
                       className="inline-block"
-                      animate={{ x: [0, 4, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                    >→</motion.span>
+                    >
+                      →
+                    </motion.span>
                   </span>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }} 
+                  {/* Hover overlay */}
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
+                    style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
                   />
                 </motion.button>
               </Link>
             </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
+            {/* ── TRUST BADGES — inline row ── */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-10"
+            >
+              {TRUST_BADGES.map(({ icon: Icon, label }, i) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-white/15 mr-1 hidden sm:inline">·</span>}
+                  <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} strokeWidth={2} />
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+
+            {/* Mode toggle — desktop, below badges */}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-7 hidden lg:block"
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="hidden lg:block"
             >
               <ModeToggle />
             </motion.div>
-
-
-
-            <AnimatePresence mode="wait">
-              <motion.div 
-                key={`pills-${mode}`} 
-                initial={{ opacity: 0, y: 16 }} 
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }} 
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-10 border-t border-white/[0.06]"
-              >
-                {content.trustPills.map(({ icon: Icon, label, sub }) => (
-                  <motion.div 
-                    key={label} 
-                    className="flex flex-col gap-2"
-                    whileHover={{ y: -2 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${GOLD}88)` }} strokeWidth={1.3} />
-                    <p className="text-[12px] font-medium text-white leading-tight tracking-wide">{label}</p>
-                    <p className="text-[11px] text-white/50 tracking-wide">{sub}</p>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
           </motion.div>
 
-          {/* RIGHT — Clean space for jet imagery */}
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            transition={{ duration: 1, delay: 0.3 }}
-            className="relative hidden lg:block" 
-            style={{ height: '100vh' }}
-          />
+          {/* Right column — pure visual real estate for the hero image */}
+          <div className="hidden lg:block" />
         </div>
       </section>
+
+      {/* ── FEATURE GRID — below hero ── */}
+      <section
+        className="w-full"
+        style={{ background: '#060B16', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <div className="max-w-[1440px] mx-auto px-8 lg:px-16 py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-10">
+            {FEATURES.map(({ icon: Icon, title, desc }, i) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.55, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                className="flex flex-col gap-3 p-6 rounded-2xl border transition-all duration-300 hover:border-[#D4AF37]/25 group cursor-default"
+                style={{
+                  background:   'rgba(12,26,29,0.6)',
+                  border:       '1px solid rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: `${BRAND.goldAlpha(0.1)}`,
+                    border:     `1px solid ${BRAND.goldAlpha(0.2)}`,
+                  }}
+                >
+                  <Icon
+                    className="w-5 h-5 transition-all duration-300 group-hover:scale-110"
+                    style={{ color: GOLD, filter: `drop-shadow(0 0 6px ${BRAND.goldAlpha(0.5)})` }}
+                    strokeWidth={1.5}
+                  />
+                </div>
+                <p
+                  style={{
+                    fontSize: '15px', fontWeight: 600, color: '#FFFFFF',
+                    letterSpacing: '-0.01em', lineHeight: 1.2,
+                  }}
+                >
+                  {title}
+                </p>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
+                  {desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FLOATING SOS CAPSULE ── */}
+      <SOSCapsule />
+
       <HowItWorksModal isOpen={showModal} onClose={closeModal} />
     </>
   );
