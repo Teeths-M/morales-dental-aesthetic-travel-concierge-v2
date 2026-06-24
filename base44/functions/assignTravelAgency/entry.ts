@@ -33,7 +33,21 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'NO_TRAVEL_AGENCIES', message: 'No travel agencies available. Admin review required.' });
     }
 
-    const selectedAgency = travelAgencies[0];
+    // Prefer agencies that service the case destination country
+    const destinationCountry = caseRecord?.procedure_country || caseRecord?.destination_country || null;
+
+    let selectedAgency = travelAgencies[0]; // default: first active
+    if (destinationCountry) {
+      const matchedAgency = travelAgencies.find(a =>
+        Array.isArray(a.service_regions) && a.service_regions.includes(destinationCountry)
+      );
+      if (matchedAgency) {
+        selectedAgency = matchedAgency;
+        console.log(`[assignTravelAgency] Matched agency ${selectedAgency.id} for destination ${destinationCountry}`);
+      } else {
+        console.warn(`[assignTravelAgency] No agency found for ${destinationCountry} — using default`);
+      }
+    }
 
     const randomBytes = new Uint8Array(32);
     crypto.getRandomValues(randomBytes);

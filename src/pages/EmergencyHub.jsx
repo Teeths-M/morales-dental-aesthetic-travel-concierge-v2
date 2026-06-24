@@ -54,8 +54,10 @@ export default function EmergencyHub() {
           }
         } catch (_) {}
       }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      console.error('[EmergencyHub] Auth failed:', err?.message);
+      // Don't set null — keep cached user if available
+    }).finally(() => setLoading(false)); // ALWAYS stop loading
   }, []);
 
   if (loading) return (

@@ -78,7 +78,8 @@ Deno.serve(async (req) => {
         action: 'emergency_vault_access',
         user_email,
         vault_count: vaults.length,
-        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+        // Use the rightmost IP — proxies append, so rightmost = actual client
+        ip_address: (() => { const f = req.headers.get('x-forwarded-for'); return f ? f.split(',').pop()?.trim() || 'unknown' : req.headers.get('cf-connecting-ip') || 'unknown'; })(),
       },
       sensitive: true,
       timestamp: new Date().toISOString(),

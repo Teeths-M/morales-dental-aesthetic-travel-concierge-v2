@@ -127,6 +127,17 @@ export default function SoloCheckInSettings() {
     return <Badge className={cfg.color}>{cfg.label}</Badge>;
   };
 
+  if (!user && !activeCase) {
+    return (
+      <div className="flex min-h-screen bg-slate-50 items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-500">Loading safety settings...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar />
@@ -356,7 +367,7 @@ export default function SoloCheckInSettings() {
                     <div className="flex-shrink-0 text-right">
                       {checkIn.escalation_level && checkIn.escalation_level !== 'none' && (
                         <p className="text-[10px] font-semibold text-red-600">
-                          ⚠️ {checkIn.escalation_level.replace('_', ' ').toUpperCase()}
+                          ⚠️ {(checkIn.escalation_level || '').replace('_', ' ').toUpperCase()}
                         </p>
                       )}
                       {checkIn.response_method && (

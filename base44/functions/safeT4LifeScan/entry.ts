@@ -367,7 +367,8 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.CaseRecord.update(caseId, {
         signature_data,
         signature_timestamp: now,
-        signature_ip_address: ip_address || req.headers.get('x-forwarded-for') || 'unknown',
+        // Use the rightmost IP — proxies append, so rightmost = actual client
+        signature_ip_address: ip_address || (() => { const f = req.headers.get('x-forwarded-for'); return f ? f.split(',').pop()?.trim() || 'unknown' : req.headers.get('cf-connecting-ip') || 'unknown'; })(),
         waiver_status: 'signed',
         safe_t_result: 'PASSED',
         status: 'Safe-T-Reviewed',

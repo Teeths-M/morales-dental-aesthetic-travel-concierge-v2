@@ -154,8 +154,10 @@ async function buildCheckInLink(base44, checkInId, caseId) {
   }
 }
 
-async function sendSms(twilioSid, twilioAuth, from, to, body) {
+async function sendSms(twilioSid, twilioAuth, from, to, body, caseId) {
   if (!twilioSid || !twilioAuth || !from || !to) return { success: false, reason: 'provider_not_configured' };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
     const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
       method: 'POST',
@@ -164,6 +166,7 @@ async function sendSms(twilioSid, twilioAuth, from, to, body) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({ From: from, To: to, Body: body }),
+      signal: controller.signal,
     });
     if (!resp.ok) {
       const txt = await resp.text().catch(() => '');
@@ -171,8 +174,15 @@ async function sendSms(twilioSid, twilioAuth, from, to, body) {
     }
     const json = await resp.json().catch(() => ({}));
     return { success: true, sid: json.sid };
-  } catch (e) {
-    return { success: false, reason: e.message };
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      console.error('[runSilentSafetyEscalation] SMS timed out after 5s for case:', caseId);
+      return { success: false, reason: 'timeout' };
+    }
+    console.error('[runSilentSafetyEscalation] SMS failed:', err?.message);
+    return { success: false, reason: err.message };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -293,7 +303,7 @@ Deno.serve(async (req) => {
         let smsStatus = 'sent';
 
         if (patientPhone) {
-          const smsResult = await sendSms(twilioSid, twilioAuth, twilioFrom, patientPhone, smsBody);
+          const smsResult = await sendSms(twilioSid, twilioAuth, twilioFrom, patientPhone, smsBody, ci.case_id);
           smsStatus = smsResult.success ? 'sent' : (smsResult.reason === 'provider_not_configured' ? 'provider_not_configured' : 'failed');
           smsSid = smsResult.sid || null;
         } else {
@@ -389,7 +399,7 @@ Deno.serve(async (req) => {
         }
 
         if (guardianPhone) {
-          const smsResult = await sendSms(twilioSid, twilioAuth, twilioFrom, guardianPhone, guardianSmsBody);
+          const smsResult = await sendSms(twilioSid, twilioAuth, twilioFrom, guardianPhone, guardianSmsBody, ci.case_id);
           await logNotification(base44, {
             channel: 'sms',
             case_id: ci.case_id,
@@ -467,7 +477,7 @@ Deno.serve(async (req) => {
         // Notify security partner via SMS if configured
         const securityPhone = caseRecord?.travel_vendor_id ? null : null; // extend when SecurityAgency has phone field
         if (securityPhone) {
-          const smsResult = await sendSms(twilioSid, twilioAuth, twilioFrom, securityPhone, dispatchBody);
+          const smsResult = await sendSms(twilioSid, twilioAuth, twilioFrom, securityPhone, dispatchBody, ci.case_id);
           await logNotification(base44, {
             channel: 'sms',
             case_id: ci.case_id,

@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.SecureShareLink.update(shareLink.id, {
       access_count: (shareLink.access_count || 0) + 1,
       last_accessed_at: now.toISOString(),
-      last_accessed_ip: req.headers.get('x-forwarded-for') || 'unknown'
+      // Use the rightmost IP — proxies append, so rightmost = actual client
+      last_accessed_ip: (() => { const f = req.headers.get('x-forwarded-for'); return f ? f.split(',').pop()?.trim() || 'unknown' : req.headers.get('cf-connecting-ip') || 'unknown'; })()
     });
 
     // BUG-01 FIX: 'passport_access_granted' is NOT in the AuditLog entity enum — it caused
@@ -88,7 +89,8 @@ Deno.serve(async (req) => {
         action: 'share_link_access',
         share_token,
         purpose: shareLink.purpose,
-        ip_address: req.headers.get('x-forwarded-for'),
+        // Use the rightmost IP — proxies append, so rightmost = actual client
+        ip_address: (() => { const f = req.headers.get('x-forwarded-for'); return f ? f.split(',').pop()?.trim() || 'unknown' : req.headers.get('cf-connecting-ip') || 'unknown'; })(),
       },
       sensitive: true,
       timestamp: now.toISOString(),

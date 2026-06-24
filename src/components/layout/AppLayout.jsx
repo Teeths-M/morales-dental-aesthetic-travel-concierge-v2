@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
@@ -24,6 +24,12 @@ export default function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(
     () => !suppressOnboarding && !!user && !isOnboardingComplete()
   );
+
+  useEffect(() => {
+    if (suppressOnboarding && showOnboarding) {
+      setShowOnboarding(false);
+    }
+  }, [pathname, suppressOnboarding]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Suppress patient-facing fixed FABs on pages where they don't belong:
   // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)

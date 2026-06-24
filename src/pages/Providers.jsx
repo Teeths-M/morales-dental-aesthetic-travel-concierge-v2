@@ -23,7 +23,7 @@ export default function Providers() {
 
   const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['doctors'],
-    queryFn: () => base44.entities.Doctor.list(),
+    queryFn: () => base44.entities.Doctor.filter({ status: 'active' }, '-created_date', 100),
     staleTime: 5 * 60 * 1000,
   });
 

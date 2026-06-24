@@ -14,7 +14,7 @@ import { base44 } from '@/api/base44Client';
 
 const TRAIL_INTERVAL_MS = 30 * 1000;
 const MOVE_THRESHOLD_M  = 50;
-const MAX_TRAIL_POINTS  = 2000;  // ~16h at 30s intervals
+const MAX_TRAIL_POINTS  = 5000;  // ~41h at 30s intervals
 
 function trailKey(caseId) { return `morales_trail_${caseId}`; }
 
