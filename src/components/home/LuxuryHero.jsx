@@ -40,55 +40,6 @@ const FEATURES = [
   { icon: CheckCircle, title: 'Verified Specialists',   desc: 'Only the top 1% of surgeons and aesthetic doctors.' },
 ];
 
-/* ── Floating SOS Capsule ─────────────────────────────────────────────────── */
-function SOSCapsule() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 1.8, duration: 0.6 }}
-      className="fixed bottom-6 right-6 z-[90]"
-    >
-      <Link to="/emergency-access" aria-label="Emergency secure line">
-        <motion.div
-          className="flex items-center gap-2.5 rounded-full px-5 py-3 cursor-pointer select-none"
-          style={{
-            background:     'rgba(6, 11, 22, 0.82)',
-            backdropFilter: 'blur(18px)',
-            WebkitBackdropFilter: 'blur(18px)',
-            border:     '1px solid rgba(212, 175, 55, 0.22)',
-            boxShadow:  '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
-          }}
-          whileHover={{ scale: 1.04, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.97 }}
-        >
-          {/* Pulse dot */}
-          <div className="relative flex items-center justify-center w-3 h-3 shrink-0">
-            <motion.span
-              className="absolute inset-0 rounded-full"
-              style={{ background: '#ef4444' }}
-              animate={{ scale: [1, 2, 1], opacity: [0.6, 0, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
-            />
-            <span className="relative w-2.5 h-2.5 rounded-full" style={{ background: '#ef4444' }} />
-          </div>
-          <span
-            style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: GOLD,
-              lineHeight: 1,
-            }}
-          >
-            Secure Line
-          </span>
-        </motion.div>
-      </Link>
-    </motion.div>
-  );
-}
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 export default function LuxuryHero() {
@@ -336,9 +287,6 @@ export default function LuxuryHero() {
           </div>
         </div>
       </section>
-
-      {/* ── FLOATING SOS CAPSULE ── */}
-      <SOSCapsule />
 
       <HowItWorksModal isOpen={showModal} onClose={closeModal} />
     </>

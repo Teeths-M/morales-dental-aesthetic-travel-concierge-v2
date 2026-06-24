@@ -19,7 +19,7 @@ export default function WhatsAppButton() {
       whileTap={{ scale: 0.95 }}
     >
       <MessageCircle className="w-5 h-5" />
-      <span className="text-sm font-semibold hidden sm:inline">Secure Line</span>
+      <span className="text-sm font-semibold hidden sm:inline">WhatsApp</span>
     </motion.a>
   );
 }
