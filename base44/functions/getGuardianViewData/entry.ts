@@ -65,8 +65,32 @@ Deno.serve(async (req) => {
 
     const hasLocationScope = !session.shared_data_scope || session.shared_data_scope.includes('location');
     let latestLocation = null;
+    let locationTrail: Array<{ lat: number; lng: number; ts: string }> = [];
 
     if (session.case_id && hasLocationScope) {
+      // Load breadcrumb trail for polyline rendering (always fetched, GPS only for precision)
+      try {
+        const crumbs = await base44.asServiceRole.entities.LocationBreadcrumb.filter(
+          { case_id: session.case_id, is_purged: false },
+          'logged_at',
+          200
+        );
+        locationTrail = crumbs
+          .filter((c: any) => c.source === 'gps' && c.latitude != null && c.longitude != null)
+          .map((c: any) => ({ lat: c.latitude, lng: c.longitude, ts: c.logged_at }));
+
+        // Country: pick from the most recent crumb that has country data
+        if (tripProgress) {
+          const latestWithCountry = [...crumbs]
+            .reverse()
+            .find((c: any) => c.country && c.country_code);
+          if (latestWithCountry) {
+            tripProgress.current_country      = latestWithCountry.country;
+            tripProgress.current_country_code = latestWithCountry.country_code;
+          }
+        }
+      } catch (_) {}
+
       // 1. Try LiveLocation first — real-time moving dot
       try {
         const liveLocations = await base44.asServiceRole.entities.LiveLocation.filter({
@@ -216,6 +240,7 @@ Deno.serve(async (req) => {
       },
       case: casePublic,
       latest_location: latestLocation,
+      location_trail: locationTrail,
       escalation: escalationInfo,
       wilderness_sos: wildernessSOS,
       trip_progress: tripProgress,
