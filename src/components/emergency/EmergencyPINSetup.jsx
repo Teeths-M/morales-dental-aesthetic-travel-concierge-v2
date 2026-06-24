@@ -44,6 +44,37 @@ async function cacheManifestLocally(userEmail) {
   }
 }
 
+// ---------- Brute-force lockout helpers ----------
+const LOCKOUT_KEY = (email) => `morales_pin_attempts_${email}`;
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+function checkLockout(email) {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_KEY(email));
+    if (!raw) return false;
+    const { attempts, lockedUntil } = JSON.parse(raw);
+    if (lockedUntil && Date.now() < lockedUntil) return true; // locked
+    return false;
+  } catch { return false; }
+}
+
+function recordFailedAttempt(email) {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_KEY(email));
+    const existing = raw ? JSON.parse(raw) : { attempts: 0 };
+    const attempts = (existing.attempts || 0) + 1;
+    const lockedUntil = attempts >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : null;
+    localStorage.setItem(LOCKOUT_KEY(email), JSON.stringify({ attempts, lockedUntil }));
+    return { attempts, isLocked: !!lockedUntil };
+  } catch { return { attempts: 1, isLocked: false }; }
+}
+
+function clearAttempts(email) {
+  try { localStorage.removeItem(LOCKOUT_KEY(email)); } catch {}
+}
+// -----------------------------------------------
+
 // ---------- Local offline PIN helpers ----------
 const LOCAL_PIN_KEY = 'morales_emergency_pin_hash';
 
@@ -235,6 +266,13 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
 
   const verifyPIN = async () => {
     if (pin.length !== 6) return;
+
+    // Check lockout before doing anything
+    if (checkLockout(userEmail)) {
+      setError('Too many failed attempts. Try again in 30 minutes.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -242,6 +280,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     try {
       const result = await verifyVaultPIN(userEmail, pin);
       if (result.valid) {
+        clearAttempts(userEmail);
         setCurrentMode('verified');
         if (onVerified) onVerified({ verified: true, pin_session_token: 'offline_local', expires_at: null });
         setLoading(false);
@@ -254,6 +293,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     // Fallback to legacy local verification
     const legacyOk = await verifyLocalPIN(pin, userEmail);
     if (legacyOk) {
+      clearAttempts(userEmail);
       setCurrentMode('verified');
       if (onVerified) onVerified({ verified: true, pin_session_token: 'offline_local', expires_at: null });
       setLoading(false);
@@ -265,6 +305,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       try {
         const res = await base44.functions.invoke('verifyEmergencyPIN', { action: 'verify', user_email: userEmail, pin });
         if (res.data?.verified) {
+          clearAttempts(userEmail);
           // Save locally for next offline use
           try {
             await saveVaultPIN(userEmail, pin);
@@ -278,9 +319,15 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       } catch (_) {}
     }
 
-    // All methods failed
-    setError('Incorrect PIN');
-    setAttemptsLeft(a => a - 1);
+    // All methods failed — record the attempt
+    const { attempts, isLocked } = recordFailedAttempt(userEmail);
+    const remaining = MAX_ATTEMPTS - attempts;
+    if (isLocked) {
+      setError('Too many failed attempts. Try again in 30 minutes.');
+    } else {
+      setError(`Incorrect PIN — ${remaining} attempt${remaining === 1 ? '' : 's'} remaining`);
+    }
+    setAttemptsLeft(remaining > 0 ? remaining : 0);
     setPin('');
     setLoading(false);
   };

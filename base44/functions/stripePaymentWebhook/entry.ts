@@ -57,10 +57,12 @@ Deno.serve(async (req) => {
 
   const base44 = createClientFromRequest(req);
 
-  // Idempotency: skip if this event was already processed
-  const existingTxn = await base44.asServiceRole.entities.PaymentTransaction.filter({ event_id: event.id });
-  if (existingTxn.length > 0) {
-    console.log(`[stripePaymentWebhook] Event ${event.id} already processed — skipping.`);
+  // Idempotency: check if we've already processed this Stripe event
+  const existingTxns = await base44.asServiceRole.entities.PaymentTransaction.filter({
+    stripe_event_id: event.id
+  });
+  if (existingTxns && existingTxns.length > 0) {
+    console.log(`[stripePaymentWebhook] Event ${event.id} already processed — skipping`);
     return Response.json({ received: true, idempotent: true });
   }
 
@@ -141,6 +143,7 @@ Deno.serve(async (req) => {
           case_id: caseId || null,
           client_email: pi.metadata?.client_email || '',
           stripe_payment_intent_id: pi.id,
+          stripe_event_id: event.id,
           event_id: event.id,
           event_type: event.type,
           status: 'failed',
@@ -172,6 +175,7 @@ Deno.serve(async (req) => {
           case_id: refundedCaseId || null,
           client_email: priorTxns[0]?.client_email || '',
           stripe_payment_intent_id: piId,
+          stripe_event_id: event.id,
           event_id: event.id,
           event_type: event.type,
           status: 'refunded',
@@ -219,6 +223,7 @@ async function handlePackagePaymentSuccess(base44, {
   if (!case_id) {
     console.warn(`[handlePackagePaymentSuccess] Rejected — missing case_id in metadata. event_id=${event_id}`);
     await base44.asServiceRole.entities.PaymentTransaction.create({
+      stripe_event_id: event_id,
       event_id, event_type,
       status: 'failed_validation',
       raw_amount: amount_total || 0,
@@ -240,6 +245,7 @@ async function handlePackagePaymentSuccess(base44, {
       client_email: client_email || '',
       stripe_session_id,
       stripe_payment_intent_id,
+      stripe_event_id: event_id,
       event_id, event_type,
       status: 'failed_validation',
       raw_amount: amount_total || 0,
@@ -259,6 +265,7 @@ async function handlePackagePaymentSuccess(base44, {
       client_email: client_email || '',
       stripe_session_id,
       stripe_payment_intent_id,
+      stripe_event_id: event_id,
       event_id, event_type,
       status: 'succeeded_skipped_demo',
       deposit_option,
@@ -333,6 +340,7 @@ async function handlePackagePaymentSuccess(base44, {
     client_email: client_email || caseRecord.client_email,
     stripe_session_id,
     stripe_payment_intent_id,
+    stripe_event_id: event_id,
     event_id,
     event_type,
     status: 'succeeded',
@@ -371,6 +379,7 @@ async function handleConsultationFeePaid(base44, {
       user_id: user_id || '',
       stripe_session_id,
       stripe_payment_intent_id,
+      stripe_event_id: event_id,
       event_id, event_type,
       status: 'succeeded_skipped_demo',
       raw_amount: amount_total,
@@ -413,6 +422,7 @@ async function handleConsultationFeePaid(base44, {
         user_id: user_id || '',
         stripe_session_id,
         stripe_payment_intent_id,
+        stripe_event_id: event_id,
         event_id, event_type,
         status: 'succeeded_skipped_demo',
         raw_amount: amount_total,
@@ -446,6 +456,7 @@ async function handleConsultationFeePaid(base44, {
     user_id: user_id || '',
     stripe_session_id,
     stripe_payment_intent_id,
+    stripe_event_id: event_id,
     event_id,
     event_type,
     status: 'succeeded',

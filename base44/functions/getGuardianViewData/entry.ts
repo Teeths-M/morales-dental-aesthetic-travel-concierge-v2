@@ -17,6 +17,10 @@ Deno.serve(async (req) => {
 
     if (!session) return Response.json({ status: 'invalid', error: 'This guardian link does not exist or has been revoked.' });
     if (!session.is_active) return Response.json({ status: 'revoked', error: 'This guardian link has been revoked by the traveler.' });
+    // Validate expires_at is a real date before comparing
+    if (!session.expires_at || isNaN(new Date(session.expires_at).getTime())) {
+      return Response.json({ status: 'invalid', error: 'Session has invalid expiration date.' });
+    }
     if (new Date(session.expires_at) < new Date()) return Response.json({ status: 'expired', error: 'This guardian link has expired.' });
 
     // Rate limit: max 100 views per hour per token

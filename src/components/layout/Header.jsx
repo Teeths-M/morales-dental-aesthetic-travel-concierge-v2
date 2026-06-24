@@ -35,16 +35,17 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, [hasHero]);
 
-  // Close user menu on outside click
+  // Close user menu on outside click — only attach when menu is open
   useEffect(() => {
-    const handler = e => {
+    if (!isUserMenuOpen) return;
+    const handler = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setIsUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [isUserMenuOpen]);
 
   const navLinks = [
     { name: 'Discover',      path: '/discover' },

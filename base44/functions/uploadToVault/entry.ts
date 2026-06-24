@@ -83,8 +83,8 @@ Deno.serve(async (req) => {
         is_emergency_accessible
       });
     } catch (createErr) {
-      console.error('[uploadToVault] PassportVault.create failed:', createErr);
-      return Response.json({ error: 'DEBUG: Vault record creation failed — ' + (createErr.message || String(createErr)) }, { status: 500 });
+      console.error('[uploadToVault] Vault create failed:', createErr?.message);
+      return Response.json({ error: 'Vault record creation failed. Please try again.' }, { status: 500 });
     }
 
     // Log to AuditLog — use 'passport_access_requested' which is in the allowed event type list.

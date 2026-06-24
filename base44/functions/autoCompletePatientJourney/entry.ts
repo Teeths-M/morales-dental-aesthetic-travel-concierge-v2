@@ -32,43 +32,44 @@ Deno.serve(async (req) => {
     const updatedCaseIds = [];
 
     for (const caseRecord of allActiveCases) {
-      // Check if return flight date exists and is in the past
-      // We'll use a field to track expected return date
-      // For now, we'll estimate based on procedure date + recovery days
-      
+      // Only auto-complete if procedure_date is set and sufficient time has passed
+      if (!caseRecord.procedure_date) {
+        console.log(`[autoCompletePatientJourney] Skipping case ${caseRecord.id} — no procedure_date set`);
+        continue;
+      }
+      const procedureDate = new Date(caseRecord.procedure_date);
+      if (isNaN(procedureDate.getTime())) {
+        console.warn(`[autoCompletePatientJourney] Invalid procedure_date for case ${caseRecord.id}`);
+        continue;
+      }
+
       let shouldComplete = false;
       let completionReason = '';
 
-      // BUG-R5-01 FIX: NEVER use created_date to estimate return date.
-      // created_date is the consultation submission timestamp — weeks/months before travel.
-      // Using it means cases auto-complete the moment recovery_days passes since *submission*,
-      // silently terminating active journeys where the patient hasn't even left yet.
-      //
-      // Rule 1 now requires: case is in Recovery/RECOVERY_PHASE_7_DAY status AND
-      // updated_date (last status transition) + recovery_days has elapsed.
-      // This correctly measures recovery from the time the case entered Recovery, not from creation.
+      // Rule 1: case is in Recovery/RECOVERY_PHASE_7_DAY status AND
+      // procedure_date + recovery_days has elapsed.
+      // Uses procedure_date (already validated above) as the anchor — not created_date or updated_date —
+      // so recovery is measured from when the patient actually had their procedure.
       if (
         caseRecord.recovery_days &&
         (caseRecord.status === 'Recovery' || caseRecord.status === 'RECOVERY_PHASE_7_DAY')
       ) {
-        const lastTransition = new Date(caseRecord.updated_date);
-        const expectedReturnDate = new Date(lastTransition);
+        const expectedReturnDate = new Date(procedureDate);
         expectedReturnDate.setDate(expectedReturnDate.getDate() + caseRecord.recovery_days + 7);
 
         if (expectedReturnDate.toISOString().split('T')[0] < today) {
           shouldComplete = true;
-          completionReason = `Recovery period ended (expected return: ${expectedReturnDate.toISOString().split('T')[0]}, from last status transition)`;
+          completionReason = `Recovery period ended (expected return: ${expectedReturnDate.toISOString().split('T')[0]}, from procedure_date)`;
         }
       }
 
-      // Rule 2: Check if case has been in Recovery status for extended period (>30 days)
+      // Rule 2: Check if case has been in Recovery status for extended period (>30 days post-procedure)
       if (caseRecord.status === 'Recovery') {
-        const statusUpdatedAt = new Date(caseRecord.updated_date);
-        const daysInRecovery = Math.floor((now - statusUpdatedAt) / (1000 * 60 * 60 * 24));
-        
-        if (daysInRecovery > 30) {
+        const daysPostProcedure = Math.floor((now - procedureDate) / (1000 * 60 * 60 * 24));
+
+        if (daysPostProcedure > 30) {
           shouldComplete = true;
-          completionReason = `In Recovery status for ${daysInRecovery} days`;
+          completionReason = `In Recovery status for ${daysPostProcedure} days post-procedure`;
         }
       }
 

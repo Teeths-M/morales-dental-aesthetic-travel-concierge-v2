@@ -27,7 +27,21 @@ function readCache() {
 }
 
 function writeCache(data) {
-  try { sessionStorage.setItem(IP_CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch {}
+  try {
+    // Only cache country-level data, never precise coordinates
+    const safeToCache = {
+      country: data.country,
+      country_code: data.country_code,
+      city: data.city,
+      region: data.region,
+      timezone: data.timezone,
+      currency: data.currency,
+      source: data.source,
+      precision: data.precision,
+      // DO NOT cache: latitude, longitude (precise coordinates)
+    };
+    sessionStorage.setItem(IP_CACHE_KEY, JSON.stringify({ data: safeToCache, ts: Date.now() }));
+  } catch {}
 }
 
 function readPrefs() {

@@ -190,11 +190,15 @@ Deno.serve(async (req) => {
           const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
           const from = Deno.env.get('TWILIO_PHONE_NUMBER');
           if (sid && auth && from) {
+            const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             try {
-              const voiceResp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
+              const voiceResp = await fetch(twilioUrl, {
                 method: 'POST',
                 headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ From: from, To: checkIn.user_phone, Twiml: `<Response><Say>This is an automated safety call from Morales Medical. You have not responded to your check-in. Please open the app and confirm you are safe. If you are in danger, trigger the SOS button immediately.</Say></Response>` }),
+                signal: controller.signal,
               });
               if (!voiceResp.ok) {
                 const errText = await voiceResp.text().catch(() => '');
@@ -202,7 +206,13 @@ Deno.serve(async (req) => {
               }
               await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { voice_call_attempted_at: now.toISOString() });
             } catch (voiceErr) {
-              console.error(`[escalateSoloCheckIn] Voice call exception for ${checkIn.id}:`, voiceErr.message);
+              if (voiceErr.name === 'AbortError') {
+                console.error(`[escalateSoloCheckIn] Twilio call timed out after 5s`);
+              } else {
+                console.error(`[escalateSoloCheckIn] Voice call exception for ${checkIn.id}:`, voiceErr?.message);
+              }
+            } finally {
+              clearTimeout(timeoutId);
             }
           }
         }

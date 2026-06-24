@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -66,6 +66,7 @@ function DashboardHome({ user, consultations, language }) {
   const navigate    = useNavigate();
   const [showGoldenM,       setShowGoldenM]       = useState(false);
   const [showWelcomeCountry, setShowWelcomeCountry] = useState(false);
+  const welcomeDebounceRef = useRef(null);
 
   // PERFORMANCE: Memoize displayName to prevent recalculation
   const displayName = useMemo(() => user?.full_name?.split(' ')[0] || 'there', [user?.full_name]);
@@ -104,9 +105,15 @@ function DashboardHome({ user, consultations, language }) {
   });
 
   // Show welcome modal whenever the patient lands in a new country
+  // Debounced to prevent double-fire when GPS updates rapidly on border crossing
   useEffect(() => {
-    if (isNewCountry) setShowWelcomeCountry(true);
-  }, [isNewCountry]);
+    if (!isNewCountry || !country) return;
+    clearTimeout(welcomeDebounceRef.current);
+    welcomeDebounceRef.current = setTimeout(() => {
+      setShowWelcomeCountry(true);
+    }, 500); // 500ms debounce — GPS can fire twice on border crossing
+    return () => clearTimeout(welcomeDebounceRef.current);
+  }, [isNewCountry, country]);
   const latestConsultation = consultations[0];
   const caseStatus = latestConsultation?.status || 'Submitted';
 
@@ -464,7 +471,12 @@ export default function Dashboard() {
   const location = useLocation();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(u => setUser(u))
+      .catch(err => {
+        console.error('[Dashboard] Auth check failed:', err?.message);
+        setUser(null); // Stop infinite loading — show empty state
+      });
     const savedLang = localStorage.getItem('appLanguage') || 'en';
     setLanguage(savedLang);
     

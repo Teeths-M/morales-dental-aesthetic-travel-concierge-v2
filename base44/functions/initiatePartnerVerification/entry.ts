@@ -72,15 +72,10 @@ Deno.serve(async (req) => {
       newStatus = fraud_score > 70 ? 'denied' : 'manual_review';
       autoVerified = false;
     } else {
-      if (fraud_score < 30) {
-        newStatus = 'verified';
-        autoVerified = true;
-        verifiedAt = now;
-      } else if (fraud_score >= 30 && fraud_score <= 70) {
-        newStatus = 'manual_review';
-      } else {
-        newStatus = 'denied';
-      }
+      // Never auto-activate — all partners require manual admin review
+      newStatus = 'pending_manual_review';
+      autoVerified = false;
+      // partnerUpdate.status stays as 'pending' — admin must approve
     }
 
     // BUG-R16-05 FIX: use asServiceRole for update
@@ -105,11 +100,7 @@ Deno.serve(async (req) => {
       updated_at: now
     };
 
-    // Non-doctor partners can be auto-activated on AI approval; doctors never can
-    if (newStatus === 'verified' && partner_type !== 'doctor') {
-      partnerUpdate.verification_can_be_activated = true;
-      partnerUpdate.status = 'active';
-    }
+    // No partner type is ever auto-activated — all require manual admin approval
 
     // BUG-R16-05 FIX: use asServiceRole for all partner updates
     if (partner_type === 'doctor') {
@@ -143,20 +134,13 @@ Deno.serve(async (req) => {
     });
 
     // Send notification to partner
-    if (newStatus === 'verified') {
+    if (newStatus === 'pending_manual_review' || newStatus === 'manual_review') {
       await base44.integrations.Core.SendEmail({
         to: partner.email,
-        subject: '✅ Verification Complete - You Are Now Verified!',
-        body: `<p>Congratulations! Your verification has been completed successfully.</p>
-               <p>You now have the "Verified by Morales" badge on your profile.</p>
+        subject: 'Verification Pending Manual Review',
+        body: `<p>Your verification documents have been received and are pending manual review by our team.</p>
+               <p>This typically takes 24-48 hours. We'll notify you once complete.</p>
                <p>Verification ID: ${verification.id}</p>`
-      });
-    } else if (newStatus === 'manual_review') {
-      await base44.integrations.Core.SendEmail({
-        to: partner.email,
-        subject: 'Verification Under Review',
-        body: `<p>Your verification is being reviewed by our team.</p>
-               <p>This typically takes 24-48 hours. We'll notify you once complete.</p>`
       });
     } else if (newStatus === 'denied') {
       await base44.integrations.Core.SendEmail({
