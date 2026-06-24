@@ -245,11 +245,11 @@ function DashboardHome({ user, consultations, language }) {
               {language === 'es' ? 'Etapa del Viaje: ' : language === 'fr' ? 'Stade du Voyage: ' : 'Journey Stage: '}<span className="text-white font-semibold capitalize">{latestConsultation?.journey_stage || (language === 'es' ? 'Consulta' : language === 'fr' ? 'Consultation' : 'Consultation')}</span>
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-4 text-center">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-4 text-center w-full sm:w-auto">
             <p className="text-white/70 text-[10px] font-semibold uppercase tracking-[0.25em] mb-2">
               {language === 'es' ? 'Días Hasta el Procedimiento' : language === 'fr' ? 'Jours Jusqu\'à la Procédure' : 'Days Until Procedure'}
             </p>
-            <p className="font-display text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntil > 0 ? daysUntil : '—'}</p>
+            <p className="font-display text-4xl sm:text-5xl text-white" style={{ letterSpacing: '-0.02em' }}>{daysUntil > 0 ? daysUntil : '—'}</p>
             <p className="text-white/60 text-[12px] mt-1">{procedureDate ? formatDate(procedureDate) : 'Jun 14, 2026'}</p>
           </div>
         </div>
@@ -420,7 +420,7 @@ function DashboardHome({ user, consultations, language }) {
         <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.28em] mb-5">
           {language === 'es' ? 'Acciones Rápidas' : language === 'fr' ? 'Actions Rapides' : 'Quick Actions'}
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {quickActions.map(({ icon: Icon, label, to, color }) => {
             const c = colorMap[color];
             return (
@@ -517,7 +517,7 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar />
-      <main className="flex-1 p-5 lg:p-8 overflow-y-auto max-w-5xl">
+      <main className="flex-1 p-5 pt-16 lg:pt-5 lg:p-8 overflow-y-auto max-w-5xl">
         <motion.div
           key={location.pathname}
           initial={{ opacity: 0, y: 8 }}

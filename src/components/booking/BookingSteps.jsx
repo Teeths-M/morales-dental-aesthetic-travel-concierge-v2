@@ -13,7 +13,7 @@ export default function BookingSteps({ currentStep }) {
         return (
           <React.Fragment key={label}>
             <div className="flex flex-col items-center relative">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
                 isComplete ? 'bg-accent text-accent-foreground' :
                 isCurrent ? 'bg-primary text-primary-foreground' :
                 'bg-secondary text-muted-foreground'
@@ -25,7 +25,7 @@ export default function BookingSteps({ currentStep }) {
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-px mx-2 ${isComplete ? 'bg-accent' : 'bg-border'}`} />
+              <div className={`flex-1 h-px mx-1 sm:mx-2 ${isComplete ? 'bg-accent' : 'bg-border'}`} />
             )}
           </React.Fragment>
         );

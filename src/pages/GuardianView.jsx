@@ -330,7 +330,7 @@ export default function GuardianView() {
           {caseData?.safe_t_result === 'PASSED'
             ? <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
             : <Shield className="w-10 h-10 text-slate-400 mx-auto mb-2" />}
-          <p className="font-semibold text-white text-lg">{session.patient_name}</p>
+          <p className="font-semibold text-white text-lg truncate">{session.patient_name}</p>
           <p className="text-slate-400 text-sm mt-1">
             Status: <span className="font-semibold text-white">{caseData?.status || 'Active Journey'}</span>
           </p>
@@ -392,9 +392,9 @@ export default function GuardianView() {
           {hasGPS ? (
             <div className="px-5 pb-5 space-y-3">
               {/* Coords bar */}
-              <div className="bg-slate-900/60 rounded-xl px-4 py-3 flex items-center gap-3">
-                <div className="flex-1">
-                  <p className="text-white font-mono text-sm font-semibold">
+              <div className="bg-slate-900/60 rounded-xl px-4 py-3 flex items-center gap-3 overflow-hidden">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-mono text-xs sm:text-sm font-semibold truncate">
                     {loc.latitude.toFixed(6)}, {loc.longitude.toFixed(6)}
                   </p>
                   <div className="flex flex-wrap gap-x-3 mt-1 text-[11px] text-slate-400">
@@ -478,21 +478,21 @@ export default function GuardianView() {
               )}
 
               {/* Action buttons */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button onClick={() => openMap(mapsViewUrl(loc.latitude, loc.longitude))}
-                  className="flex flex-col items-center gap-1.5 bg-blue-700/20 hover:bg-blue-700/40 border border-blue-700/40 rounded-xl px-2 py-3 text-blue-300 text-[11px] font-semibold transition-colors">
+                  className="flex flex-col items-center gap-1.5 bg-blue-700/20 hover:bg-blue-700/40 border border-blue-700/40 rounded-xl px-2 py-3 text-blue-300 text-[11px] font-semibold transition-colors min-h-[44px]">
                   <ExternalLink className="w-4 h-4" />View Map
                 </button>
                 <button onClick={() => openMap(mapsDirectionsUrl(loc.latitude, loc.longitude))}
-                  className="flex flex-col items-center gap-1.5 bg-emerald-700/20 hover:bg-emerald-700/40 border border-emerald-700/40 rounded-xl px-2 py-3 text-emerald-300 text-[11px] font-semibold transition-colors">
+                  className="flex flex-col items-center gap-1.5 bg-emerald-700/20 hover:bg-emerald-700/40 border border-emerald-700/40 rounded-xl px-2 py-3 text-emerald-300 text-[11px] font-semibold transition-colors min-h-[44px]">
                   <Navigation className="w-4 h-4" />Directions
                 </button>
                 <button onClick={() => openMap(mapsSatelliteUrl(loc.latitude, loc.longitude))}
-                  className="flex flex-col items-center gap-1.5 bg-purple-700/20 hover:bg-purple-700/40 border border-purple-700/40 rounded-xl px-2 py-3 text-purple-300 text-[11px] font-semibold transition-colors">
+                  className="flex flex-col items-center gap-1.5 bg-purple-700/20 hover:bg-purple-700/40 border border-purple-700/40 rounded-xl px-2 py-3 text-purple-300 text-[11px] font-semibold transition-colors min-h-[44px]">
                   <Globe className="w-4 h-4" />Satellite
                 </button>
                 <button onClick={() => copyCoords(loc.latitude, loc.longitude)}
-                  className="flex flex-col items-center gap-1.5 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/40 rounded-xl px-2 py-3 text-slate-300 text-[11px] font-semibold transition-colors">
+                  className="flex flex-col items-center gap-1.5 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/40 rounded-xl px-2 py-3 text-slate-300 text-[11px] font-semibold transition-colors min-h-[44px]">
                   {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   {copied ? 'Copied!' : 'Copy'}
                 </button>

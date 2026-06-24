@@ -82,7 +82,7 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
       {/* Add / Edit form */}
       {form && (
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold text-slate-600 mb-1 block">Full Name *</label>
               <input
@@ -172,12 +172,12 @@ export default function PersonalEmergencyContactsPanel({ userEmail, caseRecord, 
 
       {/* Sync primary to case */}
       {contacts.length > 0 && caseRecord && (
-        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
           <div className="text-xs text-blue-700">
             <span className="font-semibold">SOS primary: </span>
             {primaryContact ? `${primaryContact.name} · ${primaryContact.phone}` : '—'}
           </div>
-          <Button size="sm" className="text-xs h-8 bg-blue-600 hover:bg-blue-700" onClick={handleSyncToCase} disabled={saving}>
+          <Button size="sm" className="text-xs h-8 bg-blue-600 hover:bg-blue-700 shrink-0" onClick={handleSyncToCase} disabled={saving}>
             {savedMsg ? <><Check className="w-3.5 h-3.5 mr-1" /> Saved!</> : saving ? 'Saving…' : 'Sync to Journey'}
           </Button>
         </div>

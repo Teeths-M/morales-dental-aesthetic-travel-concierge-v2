@@ -198,7 +198,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
                   disabled={loading}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '5px',
-                    padding: '6px 12px',
+                    padding: '10px 12px',
                     borderRadius: '999px',
                     border: '1px solid rgba(255,255,255,0.08)',
                     background: 'rgba(255,255,255,0.04)',
@@ -208,6 +208,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
                     opacity: loading ? 0.5 : 1,
                     transition: 'all 0.15s',
                     whiteSpace: 'nowrap',
+                    minHeight: '44px',
                   }}
                 >
                   <span>{icon}</span> {label}

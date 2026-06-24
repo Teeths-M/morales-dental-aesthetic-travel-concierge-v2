@@ -532,6 +532,17 @@ export default function Booking() {
             </div>
           </div>
 
+          {/* Mobile step progress bar */}
+          <div className="lg:hidden px-4 pt-2 pb-1">
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.round(((step + 1) / steps.length) * 100)}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1 text-right">{step + 1} / {steps.length}</p>
+          </div>
+
           {/* Auto-save indicator */}
           <div className="flex items-center gap-1.5 text-xs justify-end px-6 py-2 border-b border-slate-100 bg-emerald-50/50">
             {isSaving ? (
@@ -542,7 +553,7 @@ export default function Booking() {
           </div>
 
           {/* Form content */}
-          <div className="p-6 lg:p-8">
+          <div className="p-4 sm:p-6 lg:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -600,12 +611,12 @@ export default function Booking() {
           {error && (
             <p className="text-sm text-red-600 px-6 pt-4">{error}</p>
           )}
-          <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
             <Button
               variant="outline"
               onClick={() => setStep(s => s - 1)}
               disabled={step === 0}
-              className="gap-2 text-sm"
+              className="gap-2 text-sm h-11 px-4"
             >
               <ArrowLeft className="w-4 h-4" /> {translations[language].backBtn}
             </Button>
@@ -622,7 +633,7 @@ export default function Booking() {
                   setStep(s => s + 1);
                   window.scrollTo(0, 0);
                 }}
-                className={`gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0 ${!canNext() ? 'opacity-70' : ''}`}
+                className={`gap-2 text-sm h-11 px-4 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0 ${!canNext() ? 'opacity-70' : ''}`}
               >
                 {translations[language].continueBtn} <ArrowRight className="w-4 h-4" />
               </Button>
@@ -630,7 +641,7 @@ export default function Booking() {
               <Button
                 onClick={() => setShowPreview(true)}
                 disabled={createMutation.isPending || !canNext()}
-                className="gap-2 text-sm bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
+                className="gap-2 text-sm h-11 px-4 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
               >
                 <CheckCircle className="w-4 h-4" /> {translations[language].reviewSubmit}
               </Button>
@@ -641,7 +652,7 @@ export default function Booking() {
           </div>
 
           {/* Right Sidebar - Step Info + Cart */}
-          <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-24 lg:h-fit">
+          <div className="hidden lg:block lg:col-span-1 space-y-4 lg:sticky lg:top-24 lg:h-fit">
           {/* Procedure Requirement Notice */}
           <ProcedureRequirementNotice />
           

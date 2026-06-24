@@ -173,7 +173,7 @@ export default function AdminSoloMonitor() {
         )}
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 bg-slate-100 rounded-2xl p-1 border border-slate-200">
+        <div className="flex gap-1 bg-slate-100 rounded-2xl p-1 border border-slate-200 overflow-x-auto scrollbar-hide">
           {[
             { id: 'incidents', label: 'Active Incidents', icon: Shield },
             { id: 'nightlife', label: `Nightlife Modes (${nightlifeSessions.length})`, icon: Moon },
@@ -182,7 +182,7 @@ export default function AdminSoloMonitor() {
             const Icon = tab.icon;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all flex-1 justify-center ${activeTab === tab.id ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all flex-shrink-0 sm:flex-1 justify-center whitespace-nowrap ${activeTab === tab.id ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
                 <Icon className="w-4 h-4" /><span className="hidden sm:inline">{tab.label}</span>
               </button>
             );
@@ -195,20 +195,20 @@ export default function AdminSoloMonitor() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center">
               <Radio className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Silent Safety Escalation Monitor</h1>
-              <p className="text-sm text-slate-500">SMS → Voice → Guardian → Security → Police · Auto-escalation state machine</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">Silent Safety Escalation Monitor</h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">SMS → Voice → Guardian → Security → Police</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button onClick={runEscalation} disabled={runningEscalation}
               variant="outline" size="sm" className="gap-2 border-red-300 text-red-700 hover:bg-red-50">
               {runningEscalation
                 ? <><div className="w-3.5 h-3.5 border border-red-500 border-t-transparent rounded-full animate-spin" />Running...</>
-                : <><Siren className="w-4 h-4" />Run Escalation Now</>}
+                : <><Siren className="w-4 h-4" /><span className="hidden sm:inline">Run Escalation Now</span><span className="sm:hidden">Escalate</span></>}
             </Button>
             <Button onClick={load} variant="outline" size="sm" className="gap-2">
-              <RefreshCw className="w-4 h-4" /> Refresh
+              <RefreshCw className="w-4 h-4" /><span className="hidden sm:inline">Refresh</span>
             </Button>
           </div>
         </div>
@@ -324,7 +324,7 @@ export default function AdminSoloMonitor() {
 
         {activeTab === 'incidents' && <>
         {/* Stats */}
-        <div className="grid sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             { label: 'Active Solo', val: stats.total, color: 'bg-blue-50 border-blue-200', icon: <Shield className="w-4 h-4 text-blue-600" /> },
             { label: 'Pending/SMS', val: stats.pending, color: 'bg-amber-50 border-amber-200', icon: <Clock className="w-4 h-4 text-amber-600" /> },

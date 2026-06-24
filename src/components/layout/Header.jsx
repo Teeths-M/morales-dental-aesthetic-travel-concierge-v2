@@ -87,7 +87,7 @@ export default function Header() {
         }}
       >
         {/* ── LOGO ── */}
-        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-3.5 shrink-0 z-50">
+        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-3.5 shrink-0 z-50 min-w-0">
           <div
             style={{
               width: '38px', height: '38px',
@@ -106,16 +106,19 @@ export default function Header() {
           >
             M
           </div>
-          <div className="flex flex-col gap-[3px]">
+          <div className="flex flex-col gap-[3px] min-w-0 overflow-hidden">
             <span
               style={{
                 fontFamily: 'Georgia, serif',
                 fontSize: '17px',
                 fontWeight: 400,
                 color: '#FFFFFF',
-                letterSpacing: '0.32em',
+                letterSpacing: '0.20em',
                 lineHeight: 1,
                 textTransform: 'uppercase',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               MORALES

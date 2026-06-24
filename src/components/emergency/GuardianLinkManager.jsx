@@ -119,7 +119,7 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
           {sessions.map(session => {
             const expired = isExpired(session.expires_at);
             return (
-              <div key={session.id} className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${expired ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white border-slate-200'}`}>
+              <div key={session.id} className={`flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 ${expired ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white border-slate-200'}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-slate-800 flex items-center gap-2">
                     {session.guardian_name}
@@ -131,16 +131,16 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
                     {session.view_count > 0 && <span className="ml-2">· Viewed {session.view_count}×</span>}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2 shrink-0">
                   {!expired && (
                     <button onClick={() => copyLink(session.view_token, session.id)}
-                      className="flex items-center gap-1 text-xs text-blue-600 border border-blue-200 rounded-lg px-2 py-1.5 hover:bg-blue-50">
+                      className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg px-3 py-2 hover:bg-blue-50 min-h-[36px]">
                       {copied === session.id ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied === session.id ? 'Copied' : 'Copy'}
                     </button>
                   )}
                   <button onClick={() => revokeLink(session.id)}
-                    className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50">
+                    className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 min-h-[36px] min-w-[36px] flex items-center justify-center">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

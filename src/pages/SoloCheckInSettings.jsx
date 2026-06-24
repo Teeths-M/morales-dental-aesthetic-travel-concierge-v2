@@ -190,7 +190,7 @@ export default function SoloCheckInSettings() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar />
-      <main className="flex-1 p-5 lg:p-8 overflow-y-auto max-w-5xl">
+      <main className="flex-1 p-5 pt-16 lg:pt-5 lg:p-8 overflow-y-auto max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <BackButton fallback="/dashboard" className="mb-5" />
 
@@ -223,13 +223,13 @@ export default function SoloCheckInSettings() {
             className="mb-6"
           >
             {isTerminalEscalation ? (
-              <div className={`w-full h-16 rounded-2xl flex items-center justify-center gap-3 px-6 border-2 ${is9hEmergency ? 'bg-red-900 border-red-900' : 'bg-red-50 border-red-300'}`}>
-                <AlertTriangle className={`w-6 h-6 flex-shrink-0 ${is9hEmergency ? 'text-white' : 'text-red-600'}`} />
+              <div className={`w-full min-h-[4rem] rounded-2xl flex items-start sm:items-center gap-3 px-4 sm:px-6 py-4 border-2 ${is9hEmergency ? 'bg-red-900 border-red-900' : 'bg-red-50 border-red-300'}`}>
+                <AlertTriangle className={`w-6 h-6 flex-shrink-0 mt-0.5 sm:mt-0 ${is9hEmergency ? 'text-white' : 'text-red-600'}`} />
                 <div className="text-left">
                   <p className={`text-sm font-semibold ${is9hEmergency ? 'text-white' : 'text-red-700'}`}>
                     {is9hEmergency ? '🆘 Emergency Dispatch Active — Police/Embassy Notified' : 'Security Dispatched — Admin Action Required'}
                   </p>
-                  <p className={`text-xs ${is9hEmergency ? 'text-red-200' : 'text-red-500'}`}>
+                  <p className={`text-xs mt-0.5 ${is9hEmergency ? 'text-red-200' : 'text-red-500'}`}>
                     {is9hEmergency ? 'Case escalated to CRITICAL. Local authorities have been engaged.' : 'Your emergency contact and security have been alerted. Contact your coordinator to resolve.'}
                   </p>
                 </div>
@@ -383,7 +383,7 @@ export default function SoloCheckInSettings() {
             ) : (
               <div className="space-y-2">
                 {checkIns.map(checkIn => (
-                  <div key={checkIn.id} className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                  <div key={checkIn.id} className="flex items-start sm:items-center gap-4 p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors flex-wrap sm:flex-nowrap">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-slate-800 text-sm">

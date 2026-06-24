@@ -86,7 +86,7 @@ export default function LuxuryHero() {
 
         {/* ── CONTENT GRID ── */}
         <div
-          className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center"
+          className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center"
           style={{ minHeight: '100svh', paddingTop: '72px' }}
         >
           <motion.div
@@ -172,11 +172,11 @@ export default function LuxuryHero() {
               transition={{ duration: 0.6, delay: 0.25 }}
               className="mb-5"
             >
-              <Link to={content.cta.path}>
+              <Link to={content.cta.path} className="block w-full sm:w-auto">
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group relative h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
+                  className="group relative w-full sm:w-auto h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
                   style={{
                     background:  `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
                     color:       '#060B16',
@@ -242,8 +242,8 @@ export default function LuxuryHero() {
         className="w-full"
         style={{ background: '#060B16', borderTop: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <div className="max-w-[1440px] mx-auto px-8 lg:px-16 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-10">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
             {FEATURES.map(({ icon: Icon, title, desc }, i) => (
               <motion.div
                 key={title}

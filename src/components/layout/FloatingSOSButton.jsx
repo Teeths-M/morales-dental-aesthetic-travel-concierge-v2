@@ -22,8 +22,11 @@ const PILL_BASE = {
   borderRadius: '999px',
   cursor: 'pointer',
   userSelect: 'none',
-  padding: '10px 20px 10px 14px',
+  padding: '10px 16px 10px 12px',
   whiteSpace: 'nowrap',
+  minHeight: '44px',
+  overflow: 'hidden',
+  maxWidth: '100%',
 };
 
 export default function FloatingSOSButton() {
@@ -37,13 +40,14 @@ export default function FloatingSOSButton() {
         transition={{ delay: 1.2, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position:      'fixed',
-          bottom:        '24px',
-          right:         '24px',
+          bottom:        'max(16px, env(safe-area-inset-bottom, 16px))',
+          right:         '16px',
           zIndex:        9999,
           display:       'flex',
           flexDirection: 'column',
           alignItems:    'flex-end',
           gap:           '8px',
+          maxWidth:      'calc(100vw - 32px)',
         }}
       >
         {/* ── Safe-T4life Assistance (top) ── */}

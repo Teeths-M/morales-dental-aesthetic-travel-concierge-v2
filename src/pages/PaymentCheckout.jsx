@@ -493,7 +493,7 @@ export default function PaymentCheckout() {
             </Card>
 
             {/* Trust Badges */}
-            <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground pt-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground pt-4">
               <span>✓ SSL Encrypted</span>
               <span>✓ Stripe Verified</span>
               <span>✓ Audited Provider</span>

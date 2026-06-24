@@ -162,10 +162,10 @@ export default function PartnerSignup() {
             <Crown className="w-4 h-4 text-amber-600" />
             <span className="text-xs font-semibold text-amber-800 tracking-wide">EXCLUSIVE PARTNER NETWORK</span>
           </div>
-          <h1 className="font-display text-5xl sm:text-6xl font-semibold text-slate-900 mb-5 tracking-tight">
+          <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-semibold text-slate-900 mb-5 tracking-tight">
             {language === 'es' ? 'Únete a la Excelencia' : language === 'fr' ? "Rejoignez l'Excellence" : 'Join Excellence'}
           </h1>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
             {language === 'es'
               ? 'Selecciona tu categoría y únete a nuestra red premium de socios de clase mundial.'
               : language === 'fr'
@@ -175,14 +175,14 @@ export default function PartnerSignup() {
         </motion.div>
 
         {/* Top row: 3 cards */}
-        <div className="grid lg:grid-cols-3 gap-7 mb-7">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7 mb-7">
           {cards.slice(0, 3).map(card => (
             <PartnerCard key={card.title} card={card} language={language} />
           ))}
         </div>
 
         {/* Bottom row: 2 cards, centered */}
-        <div className="grid lg:grid-cols-2 gap-7 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-2 gap-7 max-w-4xl mx-auto">
           {cards.slice(3).map(card => (
             <PartnerCard key={card.title} card={card} language={language} />
           ))}
