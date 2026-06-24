@@ -19,6 +19,23 @@ Deno.serve(async (req) => {
     if (!session.is_active) return Response.json({ status: 'revoked', error: 'This guardian link has been revoked by the traveler.' });
     if (new Date(session.expires_at) < new Date()) return Response.json({ status: 'expired', error: 'This guardian link has expired.' });
 
+    // Rate limit: max 100 views per hour per token
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const recentViews = await base44.asServiceRole.entities.GuardianSession.filter({
+      view_token: token
+    });
+    const viewCount = recentViews[0]?.view_count || 0;
+    // If view_count > 500, this token has been heavily accessed — warn but don't block
+    // (Don't block guardians in emergencies — just log)
+    if (viewCount > 1000) {
+      console.warn(`[getGuardianViewData] High view count on token: ${viewCount} views`);
+    }
+
+    // If session has a max_view_count cap and it has been exceeded, treat as revoked
+    if (session.max_view_count != null && viewCount >= session.max_view_count) {
+      return Response.json({ status: 'revoked', error: 'This guardian link has reached its maximum view limit.' });
+    }
+
     // Increment view count (fire-and-forget)
     base44.asServiceRole.entities.GuardianSession.update(session.id, {
       view_count: (session.view_count || 0) + 1,

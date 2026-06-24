@@ -205,7 +205,16 @@ export default function SentinelOrbit({ size = 420 }) {
 
       // HTML label
       const div = document.createElement('div');
-      div.innerHTML = `<img src="https://flagcdn.com/w20/${code}.png" width="14" height="10" style="border-radius:2px;margin-right:5px;flex-shrink:0;object-fit:cover;" alt="${name}" />${name}`;
+      const flagImg = document.createElement('img');
+      flagImg.src = `https://flagcdn.com/w20/${code}.png`;
+      flagImg.width = 14;
+      flagImg.height = 10;
+      flagImg.alt = name;
+      flagImg.style.cssText = 'border-radius:2px;margin-right:5px;flex-shrink:0;object-fit:cover;';
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = name;
+      div.appendChild(flagImg);
+      div.appendChild(nameSpan);
       div.style.cssText = [
         'display:flex','align-items:center',
         'background:rgba(5,12,30,0.88)',

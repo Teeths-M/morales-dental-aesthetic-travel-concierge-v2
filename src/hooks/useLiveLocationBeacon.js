@@ -189,17 +189,19 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
     return stopWatch;
   }, [shouldRun, startWatch, stopWatch, isPaused]);
 
-  // Page visibility: restart watch when tab becomes visible again
+  // Page visibility: pause watch when tab hidden, restart when visible again
   useEffect(() => {
     if (!shouldRun) return;
     const onVisible = () => {
       if (document.visibilityState === 'visible' && watchIdRef.current == null) {
         startWatch();
+      } else if (document.visibilityState === 'hidden') {
+        stopWatch(); // Pause when tab hidden — restarts on visibility
       }
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [shouldRun, startWatch]);
+  }, [shouldRun, startWatch, stopWatch]);
 
   const pause = useCallback(() => {
     stopWatch();

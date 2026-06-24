@@ -73,19 +73,24 @@ Deno.serve(async (req) => {
 
     // SECURITY: Validate Twilio signature on every inbound webhook
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    if (authToken) {
-      const twilioSig = req.headers.get('x-twilio-signature') || '';
-      const appUrl = Deno.env.get('APP_URL') || '';
-      const webhookUrl = `${appUrl}/api/functions/processSmsShortcode`;
-      const paramObj = {};
-      if (contentType.includes('application/x-www-form-urlencoded')) {
-        const rawText = body ? body : '';
-        new URLSearchParams(rawText).forEach((v, k) => { paramObj[k] = v; });
-      }
-      if (twilioSig && webhookUrl && !validateTwilioSignature(webhookUrl, paramObj, twilioSig, authToken)) {
-        console.error('[SMS] Rejected: invalid Twilio signature');
-        return new Response('<?xml version="1.0"?><Response></Response>', { status: 403, headers: { 'Content-Type': 'text/xml' } });
-      }
+    if (!authToken) {
+      console.error('[processSmsShortcode] TWILIO_AUTH_TOKEN not configured — rejecting webhook');
+      return new Response('<?xml version="1.0"?><Response></Response>', {
+        status: 403,
+        headers: { 'Content-Type': 'text/xml' },
+      });
+    }
+    const twilioSig = req.headers.get('x-twilio-signature') || '';
+    const appUrl = Deno.env.get('APP_URL') || '';
+    const webhookUrl = `${appUrl}/api/functions/processSmsShortcode`;
+    const paramObj = {};
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const rawText = body ? body : '';
+      new URLSearchParams(rawText).forEach((v, k) => { paramObj[k] = v; });
+    }
+    if (!validateTwilioSignature(webhookUrl, paramObj, twilioSig, authToken)) {
+      console.error('[SMS] Rejected: invalid Twilio signature');
+      return new Response('<?xml version="1.0"?><Response></Response>', { status: 403, headers: { 'Content-Type': 'text/xml' } });
     }
 
     // Rate limit: max 10 SMS commands per phone number per minute (stored in entity)

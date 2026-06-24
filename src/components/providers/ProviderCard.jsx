@@ -19,8 +19,14 @@ export default function ProviderCard({ provider }) {
                 onError={e => {
                   e.target.onerror = null;
                   e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML =
-                    `<div class="w-full h-full flex items-center justify-center bg-slate-100"><span class="text-2xl font-semibold text-slate-400">${provider.name?.[0] || '?'}</span></div>`;
+                  e.target.parentElement.innerHTML = '';
+                  const fallback = document.createElement('div');
+                  fallback.className = 'w-full h-full flex items-center justify-center bg-slate-100';
+                  const span = document.createElement('span');
+                  span.className = 'text-2xl font-semibold text-slate-400';
+                  span.textContent = (provider.name || '?')[0];
+                  fallback.appendChild(span);
+                  e.target.parentElement.appendChild(fallback);
                 }}
               />
             ) : (

@@ -102,19 +102,26 @@ export function useLocationHistory({ caseId, enabled = true }) {
     const unsynced = current.filter(p => !p.synced);
     if (!unsynced.length) return;
 
+    const syncedTimestamps = [];
     for (const point of unsynced) {
       try {
         await base44.functions.invoke('logLocationBreadcrumb', {
           action: 'log', case_id: caseId,
           latitude: point.lat, longitude: point.lng,
-          accuracy_meters: point.accuracy,
-          source: 'gps',
+          accuracy_meters: point.accuracy, source: 'gps',
         });
-        point.synced = true;
-      } catch (_) { break; }
+        syncedTimestamps.push(point.ts); // Only after success
+      } catch (err) {
+        console.error('[useLocationHistory] Sync failed:', err);
+        break; // Stop on first failure
+      }
     }
-    const updated = persistTrail(caseId, current);
-    if (mountedRef.current) setTrail([...updated]);
+
+    if (syncedTimestamps.length > 0) {
+      const updated = current.map(p => syncedTimestamps.includes(p.ts) ? { ...p, synced: true } : p);
+      persistTrail(caseId, updated);
+      if (mountedRef.current) setTrail([...updated]);
+    }
   }, [caseId]);
 
   useEffect(() => {

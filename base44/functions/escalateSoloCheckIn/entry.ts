@@ -91,13 +91,20 @@ Deno.serve(async (req) => {
       if (hoursOverdue >= 2 && checkIn.status === 'pending') {
         // Atomic claim first
         await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { status: 'escalated_2h' });
-        try {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: checkIn.user_email,
-            subject: `⚠️ URGENT: Safety Check-In Overdue (2 hours)`,
-            body: `<p>⚠️ Second attempt: You have not responded to your safety check-in. Please open the app and tap <strong>I Am Safe</strong> immediately or your emergency contact will be notified.</p><p><a href="${appUrl}/dashboard/solo-checkin">Open Dashboard →</a></p>`,
-          });
-        } catch (_) {}
+        if (!checkIn.user_email) {
+          console.error(`[escalateSoloCheckIn] No email address for check-in ${checkIn.id} — skipping 2h email`);
+        } else {
+          try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: checkIn.user_email,
+              subject: `⚠️ URGENT: Safety Check-In Overdue (2 hours)`,
+              body: `<p>⚠️ Second attempt: You have not responded to your safety check-in. Please open the app and tap <strong>I Am Safe</strong> immediately or your emergency contact will be notified.</p><p><a href="${appUrl}/dashboard/solo-checkin">Open Dashboard →</a></p>`,
+            });
+          } catch (emailErr) {
+            console.error(`[escalateSoloCheckIn] Email send failed for case ${checkIn.case_id}:`, emailErr?.message || String(emailErr));
+            // Non-blocking — continue escalation even if email fails
+          }
+        }
         escalated2h++;
       }
 
@@ -155,6 +162,12 @@ Deno.serve(async (req) => {
           }
         } catch (_) {}
 
+        // Phone validation helper
+        function isValidPhone(phone) {
+          if (!phone || typeof phone !== 'string') return false;
+          return /^\+?[\d\s\-()+]{7,20}$/.test(phone.trim());
+        }
+
         // Re-check status before calling — user may have pressed "I Am Safe" while emails were sending
         const freshCheckIn = await base44.asServiceRole.entities.SoloCheckIn.filter(
           { case_id: checkIn.case_id }, '-scheduled_time', 5
@@ -162,14 +175,17 @@ Deno.serve(async (req) => {
         const stillOverdue = freshCheckIn && !['acknowledged', 'resolved'].includes(freshCheckIn.status);
 
         // Voice call attempt via Twilio
-        if (checkIn.user_phone && stillOverdue) {
+        if (!isValidPhone(checkIn.user_phone)) {
+          console.warn(`[escalateSoloCheckIn] Invalid or missing phone for ${checkIn.id}: ${checkIn.user_phone}`);
+        }
+        if (isValidPhone(checkIn.user_phone) && stillOverdue) {
           const demoMode = Deno.env.get('DEMO_MODE') === 'true';
           if (demoMode) {
             console.log(`[DEMO_MODE] Would place Twilio voice call to ${checkIn.user_phone} for check-in ${checkIn.id}`);
             await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { voice_call_attempted_at: now.toISOString() });
           }
         }
-        if (checkIn.user_phone && stillOverdue && Deno.env.get('DEMO_MODE') !== 'true') {
+        if (isValidPhone(checkIn.user_phone) && stillOverdue && Deno.env.get('DEMO_MODE') !== 'true') {
           const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
           const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
           const from = Deno.env.get('TWILIO_PHONE_NUMBER');
@@ -230,7 +246,10 @@ Deno.serve(async (req) => {
                 ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#dc2626;">📍 Get Directions</a></p>` : ''}
                 <p style="color:#dc2626;font-weight:bold;">DISPATCH PRIVATE SECURITY IMMEDIATELY</p></div>`,
             });
-          } catch (_) {}
+          } catch (emailErr) {
+            console.error(`[escalateSoloCheckIn] Email send failed for case ${checkIn.case_id}:`, emailErr?.message || String(emailErr));
+            // Non-blocking — continue escalation even if email fails
+          }
         }
 
         // Log dispatch failure if no security partner assigned (DispatchFailureLog)
@@ -310,7 +329,10 @@ Deno.serve(async (req) => {
                 ${mapsUrl ? `<p><a href="${mapsUrl}" style="color:#7f1d1d;">📍 Get Directions</a></p>` : ''}
                 <p style="color:#7f1d1d;font-weight:bold;font-size:16px;">CONTACT LOCAL POLICE AND NEAREST EMBASSY IMMEDIATELY. Case has been set to CRITICAL priority.</p></div>`,
             });
-          } catch (_) {}
+          } catch (emailErr) {
+            console.error(`[escalateSoloCheckIn] Email send failed for case ${checkIn.case_id}:`, emailErr?.message || String(emailErr));
+            // Non-blocking — continue escalation even if email fails
+          }
         }
 
         // Audit log

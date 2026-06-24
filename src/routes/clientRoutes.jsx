@@ -39,20 +39,20 @@ export const clientRoutes = (
   <Route key="client-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
     {/* Core dashboard routes */}
     <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
-      <Route path="/safe-t"                     element={<SafeT />} />
+      <Route path="/safe-t"                     element={<ErrorBoundary><SafeT /></ErrorBoundary>} />
       <Route path="/booking"                    element={<Booking />} />
-      <Route path="/dashboard"                  element={<Dashboard />} />
-      <Route path="/dashboard/consultations"    element={<Dashboard />} />
-      <Route path="/dashboard/profile"          element={<Dashboard />} />
-      <Route path="/dashboard/documents"        element={<Dashboard />} />
-      <Route path="/dashboard/bookings"         element={<Dashboard />} />
-      <Route path="/dashboard/messages"         element={<Dashboard />} />
-      <Route path="/dashboard/journey"          element={<Dashboard />} />
-      <Route path="/dashboard/case-status"      element={<Dashboard />} />
-      <Route path="/dashboard/support"          element={<Dashboard />} />
-      <Route path="/dashboard/settings"         element={<Dashboard />} />
+      <Route path="/dashboard"                  element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/consultations"    element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/profile"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/documents"        element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/bookings"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/messages"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/journey"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/case-status"      element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/support"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/settings"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/adventure"        element={<AdventureSafetyCenter />} />
-      <Route path="/dashboard/solo-checkin"     element={<SoloCheckInSettings />} />
+      <Route path="/dashboard/solo-checkin"     element={<ErrorBoundary><SoloCheckInSettings /></ErrorBoundary>} />
       <Route path="/client-signup"              element={<ClientSignup />} />
       <Route path="/my-reviews"                 element={<PatientReviews />} />
       <Route path="/insurance"                  element={<InsuranceCoverage />} />
@@ -70,7 +70,7 @@ export const clientRoutes = (
       <Route path="/estimate/:estimate_id"         element={<EstimateDashboard />} />
       <Route path="/visa-assist"                   element={<VisaAssist />} />
       <Route path="/pay-now"                       element={<PaymentCheckout />} />
-      <Route path="/passport-vault"                element={<PassportVault />} />
+      <Route path="/passport-vault"                element={<ErrorBoundary><PassportVault /></ErrorBoundary>} />
     </Route>
   </Route>
 );

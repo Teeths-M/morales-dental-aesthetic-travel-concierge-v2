@@ -24,7 +24,11 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   // Use module-level PREVIEW_USER — single source of truth
-  const isPreviewAdmin = appParams.isPreview || (Boolean(appParams.previewToken) && window.location.hostname.includes('preview'));
+  // Production guard: preview bypass is only permitted on localhost or *.preview.* hostnames
+  const isProduction = !window.location.hostname.includes('preview') &&
+                       !window.location.hostname.includes('localhost') &&
+                       !window.location.hostname.includes('127.0.0.1');
+  const isPreviewAdmin = !isProduction && (appParams.isPreview || Boolean(appParams.previewToken));
 
   useEffect(() => {
     // Listen for online/offline events globally

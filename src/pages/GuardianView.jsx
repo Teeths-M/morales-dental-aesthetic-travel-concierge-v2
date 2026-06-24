@@ -139,8 +139,9 @@ export default function GuardianView() {
   // Live poll every 12s
   useEffect(() => {
     if (pageState !== 'ok') return;
-    pollRef.current = setInterval(() => fetchData(false), POLL_INTERVAL_MS);
-    return () => clearInterval(pollRef.current);
+    fetchData(false);
+    const pollId = setInterval(() => fetchData(false), POLL_INTERVAL_MS);
+    return () => clearInterval(pollId); // Use local pollId, not a ref that may have changed
   }, [pageState, fetchData]);
 
   const copyCoords = (lat, lng) => {

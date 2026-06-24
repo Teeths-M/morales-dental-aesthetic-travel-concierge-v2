@@ -114,7 +114,7 @@ async function ensureGuardianLink(base44, caseId, patientEmail, patientName, eme
     if (valid) return `${appUrl}/guardian/${valid.view_token}`;
 
     const token = generateToken(32);
-    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     await base44.asServiceRole.entities.GuardianSession.create({
       case_id: caseId,
       patient_email: patientEmail,
@@ -230,7 +230,11 @@ Deno.serve(async (req) => {
     // Filter out paused, completed, and future check-ins
     const workable = allActive.filter(ci => {
       if (ci.is_paused_medical) return false;
-      if (ci.pause_until && new Date(ci.pause_until) > now) return false;
+      // Never pause escalation at tier 5h or 9h — life-critical
+      const isHighTierEscalation = ci.status === 'escalated_5h' || ci.status === 'escalated_9h';
+      if (!isHighTierEscalation && ci.pause_until && new Date(ci.pause_until) > now) {
+        return false; // Skip for low tiers only
+      }
       // Only escalate check-ins that are actually overdue (scheduled time is past)
       const scheduledTime = ci.scheduled_time ? new Date(ci.scheduled_time) : null;
       if (scheduledTime && scheduledTime > now) return false;
@@ -474,12 +478,17 @@ Deno.serve(async (req) => {
             escalation_level: 4,
           });
         } else {
-          // No security partner — log dispatch failure, alert admin
-          await logDispatchFailure(base44, {
-            case_id: ci.case_id,
-            escalation_level: 4,
-            failure_reason: 'No private security partner assigned to case',
-          });
+          // No security partner — immediately alert admin and escalate
+          await logDispatchFailure(base44, { case_id: ci.case_id, escalation_level: 4, failure_reason: 'No private security partner assigned' });
+          // Alert admin immediately — don't wait for T+180m
+          const adminEmail = Deno.env.get('ADMIN_EMAIL');
+          if (adminEmail) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: adminEmail,
+              subject: '🚨 URGENT: Security dispatch failed — no partner assigned',
+              body: `Patient case ${ci.case_id} has been missing for 2+ hours. No security partner is assigned. Please contact local authorities immediately.\n\nCase ID: ${ci.case_id}\nEscalation time: ${new Date().toISOString()}`,
+            }).catch(e => console.error('[safety] Admin alert email failed:', e.message));
+          }
         }
 
         // Always email admin on security escalation

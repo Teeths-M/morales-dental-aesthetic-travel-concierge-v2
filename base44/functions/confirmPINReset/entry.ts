@@ -4,7 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 // action=verify  → returns { valid, email } (used by ResetPIN page on load)
 // action=confirm → verifies token + sets new PIN server-side
 
-const RESET_SECRET = Deno.env.get('PIN_RESET_SECRET') || 'morales-pin-reset-hmac-v1-2026';
+const RESET_SECRET = Deno.env.get('PIN_RESET_SECRET');
 
 async function signToken(data: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -49,6 +49,11 @@ function decodeToken(token: string): { email: string; expiresAt: number } | null
 
 Deno.serve(async (req) => {
   try {
+    if (!RESET_SECRET) {
+      console.error('[confirmPINReset] PIN_RESET_SECRET env var is not set');
+      return Response.json({ error: 'Service configuration error' }, { status: 500 });
+    }
+
     const base44 = createClientFromRequest(req);
     const { token, sig, action, new_pin } = await req.json().catch(() => ({}));
 

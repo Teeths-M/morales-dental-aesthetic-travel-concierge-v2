@@ -13,7 +13,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { case_id, guardian_name, guardian_email, guardian_phone, expires_hours = 48, data_scope } = await req.json();
+    const { case_id, guardian_name, guardian_email, guardian_phone, expires_hours: _expires_hours = 720, data_scope } = await req.json();
+    // Cap at 720 hours (30 days)
+    const expires_hours = Math.min(_expires_hours, 720);
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 
     // Verify the user owns this case

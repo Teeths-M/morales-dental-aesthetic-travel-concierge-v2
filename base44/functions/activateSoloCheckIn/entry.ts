@@ -69,22 +69,27 @@ Deno.serve(async (req) => {
     }
 
     // Log to AuditLog
-    await base44.functions.invoke('logAuditEvent', {
-      event_type: 'handshake_created',
-      actor_id: user.id,
-      actor_role: user.role,
-      actor_name: user.full_name,
-      resource_type: 'SoloCheckIn',
-      resource_id: checkIn.id,
-      resource_name: 'Round 1 (Initial)',
-      case_id,
-      details: {
-        action: 'solo_checkin_activated',
-        first_scheduled_time: firstCheckInTime.toISOString(),
-        is_solo_traveler: true,
-      },
-      sensitive: false,
-    });
+    try {
+      await base44.functions.invoke('logAuditEvent', {
+        event_type: 'handshake_created',
+        actor_id: user.id,
+        actor_role: user.role,
+        actor_name: user.full_name,
+        resource_type: 'SoloCheckIn',
+        resource_id: checkIn.id,
+        resource_name: 'Round 1 (Initial)',
+        case_id,
+        details: {
+          action: 'solo_checkin_activated',
+          first_scheduled_time: firstCheckInTime.toISOString(),
+          is_solo_traveler: true,
+        },
+        sensitive: false,
+      });
+    } catch (auditErr) {
+      console.error('[activateSoloCheckIn] Audit log failed — activation succeeded:', auditErr?.message);
+      // Don't fail activation if audit log fails
+    }
 
     return Response.json({ activated: true, check_in_id: checkIn.id, first_check_in: firstCheckInTime.toISOString() });
   } catch (error) {

@@ -57,7 +57,10 @@ Deno.serve(async (req) => {
       try {
         const t = await base44.asServiceRole.entities.TravelRequest.get(tripId);
         return t?.paused === true;
-      } catch (_) { return false; }
+      } catch (err) {
+        console.error(`[escalateMissedDriverHandshake] Failed to check pause for trip ${tripId}:`, err?.message);
+        return false; // Assume not paused — better to escalate than miss
+      }
     }
 
     const timedOutRaw = (pendings || []).filter(

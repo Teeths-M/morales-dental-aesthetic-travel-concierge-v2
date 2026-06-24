@@ -49,6 +49,13 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, check_in_id: checkIn.id, already_acknowledged: true });
     }
 
+    // Fetch fresh state before updating to prevent race with escalation cron
+    const freshCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter({ id: checkIn.id });
+    const fresh = freshCheckIns[0];
+    if (!fresh || fresh.status === 'acknowledged' || fresh.status === 'resolved') {
+      return Response.json({ success: true, message: 'Already acknowledged' });
+    }
+
     // Determine place label
     let locationLabel = null;
     if (location_lat != null && location_lng != null) {

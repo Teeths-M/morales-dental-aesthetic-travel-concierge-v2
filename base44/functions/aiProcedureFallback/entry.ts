@@ -120,12 +120,12 @@ Language hint: Detect from query and match procedure names accordingly.`,
       }
     });
 
-    const matches = llmResponse.matches || [];
+    const matches = Array.isArray(llmResponse?.matches) ? llmResponse.matches : [];
 
     // Persist search context to database for audit trail and downstream propagation
     try {
       const user = await base44.auth.me();
-      await base44.entities.ProcedureSearch.create({
+      await base44.asServiceRole.entities.ProcedureSearch.create({
         user_id: user.id,
         raw_query_text: patient_query,
         result_count: matches.length,
@@ -139,7 +139,7 @@ Language hint: Detect from query and match procedure names accordingly.`,
 
     // If patient selected a procedure, save the complete record
     if (selected_procedure_id) {
-      const fallbackRecord = await base44.entities.AiFallbackMatch.create({
+      const fallbackRecord = await base44.asServiceRole.entities.AiFallbackMatch.create({
         case_id: case_id || null,
         patient_id: user.id,
         patient_email: user.email,
@@ -186,7 +186,7 @@ Language hint: Detect from query and match procedure names accordingly.`,
     // Persist fallback context to database (non-blocking)
     try {
       const user = await base44.auth.me();
-      await base44.entities.ProcedureSearch.create({
+      await base44.asServiceRole.entities.ProcedureSearch.create({
         user_id: user.id,
         raw_query_text: patient_query,
         result_count: 0,

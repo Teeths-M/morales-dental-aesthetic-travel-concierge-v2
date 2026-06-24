@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, ShieldCheck, Loader2, RotateCcw } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -54,18 +55,25 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
     setLoading(true);
 
     try {
-      const res = await base44.functions.invoke('safeTAssist', {
-        messages:   history.map(m => ({ role: m.role, content: m.content })),
-        user_email: user?.email    || null,
-        user_name:  user?.full_name || null,
-        trip_phase: null, // TODO: pass from activeTrip if available
-      });
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000));
+      const res = await Promise.race([
+        base44.functions.invoke('safeTAssist', {
+          messages:   history.map(m => ({ role: m.role, content: m.content })),
+          user_email: user?.email    || null,
+          user_name:  user?.full_name || null,
+          trip_phase: null, // TODO: pass from activeTrip if available
+        }),
+        timeout,
+      ]);
       const reply = res?.data?.reply ?? "I'm here to help. Could you give me a bit more detail?";
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch (_) {
+    } catch (err) {
+      const isTimeout = err?.message === 'timeout';
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I'm initializing — please try again in a moment.\n\n**For immediate assistance:**\n• Tap **Secure Line** below for emergency support\n• Contact your Morales coordinator directly\n• Call local emergency services if needed (112 in Europe, 911 in North America)",
+        content: isTimeout
+          ? "Request timed out. Please try again."
+          : "I'm initializing — please try again in a moment.\n\n**For immediate assistance:**\n• Tap **Secure Line** below for emergency support\n• Contact your Morales coordinator directly\n• Call local emergency services if needed (112 in Europe, 911 in North America)",
       }]);
     } finally {
       setLoading(false);
@@ -243,7 +251,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
                         color: 'rgba(255,255,255,0.88)',
                       }),
                     }}
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.content) }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parseMarkdown(msg.content), { ALLOWED_TAGS: ['strong', 'em', 'br'], ALLOWED_ATTR: [] }) }}
                   />
                 </div>
               ))}

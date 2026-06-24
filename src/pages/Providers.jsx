@@ -24,13 +24,13 @@ export default function Providers() {
   const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['doctors'],
     queryFn: () => base44.entities.Doctor.list(),
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: specialties = [] } = useQuery({
     queryKey: ['specialties'],
     queryFn: () => base44.entities.DoctorSpecialty.list('-created_date', 1000),
-    refetchInterval: 5000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const specialtyMap = {};
