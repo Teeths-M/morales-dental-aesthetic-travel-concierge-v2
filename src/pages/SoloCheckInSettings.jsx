@@ -58,20 +58,22 @@ export default function SoloCheckInSettings() {
     if (!u) return;
     setRefreshing(true);
     try {
-      const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 10);
+      const rawCases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 10);
+      const cases = rawCases ?? [];
       const caseIds = cases.map(c => c.id);
       if (cases.length > 0) setActiveCase(cases.find(c => c.status !== 'Completed') || cases[0]);
 
       if (caseIds.length === 0) return;
 
-      const allCheckIns = await base44.entities.SoloCheckIn.filter(
+      const rawCheckIns = await base44.entities.SoloCheckIn.filter(
         { case_id: { $in: caseIds } },
         '-scheduled_time',
         50
       );
+      const fetched = rawCheckIns ?? [];
 
-      setAllCheckIns(allCheckIns);
-      setCheckIns(allCheckIns.filter(c => !['acknowledged', 'resolved'].includes(c.status)));
+      setAllCheckIns(fetched);
+      setCheckIns(fetched.filter(c => !['acknowledged', 'resolved'].includes(c.status)));
     } finally {
       setRefreshing(false);
     }
@@ -335,7 +337,7 @@ export default function SoloCheckInSettings() {
                       <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 flex-wrap">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Scheduled: {new Date(checkIn.scheduled_time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                          Scheduled: {checkIn.scheduled_time ? new Date(checkIn.scheduled_time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
                         </span>
                         {checkIn.responded_time && (
                           <span className="flex items-center gap-1 text-emerald-600">
