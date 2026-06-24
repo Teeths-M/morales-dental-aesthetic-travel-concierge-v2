@@ -40,7 +40,7 @@ export const clientRoutes = (
     {/* Core dashboard routes */}
     <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
       <Route path="/safe-t"                     element={<ErrorBoundary><SafeT /></ErrorBoundary>} />
-      <Route path="/booking"                    element={<Booking />} />
+      <Route path="/booking"                    element={<ErrorBoundary><Booking /></ErrorBoundary>} />
       <Route path="/dashboard"                  element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/consultations"    element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/profile"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
