@@ -1,5 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// ── Scheduled: every 5 minutes ── */5 * * * *
+// Checks all active LiveLocation records and escalates stale ones:
+//   15 min stale → email guardian + flag SoloCheckIn
+//   30 min stale → email admin + security dispatch + push nudge to patient
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -111,6 +116,18 @@ Deno.serve(async (req) => {
               ${mapsUrl ? `<p><a href="${mapsUrl}">📍 Get Directions to Last Known Location</a></p>` : ''}
               <p style="color:#dc2626;font-weight:bold;">DISPATCH PRIVATE SECURITY IF UNREACHABLE</p></div>`,
           }).catch(() => {});
+        }
+
+        // Push notification to patient: nudge them to re-open the app and share location
+        if (loc.user_email) {
+          try {
+            await base44.asServiceRole.functions.invoke('sendPushNotification', {
+              user_email: loc.user_email,
+              title: 'Are you safe?',
+              body: "We haven't heard from you in 30 minutes. Tap to update your location.",
+              data: { type: 'location_stale', case_id: loc.case_id },
+            });
+          } catch (_) { /* push is best-effort */ }
         }
 
         // Check if security partner assigned — log failure if not
