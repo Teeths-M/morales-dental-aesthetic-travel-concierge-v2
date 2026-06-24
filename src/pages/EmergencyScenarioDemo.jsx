@@ -246,7 +246,7 @@ function GpsMapPin({ active, lost }) {
 }
 
 /* ── Main page ───────────────────────────────────────────────────────────── */
-export default function EmergencyScenarioDemo() {
+export default function EmergencyScenarioDemo({ minimal = false }) {
   const [playing, setPlaying]     = useState(false);
   const [visibleIds, setVisible]  = useState(new Set(['checkin_ok']));
   const [activeSms, setActiveSms] = useState(null);
@@ -295,20 +295,22 @@ export default function EmergencyScenarioDemo() {
   const isFound = visibleIds.has('found');
 
   return (
-    <div style={{ background: DARK, minHeight: '100vh' }}>
+    <div style={{ background: DARK, minHeight: minimal ? undefined : '100vh' }}>
 
-      {/* NAV */}
-      <nav className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
-        style={{ background: 'rgba(6,11,22,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        <Link to="/demo" className="flex items-center gap-2 text-xs font-medium" style={{ color: '#64748b' }}>
-          <ArrowLeft className="w-4 h-4" /> Back to Demo
-        </Link>
-        <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#ef4444' }}>
-          ⚠ Live Incident Simulator
-        </span>
-        <div className="w-24" />
-      </nav>
+      {/* NAV — hidden when embedded as a tab */}
+      {!minimal && (
+        <nav className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
+          style={{ background: 'rgba(6,11,22,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <Link to="/demo" className="flex items-center gap-2 text-xs font-medium" style={{ color: '#64748b' }}>
+            <ArrowLeft className="w-4 h-4" /> Back to Demo
+          </Link>
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#ef4444' }}>
+            ⚠ Live Incident Simulator
+          </span>
+          <div className="w-24" />
+        </nav>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 py-10">
 

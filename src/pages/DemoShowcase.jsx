@@ -7,6 +7,8 @@ import {
   AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio
 } from 'lucide-react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
+import EmergencyScenarioDemo from '@/pages/EmergencyScenarioDemo';
+import NightlifeRobberyDemo from '@/pages/NightlifeRobberyDemo';
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
@@ -229,7 +231,15 @@ function EscalationTimeline() {
 }
 
 /* ── Main showcase page ──────────────────────────────────────────────────── */
+const TABS = [
+  { id: 'overview',   label: '🏥 Platform Overview' },
+  { id: 'emergency',  label: '🚨 Kidnapping Scenario' },
+  { id: 'nightlife',  label: '🔒 Vault Lockdown' },
+];
+
 export default function DemoShowcase() {
+  const [activeTab, setActiveTab] = useState('overview');
+
   useEffect(() => {
     document.title = 'Morales Concierge — Platform Demo';
     return () => { document.title = 'Morales Dental & Aesthetic Travel Concierge'; };
@@ -257,7 +267,32 @@ export default function DemoShowcase() {
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-4 py-16 space-y-24">
+      {/* ── TAB BAR ── */}
+      <div className="flex gap-2 px-4 pt-4 max-w-5xl mx-auto overflow-x-auto pb-1">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all"
+            style={{
+              background: activeTab === tab.id ? GOLD : '#0C1A1D',
+              color: activeTab === tab.id ? DARK : '#64748b',
+              border: activeTab === tab.id ? 'none' : '1px solid #2A3F4A',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── EMERGENCY TAB ── */}
+      {activeTab === 'emergency' && <EmergencyScenarioDemo minimal />}
+
+      {/* ── NIGHTLIFE TAB ── */}
+      {activeTab === 'nightlife' && <NightlifeRobberyDemo minimal />}
+
+      {/* ── OVERVIEW TAB ── */}
+      {activeTab === 'overview' && <div className="max-w-5xl mx-auto px-4 py-16 space-y-24">
 
         {/* ── HERO ── */}
         <section className="text-center">
@@ -489,6 +524,7 @@ export default function DemoShowcase() {
         </section>
 
       </div>
+      } {/* end overview tab */}
     </div>
   );
 }
