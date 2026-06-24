@@ -77,8 +77,30 @@ export default function Booking() {
   const [showFeeModal, setShowFeeModal] = useState(false);
   const [showHighRiskNotice, setShowHighRiskNotice] = useState(false);
   const [highRiskFlag, setHighRiskFlag] = useState(null);
-  const [showStackingBlock, setShowStackingBlock] = useState(false);
-  const [stackingViolations, setStackingViolations] = useState([]);
+  const [showStackingBlock, setShowStackingBlock] = useState(() => {
+    // Check on init so the block fires before the form renders
+    if (typeof window === 'undefined') return false;
+    try {
+      const saved = localStorage.getItem('morales_consultation_cart');
+      const cartItems = saved ? JSON.parse(saved) : [];
+      if (cartItems.length >= 2) {
+        const { isBlocked } = getViolations(cartItems.map(i => ({ name: i.name, title: i.name })));
+        return isBlocked;
+      }
+    } catch (_) {}
+    return false;
+  });
+  const [stackingViolations, setStackingViolations] = useState(() => {
+    try {
+      const saved = localStorage.getItem('morales_consultation_cart');
+      const cartItems = saved ? JSON.parse(saved) : [];
+      if (cartItems.length >= 2) {
+        const { violations } = getViolations(cartItems.map(i => ({ name: i.name, title: i.name })));
+        return violations;
+      }
+    } catch (_) {}
+    return [];
+  });
   const [consultationId, setConsultationId] = useState(null);
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [showResumeModal, setShowResumeModal] = useState(false);
