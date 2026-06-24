@@ -12,10 +12,22 @@ export default function EstimateDashboard() {
   const navigate = useNavigate();
   const [showConsultationModal, setShowConsultationModal] = useState(false);
 
-  const { data: estimate, isLoading } = useQuery({
+  const { data: estimate, isLoading, error: estimateError } = useQuery({
     queryKey: ['estimate', estimate_id],
     queryFn: () => base44.entities.PriceEstimate.get(estimate_id)
   });
+
+  if (estimateError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <p className="text-slate-700 font-semibold mb-2">Unable to load estimate</p>
+          <p className="text-slate-500 text-sm mb-4">The estimate link may have expired or is invalid.</p>
+          <button onClick={() => window.history.back()} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm">Go Back</button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -8,6 +8,18 @@ import { encryptFile } from '@/lib/passportEncryption';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_SIZE_MB = 10;
+const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+function validateFile(file) {
+  if (!file) return 'Please select a file';
+  if (!ACCEPTED_TYPES.includes(file.type)) {
+    return `File type not allowed. Please use: PDF, JPG, PNG, or WebP`;
+  }
+  if (file.size > MAX_SIZE_BYTES) {
+    return `File too large. Maximum size is ${MAX_SIZE_MB}MB (your file: ${(file.size / 1024 / 1024).toFixed(1)}MB)`;
+  }
+  return null; // valid
+}
 
 export default function PassportUploader({ onTokenIssued, consultationId }) {
   const [step, setStep] = useState('idle'); // idle | encrypting | uploading | done | error
@@ -41,6 +53,12 @@ export default function PassportUploader({ onTokenIssued, consultationId }) {
   const handleUpload = async () => {
     const file = fileRef.current?.files[0];
     if (!file) { setError('Please select a passport image or PDF.'); return; }
+
+    const fileError = validateFile(file);
+    if (fileError) {
+      setError(fileError);
+      return;
+    }
 
     if (!passportMeta.last_4_digits || !passportMeta.expiry_date || !passportMeta.nationality) {
       setError('Please fill in the document metadata fields below.');

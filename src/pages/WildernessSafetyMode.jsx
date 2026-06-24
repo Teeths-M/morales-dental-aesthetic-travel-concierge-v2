@@ -22,6 +22,7 @@ export default function WildernessSafetyMode() {
   const [user, setUser] = useState(null);
   const [caseId, setCaseId] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(async (u) => {
@@ -30,7 +31,7 @@ export default function WildernessSafetyMode() {
         const cases = await base44.entities.CaseRecord.filter({ client_email: u.email }, '-created_date', 1).catch(() => []);
         if (cases[0]) setCaseId(cases[0].id);
       }
-    }).catch(() => {});
+    }).catch(() => { setLoadError('Safety mode unavailable. Please try again.'); });
 
     const handleOnline  = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -85,6 +86,12 @@ export default function WildernessSafetyMode() {
 
       {/* Main content */}
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {loadError && (
+          <div className="bg-red-900/30 border border-red-700/40 rounded-xl p-4 text-red-300 text-sm mb-4">
+            ⚠️ {loadError}
+          </div>
+        )}
+
         {/* Offline warning banner */}
         <AnimatePresence>
           {!isOnline && (

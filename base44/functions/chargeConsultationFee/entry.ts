@@ -52,6 +52,25 @@ Deno.serve(async (req) => {
     const allowed = await checkRateLimit(base44, `${user.id}:chargeConsultationFee`, 3600, 5);
     if (!allowed) return Response.json({ error: 'Too many payment attempts. Please wait before trying again.' }, { status: 429 });
 
+    // RATE LIMIT: max 3 consultation requests per user per day
+    const dayKey = `consultation_create_${user.id}_${new Date().toISOString().slice(0, 10)}`;
+    const dayBuckets = await base44.asServiceRole.entities.RateLimitBucket.filter(
+      { bucket_key: dayKey }, '-created_date', 1
+    ).catch(() => []);
+
+    const dayBucket = dayBuckets?.[0];
+    if (dayBucket && dayBucket.count >= 3) {
+      return Response.json({
+        error: 'Too many consultation requests today. Please contact us directly if you need assistance.'
+      }, { status: 429 });
+    }
+
+    base44.asServiceRole.entities.RateLimitBucket.create({
+      bucket_key: dayKey,
+      count: (dayBucket?.count || 0) + 1,
+      window_start: new Date().toISOString(),
+    }).catch(() => {});
+
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
       return Response.json({

@@ -48,6 +48,7 @@ export default function PaymentCheckout() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declinedAmount, setDeclinedAmount] = useState(null);
+  const [error, setError] = useState(null);
 
   // Extract token from URL query param
   const proposalToken = searchParams.get('token');
@@ -126,6 +127,7 @@ export default function PaymentCheckout() {
       return { redirecting: true };
     },
     onError: (error) => {
+      setError('Payment system temporarily unavailable. Please try again.');
       const finalCost = paymentPlan?.final_cost || 0;
       const depositMap = { full_payment: 0.95, deposit_50: 0.50, deposit_25: 0.25 };
       const multiplier = depositMap[selectedPlan] ?? 1;
@@ -168,6 +170,21 @@ export default function PaymentCheckout() {
             </p>
           </AlertDescription>
         </Alert>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="text-4xl mb-4">💳</div>
+          <h2 className="text-white font-semibold text-lg mb-2">Payment Unavailable</h2>
+          <p className="text-slate-400 text-sm mb-4">{error}</p>
+          <button onClick={() => window.history.back()} className="bg-emerald-600 text-white px-6 py-2 rounded-xl text-sm">
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }

@@ -34,6 +34,7 @@ export default function CompanionDashboard() {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: companion, isLoading } = useQuery({
@@ -42,13 +43,15 @@ export default function CompanionDashboard() {
       const companions = await base44.entities.Companion.filter({ email: user?.email });
       return companions[0] || null;
     },
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    onError: () => setFetchError('Unable to load assignments. Please refresh.')
   });
 
   const { data: assignments = [] } = useQuery({
     queryKey: ['companion_assignments', user?.id],
     queryFn: () => base44.entities.CompanionAssignment.filter({ companion_user_id: user?.id }),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    onError: () => setFetchError('Unable to load assignments. Please refresh.')
   });
 
   const updateMutation = useMutation({
@@ -223,6 +226,12 @@ export default function CompanionDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-red-700 text-sm">
+            {fetchError} <button onClick={() => window.location.reload()} className="ml-2 underline">Refresh</button>
+          </div>
+        )}
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="flex-wrap h-auto">

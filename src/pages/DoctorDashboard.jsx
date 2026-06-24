@@ -15,6 +15,7 @@ export default function DoctorDashboard() {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [activeTab, setActiveTab] = useState('profile');
+  const [fetchError, setFetchError] = useState(null);
   const { user: authUser } = useAuth();
 
   // PERFORMANCE: React Query with caching — automatic deduplication, no manual useEffect
@@ -41,7 +42,7 @@ export default function DoctorDashboard() {
         }
         return null;
       }
-      
+
       const response = await base44.functions.invoke('getMyDoctorProfile', {});
       return {
         doctor: { ...response.data.doctor, successful_procedures_count: response.data.doctor.successful_procedures_count || 0 },
@@ -51,6 +52,7 @@ export default function DoctorDashboard() {
     },
     enabled: !!userData,
     staleTime: 120000, // 2 minutes cache
+    onError: () => setFetchError('Unable to load assignments. Please refresh.')
   });
 
   const doctor = profileData?.doctor;
@@ -144,6 +146,12 @@ export default function DoctorDashboard() {
   return (
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-4xl mx-auto">
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-red-700 text-sm">
+            {fetchError} <button onClick={() => window.location.reload()} className="ml-2 underline">Refresh</button>
+          </div>
+        )}
+
         <div className="mb-12">
           <div className="mb-6">
           <DoctorVerificationPanel user={user} />

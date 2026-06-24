@@ -49,6 +49,7 @@ export default function NightlifeSafetyMode() {
   const [hasPIN, setHasPIN] = useState(false);
   const [hasGuardian, setHasGuardian] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const { toast } = useToast();
   const intervalRef = useRef(null);
 
@@ -56,7 +57,7 @@ export default function NightlifeSafetyMode() {
     // Check for existing active session
     base44.entities.NightlifeSafetySession.filter({ status: 'active' }, '-created_at', 1)
       .then(sessions => { if (sessions[0]) setExistingSession(sessions[0]); })
-      .catch(() => {});
+      .catch(() => { setLoadError('Safety mode unavailable. Please try again.'); });
 
     // Check if PIN is set
     base44.auth.me().then(user => {
@@ -64,7 +65,7 @@ export default function NightlifeSafetyMode() {
       base44.functions.invoke('verifyEmergencyPIN', { action: 'get_hint', user_email: user.email })
         .then(r => setHasPIN(!!r.data?.has_pin))
         .catch(() => {});
-    }).catch(() => {});
+    }).catch(() => { setLoadError('Safety mode unavailable. Please try again.'); });
   }, []);
 
   const acquireGPS = () => {
@@ -257,6 +258,12 @@ export default function NightlifeSafetyMode() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950/20 to-slate-900 p-4">
       <div className="max-w-lg mx-auto space-y-5 pt-4 pb-12">
         <BackButton fallback="/emergency" className="mb-2" />
+
+        {loadError && (
+          <div className="bg-red-900/30 border border-red-700/40 rounded-xl p-4 text-red-300 text-sm mb-4">
+            ⚠️ {loadError}
+          </div>
+        )}
 
         {/* Header */}
         <div className="text-center">

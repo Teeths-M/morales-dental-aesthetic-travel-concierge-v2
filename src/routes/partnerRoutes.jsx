@@ -49,36 +49,36 @@ export const partnerRoutes = (
 
     {/* Partner signup + dashboards inside AppLayout */}
     <Route key="partner-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-      <Route path="/partner-signup"               element={<PartnerSignup />} />
-      <Route path="/partner-signup/travel-agency" element={<TravelAgencySignup />} />
-      <Route path="/partner-signup/taxi-service"  element={<TaxiServiceSignup />} />
-      <Route path="/companion-signup"             element={<CompanionSignup />} />
-      <Route path="/security-signup"              element={<SecurityAgencySignup />} />
-      <Route path="/doctor-signup"                element={<DoctorSignup />} />
+      <Route path="/partner-signup"               element={<ErrorBoundary><PartnerSignup /></ErrorBoundary>} />
+      <Route path="/partner-signup/travel-agency" element={<ErrorBoundary><TravelAgencySignup /></ErrorBoundary>} />
+      <Route path="/partner-signup/taxi-service"  element={<ErrorBoundary><TaxiServiceSignup /></ErrorBoundary>} />
+      <Route path="/companion-signup"             element={<ErrorBoundary><CompanionSignup /></ErrorBoundary>} />
+      <Route path="/security-signup"              element={<ErrorBoundary><SecurityAgencySignup /></ErrorBoundary>} />
+      <Route path="/doctor-signup"                element={<ErrorBoundary><DoctorSignup /></ErrorBoundary>} />
 
-      <Route element={<ProtectedRoute allowedRoles={DOCTOR_PORTAL_ROLES} />}>
-        <Route path="/doctor-dashboard"            element={<DoctorDashboard />} />
-        <Route path="/portal/doctor/dashboard"     element={<DoctorCasesDashboard />} />
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={DOCTOR_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/doctor-dashboard"            element={<ErrorBoundary><DoctorDashboard /></ErrorBoundary>} />
+        <Route path="/portal/doctor/dashboard"     element={<ErrorBoundary><DoctorCasesDashboard /></ErrorBoundary>} />
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={TRAVEL_AGENCY_PORTAL_ROLES} />}>
-        <Route path="/travel-agency-dashboard"     element={<TravelAgencyDashboard />} />
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={TRAVEL_AGENCY_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/travel-agency-dashboard"     element={<ErrorBoundary><TravelAgencyDashboard /></ErrorBoundary>} />
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={TAXI_SERVICE_PORTAL_ROLES} />}>
-        <Route path="/taxi-service-dashboard"      element={<TaxiServiceDashboard />} />
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={TAXI_SERVICE_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/taxi-service-dashboard"      element={<ErrorBoundary><TaxiServiceDashboard /></ErrorBoundary>} />
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={COMPANION_PORTAL_ROLES} />}>
-        <Route path="/companion-dashboard"         element={<CompanionDashboard />} />
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={COMPANION_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/companion-dashboard"         element={<ErrorBoundary><CompanionDashboard /></ErrorBoundary>} />
       </Route>
 
       {/* Security agency — no strict role guard (matches original) */}
-      <Route path="/security-agency-dashboard"     element={<SecurityAgencyDashboard />} />
+      <Route path="/security-agency-dashboard"     element={<ErrorBoundary><SecurityAgencyDashboard /></ErrorBoundary>} />
 
-      <Route element={<ProtectedRoute allowedRoles={PARTNER_REVIEW_ROLES} />}>
-        <Route path="/partner-portal"              element={<PartnerPortal />} />
-        <Route path="/partner-reviews"             element={<PartnerReviews />} />
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={PARTNER_REVIEW_ROLES} /></ErrorBoundary>}>
+        <Route path="/partner-portal"              element={<ErrorBoundary><PartnerPortal /></ErrorBoundary>} />
+        <Route path="/partner-reviews"             element={<ErrorBoundary><PartnerReviews /></ErrorBoundary>} />
       </Route>
     </Route>
   </>

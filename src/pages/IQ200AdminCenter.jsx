@@ -338,17 +338,18 @@ export default function IQ200AdminCenter() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [creatingCase, setCreatingCase] = useState(null);
   const [populatingData, setPopulatingData] = useState(false);
-
-  const { data: cases = [], isLoading, refetch } = useQuery({
+  const { data: cases = [], isLoading, isError: casesError, refetch } = useQuery({
     queryKey: ['iq200_cases'],
-    queryFn: () => base44.asServiceRole.entities.CaseRecord.list('-created_date', 100),
+    queryFn: () => base44.asServiceRole.entities.CaseRecord.filter({}, '-created_date', 50),
     refetchInterval: 30000,
   });
 
-  const { data: consultations = [] } = useQuery({
+  const { data: consultations = [], isError: consultationsError } = useQuery({
     queryKey: ['consultations_for_iq200'],
-    queryFn: () => base44.asServiceRole.entities.Consultation.list('-created_date', 50),
+    queryFn: () => base44.asServiceRole.entities.Consultation.filter({}, '-created_date', 50),
   });
+
+  const loadError = (casesError || consultationsError) ? 'Failed to load. Please refresh.' : null;
 
   const pendingConsultations = consultations.filter(c => !cases.some(r => r.consultation_id === c.id));
 
@@ -394,6 +395,7 @@ export default function IQ200AdminCenter() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {loadError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm mb-4">{loadError}</div>}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold font-display">IQ-200 Intelligence Center</h1>

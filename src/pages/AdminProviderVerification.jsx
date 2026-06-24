@@ -42,14 +42,14 @@ export default function AdminProviderVerification() {
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: providers, isLoading, refetch } = useQuery({
+  const { data: providers, isLoading, isError, refetch } = useQuery({
     queryKey: ['provider-verifications'],
     queryFn: async () => {
       const [doctors, travelAgencies, taxiServices, companions] = await Promise.all([
-        base44.entities.Doctor.list(),
-        base44.entities.TravelAgency.list(),
-        base44.entities.TaxiService.list(),
-        base44.entities.Companion.list()
+        base44.entities.Doctor.filter({}, '-created_date', 100),
+        base44.entities.TravelAgency.filter({}, '-created_date', 100),
+        base44.entities.TaxiService.filter({}, '-created_date', 100),
+        base44.entities.Companion.filter({}, '-created_date', 100)
       ]);
 
       return [
@@ -137,6 +137,7 @@ export default function AdminProviderVerification() {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {isError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm mb-4">Failed to load. Please refresh.</div>}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold font-display">Provider Verification Dashboard</h1>

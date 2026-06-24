@@ -65,6 +65,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'encrypted_file_uri, encryption_iv_b64, and encryption_salt_b64 are required' }, { status: 400 });
     }
 
+    // Server-side file validation
+    const ALLOWED_MIME_TYPES = new Set([
+      'application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'
+    ]);
+    const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+
+    if (!file_name || typeof file_name !== 'string') {
+      return Response.json({ error: 'file_name is required' }, { status: 400 });
+    }
+
+    if (mime_type && !ALLOWED_MIME_TYPES.has(mime_type)) {
+      return Response.json({ error: 'File type not allowed. Use PDF, JPG, PNG, or WebP.' }, { status: 400 });
+    }
+
+    if (file_size_bytes && file_size_bytes > MAX_FILE_SIZE_BYTES) {
+      return Response.json({ error: 'File too large. Maximum 10MB.' }, { status: 400 });
+    }
+
+    // Sanitize filename — remove path traversal chars
+    const safeName = file_name.replace(/[^a-zA-Z0-9._\- ]/g, '_').slice(0, 255);
+
     // File is already uploaded to private storage by the frontend
     const file_uri = encrypted_file_uri;
 
@@ -89,7 +110,7 @@ Deno.serve(async (req) => {
         algorithm_version: 2,
         integrity_hash: file_hash_sha256,
         file_size_bytes,
-        file_name,
+        file_name: safeName,
         mime_type,
         redacted_for_display,
         status: 'active',
@@ -120,7 +141,7 @@ Deno.serve(async (req) => {
         actor_name: user.full_name,
         resource_type: 'PassportVault',
         resource_id: vault.id,
-        resource_name: `${document_type} - ${file_name}`,
+        resource_name: `${document_type} - ${safeName}`,
         details: {
           action: 'vault_upload',
           document_type,
