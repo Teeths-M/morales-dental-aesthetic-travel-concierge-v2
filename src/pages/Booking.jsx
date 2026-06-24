@@ -545,6 +545,7 @@ export default function Booking() {
         onBack={() => {
           setShowStackingBlock(false);
           setStackingViolations([]);
+          navigate('/procedures');
         }}
       />
     );
