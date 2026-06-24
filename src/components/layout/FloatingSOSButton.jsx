@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShieldAlert, ShieldCheck } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 /**
  * FloatingSOSButton
@@ -19,6 +20,10 @@ const PILL_STYLE = {
 };
 
 export default function FloatingSOSButton() {
+  const { user } = useAuth();
+  // Safe-T4life requires auth — send logged-in users directly, others to dashboard (login flow)
+  const safetyPath = user ? '/safe-t' : '/dashboard';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.92 }}
@@ -36,7 +41,7 @@ export default function FloatingSOSButton() {
       }}
     >
       {/* ── Top pill: Safe-T4life Assistance ── */}
-      <Link to="/safe-t" aria-label="Safe-T4life Assistance">
+      <Link to={safetyPath} aria-label="Safe-T4life Assistance">
         <motion.div
           className="flex items-center gap-2.5 rounded-full cursor-pointer select-none"
           style={{
