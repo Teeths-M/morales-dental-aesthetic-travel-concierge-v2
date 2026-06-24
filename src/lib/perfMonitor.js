@@ -1,3 +1,4 @@
+/* global Deno */
 /**
  * Performance Monitoring Middleware
  * 

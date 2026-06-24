@@ -12,6 +12,7 @@ import LuxuryTestimonials from '../components/home/LuxuryTestimonials';
 
 
 export default function Home() {
+  // Force recompile — resolves transient Vite chunk fetch failure
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const navigate = useNavigate();
