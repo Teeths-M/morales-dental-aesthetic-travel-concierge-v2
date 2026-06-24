@@ -38,10 +38,63 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
+  // Restore last known position from localStorage so the patient sees their location
+  // immediately on mount, even before the first GPS fix arrives.
+  useEffect(() => {
+    if (!caseId) return;
+    try {
+      const raw = localStorage.getItem(`morales_loc_cache_${caseId}`);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached?.lat != null && !currentLocation) setCurrentLocation(cached);
+      }
+    } catch (_) {}
+  }, [caseId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When connectivity returns, flush the latest cached position to the backend
+  // so the Guardian map updates without waiting for the next GPS watchPosition event.
+  useEffect(() => {
+    if (!caseId) return;
+    const onOnline = () => {
+      try {
+        const raw = localStorage.getItem(`morales_loc_cache_${caseId}`);
+        if (!raw) return;
+        const cached = JSON.parse(raw);
+        if (!cached?.lat || !cached?.ts) return;
+        const ageMs = Date.now() - new Date(cached.ts).getTime();
+        if (ageMs < 30 * 60_000 && mountedRef.current) {
+          sendUpdate(cached.lat, cached.lng, cached.accuracy, cached.heading, cached.speed, cached.altitude, cached.source || 'gps');
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [caseId, sendUpdate]);
+
   const shouldRun = enabled && caseId && !COMPLETED_STATUSES.has(caseStatus) && !isPaused;
+
+  const cacheKey = caseId ? `morales_loc_cache_${caseId}` : null;
 
   const sendUpdate = useCallback(async (lat, lng, accuracy, heading, speed, altitude, source = 'gps') => {
     if (!caseId || !mountedRef.current) return;
+
+    const ts = new Date().toISOString();
+    const locSnapshot = { lat, lng, accuracy, heading, speed, altitude, source, ts };
+
+    // Always persist locally first — survives offline and app restarts
+    if (cacheKey) {
+      try { localStorage.setItem(cacheKey, JSON.stringify(locSnapshot)); } catch (_) {}
+    }
+
+    if (!navigator.onLine) {
+      // Offline: update local state so patient UI stays accurate; sync on reconnect
+      if (mountedRef.current) {
+        setCurrentLocation(locSnapshot);
+        setLastUpdate(ts);
+      }
+      return;
+    }
+
     try {
       await base44.functions.invoke('updateLiveLocation', {
         case_id: caseId,
@@ -53,14 +106,16 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
         altitude: altitude ?? null,
         source,
       });
-      const ts = new Date().toISOString();
       lastSentRef.current = { lat, lng, ts };
       if (mountedRef.current) {
         setLastUpdate(ts);
-        setCurrentLocation({ lat, lng, accuracy, heading, speed, altitude, source });
+        setCurrentLocation(locSnapshot);
       }
-    } catch (_) { /* network error — silent, will retry on next position event */ }
-  }, [caseId]);
+    } catch (_) {
+      // Network error — local cache already written; will retry on next position event
+      if (mountedRef.current) setCurrentLocation(locSnapshot);
+    }
+  }, [caseId, cacheKey]);
 
   const stopWatch = useCallback(() => {
     if (watchIdRef.current != null) {
@@ -98,29 +153,16 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
         if (!mountedRef.current) return;
         if (err.code === err.PERMISSION_DENIED) {
           setStatus('denied');
-          // IP geo fallback
-          base44.functions.invoke('getGeolocationAndCurrency', {}).then(res => {
-            const d = res?.data;
-            if (d?.latitude && mountedRef.current) {
-              setStatus('ip_fallback');
-              sendUpdate(d.latitude, d.longitude, null, null, null, null, 'ip_geo');
-              // Re-poll IP geo every 60s as fallback
-              intervalRef.current = setInterval(() => {
-                if (!mountedRef.current) return;
-                base44.functions.invoke('getGeolocationAndCurrency', {}).then(r => {
-                  const dd = r?.data;
-                  if (dd?.latitude) sendUpdate(dd.latitude, dd.longitude, null, null, null, null, 'ip_geo');
-                }).catch(() => {});
-              }, MAX_INTERVAL_MS);
-            } else if (mountedRef.current) {
-              setStatus('unavailable');
-            }
-          }).catch(() => { if (mountedRef.current) setStatus('unavailable'); });
+          // Do NOT fall back to IP geolocation. IP geo resolves to the patient's ISP city
+          // (often wrong country, especially with VPNs) and would pin the Guardian map to
+          // the wrong location — e.g. Caracas for Venezuelan ISPs regardless of where the
+          // patient physically is. Guardian sees "Location not yet shared" instead, which
+          // is accurate and doesn't cause false alarms.
         } else {
           setStatus('unavailable');
         }
       },
-      { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
     );
 
     // Heartbeat: even if stationary, send every 60s to keep stale threshold from triggering

@@ -82,7 +82,7 @@ function DashboardHome({ user, consultations, language }) {
   const latestActive = consultations.find(c => c.status !== 'Completed');
   const isSolo = latestActive && (!latestActive.requires_companion || latestActive.companion_requirement_status === 'companion_required_pending');
   // Auto-start live beacon for solo travelers with an active journey
-  useLiveLocationBeacon({ caseId: latestActive?.id, caseStatus: latestActive?.status, enabled: !!isSolo });
+  const { status: locationStatus } = useLiveLocationBeacon({ caseId: latestActive?.id, caseStatus: latestActive?.status, enabled: !!isSolo });
   const latestConsultation = consultations[0];
   const caseStatus = latestConsultation?.status || 'Submitted';
 
@@ -131,6 +131,33 @@ function DashboardHome({ user, consultations, language }) {
     <div className="space-y-6">
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
+
+      {/* GPS permission banners — only shown during active solo journeys */}
+      {isSolo && locationStatus === 'denied' && (
+        <div className="rounded-2xl border border-amber-600/50 bg-amber-900/20 px-5 py-4 flex items-start gap-3">
+          <Shield className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-300">GPS permission required</p>
+            <p className="text-xs text-amber-400/80 mt-0.5">
+              We need your location to keep your Guardian informed. Please enable GPS in your browser settings and reload the page.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 text-xs font-semibold text-amber-300 underline underline-offset-2"
+            >
+              Reload after enabling GPS
+            </button>
+          </div>
+        </div>
+      )}
+      {isSolo && locationStatus === 'unavailable' && (
+        <div className="rounded-2xl border border-slate-600/50 bg-slate-800/40 px-5 py-3 flex items-center gap-3">
+          <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <p className="text-xs text-slate-400">
+            We're having trouble finding your location. Your Guardian will see your last known position.
+          </p>
+        </div>
+      )}
 
       {/* 9-Handshake Journey Block — only visible during active travel */}
       {activeTrip && (
