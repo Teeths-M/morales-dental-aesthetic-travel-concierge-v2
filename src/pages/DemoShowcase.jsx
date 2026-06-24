@@ -314,6 +314,22 @@ export default function DemoShowcase() {
               View Live Dashboard <ChevronRight style={{ width: 16, height: 16 }} />
             </Link>
           </div>
+
+          {/* Emergency scenario CTA — most dramatic feature */}
+          <div className="mt-6 flex justify-center">
+            <Link
+              to="/demo/emergency"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm w-full max-w-sm justify-center"
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.4)',
+                color: '#fca5a5',
+              }}
+            >
+              <AlertTriangle style={{ width: 16, height: 16 }} />
+              Watch the Kidnapping Scenario — Live Safety Response Demo
+            </Link>
+          </div>
         </section>
 
         {/* ── 9-HANDSHAKE INTERACTIVE DEMO ── */}
