@@ -3,7 +3,6 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
 import FloatingSOSButton from './FloatingSOSButton';
-import SafeTCompanion from '@/components/safet/SafeTCompanion';
 import Header from './Header';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
 import OfflineBanner from './OfflineBanner';
@@ -54,7 +53,6 @@ export default function AppLayout() {
         {!isAdmin && (
           <>
             <WhatsAppButton />
-            <SafeTCompanion />
             <HeartNotificationCenter user={user} />
             <GuardianTicker />
 
