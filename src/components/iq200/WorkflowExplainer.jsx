@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Mail, Link as LinkIcon, CheckCircle, Shield } from 'lucide-react';
+import { ArrowRight, Link as LinkIcon, Shield } from 'lucide-react';
 
 export default function WorkflowExplainer() {
   return (

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import {
-  Stethoscope, CheckCircle2, AlertTriangle, Clock, FileText,
+  Stethoscope, CheckCircle2, AlertTriangle, Clock,
   ShieldCheck, AlertOctagon, BookOpen, Layers, MessageSquare
 } from 'lucide-react';
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart, Globe } from 'lucide-react';
+import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart } from 'lucide-react';
 import { BackButton } from '@/components/nav/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

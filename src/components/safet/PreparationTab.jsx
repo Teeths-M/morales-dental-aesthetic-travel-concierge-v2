@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  CheckCircle2, Clock, Plane, Hotel, Car, Bell, Briefcase,
+  CheckCircle2, Plane, Hotel, Car, Bell, Briefcase,
   Users, Globe, Droplets, Moon, Utensils, BarChart3
 } from 'lucide-react';
 

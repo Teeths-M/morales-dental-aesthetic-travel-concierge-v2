@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, FileText, AlertTriangle, Star } from 'lucide-react';
+import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, AlertTriangle, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { base44 } from '@/api/base44Client';
-import { BRAND } from '@/lib/brandTokens';
 
 const TRAVEL_CLASSES = [
   { value: 'economy', label: 'Economy', icon: '💺' },

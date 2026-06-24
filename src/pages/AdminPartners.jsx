@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Users, Plane, Car, User, Search, Filter, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, Trash2, Square, SquareCheck } from 'lucide-react';
+import { Users, Plane, Car, User, Search, Mail, Phone, MapPin, Star, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tabs,

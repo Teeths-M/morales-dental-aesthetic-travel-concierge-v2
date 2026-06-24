@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SafeTOverrideModal from '@/components/safet/SafeTOverrideModal';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, Clock, AlertCircle, Sparkles, Shield, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Sparkles, Shield, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0); }

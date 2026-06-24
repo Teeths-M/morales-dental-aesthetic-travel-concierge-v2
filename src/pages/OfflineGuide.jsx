@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { WifiOff, AlertTriangle, Shield, Smartphone, MessageSquare, Download, ArrowLeft, CheckCircle } from 'lucide-react';
+import { WifiOff, AlertTriangle, Shield, MessageSquare, Download, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const Step = ({ number, title, children }) => (
   <div className="flex gap-4">

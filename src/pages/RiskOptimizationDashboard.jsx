@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Brain, ShieldCheck, AlertTriangle, BarChart2, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
+import { Brain, ShieldCheck, AlertTriangle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';

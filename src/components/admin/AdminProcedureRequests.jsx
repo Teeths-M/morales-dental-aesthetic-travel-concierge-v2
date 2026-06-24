@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Clock, FileText, ExternalLink } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminProcedureRequests() {

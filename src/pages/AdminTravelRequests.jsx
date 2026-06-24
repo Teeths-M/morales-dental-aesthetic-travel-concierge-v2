@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plane, Hotel, Car, Users, Calendar, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plane, Hotel, Users, Calendar, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { base44 } from '@/api/base44Client';

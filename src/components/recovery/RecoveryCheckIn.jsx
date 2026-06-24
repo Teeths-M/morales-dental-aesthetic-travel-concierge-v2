@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Wifi, WifiOff, CheckCircle2, AlertTriangle, RefreshCw, Activity } from 'lucide-react';
 import { useRecoveryCheckIn } from '@/offline/recovery/useRecoveryCheckIn';
 

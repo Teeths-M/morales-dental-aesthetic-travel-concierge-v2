@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Wifi, WifiOff, MapPin, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import { Phone, Wifi, WifiOff, MapPin, AlertCircle, RefreshCw } from 'lucide-react';
 import HandshakeTapButton from '@/components/handshake/HandshakeTapButton';
 import { useFlightTracking } from '@/hooks/useFlightTracking';
 

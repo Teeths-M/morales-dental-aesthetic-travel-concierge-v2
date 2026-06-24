@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { AlertTriangle, Shield, Ambulance, PhoneCall, Car, EyeOff, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Shield, Ambulance, Car, EyeOff, X, Loader2, CheckCircle2 } from 'lucide-react';
 
 const SOS_OPTIONS = [
   { id: 'police', label: 'Local Police', desc: 'Report crime or threat', icon: Shield, color: 'text-blue-700 bg-blue-50 border-blue-200', pulse: 'bg-blue-600' },

@@ -6,7 +6,7 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mountain, Wind, Waves, Leaf, Zap, TreePine, Droplets, Anchor,
-  MapPin, Shield, WifiOff, CheckCircle2, Circle, Loader2, AlertTriangle, Navigation } from 'lucide-react';
+  MapPin, Shield, CheckCircle2, Circle, Loader2, AlertTriangle, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import WildernessSafetyNudge from './WildernessSafetyNudge';

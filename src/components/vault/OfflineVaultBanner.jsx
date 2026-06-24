@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function OfflineVaultBanner({ isOffline, pendingCount, onSync }) {

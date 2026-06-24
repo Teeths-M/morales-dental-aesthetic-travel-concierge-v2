@@ -6,7 +6,6 @@ import {
   Activity, 
   UserCheck, 
   Plane, 
-  Car, 
   DollarSign, 
   CheckCircle2, 
   Clock,

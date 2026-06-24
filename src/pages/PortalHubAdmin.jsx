@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { 
   CheckCircle2, 
   Clock, 
-  AlertCircle, 
-  TrendingUp,
-  Filter,
+  AlertCircle,
   Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import PortalHubSidebar from '@/components/portal/PortalHubSidebar';
-import BottomNavbar from '@/components/portal/BottomNavbar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import WorkflowDashboard from '@/components/portal/WorkflowDashboard';
 import ProviderManager from '@/components/portal/ProviderManager';

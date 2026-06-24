@@ -43,9 +43,9 @@ const metrics = {
 setInterval(() => {
   try {
     // Deno global available in Deno runtime
-    // eslint-disable-next-line no-undef
+     
     if (typeof Deno !== 'undefined' && Deno.memoryUsage) {
-      // eslint-disable-next-line no-undef
+       
       const mem = Deno.memoryUsage();
       metrics.lastMemorySample = {
         rss: Math.round(mem.rss / 1024 / 1024), // MB
@@ -165,9 +165,9 @@ export function handleHealthEndpoint(req) {
 export function getMemoryUsage() {
   try {
     // Deno global available in Deno runtime
-    // eslint-disable-next-line no-undef
+     
     if (typeof Deno !== 'undefined' && Deno.memoryUsage) {
-      // eslint-disable-next-line no-undef
+       
       const mem = Deno.memoryUsage();
       return Math.round(mem.rss / 1024 / 1024); // MB
     }

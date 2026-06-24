@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 import { 
   FileText, CheckCircle, AlertCircle, Clock, Shield, Eye, 
-  Search, Filter, RefreshCw, UserCheck, XCircle, ArrowLeft
+  Search, RefreshCw, UserCheck, XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

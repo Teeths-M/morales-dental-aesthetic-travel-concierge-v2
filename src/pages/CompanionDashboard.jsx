@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   User, 
-  Calendar, 
   DollarSign, 
   Star, 
   CheckCircle, 
@@ -24,8 +23,6 @@ import {
   Globe,
   Award,
   TrendingUp,
-  MessageSquare,
-  Settings,
   ClipboardCheck,
   LogOut
 } from 'lucide-react';

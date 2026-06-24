@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, X, Sparkles, Volume2, DollarSign } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Mic, MicOff, X, Sparkles, DollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { extractProceduresFromText } from './ProcedureData';
 import { PricingEngine } from '@/lib/pricingEngine';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Play, AlertTriangle, Bell, ChevronRight, Trophy } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const MODULES = [

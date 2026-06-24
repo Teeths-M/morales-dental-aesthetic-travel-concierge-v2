@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Shield, AlertCircle } from 'lucide-react';
 
 export default function VerificationInfo({ language = 'en' }) {
   const content = {

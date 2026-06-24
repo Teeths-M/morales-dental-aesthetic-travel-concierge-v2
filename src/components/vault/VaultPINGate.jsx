@@ -4,8 +4,7 @@ import { ArrowLeft, Lock, Shield, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
-import { BRAND } from '@/lib/brandTokens';
-import { generatePINHash, verifyPIN, generateSalt } from '@/lib/vaultPINHashing';
+import { generatePINHash, verifyPIN } from '@/lib/vaultPINHashing';
 
 export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
   const [pin, setPin] = useState(['', '', '', '']);

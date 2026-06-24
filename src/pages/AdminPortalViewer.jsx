@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Loader2, Stethoscope, Plane, Car } from 'lucide-react';
 import { parseISO, addDays, format as dateFnsFormat } from 'date-fns';
 import AdminLayout from '@/components/layout/AdminLayout';

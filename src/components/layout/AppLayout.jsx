@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
 import FloatingSOSButton from './FloatingSOSButton';
@@ -29,7 +29,7 @@ export default function AppLayout() {
     if (suppressOnboarding && showOnboarding) {
       setShowOnboarding(false);
     }
-  }, [pathname, suppressOnboarding]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname, suppressOnboarding]);  
 
   // Suppress patient-facing fixed FABs on pages where they don't belong:
   // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)

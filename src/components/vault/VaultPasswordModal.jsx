@@ -6,7 +6,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Eye, EyeOff, X } from 'lucide-react';
-import { BRAND } from '@/lib/brandTokens';
 
 export default function VaultPasswordModal({ isOpen, onClose, onConfirm, title = 'Enter Decryption Password', isLoading }) {
   const [password, setPassword] = useState('');

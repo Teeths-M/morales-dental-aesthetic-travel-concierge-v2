@@ -1,8 +1,7 @@
 import React from "react";
-import { Star, MapPin, DollarSign, Calendar } from "lucide-react";
+import { Star, MapPin, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export default function DoctorSearchCard({ doctor, onBook, onViewProfile }) {
   const rating = doctor.rating || 5.0;

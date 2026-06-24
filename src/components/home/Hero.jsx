@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, BadgeCheck, Plane, Users, Heart, Briefcase, Activity, Home, CheckCircle, User, X, Stethoscope, Car, HeartHandshake } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SlotCounter from './SlotCounter';
-import { translations } from '@/lib/translations';
 import { useAuth } from '@/lib/AuthContext';
 
 const SENTINEL_IMAGE =

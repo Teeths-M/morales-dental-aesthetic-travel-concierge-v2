@@ -74,7 +74,7 @@ export default function Section10Documents({ form, update }) {
       window.removeEventListener('online',  up);
       window.removeEventListener('offline', dn);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   const syncQueued = useCallback(async () => {
     const unsynced = getUnsyncedUploads();

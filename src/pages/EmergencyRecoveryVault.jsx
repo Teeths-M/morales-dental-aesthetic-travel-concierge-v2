@@ -5,17 +5,16 @@
  * Shows essential survival information for compromised travelers.
  * Does NOT expose full medical records — only emergency-accessible documents.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, FileText, MapPin, Phone, Globe, Navigation, Download,
-  Car, AlertTriangle, CheckCircle2, RefreshCw, Eye, Copy, Clock,
-  User, Hotel, Plane, CreditCard, Lock
+  Shield, FileText, MapPin, Phone, Globe, Navigation,
+  Car, RefreshCw, Eye, Copy, Clock,
+  User, Hotel, Plane, Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import { Link } from 'react-router-dom';
 
 const DOC_ICONS = {
   passport: User,

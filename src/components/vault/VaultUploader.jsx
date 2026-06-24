@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Shield, Upload, CheckCircle2, AlertTriangle, Lock, Eye, FileText, Wand2, Loader2 } from 'lucide-react';
+import { Shield, Upload, CheckCircle2, AlertTriangle, Lock, Eye, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

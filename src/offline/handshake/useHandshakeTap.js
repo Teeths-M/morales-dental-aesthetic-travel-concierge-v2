@@ -54,7 +54,7 @@ export function useHandshakeTap({
       window.removeEventListener('online',  up);
       window.removeEventListener('offline', down);
     };
-  }, []);                                         // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);                                        
 
   const captureGPS = useCallback(() => new Promise((resolve) => {
     if (!navigator.geolocation) { resolve(null); return; }

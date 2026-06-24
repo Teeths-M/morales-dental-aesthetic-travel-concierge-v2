@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, FileText, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Shield, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { BRAND } from '@/lib/brandTokens';
 
 export default function PassportVisaChecker({ destinationCountry, selectedPassportId, onVisaCheckComplete }) {
   const [checkingVisa, setCheckingVisa] = useState(false);

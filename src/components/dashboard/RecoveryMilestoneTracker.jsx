@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Heart, Clock, ChevronRight, Shield, Star, Calendar, FileText, Plane, Utensils, Bed, Smile } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { CheckCircle2, Circle, Heart, ChevronRight, Star } from 'lucide-react';
 
 const MILESTONES = [
   { id: 'prep', label: 'Pre-Procedure Prep', icon: '📋', tips: ['Complete all lab work and blood tests', 'Arrange time off work/school', 'Prepare recovery space at home', 'Stock up on soft foods and supplies'] },

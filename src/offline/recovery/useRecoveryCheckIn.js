@@ -51,7 +51,7 @@ export function useRecoveryCheckIn({ sessionId, tripId = '', caseId = '' }) {
       window.removeEventListener('online',  up);
       window.removeEventListener('offline', down);
     };
-  }, []);                     // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);                    
 
   const syncPacket = useCallback(async (packet) => {
     if (syncingRef.current) return;

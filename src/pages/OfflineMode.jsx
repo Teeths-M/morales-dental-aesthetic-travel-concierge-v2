@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, MessageSquare, QrCode, Shield, Smartphone, ArrowLeft, Download, BookOpen } from 'lucide-react';
 import OfflineCapabilitiesPanel from '@/components/offline/OfflineCapabilitiesPanel';
 import { useNavigate, Link } from 'react-router-dom';

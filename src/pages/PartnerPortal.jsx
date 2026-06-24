@@ -12,7 +12,6 @@ import {
   MapPin, 
   User, 
   Phone, 
-  Mail, 
   AlertCircle, 
   CheckCircle2, 
   TrendingUp, 
@@ -27,7 +26,6 @@ import {
   HeartHandshake,
   Stethoscope
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function PartnerPortal() {
   const navigate = useNavigate();

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Plane, Hotel, Car, Calendar, CreditCard, CheckCircle2,
-  Clock, AlertTriangle, Users, ArrowRight, MapPin
+  Plane, Calendar, CreditCard, CheckCircle2, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';

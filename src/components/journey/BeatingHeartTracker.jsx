@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Clock, AlertTriangle, Heart, Zap, MapPin, User, Car, Plane, Hotel, Stethoscope, UtensilsCrossed, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Heart, Zap, MapPin, Car, Plane, Hotel, Stethoscope, UtensilsCrossed } from 'lucide-react';
 
 const ROLE_COLORS = {
   taxi_service: { bg: 'bg-blue-500',    ring: 'ring-blue-300',    text: 'text-blue-700',    light: 'bg-blue-50',   border: 'border-blue-200',   label: 'Driver' },

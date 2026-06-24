@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Trash2, Bookmark, Loader2, Navigation, Wifi, WifiOff, RefreshCw, Pause, Play, Globe } from 'lucide-react';
+import { MapPin, Trash2, Bookmark, Loader2, Navigation, Wifi, WifiOff, Pause, Play, Globe } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
 
@@ -92,7 +92,7 @@ export default function LocationBreadcrumbTracker({ caseId }) {
     } else if (ipLocation && !prefs.locationPaused) {
       autoLog('ip_geo');
     }
-  }, [loading, gpsStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, gpsStatus]);  
 
   // Background refresh every 15 minutes while page visible
   useEffect(() => {

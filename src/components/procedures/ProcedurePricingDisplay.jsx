@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, TrendingDown, Info, Globe, AlertCircle } from 'lucide-react';
+import { DollarSign, TrendingDown, Globe, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { PricingEngine } from '@/lib/pricingEngine';
 

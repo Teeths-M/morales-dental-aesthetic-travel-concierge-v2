@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Search, Mic, MicOff, Loader2, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { PASSPORT_COUNTRIES, DESTINATIONS, TRAVEL_PURPOSES, getVisaRule } from './visaData';
 import { base44 } from '@/api/base44Client';
 

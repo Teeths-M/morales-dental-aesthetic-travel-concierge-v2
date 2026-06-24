@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Clock, FileText, Share2, Trash2, Download, Plus, WifiOff, CloudDownload, CheckCircle, AlertCircle } from 'lucide-react';
+import { Shield, Clock, FileText, Share2, Trash2, Download, Plus, CloudDownload, CheckCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { decryptFileWithPassword } from '@/lib/vaultEncryption';
 import VaultPasswordModal from './VaultPasswordModal';

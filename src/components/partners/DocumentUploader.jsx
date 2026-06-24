@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FileText, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
 

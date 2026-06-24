@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, ClipboardList, User, FileText, CalendarDays,
-  MessageCircle, Shield, Map, Headphones, Settings, Menu, X, ChevronRight, ChevronLeft,
-  Stethoscope, Plane, Users, AlertTriangle, Mountain, Radio, Globe, Luggage, Crown
+  LayoutDashboard, FileText,
+  MessageCircle, Shield, Settings, Menu, ChevronRight,
+  Stethoscope, Plane, AlertTriangle, Globe
 } from 'lucide-react';
 
 // PREMIUM COLOR PALETTE

@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Stethoscope, Plane, Shield, FileText, MessageCircle, AlertTriangle,
-  Mountain, Radio, Users, Calendar, MapPin, Clock, Star, Luggage,
-  ArrowRight, CheckCircle, Sparkles, Crown
+  Mountain, Radio, Users, Calendar, MapPin, Star, Luggage,
+  ArrowRight, Sparkles, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

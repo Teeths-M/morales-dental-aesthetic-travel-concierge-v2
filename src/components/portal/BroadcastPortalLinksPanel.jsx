@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Radio, Send, Eye, CheckCircle2, AlertCircle, Loader2,
+import { Send, Eye, CheckCircle2, AlertCircle, Loader2,
   Stethoscope, Plane, Car, Users, Zap
 } from 'lucide-react';
 

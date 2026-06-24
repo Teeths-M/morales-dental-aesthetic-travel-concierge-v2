@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity, Clock, Users, TrendingUp, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const COLORS = ['#047857', '#1d4ed8', '#7c3aed', '#db2777', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#7c2d12', '#9d174d'];

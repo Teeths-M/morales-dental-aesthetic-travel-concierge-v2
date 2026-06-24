@@ -5,9 +5,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
-  Upload, MessageCircle, Calendar, HeartPulse, Users,
-  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle,
-  Plane, Star, Lock, FileText
+  Upload, MessageCircle, HeartPulse, Users,
+  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Star, Lock, FileText
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import FeatureHub from '@/components/dashboard/FeatureHub';

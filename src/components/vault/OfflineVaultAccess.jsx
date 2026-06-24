@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, Lock, AlertTriangle, WifiOff, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Shield, AlertTriangle, WifiOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { verifyVaultPIN, saveVaultPIN, hasVaultPIN } from '@/lib/vault/offlineVaultPIN';
-import { motion } from 'framer-motion';
 
 const PinInput = ({ onComplete, disabled }) => {
   const [pins, setPins] = useState(['', '', '', '']);

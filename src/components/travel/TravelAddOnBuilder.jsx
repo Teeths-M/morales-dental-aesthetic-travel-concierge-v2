@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Plane, Hotel, Users, Utensils, Car, Globe, Shield, CheckCircle2, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, MapPin, Star, Calendar, Clock } from 'lucide-react';
+import { Check, MapPin, Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect }) {

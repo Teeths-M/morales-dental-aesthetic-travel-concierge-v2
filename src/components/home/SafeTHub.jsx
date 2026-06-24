@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import AssessmentFlow from './AssessmentFlow';
-import { motion, useInView, useAnimation } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shield, Brain, UserCheck, HeartPulse, Stethoscope, Globe, ArrowRight, CheckCircle, Activity, Lock } from 'lucide-react';
+import { Shield, Brain, UserCheck, HeartPulse, Globe, ArrowRight, CheckCircle, Activity, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const PILLARS = [

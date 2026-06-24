@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';

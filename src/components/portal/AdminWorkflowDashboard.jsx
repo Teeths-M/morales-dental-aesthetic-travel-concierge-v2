@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Activity, 
   Users, 
-  DollarSign, 
   CheckCircle2, 
   Clock,
   RefreshCw,

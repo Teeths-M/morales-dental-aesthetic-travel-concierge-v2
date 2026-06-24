@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import {
   Scale, Search, ChevronDown, ChevronUp, CheckCircle2,
-  AlertTriangle, Clock, FileText, Shield, Filter, ExternalLink
+  AlertTriangle, Clock, FileText, Shield, Filter
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 

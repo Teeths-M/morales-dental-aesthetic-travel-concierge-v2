@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock, Upload, Trash2, AlertCircle, PlusCircle, LogOut, ShieldAlert } from 'lucide-react';
+import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';

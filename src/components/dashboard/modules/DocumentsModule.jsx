@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { FileText, Upload, CheckCircle2, Clock, AlertTriangle, X, Shield, Loader2 } from 'lucide-react';
+import { Upload, CheckCircle2, Clock, AlertTriangle, Shield, Loader2 } from 'lucide-react';
 
 const requiredDocs = [
   { key: 'xrays', label: 'Dental / Medical X-Rays', status: 'missing', icon: '🦷' },

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Moon, MapPin, Clock, Shield, CheckCircle2, AlertTriangle,
-  Navigation, Share2, Phone, ChevronRight, Star, Zap, Eye,
-  Lock, ArrowLeft, RefreshCw
+  Navigation, Star, Zap, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';

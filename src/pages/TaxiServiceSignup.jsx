@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { translations } from '@/lib/translations';
 import TaxiServiceSignupStep1 from '@/components/partner-signup/TaxiServiceSignupStep1';
 import TaxiServiceSignupStep2 from '@/components/partner-signup/TaxiServiceSignupStep2';

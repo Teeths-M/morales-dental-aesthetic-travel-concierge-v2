@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, X, Loader2, CheckCircle2, FileText } from 'lucide-react';
+import { AlertTriangle, Loader2, CheckCircle2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 

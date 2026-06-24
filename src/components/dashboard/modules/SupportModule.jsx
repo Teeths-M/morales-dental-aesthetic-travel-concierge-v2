@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Headphones, Phone, MessageCircle, HelpCircle, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Phone, MessageCircle, HelpCircle, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';

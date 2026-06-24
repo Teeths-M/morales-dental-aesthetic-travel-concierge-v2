@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import {
-  DollarSign, Scale, Shield, CreditCard, TrendingUp, Lock, Search, Filter
+  DollarSign, Scale, CreditCard, TrendingUp, Lock, Search
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AdminLayout from '@/components/layout/AdminLayout';

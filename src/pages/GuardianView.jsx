@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
   Eye, Shield, CheckCircle2, Clock, AlertTriangle,
-  MapPin, Loader2, Navigation, Copy, ExternalLink, Globe, Radio, Wifi, WifiOff,
+  MapPin, Navigation, Copy, ExternalLink, Globe, Radio, Wifi, WifiOff,
 } from 'lucide-react';
 
 // Fix default leaflet marker icons (webpack/vite strips them)

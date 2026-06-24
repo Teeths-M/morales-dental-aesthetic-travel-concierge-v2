@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, AlertCircle, DollarSign, Calendar, Heart } from 'lucide-react';
+import { CheckCircle2, DollarSign, Calendar } from 'lucide-react';
 
 export default function EstimateDashboard() {
   const { estimate_id } = useParams();

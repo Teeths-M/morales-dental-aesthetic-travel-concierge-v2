@@ -69,7 +69,7 @@ export function useCountryDetection({ lat, lng, enabled = true }) {
       setCountry(last.country);
       setCountryCode(last.countryCode);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!enabled || lat == null || lng == null) return;

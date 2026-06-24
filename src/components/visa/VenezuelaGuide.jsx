@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Circle, ChevronDown, ChevronUp, ExternalLink, Play, UserPlus, FileText, LogIn } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, Play, UserPlus, FileText, LogIn } from 'lucide-react';
 
 const STEPS = [
   {

@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mountain, AlertTriangle, Shield, WifiOff, Wifi, TreePine, Navigation } from 'lucide-react';
+import { WifiOff, Wifi, TreePine } from 'lucide-react';
 import { BackButtonLight } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
 import WildernessActivityStart from '@/components/wilderness/WildernessActivityStart';

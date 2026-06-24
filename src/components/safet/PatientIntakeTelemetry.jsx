@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  User, Pill, AlertTriangle, Stethoscope, Activity, Heart,
+  User, Pill, AlertTriangle, Stethoscope, Activity,
   Wind, Brain, Baby, Cigarette, Wine, Dumbbell, ChevronRight, ChevronLeft, CheckCircle2, Shield
 } from 'lucide-react';
 

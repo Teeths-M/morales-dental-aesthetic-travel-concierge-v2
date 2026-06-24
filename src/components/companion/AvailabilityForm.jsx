@@ -1,6 +1,5 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { CheckCircle } from 'lucide-react';
 
 const AVAILABILITY_OPTIONS = [
   { value: 'full-time', label: 'Full-time', desc: 'Available any day, any time' },

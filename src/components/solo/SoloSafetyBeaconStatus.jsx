@@ -4,7 +4,7 @@
  * Wires useSoloSafetyBeacon and shows current state clearly.
  */
 import React from 'react';
-import { Radio, Navigation, Globe, WifiOff, Pause, AlertTriangle } from 'lucide-react';
+import { Radio, Navigation, Globe, WifiOff, Pause } from 'lucide-react';
 import { useSoloSafetyBeacon } from '@/hooks/useSoloSafetyBeacon';
 
 export default function SoloSafetyBeaconStatus({ caseId, caseStatus, isSoloTraveler }) {

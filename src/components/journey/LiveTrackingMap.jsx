@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Clock, Car, User, Plane, AlertTriangle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Car, User, Wifi, WifiOff } from 'lucide-react';
 
 const ROLE_COLORS = {
   driver:    { color: '#3b82f6', bg: 'bg-blue-500',    text: 'text-blue-700',    light: 'bg-blue-50',    label: 'Driver' },

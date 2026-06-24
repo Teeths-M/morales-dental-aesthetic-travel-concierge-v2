@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Heart, Mail, Phone, CheckCircle2, Loader2, Luggage } from 'lucide-react';
+import { Heart, CheckCircle2, Loader2, Luggage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function LuggageFinderPortal() {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  CheckCircle2, Circle, AlertTriangle, Clock, Zap,
+  CheckCircle2, Circle, AlertTriangle, Clock,
   Activity, Wind, Footprints, PersonStanding, Bike
 } from 'lucide-react';
 

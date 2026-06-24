@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
-  Plane, Car, Calendar, MapPin, Clock, Star, CheckCircle, Mail, Phone,
-  Globe, User, Shield, Heart, ArrowLeft, Package, CreditCard, FileText
+  Plane, Car, Calendar, MapPin, Star, CheckCircle, Mail, Phone,
+  Globe, User, Shield, Heart, Package, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

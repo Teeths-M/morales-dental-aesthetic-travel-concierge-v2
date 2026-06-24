@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { translations } from '@/lib/translations';
-import { ArrowRight, ChevronLeft, Upload, CloudUpload } from 'lucide-react';
+import { ChevronLeft, Upload, CloudUpload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import VerificationInfo from './VerificationInfo';

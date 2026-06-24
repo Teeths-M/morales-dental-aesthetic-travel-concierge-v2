@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, DollarSign, TrendingUp, Loader2 } from 'lucide-react';
+import { DollarSign, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 

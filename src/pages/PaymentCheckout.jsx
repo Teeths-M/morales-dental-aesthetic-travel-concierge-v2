@@ -1,13 +1,13 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard } from 'lucide-react';
 import DeclineDepositDialog from '@/components/checkout/DeclineDepositDialog';
 import { toast } from 'sonner';
 

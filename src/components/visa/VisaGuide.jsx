@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, ExternalLink, Play, UserPlus, FileText, CheckCircle, LogIn } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, Play, UserPlus, FileText, CheckCircle } from 'lucide-react';
 
 // Per-destination guide config
 const DESTINATION_GUIDES = {

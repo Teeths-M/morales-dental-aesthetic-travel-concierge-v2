@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, ChevronRight, Plane, ClipboardCheck, Stethoscope, HeartPulse, Star, AlertCircle, MessageCircle, ShieldCheck, Hospital, Leaf } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronRight, Plane, ClipboardCheck, Stethoscope, Star, AlertCircle, MessageCircle, ShieldCheck, Hospital, Leaf } from 'lucide-react';
 
 const STAGES = [
   {

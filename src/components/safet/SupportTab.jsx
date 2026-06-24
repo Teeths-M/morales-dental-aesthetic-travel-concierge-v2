@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, MessageCircle, Mail, Shield, Clock, ChevronRight, Star, AlertCircle, HeartHandshake, Stethoscope, Plane, MapPin } from 'lucide-react';
+import { Phone, MessageCircle, Mail, Shield, Clock, ChevronRight, AlertCircle, HeartHandshake, Stethoscope, Plane, MapPin } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 

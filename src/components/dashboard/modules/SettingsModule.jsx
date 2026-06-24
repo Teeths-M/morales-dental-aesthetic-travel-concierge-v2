@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Bell, Lock, Globe, Shield, User, Eye, CheckCircle2 } from 'lucide-react';
+import { Bell, Lock, Globe, User, Eye, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';

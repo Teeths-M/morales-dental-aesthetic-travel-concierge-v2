@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, AlertTriangle, CheckCircle2, DollarSign, Send,
+  Shield, AlertTriangle, DollarSign, Send,
   RefreshCw, ChevronDown, ChevronUp, Zap, TrendingUp,
   XCircle, BarChart2, FileText, Database
 } from 'lucide-react';

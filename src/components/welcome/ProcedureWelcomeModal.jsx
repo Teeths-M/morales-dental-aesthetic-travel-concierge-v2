@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProcedureWelcomeModal({ isOpen, onClose, userEmail, isFirstTimeSignup = false }) {

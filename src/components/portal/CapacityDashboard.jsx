@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  RefreshCw, Users, TrendingUp, Zap, CheckCircle2, Clock, Edit2, Save, X
+  RefreshCw, TrendingUp, Zap, CheckCircle2, Clock, Edit2, Save, X
 } from 'lucide-react';
 
 function formatMonth(ym) {

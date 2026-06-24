@@ -124,12 +124,12 @@ export function useFlightTracking({ tripId }) {
     pollStatus();
     intervalRef.current = setInterval(pollStatus, POLL_INTERVAL_MS);
     return () => clearInterval(intervalRef.current);
-  }, [tripId]);               // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tripId]);              
 
   // Re-poll when connectivity returns
   useEffect(() => {
     if (isOnline) pollStatus();
-  }, [isOnline]);             // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOnline]);            
 
   return {
     isOnline,

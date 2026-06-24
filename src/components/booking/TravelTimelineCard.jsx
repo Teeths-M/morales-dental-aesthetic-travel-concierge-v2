@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { Plane, Moon, AlertTriangle, Sparkles, Plus, Minus } from 'lucide-react';
+import { Plane, Moon, Sparkles, Plus, Minus } from 'lucide-react';
 
 // Flight days: 0 = Sunday, 4 = Thursday
 const FLIGHT_DAYS = [0, 4];

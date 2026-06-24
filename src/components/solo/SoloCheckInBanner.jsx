@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Clock, CheckCircle2, AlertTriangle, MapPin, Globe } from 'lucide-react';
+import { Shield, CheckCircle2, AlertTriangle, MapPin, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';

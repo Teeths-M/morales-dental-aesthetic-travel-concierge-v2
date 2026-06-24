@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mountain, Plus, Shield, Zap, Waves, Wind, Leaf, CheckCircle2, Circle,
+import { Mountain, Plus, Zap, Waves, Wind, Leaf, CheckCircle2, Circle,
   Clock, AlertTriangle, ChevronDown, ChevronUp, Loader2, Bell, TreePine } from 'lucide-react';
 import { BackButton } from '@/components/nav/BackButton';
 import { Link } from 'react-router-dom';

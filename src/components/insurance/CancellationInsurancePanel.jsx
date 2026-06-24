@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Shield, ShieldCheck, Umbrella, BadgeCheck, AlertTriangle, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { Shield, ShieldCheck, BadgeCheck, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const TIERS = [

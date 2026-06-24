@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, ChevronLeft } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { translations } from '@/lib/translations';
 
 const REGIONS = ['Caribbean', 'North America', 'Central America', 'South America', 'Europe', 'Middle East', 'Asia', 'Africa'];

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plane, BarChart3, DollarSign, Calendar, Star, LogOut } from 'lucide-react';
+import { Plane, DollarSign, Star, LogOut } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
 

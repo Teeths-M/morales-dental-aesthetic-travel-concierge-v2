@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, X, ChevronDown, Star, MapPin, DollarSign } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +12,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-  SheetClose,
 } from "@/components/ui/sheet";
 import {
   Select,
@@ -23,9 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import DoctorSearchCard from "@/components/discover/DoctorSearchCard";
 import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
 import PageHeroBand from "@/components/layout/PageHeroBand";

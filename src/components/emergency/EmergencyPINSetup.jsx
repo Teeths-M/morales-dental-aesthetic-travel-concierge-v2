@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Smartphone, Lock, CheckCircle2, AlertTriangle, Eye, EyeOff, Loader2, RefreshCw, WifiOff } from 'lucide-react';
+import { Smartphone, CheckCircle2, AlertTriangle, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { saveVaultPIN, verifyVaultPIN, hasVaultPIN } from '@/lib/vault/offlineVaultPIN';

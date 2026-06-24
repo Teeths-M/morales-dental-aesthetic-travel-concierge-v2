@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Shield, Heart, Clock, ChevronRight, Phone, Mail, MessageCircle, Calendar, FileText, Plane, Stethoscope, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Shield, Heart, Clock, ChevronRight, Phone, Mail, MessageCircle, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const NEXT_STEPS = [

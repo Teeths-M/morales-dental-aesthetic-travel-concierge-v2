@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { ClipboardList, DollarSign, AlertTriangle, CheckCircle2, Clock, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ClipboardList, DollarSign, CheckCircle2, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

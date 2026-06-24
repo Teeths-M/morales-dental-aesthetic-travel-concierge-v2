@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Syringe, CheckCircle2, Clock, AlertTriangle, MapPin, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 export default function VaccinationTrackerTab({ procedureCountry }) {

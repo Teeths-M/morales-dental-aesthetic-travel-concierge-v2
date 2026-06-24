@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Star, Shield, Stethoscope, Clock, Users, ChevronRight, CheckCircle, Award } from 'lucide-react';
+import { Search, MapPin, Shield, Stethoscope, ChevronRight, CheckCircle, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DoctorCard from '@/components/directory/DoctorCard';
 import SecurityAgencyCard from '@/components/directory/SecurityAgencyCard';

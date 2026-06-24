@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Check, X, DollarSign, TrendingUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import DoctorSpecialtiesPreview from './DoctorSpecialtiesPreview';
 
 const CATEGORIES = [

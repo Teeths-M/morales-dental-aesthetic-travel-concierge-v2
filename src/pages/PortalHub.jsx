@@ -4,10 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck, ShieldX, Stethoscope, Plane, Hotel, Car,
-  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users, Trash2, ArrowRight
+  Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, User, ChevronDown, ChevronUp, Users, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PartnersManager from '@/components/portal/PartnersManager';
 import CapacityDashboard from '@/components/portal/CapacityDashboard';

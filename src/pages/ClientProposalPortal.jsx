@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useParams } from 'react-router-dom';
-import { CheckCircle2, Clock, Shield, CreditCard, Sparkles, Lock, AlertCircle, Plane } from 'lucide-react';
+import { CheckCircle2, Shield, Sparkles, Lock, AlertCircle, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0); }

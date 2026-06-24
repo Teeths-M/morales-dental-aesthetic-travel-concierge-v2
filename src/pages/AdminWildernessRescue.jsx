@@ -6,12 +6,11 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
   Mountain, AlertTriangle, CheckCircle2, MapPin, Navigation,
-  RefreshCw, Shield, Clock, Radio, Loader2, ChevronDown,
+  RefreshCw, Shield, Radio, Loader2, ChevronDown,
   ChevronUp, Siren, TreePine, Globe, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { formatDate } from '@/lib/format';
 
 const RESCUE_STATUSES = {
   triggered:   { label: 'SOS Received',           color: 'bg-red-100 text-red-800',    dot: 'bg-red-500 animate-pulse' },

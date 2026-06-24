@@ -18,7 +18,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
-import { BRAND } from '@/lib/brandTokens';
 
 function BreadcrumbSkeleton() {
   return (

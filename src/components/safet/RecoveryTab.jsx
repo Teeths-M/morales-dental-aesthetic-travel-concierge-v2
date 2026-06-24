@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   HeartPulse, CheckCircle2, Calendar, Phone, Hospital,
-  Thermometer, Smile, AlertTriangle, MessageCircle, Camera,
+  Thermometer, AlertTriangle, MessageCircle, Camera,
   Clock, Droplets, Moon, Activity, HeartHandshake, ChevronRight
 } from 'lucide-react';
 import RecoveryMilestoneTimeline from '@/components/recovery/RecoveryMilestoneTimeline';

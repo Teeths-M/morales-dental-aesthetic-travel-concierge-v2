@@ -49,7 +49,7 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
         if (cached?.lat != null && !currentLocation) setCurrentLocation(cached);
       }
     } catch (_) {}
-  }, [caseId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [caseId]);
 
   // cacheKey and sendUpdate must be defined before the online-flush useEffect
   // that references sendUpdate in its dependency array — otherwise they'd be in

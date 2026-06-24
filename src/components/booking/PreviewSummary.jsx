@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
-import { CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Shield, User, Plane, Stethoscope, Pill, Activity, Heart, Baby, FileText, ClipboardCheck, Globe, HeartHandshake } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Shield, User, Stethoscope, Pill, Activity, Heart, Baby, FileText, ClipboardCheck, Globe, HeartHandshake } from 'lucide-react';
+import { motion } from 'framer-motion';
 import SafeTScan from './SafeTScan';
 
 function SummarySection({ icon: Icon, title, color = 'text-slate-500', children, defaultOpen = false }) {

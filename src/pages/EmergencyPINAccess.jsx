@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
-import { Shield, ArrowRight, AlertTriangle, Moon, Car, Lock, ArrowLeft, WifiOff, Smartphone } from 'lucide-react';
+import { Shield, ArrowRight, AlertTriangle, Car, ArrowLeft, WifiOff, Smartphone } from 'lucide-react';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
 import ForgotPIN from '@/components/emergency/ForgotPIN';
 import EmergencyVaultViewer from '@/components/vault/EmergencyVaultViewer';

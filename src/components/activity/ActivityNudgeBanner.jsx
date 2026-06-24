@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { getChecklist } from '@/lib/activityChecklists';
 

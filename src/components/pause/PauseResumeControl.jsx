@@ -46,7 +46,7 @@ export default function PauseResumeControl({ tripId, initialPaused = false, onPa
     window.addEventListener('online',  up);
     window.addEventListener('offline', down);
     return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
-  }, []);       // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);        
 
   const syncPacket = useCallback(async (packet) => {
     if (syncingRef.current) return;

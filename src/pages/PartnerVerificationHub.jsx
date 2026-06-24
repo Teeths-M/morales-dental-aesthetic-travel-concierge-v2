@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -32,10 +31,7 @@ import {
   Eye,
   FileText,
   TrendingUp,
-  Users,
-  Search,
-  ThumbsUp,
-  ThumbsDown
+  Search
 } from 'lucide-react';
 import AdminLayout from '@/components/layout/AdminLayout';
 

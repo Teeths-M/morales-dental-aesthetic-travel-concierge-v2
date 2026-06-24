@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
   Shield, AlertTriangle, CheckCircle2, MapPin, Clock, RefreshCw,
-  Navigation, UserCheck, Radio, MessageSquare, Phone, Globe,
-  AlertCircle, ExternalLink, ChevronDown, ChevronUp, Siren,
+  Navigation, UserCheck, Radio, MessageSquare, Phone, Globe, ChevronDown, ChevronUp, Siren,
   Moon, Car, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

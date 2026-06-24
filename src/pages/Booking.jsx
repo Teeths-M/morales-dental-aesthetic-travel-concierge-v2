@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Lock, FileText, X, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, FileText, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';

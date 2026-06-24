@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, CheckCircle2, X, Star, Shield, Heart, Globe } from 'lucide-react';
+import { ChevronRight, ChevronLeft, CheckCircle2, X, Star, Shield, Heart } from 'lucide-react';
 
 const PROCEDURES = [
   { group: '🦷 Dental',    label: 'Dental Implants',          value: 'dental_implants' },

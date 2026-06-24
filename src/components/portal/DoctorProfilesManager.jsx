@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Edit2, Save, X, Star, Clock, MapPin, Upload, Trash2, Play, Image as ImageIcon, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function DoctorProfilesManager() {

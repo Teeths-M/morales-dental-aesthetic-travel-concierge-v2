@@ -131,7 +131,7 @@ export function useAutoLocation() {
     if (prefs.gpsGranted && !prefs.locationPaused && 'geolocation' in navigator) {
       requestGPS();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const updatePref = (key, value) => {
     const next = { ...readPrefs(), [key]: value };

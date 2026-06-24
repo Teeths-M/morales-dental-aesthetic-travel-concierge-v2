@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FileText, Clock, CheckCircle2, XCircle, AlertTriangle, Plus,
+import { CheckCircle2, XCircle, AlertTriangle, Plus,
   ExternalLink, ChevronDown, ChevronUp, CalendarClock, Pencil, Trash2
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Fingerprint, Eye, Lock, Shield, AlertTriangle } from 'lucide-react';
+import { Fingerprint, Lock, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 

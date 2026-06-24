@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Star, BadgeCheck, Clock, ArrowLeft, MessageCircle, Play, Image as ImageIcon, X } from 'lucide-react';
+import { Star, BadgeCheck, Clock, ArrowLeft, Play, Image as ImageIcon, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProviderDetail() {

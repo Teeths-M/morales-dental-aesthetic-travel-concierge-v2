@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, AlertCircle, Clock, Upload, Zap, Target } from 'lucide-react';
 
 const getReadinessItems = (language) => [
   { id: 'passport', label: 'Passport Valid (6+ months)', icon: '🛂', category: 'documents', points: 20 },

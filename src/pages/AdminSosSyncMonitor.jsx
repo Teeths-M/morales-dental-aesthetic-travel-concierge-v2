@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, Clock, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
 const STATUS_META = {

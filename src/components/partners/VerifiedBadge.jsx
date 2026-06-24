@@ -1,6 +1,5 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Shield, Award } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 export default function VerifiedBadge({ partnerType, verifiedAt }) {
   return (

@@ -19,7 +19,7 @@
  *   className    {string?}
  */
 
-/* eslint-disable react/prop-types */
+ 
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';

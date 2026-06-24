@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, ChevronLeft, Plus, Minus } from 'lucide-react';
-import { translations } from '@/lib/translations';
 
 // Platform operating node configuration
 const ORIGIN_COUNTRIES = ['Trinidad and Tobago', 'Jamaica', 'Barbados', 'Guyana', 'Suriname'];
