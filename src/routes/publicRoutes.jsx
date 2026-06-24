@@ -24,6 +24,7 @@ const OnboardingEducation = lazy(() => import('@/pages/OnboardingEducation'));
 const TravelConcierge = lazy(() => import('@/pages/TravelConcierge'));
 const EmergencyHub    = lazy(() => import('@/pages/EmergencyHub'));
 const OfflineGuide    = lazy(() => import('@/pages/OfflineGuide'));
+const DemoShowcase    = lazy(() => import('@/pages/DemoShowcase'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -43,5 +44,6 @@ export const publicRoutes = (
     <Route path="/travel-concierge" element={<TravelConcierge />} />
     <Route path="/emergency"        element={<EmergencyHub />} />
     <Route path="/offline-guide"    element={<OfflineGuide />} />
+    <Route path="/demo"             element={<DemoShowcase />} />
   </Route>
 );

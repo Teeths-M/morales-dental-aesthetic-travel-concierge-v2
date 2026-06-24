@@ -203,6 +203,22 @@ export default function LuxuryHero() {
               </Link>
             </motion.div>
 
+            {/* Secondary CTA — platform demo */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.32 }}
+              className="mb-8"
+            >
+              <Link
+                to="/demo"
+                style={{ fontSize: '13px', fontWeight: 500, color: GOLD, opacity: 0.75, letterSpacing: '0.03em' }}
+                className="hover:opacity-100 transition-opacity"
+              >
+                See how it works — interactive demo →
+              </Link>
+            </motion.div>
+
             {/* ── TRUST BADGES — inline row ── */}
             <motion.div
               initial={{ opacity: 0 }}
