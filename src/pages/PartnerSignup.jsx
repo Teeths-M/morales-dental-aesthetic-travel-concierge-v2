@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plane, Car, Globe, User, Shield, Stethoscope, Crown, Sparkles, ArrowRight } from 'lucide-react';
+import { Plane, Car, User, Shield, Stethoscope, Crown, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Each card carries its own badge gradient so badges communicate
@@ -150,40 +150,6 @@ export default function PartnerSignup() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      {/* Header bar */}
-      <div className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-amber-500/20 px-4 py-3 shadow-xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Real brand logo instead of the generic amber circle */}
-            <img
-              src="/morales-m-mark.png"
-              alt="Morales"
-              className="w-9 h-9 object-contain drop-shadow-[0_2px_8px_rgba(212,175,55,0.4)]"
-            />
-            <div>
-              <p className="text-white font-serif font-normal text-sm tracking-[0.2em] uppercase">MORALES</p>
-              <p className="text-white/50 text-[10px] tracking-[0.18em] uppercase">Partner Network</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <Globe className="w-4 h-4 text-amber-400 flex-shrink-0 mr-1" />
-            {ALL_LANGUAGES.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setLanguage(lang.code)}
-                className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                  language === lang.code
-                    ? 'bg-amber-500 text-white shadow-md'
-                    : 'text-white/60 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {lang.flag} {lang.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-12 sm:py-20">
         {/* Page header */}
         <motion.div
