@@ -1,10 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
-
-// ── Safe-T4life AI Assistant ───────────────────────────────────────────────
-// All-knowing medical travel AI: journey tracking, safety, emergency triage,
-// recovery, logistics, and 24/7 concierge guidance.
-// Powered by Claude. Runs behind requireAuth: false so unauthenticated users
-// on the home page can still access safety assistance.
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Dental & Aesthetic Travel Concierge — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
 
@@ -75,77 +69,80 @@ Each checkpoint must be confirmed sequentially. If a checkpoint is missed within
 - You do NOT have access to the patient's real-time data (location, vitals, documents) — but you can guide them on how to use those features
 - You do NOT make financial decisions or modify bookings (guide them to the coordinator)`;
 
-Deno.serve(createHandler(async ({ body }) => {
-  const { messages, user_email, user_name, trip_phase } = await body();
-
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return err('messages array is required');
-  }
-
-  // Trim to last 20 messages and map roles
-  let conversation = messages.slice(-20).map((m: any) => ({
-    role:    m.role === 'user' ? 'user' : 'assistant',
-    content: String(m.content ?? '').slice(0, 2000),
-  }));
-
-  // Anthropic requires the first message to have role 'user'.
-  // The client includes a synthetic assistant welcome message — drop it and any
-  // other leading assistant turns before the first real user message.
-  const firstUserIdx = conversation.findIndex((m) => m.role === 'user');
-  if (firstUserIdx === -1) {
-    return ok({ reply: "Please send a message and I'll be right with you." });
-  }
-  if (firstUserIdx > 0) conversation = conversation.slice(firstUserIdx);
-
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) {
-    // Graceful fallback when API key not configured
-    return ok({
-      reply: "I'm Safe-T4life — your AI assistant is almost ready. If this is an urgent safety matter, please tap **Secure Line** for immediate assistance or contact your Morales coordinator directly.",
-    });
-  }
-
-  // Build context prefix for the system
-  const userCtx = user_name
-    ? `\n\n## Current User\nName: ${user_name}${user_email ? `\nEmail: ${user_email}` : ''}${trip_phase ? `\nJourney Phase: ${trip_phase}` : ''}`
-    : '';
-
-  let response: Response;
+Deno.serve(async (req) => {
   try {
-    response = await fetch('https://api.anthropic.com/v1/messages', {
-      method:  'POST',
-      headers: {
-        'x-api-key':         apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type':      'application/json',
-      },
-      body: JSON.stringify({
-        model:      'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        system:     SYSTEM_PROMPT + userCtx,
-        messages:   conversation,
-      }),
-    });
-  } catch (fetchErr) {
-    console.error('[safeTAssist] network error reaching Anthropic:', fetchErr);
-    return ok({
-      reply: "I'm having a moment of difficulty connecting. If this is urgent, please tap **Secure Line** below or contact your Morales coordinator. I'll be back shortly.",
+    // Parse body
+    const body = await req.json().catch(() => ({}));
+    const { messages, user_email, user_name, trip_phase } = body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return Response.json({ error: 'messages array is required' }, { status: 400 });
+    }
+
+    // Build conversation — Anthropic requires first message to be 'user'.
+    // Strip any leading assistant messages (e.g. the synthetic welcome message).
+    let conversation = messages.slice(-20).map((m) => ({
+      role:    m.role === 'user' ? 'user' : 'assistant',
+      content: String(m.content ?? '').slice(0, 2000),
+    }));
+    const firstUserIdx = conversation.findIndex((m) => m.role === 'user');
+    if (firstUserIdx === -1) {
+      return Response.json({ reply: "Please send a message and I'll be right with you." });
+    }
+    if (firstUserIdx > 0) conversation = conversation.slice(firstUserIdx);
+
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      return Response.json({
+        reply: "I'm Safe-T4life — your AI assistant is almost ready. If this is an urgent safety matter, please tap **Secure Line** for immediate assistance or contact your Morales coordinator directly.",
+      });
+    }
+
+    // Build context prefix
+    const userCtx = user_name
+      ? `\n\n## Current User\nName: ${user_name}${user_email ? `\nEmail: ${user_email}` : ''}${trip_phase ? `\nJourney Phase: ${trip_phase}` : ''}`
+      : '';
+
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method:  'POST',
+        headers: {
+          'x-api-key':         apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type':      'application/json',
+        },
+        body: JSON.stringify({
+          model:      'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          system:     SYSTEM_PROMPT + userCtx,
+          messages:   conversation,
+        }),
+      });
+    } catch (fetchErr) {
+      console.error('[safeTAssist] network error reaching Anthropic:', fetchErr);
+      return Response.json({
+        reply: "I'm having a moment of difficulty connecting. If this is urgent, please tap **Secure Line** below or contact your Morales coordinator. I'll be back shortly.",
+      });
+    }
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      console.error('[safeTAssist] Anthropic error:', response.status, errText);
+      return Response.json({
+        reply: "I'm having a moment of difficulty connecting. If this is urgent, please tap **Secure Line** below or contact your Morales coordinator. I'll be back shortly.",
+      });
+    }
+
+    const data = await response.json();
+    const reply = data?.content?.[0]?.text ?? "I'm here — could you repeat that?";
+
+    return Response.json({ reply });
+
+  } catch (err) {
+    console.error('[safeTAssist] unhandled error:', err);
+    return Response.json({
+      reply: "I'm having a moment of difficulty. If this is urgent, please tap **Secure Line** or contact your Morales coordinator.",
     });
   }
-
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    console.error('[safeTAssist] Anthropic error:', response.status, errText);
-    return ok({
-      reply: "I'm having a moment of difficulty connecting. If this is urgent, please tap **Secure Line** below or contact your Morales coordinator. I'll be back shortly.",
-    });
-  }
-
-  const data = await response.json();
-  const reply = data?.content?.[0]?.text ?? "I'm here — could you repeat that?";
-
-  return ok({ reply });
-}, {
-  name:        'safeTAssist',
-  requireAuth: false,  // Public — unauthenticated users need safety help too
-}));
+});
