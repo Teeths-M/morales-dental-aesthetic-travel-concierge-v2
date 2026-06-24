@@ -1,4 +1,10 @@
-const CACHE_NAME = 'morales-vault-v1';
+const CACHE_NAME      = 'morales-vault-v1';
+const TILE_CACHE_NAME = 'morales-map-tiles-v1';
+const OSM_TILE_RE     = /^https:\/\/[abc]\.tile\.openstreetmap\.org\//;
+
+// 1×1 transparent PNG — returned when a tile can't load offline
+const BLANK_TILE_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=';
+
 const APP_SHELL = [
   '/',
   '/offline',
@@ -23,7 +29,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          .filter((name) => name !== CACHE_NAME && name !== TILE_CACHE_NAME)
           .map((name) => caches.delete(name))
       );
     })
@@ -38,6 +44,26 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Map tiles: cache-first (tiles are immutable — same z/x/y never changes)
+  if (OSM_TILE_RE.test(request.url)) {
+    event.respondWith(
+      caches.open(TILE_CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
+          if (response.ok) cache.put(request, response.clone());
+          return response;
+        } catch (_) {
+          // Offline and tile not cached — return blank tile so polyline still renders
+          const body = Uint8Array.from(atob(BLANK_TILE_B64), c => c.charCodeAt(0));
+          return new Response(body, { headers: { 'Content-Type': 'image/png' } });
+        }
+      })
+    );
     return;
   }
 

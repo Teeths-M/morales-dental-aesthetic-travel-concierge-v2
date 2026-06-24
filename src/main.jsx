@@ -69,3 +69,10 @@ async function mountApp() {
 }
 
 mountApp();
+
+// Register service worker in production for offline tile caching + app shell
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  });
+}
