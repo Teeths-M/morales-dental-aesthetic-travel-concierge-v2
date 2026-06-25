@@ -361,6 +361,21 @@ export default function Header() {
           {/* Portals */}
           <div className="flex flex-col gap-3">
             <span className="text-[11px] uppercase tracking-[0.2em] font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>Partner Portals</span>
+
+            {/* Join CTA — prominent, gold, for new partners */}
+            <Link
+              to="/register-role"
+              onClick={() => setIsMobileOpen(false)}
+              className="flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold"
+              style={{
+                background: 'linear-gradient(135deg, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.08) 100%)',
+                border: '1px solid rgba(212,175,55,0.45)',
+                color: '#D4AF37',
+              }}
+            >
+              ✦ Join as a Provider Partner
+            </Link>
+
             {[
               { to: '/doctor-dashboard',        label: 'Doctor Portal' },
               { to: '/travel-agency-dashboard', label: 'Travel Agency Portal' },
