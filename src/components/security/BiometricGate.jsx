@@ -5,17 +5,15 @@ import { Fingerprint, Lock, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes (was 5)
 const MAX_FAILED_ATTEMPTS = 3;
 
-// Public paths never trigger the session lock — no auth context exists there
-const PUBLIC_PATHS = ['/', '/discover', '/providers', '/how-it-works', '/partners',
-  '/about', '/procedures', '/consultation', '/consultation-success', '/register-role',
-  '/deep-perfection', '/onboarding', '/travel-concierge', '/emergency', '/offline-guide',
-  '/demo', '/login', '/register'];
-
 export default function BiometricGate({ children }) {
-  const location = useLocation();
+  // Session auto-lock disabled — the vault PIN and emergency features still
+  // exist, but blocking the whole app on idle is removed to prevent lockouts.
+  return children;
+
+  // eslint-disable-next-line no-unreachable
+  const location = useLocation(); // kept to avoid removing import
   const [locked, setLocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
   const [method, setMethod] = useState(null); // 'biometric' | 'pin'
