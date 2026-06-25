@@ -10,6 +10,7 @@ import LocationBreadcrumbTracker from '@/components/emergency/LocationBreadcrumb
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
 import PINSetupPrompt from '@/components/emergency/PINSetupPrompt';
 import NaturalDisasterPanel from '@/components/emergency/NaturalDisasterPanel';
+import EmergencyCommsCascade from '@/components/emergency/EmergencyCommsCascade';
 import { Link } from 'react-router-dom';
 
 const TABS = [
@@ -187,6 +188,24 @@ export default function EmergencyHub() {
                       );
                     })}
                   </div>
+                  {/* ── 6-Channel Offline Comms Cascade ── */}
+                  <details className="group">
+                    <summary className="list-none flex items-center gap-2 cursor-pointer select-none py-2">
+                      <span className="text-xs font-semibold text-slate-400 group-open:text-white transition-colors">
+                        📡 No Signal? Advanced Comms — Satellite · BLE · Web Share · QR
+                      </span>
+                    </summary>
+                    <div className="mt-3 rounded-2xl p-4" style={{ background: '#060B16', border: '1px solid #2A3F4A' }}>
+                      <EmergencyCommsCascade
+                        caseId={activeCase?.id || ''}
+                        userId={user?.id || ''}
+                        userEmail={user?.email || ''}
+                        activityType="emergency"
+                        medicalCode=""
+                      />
+                    </div>
+                  </details>
+
                   {/* Discreet safety net info */}
                   <div className="bg-slate-900/60 border border-slate-700 rounded-2xl p-4">
                     <p className="text-slate-300 text-xs font-semibold mb-2">🛡️ Discreet Safety Net</p>
