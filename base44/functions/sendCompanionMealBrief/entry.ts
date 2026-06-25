@@ -1,7 +1,8 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
-const BRAND = 'Morales Dental & Aesthetics';
-const GOLD  = '#D4AF37';
+const BRAND   = 'Morales Dental & Aesthetics';
+const GOLD    = '#D4AF37';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const e = (v: unknown) => String(v ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -67,8 +68,8 @@ function mealBriefEmail({ companionName, patientName, procedures, cuisine, comfo
     </ul>
   </div>
 
-  <a href="https://moralesdentalandaesthetics.com/companion-portal" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;">
-    Open Companion Portal →
+  <a href="${APP_URL}/companion-dashboard" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;">
+    Open Companion Dashboard →
   </a>
   <p style="margin:24px 0 0;font-size:13px;color:#64746d;line-height:1.6;">
     Contact the Morales team immediately if the patient reports any adverse reactions or discomfort.<br/>

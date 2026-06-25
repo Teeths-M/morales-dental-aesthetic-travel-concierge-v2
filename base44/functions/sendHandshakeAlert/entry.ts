@@ -1,7 +1,8 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
-const BRAND = 'Morales Dental & Aesthetics';
-const GOLD  = '#D4AF37';
+const BRAND   = 'Morales Dental & Aesthetics';
+const GOLD    = '#D4AF37';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const e = (v: unknown) => String(v ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -20,10 +21,17 @@ const HS_PARTNER_MAP: Record<number, { role: string; partnerLabel: string; messa
   9: { role: 'all',       partnerLabel: 'All Partners',    icon: '⭐', message: 'HS9 confirmed — patient safely home. Journey complete. Golden M achieved. Thank you for being part of this patient\'s care.' },
 };
 
+const PARTNER_DASHBOARD_URLS: Record<string, string> = {
+  Doctor:    `${APP_URL}/doctor-dashboard`,
+  Companion: `${APP_URL}/companion-dashboard`,
+  Default:   `${APP_URL}/partner-portal`,
+};
+
 function handshakeEmail({ partnerName, partnerLabel, icon, hsNum, patientName, message, completedAt, caseRef }: {
   partnerName: string; partnerLabel: string; icon: string; hsNum: number;
   patientName: string; message: string; completedAt: string; caseRef: string;
 }) {
+  const dashboardUrl = PARTNER_DASHBOARD_URLS[partnerLabel] ?? PARTNER_DASHBOARD_URLS.Default;
   const isGoldenM = hsNum === 9;
   return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
@@ -63,8 +71,8 @@ function handshakeEmail({ partnerName, partnerLabel, icon, hsNum, patientName, m
     <p style="margin:8px 0 0;font-size:12px;color:#64746d;">— The Morales Concierge Team</p>
   </div>` : ''}
 
-  <a href="https://moralesdentalandaesthetics.com/partner-portal" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;">
-    View Partner Portal →
+  <a href="${dashboardUrl}" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;">
+    Open My Dashboard →
   </a>
   <p style="margin:24px 0 0;font-size:13px;color:#64746d;">This is an automated handshake notification from ${BRAND}. You are receiving this as a registered partner.</p>
   <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>

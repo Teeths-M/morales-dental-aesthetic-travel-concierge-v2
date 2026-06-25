@@ -1,7 +1,8 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
-const BRAND = 'Morales Dental & Aesthetics';
-const GOLD  = '#D4AF37';
+const BRAND   = 'Morales Dental & Aesthetics';
+const GOLD    = '#D4AF37';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const e = (v: unknown) => String(v ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -52,7 +53,7 @@ function bookingEmail({ clientName, procedures, departureDate, destination, case
     </tr>`).join('')}
   </table>
 
-  <a href="https://moralesdentalandaesthetics.com/dashboard" style="display:inline-block;background:#060B16;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">
+  <a href="${APP_URL}/dashboard" style="display:inline-block;background:#060B16;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">
     View My Journey →
   </a>
 
