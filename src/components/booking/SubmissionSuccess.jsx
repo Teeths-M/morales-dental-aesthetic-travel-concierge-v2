@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { CheckCircle2, Shield, Heart, Clock, ChevronRight, Phone, Mail, MessageCircle, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
@@ -76,37 +77,74 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
   const doneCount = checklist.filter(c => c.done).length;
   const highPriority = checklist.filter(c => c.priority === 'high' && !c.done);
 
+  // Confetti on mount — the booking is a moment worth celebrating
+  useEffect(() => {
+    const burst = () => confetti({ particleCount: 80, spread: 90, origin: { y: 0.4 }, colors: ['#D4AF37', '#FFE066', '#fff'] });
+    burst();
+    const t = setTimeout(burst, 600);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
-    <div className="min-h-[60vh] py-12 px-4">
+    <div className="min-h-[60vh] py-12 px-4" style={{ background: 'linear-gradient(180deg, #060B16 0%, #0d1c20 20%, #f8fafc 35%)' }}>
       <div className="max-w-2xl mx-auto space-y-6">
 
-        {/* Hero Success Card */}
+        {/* ── Premium Golden M hero ── */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-emerald-800 to-blue-900 rounded-3xl p-7 text-white text-center shadow-2xl shadow-emerald-900/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="rounded-3xl p-8 text-center"
+          style={{
+            background: '#0C1A1D',
+            border: '1px solid rgba(212,175,55,0.35)',
+            boxShadow: '0 0 80px rgba(212,175,55,0.08)',
+          }}
         >
+          {/* M mark */}
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4"
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 220, damping: 18 }}
+            className="relative mx-auto mb-6"
+            style={{ width: 88, height: 88 }}
           >
-            <CheckCircle2 className="w-9 h-9 text-white" />
-          </motion.div>
-          <h1 className="font-display text-2xl lg:text-3xl font-semibold mb-2">Consultation Submitted</h1>
-          <p className="text-white/70 text-sm leading-relaxed max-w-md mx-auto">
-            Your consultation has been successfully submitted for professional medical review. Your healthcare journey has officially begun.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2 justify-center">
-            <div className="flex items-center gap-2 bg-white/15 border border-white/20 rounded-xl px-3 py-2 text-xs">
-              <Clock className="w-3.5 h-3.5 text-white/70" />
-              <span>Doctor response: <strong>24–48 hours</strong></span>
+            <div className="absolute inset-0 rounded-full" style={{
+              background: 'radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 70%)',
+              transform: 'scale(1.8)',
+            }} />
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              style={{ border: '1px solid rgba(212,175,55,0.25)' }}
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            />
+            <div className="absolute inset-0 rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(145deg, #E8C85C 0%, #D4AF37 45%, #B8941F 100%)',
+                boxShadow: '0 0 40px rgba(212,175,55,0.6), inset 0 1px 0 rgba(255,255,255,0.25)',
+              }}>
+              <span style={{ fontFamily: 'Georgia, serif', fontSize: 42, fontWeight: 700, color: '#060B16', letterSpacing: '-0.04em', lineHeight: 1 }}>M</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/15 border border-white/20 rounded-xl px-3 py-2 text-xs">
-              <Shield className="w-3.5 h-3.5 text-white/70" />
-              <span>SAFE-T 4LIFE™ <strong>Active</strong></span>
+          </motion.div>
+
+          <h1 className="text-3xl font-bold mb-2 text-white" style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}>
+            Your Journey Has Begun.
+          </h1>
+          <p className="text-sm leading-relaxed mb-6 max-w-md mx-auto" style={{ color: '#94a3b8' }}>
+            Welcome to Morales. Your consultation is now in the hands of our medical team. You are officially in our care.
+          </p>
+
+          <div className="flex flex-wrap gap-2 justify-center">
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium"
+              style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#D4AF37' }}>
+              <Clock className="w-3.5 h-3.5" />
+              Doctor response: <strong>24–48 hours</strong>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium"
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', color: '#4ade80' }}>
+              <Shield className="w-3.5 h-3.5" />
+              SAFE-T 4LIFE™ <strong>Active</strong>
             </div>
           </div>
         </motion.div>
