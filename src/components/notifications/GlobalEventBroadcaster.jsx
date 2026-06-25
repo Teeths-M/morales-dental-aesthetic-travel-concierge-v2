@@ -54,6 +54,32 @@ export default function GlobalEventBroadcaster({ user }) {
     enabled: hasActiveTrip,
   });
 
+  // ── MedGuard™ Activation — fires once when patient enters active travel ────
+  // This is the moment the patient knows they are protected. One shot, session only.
+  const medguardActivatedRef = useRef(false);
+  useEffect(() => {
+    if (!activeTrip || medguardActivatedRef.current) return;
+    const ACTIVE = ['transit_out', 'arrived', 'recovery', 'transit_return'];
+    if (!ACTIVE.includes(activeTrip.trip_phase)) return;
+
+    const key = `morales_medguard_activated_${activeTrip.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    medguardActivatedRef.current = true;
+
+    // Small delay so it doesn't clash with the greeting notification
+    setTimeout(() => {
+      showNotification({
+        type:     'success',
+        icon:     '🛡️',
+        title:    'MedGuard™ Protection Active',
+        body:     'We are monitoring your safety in real time. You are not alone — Morales is watching.',
+        duration: 7000,
+        position: 'top',
+      });
+    }, 2500);
+  }, [activeTrip?.trip_phase, activeTrip?.id]);
+
   // ── 3. Daily greeting (once per session) ─────────────────────────────────
   useEffect(() => {
     if (!user || greetedRef.current) return;

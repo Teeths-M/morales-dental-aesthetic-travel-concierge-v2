@@ -57,7 +57,23 @@ function bookingEmail({ clientName, procedures, departureDate, destination, case
     View My Journey →
   </a>
 
-  <p style="margin:28px 0 0;font-size:13px;color:#64746d;line-height:1.6;">
+  <!-- MedGuard protection notice -->
+  <div style="margin:28px 0 0;padding:18px 20px;background:#060B1612;border:1px solid #D4AF3730;border-radius:14px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="font-size:20px;">🛡️</span>
+      <span style="font-size:13px;font-weight:700;color:#060B16;letter-spacing:0.5px;">Protected by MedGuard™</span>
+    </div>
+    <p style="margin:0;font-size:13px;color:#40514a;line-height:1.6;">
+      From the moment your journey begins, <strong>MedGuard™</strong> monitors your safety in real time.
+      Our behavioral prediction engine watches for signs of risk — missed check-ins, GPS silence,
+      late-night risk patterns — and dispatches your concierge or security team automatically,
+      before you ever need to ask for help.
+      <br/><br/>
+      <em>You are never alone on a Morales journey.</em>
+    </p>
+  </div>
+
+  <p style="margin:20px 0 0;font-size:13px;color:#64746d;line-height:1.6;">
     Questions? Reach us on WhatsApp anytime. Your dedicated concierge is available 24/7.<br/>
     This is an automated confirmation. Please do not reply to this email.
   </p>
