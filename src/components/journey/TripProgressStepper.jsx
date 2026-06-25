@@ -132,14 +132,14 @@ export default function TripProgressStepper({ currentStep = 0, isComplete = fals
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
         {Object.entries(ROLE_LABELS).map(([key, { name, color }]) => (
           <div key={key} className="flex items-center gap-1">
-            <Heart size={9} color={color} filled />
-            <span className="text-[9px] font-medium" style={{ color }}>{name}</span>
+            <Heart size={10} color={color} filled />
+            <span className="text-xs font-medium" style={{ color }}>{name}</span>
           </div>
         ))}
       </div>
 
-      {/* Step labels */}
-      <div className="hidden sm:flex mt-2 overflow-x-auto">
+      {/* Step emoji labels — shown on all screens */}
+      <div className="flex mt-2 overflow-x-auto">
         {STEPS.map((step, i) => {
           const stepNum = i + 1;
           const isDone  = isComplete || stepNum <= currentStep;
@@ -148,7 +148,7 @@ export default function TripProgressStepper({ currentStep = 0, isComplete = fals
           return (
             <React.Fragment key={stepNum}>
               <div style={{ minWidth: 34, textAlign: 'center' }}>
-                <div className="text-[8px] leading-tight font-medium whitespace-pre-line" style={{ color: labelColor }}>
+                <div className="text-xs leading-tight font-medium" style={{ color: labelColor }}>
                   {step.emoji}
                 </div>
               </div>

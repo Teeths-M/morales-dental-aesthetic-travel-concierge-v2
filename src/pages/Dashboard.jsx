@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
   Upload, MessageCircle, HeartPulse, Users,
-  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Star, Lock, FileText
+  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Star, Lock, FileText, ChevronDown
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import FeatureHub from '@/components/dashboard/FeatureHub';
@@ -68,6 +68,8 @@ function DashboardHome({ user, consultations, language }) {
   const navigate    = useNavigate();
   const [showGoldenM,       setShowGoldenM]       = useState(false);
   const [showWelcomeCountry, setShowWelcomeCountry] = useState(false);
+  const [showSafeT,         setShowSafeT]         = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const welcomeDebounceRef = useRef(null);
 
   // PERFORMANCE: Memoize displayName to prevent recalculation
@@ -387,40 +389,53 @@ function DashboardHome({ user, consultations, language }) {
         </Link>
       </div>
 
-      {/* SAFE-T Status */}
+      {/* SAFE-T Status — collapsible */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+        <button
+          onClick={() => setShowSafeT(v => !v)}
+          className="w-full flex items-center gap-3 text-left"
+          aria-expanded={showSafeT}
+        >
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
             <Shield className="w-4 h-4 text-emerald-700" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-800">SAFE-T 4LIFE™ {language === 'es' ? 'Estado' : language === 'fr' ? 'Statut' : 'Status'}</p>
-            <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-800">SAFE-T 4LIFE™ {language === 'es' ? 'Estado' : language === 'fr' ? 'Statut' : 'Status'}</p>
+            <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
               {language === 'es' ? 'Riesgo Bajo' : language === 'fr' ? 'Risque Faible' : 'Low Risk'}
             </span>
           </div>
-        </div>
-        <div className="space-y-2 mb-4">
-          {[
-            { label: language === 'es' ? 'Puntuación de Seguridad' : language === 'fr' ? 'Score de Sécurité' : 'Safety Score', val: 82, color: '#047857' },
-            { label: language === 'es' ? 'Progreso de Preparación' : language === 'fr' ? 'Progrès de Préparation' : 'Prep Progress', val: 60, color: '#1d4ed8' },
-          ].map(s => (
-            <div key={s.label}>
-              <div className="flex justify-between text-[11px] mb-1">
-                <span className="text-slate-500">{s.label}</span>
-                <span className="font-semibold" style={{ color: s.color }}>{s.val}%</span>
-              </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-1.5 rounded-full" style={{ width: `${s.val}%`, backgroundColor: s.color }} />
-              </div>
+          <ChevronDown
+            className="w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200"
+            style={{ transform: showSafeT ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </button>
+
+        {showSafeT && (
+          <>
+            <div className="space-y-2 mt-4 mb-4">
+              {[
+                { label: language === 'es' ? 'Puntuación de Seguridad' : language === 'fr' ? 'Score de Sécurité' : 'Safety Score', val: 82, color: '#047857' },
+                { label: language === 'es' ? 'Progreso de Preparación' : language === 'fr' ? 'Progrès de Préparation' : 'Prep Progress', val: 60, color: '#1d4ed8' },
+              ].map(s => (
+                <div key={s.label}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-600">{s.label}</span>
+                    <span className="font-semibold" style={{ color: s.color }}>{s.val}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 rounded-full" style={{ width: `${s.val}%`, backgroundColor: s.color }} />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <Link to="/safe-t">
-          <Button variant="outline" className="w-full text-sm h-12 rounded-xl">
-            {language === 'es' ? 'Evaluación Completa' : language === 'fr' ? 'Évaluation Complète' : 'Full Assessment'} <ArrowRight className="w-4 h-4 ml-1.5" />
-          </Button>
-        </Link>
+            <Link to="/safe-t">
+              <Button variant="outline" className="w-full text-sm h-12 rounded-xl">
+                {language === 'es' ? 'Evaluación Completa' : language === 'fr' ? 'Évaluation Complète' : 'Full Assessment'} <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Journey Progress */}
@@ -437,7 +452,7 @@ function DashboardHome({ user, consultations, language }) {
 
       {/* Quick Actions */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.28em] mb-5">
+        <p className="text-xs font-semibold text-slate-700 uppercase tracking-[0.22em] mb-5">
           {language === 'es' ? 'Acciones Rápidas' : language === 'fr' ? 'Actions Rapides' : 'Quick Actions'}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -445,9 +460,9 @@ function DashboardHome({ user, consultations, language }) {
             const c = colorMap[color];
             return (
               <Link key={label} to={to}>
-                <div className={`flex flex-col items-center gap-2 rounded-xl p-3.5 border border-slate-100 ${c.bg} ${c.hover} transition-all cursor-pointer text-center`}>
-                  <Icon className={`w-5 h-5 ${c.icon}`} />
-                  <span className="text-[11px] font-semibold text-slate-700 leading-tight">{label}</span>
+                <div className={`flex flex-col items-center gap-2.5 rounded-xl p-4 py-5 border border-slate-100 min-h-[80px] justify-center ${c.bg} ${c.hover} transition-all cursor-pointer text-center`}>
+                  <Icon className={`w-6 h-6 ${c.icon}`} />
+                  <span className="text-xs font-semibold text-slate-800 leading-tight">{label}</span>
                 </div>
               </Link>
             );
@@ -455,30 +470,41 @@ function DashboardHome({ user, consultations, language }) {
         </div>
       </div>
 
-      {/* Notifications */}
+      {/* Notifications — collapsible */}
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <Bell className="w-4 h-4 text-slate-500" />
-          <p className="text-[15px] font-semibold text-slate-800" style={{ letterSpacing: '-0.01em' }}>
+        <button
+          onClick={() => setShowNotifications(v => !v)}
+          className="w-full flex items-center gap-3 text-left min-h-[44px]"
+          aria-expanded={showNotifications}
+        >
+          <Bell className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <p className="text-sm font-semibold text-slate-800 flex-1" style={{ letterSpacing: '-0.01em' }}>
             {language === 'es' ? 'Notificaciones' : language === 'fr' ? 'Notifications' : 'Notifications'}
           </p>
-          <span className="text-[10px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{notifications.length}</span>
-        </div>
-        <div className="space-y-2">
-          {notifications.map((n, i) => (
-            <div key={i} className={`flex items-start gap-3 rounded-xl px-3 py-3 border
-              ${n.type === 'warning' ? 'bg-amber-50 border-amber-100' :
-                n.type === 'success' ? 'bg-emerald-50 border-emerald-100' : 'bg-blue-50 border-blue-100'}`}>
-              {n.type === 'warning' ? <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" /> :
-               n.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" /> :
-               <Bell className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />}
-              <div className="flex-1">
-                <p className={`text-xs font-medium ${n.type === 'warning' ? 'text-amber-800' : n.type === 'success' ? 'text-emerald-800' : 'text-blue-800'}`}>{n.text}</p>
-                <p className="text-xs text-slate-600 mt-0.5">{n.time}</p>
+          <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{notifications.length} {language === 'es' ? 'nuevas' : language === 'fr' ? 'nouvelles' : 'new'}</span>
+          <ChevronDown
+            className="w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200"
+            style={{ transform: showNotifications ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </button>
+
+        {showNotifications && (
+          <div className="space-y-2 mt-4">
+            {notifications.map((n, i) => (
+              <div key={i} className={`flex items-start gap-3 rounded-xl px-3 py-3.5 border
+                ${n.type === 'warning' ? 'bg-amber-50 border-amber-100' :
+                  n.type === 'success' ? 'bg-emerald-50 border-emerald-100' : 'bg-blue-50 border-blue-100'}`}>
+                {n.type === 'warning' ? <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" /> :
+                 n.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" /> :
+                 <Bell className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />}
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${n.type === 'warning' ? 'text-amber-800' : n.type === 'success' ? 'text-emerald-800' : 'text-blue-800'}`}>{n.text}</p>
+                  <p className="text-xs text-slate-600 mt-1">{n.time}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
