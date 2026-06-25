@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { buzz } from '@/lib/buzz';
 
 const NotificationContext = createContext(null);
 
@@ -37,6 +38,10 @@ export function NotificationProvider({ children }) {
       duration: 5000,
       ...notification,
     };
+
+    // Buzz the device — pattern chosen by notification type
+    buzz(n.type || 'default');
+
     setStack(prev => [n, ...prev].slice(0, 4)); // max 4 simultaneous
 
     if (n.duration > 0) {

@@ -1,5 +1,6 @@
 // Inspired by react-hot-toast library
 import { useState, useEffect } from "react";
+import { buzz } from "@/lib/buzz";
 
 const TOAST_LIMIT = 20;
 const TOAST_REMOVE_DELAY = 5000; // 5 seconds default - production UX standard
@@ -112,6 +113,9 @@ function dispatch(action) {
 
 function toast({ ...props }) {
   const id = genId();
+
+  // Buzz the device — variant:destructive = error pattern, others = info
+  buzz(props.variant === 'destructive' ? 'destructive' : (props.buzzType || 'info'));
 
   const update = (props) =>
     dispatch({
