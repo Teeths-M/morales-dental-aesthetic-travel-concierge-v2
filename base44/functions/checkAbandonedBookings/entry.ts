@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       const age     = now - new Date(c.pay_now_email_sent_at).getTime();
       const tasks: Promise<unknown>[] = [];
       const caseRef = c.id.slice(-8).toUpperCase();
-      const payUrl  = `${APP_URL}/dashboard/bookings?pay=full&case=${c.id}`;
+      const payUrl  = `${APP_URL}/portal-hub/checkout/${c.id}?type=full`;
       const firstName = (c.client_name || 'Valued Patient').split(' ')[0];
 
       // ── Stage 1 — 2-hour warm recovery ───────────────────────────────────

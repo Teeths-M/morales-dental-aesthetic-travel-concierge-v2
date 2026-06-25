@@ -62,6 +62,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     status:                  'confirmed_by_patient',
   });
 
+  // Find companion to notify (must be declared before assignment block — used inside it)
+  const companion = delivery.companion_id
+    ? await base44.asServiceRole.entities.Companion.get(delivery.companion_id).catch(() => null)
+    : null;
+
   // Add receipt to MothersTouchAssignment.grocery_receipts
   const assignment = await base44.asServiceRole.entities.MothersTouchAssignment.get(
     delivery.mothers_touch_assignment_id
@@ -83,19 +88,14 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       ],
     }));
 
-    // Notify companion: expense approved
+    // Notify companion via SMS on approval
     if (assignment.companion_whatsapp || companion?.phone) {
       tasks.push(sendSms(
-        assignment.companion_whatsapp || '',
+        assignment.companion_whatsapp || companion?.phone || '',
         `✅ Expense approved by ${delivery.patient_email?.split('@')[0]}. ${usd(delivery.receipt_amount_usd)} for ${delivery.meal_type} has been added to your payment. — ${BRAND}`
       ));
     }
   }
-
-  // Find companion to notify
-  const companion = delivery.companion_id
-    ? await base44.asServiceRole.entities.Companion.get(delivery.companion_id).catch(() => null)
-    : null;
 
   if (companion?.email) {
     tasks.push(base44.asServiceRole.integrations.Core.SendEmail({

@@ -105,9 +105,9 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const caseRef    = case_id.slice(-8).toUpperCase();
   const procedures = (c.procedures || []).join(', ') || 'Your procedure(s)';
 
-  // Payment URLs — include case_id + payment_type in token for Stripe checkout
-  const payFullUrl  = `${APP_URL}/dashboard/bookings?pay=full&case=${case_id}`;
-  const payTermsUrl = `${APP_URL}/dashboard/bookings?pay=50pct&case=${case_id}`;
+  // Payment URLs — route to PaymentCheckout which reads case_id from URL params
+  const payFullUrl  = `${APP_URL}/portal-hub/checkout/${case_id}?type=full`;
+  const payTermsUrl = `${APP_URL}/portal-hub/checkout/${case_id}?type=terms`;
 
   await Promise.allSettled([
     base44.asServiceRole.integrations.Core.SendEmail({

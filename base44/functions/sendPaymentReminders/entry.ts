@@ -93,9 +93,9 @@ Deno.serve(async (req) => {
       const daysLeft = Math.round((dueMs - todayMs) / 86_400_000);
       const caseRef  = c.id.slice(-8).toUpperCase();
       const balance  = Number(c.amount_remaining || c.package_price_first_installment || 0);
-      // 1-click payment URL — includes Stripe customer ID for saved-card flow
+      // 1-click payment URL — routes to PaymentCheckout, includes Stripe customer ID for saved-card flow
       const oneClickSuffix = c.stripe_customer_id ? `&customer=${c.stripe_customer_id}` : '';
-      const payUrl   = `${APP_URL}/dashboard/bookings?pay=balance&case=${c.id}${oneClickSuffix}`;
+      const payUrl   = `${APP_URL}/portal-hub/checkout/${c.id}?type=balance${oneClickSuffix}`;
 
       const tasks: Promise<unknown>[] = [];
 
