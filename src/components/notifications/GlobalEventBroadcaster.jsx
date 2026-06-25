@@ -7,6 +7,8 @@ import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
 
 const DRIVER_ETA_POLL_MS = 45 * 1000;
 const COUNTRY_STORAGE_KEY = 'morales_last_notified_country';
+const ADVENTURE_STORAGE_KEY = 'morales_adventure_prompted';
+const EVENING_STORAGE_KEY = 'morales_evening_prompted';
 
 /**
  * GlobalEventBroadcaster
@@ -95,7 +97,62 @@ export default function GlobalEventBroadcaster({ user }) {
     });
   }, [isNewCountry, country]);
 
-  // ── 5. Driver ETA (transit_out phase, HS1 not yet done) ──────────────────
+  // ── 5. Adventure prompt — fires 35s after arriving in a new country ──────
+  useEffect(() => {
+    if (!isNewCountry || !country) return;
+    if (!activeTrip || !['arrived', 'recovery'].includes(activeTrip.trip_phase)) return;
+
+    const key = `${ADVENTURE_STORAGE_KEY}_${country}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+
+    const t = setTimeout(() => {
+      showNotification({
+        type:     'info',
+        icon:     '🏔️',
+        title:    `What's your plan in ${country}?`,
+        body:     'Let us know before you head out — nightlife, excursions, or adventures. We keep you safe.',
+        duration: 0,
+        position: 'top',
+        action: {
+          label:   'Plan Safely →',
+          onPress: () => { window.location.href = '/dashboard/adventure'; },
+        },
+      });
+    }, 35_000); // 35s after arrival notification so they don't stack
+
+    return () => clearTimeout(t);
+  }, [isNewCountry, country, activeTrip?.trip_phase]);
+
+  // ── Evening adventure reminder (6 PM – 11 PM, once per day) ─────────────
+  useEffect(() => {
+    if (!activeTrip) return;
+    if (!['arrived', 'recovery'].includes(activeTrip.trip_phase)) return;
+
+    const today = new Date().toDateString();
+    const stored = localStorage.getItem(EVENING_STORAGE_KEY);
+    if (stored === today) return;
+
+    const hour = new Date().getHours();
+    if (hour < 18 || hour >= 23) return; // only 6 PM – 11 PM
+
+    localStorage.setItem(EVENING_STORAGE_KEY, today);
+
+    showNotification({
+      type:     'info',
+      icon:     '🌆',
+      title:    'Going out tonight?',
+      body:     `Activate Nightlife Safety Mode before you head out in ${country || 'your destination'}. We monitor until you're back.`,
+      duration: 0,
+      position: 'top',
+      action: {
+        label:   'Activate Safety Mode',
+        onPress: () => { window.location.href = '/nightlife-safety'; },
+      },
+    });
+  }, [activeTrip?.trip_phase, country]);
+
+  // ── 6. Driver ETA (transit_out phase, HS1 not yet done) ──────────────────
   useEffect(() => {
     if (!activeTrip) return;
     if (activeTrip.trip_phase !== 'transit_out') return;
