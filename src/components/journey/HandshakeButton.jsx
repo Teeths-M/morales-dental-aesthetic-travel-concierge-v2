@@ -11,15 +11,15 @@ const GOLD = '#D4AF37';
 
 const HANDSHAKE_LABELS = [
   null, // index 0 unused
-  'Handshake 1: Confirm Pickup',
-  'Handshake 2: Confirm Airport Drop-off',
-  'Handshake 3: Confirm Destination Arrival',
-  'Handshake 4: Confirm Hotel Check-in',
-  'Handshake 5: Confirm Clinic Arrival',
-  'Handshake 6: Confirm Companion Delivery',
-  'Handshake 7: Confirm Return Pickup',
-  'Handshake 8: Confirm Home Airport Arrival',
-  'Handshake 9: Confirm Home Drop-off',
+  'My Driver Has Arrived — Confirm Pickup',
+  'I\'m at the Airport — Confirm Drop-off',
+  'Arrived at Destination Airport',
+  'Confirm Hotel Check-In',
+  'Clinic Check-In',
+  'Confirm Companion Meal Delivery',
+  'Confirm Return Transport',
+  'Arrived at Home Airport',
+  'I\'m Safely Home',
 ];
 
 const HANDSHAKE_TYPES = [
@@ -137,7 +137,7 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
       <button
         onClick={handleTap}
         disabled={isDone || loading}
-        className="w-full rounded-2xl py-4 px-6 font-semibold text-base transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-default"
+        className="w-full rounded-2xl py-4 px-6 font-semibold text-base transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-default min-h-[52px]"
         style={{
           background: isDone ? GOLD : loading ? '#a07c20' : GOLD,
           color: '#060B16',

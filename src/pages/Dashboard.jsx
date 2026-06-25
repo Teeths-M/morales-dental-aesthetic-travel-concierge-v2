@@ -28,6 +28,7 @@ import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
 import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
+import FirstTimeTooltip from '@/components/ui-system/FirstTimeTooltip';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
@@ -161,6 +162,9 @@ function DashboardHome({ user, consultations, language }) {
 
   return (
     <div className="space-y-6">
+      {/* Mission Brief — one-time onboarding overlay, shown on first dashboard visit */}
+      <FirstTimeTooltip />
+
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
 
@@ -303,8 +307,8 @@ function DashboardHome({ user, consultations, language }) {
             ))}
           </div>
           <Link to="/providers">
-            <Button size="sm" className="w-full mt-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-8">
-              View All Specialists <ArrowRight className="w-3 h-3 ml-1" />
+            <Button className="w-full mt-3 bg-emerald-700 hover:bg-emerald-800 text-white text-sm h-12 rounded-xl">
+              View All Specialists <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </Link>
         </div>
@@ -365,7 +369,7 @@ function DashboardHome({ user, consultations, language }) {
           <span className="text-white font-semibold text-lg">A</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest mb-0.5">
             {language === 'es' ? 'Tu Coordinador Asignado' : language === 'fr' ? 'Votre Coordinateur Assigné' : 'Your Assigned Coordinator'}
           </p>
           <p className="text-sm font-semibold text-slate-800">Ana Morales — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
@@ -377,8 +381,8 @@ function DashboardHome({ user, consultations, language }) {
           </div>
         </div>
         <Link to="/dashboard/messages">
-          <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-9 gap-1.5">
-            <MessageCircle className="w-3.5 h-3.5" /> {language === 'es' ? 'Mensaje' : language === 'fr' ? 'Message' : 'Message'}
+          <Button className="bg-emerald-700 hover:bg-emerald-800 text-white text-sm h-12 rounded-xl gap-1.5 px-5">
+            <MessageCircle className="w-4 h-4" /> {language === 'es' ? 'Mensaje' : language === 'fr' ? 'Message' : 'Message'}
           </Button>
         </Link>
       </div>
@@ -413,8 +417,8 @@ function DashboardHome({ user, consultations, language }) {
           ))}
         </div>
         <Link to="/safe-t">
-          <Button size="sm" variant="outline" className="w-full text-xs h-8">
-            {language === 'es' ? 'Evaluación Completa' : language === 'fr' ? 'Évaluation Complète' : 'Full Assessment'} <ArrowRight className="w-3 h-3 ml-1" />
+          <Button variant="outline" className="w-full text-sm h-12 rounded-xl">
+            {language === 'es' ? 'Evaluación Completa' : language === 'fr' ? 'Évaluation Complète' : 'Full Assessment'} <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </Link>
       </div>
@@ -470,7 +474,7 @@ function DashboardHome({ user, consultations, language }) {
                <Bell className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />}
               <div className="flex-1">
                 <p className={`text-xs font-medium ${n.type === 'warning' ? 'text-amber-800' : n.type === 'success' ? 'text-emerald-800' : 'text-blue-800'}`}>{n.text}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{n.time}</p>
+                <p className="text-xs text-slate-600 mt-0.5">{n.time}</p>
               </div>
             </div>
           ))}

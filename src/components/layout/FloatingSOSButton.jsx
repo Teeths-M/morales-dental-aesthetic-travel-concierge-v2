@@ -81,17 +81,17 @@ export default function FloatingSOSButton() {
           <ShieldCheck style={{ width: '16px', height: '16px', color: '#34d399', filter: 'drop-shadow(0 0 4px rgba(52,211,153,0.5))', flexShrink: 0 }} strokeWidth={2} />
 
           <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#34d399', lineHeight: 1 }}>
-            Safe-T4life Assistance
+            Assistance
           </span>
         </motion.div>
 
-        {/* ── Secure Line / SOS (bottom) ── */}
-        <Link to="/emergency" aria-label="Emergency Secure Line" style={{ textDecoration: 'none' }}>
+        {/* ── SOS (bottom) ── */}
+        <Link to="/emergency" aria-label="SOS Emergency" style={{ textDecoration: 'none' }}>
           <motion.div
-            aria-label="Emergency Secure Line — tap for immediate emergency access"
+            aria-label="SOS — tap for immediate emergency access"
             style={{
               ...PILL_BASE,
-              border: '1px solid rgba(212, 175, 55, 0.22)',
+              border: '1px solid rgba(239, 68, 68, 0.40)',
             }}
             whileHover={{
               scale: 1.04,
@@ -110,10 +110,10 @@ export default function FloatingSOSButton() {
               <span style={{ position: 'relative', width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 6px rgba(239,68,68,0.7)', display: 'block' }} />
             </div>
 
-            <ShieldAlert style={{ width: '16px', height: '16px', color: '#D4AF37', filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.5))', flexShrink: 0 }} strokeWidth={2} />
+            <ShieldAlert style={{ width: '16px', height: '16px', color: '#ef4444', filter: 'drop-shadow(0 0 4px rgba(239,68,68,0.6))', flexShrink: 0 }} strokeWidth={2} />
 
-            <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#D4AF37', lineHeight: 1 }}>
-              Secure Line
+            <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ef4444', lineHeight: 1 }}>
+              SOS
             </span>
           </motion.div>
         </Link>

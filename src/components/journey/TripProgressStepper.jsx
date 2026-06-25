@@ -7,15 +7,15 @@ const GOLD = '#D4AF37';
    active/done, and the heart icon is always shown inside.
 */
 const STEPS = [
-  { label: 'Driver\nPickup',       role: 'driver',    color: '#22c55e', emoji: '🚗' }, // HS1
-  { label: 'Airport\nDrop-off',    role: 'airport',   color: '#a855f7', emoji: '✈️' }, // HS2
-  { label: 'Destination\nPickup',  role: 'airport',   color: '#a855f7', emoji: '🛬' }, // HS3
+  { label: 'Driver\nArrived',      role: 'driver',    color: '#22c55e', emoji: '🚗' }, // HS1
+  { label: 'At the\nAirport',      role: 'airport',   color: '#a855f7', emoji: '✈️' }, // HS2
+  { label: 'Landed\nSafely',       role: 'airport',   color: '#a855f7', emoji: '🛬' }, // HS3
   { label: 'Hotel\nCheck-in',      role: 'patient',   color: '#ef4444', emoji: '🏨' }, // HS4
-  { label: 'Clinic\nArrival',      role: 'doctor',    color: '#D4AF37', emoji: '🏥' }, // HS5
+  { label: 'Clinic\nCheck-in',     role: 'doctor',    color: '#D4AF37', emoji: '🏥' }, // HS5
   { label: 'Companion\nDelivery',  role: 'companion', color: '#ec4899', emoji: '🍽️' }, // HS6
   { label: 'Return\nTransport',    role: 'driver',    color: '#22c55e', emoji: '🚕' }, // HS7
   { label: 'Home\nAirport',        role: 'airport',   color: '#a855f7', emoji: '🛫' }, // HS8
-  { label: 'Home\nDrop-off',       role: 'patient',   color: '#ef4444', emoji: '🏠' }, // HS9
+  { label: 'Safely\nHome',         role: 'patient',   color: '#ef4444', emoji: '🏠' }, // HS9
 ];
 
 const ROLE_LABELS = {
