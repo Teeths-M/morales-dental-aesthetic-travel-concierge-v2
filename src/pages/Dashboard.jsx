@@ -40,6 +40,15 @@ import ErrorState from '@/components/ui-system/ErrorState';
 import EmptyState from '@/components/ui-system/EmptyState';
 import { formatDate } from '@/lib/format';
 
+function WhatsAppMini() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" flexShrink="0">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.527 5.845L.057 23.571a.75.75 0 0 0 .92.92l5.733-1.47A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.686-.528-5.208-1.443l-.374-.222-3.405.874.89-3.328-.241-.385A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+    </svg>
+  );
+}
+
 const notifications = [
   { type: 'warning', text: 'Lab work still required for medical clearance', time: '2h ago' },
   { type: 'info', text: 'Dr. Ramirez left a note on your consultation', time: '5h ago' },
@@ -366,7 +375,7 @@ function DashboardHome({ user, consultations, language }) {
       </div>
 
       {/* Coordinator Card */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 flex items-center gap-4 flex-wrap">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-700 to-blue-800 flex items-center justify-center flex-shrink-0">
           <span className="text-white font-semibold text-lg">A</span>
         </div>
@@ -377,16 +386,33 @@ function DashboardHome({ user, consultations, language }) {
           <p className="text-sm font-semibold text-slate-800">Ana Morales — {language === 'es' ? 'Especialista en Cuidado del Paciente' : language === 'fr' ? 'Spécialiste des Soins Patients' : 'Patient Care Specialist'}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            <span className="text-[11px] text-emerald-600 font-medium">
+            <span className="text-xs text-emerald-600 font-medium">
               {language === 'es' ? 'En línea ahora' : language === 'fr' ? 'En ligne maintenant' : 'Online now'}
             </span>
           </div>
         </div>
-        <Link to="/dashboard/messages">
-          <Button className="bg-emerald-700 hover:bg-emerald-800 text-white text-sm h-12 rounded-xl gap-1.5 px-5">
-            <MessageCircle className="w-4 h-4" /> {language === 'es' ? 'Mensaje' : language === 'fr' ? 'Message' : 'Message'}
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* WhatsApp — primary global CTA */}
+          <a
+            href="https://wa.me/18005550199?text=Hello%20Ana%2C%20I%20need%20help%20with%20my%20Morales%20journey."
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button className="h-12 rounded-xl gap-2 px-5 text-sm font-semibold text-white"
+              style={{ background: '#25D366', border: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#1da851'}
+              onMouseLeave={e => e.currentTarget.style.background = '#25D366'}
+            >
+              <WhatsAppMini /> WhatsApp
+            </Button>
+          </a>
+          {/* Internal message — secondary */}
+          <Link to="/dashboard/messages">
+            <Button variant="outline" className="h-12 w-12 rounded-xl p-0 flex items-center justify-center">
+              <MessageCircle className="w-4 h-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* SAFE-T Status — collapsible */}

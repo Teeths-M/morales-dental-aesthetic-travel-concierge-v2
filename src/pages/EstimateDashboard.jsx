@@ -6,11 +6,14 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, DollarSign, Calendar } from 'lucide-react';
+import CurrencySelector from '@/components/ui-system/CurrencySelector';
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter';
 
 export default function EstimateDashboard() {
   const { estimate_id } = useParams();
   const navigate = useNavigate();
   const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const { selectedCode, setSelectedCode, formatLocal } = useCurrencyConverter();
 
   const { data: estimate, isLoading, error: estimateError } = useQuery({
     queryKey: ['estimate', estimate_id],
@@ -90,15 +93,25 @@ export default function EstimateDashboard() {
             {/* Price Range */}
             <Card className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/30">
               <div className="mb-6">
-                <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">
-                  Estimated Package Cost
-                </p>
-                <div className="flex items-baseline gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                    Estimated Package Cost
+                  </p>
+                  <CurrencySelector
+                    selectedCode={selectedCode}
+                    onSelect={setSelectedCode}
+                    formatLocal={formatLocal}
+                  />
+                </div>
+                <div className="flex items-baseline gap-4 flex-wrap">
                   <div>
                     <p className="text-4xl font-semibold text-foreground">
                       ${estimate.estimated_total_low.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Low estimate</p>
+                    {selectedCode !== 'USD' && (
+                      <p className="text-sm font-medium text-primary mt-0.5">≈ {formatLocal(estimate.estimated_total_low)}</p>
+                    )}
                   </div>
                   <div className="text-muted-foreground">–</div>
                   <div>
@@ -106,6 +119,9 @@ export default function EstimateDashboard() {
                       ${estimate.estimated_total_high.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">High estimate (seasonal)</p>
+                    {selectedCode !== 'USD' && (
+                      <p className="text-sm font-medium text-primary mt-0.5">≈ {formatLocal(estimate.estimated_total_high)}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -130,16 +146,22 @@ export default function EstimateDashboard() {
                     className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg"
                   >
                     <span className="text-foreground">{item.label}</span>
-                    <span className="font-semibold text-foreground">
-                      ${item.cost.toLocaleString()}
-                    </span>
+                    <div className="text-right">
+                      <span className="font-semibold text-foreground block">${item.cost.toLocaleString()}</span>
+                      {selectedCode !== 'USD' && formatLocal(item.cost) && (
+                        <span className="text-xs text-muted-foreground">≈ {formatLocal(item.cost)}</span>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
                 <div className="flex items-center justify-between p-3 border-t-2 border-border pt-4 mt-4">
                   <span className="font-semibold text-foreground">Subtotal</span>
-                  <span className="text-xl font-semibold text-foreground">
-                    ${totalBase.toLocaleString()}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-xl font-semibold text-foreground block">${totalBase.toLocaleString()}</span>
+                    {selectedCode !== 'USD' && formatLocal(totalBase) && (
+                      <span className="text-sm font-medium text-primary">≈ {formatLocal(totalBase)}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

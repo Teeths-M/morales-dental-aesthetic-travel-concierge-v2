@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, Lock, Zap, Plane, Sparkles, TriangleAlert, CreditCard } from 'lucide-react';
+import CurrencySelector from '@/components/ui-system/CurrencySelector';
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter';
 import DeclineDepositDialog from '@/components/checkout/DeclineDepositDialog';
 import { toast } from 'sonner';
 
@@ -49,6 +51,7 @@ export default function PaymentCheckout() {
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declinedAmount, setDeclinedAmount] = useState(null);
   const [error, setError] = useState(null);
+  const { selectedCode, setSelectedCode, formatLocal } = useCurrencyConverter();
 
   // Extract token from URL query param
   const proposalToken = searchParams.get('token');
@@ -392,9 +395,19 @@ export default function PaymentCheckout() {
                   </div>
                 )}
                 {caseRecord?.final_package_price > 0 && (
-                  <div className="pt-4 border-t border-border flex items-center justify-between">
-                    <p className="font-semibold text-foreground text-base">Total Package Price</p>
-                    <p className="font-semibold text-foreground text-xl">${caseRecord.final_package_price.toLocaleString()}</p>
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-semibold text-foreground text-base">Total Package Price</p>
+                      <p className="font-semibold text-foreground text-xl">${caseRecord.final_package_price.toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <CurrencySelector
+                        selectedCode={selectedCode}
+                        onSelect={setSelectedCode}
+                        formatLocal={formatLocal}
+                        amountUSD={caseRecord.final_package_price}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -435,7 +448,7 @@ export default function PaymentCheckout() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-semibold text-foreground">
                           ${plan.amount.toLocaleString()}
@@ -446,9 +459,13 @@ export default function PaymentCheckout() {
                           </span>
                         )}
                       </div>
+                      {selectedCode !== 'USD' && formatLocal(plan.amount) && (
+                        <p className="text-sm font-medium text-primary">≈ {formatLocal(plan.amount)}</p>
+                      )}
                       {plan.remaining && (
                         <p className="text-sm text-muted-foreground">
                           Remaining: ${plan.remaining.toLocaleString()}
+                          {selectedCode !== 'USD' && formatLocal(plan.remaining) ? ` (≈ ${formatLocal(plan.remaining)})` : ''}
                         </p>
                       )}
                     </div>
