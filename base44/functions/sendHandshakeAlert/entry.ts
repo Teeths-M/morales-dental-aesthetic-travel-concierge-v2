@@ -104,7 +104,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   // Notify the relevant partner(s) based on HS number
   if (hsNum === 5 && caseRecord?.doctor_email) {
-    // HS5 — notify doctor
+    // HS5 — notify doctor: patient has arrived at the clinic
     const doctor = await base44.asServiceRole.entities.Doctor.filter({ email: caseRecord.doctor_email }).then(r => r[0]).catch(() => null);
     const partnerName = doctor?.full_name || caseRecord.doctor_email;
     tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
@@ -113,11 +113,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       subject: `HS5 Confirmed — ${patientName} has arrived at your clinic | ${BRAND}`,
       body: handshakeEmail({ partnerName, partnerLabel: 'Doctor', icon: '🏥', hsNum, patientName, message: hsInfo.message, completedAt, caseRef }),
     }));
+    // Push — doctor's phone buzzes: patient walking through the door NOW
+    tasks.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: caseRecord.doctor_email,
+      title:      '🏥 Patient Has Arrived',
+      body:       `${patientName} has just confirmed clinic check-in (HS5). They are at your clinic now.`,
+      url:        '/doctor-dashboard',
+      type:       'success',
+      tag:        `hs5-doctor-${trip_id}`,
+    }).catch(() => {}) ?? Promise.resolve());
     sent.push(`doctor:${caseRecord.doctor_email}`);
   }
 
   if (hsNum === 6) {
-    // HS6 — notify companion
+    // HS6 — notify companion: meal delivery acknowledged
     const companionAssignments = await base44.asServiceRole.entities.CompanionAssignment.filter({ case_id: case_id || trip.case_id }).catch(() => []);
     for (const ca of companionAssignments) {
       const companion = ca.companion_id ? await base44.asServiceRole.entities.Companion.get(ca.companion_id).catch(() => null) : null;
@@ -128,6 +137,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
           subject: `HS6 Confirmed — Meal delivery acknowledged for ${patientName} | ${BRAND}`,
           body: handshakeEmail({ partnerName: companion.full_name || companion.email, partnerLabel: 'Companion', icon: '🍽️', hsNum, patientName, message: hsInfo.message, completedAt, caseRef }),
         }));
+        // Push — companion's phone buzzes: delivery confirmed
+        tasks.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+          user_email: companion.email,
+          title:      '🍽️ Delivery Confirmed',
+          body:       `${patientName} confirmed your meal delivery (HS6). Well done.`,
+          url:        '/companion-dashboard',
+          type:       'safe',
+          tag:        `hs6-companion-${ca.companion_id}`,
+        }).catch(() => {}) ?? Promise.resolve());
         sent.push(`companion:${companion.email}`);
       }
     }

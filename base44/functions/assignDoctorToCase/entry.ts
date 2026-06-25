@@ -226,6 +226,16 @@ Deno.serve(async (req) => {
 </html>`
     });
 
+    // Push notification — doctor's phone buzzes immediately with new patient alert
+    base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: selectedDoctor.email,
+      title:      '👨‍⚕️ New Patient',
+      body:       `${caseRecord.client_name} · ${procedureDisplay} · Preferred: ${preferredDate}. Tap to review in your portal.`,
+      url:        '/doctor-dashboard',
+      type:       'success',
+      tag:        `doc-new-${caseId}`,
+    }).catch(() => {});
+
     return Response.json({
       status: 'DOCTOR_ASSIGNED',
       doctor_email: selectedDoctor.email,

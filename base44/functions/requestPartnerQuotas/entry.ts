@@ -75,6 +75,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       body: quotaEmail({ partnerName: agency.agency_name || agency.email, partnerType: 'Travel Agency', patientName, procedures, procedureDate, caseRef, portalUrl: url,
         services: ['Round-trip flights from patient origin to procedure country', 'Hotel accommodation (procedure + recovery nights)'] }),
     }));
+    // Push — travel agency phone buzzes with new booking request
+    dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: agency.email,
+      title:      '🗺️ New Quote Request',
+      body:       `${patientName} needs a travel package to ${caseRecord.procedure_country || 'destination'} · ${procedureDate}. Tap to submit your quote.`,
+      url:        url,
+      type:       'booking',
+      tag:        `quota-travel-${case_id}`,
+    }).catch(() => {}) ?? Promise.resolve());
     sent.push('travel_agency');
   }
 
@@ -90,6 +99,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       body: quotaEmail({ partnerName: driver.driver_name || driver.company_name || driver.email, partnerType: 'Chauffeur', patientName, procedures, procedureDate, caseRef, portalUrl: url,
         services: ['Origin: Home → Airport (departure)', 'Destination: Airport → Hotel, Hotel → Clinic, Clinic → Hotel, Hotel → Airport', 'Origin: Airport → Home (return)'] }),
     }));
+    // Push — driver phone buzzes with new transfer job
+    dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: driver.email,
+      title:      '🚗 New Transfer Request',
+      body:       `${patientName} needs medical transport. Procedure on ${procedureDate}. Tap to price your legs.`,
+      url:        url,
+      type:       'booking',
+      tag:        `quota-driver-${case_id}`,
+    }).catch(() => {}) ?? Promise.resolve());
     sent.push('driver');
   }
 
@@ -105,6 +123,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       body: quotaEmail({ partnerName: companion.full_name || companion.email, partnerType: 'Companion', patientName, procedures, procedureDate, caseRef, portalUrl: url,
         services: [`Recovery support for ${caseRecord.recovery_days || 3} days post-procedure`, 'Meal delivery and dietary care', 'Emotional support and language assistance'] }),
     }));
+    // Push — companion phone buzzes with new care assignment request
+    dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: companion.email,
+      title:      '🤱 New Companion Request',
+      body:       `${patientName} needs recovery support for ${caseRecord.recovery_days || 3} days in ${caseRecord.procedure_country || 'destination'}. Tap to confirm availability.`,
+      url:        url,
+      type:       'companion',
+      tag:        `quota-companion-${case_id}`,
+    }).catch(() => {}) ?? Promise.resolve());
     sent.push('companion');
   }
 
@@ -116,6 +143,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       body: quotaEmail({ partnerName: caseRecord.clinic_selected || 'Doctor', partnerType: 'Clinic', patientName, procedures, procedureDate, caseRef, portalUrl: `${APP_URL}/doctor-dashboard`,
         services: ['Clinic facility fee', 'Anaesthesia fee (if applicable)', 'Post-operative follow-up consultation'] }),
     }));
+    // Push — doctor gets clinic fee reminder
+    dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: caseRecord.doctor_email,
+      title:      '🏥 Facility Fee Quote Needed',
+      body:       `${patientName} · ${procedures}. Please submit clinic fee, anaesthesia, and post-op cost.`,
+      url:        `${APP_URL}/doctor-dashboard`,
+      type:       'success',
+      tag:        `quota-clinic-${case_id}`,
+    }).catch(() => {}) ?? Promise.resolve());
     sent.push('clinic');
   }
 
