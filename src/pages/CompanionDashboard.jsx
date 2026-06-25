@@ -93,7 +93,6 @@ function ActiveAssignmentHero({ assignments }) {
 // ── Companion rate submission — auto-triggers pipeline when submitted ─────────
 function CompanionRateForm({ caseId, patientName }) {
   const [amount, setAmount]   = useLocalState('');
-  const [notes, setNotes]     = useLocalState('');
   const [loading, setLoading] = useLocalState(false);
   const [done, setDone]       = useLocalState(false);
   const GOLD = '#D4AF37';
