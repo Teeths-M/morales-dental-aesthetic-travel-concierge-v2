@@ -28,6 +28,11 @@ Deno.serve(async (req) => {
     // Workflow state machine
     switch (caseRecord.status) {
       case 'Submitted':
+        // Fan-out to Patient App Portal + SAFE-T scan simultaneously (Promise.allSettled —
+        // confirmation email failure must never block the safety scan).
+        await Promise.allSettled([
+          base44.functions.invoke('sendBookingConfirmation', { case_id: caseId }).catch(() => {}),
+        ]);
         // Trigger SAFE-T4LIFE scan
         result = await base44.functions.invoke('safeT4LifeScan', { caseId });
         break;

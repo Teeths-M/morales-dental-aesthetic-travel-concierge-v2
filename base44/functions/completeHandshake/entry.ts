@@ -144,12 +144,45 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   const isComplete = n === 9;
 
-  // Golden M SMS — fired on final handshake completion
+  // ── Async dispatch cluster — Promise.allSettled so no single failure blocks ──
+  // Matches the Enterprise Asynchronous Infrastructure diagram:
+  // every handshake fans out to Patient App Portal + Master Admin Log + Partner notifications.
+  const downstream: Promise<unknown>[] = [];
+
+  // Patient App Portal: Golden M SMS on HS9
   if (isComplete && trip.user_phone) {
-    await sendSms(
-      trip.user_phone,
-      'Welcome home. We\'re honored to have been part of your journey. The Golden M is yours. — Morales Concierge'
-    ).catch(() => {});
+    downstream.push(
+      sendSms(
+        trip.user_phone,
+        'Welcome home. We\'re honored to have been part of your journey. The Golden M is yours. — Morales Concierge'
+      )
+    );
+  }
+
+  // Partner Portal notifications (doctor on HS5, companion on HS6, all on HS9)
+  // sendHandshakeAlert and sendGoldenMNotification handle role-routing internally.
+  if ([5, 6, 9].includes(n)) {
+    downstream.push(
+      base44.asServiceRole.functions?.invoke?.('sendHandshakeAlert', {
+        handshake_number: n,
+        trip_id,
+        case_id: trip.case_id || '',
+      }).catch(() => {}) ?? Promise.resolve()
+    );
+  }
+
+  // Golden M email + celebration notification (patient + doctor) on HS9
+  if (isComplete) {
+    downstream.push(
+      base44.asServiceRole.functions?.invoke?.('sendGoldenMNotification', {
+        trip_id,
+      }).catch(() => {}) ?? Promise.resolve()
+    );
+  }
+
+  // Fire all downstream tasks concurrently — failures are non-fatal
+  if (downstream.length > 0) {
+    await Promise.allSettled(downstream);
   }
 
   return ok({
