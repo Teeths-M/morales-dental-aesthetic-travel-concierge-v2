@@ -404,6 +404,23 @@ async function handlePackagePaymentSuccess(base44, {
       });
     }
   }
+
+  // ── Partner Cascade (Promise.allSettled — never blocks main payment confirmation) ──
+  // Determines which partners to activate based on payment type, then fires sendPaymentReceipt.
+  const cascadePaymentType = (deposit_option === 'Full' || plan_type === 'full_payment') ? 'full_pay'
+    : (deposit_option === '50%' || plan_type === 'deposit_50') ? 'terms'
+    : null;
+
+  if (cascadePaymentType) {
+    await Promise.allSettled([
+      base44.functions.invoke('processPaymentCascade', {
+        case_id,
+        payment_type:      cascadePaymentType,
+        amount_paid:       amount_total,
+        stripe_payment_id: stripe_payment_intent_id || stripe_session_id,
+      }).catch(() => {}),
+    ]);
+  }
 }
 
 async function handleConsultationFeePaid(base44, {

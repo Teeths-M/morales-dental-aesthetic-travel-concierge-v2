@@ -632,6 +632,107 @@
     "clinical_boundary_version": {
       "type": "string",
       "default": "1.0"
+    },
+
+    // ── Partner Quota Tracking ────────────────────────────────────────────────
+    "quotas_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When quota requests were sent to all 4 partners"
+    },
+    "companion_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Companion service cost submitted by companion partner"
+    },
+    "companion_quote_status": {
+      "type": "string",
+      "enum": ["PENDING", "SUBMITTED", "CONFIRMED"],
+      "default": "PENDING"
+    },
+    "clinic_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Clinic/facility fee submitted by the assigned clinic"
+    },
+    "clinic_quote_status": {
+      "type": "string",
+      "enum": ["PENDING", "SUBMITTED", "CONFIRMED"],
+      "default": "PENDING"
+    },
+    "all_quotas_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when all 4 partner quotas (travel, driver, companion, clinic) are confirmed"
+    },
+
+    // ── Package Pricing (post-quota calculation) ──────────────────────────────
+    "package_price_full": {
+      "type": "number",
+      "default": 0,
+      "description": "(base_cost - 49) * 1.25 — full payment price"
+    },
+    "package_price_terms": {
+      "type": "number",
+      "default": 0,
+      "description": "(base_cost - 49) * 1.30 — price when paying in two installments"
+    },
+    "package_price_first_installment": {
+      "type": "number",
+      "default": 0,
+      "description": "package_price_terms * 0.50 — the 50% upfront amount"
+    },
+    "payment_type": {
+      "type": "string",
+      "enum": ["full_pay", "terms"],
+      "description": "Patient's chosen payment method"
+    },
+    "pay_now_email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the Pay Now email was sent to the patient"
+    },
+
+    // ── Partner Cascade Tracking ──────────────────────────────────────────────
+    "doctor_cascade_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "travel_cascade_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "driver_cascade_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "companion_cascade_sent": {
+      "type": "boolean",
+      "default": false
+    },
+
+    // ── Payment Reminder Tracking ─────────────────────────────────────────────
+    "payment_reminder_7d_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_reminder_3d_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_reminder_1d_sent": {
+      "type": "boolean",
+      "default": false
+    },
+
+    // ── Receipt Storage ───────────────────────────────────────────────────────
+    "receipt_vault_id": {
+      "type": "string",
+      "description": "PassportVault record ID where the payment receipt is stored"
+    },
+    "receipt_html": {
+      "type": "string",
+      "description": "HTML content of the most recent payment receipt"
     }
   },
   "required": [

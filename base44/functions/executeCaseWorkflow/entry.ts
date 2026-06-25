@@ -48,16 +48,21 @@ Deno.serve(async (req) => {
 
       case 'Doctor-Pending':
         if (caseRecord.doctor_confirmation_status === 'Confirmed') {
-          // Assign travel agency
-          result = await base44.functions.invoke('assignTravelAgency', { caseId });
+          // Doctor confirmed → request pricing quotas from all 4 partners simultaneously
+          result = await base44.functions.invoke('requestPartnerQuotas', { case_id: caseId });
         } else {
           result = { status: 'WAITING_DOCTOR', message: 'Waiting for doctor confirmation' };
         }
         break;
 
       case 'Vendor-Pending':
-        // Assign chauffeur services
-        result = await base44.functions.invoke('assignChauffeurServices', { caseId });
+        if (caseRecord.all_quotas_confirmed) {
+          // All 4 partner quotes confirmed → calculate package price and fire Pay Now email
+          result = await base44.functions.invoke('calculatePackagePrice', { case_id: caseId });
+        } else {
+          // Legacy path: chauffeur assignment (pre-quota system)
+          result = await base44.functions.invoke('assignChauffeurServices', { caseId });
+        }
         break;
 
       case 'Admin-Review':
