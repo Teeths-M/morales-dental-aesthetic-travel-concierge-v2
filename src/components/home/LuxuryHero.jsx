@@ -165,22 +165,23 @@ export default function LuxuryHero() {
               </motion.p>
             </AnimatePresence>
 
-            {/* ── CTA BUTTON — pill style ── */}
+            {/* ── CTA ROW — primary + demo side by side ── */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="mb-5"
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8"
             >
-              <Link to={content.cta.path} className="block w-full sm:w-auto">
+              {/* Primary: gold pill */}
+              <Link to={content.cta.path}>
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   className="group relative w-full sm:w-auto h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
                   style={{
-                    background:  `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
-                    color:       '#060B16',
-                    boxShadow:   `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
+                    background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
+                    color:         '#060B16',
+                    boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
                     letterSpacing: '0.02em',
                   }}
                 >
@@ -194,28 +195,32 @@ export default function LuxuryHero() {
                       →
                     </motion.span>
                   </span>
-                  {/* Hover overlay */}
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
                     style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
                   />
                 </motion.button>
               </Link>
-            </motion.div>
 
-            {/* Secondary CTA — platform demo */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.32 }}
-              className="mb-8"
-            >
-              <Link
-                to="/demo"
-                style={{ fontSize: '13px', fontWeight: 500, color: GOLD, opacity: 0.75, letterSpacing: '0.03em' }}
-                className="hover:opacity-100 transition-opacity"
-              >
-                See how it works — interactive demo →
+              {/* Secondary: glass demo pill */}
+              <Link to="/demo">
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto h-14 px-8 rounded-full text-[14px] font-semibold flex items-center justify-center gap-2.5 transition-all duration-200"
+                  style={{
+                    background:    'rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    border:        `1px solid rgba(212,175,55,0.38)`,
+                    color:         GOLD,
+                    letterSpacing: '0.02em',
+                    boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <Play style={{ width: 14, height: 14, fill: GOLD, flexShrink: 0 }} />
+                  Live Demo
+                </motion.button>
               </Link>
             </motion.div>
 
