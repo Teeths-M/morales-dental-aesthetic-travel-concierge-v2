@@ -90,6 +90,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     ? new Date(caseRecord.departure_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     : 'To be confirmed';
 
+  // Sync departure_date from Consultation if not already on CaseRecord
+  // This enables sendTravelCountdownReminders to query by departure_date.
+  if (!caseRecord.departure_date && caseRecord.consultation_id) {
+    const consultation = await base44.asServiceRole.entities.Consultation.get(caseRecord.consultation_id).catch(() => null);
+    if (consultation?.preferred_date) {
+      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
+        departure_date: consultation.preferred_date,
+        procedure_date: consultation.preferred_date,
+      }).catch(() => {});
+    }
+  }
+
   await base44.asServiceRole.integrations.Core.SendEmail({
     from_name: BRAND,
     to: clientEmail,

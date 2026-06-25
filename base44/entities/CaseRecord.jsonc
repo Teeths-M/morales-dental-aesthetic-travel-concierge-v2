@@ -733,7 +733,32 @@
     "receipt_html": {
       "type": "string",
       "description": "HTML content of the most recent payment receipt"
-    }
+    },
+
+    // ── Travel Date ───────────────────────────────────────────────────────────
+    "departure_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Patient departure date (ISO date) — synced from Consultation.preferred_date"
+    },
+    "procedure_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Actual procedure/appointment date at destination"
+    },
+    "booking_type": {
+      "type": "string",
+      "enum": ["medical_package", "travel_only"],
+      "default": "medical_package",
+      "description": "medical_package = full medical tourism; travel_only = flight+hotel+taxi only"
+    },
+
+    // ── Pre-Travel Countdown Reminders ────────────────────────────────────────
+    "travel_reminder_14d_sent": { "type": "boolean", "default": false },
+    "travel_reminder_7d_sent":  { "type": "boolean", "default": false },
+    "travel_reminder_3d_sent":  { "type": "boolean", "default": false },
+    "travel_reminder_1d_sent":  { "type": "boolean", "default": false },
+    "travel_reminder_day_of_sent": { "type": "boolean", "default": false }
   },
   "required": [
     "client_name",

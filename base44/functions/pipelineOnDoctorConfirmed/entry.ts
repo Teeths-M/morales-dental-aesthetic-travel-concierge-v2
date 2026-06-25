@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
     // ── 1. NOTIFY PATIENT ────────────────────────────────────────────────────
     const patientDashboard = `${appUrl}/dashboard/case-status`;
-    const patientSms = `Great news ${patientName}! 🎉 Your doctor has confirmed your case. Our team is now coordinating your travel, hotel, and transfers. Track everything here: ${patientDashboard} — Morales Dental & Aesthetics`;
+    const patientSms = `Hi ${patientName.split(' ')[0]}, wonderful news — your doctor has reviewed and confirmed your case. Our concierge team is now arranging your travel, accommodation, and transfers. You will hear from us within 24 hours with your complete package. — ${BRAND}`;
 
     const patientEmailHtml = emailLayout({
       eyebrow: 'Doctor Confirmed',
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       const token = encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
       const portalUrl = `${appUrl}/portal/travel?token=${token}`;
 
-      const agencySms = `Hello ${agencyName}, a doctor has confirmed a new patient (${patientName}). Open your portal to submit flight, hotel & travel package pricing: ${portalUrl} — Morales Dental & Aesthetics`;
+      const agencySms = `Hello ${agencyName}, a doctor has confirmed a new patient with Morales. ${patientName} requires a complete travel package. Please open your portal to submit pricing within 48 hours: ${portalUrl} — ${BRAND}`;
 
       const procedureLabel = (caseData.procedures || []).join(', ') || 'Medical procedure';
       const agencyEmailHtml = emailLayout({
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
       const token = encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
       const portalUrl = `${appUrl}/portal/transfer?token=${token}`;
 
-      const driverSms = `Hello ${driverName}, a new patient (${patientName}) needs transfer quotes (airport ↔ hotel ↔ clinic). Open your portal to submit leg pricing: ${portalUrl} — Morales Dental & Aesthetics`;
+      const driverSms = `Hello ${driverName}, a new patient has been confirmed with Morales. ${patientName} requires medical transfers in your region. Please open your portal to submit your pricing within 48 hours: ${portalUrl} — ${BRAND}`;
 
       const driverEmailHtml = emailLayout({
         eyebrow: 'Transfer Quote Request',
