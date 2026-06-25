@@ -55,68 +55,73 @@ export default function GoldenMCelebration({ visible, trip, onClose }) {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{ background: 'rgba(6,11,22,0.95)', backdropFilter: 'blur(8px)' }}
     >
-      {/* Premium Golden M logo mark */}
-      <div className="relative flex items-center justify-center mb-8" style={{ width: 160, height: 160 }}>
-        {/* Deep background radial glow */}
+      {/* ── Real Morales M logo mark with deep glow ── */}
+      <div className="relative flex flex-col items-center mb-6">
+        {/* Outer radial glow */}
         <div className="absolute" style={{
-          inset: -60,
-          background: 'radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 65%)',
+          width: 320, height: 320, top: '50%', left: '50%',
+          transform: 'translate(-50%,-50%)',
+          background: 'radial-gradient(circle, rgba(212,175,55,0.22) 0%, rgba(212,175,55,0.06) 45%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Pulse rings */}
+        <div className="absolute" style={{
+          width: 200, height: 200, top: '50%', left: '50%',
+          transform: 'translate(-50%,-50%)',
+          border: '1px solid rgba(212,175,55,0.3)',
           borderRadius: '50%',
+          animation: 'mring1 2.6s ease-in-out infinite',
         }} />
-        {/* Animated pulse ring 1 */}
-        <div className="absolute inset-0 rounded-full" style={{
-          border: '1px solid rgba(212,175,55,0.25)',
-          animation: 'mring1 2.4s ease-in-out infinite',
-        }} />
-        {/* Animated pulse ring 2 */}
-        <div className="absolute rounded-full" style={{
-          inset: -18,
+        <div className="absolute" style={{
+          width: 240, height: 240, top: '50%', left: '50%',
+          transform: 'translate(-50%,-50%)',
           border: '1px solid rgba(212,175,55,0.15)',
-          animation: 'mring2 2.4s ease-in-out 0.5s infinite',
+          borderRadius: '50%',
+          animation: 'mring2 2.6s ease-in-out 0.7s infinite',
         }} />
-        {/* Outer decorative ring */}
-        <div className="absolute inset-0 rounded-full" style={{
-          border: '1px solid rgba(212,175,55,0.35)',
-          background: 'rgba(212,175,55,0.04)',
-        }} />
-        {/* Main gold circle */}
-        <div
-          className="relative flex items-center justify-center rounded-full"
+
+        {/* The actual Morales M mark */}
+        <img
+          src="/morales-m-mark.png"
+          alt="Morales M"
           style={{
-            width: 128,
-            height: 128,
-            background: 'linear-gradient(145deg, #F0D060 0%, #D4AF37 40%, #B8941F 100%)',
-            boxShadow: '0 0 70px rgba(212,175,55,0.75), 0 0 140px rgba(212,175,55,0.3), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.15)',
-            border: '1px solid rgba(255,255,255,0.2)',
+            width: 140,
+            height: 'auto',
+            filter: 'drop-shadow(0 0 32px rgba(212,175,55,0.9)) drop-shadow(0 0 64px rgba(212,175,55,0.5)) drop-shadow(0 0 120px rgba(212,175,55,0.25))',
+            position: 'relative',
+            zIndex: 1,
           }}
-        >
-          <span style={{
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            fontSize: 70,
-            fontWeight: 700,
-            color: '#060B16',
-            letterSpacing: '-0.05em',
-            lineHeight: 1,
-            textShadow: '0 2px 0 rgba(255,255,255,0.18), 0 -1px 0 rgba(0,0,0,0.2)',
-            userSelect: 'none',
-          }}>
-            M
-          </span>
-        </div>
+        />
+
+        {/* Gold line — the signature brand separator */}
+        <div style={{
+          width: 200,
+          height: 1,
+          marginTop: 20,
+          background: 'linear-gradient(to right, transparent, #D4AF37, #F0D060, #D4AF37, transparent)',
+          boxShadow: '0 0 8px rgba(212,175,55,0.8)',
+          position: 'relative',
+          zIndex: 1,
+        }} />
       </div>
+
       <style>{`
-        @keyframes mring1 { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.18);opacity:0} }
-        @keyframes mring2 { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.22);opacity:0} }
+        @keyframes mring1 { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.5} 50%{transform:translate(-50%,-50%) scale(1.12);opacity:0} }
+        @keyframes mring2 { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.3} 50%{transform:translate(-50%,-50%) scale(1.1);opacity:0} }
       `}</style>
 
       {/* Heading */}
       <h1
-        className="text-3xl font-bold text-center mb-2"
-        style={{ color: GOLD, letterSpacing: '-0.03em', fontFamily: 'Georgia, serif' }}
+        className="text-3xl font-bold text-center mb-1"
+        style={{ color: GOLD, letterSpacing: '0.08em', fontFamily: 'Georgia, serif', textTransform: 'uppercase', fontSize: '1.6rem' }}
       >
-        Journey Complete.
+        MORALES
       </h1>
-      <p className="text-lg font-medium mb-8" style={{ color: '#e2e8f0' }}>
+      <p className="text-sm tracking-widest uppercase mb-1" style={{ color: 'rgba(212,175,55,0.6)', letterSpacing: '0.25em' }}>
+        Journey Complete
+      </p>
+      <p className="text-base font-medium mb-8" style={{ color: '#94a3b8' }}>
         Welcome Home.
       </p>
 
