@@ -158,7 +158,7 @@ async function analyzeCase(base44: any, caseRecord: any) {
   const tasks: Promise<unknown>[] = [];
 
   if (risk.level === 'ALERT' || risk.level === 'CRITICAL') {
-    // Notify concierge
+    // Notify concierge via email
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     if (adminEmail) {
       tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
@@ -178,6 +178,19 @@ async function analyzeCase(base44: any, caseRecord: any) {
         </div>`,
       }));
       actions.push('admin_alerted');
+
+      // Push notification to admin's device(s) — shows even when app is closed
+      tasks.push(
+        base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+          user_email: adminEmail,
+          title:      `🛡️ MedGuard ${risk.level}`,
+          body:       `${patientName} · Score ${score}/100 · ${destCountry || 'Unknown location'}`,
+          url:        '/admin/mission-control',
+          urgent:     risk.level === 'CRITICAL',
+          tag:        `medguard-${caseId}`,
+        }).catch(() => {})
+        ?? Promise.resolve()
+      );
     }
 
     // Proactive patient outreach

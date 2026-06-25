@@ -4,12 +4,14 @@ import webPush from 'npm:web-push@3.6.7';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+    // Allow admin users OR internal service-to-service calls (no auth header = system call)
+    const user = await base44.auth.me().catch(() => null);
+    const isSystem = !user; // called from another edge function (MedGuard, SOS, etc.)
+    if (!isSystem && user?.role !== 'admin' && user?.role !== 'platform_admin') {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { user_id, user_email, title, body, url } = await req.json();
+    const { user_id, user_email, title, body, url, urgent, tag } = await req.json();
 
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
@@ -32,7 +34,7 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'No push subscriptions found for user' });
     }
 
-    const payload = JSON.stringify({ title, body, url: url || '/' });
+    const payload = JSON.stringify({ title, body, url: url || '/admin', urgent: urgent || false, tag: tag || 'morales' });
     const results = { sent: [], failed: [] };
 
     for (const sub of subs) {
