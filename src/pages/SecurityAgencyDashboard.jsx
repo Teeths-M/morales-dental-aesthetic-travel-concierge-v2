@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { BackButtonLight } from '@/components/nav/BackButton';
 import { motion } from 'framer-motion';
 import { Shield, CheckCircle, Clock, AlertCircle, ToggleLeft, ToggleRight, Phone, MapPin, Users, Zap, Star, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,7 @@ export default function SecurityAgencyDashboard() {
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+          <BackButtonLight fallback="/" className="absolute top-4 left-4" />
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />

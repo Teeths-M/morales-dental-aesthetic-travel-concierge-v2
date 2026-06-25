@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { decodePortalToken, getTokenFromUrl } from '@/lib/portalToken';
+import { BackButton } from '@/components/nav/BackButton';
 
 const USD = (val) => `$${(Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -175,6 +176,7 @@ export default function PortalChauffeur() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8faf8', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <div style={{ padding: '12px 24px' }}><BackButton fallback="/" /></div>
       <style>{`
         @media (max-width: 600px) {
           .ch-header { padding: 20px 16px !important; }

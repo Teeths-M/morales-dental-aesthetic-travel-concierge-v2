@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { BackButton } from '@/components/nav/BackButton';
 import TravelAgencyDashboardView from '@/components/partner-dashboard/TravelAgencyDashboard';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
@@ -54,6 +55,7 @@ export default function TravelAgencyDashboard() {
   return (
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-5xl mx-auto">
+        <BackButton fallback="/" className="mb-4" />
         <TravelAgencyDashboardView agency={agency} language={language} />
       </div>
     </div>

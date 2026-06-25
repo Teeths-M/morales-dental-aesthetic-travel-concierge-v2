@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { BackButton } from '@/components/nav/BackButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -224,6 +225,7 @@ export default function PortalDoctor() {
   return (
     <div className="min-h-screen bg-background py-6 px-4 sm:py-12 sm:px-6">
       <div className="max-w-3xl mx-auto">
+        <BackButton fallback="/" className="mb-4" />
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl font-display">Doctor Portal - Case Review</CardTitle>

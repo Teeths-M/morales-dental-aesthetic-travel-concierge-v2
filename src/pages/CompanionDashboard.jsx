@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
@@ -136,6 +137,7 @@ export default function CompanionDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
+        <BackButton fallback="/" className="mb-2" />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

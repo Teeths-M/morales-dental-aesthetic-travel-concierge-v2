@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { BackButton } from '@/components/nav/BackButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -229,7 +230,7 @@ export default function DoctorCasesDashboard() {
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto space-y-8">
-
+        <BackButton fallback="/" className="mb-2" />
         {/* Header */}
         <div>
           <h1 className="text-3xl font-display font-semibold text-foreground">Assigned Cases</h1>

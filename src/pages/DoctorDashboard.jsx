@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert } from 'lucide-react';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
@@ -146,6 +147,7 @@ export default function DoctorDashboard() {
   return (
     <div className="min-h-screen bg-background py-12 px-6">
       <div className="max-w-4xl mx-auto">
+        <BackButton fallback="/" className="mb-4" />
         {fetchError && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-red-700 text-sm">
             {fetchError} <button onClick={() => window.location.reload()} className="ml-2 underline">Refresh</button>
