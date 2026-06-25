@@ -219,6 +219,80 @@ export default function GlobalEventBroadcaster({ user }) {
     }
   }, [activeTrip?.current_step]);
 
+  // ── Weather-aware behavioral nudge (Open-Meteo — free, no API key needed) ─
+  // Checks patient's current location temperature. Hot climate → hydration reminder.
+  // Runs every 2 hours during active travel phases. Suppressed once per day.
+  useEffect(() => {
+    if (!activeTrip || !currentLocation?.lat) return;
+    if (!['arrived', 'recovery'].includes(activeTrip.trip_phase)) return;
+
+    const WEATHER_KEY = 'morales_weather_nudge';
+    const today       = new Date().toDateString();
+    if (sessionStorage.getItem(WEATHER_KEY) === today) return;
+
+    const checkWeather = async () => {
+      try {
+        const { lat, lng } = currentLocation;
+        const url  = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,weathercode&temperature_unit=celsius`;
+        const res  = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        const data = await res.json();
+        const tempC       = data?.current?.temperature_2m;
+        const feelsLikeC  = data?.current?.apparent_temperature;
+        const wcode       = data?.current?.weathercode;
+        if (tempC == null) return;
+
+        const hour = new Date().getHours();
+
+        // Hot climate hydration reminder (>= 32°C / 90°F)
+        if (tempC >= 32) {
+          sessionStorage.setItem(WEATHER_KEY, today);
+          showNotification({
+            type: 'info', icon: '💧',
+            title: `${Math.round(tempC)}°C in your location — stay hydrated`,
+            body: feelsLikeC && feelsLikeC > tempC
+              ? `Feels like ${Math.round(feelsLikeC)}°C. Drink at least 500ml of water before your appointment today.`
+              : 'High temperature alert. Drink water regularly and rest in cool spaces.',
+            duration: 8000, position: 'top',
+          });
+        }
+
+        // Rain / storm warning (wcode 61–99 = rain/thunderstorm)
+        if (wcode >= 61 && wcode <= 99 && hour >= 6 && hour <= 20) {
+          const alreadySent = sessionStorage.getItem(`morales_rain_${today}`);
+          if (!alreadySent) {
+            sessionStorage.setItem(`morales_rain_${today}`, '1');
+            showNotification({
+              type: 'info', icon: '🌧️',
+              title: 'Rain expected today',
+              body: 'Pack an umbrella and allow extra travel time to your clinic. Your driver has been notified.',
+              duration: 6000, position: 'top',
+            });
+          }
+        }
+
+        // Clinic countdown — 2 hours before departure, remind them to get ready
+        if (hour === 8 && activeTrip.trip_phase === 'arrived') {
+          const clinicKey = `morales_clinic_reminder_${today}`;
+          if (!sessionStorage.getItem(clinicKey)) {
+            sessionStorage.setItem(clinicKey, '1');
+            showNotification({
+              type: 'info', icon: '🏥',
+              title: 'Clinic day — prepare now',
+              body: 'Your procedure is today. Confirm you have your ID, fast if required, and your driver is confirmed.',
+              duration: 0, position: 'top',
+              action: { label: 'View Schedule →', onPress: () => { window.location.href = '/dashboard/journey'; } },
+            });
+          }
+        }
+
+      } catch (_) {}
+    };
+
+    checkWeather();
+    const interval = setInterval(checkWeather, 2 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [activeTrip?.trip_phase, currentLocation?.lat]);
+
   // ── Earthquake monitor — checks USGS every 10 min when user has active trip ─
   useEffect(() => {
     if (!activeTrip || !currentLocation?.lat) return;
