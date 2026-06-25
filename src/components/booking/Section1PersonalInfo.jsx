@@ -30,10 +30,40 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
   const [nationalitySearch, setNationalitySearch] = useState('');
   const { country: ipCountry } = useIpGeolocation();
 
-  // Auto-populate ip_country_origin once on mount
+  // Country name → nationality adjective map for auto-fill
+  const COUNTRY_TO_NATIONALITY = {
+    'United States': 'American', 'United Kingdom': 'British', 'Canada': 'Canadian',
+    'Australia': 'Australian', 'New Zealand': 'New Zealander', 'Germany': 'German',
+    'France': 'French', 'Spain': 'Spanish', 'Italy': 'Italian', 'Portugal': 'Portuguese',
+    'Brazil': 'Brazilian', 'Mexico': 'Mexican', 'Colombia': 'Colombian',
+    'Venezuela': 'Venezuelan', 'Argentina': 'Argentine', 'Peru': 'Peruvian',
+    'Chile': 'Chilean', 'Ecuador': 'Ecuadorian', 'Panama': 'Panamanian',
+    'Costa Rica': 'Costa Rican', 'Dominican Republic': 'Dominican',
+    'Trinidad and Tobago': 'Trinidad and Tobago', 'Jamaica': 'Jamaican',
+    'Barbados': 'Barbadian', 'Guyana': 'Guyanese', 'Haiti': 'Haitian',
+    'India': 'Indian', 'China': 'Chinese', 'Japan': 'Japanese',
+    'South Korea': 'South Korean', 'Philippines': 'Filipino', 'Thailand': 'Thai',
+    'Vietnam': 'Vietnamese', 'Indonesia': 'Indonesian', 'Malaysia': 'Malaysian',
+    'Nigeria': 'Nigerian', 'Ghana': 'Ghanaian', 'Kenya': 'Kenyan',
+    'South Africa': 'South African', 'Egypt': 'Egyptian', 'Morocco': 'Moroccan',
+    'Turkey': 'Turkish', 'Saudi Arabia': 'Saudi', 'UAE': 'Emirati',
+    'Netherlands': 'Dutch', 'Belgium': 'Belgian', 'Switzerland': 'Swiss',
+    'Sweden': 'Swedish', 'Norway': 'Norwegian', 'Denmark': 'Danish',
+    'Poland': 'Polish', 'Russia': 'Russian', 'Ukraine': 'Ukrainian',
+    'Ireland': 'Irish', 'Israel': 'Israeli', 'Pakistan': 'Pakistani',
+    'Bangladesh': 'Bangladeshi', 'Sri Lanka': 'Sri Lankan', 'Nepal': 'Nepalese',
+  };
+
+  // Auto-populate Country of Origin and ip_country_origin once on mount
   useEffect(() => {
-    if (ipCountry && !form.ip_country_origin) {
-      update('ip_country_origin', ipCountry);
+    if (!ipCountry) return;
+    if (!form.ip_country_origin) update('ip_country_origin', ipCountry);
+    // Auto-fill nationality dropdown if not already set
+    if (!form.nationality) {
+      const matched = COUNTRY_TO_NATIONALITY[ipCountry]
+        || nationalities.find(n => n.toLowerCase() === ipCountry.toLowerCase())
+        || null;
+      if (matched) update('nationality', matched);
     }
   }, [ipCountry]);
 

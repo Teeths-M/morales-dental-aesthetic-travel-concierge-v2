@@ -1,8 +1,21 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckSquare, Square, Utensils } from 'lucide-react';
+import { AlertCircle, CheckSquare, Square, Utensils, Sparkles, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+
+const CUISINE_OPTIONS = [
+  { value: 'latin_caribbean', label: '🌴 Latin / Caribbean' },
+  { value: 'north_american', label: '🍔 North American' },
+  { value: 'mediterranean', label: '🫒 Mediterranean' },
+  { value: 'asian', label: '🥢 Asian' },
+  { value: 'middle_eastern', label: '🥙 Middle Eastern' },
+  { value: 'african', label: '🌍 African' },
+  { value: 'european', label: '🥐 European' },
+  { value: 'vegetarian_focused', label: '🥗 Vegetarian Focused' },
+  { value: 'no_preference', label: '✅ No Preference' },
+];
 
 const DIETARY_OPTIONS = [
   { value: 'none', label: '✅ No Dietary Restrictions' },
@@ -43,6 +56,32 @@ export default function SectionDietaryAllergy({ form, update, showValidation = f
   const isMissingMedAllergyDetail = showValidation && form.has_medication_allergies && !form.medication_allergies_details;
   const isMissingDietDetails = showValidation && needsDietaryDetails && !form.dietary_restrictions_details;
   const isMissingAck = showValidation && !form.dietary_accuracy_acknowledged;
+
+  const [generatingPlan, setGeneratingPlan] = useState(false);
+
+  const generateRecoveryPlan = useCallback(async () => {
+    setGeneratingPlan(true);
+    try {
+      const resp = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are a medical nutrition specialist for post-surgical recovery. Generate a personalized recovery meal plan brief for a companion caregiver.
+
+Patient profile:
+- Procedure: ${form.procedure_interest || 'medical procedure'}
+- Dietary restriction: ${form.dietary_restrictions || 'none'}
+- Preferred cuisine: ${form.preferred_cuisine || 'no preference'}
+- Food allergies: ${form.has_food_allergies ? form.food_allergies_details : 'none'}
+- Comfort foods requested: ${form.recovery_comfort_foods || 'not specified'}
+- Special requests: ${form.companion_meal_notes || 'none'}
+
+Write 4-5 specific, practical recovery meal recommendations for the first week post-procedure. Format as bullet points starting with an emoji. Be specific to the procedure and dietary restrictions. Focus on anti-inflammatory foods, healing nutrition, and comfort. Keep it concise — one line per recommendation.`,
+      });
+      if (resp) update('ai_recovery_meal_plan', resp);
+    } catch {
+      update('ai_recovery_meal_plan', '• Light broths and soups for the first 48 hours to ease digestion\n• Soft, protein-rich foods (eggs, yogurt, fish) to support tissue repair\n• Anti-inflammatory foods: berries, leafy greens, ginger tea\n• Stay hydrated: coconut water and warm herbal teas\n• Avoid spicy, fried, or processed foods during the recovery window');
+    } finally {
+      setGeneratingPlan(false);
+    }
+  }, [form]);
 
   return (
     <div className="space-y-6">
@@ -129,6 +168,87 @@ export default function SectionDietaryAllergy({ form, update, showValidation = f
           placeholder="e.g. I carry an EpiPen. In case of reaction, call 911 and administer epinephrine..."
           className="mt-1.5 h-20"
         />
+      </div>
+
+      {/* ── RECOVERY MEAL PREFERENCES ──────────────────────────────────────── */}
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Utensils className="w-4 h-4 text-emerald-700" />
+          <h4 className="font-semibold text-emerald-900 text-sm">Recovery Meal Preferences</h4>
+          <span className="text-xs text-emerald-600 ml-auto">Shared with your companion</span>
+        </div>
+        <p className="text-xs text-emerald-700">
+          Your companion will prepare meals for your recovery. Tell us what you love — we'll make sure they know.
+        </p>
+
+        {/* Cuisine preference */}
+        <div>
+          <Label className="text-xs font-semibold">Preferred Cuisine Style</Label>
+          <Select value={form.preferred_cuisine || ''} onValueChange={v => update('preferred_cuisine', v)}>
+            <SelectTrigger className="mt-1.5 bg-white">
+              <SelectValue placeholder="Select your preferred cuisine" />
+            </SelectTrigger>
+            <SelectContent>
+              {CUISINE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Comfort foods */}
+        <div>
+          <Label className="text-xs font-semibold">Comfort Foods You Love <span className="font-normal text-muted-foreground">(optional)</span></Label>
+          <Textarea
+            value={form.recovery_comfort_foods || ''}
+            onChange={e => update('recovery_comfort_foods', e.target.value)}
+            placeholder="e.g. chicken soup, rice and beans, fresh fruit, herbal tea..."
+            className="mt-1.5 h-16 bg-white text-sm"
+          />
+        </div>
+
+        {/* Special meal requests for companion */}
+        <div>
+          <Label className="text-xs font-semibold">Special Requests for Your Companion <span className="font-normal text-muted-foreground">(optional)</span></Label>
+          <Textarea
+            value={form.companion_meal_notes || ''}
+            onChange={e => update('companion_meal_notes', e.target.value)}
+            placeholder="e.g. Small portions, no spicy food, warm drinks only, eat at specific times..."
+            className="mt-1.5 h-16 bg-white text-sm"
+          />
+        </div>
+
+        {/* AI Recovery Plan */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label className="text-xs font-semibold">AI Recovery Nutrition Plan</Label>
+            <button
+              type="button"
+              onClick={generateRecoveryPlan}
+              disabled={generatingPlan}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-60"
+              style={{ background: 'rgba(16,185,129,0.12)', color: '#059669', border: '1px solid rgba(16,185,129,0.3)' }}
+            >
+              {generatingPlan
+                ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating…</>
+                : <><Sparkles className="w-3 h-3" /> Generate for my procedure</>}
+            </button>
+          </div>
+          {form.ai_recovery_meal_plan ? (
+            <div className="bg-white border border-emerald-200 rounded-xl p-4">
+              <p className="text-xs text-emerald-700 font-semibold mb-2">✨ Personalized Recovery Plan</p>
+              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{form.ai_recovery_meal_plan}</div>
+              <button
+                type="button"
+                onClick={generateRecoveryPlan}
+                disabled={generatingPlan}
+                className="mt-2 text-xs text-emerald-600 underline"
+              >Regenerate</button>
+            </div>
+          ) : (
+            <p className="text-xs text-emerald-600 italic">
+              Click "Generate" to receive a personalized recovery nutrition plan based on your procedure and dietary profile.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Accuracy Acknowledgement */}

@@ -2,7 +2,15 @@ import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { Utensils, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Utensils, AlertCircle, CheckCircle, Loader2, Sparkles, Heart } from 'lucide-react';
+
+const CUISINE_LABELS = {
+  latin_caribbean: '🌴 Latin / Caribbean', north_american: '🍔 North American',
+  mediterranean: '🫒 Mediterranean', asian: '🥢 Asian',
+  middle_eastern: '🥙 Middle Eastern', african: '🌍 African',
+  european: '🥐 European', vegetarian_focused: '🥗 Vegetarian Focused',
+  no_preference: '✅ No Preference',
+};
 
 const RESTRICTION_LABELS = {
   none: '✅ No restrictions',
@@ -107,6 +115,47 @@ export default function DietaryInfoCard({ caseId }) {
           </div>
         )}
       </div>
+
+      {/* ── RECOVERY MEAL PLAN (companion brief) ── */}
+      {(profile.preferred_cuisine || profile.recovery_comfort_foods || profile.companion_meal_notes || profile.ai_recovery_meal_plan) && (
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
+          <div className="flex items-center gap-2">
+            <Heart className="w-4 h-4 text-pink-500" />
+            <h5 className="font-semibold text-sm text-foreground">Recovery Meal Brief for You</h5>
+          </div>
+
+          {profile.preferred_cuisine && (
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+              <span className="text-xs text-muted-foreground font-medium">Preferred Cuisine</span>
+              <span className="text-sm font-semibold">{CUISINE_LABELS[profile.preferred_cuisine] || profile.preferred_cuisine}</span>
+            </div>
+          )}
+
+          {profile.recovery_comfort_foods && (
+            <div className="p-3 bg-pink-50 border border-pink-200 rounded-lg">
+              <p className="text-xs font-semibold text-pink-700 mb-1">🍽️ Comfort Foods They Love</p>
+              <p className="text-sm text-pink-800">{profile.recovery_comfort_foods}</p>
+            </div>
+          )}
+
+          {profile.companion_meal_notes && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs font-semibold text-blue-700 mb-1">📋 Special Requests for You</p>
+              <p className="text-sm text-blue-800">{profile.companion_meal_notes}</p>
+            </div>
+          )}
+
+          {profile.ai_recovery_meal_plan && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <p className="text-xs font-semibold text-emerald-700">AI Recovery Nutrition Plan</p>
+              </div>
+              <div className="text-sm text-emerald-800 whitespace-pre-line leading-relaxed">{profile.ai_recovery_meal_plan}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {!profile.companion_acknowledged_at && (
         <p className="text-xs text-amber-600 font-medium">⚠️ Please confirm the dietary handshake to acknowledge you have received and understood this information.</p>
