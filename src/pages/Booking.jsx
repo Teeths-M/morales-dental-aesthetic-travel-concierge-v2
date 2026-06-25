@@ -61,7 +61,7 @@ const steps = [
    { label: 'Medications',      emoji: '💊', short: 'Meds'      },
    { label: 'Lifestyle',        emoji: '🚬', short: 'Lifestyle' },
    { label: 'Emotional',        emoji: '🧠', short: 'Emotional' },
-   { label: 'Pregnancy',        emoji: '🤰', short: 'Health'    },
+   { label: "Women's Health",   emoji: '👩‍⚕️', short: 'Health'    },
    { label: 'Documents',        emoji: '📎', short: 'Docs'      },
    { label: 'Procedure & Date', emoji: '🏥', short: 'Procedure' },
    { label: 'Consent & Signature', emoji: '⚖️', short: 'Consent'    },
