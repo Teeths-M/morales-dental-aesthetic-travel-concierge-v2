@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
-import { Heart, ChefHat, Calendar, CheckCircle2 } from 'lucide-react';
+import { Heart, ChefHat, Calendar, CheckCircle2, Upload, Receipt } from 'lucide-react';
 import { useState as useLocalState } from 'react';
 
 const GOLD = '#D4AF37';
@@ -82,11 +82,84 @@ function ActiveAssignmentHero({ assignments }) {
 
       {/* Dietary card inlined */}
       {caseRecord && caseRecord.companion_quote_status === 'CONFIRMED' && (
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-2">
           <DietaryInfoCard caseRecord={caseRecord} compact />
         </div>
       )}
+
+      {/* Receipt upload — companion uploads grocery receipt after shopping */}
+      {caseRecord && <ReceiptUploadPanel caseId={caseRecord.id} assignmentId={caseRecord.companion_assignment_id} />}
     </motion.div>
+  );
+}
+
+// ── Receipt upload panel — companion uploads after grocery purchase ────────────
+function ReceiptUploadPanel({ caseId, assignmentId }) {
+  const GOLD = '#D4AF37';
+  const [amount,   setAmount]   = useLocalState('');
+  const [desc,     setDesc]     = useLocalState('');
+  const [loading,  setLoading]  = useLocalState(false);
+  const [uploaded, setUploaded] = useLocalState(false);
+
+  if (!assignmentId) return null;
+
+  const handleUpload = async () => {
+    const val = parseFloat(amount);
+    if (!val || val <= 0 || !desc.trim()) return;
+    setLoading(true);
+    try {
+      // Add receipt to MothersTouchAssignment
+      const assignment = await base44.entities.MothersTouchAssignment.filter({ case_id: caseId });
+      if (assignment[0]) {
+        const existing = assignment[0].grocery_receipts || [];
+        await base44.entities.MothersTouchAssignment.update(assignment[0].id, {
+          grocery_receipts: [...existing, {
+            receipt_url: '',
+            amount_usd: val,
+            description: desc,
+            uploaded_at: new Date().toISOString(),
+          }],
+        });
+      }
+      setUploaded(true);
+    } catch (_) { setLoading(false); }
+  };
+
+  if (uploaded) return (
+    <div className="px-5 pb-4">
+      <div className="flex items-center gap-2 p-3 rounded-xl"
+        style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}>
+        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+        <p className="text-xs font-semibold text-emerald-300">Receipt submitted — patient will receive approval request</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="px-5 pb-4">
+      <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2A3F4A' }}>
+        <div className="flex items-center gap-1.5 mb-2">
+          <Receipt className="w-3.5 h-3.5" style={{ color: GOLD }} />
+          <span className="text-xs font-semibold" style={{ color: GOLD }}>Upload Grocery Receipt</span>
+        </div>
+        <div className="flex gap-2 mb-2">
+          <input type="number" min="0" step="0.01" placeholder="Amount (USD)"
+            value={amount} onChange={e => setAmount(e.target.value)}
+            className="flex-1 px-3 py-2 text-xs rounded-lg focus:outline-none"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #2A3F4A', color: '#fff' }} />
+          <input type="text" placeholder="Description (e.g. Lunch groceries)"
+            value={desc} onChange={e => setDesc(e.target.value)}
+            className="flex-[2] px-3 py-2 text-xs rounded-lg focus:outline-none"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #2A3F4A', color: '#fff' }} />
+        </div>
+        <button onClick={handleUpload} disabled={loading || !amount || !desc}
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
+          style={{ background: GOLD, color: '#060B16' }}>
+          <Upload className="w-3.5 h-3.5" />
+          {loading ? 'Submitting…' : 'Submit for Patient Approval'}
+        </button>
+      </div>
+    </div>
   );
 }
 

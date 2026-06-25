@@ -171,6 +171,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     );
   }
 
+  // ── Mother's Touch auto-activation on HS5 (Clinic Arrival) ─────────────────
+  // The moment the patient walks into the clinic, Mother's Touch fires.
+  // Auto-matches a vetted companion, creates meal schedule, notifies both parties.
+  if (n === 5) {
+    base44.asServiceRole.functions?.invoke?.('activateMotherTouch', {
+      case_id: trip.case_id || trip_id,
+      handshake_number: n,
+    }).catch(() => {}); // non-blocking — handshake confirms regardless
+  }
+
   // Partner Portal notifications (doctor on HS5, companion on HS6, all on HS9)
   // sendHandshakeAlert and sendGoldenMNotification handle role-routing internally.
   if ([5, 6, 9].includes(n)) {

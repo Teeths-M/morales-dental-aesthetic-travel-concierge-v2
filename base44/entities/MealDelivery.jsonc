@@ -1,0 +1,59 @@
+{
+  "name": "MealDelivery",
+  "type": "object",
+  "description": "Tracks each individual meal delivery or care visit in a Mother's Touch session. Each delivery has its own handshake confirmation and expense record.",
+  "properties": {
+    "mothers_touch_assignment_id": { "type": "string" },
+    "case_id":           { "type": "string" },
+    "companion_id":      { "type": "string" },
+    "patient_email":     { "type": "string", "format": "email" },
+    "meal_type": {
+      "type": "string",
+      "enum": ["breakfast", "lunch", "dinner", "snack", "medication_check", "vitals_check"],
+      "default": "lunch"
+    },
+    "scheduled_for":     { "type": "string", "format": "date-time" },
+    "status": {
+      "type": "string",
+      "enum": ["scheduled", "en_route", "delivered", "confirmed_by_patient", "disputed"],
+      "default": "scheduled"
+    },
+    "receipt_url":       { "type": "string", "description": "URL to uploaded grocery/meal receipt" },
+    "receipt_amount_usd":{ "type": "number", "default": 0 },
+    "receipt_description":{ "type": "string" },
+    "receipt_uploaded_at":{ "type": "string", "format": "date-time" },
+    "patient_approved":  { "type": "boolean", "default": false },
+    "patient_approved_at":{ "type": "string", "format": "date-time" },
+    "patient_approval_method": {
+      "type": "string",
+      "enum": ["app", "sms"],
+      "default": "app"
+    },
+    "handshake_confirmed":{ "type": "boolean", "default": false },
+    "handshake_confirmed_at":{ "type": "string", "format": "date-time" },
+    "companion_notes":   { "type": "string", "description": "Companion notes on patient wellbeing during visit" },
+    "vitals_notes":      { "type": "string", "description": "Any vitals observations (alertness, appetite, pain level)" },
+    "escrow_released":   { "type": "boolean", "default": false },
+    "escrow_released_at":{ "type": "string", "format": "date-time" },
+    "delivered_at":      { "type": "string", "format": "date-time" }
+  },
+  "required": ["case_id", "companion_id", "meal_type"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.patient_email": "{{user.email}}" },
+        { "data.companion_id": "{{user.id}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": { "user_condition": { "isAuthenticated": true } },
+    "update": {
+      "$or": [
+        { "data.companion_id": "{{user.id}}" },
+        { "data.patient_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
+    }
+  }
+}
