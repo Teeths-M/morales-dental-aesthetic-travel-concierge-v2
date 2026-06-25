@@ -1,6 +1,7 @@
 // pages/CompanionSignup.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BackButton } from '@/components/nav/BackButton';
 import { useCompanionSignup } from '@/hooks/useCompanionSignup';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -100,6 +101,7 @@ export default function CompanionSignup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-12 px-4">
       <div className="max-w-2xl mx-auto">
+        <BackButton fallback="/register-role" className="mb-4" />
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 border-4 border-emerald-300 mb-4">

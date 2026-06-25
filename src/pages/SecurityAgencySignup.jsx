@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BackButtonLight } from '@/components/nav/BackButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Upload, CheckCircle, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -146,6 +147,7 @@ export default function SecurityAgencySignup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center p-4">
       <div className="w-full max-w-xl">
+        <BackButtonLight fallback="/register-role" className="mb-4" />
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 border border-white/20 mb-4">

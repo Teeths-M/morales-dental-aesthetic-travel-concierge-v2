@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { translations } from '@/lib/translations';
+import { BackButton } from '@/components/nav/BackButton';
 import TaxiServiceSignupStep1 from '@/components/partner-signup/TaxiServiceSignupStep1';
 import TaxiServiceSignupStep2 from '@/components/partner-signup/TaxiServiceSignupStep2';
 import TaxiServiceSignupStep3 from '@/components/partner-signup/TaxiServiceSignupStep3';
@@ -324,6 +325,7 @@ export default function TaxiServiceSignup() {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Main Content - Split Layout */}
       <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+        <BackButton fallback="/register-role" className="mb-4" />
         {/* Auto-detection indicator */}
         {formData.operating_country && (
           <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">

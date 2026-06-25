@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { translations } from '@/lib/translations';
+import { BackButton } from '@/components/nav/BackButton';
 import DoctorSignupStep1 from '@/components/doctor-signup/DoctorSignupStep1';
 import DoctorSignupStep2 from '@/components/doctor-signup/DoctorSignupStep2';
 import DoctorSignupStep2Pricing from '@/components/doctor-signup/DoctorSignupStep2Pricing';
@@ -140,6 +141,7 @@ export default function DoctorSignup() {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 py-12">
+        <BackButton fallback="/register-role" className="mb-4" />
         {/* Auto-detection indicator */}
         {formData.clinic_country && (
           <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center gap-2">
