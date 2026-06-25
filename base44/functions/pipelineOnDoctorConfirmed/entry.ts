@@ -176,6 +176,62 @@ Deno.serve(async (req) => {
       results.chauffeurs.push({ name: driverName, email: driver.email, portal_url: portalUrl });
     }
 
+    // ── 4. NOTIFY COMPANIONS (new — quota request for recovery service) ────────
+    const companions = await base44.asServiceRole.entities.Companion.filter({
+      verification_status: 'verified', is_available: true
+    }).catch(() => []);
+    const procedureCountry = caseData.procedure_country || '';
+    const companion = companions.find(c => (c.service_regions || []).includes(procedureCountry)) ?? companions[0];
+
+    if (companion) {
+      const companionName = companion.full_name || companion.email;
+      const companionEmailHtml = emailLayout({
+        eyebrow: 'Companion Service Quote Request',
+        title: `Companion quote needed: ${patientName}`,
+        intro: `${companionName}, a patient has been confirmed by their doctor and requires a recovery companion. Please review the details and submit your availability and pricing for the recovery period.`,
+        rows: [
+          ['Patient', patientName],
+          ['Procedure(s)', (caseData.procedures || []).join(', ') || '—'],
+          ['Recovery Days', String(caseData.recovery_days || 3)],
+          ['Location', procedureCountry || '—'],
+        ],
+        note: '🍽️ Your quote should cover daily meal delivery, emotional support, and availability for the full recovery period.',
+        ctaText: 'Open Companion Dashboard',
+        ctaUrl: `${appUrl}/companion-dashboard`,
+      });
+      if (companion.phone && !await isBlackedOut('sms', 'vendor', companion.phone)) {
+        labeledDispatches.push({ label: `Companion SMS — ${companionName}`, provider_type: 'companion', provider_name: companionName, provider_email: companion.phone, dispatch_type: 'sms',
+          fn: () => sendSms(companion.phone, `Hello ${companionName}, a confirmed patient (${patientName}) needs a recovery companion in ${procedureCountry}. Please log in to confirm your availability and pricing: ${appUrl}/companion-dashboard — ${BRAND}`) });
+      }
+      if (companion.email && !await isBlackedOut('email', 'vendor', companion.email)) {
+        labeledDispatches.push({ label: `Companion Email — ${companionName}`, provider_type: 'companion', provider_name: companionName, provider_email: companion.email, dispatch_type: 'email',
+          fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: companion.email, subject: `Companion quote needed — ${patientName} | ${BRAND}`, body: companionEmailHtml }) });
+      }
+    }
+
+    // ── 5. NOTIFY CLINIC (doctor's clinic — facility fee quote) ─────────────
+    const doctorEmail = caseData.doctor_email;
+    if (doctorEmail) {
+      const clinicEmailHtml = emailLayout({
+        eyebrow: 'Clinic Facility Fee — Quote Request',
+        title: `Facility fee quote needed: ${patientName}`,
+        intro: `Doctor, as the confirmed physician for this case, please provide the clinic facility fee, anaesthesia cost (if applicable), and post-operative consultation fee so we can finalise the patient's complete package pricing.`,
+        rows: [
+          ['Patient', patientName],
+          ['Procedure(s)', (caseData.procedures || []).join(', ') || '—'],
+          ['Procedure Date', caseData.procedure_date || caseData.preferred_date || 'To be confirmed'],
+          ['Case Reference', caseRecordId.slice(-8).toUpperCase()],
+        ],
+        note: '🏥 Please include: clinic facility fee, anaesthesia (if applicable), and post-op follow-up cost. Submit via your dashboard.',
+        ctaText: 'Open Doctor Dashboard',
+        ctaUrl: `${appUrl}/doctor-dashboard`,
+      });
+      if (!await isBlackedOut('email', 'vendor', doctorEmail)) {
+        labeledDispatches.push({ label: 'Clinic Facility Fee Email', provider_type: 'clinic', provider_name: 'Doctor', provider_email: doctorEmail, dispatch_type: 'email',
+          fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: doctorEmail, subject: `Clinic facility fee quote needed — ${patientName} | ${BRAND}`, body: clinicEmailHtml }) });
+      }
+    }
+
     // ── FAULT-TOLERANT SETTLEMENT: isolate failures, continue all other dispatches ──
     const settled = await Promise.allSettled(labeledDispatches.map(d => d.fn()));
     const failureWrites = [];
@@ -203,12 +259,15 @@ Deno.serve(async (req) => {
       console.warn(`[FaultTolerance] ${failureWrites.length} dispatch(es) failed and logged for admin intervention`);
     }
 
-    // Update CaseRecord status to Travel-Coordination
+    // Update CaseRecord to Vendor-Pending — waiting for all 4 partner quotes to come back.
+    // Status moves to Proposal-Sent only after all_quotas_confirmed = true via calculatePackagePrice.
     await base44.asServiceRole.entities.CaseRecord.update(caseRecordId, {
-      status: 'Travel-Coordination',
+      status:               'Vendor-Pending',
+      quotas_requested_at:  new Date().toISOString(),
     });
 
-    return Response.json({ success: true, results });
+    console.log(`[pipelineOnDoctorConfirmed] Quota requests dispatched to ${labeledDispatches.length} partner channels for case ${caseRecordId}`);
+    return Response.json({ success: true, results, partners_notified: labeledDispatches.length });
   } catch (error) {
     console.error('[pipelineOnDoctorConfirmed]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
