@@ -55,35 +55,59 @@ export default function GoldenMCelebration({ visible, trip, onClose }) {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{ background: 'rgba(6,11,22,0.95)', backdropFilter: 'blur(8px)' }}
     >
-      {/* Golden M */}
-      <div className="relative flex items-center justify-center mb-6">
-        {/* Outer glow */}
+      {/* Premium Golden M logo mark */}
+      <div className="relative flex items-center justify-center mb-8" style={{ width: 160, height: 160 }}>
+        {/* Deep background radial glow */}
+        <div className="absolute" style={{
+          inset: -60,
+          background: 'radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 65%)',
+          borderRadius: '50%',
+        }} />
+        {/* Animated pulse ring 1 */}
+        <div className="absolute inset-0 rounded-full" style={{
+          border: '1px solid rgba(212,175,55,0.25)',
+          animation: 'mring1 2.4s ease-in-out infinite',
+        }} />
+        {/* Animated pulse ring 2 */}
+        <div className="absolute rounded-full" style={{
+          inset: -18,
+          border: '1px solid rgba(212,175,55,0.15)',
+          animation: 'mring2 2.4s ease-in-out 0.5s infinite',
+        }} />
+        {/* Outer decorative ring */}
+        <div className="absolute inset-0 rounded-full" style={{
+          border: '1px solid rgba(212,175,55,0.35)',
+          background: 'rgba(212,175,55,0.04)',
+        }} />
+        {/* Main gold circle */}
         <div
-          className="absolute rounded-full"
+          className="relative flex items-center justify-center rounded-full"
           style={{
-            width: 180,
-            height: 180,
-            background: `radial-gradient(circle, rgba(212,175,55,0.25) 0%, transparent 70%)`,
-          }}
-        />
-        {/* M mark */}
-        <div
-          className="relative flex items-center justify-center rounded-full font-bold"
-          style={{
-            width: 120,
-            height: 120,
-            background: GOLD,
-            color: '#060B16',
-            fontSize: 64,
-            fontFamily: 'Georgia, serif',
-            letterSpacing: '-0.04em',
-            boxShadow: `0 0 60px rgba(212,175,55,0.6), 0 0 120px rgba(212,175,55,0.25)`,
-            lineHeight: 1,
+            width: 128,
+            height: 128,
+            background: 'linear-gradient(145deg, #F0D060 0%, #D4AF37 40%, #B8941F 100%)',
+            boxShadow: '0 0 70px rgba(212,175,55,0.75), 0 0 140px rgba(212,175,55,0.3), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.15)',
+            border: '1px solid rgba(255,255,255,0.2)',
           }}
         >
-          M
+          <span style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: 70,
+            fontWeight: 700,
+            color: '#060B16',
+            letterSpacing: '-0.05em',
+            lineHeight: 1,
+            textShadow: '0 2px 0 rgba(255,255,255,0.18), 0 -1px 0 rgba(0,0,0,0.2)',
+            userSelect: 'none',
+          }}>
+            M
+          </span>
         </div>
       </div>
+      <style>{`
+        @keyframes mring1 { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.18);opacity:0} }
+        @keyframes mring2 { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.22);opacity:0} }
+      `}</style>
 
       {/* Heading */}
       <h1

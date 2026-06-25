@@ -133,18 +133,50 @@ function HandshakeDemo() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-6"
           >
-            <div
-              className="mx-auto flex items-center justify-center rounded-full font-bold mb-4"
-              style={{
-                width: 88, height: 88,
-                background: GOLD, color: DARK,
-                fontSize: 44, fontFamily: 'Georgia, serif',
-                boxShadow: `0 0 40px rgba(212,175,55,0.6)`,
-              }}
-            >
-              M
+            {/* Premium Golden M logo mark */}
+            <div className="relative mx-auto mb-5" style={{ width: 110, height: 110 }}>
+              {/* Outer glow rings */}
+              <div className="absolute inset-0 rounded-full" style={{
+                background: 'radial-gradient(circle, rgba(212,175,55,0.18) 0%, transparent 70%)',
+                transform: 'scale(1.6)',
+              }} />
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{ border: '1px solid rgba(212,175,55,0.2)' }}
+                animate={{ scale: [1, 1.18, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{ border: '1px solid rgba(212,175,55,0.15)', margin: -12 }}
+                animate={{ scale: [1, 1.22, 1], opacity: [0.4, 0, 0.4] }}
+                transition={{ duration: 2.4, delay: 0.6, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              {/* Main circle */}
+              <div
+                className="absolute inset-0 rounded-full flex items-center justify-center"
+                style={{
+                  background: `linear-gradient(145deg, #E8C85C 0%, ${GOLD} 45%, #B8941F 100%)`,
+                  boxShadow: `0 0 50px rgba(212,175,55,0.65), 0 0 100px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.25)`,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                }}
+              >
+                {/* M lettermark */}
+                <span style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  fontSize: 52,
+                  fontWeight: 700,
+                  color: '#060B16',
+                  letterSpacing: '-0.04em',
+                  lineHeight: 1,
+                  textShadow: '0 1px 0 rgba(255,255,255,0.15)',
+                  userSelect: 'none',
+                }}>
+                  M
+                </span>
+              </div>
             </div>
-            <p className="text-xl font-bold mb-1" style={{ color: GOLD }}>Journey Complete.</p>
+            <p className="text-xl font-bold mb-1" style={{ color: GOLD, fontFamily: 'Georgia, serif', letterSpacing: '-0.02em' }}>Journey Complete.</p>
             <p className="text-sm mb-4" style={{ color: '#94a3b8' }}>
               The Golden M is yours. SMS sent to patient.
             </p>
