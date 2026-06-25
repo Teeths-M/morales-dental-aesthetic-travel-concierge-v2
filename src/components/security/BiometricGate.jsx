@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { Fingerprint, Lock, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes (was 5)
 const MAX_FAILED_ATTEMPTS = 3;
 
+// Public paths never trigger the session lock — no auth context exists there
+const PUBLIC_PATHS = ['/', '/discover', '/providers', '/how-it-works', '/partners',
+  '/about', '/procedures', '/consultation', '/consultation-success', '/register-role',
+  '/deep-perfection', '/onboarding', '/travel-concierge', '/emergency', '/offline-guide',
+  '/demo', '/login', '/register'];
+
 export default function BiometricGate({ children }) {
+  const location = useLocation();
   const [locked, setLocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
   const [method, setMethod] = useState(null); // 'biometric' | 'pin'
@@ -138,7 +146,11 @@ export default function BiometricGate({ children }) {
   // Register a session PIN on mount (while user is authenticated and unlocked)
   useEffect(() => { ensurePinRegistered(); }, [ensurePinRegistered]);
 
-  if (!locked) return children;
+  // Never lock on public/unauthenticated paths — no session exists there
+  const isPublic = PUBLIC_PATHS.some(p =>
+    location.pathname === p || location.pathname.startsWith(p + '/')
+  );
+  if (!locked || isPublic) return children;
 
   const isMaxed = failedAttempts >= MAX_FAILED_ATTEMPTS;
 
