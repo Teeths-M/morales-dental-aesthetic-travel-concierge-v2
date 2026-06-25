@@ -11,6 +11,7 @@ import {
   Copy, CheckCircle2, RefreshCw, Loader2, Navigation, Info
 } from 'lucide-react';
 import { useOfflineSOS } from '@/offline/sos/useOfflineSOS';
+import EmergencyCommsCascade from '@/components/emergency/EmergencyCommsCascade';
 
 const STATE_LABELS = {
   idle: '',
@@ -222,6 +223,25 @@ export default function WildernessSOSPanel({
             <RefreshCw className="w-3.5 h-3.5" /> Retry Sync to Morales
           </button>
         )}
+
+        {/* Advanced comms cascade — 6-channel fallback */}
+        <details className="group">
+          <summary className="list-none flex items-center gap-2 cursor-pointer select-none py-2">
+            <span className="text-xs font-semibold text-slate-400 group-open:text-white transition-colors">
+              ▸ Advanced Emergency Comms — Satellite · BLE · QR · Web Share
+            </span>
+          </summary>
+          <div className="mt-3 rounded-2xl p-4" style={{ background: '#060B16', border: '1px solid #2A3F4A' }}>
+            <EmergencyCommsCascade
+              caseId={caseId}
+              userId={userId}
+              userEmail={userEmail}
+              activitySessionId={activitySessionId}
+              activityType={activityType}
+              medicalCode={medicalCode}
+            />
+          </div>
+        </details>
       </div>
     </div>
   );
