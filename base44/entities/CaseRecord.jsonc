@@ -754,6 +754,10 @@
     },
 
     // ── Pre-Travel Countdown Reminders ────────────────────────────────────────
+    // ── Recovery Tracker Share Token (Viral Hook) ─────────────────────────────
+    "share_token":     { "type": "string",  "description": "Token for public recovery tracker page /track/:token" },
+    "share_token_exp": { "type": "string",  "format": "date-time", "description": "Share token expiry" },
+
     "travel_reminder_14d_sent": { "type": "boolean", "default": false },
     "travel_reminder_7d_sent":  { "type": "boolean", "default": false },
     "travel_reminder_3d_sent":  { "type": "boolean", "default": false },

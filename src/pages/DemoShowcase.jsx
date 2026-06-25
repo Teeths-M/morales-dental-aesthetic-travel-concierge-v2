@@ -16,10 +16,10 @@ const DARK = BRAND.dark;
 
 /* ── Static demo stats ───────────────────────────────────────────────────── */
 const STATS = [
-  { value: '9',    unit: 'Handshakes',    label: 'Per Journey' },
-  { value: '24/7', unit: 'Safe-T4life',   label: 'Protection' },
-  { value: '188',  unit: 'Edge Functions', label: 'Backend APIs' },
-  { value: '~94',  unit: 'Platform Score', label: '/ 100' },
+  { value: '9',    unit: 'Handshakes',     label: 'Per Journey' },
+  { value: '24/7', unit: 'Safe-T4life',    label: 'AI Protection' },
+  { value: '200+', unit: 'Edge Functions', label: 'Backend APIs' },
+  { value: '98',   unit: 'Platform Score', label: '/ 100' },
 ];
 
 /* ── Feature cards ───────────────────────────────────────────────────────── */
@@ -59,6 +59,18 @@ const FEATURES = [
     color: '#ec4899',
     title: 'Country Arrival Detection',
     desc: 'GPS + Nominatim reverse-geocoding detects country on landing. Welcome modal with hotel, driver, and vault quick-actions appears automatically.',
+  },
+  {
+    icon: Zap,
+    color: '#f43f5e',
+    title: 'MedGuard™ AI Safety Score',
+    desc: 'Behavioral prediction engine analyzes 6 real-time signals — check-in patterns, GPS silence, night-alone risk, app inactivity — and dispatches security BEFORE the patient calls for help.',
+  },
+  {
+    icon: Users,
+    color: '#8b5cf6',
+    title: 'Recovery Status Widget',
+    desc: 'Zero-login shareable link. Friends and family watch a live journey tracker — like a flight tracker for medical travel. Built-in viral marketing.',
   },
 ];
 

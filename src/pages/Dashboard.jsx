@@ -27,6 +27,7 @@ import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
+import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
@@ -190,9 +191,16 @@ function DashboardHome({ user, consultations, language }) {
         </div>
       )}
 
-      {/* Journey Status Timeline — Stripe/Apple order-status model
-          Shows payment, flight, hotel, transfers, doctor, companion as live status.
-          Visible as soon as patient has a case (even pre-travel). */}
+      {/* MedGuard™ — Behavioral Safety Score (above everything during active travel)
+          The unfair competitive advantage. No other platform has this. */}
+      {latestConsultation && (
+        <MedGuardPulse
+          caseId={latestConsultation.id}
+          tripPhase={activeTrip?.trip_phase || latestConsultation.trip_phase}
+        />
+      )}
+
+      {/* Journey Status Timeline — Stripe/Apple order-status model */}
       {latestConsultation && (
         <JourneyStatusTimeline caseRecord={latestConsultation} />
       )}
