@@ -16,7 +16,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import QRCode from 'qrcode';
 import { base44 } from '@/api/base44Client';
 import {
   buildSosPacket,
@@ -147,20 +146,29 @@ export function useEmergencyComms({
     setChannel('bluetooth', ok ? 'sent' : 'failed');
   }, [bluetooth]);
 
-  // ── Channel: QR Code ───────────────────────────────────────────────────
+  // ── Channel: QR Code (public API — no npm package needed) ─────────────
   const generateQr = useCallback(async (payload) => {
     setChannel('qr', 'sending');
     try {
-      const url = await QRCode.toDataURL(payload, {
-        width: 256,
-        margin: 2,
-        color: { dark: '#060B16', light: '#ffffff' },
-        errorCorrectionLevel: 'M',
+      // qrserver.com is a free public API — works offline if response is cached
+      const encoded = encodeURIComponent(payload);
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&margin=2&data=${encoded}`;
+      // Pre-fetch and convert to data URL so it survives offline display
+      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      const blob = await res.blob();
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
       });
-      setQrDataUrl(url);
+      setQrDataUrl(dataUrl);
       setChannel('qr', 'sent');
     } catch (_) {
-      setChannel('qr', 'failed');
+      // Fallback: use direct URL (requires internet to display)
+      const encoded = encodeURIComponent(payload);
+      setQrDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&margin=2&data=${encoded}`);
+      setChannel('qr', 'sent');
     }
   }, []);
 
