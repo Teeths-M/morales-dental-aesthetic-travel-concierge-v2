@@ -4,8 +4,10 @@ import { useLocation } from 'react-router-dom';
 import { Fingerprint, Lock, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { PUBLIC_BYPASS_PATHS as PUBLIC_PATHS } from '@/lib/constants';
 
 const MAX_FAILED_ATTEMPTS = 3;
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function BiometricGate({ children }) {
   // Session auto-lock disabled — the vault PIN and emergency features still

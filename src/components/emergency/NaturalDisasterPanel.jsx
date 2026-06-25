@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Phone, MapPin, ChevronDown, ChevronUp, Loader2, Radio } from 'lucide-react';
+import { AlertTriangle, Phone, MapPin, ChevronDown, ChevronUp, Loader2, Radio, Shield } from 'lucide-react';
 
 /* ── Country emergency data ────────────────────────────────────────────────
    Covers top medical tourism destinations + major countries worldwide.
