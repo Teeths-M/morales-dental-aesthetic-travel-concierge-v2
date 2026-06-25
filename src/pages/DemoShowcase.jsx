@@ -258,9 +258,236 @@ function EscalationTimeline() {
   );
 }
 
+/* ── MedGuard™ live simulation demo ─────────────────────────────────────── */
+const MEDGUARD_SCENARIOS = [
+  {
+    label: 'SAFE', score: 12, color: '#22c55e',
+    patient: 'Maria C.', dest: 'Caracas, Venezuela', phase: 'arrived',
+    factors: [
+      { key: 'Check-In Status',       pts: 0,  note: 'Last check-in 2h ago — on time' },
+      { key: 'GPS Signal',            pts: 0,  note: 'Live location active' },
+      { key: 'Night Alone Risk',      pts: 0,  note: 'Daytime — 2:30 PM local' },
+      { key: 'Destination Risk',      pts: 15, note: 'High-risk country flag' },
+      { key: 'App Activity',          pts: 0,  note: 'Active 8 min ago' },
+      { key: 'Solo Protocol',         pts: 0,  note: 'Companion assigned' },
+    ],
+    response: null,
+    badge: 'All systems normal. Standard monitoring active.',
+  },
+  {
+    label: 'WATCH', score: 42, color: '#d97706',
+    patient: 'Maria C.', dest: 'Caracas, Venezuela', phase: 'arrived',
+    factors: [
+      { key: 'Check-In Status',       pts: 0,  note: 'Last check-in 10h ago — on schedule' },
+      { key: 'GPS Signal',            pts: 0,  note: 'Last update 1.5h ago' },
+      { key: 'Night Alone Risk',      pts: 20, note: 'Late evening — 11:20 PM local' },
+      { key: 'Destination Risk',      pts: 15, note: 'High-risk country flag' },
+      { key: 'App Activity',          pts: 8,  note: 'No app activity for 3.2h' },
+      { key: 'Solo Protocol',         pts: 0,  note: 'Companion assigned' },
+    ],
+    response: 'Increased monitoring frequency. Next check-in shortened to 4 hours.',
+    badge: 'Monitoring closely. Patient appears active.',
+  },
+  {
+    label: 'ALERT', score: 71, color: '#ea580c',
+    patient: 'Maria C.', dest: 'Caracas, Venezuela', phase: 'recovery',
+    factors: [
+      { key: 'Check-In Status',       pts: 25, note: '⚠️ Solo check-in overdue by 2h 14m' },
+      { key: 'GPS Signal',            pts: 16, note: '⚠️ GPS silent for 2h — last: Hotel Caracas' },
+      { key: 'Night Alone Risk',      pts: 20, note: '🌙 1:45 AM local — alone at night' },
+      { key: 'Destination Risk',      pts: 15, note: 'High-risk country flag' },
+      { key: 'App Activity',          pts: 10, note: 'No activity for 4.5h' },
+      { key: 'Solo Protocol',         pts: 0,  note: 'Companion assigned' },
+    ],
+    response: '🟠 Concierge notified. SMS sent: "Hi Maria, we noticed you haven\'t checked in. Reply SAFE or tap the app."',
+    badge: 'Alert active. Concierge has contacted the patient.',
+  },
+  {
+    label: 'CRITICAL', score: 89, color: '#dc2626',
+    patient: 'Maria C.', dest: 'Caracas, Venezuela', phase: 'recovery',
+    factors: [
+      { key: 'Check-In Status',       pts: 50, note: '🚨 2 consecutive solo check-ins missed' },
+      { key: 'GPS Signal',            pts: 24, note: '🚨 GPS silent for 3h — signal lost' },
+      { key: 'Night Alone Risk',      pts: 20, note: '🌙 3:10 AM — alone in high-risk zone' },
+      { key: 'Destination Risk',      pts: 15, note: 'Venezuela — Tier 4 advisory' },
+      { key: 'App Activity',          pts: 10, note: 'No activity for 6h' },
+      { key: 'Solo Protocol',         pts: 15, note: '🚨 Solo check-in protocol violated' },
+    ],
+    response: '🚨 SECURITY DISPATCHED. Blaze Security Agency alerted with GPS last-known coords. Local emergency protocols activated. Family emergency contact notified.',
+    badge: 'Critical protocol active. Security en route.',
+  },
+];
+
+function MedGuardDemo() {
+  const [sceneIdx, setSceneIdx] = useState(0);
+  const [running,  setRunning]  = useState(true);
+  const [tick,     setTick]     = useState(0);
+
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => {
+      setSceneIdx(i => {
+        if (i >= MEDGUARD_SCENARIOS.length - 1) { setRunning(false); return i; }
+        return i + 1;
+      });
+    }, 3500);
+    return () => clearInterval(t);
+  }, [running]);
+
+  // Score counter animation
+  const scene    = MEDGUARD_SCENARIOS[sceneIdx];
+  const [displayScore, setDisplayScore] = useState(scene.score);
+
+  useEffect(() => {
+    const target = scene.score;
+    const step   = target > displayScore ? 2 : -2;
+    const t = setInterval(() => {
+      setDisplayScore(s => {
+        if (Math.abs(s - target) <= 2) { clearInterval(t); return target; }
+        return s + step;
+      });
+    }, 20);
+    return () => clearInterval(t);
+  }, [sceneIdx]);
+
+  const restart = () => { setSceneIdx(0); setDisplayScore(12); setRunning(true); };
+
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto">
+
+      {/* Header */}
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
+          style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)' }}>
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#22c55e' }} />
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>MedGuard™ Live Simulation</span>
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Predicting risk <em style={{ color: GOLD }}>before</em> the patient calls for help.
+        </h2>
+        <p className="text-sm" style={{ color: '#64748b' }}>
+          Watch as MedGuard analyzes Maria's behavioral signals in real time and escalates automatically.
+        </p>
+      </div>
+
+      {/* Score dial */}
+      <motion.div key={sceneIdx} initial={{ scale: 0.97, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }}
+        className="rounded-2xl overflow-hidden"
+        style={{ background: '#0C1A1D', border: `2px solid ${scene.color}50` }}>
+
+        {/* Top bar */}
+        <div style={{ height: 4, background: `linear-gradient(to right, ${scene.color}00, ${scene.color}, ${scene.color}00)`,
+          boxShadow: `0 0 12px ${scene.color}` }} />
+
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            {/* Patient info */}
+            <div className="flex items-center gap-3">
+              <img src="https://i.pravatar.cc/150?img=47" alt="Maria" className="w-12 h-12 rounded-full object-cover"
+                style={{ border: `2px solid ${scene.color}` }} />
+              <div>
+                <p className="text-base font-bold text-white">{scene.patient}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs" style={{ color: '#94a3b8' }}>📍 {scene.dest}</span>
+                </div>
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: scene.color }} />
+                  <span className="text-xs font-semibold" style={{ color: scene.color }}>{scene.label}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Score */}
+            <div className="text-right">
+              <div className="text-5xl font-black leading-none" style={{ color: scene.color }}>
+                {displayScore}
+              </div>
+              <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>/ 100</div>
+              <div className="text-xs font-semibold mt-1 uppercase tracking-widest" style={{ color: scene.color }}>
+                Risk Score
+              </div>
+            </div>
+          </div>
+
+          {/* Factor breakdown */}
+          <div className="space-y-2.5 mb-5">
+            {scene.factors.map((f, i) => (
+              <motion.div key={f.key} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06 }}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>{f.key}</span>
+                  <span style={{ color: f.pts > 0 ? '#ef4444' : '#22c55e', fontWeight: 700 }}>
+                    {f.pts > 0 ? `+${f.pts}` : '✓ Clear'}
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <motion.div className="h-1.5 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(f.pts * 2, 100)}%` }}
+                    transition={{ duration: 0.5, delay: i * 0.06 }}
+                    style={{ background: f.pts > 0 ? '#ef4444' : '#22c55e' }} />
+                </div>
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>{f.note}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Automated response */}
+          {scene.response && (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              className="rounded-xl px-4 py-3"
+              style={{ background: `${scene.color}15`, border: `1px solid ${scene.color}30` }}>
+              <p className="text-xs font-semibold mb-1" style={{ color: scene.color }}>
+                Automated Response Fired
+              </p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                {scene.response}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Badge */}
+          <p className="text-xs mt-4 text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            {scene.badge}
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Scene selector / controls */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-2">
+          {MEDGUARD_SCENARIOS.map((s, i) => (
+            <button key={s.label} onClick={() => { setSceneIdx(i); setRunning(false); }}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{ background: sceneIdx === i ? `${s.color}25` : '#0C1A1D',
+                       color: sceneIdx === i ? s.color : '#475569',
+                       border: `1px solid ${sceneIdx === i ? s.color + '50' : '#2A3F4A'}` }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <button onClick={restart}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          style={{ background: running ? GOLD : '#0C1A1D', color: running ? DARK : GOLD,
+                   border: `1px solid ${running ? 'transparent' : GOLD + '40'}` }}>
+          {running ? '● Live' : '↺ Replay'}
+        </button>
+      </div>
+
+      {/* Caption */}
+      <div className="text-center">
+        <p className="text-xs" style={{ color: '#334155' }}>
+          MedGuard™ analyzes 6 behavioral signals every 5 minutes. No other medical travel platform does this.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main showcase page ──────────────────────────────────────────────────── */
 const TABS = [
   { id: 'overview',   label: '🏥 Platform Overview' },
+  { id: 'medguard',   label: '🛡️ MedGuard™ Live' },
   { id: 'emergency',  label: '🚨 Kidnapping Scenario' },
   { id: 'nightlife',  label: '🔒 Vault Lockdown' },
 ];
@@ -312,6 +539,13 @@ export default function DemoShowcase() {
           </button>
         ))}
       </div>
+
+      {/* ── MEDGUARD TAB ── */}
+      {activeTab === 'medguard' && (
+        <div className="max-w-5xl mx-auto px-4 py-12">
+          <MedGuardDemo />
+        </div>
+      )}
 
       {/* ── EMERGENCY TAB ── */}
       {activeTab === 'emergency' && <EmergencyScenarioDemo minimal />}
