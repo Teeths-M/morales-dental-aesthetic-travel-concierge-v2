@@ -1,69 +1,44 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Users, Menu, X, LayoutDashboard, Import, UserCheck, FilePlus, Eye,
-  MessageSquare, ShieldAlert, Activity, DollarSign, User, BarChart2,
-  Shield, FileText, Star, Settings, TrendingUp, CreditCard, AlertTriangle,
-  LogOut, TreePine, Radio, ChevronLeft,
+  Users, Menu, X, LayoutDashboard, ShieldAlert, Activity,
+  DollarSign, User, Shield, FileText, CreditCard, AlertTriangle,
+  LogOut, ChevronLeft,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
+// Essential-only navigation — 10 items, 4 sections.
+// Advanced tools (imports, IQ-200, portal viewer, etc.) still exist at their
+// URLs but are not surfaced here to keep the daily workflow clear.
 const NAV_SECTIONS = [
   {
     label: null,
     items: [
-      { path: '/admin', label: 'Patient Journey', icon: LayoutDashboard },
+      { path: '/admin',                 label: 'Patient Journey',  icon: LayoutDashboard },
+      { path: '/admin/mission-control', label: 'Mission Control',  icon: Activity },
     ],
   },
   {
-    label: 'Partners',
+    label: 'People',
     items: [
-      { path: '/admin/partners',              label: 'Partner Management',    icon: Users },
-      { path: '/admin/partner-verification',  label: 'Partner Verification',  icon: Shield },
-      { path: '/admin/doctor-verification',   label: 'Doctor Verification',   icon: UserCheck },
-      { path: '/admin/provider-verification', label: 'Provider Verification', icon: ShieldAlert },
-      { path: '/admin/provider-performance',  label: 'Provider Performance',  icon: TrendingUp },
-      { path: '/admin/companions',            label: 'Companions',            icon: User },
+      { path: '/admin/partners',             label: 'Partners',      icon: Users },
+      { path: '/admin/partner-verification', label: 'Verifications', icon: ShieldAlert },
+      { path: '/admin/companions',           label: 'Companions',    icon: User },
     ],
   },
   {
-    label: 'Operations',
+    label: 'Money',
     items: [
-      { path: '/admin/procedure-requests', label: 'Procedure Requests', icon: FilePlus },
-      { path: '/admin/imports',            label: 'Data Imports',       icon: Import },
-      { path: '/admin/config-approvals',   label: 'Config Approvals',   icon: Settings },
-      { path: '/admin/portal-viewer',      label: 'Portal Viewer',      icon: Eye },
+      { path: '/admin/payments', label: 'Payments & Payouts', icon: CreditCard },
+      { path: '/admin/pricing',  label: 'Pricing',            icon: DollarSign },
     ],
   },
   {
-    label: 'Communications',
+    label: 'Monitor',
     items: [
-      { path: '/admin/sms',              label: 'SMS Notifications',   icon: MessageSquare },
-      { path: '/admin/dispatch-monitor', label: 'Dispatch Failures',   icon: ShieldAlert },
-      { path: '/admin/iq200',            label: 'IQ-200 Intelligence', icon: Activity },
-    ],
-  },
-  {
-    label: 'Finance',
-    items: [
-      { path: '/admin/pricing',       label: 'Pricing Catalog',   icon: DollarSign },
-      { path: '/admin/payments',      label: 'Payments & Payouts', icon: CreditCard },
-      { path: '/admin/monetization',  label: 'Monetization',      icon: Star },
-    ],
-  },
-  {
-    label: 'Safety',
-    items: [
-      { path: '/admin/solo-monitor',        label: 'Solo Safety Monitor', icon: Radio },
-      { path: '/admin/risk-optimization',   label: 'Risk Optimization',   icon: AlertTriangle },
-      { path: '/admin/wilderness-rescue',   label: 'Wilderness Rescue',   icon: TreePine },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [
-      { path: '/admin/analytics',  label: 'Analytics', icon: BarChart2 },
-      { path: '/admin/audit-log',  label: 'Audit Log', icon: FileText },
+      { path: '/admin/solo-monitor',     label: 'Safety Monitor',  icon: Shield },
+      { path: '/admin/dispatch-monitor', label: 'Dispatch Issues', icon: AlertTriangle },
+      { path: '/admin/audit-log',        label: 'Audit Log',       icon: FileText },
     ],
   },
 ];

@@ -15,7 +15,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import CaseDetailDrawer from '@/components/admin/CaseDetailDrawer';
-import JourneyStageSummary from '@/components/admin/JourneyStageSummary';
 import FallbackCrisisAlert from '@/components/admin/FallbackCrisisAlert';
 import AdminLayout from '@/components/layout/AdminLayout';
 
@@ -60,13 +59,6 @@ export default function SimpleAdminDashboard() {
     a.download = `cases-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleTestSentry = () => {
-    // This will be caught by Sentry in production
-    const testError = new Error('TEST_SENTRY_ERROR - This is a test error for Sentry integration validation');
-    testError.name = 'SentryTestError';
-    throw testError;
   };
 
   // Derive active and completed cases from the single query
@@ -148,9 +140,6 @@ export default function SimpleAdminDashboard() {
             <p className="text-muted-foreground mt-1">Monitor active medical travel cases</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={handleTestSentry} variant="destructive" size="sm" className="gap-1.5">
-              🧪 Test Sentry
-            </Button>
             <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" disabled={allCases.length === 0}>
               <Download className="w-4 h-4" /> <span className="hidden md:inline">Export CSV</span>
             </Button>
@@ -234,9 +223,6 @@ export default function SimpleAdminDashboard() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Journey Stage Summary */}
-            <JourneyStageSummary cases={allCases} />
 
             {/* Search Bar */}
             <div className="bg-white rounded-2xl shadow-md p-4 border border-slate-100">
