@@ -405,6 +405,30 @@ async function handlePackagePaymentSuccess(base44, {
     }
   }
 
+  // ── Store Stripe Customer ID for 1-click balance payment (Stripe model) ──
+  // Retrieve customer + default payment method from the session/intent
+  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+  if (stripeKey && stripe_session_id && case_id) {
+    try {
+      const sessResp = await fetch(`https://api.stripe.com/v1/checkout/sessions/${stripe_session_id}`, {
+        headers: { 'Authorization': `Bearer ${stripeKey}` },
+      });
+      if (sessResp.ok) {
+        const sess = await sessResp.json();
+        const customerId = sess.customer;
+        const pmId       = sess.payment_method_creation === 'customer' ? sess.payment_method : null;
+        const last4      = sess.customer_details?.card?.last4 || null;
+        if (customerId) {
+          await base44.asServiceRole.entities.CaseRecord.update(case_id, {
+            stripe_customer_id:          customerId,
+            stripe_payment_method_id:    pmId || undefined,
+            stripe_payment_method_last4: last4 || undefined,
+          }).catch(() => {});
+        }
+      }
+    } catch (_) {}
+  }
+
   // ── Partner Cascade (Promise.allSettled — never blocks main payment confirmation) ──
   // Determines which partners to activate based on payment type, then fires sendPaymentReceipt.
   const cascadePaymentType = (deposit_option === 'Full' || plan_type === 'full_payment') ? 'full_pay'

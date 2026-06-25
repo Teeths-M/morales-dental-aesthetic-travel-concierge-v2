@@ -758,7 +758,25 @@
     "travel_reminder_7d_sent":  { "type": "boolean", "default": false },
     "travel_reminder_3d_sent":  { "type": "boolean", "default": false },
     "travel_reminder_1d_sent":  { "type": "boolean", "default": false },
-    "travel_reminder_day_of_sent": { "type": "boolean", "default": false }
+    "travel_reminder_day_of_sent": { "type": "boolean", "default": false },
+
+    // ── Abandoned Booking Recovery (Expedia model) ────────────────────────────
+    "abandoned_1_sent":   { "type": "boolean", "default": false, "description": "2-hr warm recovery email+SMS sent" },
+    "abandoned_2_sent":   { "type": "boolean", "default": false, "description": "24-hr firm reminder email+SMS sent" },
+    "quotas_released_at": { "type": "string",  "format": "date-time", "description": "When 48-hr quote expiry was triggered" },
+
+    // ── Partner SLA Breach Tracking (Uber model) ──────────────────────────────
+    "sla_breached_travel":    { "type": "boolean", "default": false },
+    "sla_breached_driver":    { "type": "boolean", "default": false },
+    "sla_breached_companion": { "type": "boolean", "default": false },
+    "sla_breached_clinic":    { "type": "boolean", "default": false },
+    "backup_travel_id":       { "type": "string", "description": "Backup travel agency dispatched after SLA breach" },
+    "backup_driver_id":       { "type": "string", "description": "Backup driver dispatched after SLA breach" },
+
+    // ── Stripe 1-Click Checkout (Stripe model) ────────────────────────────────
+    "stripe_customer_id":     { "type": "string", "description": "Stripe Customer ID — enables 1-click balance payment" },
+    "stripe_payment_method_id":{ "type": "string", "description": "Saved Stripe payment method for 1-click" },
+    "stripe_payment_method_last4": { "type": "string", "description": "Last 4 digits for display in Pay Now email" }
   },
   "required": [
     "client_name",

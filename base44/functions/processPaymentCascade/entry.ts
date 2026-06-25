@@ -163,6 +163,43 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }
   }
 
+  // ── Create EscrowHold records (Airbnb trust model) ───────────────────────
+  // Partners are notified and activated, but funds are held until
+  // the patient physically completes the relevant handshake checkpoint.
+  const escrowTasks: Promise<unknown>[] = [];
+  const now = new Date().toISOString();
+  const baseCost = Number(c.base_cost || 0);
+  const consult  = 49;
+  const adj      = Math.max(baseCost - consult, 0);
+
+  const ESCROW_MAP = [
+    { partner_type: 'doctor',         release_trigger_hs: 5, amount: Number(c.treatment_cost || 0) + Number(c.clinic_cost || 0), email: c.doctor_email },
+    { partner_type: 'companion',      release_trigger_hs: 6, amount: Number(c.companion_cost || 0), email: null },
+    { partner_type: 'driver_origin',  release_trigger_hs: 1, amount: Math.round(Number(c.pickup_cost || 0) * 0.25), email: null },
+    { partner_type: 'driver_destination', release_trigger_hs: 7, amount: Number(c.local_transfer_cost || 0), email: null },
+    { partner_type: 'travel_agency',  release_trigger_hs: 9, amount: Number(c.flight_cost || 0) + Number(c.hotel_cost || 0), email: agency?.email },
+  ];
+
+  for (const em of ESCROW_MAP) {
+    if (em.amount <= 0) continue;
+    escrowTasks.push(
+      base44.asServiceRole.entities.EscrowHold.create({
+        case_id:           case_id,
+        partner_type:      em.partner_type,
+        partner_id:        em.partner_type === 'doctor' ? (c.doctor_id || '') : '',
+        partner_email:     em.email || '',
+        amount_held_usd:   em.amount,
+        release_trigger_hs: em.release_trigger_hs,
+        status:            'held',
+        payment_confirmed_at: now,
+      }).catch(() => {})
+    );
+  }
+  if (escrowTasks.length > 0) await Promise.allSettled(escrowTasks);
+
+  // Generate itinerary calendar (async, non-blocking)
+  base44.asServiceRole.functions?.invoke?.('generateItineraryCalendar', { case_id }).catch(() => {});
+
   // Generate receipt + update case record
   const newPaymentStatus = isFullPay ? 'Paid In Full' : isBalance ? 'Paid In Full' : '50% Paid';
   const amountPaid  = Number(amount_paid || 0);

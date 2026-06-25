@@ -26,6 +26,7 @@ import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
+import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
@@ -187,6 +188,13 @@ function DashboardHome({ user, consultations, language }) {
             We're having trouble finding your location. Your Guardian will see your last known position.
           </p>
         </div>
+      )}
+
+      {/* Journey Status Timeline — Stripe/Apple order-status model
+          Shows payment, flight, hotel, transfers, doctor, companion as live status.
+          Visible as soon as patient has a case (even pre-travel). */}
+      {latestConsultation && (
+        <JourneyStatusTimeline caseRecord={latestConsultation} />
       )}
 
       {/* 9-Handshake Journey Block — only visible during active travel */}
