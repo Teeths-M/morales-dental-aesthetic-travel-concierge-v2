@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { PlatformModeProvider } from '@/context/PlatformModeContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import { usePushNotifications } from './hooks/usePushNotifications';
@@ -122,8 +123,10 @@ function App() {
         <CartProvider>
           <QueryClientProvider client={queryClientInstance}>
             <PlatformModeProvider>
-              <AuthenticatedApp />
-              <Toaster />
+              <NotificationProvider>
+                <AuthenticatedApp />
+                <Toaster />
+              </NotificationProvider>
             </PlatformModeProvider>
           </QueryClientProvider>
         </CartProvider>

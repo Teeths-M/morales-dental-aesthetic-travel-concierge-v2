@@ -1,0 +1,166 @@
+import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { useNotification } from '@/context/NotificationContext';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
+import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
+
+const DRIVER_ETA_POLL_MS = 45 * 1000;
+const COUNTRY_STORAGE_KEY = 'morales_last_notified_country';
+
+/**
+ * GlobalEventBroadcaster
+ *
+ * Sits silently in AppLayout and fires global notifications for:
+ *  1. Country arrival (GPS → new country detected)
+ *  2. Driver ETA (active trip in transit phase)
+ *  3. Handshake step progression
+ *  4. Daily greeting on first load
+ *
+ * Props: user — auth user object
+ */
+export default function GlobalEventBroadcaster({ user }) {
+  const { showNotification } = useNotification();
+  const greetedRef     = useRef(false);
+  const lastEtaRef     = useRef(null);
+
+  // ── 1. Active trip (for driver ETA + handshake events) ───────────────────
+  const { data: activeTrip } = useQuery({
+    queryKey: ['global-active-trip', user?.email],
+    queryFn: async () => {
+      const trips = await base44.entities.TravelRequest.filter({ user_email: user.email });
+      return trips.find(t =>
+        ['pre_departure', 'transit_out', 'arrived', 'recovery', 'transit_return'].includes(t.trip_phase)
+      ) ?? null;
+    },
+    enabled: !!user?.email,
+    staleTime: 60_000,
+    refetchInterval: DRIVER_ETA_POLL_MS,
+  });
+
+  // ── 2. Live GPS for country detection ────────────────────────────────────
+  const hasActiveTrip = !!activeTrip;
+  const { currentLocation } = useLiveLocationBeacon({
+    caseId:     activeTrip?.case_id,
+    caseStatus: activeTrip?.status,
+    enabled:    hasActiveTrip,
+  });
+
+  const { country, flag, isNewCountry, acknowledgeCountry } = useCountryDetection({
+    lat:     currentLocation?.lat,
+    lng:     currentLocation?.lng,
+    enabled: hasActiveTrip,
+  });
+
+  // ── 3. Daily greeting (once per session) ─────────────────────────────────
+  useEffect(() => {
+    if (!user || greetedRef.current) return;
+    greetedRef.current = true;
+
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const name = user.full_name?.split(' ')[0] || '';
+
+    showNotification({
+      type:     'info',
+      icon:     hour < 12 ? '🌅' : hour < 17 ? '☀️' : '🌙',
+      title:    `${greeting}${name ? `, ${name}` : ''}.`,
+      body:     'Your Morales concierge is ready.',
+      duration: 4000,
+      position: 'top',
+    });
+  }, [user?.id]);
+
+  // ── 4. Country arrival ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isNewCountry || !country) return;
+
+    const lastNotified = sessionStorage.getItem(COUNTRY_STORAGE_KEY);
+    if (lastNotified === country) return;
+    sessionStorage.setItem(COUNTRY_STORAGE_KEY, country);
+
+    showNotification({
+      type:     'arrival',
+      icon:     flag || '🌍',
+      title:    `Welcome to ${country}`,
+      body:     activeTrip?.current_step < 4
+        ? 'Your driver and hotel details are ready. Tap to view.'
+        : 'Safe-T4life protection is active. Stay safe.',
+      duration: 0, // stays until dismissed
+      position: 'top',
+      action: activeTrip ? {
+        label: 'View Journey',
+        onPress: () => { acknowledgeCountry(); window.location.href = '/dashboard/journey'; },
+      } : null,
+    });
+  }, [isNewCountry, country]);
+
+  // ── 5. Driver ETA (transit_out phase, HS1 not yet done) ──────────────────
+  useEffect(() => {
+    if (!activeTrip) return;
+    if (activeTrip.trip_phase !== 'transit_out') return;
+    if (activeTrip.current_step >= 1) return; // HS1 already confirmed = driver arrived
+
+    // Estimate ETA from handshake schedule or show a live update
+    const lastEta = lastEtaRef.current;
+    const now = Date.now();
+    if (lastEta && now - lastEta < DRIVER_ETA_POLL_MS) return; // don't spam
+    lastEtaRef.current = now;
+
+    // ETA from trip data if available, else generic
+    const etaMins = activeTrip.driver_eta_minutes ?? null;
+    const etaLabel = etaMins != null
+      ? `${etaMins} min${etaMins !== 1 ? 's' : ''} away`
+      : 'on the way';
+
+    showNotification({
+      type:     'driver',
+      icon:     '🚗',
+      title:    `Your driver is ${etaLabel}`,
+      body:     activeTrip.driver_name
+        ? `${activeTrip.driver_name} · Confirm pickup with Handshake 1`
+        : 'Confirm your pickup with Handshake 1 when they arrive.',
+      duration: 8000,
+      position: 'top',
+    });
+  }, [activeTrip?.trip_phase, activeTrip?.current_step]);
+
+  // ── 6. Handshake step completion ─────────────────────────────────────────
+  const prevStepRef = useRef(null);
+  useEffect(() => {
+    if (!activeTrip) return;
+    const step = activeTrip.current_step ?? 0;
+    if (step === 0 || step === prevStepRef.current) return;
+
+    prevStepRef.current = step;
+
+    const STEP_LABELS = [
+      '', 'Driver Pickup', 'Airport Drop-off', 'Destination Pickup',
+      'Hotel Check-in', 'Clinic Arrival', 'Companion Delivery',
+      'Return Transport', 'Home Airport', 'Home Drop-off',
+    ];
+    const STEP_ICONS = ['', '🚗', '✈️', '🛬', '🏨', '🏥', '🍽️', '🚕', '🛫', '🏠'];
+
+    if (step === 9) {
+      showNotification({
+        type:     'handshake',
+        icon:     '⭐',
+        title:    'Journey Complete — The Golden M is Yours',
+        body:     'All 9 handshakes confirmed. Welcome home.',
+        duration: 0,
+        position: 'top',
+      });
+    } else {
+      showNotification({
+        type:     'handshake',
+        icon:     STEP_ICONS[step] || '✅',
+        title:    `HS${step} Confirmed — ${STEP_LABELS[step]}`,
+        body:     `Next: HS${step + 1} — ${STEP_LABELS[step + 1]}`,
+        duration: 5000,
+        position: 'top',
+      });
+    }
+  }, [activeTrip?.current_step]);
+
+  return null; // pure side-effect component
+}

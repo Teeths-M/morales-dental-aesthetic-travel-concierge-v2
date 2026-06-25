@@ -10,6 +10,8 @@ import { useAuth } from '@/lib/AuthContext';
 import BiometricGate from '@/components/security/BiometricGate';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
 import FloatingCheckInAlert from '@/components/solo/FloatingCheckInAlert';
+import GlobalNotificationStack from '@/components/notifications/GlobalNotificationStack';
+import GlobalEventBroadcaster from '@/components/notifications/GlobalEventBroadcaster';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 
@@ -63,11 +65,15 @@ export default function AppLayout() {
             <HeartNotificationCenter user={user} />
             <GuardianTicker />
             {user && <FloatingCheckInAlert user={user} />}
+            {user && <GlobalEventBroadcaster user={user} />}
 
             {/* Premium floating SOS — global, always on top */}
             <FloatingSOSButton />
           </>
         )}
+
+        {/* Global notification stack — Apple/Uber style banners, always present */}
+        <GlobalNotificationStack />
       </div>
     </BiometricGate>
   );
