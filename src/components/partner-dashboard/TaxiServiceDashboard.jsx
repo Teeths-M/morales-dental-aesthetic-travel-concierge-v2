@@ -1,160 +1,253 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Car, Star, Zap, DollarSign, MapPin, LogOut } from 'lucide-react';
-import { translations } from '@/lib/translations';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Car, Star, DollarSign, MapPin, CheckCircle, AlertTriangle, LogOut, Phone, Navigation } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+
+const GOLD = '#D4AF37';
+
+function StatusDot({ online }) {
+  return (
+    <span className="relative flex h-2.5 w-2.5">
+      {online && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${online ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+    </span>
+  );
+}
 
 export default function TaxiServiceDashboard({ taxi, language }) {
-  const t = translations[language];
-  const [isOnline, setIsOnline] = useState(false);
+  const [isOnline, setIsOnline] = useState(taxi?.is_available ?? false);
+  const [toggling, setToggling] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Active + pending trip assignments for this driver
+  const { data: cases = [], isLoading: loadingCases } = useQuery({
+    queryKey: ['taxi-cases', taxi?.id],
+    queryFn: () => base44.asServiceRole?.entities?.CaseRecord?.filter(
+      { assigned_driver_id: taxi?.id },
+      '-departure_date', 20
+    ).catch(() => []) ?? Promise.resolve([]),
+    enabled: !!taxi?.id,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+  });
+
+  // Pending quote requests — cases in Travel-Coordination needing transfer pricing
+  const { data: pendingQuotes = [] } = useQuery({
+    queryKey: ['taxi-pending-quotes'],
+    queryFn: () => base44.entities.CaseRecord.filter(
+      { status: 'Travel-Coordination', transfer_status: 'PENDING' },
+      '-updated_date', 10
+    ).catch(() => []),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const activeCases  = cases.filter(c => ['In-Progress', 'Travel-Coordination', 'confirmed'].includes(c.status));
+  const pastCases    = cases.filter(c => ['Completed', 'Closed'].includes(c.status));
+
+  const toggleOnline = async () => {
+    setToggling(true);
+    try {
+      await base44.entities.TaxiService.update(taxi.id, { is_available: !isOnline });
+      setIsOnline(v => !v);
+      queryClient.invalidateQueries(['taxi-cases', taxi.id]);
+    } catch (_) { toast.error('Could not update availability'); }
+    finally { setToggling(false); }
+  };
+
+  const submitQuote = (caseId) => {
+    window.location.href = `/portal/transfer?case_id=${caseId}`;
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl p-8">
-        <div className="flex items-start justify-between">
+    <div className="space-y-6">
+
+      {/* Header card */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl p-6"
+        style={{ background: 'linear-gradient(135deg, #060B16 0%, #0C1A1D 100%)', border: '1px solid #2A3F4A' }}>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-sm text-blue-600 font-semibold mb-1">
-              🚕 {isOnline ? (language === 'es' ? 'En Línea' : language === 'fr' ? 'En Ligne' : 'Online') : (language === 'es' ? 'Desconectado' : language === 'fr' ? 'Hors ligne' : 'Offline')}
-            </p>
-            <h1 className="text-3xl font-display font-semibold text-foreground">{taxi.driver_name || taxi.company_name}</h1>
-            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              {language === 'es' ? 'Zona:' : language === 'fr' ? 'Zone:' : 'Zone:'} {taxi.operating_city}
-            </p>
+            <div className="flex items-center gap-2 mb-1">
+              <StatusDot online={isOnline} />
+              <span className="text-xs font-semibold" style={{ color: isOnline ? '#22c55e' : '#94a3b8' }}>
+                {isOnline ? 'Online — receiving assignments' : 'Offline'}
+              </span>
+            </div>
+            <h1 className="text-2xl font-semibold text-white mb-1">{taxi.driver_name || taxi.company_name}</h1>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" style={{ color: GOLD }} />
+              <span className="text-sm" style={{ color: '#94a3b8' }}>{taxi.operating_city || 'City not set'}</span>
+            </div>
           </div>
-          <Badge className={isOnline ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-            {isOnline ? '🟢 Online' : '⚪ Offline'}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Today's Trip Assignment */}
-      <Card className="p-6 border-2 border-blue-200 bg-blue-50/50">
-        <p className="text-sm font-semibold text-foreground mb-4">📋 {language === 'es' ? 'Viaje de Hoy' : language === 'fr' ? 'Voyage d\'Aujourd\'hui' : 'Today\'s Trip'}:</p>
-        <div className="space-y-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="font-medium text-foreground">Maria G. <span className="text-xs text-blue-600 font-semibold ml-2">3:00 PM</span></p>
-              <p className="text-sm text-muted-foreground">{language === 'es' ? 'Clínica Abreu → Marriott Hotel' : 'CIMA Hospital → Marriott Hotel'}</p>
-              <p className="text-xs text-amber-700 mt-1">⚠️ {language === 'es' ? 'Post-cirugía de rodilla – asistir con silla de ruedas' : 'Post-knee surgery – assist with wheelchair'}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="text-xs">{language === 'es' ? 'Llamar' : 'Call'}</Button>
-              <Button size="sm" className="bg-blue-600 text-white text-xs">{language === 'es' ? 'Estoy Aquí' : 'I\'m Here'}</Button>
-            </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={toggleOnline} disabled={toggling}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+              style={{
+                background: isOnline ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)',
+                color: isOnline ? '#ef4444' : '#22c55e',
+                border: `1px solid ${isOnline ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+              }}>
+              {toggling ? '…' : isOnline ? 'Go Offline' : 'Go Online'}
+            </button>
+            <button onClick={() => base44.auth.logout()}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-red-400 border border-red-400/30 hover:bg-red-400/10 transition-all">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
-      </Card>
 
-      {/* Stats Grid */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Car className="w-6 h-6 text-blue-600" />
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3 mt-5">
+          {[
+            { label: 'Trips done', value: taxi.total_trips || pastCases.length || 0, icon: Car },
+            { label: 'Rating', value: taxi.average_rating ? `${Number(taxi.average_rating).toFixed(1)} ★` : '—', icon: Star },
+            { label: 'This month', value: `$${taxi.earnings_this_month?.toLocaleString() || 0}`, icon: DollarSign },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <p className="text-lg font-bold text-white">{value}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: '#64748b' }}>{label}</p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Viajes Esta Semana' : language === 'fr' ? 'Trajets Cette Semaine' : 'This Week\'s Trips'}</p>
-              <p className="text-2xl font-semibold text-foreground">{taxi.total_trips || 0}</p>
-            </div>
-          </div>
-        </Card>
+          ))}
+        </div>
+      </motion.div>
 
-        <Card className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Ganancias' : language === 'fr' ? 'Revenus' : 'Earnings'}</p>
-              <p className="text-2xl font-semibold text-foreground">${taxi.earnings_this_week || 0}</p>
-              <p className="text-xs text-emerald-600 mt-1">+ ${Math.round((taxi.earnings_this_week || 0) * 0.1)} tips</p>
-            </div>
+      {/* Pending quote requests */}
+      {pendingQuotes.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <h2 className="text-sm font-semibold text-white">Quote Requests ({pendingQuotes.length})</h2>
           </div>
-        </Card>
+          <div className="space-y-3">
+            {pendingQuotes.map(c => (
+              <div key={c.id} className="rounded-2xl p-4"
+                style={{ background: '#0C1A1D', border: '1px solid rgba(212,175,55,0.25)' }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white">{c.client_name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+                      {c.procedure_country || c.destination_country || 'Destination TBC'}
+                      {c.departure_date ? ` · Departs ${new Date(c.departure_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: '#64748b' }}>
+                      {(c.procedures || []).join(', ') || 'Procedure TBC'}
+                    </p>
+                  </div>
+                  <button onClick={() => submitQuote(c.id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap"
+                    style={{ background: GOLD, color: '#060B16' }}>
+                    Submit Quote →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
-        <Card className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
-              <Star className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase">{language === 'es' ? 'Calificación' : language === 'fr' ? 'Évaluation' : 'Rating'}</p>
-              <p className="text-2xl font-semibold text-foreground">{taxi.quality_score?.toFixed(1) || '5.0'} ⭐</p>
-              <p className="text-xs text-yellow-600 mt-1">{language === 'es' ? 'Top 10% de conductores' : 'Top 10% drivers'}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      {/* Active assignments */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Navigation className="w-4 h-4" style={{ color: GOLD }} />
+          <h2 className="text-sm font-semibold text-white">Active Assignments</h2>
+        </div>
 
-      {/* Bonus Progress */}
-      <Card className="p-6">
-        <p className="text-sm font-semibold text-foreground mb-3">🏆 {language === 'es' ? 'Progreso de Bonificación' : language === 'fr' ? 'Progression du Bonus' : 'Bonus Progress'}</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">{taxi.bonus_progress || 0} / 50 {language === 'es' ? 'viajes' : language === 'fr' ? 'trajets' : 'trips'}</p>
-            <p className="text-sm font-semibold text-emerald-600">$50 {language === 'es' ? 'bonificación' : language === 'fr' ? 'bonus' : 'bonus'}</p>
+        {loadingCases ? (
+          <div className="rounded-2xl p-8 text-center" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto" />
           </div>
-          <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-emerald-600 to-teal-600 transition-all"
-              style={{ width: `${((taxi.bonus_progress || 0) / 50) * 100}%` }}
-            ></div>
+        ) : activeCases.length === 0 ? (
+          <div className="rounded-2xl p-6 text-center" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+            <Car className="w-8 h-8 mx-auto mb-2" style={{ color: '#334155' }} />
+            <p className="text-sm" style={{ color: '#64748b' }}>No active assignments right now.</p>
+            <p className="text-xs mt-1" style={{ color: '#475569' }}>Go online to receive trip requests.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {activeCases.map(c => (
+              <div key={c.id} className="rounded-2xl p-4"
+                style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-semibold text-white">{c.client_name}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-xs" style={{ color: '#94a3b8' }}>
+                      {c.procedure_country || 'Destination TBC'}
+                      {c.departure_date ? ` · ${new Date(c.departure_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                    </p>
+                    {c.client_phone && (
+                      <a href={`tel:${c.client_phone}`} className="flex items-center gap-1 mt-1.5">
+                        <Phone className="w-3 h-3 text-emerald-400" />
+                        <span className="text-xs text-emerald-400">{c.client_phone}</span>
+                      </a>
+                    )}
+                    {c.special_requirements && (
+                      <p className="text-xs mt-1.5 px-2 py-1 rounded-lg" style={{ background: 'rgba(234,179,8,0.1)', color: '#fbbf24' }}>
+                        ⚠️ {c.special_requirements}
+                      </p>
+                    )}
+                  </div>
+                  <Link to={`/case/${c.id}`}>
+                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all">
+                      View
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+
+      {/* Recent completed */}
+      {pastCases.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-sm font-semibold text-white">Recent Trips</h2>
+          </div>
+          <div className="space-y-2">
+            {pastCases.slice(0, 3).map(c => (
+              <div key={c.id} className="rounded-xl px-4 py-3 flex items-center justify-between"
+                style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+                <div>
+                  <p className="text-sm text-white font-medium">{c.client_name}</p>
+                  <p className="text-xs" style={{ color: '#64748b' }}>{c.procedure_country || '—'}</p>
+                </div>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
+                  ✓ Complete
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-      </Card>
+      )}
 
-      {/* Main Actions */}
-      <div className="space-y-3">
-        <Button
-          onClick={() => setIsOnline(!isOnline)}
-          className={`w-full font-semibold h-12 ${
-            isOnline
-              ? 'bg-red-600 hover:bg-red-700 text-white'
-              : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white'
-          }`}
-        >
-          <Zap className="w-5 h-5 mr-2" />
-          {isOnline ? (language === 'es' ? 'Desconectarse' : language === 'fr' ? 'Se Déconnecter' : 'Go Offline') : (language === 'es' ? 'Conectarse' : language === 'fr' ? 'Se Connecter' : 'Go Online')}
-        </Button>
-        <Link to="/partner-portal" className="block">
-          <Button variant="outline" className="w-full h-12">
-            🏢 {language === 'es' ? 'Portal de Socios' : language === 'fr' ? 'Portail Partenaire' : 'Partner Portal'}
-          </Button>
+      {/* Bottom links */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/partner-reviews">
+          <button className="w-full py-3 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all flex items-center justify-center gap-2">
+            <Star className="w-4 h-4 text-amber-400" /> My Reviews
+          </button>
         </Link>
-        <Link to="/partner-reviews" className="block">
-          <Button variant="outline" className="w-full h-12">
-            <Star className="w-4 h-4 mr-2" />
-            {language === 'es' ? 'Mis Reseñas' : language === 'fr' ? 'Mes Avis' : 'My Reviews'}
-          </Button>
+        <Link to="/partner-portal">
+          <button className="w-full py-3 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:bg-white/5 transition-all">
+            Partner Portal
+          </button>
         </Link>
-        <Button 
-          variant="outline" 
-          className="w-full h-12"
-          onClick={() => alert(language === 'es' ? 'Próximamente: Actualizar Disponibilidad' : language === 'fr' ? 'Bientôt: Mettre à jour la disponibilité' : 'Coming Soon: Update Availability')}
-        >
-          📅 {language === 'es' ? 'Actualizar Disponibilidad' : language === 'fr' ? 'Mettre à Jour la Disponibilité' : 'Update Availability'}
-        </Button>
-        <Button variant="outline" className="w-full h-12 text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
-          <LogOut className="w-4 h-4 mr-2" />
-          {language === 'es' ? 'Cerrar Sesión' : language === 'fr' ? 'Se Déconnecter' : 'Logout'}
-        </Button>
       </div>
 
-      {/* Info Box */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p className="text-sm text-amber-900 font-medium">
-          ⏳ {language === 'es'
-            ? 'Tu perfil está en revisión. Serás notificado cuando sea aprobado.'
-            : language === 'fr'
-            ? 'Votre profil est en cours d\'examen. Vous serez notifié lorsqu\'il sera approuvé.'
-            : 'Your profile is under review. You\'ll be notified when approved.'}
-        </p>
-      </div>
     </div>
   );
 }

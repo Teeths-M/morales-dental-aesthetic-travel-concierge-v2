@@ -1,0 +1,100 @@
+import { createHandler, ok, err } from '../_shared/createHandler.ts';
+
+const BRAND = 'Morales Dental & Aesthetics';
+const GOLD  = '#D4AF37';
+
+const e = (v: unknown) => String(v ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+function bookingEmail({ clientName, procedures, departureDate, destination, caseRef }: {
+  clientName: string; procedures: string; departureDate: string;
+  destination: string; caseRef: string;
+}) {
+  return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
+<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
+<tr><td style="background:#060B16;padding:32px;text-align:center;">
+  <img src="https://moralesdentalandaesthetics.com/morales-m-mark.png" width="64" alt="M" style="display:block;margin:0 auto 16px;" />
+  <div style="font-family:Georgia,serif;font-size:24px;color:#fff;letter-spacing:0.04em;">${BRAND}</div>
+  <div style="width:160px;height:1px;background:linear-gradient(to right,transparent,${GOLD},transparent);margin:14px auto 0;"></div>
+  <div style="margin-top:10px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};">Booking Confirmed</div>
+</td></tr>
+<tr><td style="padding:36px 32px;">
+  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#060B16;">Your journey begins, ${e(clientName)}.</h1>
+  <p style="margin:0 0 28px;font-size:15px;line-height:1.7;color:#40514a;">
+    We are honoured to be part of your health journey. Your booking request has been received and our concierge team is already preparing everything for your care abroad.
+  </p>
+
+  <table width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin-bottom:28px;">
+    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;width:40%;">Case Reference</td><td style="padding:10px 0;color:#060B16;font-size:14px;font-weight:700;">${e(caseRef)}</td></tr>
+    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Procedure(s)</td><td style="padding:10px 0;color:#060B16;font-size:14px;font-weight:600;">${e(procedures)}</td></tr>
+    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Destination</td><td style="padding:10px 0;color:#060B16;font-size:14px;font-weight:600;">${e(destination)}</td></tr>
+    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Departure Date</td><td style="padding:10px 0;color:#060B16;font-size:14px;font-weight:600;">${e(departureDate)}</td></tr>
+  </table>
+
+  <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#060B16;">What happens next:</p>
+  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:28px;">
+    ${[
+      ['Your assigned doctor reviews your consultation', '24 hrs'],
+      ['Travel agency prepares your flight & hotel package', '48 hrs'],
+      ['Chauffeur assigned for all local transfers', '48 hrs'],
+      ['Recovery companion briefed on your dietary needs', '72 hrs'],
+      ['Secure document vault link sent to your email', '72 hrs'],
+      ['Pre-departure check-in call from your concierge', '5 days'],
+    ].map(([step, time]) => `
+    <tr>
+      <td style="padding:8px 0;vertical-align:top;width:32px;">
+        <div style="width:22px;height:22px;background:#060B16;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:${GOLD};">✓</div>
+      </td>
+      <td style="padding:8px 0;font-size:13px;color:#40514a;line-height:1.5;">${step}</td>
+      <td style="padding:8px 0;text-align:right;font-size:12px;color:#64746d;white-space:nowrap;">${time}</td>
+    </tr>`).join('')}
+  </table>
+
+  <a href="https://moralesdentalandaesthetics.com/dashboard" style="display:inline-block;background:#060B16;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">
+    View My Journey →
+  </a>
+
+  <p style="margin:28px 0 0;font-size:13px;color:#64746d;line-height:1.6;">
+    Questions? Reach us on WhatsApp anytime. Your dedicated concierge is available 24/7.<br/>
+    This is an automated confirmation. Please do not reply to this email.
+  </p>
+  <p style="margin:14px 0 0;font-size:14px;color:#060B16;font-weight:700;">The Morales Concierge Team</p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+Deno.serve(createHandler(async ({ base44, body }) => {
+  const { case_id, consultation_id } = await body();
+  if (!case_id && !consultation_id) return err('case_id or consultation_id is required');
+
+  let caseRecord: any = null;
+  if (case_id) {
+    caseRecord = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
+  } else {
+    const rows = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id }).catch(() => []);
+    caseRecord = rows[0] ?? null;
+  }
+  if (!caseRecord) return err('Case not found');
+
+  const clientEmail = caseRecord.client_email;
+  if (!clientEmail) return err('No client email on case');
+
+  const clientName   = caseRecord.client_name || 'Valued Patient';
+  const procedures   = (caseRecord.procedures || []).join(', ') || 'Procedure TBC';
+  const destination  = caseRecord.procedure_country || caseRecord.destination_country || 'Your destination';
+  const caseRef      = caseRecord.id?.slice(-8).toUpperCase() || 'N/A';
+  const departureDate = caseRecord.departure_date
+    ? new Date(caseRecord.departure_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : 'To be confirmed';
+
+  await base44.asServiceRole.integrations.Core.SendEmail({
+    from_name: BRAND,
+    to: clientEmail,
+    subject: `Your Morales journey is confirmed — ${caseRef}`,
+    body: bookingEmail({ clientName, procedures, departureDate, destination, caseRef }),
+  });
+
+  return ok({ sent_to: clientEmail, case_ref: caseRef });
+}, { name: 'sendBookingConfirmation', requireAuth: false }));

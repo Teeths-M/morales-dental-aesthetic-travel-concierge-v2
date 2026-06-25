@@ -11,6 +11,8 @@ import ProcedureRequestForm from '@/components/doctor-dashboard/ProcedureRequest
 import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
+import { motion } from 'framer-motion';
+import { Heart, Stethoscope, Phone } from 'lucide-react';
 
 export default function DoctorDashboard() {
   const [editing, setEditing] = useState(false);
@@ -69,6 +71,17 @@ export default function DoctorDashboard() {
     enabled: !!doctor?.email,
     staleTime: 60000,
   });
+
+  // Active patients assigned to this doctor
+  const { data: activeCases = [] } = useQuery({
+    queryKey: ['doctor-active-cases', doctor?.email],
+    queryFn: () => base44.entities.CaseRecord.filter({ doctor_email: doctor.email }, '-departure_date', 30),
+    enabled: !!doctor?.email,
+    staleTime: 90_000,
+    refetchInterval: 120_000,
+  });
+  const inProgressCases = activeCases.filter(c => !['Completed', 'Closed', 'Cancelled', 'Admin-Review'].includes(c.status));
+  const completedCases  = activeCases.filter(c => ['Completed', 'Closed'].includes(c.status));
 
   // PERFORMANCE: Memoize initial form data — prevents recreation on every render
   useMemo(() => {
@@ -184,6 +197,14 @@ export default function DoctorDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="border-b border-border px-8 pt-6">
               <TabsList className="mb-0">
+                <TabsTrigger value="patients" className="relative">
+                  Active Patients
+                  {inProgressCases.length > 0 && (
+                    <span className="ml-1.5 w-4 h-4 bg-emerald-500 text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
+                      {inProgressCases.length}
+                    </span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="profile">My Profile</TabsTrigger>
                 <TabsTrigger value="availability">Availability Calendar</TabsTrigger>
                 <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
@@ -200,6 +221,98 @@ export default function DoctorDashboard() {
                 </TabsTrigger>
               </TabsList>
             </div>
+
+            {/* ── Active Patients Tab ─────────────────────────────────────────── */}
+            <TabsContent value="patients" className="p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <Stethoscope className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Active Patients</h2>
+              </div>
+
+              {inProgressCases.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-border rounded-2xl">
+                  <Heart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm">No active patients assigned right now.</p>
+                  <p className="text-muted-foreground/60 text-xs mt-1">Patients will appear here once they are assigned to you.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {inProgressCases.map((c, idx) => {
+                    const hs = c.current_step ?? 0;
+                    const hsLabel = ['', 'Driver Pickup', 'Airport Drop-off', 'Destination Pickup', 'Hotel Check-in', 'Clinic Arrival', 'Companion Delivery', 'Return Transport', 'Home Airport', 'Journey Complete'][hs] || 'Pre-departure';
+                    const phaseColor = {
+                      pre_departure: '#64748b', transit_out: '#60a5fa', arrived: '#22c55e',
+                      recovery: '#D4AF37', transit_return: '#a855f7', completed: '#22c55e',
+                    }[c.trip_phase] ?? '#64748b';
+                    return (
+                      <motion.div key={c.id}
+                        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
+                        className="rounded-2xl p-5 border border-border bg-card hover:border-primary/30 transition-all">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                              <p className="text-base font-semibold text-foreground">{c.client_name}</p>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background: `${phaseColor}20`, color: phaseColor }}>
+                                {c.trip_phase?.replace(/_/g, ' ') || c.status?.replace(/-/g, ' ') || 'Coordinating'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                              {(c.procedures || []).join(', ') || 'Procedure TBC'}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                              {c.procedure_country && <span>📍 {c.procedure_country}</span>}
+                              {c.departure_date && <span>✈️ {new Date(c.departure_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+                              <span style={{ color: phaseColor }}>HS{hs}/9 — {hsLabel}</span>
+                            </div>
+                            {/* 9-step progress bar */}
+                            <div className="flex items-center gap-0.5 mt-3">
+                              {Array.from({ length: 9 }, (_, i) => (
+                                <div key={i} className="flex-1 h-1.5 rounded-full transition-all"
+                                  style={{ background: i < hs ? phaseColor : '#e2e8f0' }} />
+                              ))}
+                            </div>
+                            <div className="flex justify-between text-[9px] mt-0.5" style={{ color: '#94a3b8' }}>
+                              <span>HS1</span><span>HS{hs > 0 ? hs : '—'}</span><span>HS9</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            {c.client_phone && (
+                              <a href={`tel:${c.client_phone}`}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border hover:bg-secondary/20 transition-all">
+                                <Phone className="w-3 h-3" /> Call
+                              </a>
+                            )}
+                            {c.special_requirements && (
+                              <p className="text-[10px] text-amber-700 bg-amber-50 px-2 py-1 rounded-lg max-w-[140px]">
+                                ⚠️ {c.special_requirements}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {completedCases.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">Completed ({completedCases.length})</h3>
+                  <div className="space-y-2">
+                    {completedCases.slice(0, 5).map(c => (
+                      <div key={c.id} className="flex items-center justify-between px-4 py-3 rounded-xl border border-border">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{c.client_name}</p>
+                          <p className="text-xs text-muted-foreground">{(c.procedures || []).join(', ') || '—'}</p>
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">✓ Complete</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
 
             <TabsContent value="profile" className="p-8">
               {/* Flagged Case Alert — only visible when cases are waiting */}

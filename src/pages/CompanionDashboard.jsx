@@ -4,6 +4,83 @@ import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
+import { motion } from 'framer-motion';
+import { Heart, ChefHat, Calendar } from 'lucide-react';
+
+const GOLD = '#D4AF37';
+
+// ── Active assignment hero — shown when companion has a live patient ──────────
+function ActiveAssignmentHero({ assignments }) {
+  const activeAssignment = assignments.find(a =>
+    ['confirmed', 'active', 'in_progress', 'assigned'].includes(a.status?.toLowerCase() ?? '')
+  ) ?? assignments[0] ?? null;
+
+  const { data: caseRecord } = useQuery({
+    queryKey: ['companion-active-case', activeAssignment?.case_id],
+    queryFn: () => base44.entities.CaseRecord.get(activeAssignment.case_id),
+    enabled: !!activeAssignment?.case_id,
+    staleTime: 120_000,
+  });
+
+  if (!activeAssignment && assignments.length === 0) return null;
+
+  if (!activeAssignment) {
+    return (
+      <div className="rounded-2xl px-5 py-4 mb-2 flex items-center gap-3"
+        style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+        <Heart className="w-5 h-5 flex-shrink-0" style={{ color: '#334155' }} />
+        <p className="text-sm" style={{ color: '#64748b' }}>No active patient assignment right now. You'll be notified when a new patient is matched to you.</p>
+      </div>
+    );
+  }
+
+  const patientName = activeAssignment.patient_name || caseRecord?.client_name || 'Your Patient';
+  const procedures  = (caseRecord?.procedures || []).join(', ') || activeAssignment.procedure_types?.join(', ') || 'Procedure TBC';
+  const startDate   = activeAssignment.assignment_start_date
+    ? new Date(activeAssignment.assignment_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl overflow-hidden mb-2"
+      style={{ background: 'linear-gradient(135deg, #060B16, #0d1c20)', border: `1px solid ${GOLD}40` }}>
+      {/* Gold top bar */}
+      <div style={{ height: 3, background: `linear-gradient(to right, transparent, ${GOLD}, transparent)` }} />
+      <div className="px-5 py-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="text-xs font-semibold tracking-wide" style={{ color: GOLD }}>ACTIVE ASSIGNMENT</span>
+        </div>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-lg font-semibold text-white">{patientName}</p>
+            <p className="text-sm mt-0.5" style={{ color: '#94a3b8' }}>{procedures}</p>
+            {startDate && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Calendar className="w-3.5 h-3.5" style={{ color: '#64748b' }} />
+                <span className="text-xs" style={{ color: '#64748b' }}>Starts {startDate}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+            style={{ background: 'rgba(212,175,55,0.12)', border: `1px solid ${GOLD}30` }}>
+            <ChefHat className="w-4 h-4" style={{ color: GOLD }} />
+            <span className="text-xs font-semibold" style={{ color: GOLD }}>Meal Brief Ready</span>
+          </div>
+        </div>
+      </div>
+      {/* Dietary card inlined */}
+      {caseRecord && (
+        <div className="px-5 pb-4">
+          <DietaryInfoCard caseRecord={caseRecord} compact />
+        </div>
+      )}
+    </motion.div>
+  );
+}
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -234,6 +311,8 @@ export default function CompanionDashboard() {
             {fetchError} <button onClick={() => window.location.reload()} className="ml-2 underline">Refresh</button>
           </div>
         )}
+
+        <ActiveAssignmentHero assignments={assignments} />
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="flex-wrap h-auto">

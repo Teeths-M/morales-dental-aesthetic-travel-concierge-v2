@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BackButtonLight } from '@/components/nav/BackButton';
 import { motion } from 'framer-motion';
-import { Shield, CheckCircle, Clock, AlertCircle, ToggleLeft, ToggleRight, Phone, MapPin, Users, Zap, Star, LogOut } from 'lucide-react';
+import { Shield, CheckCircle, Clock, AlertCircle, ToggleLeft, ToggleRight, Phone, MapPin, Users, Zap, Star, LogOut, Siren, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 const STATUS_CONFIG = {
   pending_review:  { label: 'Pending Review',  color: 'bg-amber-100 text-amber-700',  icon: Clock },
@@ -13,6 +14,120 @@ const STATUS_CONFIG = {
   rejected:        { label: 'Rejected',         color: 'bg-red-100 text-red-700',      icon: AlertCircle },
   suspended:       { label: 'Suspended',        color: 'bg-slate-100 text-slate-600',  icon: AlertCircle },
 };
+
+// ── Active escort assignments + recent SOS alerts ─────────────────────────────
+function ActiveEscortsPanel({ agencyId }) {
+  const { data: activeCases = [], isLoading } = useQuery({
+    queryKey: ['security-active-cases', agencyId],
+    queryFn: () => base44.entities.CaseRecord.filter(
+      { security_agency_id: agencyId },
+      '-updated_date', 20
+    ).catch(() => []),
+    enabled: !!agencyId,
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+  });
+
+  const { data: sosAlerts = [] } = useQuery({
+    queryKey: ['security-sos-alerts', agencyId],
+    queryFn: () => base44.entities.SOSAlert?.filter(
+      { security_agency_id: agencyId },
+      '-created_date', 5
+    ).catch(() => []),
+    enabled: !!agencyId,
+    staleTime: 120_000,
+  });
+
+  const active   = activeCases.filter(c => !['Completed', 'Closed', 'Cancelled'].includes(c.status));
+  const recent   = activeCases.filter(c => ['Completed', 'Closed'].includes(c.status)).slice(0, 3);
+
+  return (
+    <div className="space-y-4">
+      {/* Active escorts */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Navigation className="w-4 h-4 text-blue-600" />
+          <h3 className="font-semibold text-slate-800">Active Escort Assignments</h3>
+          {active.length > 0 && (
+            <span className="ml-auto text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {active.length} active
+            </span>
+          )}
+        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-600 rounded-full animate-spin" />
+          </div>
+        ) : active.length === 0 ? (
+          <div className="text-center py-6">
+            <Shield className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">No active escort assignments right now.</p>
+            <p className="text-xs text-slate-400 mt-1">You will be dispatched when a patient triggers an SOS or requires a security escort.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {active.map(c => (
+              <div key={c.id} className="flex items-start justify-between gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-800">{c.client_name}</p>
+                    <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Active</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {c.procedure_country || 'Location TBC'}
+                    {c.departure_date ? ` · ${new Date(c.departure_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                  </p>
+                  {c.special_requirements && (
+                    <p className="text-xs text-amber-700 mt-1 bg-amber-50 px-2 py-0.5 rounded">
+                      ⚠️ {c.special_requirements}
+                    </p>
+                  )}
+                </div>
+                {c.client_phone && (
+                  <a href={`tel:${c.client_phone}`} className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
+                    <Phone className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recent SOS alerts */}
+      {(sosAlerts.length > 0 || recent.length > 0) && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Siren className="w-4 h-4 text-red-500" />
+            <h3 className="font-semibold text-slate-800">Recent SOS History</h3>
+          </div>
+          <div className="space-y-2">
+            {sosAlerts.slice(0, 3).map(alert => (
+              <div key={alert.id} className="flex items-center justify-between py-2 border-b border-slate-50">
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{alert.client_name || 'Patient'}</p>
+                  <p className="text-xs text-slate-500">{alert.alert_type || 'SOS Alert'} · {new Date(alert.created_date).toLocaleDateString()}</p>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${alert.resolved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {alert.resolved ? '✓ Resolved' : '● Active'}
+                </span>
+              </div>
+            ))}
+            {recent.map(c => (
+              <div key={c.id} className="flex items-center justify-between py-2 border-b border-slate-50">
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{c.client_name}</p>
+                  <p className="text-xs text-slate-500">Escort · {c.procedure_country || '—'}</p>
+                </div>
+                <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ Complete</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SecurityAgencyDashboard() {
   const [agency, setAgency] = useState(null);
@@ -165,6 +280,9 @@ export default function SecurityAgencyDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Active escorts + SOS alerts */}
+        <ActiveEscortsPanel agencyId={agency.id} />
 
         {/* Profile Details */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">

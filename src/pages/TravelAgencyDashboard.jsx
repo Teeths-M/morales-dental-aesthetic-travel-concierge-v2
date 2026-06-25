@@ -53,8 +53,8 @@ export default function TravelAgencyDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen py-10 px-4 sm:px-6" style={{ background: '#060B16' }}>
+      <div className="max-w-2xl mx-auto">
         <BackButton fallback="/" className="mb-4" />
         <TravelAgencyDashboardView agency={agency} language={language} />
       </div>
