@@ -9,14 +9,16 @@ import SpaceIntelPanel from '@/components/emergency/SpaceIntelPanel';
 import LocationBreadcrumbTracker from '@/components/emergency/LocationBreadcrumbTracker';
 import EmergencyPINSetup from '@/components/emergency/EmergencyPINSetup';
 import PINSetupPrompt from '@/components/emergency/PINSetupPrompt';
+import NaturalDisasterPanel from '@/components/emergency/NaturalDisasterPanel';
 import { Link } from 'react-router-dom';
 
 const TABS = [
-  { id: 'sos', label: 'SOS & Dispatch', icon: AlertTriangle },
-  { id: 'intel', label: 'Space Intel', icon: Globe2 },
-  { id: 'guardian', label: 'Guardian Links', icon: Eye },
-  { id: 'location', label: 'My Locations', icon: MapPin },
-  { id: 'pin', label: 'Emergency PIN', icon: Smartphone },
+  { id: 'sos',      label: 'SOS & Dispatch',    icon: AlertTriangle },
+  { id: 'disaster', label: '🌍 Natural Disaster', icon: AlertTriangle },
+  { id: 'intel',    label: 'Space Intel',         icon: Globe2 },
+  { id: 'guardian', label: 'Guardian Links',       icon: Eye },
+  { id: 'location', label: 'My Locations',         icon: MapPin },
+  { id: 'pin',      label: 'Emergency PIN',        icon: Smartphone },
 ];
 
 export default function EmergencyHub() {
@@ -196,6 +198,10 @@ export default function EmergencyHub() {
                     </ul>
                   </div>
                 </div>
+              )}
+
+              {activeTab === 'disaster' && (
+                <NaturalDisasterPanel userCountry={activeCase?.procedure_country || ''} />
               )}
 
               {activeTab === 'intel' && (

@@ -219,5 +219,45 @@ export default function GlobalEventBroadcaster({ user }) {
     }
   }, [activeTrip?.current_step]);
 
+  // ── Earthquake monitor — checks USGS every 10 min when user has active trip ─
+  useEffect(() => {
+    if (!activeTrip || !currentLocation?.lat) return;
+
+    const checkQuake = async () => {
+      try {
+        const now = new Date();
+        const past2h = new Date(now - 2 * 60 * 60 * 1000).toISOString().split('.')[0];
+        const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${past2h}&minmagnitude=5.0&latitude=${currentLocation.lat}&longitude=${currentLocation.lng}&maxradiuskm=400&limit=1&orderby=magnitude`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        const quake = data?.features?.[0];
+        if (!quake) return;
+        const mag = quake.properties.magnitude ?? quake.properties.mag;
+        const place = quake.properties.place;
+        const key = `morales_quake_alerted_${quake.id}`;
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+        showNotification({
+          type:     'alert',
+          icon:     '🌍',
+          title:    `M${parseFloat(mag).toFixed(1)} Earthquake — ${place}`,
+          body:     mag >= 6
+            ? 'Strong earthquake detected near you. Follow DROP-COVER-HOLD procedures immediately.'
+            : 'Earthquake detected nearby. Stay alert and avoid damaged structures.',
+          duration: 0,
+          position: 'top',
+          action: {
+            label:   'Earthquake Guide →',
+            onPress: () => { window.location.href = '/emergency'; },
+          },
+        });
+      } catch (_) {}
+    };
+
+    checkQuake();
+    const interval = setInterval(checkQuake, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [activeTrip?.id, currentLocation?.lat]);
+
   return null; // pure side-effect component
 }
