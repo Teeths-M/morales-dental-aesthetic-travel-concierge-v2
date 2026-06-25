@@ -136,23 +136,38 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// ── Vibration patterns — Apple HIG-inspired ──────────────────────────────────
+// Each pattern is [buzz_ms, pause_ms, buzz_ms, ...]. Maps to notification type.
+const VIBRATE = {
+  safe:      [80,  60,  80],                        // Light double tap — "we see you, you're safe"
+  success:   [100, 50, 100,  50, 280],              // Triple with finale — milestone reached
+  golden_m:  [120, 60, 120,  60, 120, 80, 550],     // Full celebration — journey complete
+  payment:   [160, 80, 160],                         // Confident double — money confirmed
+  companion: [80,  50,  80,  50,  80],              // Gentle triple — someone is coming
+  booking:   [100, 70, 220],                         // Short-long rise — journey starting
+  alert:     [350, 100, 350, 100, 350],             // Three strong — admin urgent
+  default:   [160, 100, 160],
+};
+
 // ── Push notification handler ─────────────────────────────────────────────────
-// Without this, push messages arrive at the device but are silently dropped.
-// This handler shows the OS-level notification popup even when the app is closed.
+// Shows the OS-level notification popup even when the app is closed.
 self.addEventListener('push', (event) => {
-  let data = { title: 'Morales Alert', body: 'You have a new update.', url: '/admin' };
+  let data = { title: 'Morales', body: 'You have a new update.', url: '/dashboard', type: 'default' };
   try {
     if (event.data) data = { ...data, ...JSON.parse(event.data.text()) };
   } catch (_) {}
+
+  const vibrate = VIBRATE[data.type] || VIBRATE.default;
 
   const options = {
     body:    data.body,
     icon:    '/morales-m-mark.png',
     badge:   '/morales-m-mark.png',
     tag:     data.tag || 'morales-alert',
-    data:    { url: data.url || '/admin' },
-    vibrate: [200, 100, 200],
-    requireInteraction: data.urgent === true, // keeps urgent alerts on screen until dismissed
+    data:    { url: data.url || '/dashboard' },
+    vibrate,
+    silent:  false,
+    requireInteraction: data.urgent === true,
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));

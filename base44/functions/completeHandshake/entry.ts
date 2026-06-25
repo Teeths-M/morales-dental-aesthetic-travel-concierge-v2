@@ -144,6 +144,28 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   const isComplete = n === 9;
 
+  // ── Patient push notification — key handshake moments only ───────────────
+  // HS1, HS3, HS5, HS6, HS9 are the moments that matter most to the patient.
+  const PATIENT_PUSH: Record<number, { title: string; body: string; type: string }> = {
+    1: { title: '🚗 Journey Begun',        body: 'Your driver has arrived. Checkpoint 1 of 9 confirmed.',         type: 'safe'      },
+    3: { title: '✈️ Landed Safely',         body: `You have arrived safely. Welcome to your destination.`,          type: 'success'   },
+    5: { title: '🏥 Clinic Check-In',       body: 'You are in good hands. Your care team is ready for you.',       type: 'success'   },
+    6: { title: '🍽️ Companion Confirmed',   body: 'Your recovery companion has checked in. You are not alone.',    type: 'companion' },
+    9: { title: '⭐ The Golden M Is Yours', body: 'Welcome home. All 9 checkpoints complete. Journey done.',        type: 'golden_m'  },
+  };
+
+  if (PATIENT_PUSH[n] && trip.user_email) {
+    const pp = PATIENT_PUSH[n];
+    base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: trip.user_email,
+      title:      pp.title,
+      body:       pp.body,
+      url:        '/dashboard',
+      type:       pp.type,
+      tag:        `hs-${n}-${trip_id}`,
+    }).catch(() => {}); // non-blocking
+  }
+
   // ── Escrow release — 24 hours after handshake completion (Airbnb model) ────
   // HS1, HS5, HS6, HS7, HS9 each trigger the release of specific partner holds.
   if ([1, 5, 6, 7, 9].includes(n)) {

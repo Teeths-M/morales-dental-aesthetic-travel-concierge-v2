@@ -225,6 +225,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }),
     // Generate receipt
     base44.asServiceRole.functions?.invoke?.('sendPaymentReceipt', { case_id, payment_type, amount_paid: amountPaid, stripe_payment_id }).catch(() => {}),
+    // Push notification — confident double buzz when payment lands
+    c.client_email ? base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+      user_email: c.client_email,
+      title:      '✅ Payment Confirmed',
+      body:       `${isFullPay ? 'Full payment' : '50% deposit'} received. Your partners are being confirmed now.`,
+      url:        '/dashboard/bookings',
+      type:       'payment',
+      tag:        `payment-${case_id}`,
+    }).catch(() => {}) : Promise.resolve(),
     base44.asServiceRole.entities.AuditLog.create({
       event_type: 'payment_cascade_triggered', actor_id: 'system', actor_role: 'system',
       actor_name: 'Morales Automation', resource_type: 'CaseRecord', resource_id: case_id,

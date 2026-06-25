@@ -125,5 +125,15 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     body: bookingEmail({ clientName, procedures, departureDate, destination, caseRef }),
   });
 
+  // Push notification — device buzz on booking confirmation
+  base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+    user_email: clientEmail,
+    title:      '✈️ Booking Confirmed',
+    body:       `Your journey to ${destination} is confirmed. Case ${caseRef}.`,
+    url:        '/dashboard',
+    type:       'booking',
+    tag:        `booking-${caseRecord.id}`,
+  }).catch(() => {});
+
   return ok({ sent_to: clientEmail, case_ref: caseRef });
 }, { name: 'sendBookingConfirmation', requireAuth: false }));

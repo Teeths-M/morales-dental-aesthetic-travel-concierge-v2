@@ -115,6 +115,19 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       subject: `Welcome home — The Golden M is yours. ✨ | ${BRAND}`,
       body: goldenMEmail({ clientName, procedures, duration, caseRef }),
     }));
+
+    // Golden M push — the biggest celebration buzz of the whole journey
+    tasks.push(
+      base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+        user_email: clientEmail,
+        title:      '⭐ The Golden M Is Yours',
+        body:       `Welcome home, ${clientName.split(' ')[0]}. All 9 checkpoints complete. Journey done. Thank you for trusting Morales.`,
+        url:        '/dashboard',
+        type:       'golden_m',
+        tag:        `golden-m-${trip_id}`,
+        urgent:     false,
+      }).catch(() => {}) ?? Promise.resolve()
+    );
   }
 
   if (clientPhone) {

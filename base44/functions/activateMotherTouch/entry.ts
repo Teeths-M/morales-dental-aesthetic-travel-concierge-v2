@@ -248,6 +248,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     ));
   }
 
+  // Push notification — gentle triple buzz when companion is assigned
+  if (caseRecord.client_email) {
+    tasks.push(
+      base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
+        user_email: caseRecord.client_email,
+        title:      '🤱 Your Companion Is Ready',
+        body:       `${companion.full_name || 'Your companion'} is briefed and on the way. First visit: ${scheduleLines[0] || 'today at 6 PM'}.`,
+        url:        '/dashboard',
+        type:       'companion',
+        tag:        `companion-${case_id}`,
+      }).catch(() => {}) ?? Promise.resolve()
+    );
+  }
+
   await Promise.allSettled(tasks);
 
   return ok({
