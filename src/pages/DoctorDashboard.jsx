@@ -12,7 +12,56 @@ import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
-import { Heart, Stethoscope, Phone } from 'lucide-react';
+import { Heart, Stethoscope, Phone, DollarSign, CheckCircle2 } from 'lucide-react';
+import { useState as useLocalState } from 'react';
+
+// ── Facility Fee inline form — auto-triggers pipeline when submitted ──────────
+function FacilityFeeForm({ caseId, caseRef }) {
+  const [amount, setAmount]   = useLocalState('');
+  const [loading, setLoading] = useLocalState(false);
+  const [done, setDone]       = useLocalState(false);
+
+  const submit = async () => {
+    const val = parseFloat(amount);
+    if (!val || val <= 0) return;
+    setLoading(true);
+    try {
+      await base44.functions.invoke('submitPartnerQuote', {
+        case_id: caseId, partner_type: 'clinic', amount: val,
+      });
+      setDone(true);
+    } catch (_) { setLoading(false); }
+  };
+
+  if (done) return (
+    <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+      <p className="text-xs font-semibold text-emerald-700">Clinic fee submitted — pipeline advancing automatically</p>
+    </div>
+  );
+
+  return (
+    <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+      <p className="text-xs font-semibold text-amber-800 mb-2">
+        ⏳ Clinic facility fee required to finalise package pricing for {caseRef}
+      </p>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-600" />
+          <input
+            type="number" min="0" step="0.01" placeholder="Facility fee (USD)"
+            value={amount} onChange={e => setAmount(e.target.value)}
+            className="w-full pl-8 pr-3 py-2 text-sm border border-amber-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
+        </div>
+        <button onClick={submit} disabled={loading || !amount}
+          className="px-4 py-2 rounded-lg text-xs font-bold bg-amber-600 text-white disabled:opacity-50 whitespace-nowrap">
+          {loading ? '…' : 'Submit Fee'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function DoctorDashboard() {
   const [editing, setEditing] = useState(false);
@@ -290,6 +339,10 @@ export default function DoctorDashboard() {
                             )}
                           </div>
                         </div>
+                        {/* Facility fee gate — shows when clinic quote is still pending */}
+                        {c.status === 'Vendor-Pending' && c.clinic_quote_status !== 'CONFIRMED' && (
+                          <FacilityFeeForm caseId={c.id} caseRef={c.id.slice(-8).toUpperCase()} />
+                        )}
                       </motion.div>
                     );
                   })}

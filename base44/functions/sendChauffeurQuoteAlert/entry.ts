@@ -107,9 +107,17 @@ Deno.serve(async (req) => {
       }).catch(err => console.log(`Admin email skipped for ${admin.email}: ${err.message}`));
     }
 
+    // ── Automation Gate: update CaseRecord + check if all 4 quotes are in ──
+    // Non-blocking — chauffeur quote saved regardless of whether this call succeeds.
+    base44.functions.invoke('submitPartnerQuote', {
+      consultation_id,
+      partner_type: 'driver',
+      amount: transferTotal,
+    }).catch(e => console.warn('[sendChauffeurQuoteAlert] submitPartnerQuote failed:', e.message));
+
     return Response.json({
       success: true,
-      message: 'Leg costs saved. Status set to Admin-Review. Admin notified.',
+      message: 'Transfer legs saved. Automation gate notified. Pipeline will advance when all 4 quotes confirmed.',
       transfer_total: transferTotal,
     });
   } catch (error) {

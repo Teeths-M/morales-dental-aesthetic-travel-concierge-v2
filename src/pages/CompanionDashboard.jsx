@@ -5,7 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
-import { Heart, ChefHat, Calendar } from 'lucide-react';
+import { Heart, ChefHat, Calendar, CheckCircle2 } from 'lucide-react';
+import { useState as useLocalState } from 'react';
 
 const GOLD = '#D4AF37';
 
@@ -72,13 +73,72 @@ function ActiveAssignmentHero({ assignments }) {
           </div>
         </div>
       </div>
+      {/* Rate submission gate — shows when companion quote pending */}
+      {caseRecord && caseRecord.companion_quote_status !== 'CONFIRMED' && (
+        <div className="px-5 pb-4">
+          <CompanionRateForm caseId={caseRecord.id} patientName={patientName} />
+        </div>
+      )}
+
       {/* Dietary card inlined */}
-      {caseRecord && (
+      {caseRecord && caseRecord.companion_quote_status === 'CONFIRMED' && (
         <div className="px-5 pb-4">
           <DietaryInfoCard caseRecord={caseRecord} compact />
         </div>
       )}
     </motion.div>
+  );
+}
+
+// ── Companion rate submission — auto-triggers pipeline when submitted ─────────
+function CompanionRateForm({ caseId, patientName }) {
+  const [amount, setAmount]   = useLocalState('');
+  const [notes, setNotes]     = useLocalState('');
+  const [loading, setLoading] = useLocalState(false);
+  const [done, setDone]       = useLocalState(false);
+  const GOLD = '#D4AF37';
+
+  const submit = async () => {
+    const val = parseFloat(amount);
+    if (!val || val <= 0) return;
+    setLoading(true);
+    try {
+      await base44.functions.invoke('submitPartnerQuote', {
+        case_id: caseId, partner_type: 'companion', amount: val,
+      });
+      setDone(true);
+    } catch (_) { setLoading(false); }
+  };
+
+  if (done) return (
+    <div className="flex items-center gap-2 p-3 rounded-xl" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
+      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+      <p className="text-xs font-semibold text-emerald-300">Rate submitted — pipeline will advance automatically when all partners respond</p>
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl p-3" style={{ background: 'rgba(212,175,55,0.08)', border: `1px solid ${GOLD}30` }}>
+      <p className="text-xs font-semibold mb-2" style={{ color: GOLD }}>
+        ⏳ Submit your service rate for {patientName} to unlock the pricing pipeline
+      </p>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: GOLD }}>$</span>
+          <input
+            type="number" min="0" step="0.01" placeholder="Total service rate (USD)"
+            value={amount} onChange={e => setAmount(e.target.value)}
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg focus:outline-none"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #2A3F4A', color: '#fff' }}
+          />
+        </div>
+        <button onClick={submit} disabled={loading || !amount}
+          className="px-4 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
+          style={{ background: GOLD, color: '#060B16' }}>
+          {loading ? '…' : 'Submit'}
+        </button>
+      </div>
+    </div>
   );
 }
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

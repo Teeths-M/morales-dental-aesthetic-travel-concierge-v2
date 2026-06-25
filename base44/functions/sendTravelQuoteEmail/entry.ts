@@ -85,13 +85,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Automation Gate: update CaseRecord + check if all 4 quotes are in ──
+    // Non-blocking — travel quote saved regardless of whether this call succeeds.
+    const travelTotal = (Number(flight_cost_usd) || 0) + (Number(hotel_cost_usd) || 0);
+    base44.functions.invoke('submitPartnerQuote', {
+      consultation_id,
+      partner_type: 'travel',
+      amount: travelTotal,
+    }).catch(e => console.warn('[sendTravelQuoteEmail] submitPartnerQuote failed:', e.message));
+
     return Response.json({
       success: true,
-      message: 'Travel quote saved. Status set to Transfer-Pending. Chauffeur notified.',
+      message: 'Travel quote saved. Automation gate notified. Pipeline will advance when all 4 quotes confirmed.',
       chauffeur_portal_url: chauffeurPortalUrl,
     });
   } catch (error) {
     console.error('sendTravelQuoteEmail error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
