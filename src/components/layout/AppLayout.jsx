@@ -9,6 +9,7 @@ import OfflineBanner from './OfflineBanner';
 import { useAuth } from '@/lib/AuthContext';
 import BiometricGate from '@/components/security/BiometricGate';
 import GuardianTicker from '@/components/guardian/GuardianTicker';
+import FloatingCheckInAlert from '@/components/solo/FloatingCheckInAlert';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 
@@ -61,6 +62,7 @@ export default function AppLayout() {
             <WhatsAppButton />
             <HeartNotificationCenter user={user} />
             <GuardianTicker />
+            {user && <FloatingCheckInAlert user={user} />}
 
             {/* Premium floating SOS — global, always on top */}
             <FloatingSOSButton />
