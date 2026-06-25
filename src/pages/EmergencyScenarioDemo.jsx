@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MapPin, Radio, ArrowLeft, Play, RotateCcw,
+  Radio, ArrowLeft, Play, RotateCcw,
   MessageSquare, Navigation, Siren
 } from 'lucide-react';
 
@@ -192,40 +192,57 @@ function GpsMapPin({ active, lost }) {
         </span>
       </div>
 
-      {/* Pin */}
+      {/* Maria's face + pin */}
       <AnimatePresence>
         {active && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="relative"
+            className="relative flex flex-col items-center"
+            style={{ gap: 0 }}
           >
-            {/* Pulse rings */}
-            {!lost && (
-              <>
-                <motion.div
-                  className="absolute rounded-full"
-                  style={{ inset: -20, border: `2px solid ${lost ? '#ef4444' : '#22c55e'}`, opacity: 0.3 }}
-                  animate={{ scale: [1, 1.5], opacity: [0.3, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                <motion.div
-                  className="absolute rounded-full"
-                  style={{ inset: -12, border: `2px solid ${lost ? '#ef4444' : '#22c55e'}`, opacity: 0.5 }}
-                  animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
-                  transition={{ duration: 2, delay: 0.4, repeat: Infinity }}
-                />
-              </>
-            )}
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center"
-              style={{
+            {/* Face avatar */}
+            <div className="relative flex flex-col items-center">
+              {/* Pulse rings around face */}
+              {!lost && (
+                <>
+                  <motion.div className="absolute rounded-full"
+                    style={{ inset: -10, border: `2px solid ${lost ? '#ef4444' : '#22c55e'}`, opacity: 0.4 }}
+                    animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity }} />
+                  <motion.div className="absolute rounded-full"
+                    style={{ inset: -6, border: `2px solid ${lost ? '#ef4444' : '#22c55e'}`, opacity: 0.6 }}
+                    animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
+                    transition={{ duration: 2.2, delay: 0.5, repeat: Infinity }} />
+                </>
+              )}
+              {/* Face photo */}
+              <img
+                src="https://i.pravatar.cc/150?img=47"
+                alt="Maria C."
+                style={{
+                  width: 44, height: 44,
+                  borderRadius: '50%',
+                  border: `3px solid ${lost ? '#ef4444' : '#22c55e'}`,
+                  boxShadow: `0 0 20px ${lost ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'}`,
+                  objectFit: 'cover',
+                  position: 'relative',
+                  zIndex: 2,
+                }}
+              />
+              {/* Name tag */}
+              <div style={{
+                position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)',
                 background: lost ? '#ef4444' : '#22c55e',
-                boxShadow: `0 0 16px ${lost ? 'rgba(239,68,68,0.6)' : 'rgba(34,197,94,0.6)'}`,
-              }}
-            >
-              <MapPin className="w-3 h-3 text-white" />
+                color: '#fff', fontSize: 8, fontWeight: 700,
+                padding: '2px 6px', borderRadius: 999, whiteSpace: 'nowrap', zIndex: 3,
+              }}>
+                Maria C.
+              </div>
             </div>
+            {/* Pin stem */}
+            <div style={{ width: 2, height: 16, background: lost ? '#ef4444' : '#22c55e', marginTop: 22, borderRadius: 1 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: lost ? '#ef4444' : '#22c55e', marginTop: -2 }} />
           </motion.div>
         )}
       </AnimatePresence>

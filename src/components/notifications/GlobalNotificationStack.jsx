@@ -1,77 +1,88 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
 
-const TYPE_STYLES = {
-  arrival:   { bg: '#0a1a10', border: 'rgba(34,197,94,0.5)',  accent: '#22c55e' },
-  driver:    { bg: '#0a1020', border: 'rgba(96,165,250,0.5)', accent: '#60a5fa' },
-  handshake: { bg: '#0a1020', border: 'rgba(212,175,55,0.5)', accent: '#D4AF37' },
-  checkin:   { bg: '#1a0a0a', border: 'rgba(239,68,68,0.5)',  accent: '#ef4444' },
-  alert:     { bg: '#1a0a0a', border: 'rgba(239,68,68,0.5)',  accent: '#ef4444' },
-  success:   { bg: '#0a1a10', border: 'rgba(34,197,94,0.5)',  accent: '#22c55e' },
-  info:      { bg: '#0C1A1D', border: 'rgba(148,163,184,0.3)', accent: '#94a3b8' },
+/* ── Apple-style accent colors per notification type ─────────────────────── */
+const TYPE_ACCENT = {
+  arrival:   '#22c55e',
+  driver:    '#60a5fa',
+  handshake: '#D4AF37',
+  checkin:   '#ef4444',
+  alert:     '#ef4444',
+  success:   '#22c55e',
+  info:      '#D4AF37',
 };
 
+/* ── Apple iOS-style frosted glass notification card ─────────────────────── */
 function NotificationCard({ n, onDismiss }) {
-  const s = TYPE_STYLES[n.type] || TYPE_STYLES.info;
+  const accent = TYPE_ACCENT[n.type] || '#D4AF37';
 
   return (
     <motion.div
       layout
       initial={n.position === 'top'
-        ? { y: -80, opacity: 0, scale: 0.94 }
-        : { y: 80, opacity: 0, scale: 0.94 }}
+        ? { y: -72, opacity: 0, scale: 0.93 }
+        : { y: 72, opacity: 0, scale: 0.93 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={n.position === 'top'
-        ? { y: -60, opacity: 0, scale: 0.92 }
-        : { y: 60, opacity: 0, scale: 0.92 }}
-      transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-      className="w-full rounded-2xl overflow-hidden"
+        ? { y: -50, opacity: 0, scale: 0.95 }
+        : { y: 50, opacity: 0, scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+      onClick={onDismiss}
+      className="w-full cursor-pointer"
       style={{
-        background: s.bg,
-        border: `1px solid ${s.border}`,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${s.border}`,
+        borderRadius: 20,
+        overflow: 'hidden',
+        background: 'rgba(28, 28, 32, 0.88)',
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset',
+        border: '1px solid rgba(255,255,255,0.08)',
       }}
     >
-      <div className="flex items-start gap-3 px-4 py-3.5">
-        {/* Icon */}
-        <span className="text-2xl flex-shrink-0 leading-tight mt-0.5">{n.icon}</span>
+      <div className="flex items-center gap-3 px-4 py-3">
+        {/* App icon — white square with Morales M, like iOS app icon */}
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+          background: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+          overflow: 'hidden',
+        }}>
+          <img src="/morales-m-mark.png" alt="M" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+        </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white leading-tight">{n.title}</p>
+          {/* App name + timestamp row */}
+          <div className="flex items-center justify-between gap-2 mb-0.5">
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.02em' }}>
+              MORALES CONCIERGE
+            </span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>now</span>
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: 1 }}
+            className="truncate">{n.title}</p>
           {n.body && (
-            <p className="text-xs mt-0.5 leading-relaxed" style={{ color: '#94a3b8' }}>{n.body}</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.4 }}
+              className="line-clamp-2">{n.body}</p>
           )}
           {n.action && (
             <button
-              onClick={() => { n.action.onPress?.(); onDismiss(); }}
-              className="mt-2.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+              onClick={e => { e.stopPropagation(); n.action.onPress?.(); onDismiss(); }}
               style={{
-                background: `${s.accent}20`,
-                border: `1px solid ${s.accent}60`,
-                color: s.accent,
+                marginTop: 8, padding: '5px 12px', borderRadius: 20,
+                background: `${accent}22`, border: `1px solid ${accent}55`,
+                color: accent, fontSize: 12, fontWeight: 700,
               }}
             >
               {n.action.label}
             </button>
           )}
         </div>
-
-        {/* Dismiss */}
-        <button
-          onClick={onDismiss}
-          className="p-1 rounded-lg flex-shrink-0 mt-0.5"
-          style={{ color: '#475569' }}
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
       </div>
 
-      {/* Progress bar auto-dismiss indicator */}
+      {/* Thin accent progress line at bottom */}
       {n.duration > 0 && (
         <motion.div
           initial={{ scaleX: 1 }}
@@ -79,8 +90,8 @@ function NotificationCard({ n, onDismiss }) {
           transition={{ duration: n.duration / 1000, ease: 'linear' }}
           style={{
             height: 2,
-            background: s.accent,
-            opacity: 0.4,
+            background: accent,
+            opacity: 0.5,
             transformOrigin: 'left',
           }}
         />

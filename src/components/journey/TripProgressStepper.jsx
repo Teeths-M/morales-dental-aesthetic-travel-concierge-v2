@@ -73,29 +73,33 @@ export default function TripProgressStepper({ currentStep = 0, isComplete = fals
 
           return (
             <React.Fragment key={stepNum}>
-              <div className="flex flex-col items-center" style={{ minWidth: 34 }}>
+              <div className="flex flex-col items-center" style={{ minWidth: 40 }}>
                 <div
                   title={`HS${stepNum} — ${step.label.replace('\n', ' ')} (${ROLE_LABELS[step.role].name})`}
                   className="flex items-center justify-center rounded-full transition-all duration-300 relative"
                   style={{
-                    width: 34,
-                    height: 34,
-                    background: isDone ? `${roleColor}20` : 'transparent',
-                    border: `2px solid ${borderColor}`,
-                    boxShadow: isDone
-                      ? `0 0 10px ${roleColor}55`
+                    width: 40,
+                    height: 40,
+                    background: isDone
+                      ? `${roleColor}35`
                       : isCurrent
-                      ? `0 0 0 4px ${roleColor}30`
+                      ? `${roleColor}15`
+                      : 'rgba(42,63,74,0.4)',
+                    border: `2.5px solid ${isDone || isCurrent ? roleColor : '#2A3F4A'}`,
+                    boxShadow: isDone
+                      ? `0 0 14px ${roleColor}80, 0 0 28px ${roleColor}30`
+                      : isCurrent
+                      ? `0 0 0 5px ${roleColor}25, 0 0 14px ${roleColor}50`
                       : undefined,
                     animation: isCurrent ? 'heartbeat 1.4s ease-in-out infinite' : undefined,
                   }}
                 >
                   {isDone ? (
-                    <Heart size={14} color={roleColor} filled />
+                    <Heart size={20} color={roleColor} filled />
                   ) : isCurrent ? (
-                    <Heart size={12} color={roleColor} filled={false} />
+                    <Heart size={18} color={roleColor} filled={false} />
                   ) : (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#2A3F4A' }}>{stepNum}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#475569' }}>{stepNum}</span>
                   )}
                 </div>
               </div>
@@ -104,13 +108,18 @@ export default function TripProgressStepper({ currentStep = 0, isComplete = fals
                 <div
                   className="flex-1 rounded-full transition-all duration-500"
                   style={{
-                    height: 2,
+                    height: 2.5,
                     minWidth: 4,
                     background: isDone && !isComplete
                       ? `linear-gradient(to right, ${step.color}, ${STEPS[i + 1].color})`
                       : isComplete
                       ? GOLD
-                      : '#2A3F4A',
+                      : '#1e2d35',
+                    boxShadow: isDone && !isComplete
+                      ? `0 0 6px ${step.color}60`
+                      : isComplete
+                      ? `0 0 6px ${GOLD}60`
+                      : 'none',
                   }}
                 />
               )}
