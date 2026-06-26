@@ -28,6 +28,8 @@ import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
 import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
+import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
+import { useSafetyScore } from '@/hooks/useSafetyScore';
 import FirstTimeTooltip from '@/components/ui-system/FirstTimeTooltip';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
@@ -99,6 +101,15 @@ function DashboardHome({ user, consultations, language }) {
   });
 
   const latestActive = consultations.find(c => c.status !== 'Completed');
+
+  // Morales Safety Score — powered by MedGuard™ 6-signal analysis
+  const tripPhaseForScore = activeTrip?.trip_phase || latestActive?.trip_phase;
+  const safetyScore = useSafetyScore({
+    caseId:    latestActive?.id,
+    tripPhase: tripPhaseForScore,
+    enabled:   !!latestActive?.id,
+  });
+
   const isSolo = latestActive && (!latestActive.requires_companion || latestActive.companion_requirement_status === 'companion_required_pending');
   // Auto-start live beacon for solo travelers with an active journey
   const { status: locationStatus, currentLocation } = useLiveLocationBeacon({
@@ -212,6 +223,18 @@ function DashboardHome({ user, consultations, language }) {
         <MedGuardPulse
           caseId={latestConsultation.id}
           tripPhase={activeTrip?.trip_phase || latestConsultation.trip_phase}
+        />
+      )}
+
+      {/* Morales Safety Score — proprietary 0-100 gauge powered by MedGuard™ */}
+      {latestConsultation && (
+        <SafetyScoreGauge
+          score={safetyScore.score}
+          breakdown={safetyScore.breakdown}
+          analyzedAt={safetyScore.analyzedAt}
+          isLoading={safetyScore.isLoading}
+          isActiveTravel={safetyScore.isActiveTravel}
+          phase={tripPhaseForScore}
         />
       )}
 
