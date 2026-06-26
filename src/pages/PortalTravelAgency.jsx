@@ -68,6 +68,11 @@ export default function PortalTravelAgency() {
   const [flightItinerary, setFlightItinerary] = useState('');
   const [hotelSelection, setHotelSelection] = useState('');
   const [taxiServiceId, setTaxiServiceId] = useState('');
+  // Logistics fields — stored on CaseRecord for the patient Journey Map
+  const [flightNumber, setFlightNumber] = useState('');
+  const [hotelAddress, setHotelAddress] = useState('');
+  const [hotelLat, setHotelLat]         = useState('');
+  const [hotelLng, setHotelLng]         = useState('');
   const [lastSubmitted, setLastSubmitted] = useState(null);
   const [workflowId, setWorkflowId] = useState(null);
   const [revisionCount, setRevisionCount] = useState(0);
@@ -154,6 +159,20 @@ export default function PortalTravelAgency() {
         flight_itinerary_summary: flightItinerary,
         hotel_selection: hotelSelection,
       });
+
+      // Save logistics fields to CaseRecord so the patient sees them on their Journey Map
+      if (consultation?.id) {
+        const hotelCoordsObj = (hotelLat && hotelLng)
+          ? { lat: parseFloat(hotelLat), lng: parseFloat(hotelLng) }
+          : null;
+        await base44.asServiceRole.entities.CaseRecord.update(consultation.id, {
+          ...(flightNumber   ? { logistics_flight_number: flightNumber } : {}),
+          ...(hotelSelection ? { hotel_name: hotelSelection }            : {}),
+          ...(hotelAddress   ? { hotel_address: hotelAddress }           : {}),
+          ...(hotelCoordsObj ? { hotel_coords: hotelCoordsObj }          : {}),
+        }).catch(() => {});
+      }
+
       setSubmitted(true);
     } catch (e) {
       setError(e.message || 'Submission failed. Please try again.');
@@ -369,11 +388,47 @@ export default function PortalTravelAgency() {
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, color: '#111', resize: 'vertical', minHeight: 72, boxSizing: 'border-box', outline: 'none' }} />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>HOTEL SELECTION</label>
-              <input type="text" value={hotelSelection} onChange={e => setHotelSelection(e.target.value)}
-                placeholder="e.g. Grand Hyatt Playa del Carmen"
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>FLIGHT NUMBER</label>
+              <input type="text" value={flightNumber} onChange={e => setFlightNumber(e.target.value)}
+                placeholder="e.g. AA123, TK45, CM204"
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, color: '#111', boxSizing: 'border-box', outline: 'none' }} />
             </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>HOTEL NAME</label>
+              <input type="text" value={hotelSelection} onChange={e => setHotelSelection(e.target.value)}
+                placeholder="e.g. Grand Hyatt Caracas"
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, color: '#111', boxSizing: 'border-box', outline: 'none' }} />
+            </div>
+
+            {/* ── Location block — feeds the Patient Journey Map ── */}
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+              <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#166534' }}>📍 Hotel Location — Powers the Patient Journey Map</p>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>HOTEL ADDRESS</label>
+                <input type="text" value={hotelAddress} onChange={e => setHotelAddress(e.target.value)}
+                  placeholder="e.g. Av. Principal Las Mercedes, Caracas 1060, Venezuela"
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, color: '#111', boxSizing: 'border-box', outline: 'none' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>LATITUDE</label>
+                  <input type="number" step="any" value={hotelLat} onChange={e => setHotelLat(e.target.value)}
+                    placeholder="e.g. 10.4806"
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, color: '#111', boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>LONGITUDE</label>
+                  <input type="number" step="any" value={hotelLng} onChange={e => setHotelLng(e.target.value)}
+                    placeholder="e.g. -66.9036"
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, color: '#111', boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+              <p style={{ margin: '10px 0 0', fontSize: 11, color: '#6b7280' }}>
+                💡 Find coords: search the hotel on <a href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0F3A20', fontWeight: 600 }}>OpenStreetMap</a> → right-click the pin.
+              </p>
+            </div>
+
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 6 }}>CHAUFFEUR SERVICE ID (for transfer dispatch)</label>
               <input type="text" value={taxiServiceId} onChange={e => setTaxiServiceId(e.target.value)}

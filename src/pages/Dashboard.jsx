@@ -29,6 +29,7 @@ import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
 import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
+import JourneyMap from '@/components/dashboard/JourneyMap';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
 import FirstTimeTooltip from '@/components/ui-system/FirstTimeTooltip';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
@@ -235,6 +236,17 @@ function DashboardHome({ user, consultations, language }) {
           isLoading={safetyScore.isLoading}
           isActiveTravel={safetyScore.isActiveTravel}
           phase={tripPhaseForScore}
+        />
+      )}
+
+      {/* Journey Map — hotel + clinic pins, above the fold */}
+      {latestConsultation && (
+        <JourneyMap
+          hotelCoords={latestConsultation.hotel_coords   ?? null}
+          hotelName={latestConsultation.hotel_name       ?? ''}
+          hotelAddress={latestConsultation.hotel_address ?? ''}
+          clinicCoords={latestConsultation.clinic_coords ?? null}
+          clinicAddress={latestConsultation.clinic_address ?? ''}
         />
       )}
 

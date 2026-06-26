@@ -25,6 +25,9 @@ export default function PortalDoctor() {
   const [formData, setFormData] = useState({
     doctor_notes: ''
   });
+  const [clinicAddress, setClinicAddress] = useState('');
+  const [clinicLat, setClinicLat]         = useState('');
+  const [clinicLng, setClinicLng]         = useState('');
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [showInfoRequest, setShowInfoRequest] = useState(false);
   const [infoRequest, setInfoRequest] = useState('');
@@ -107,11 +110,16 @@ export default function PortalDoctor() {
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
+      const coordsUpdate = (clinicLat && clinicLng)
+        ? { clinic_coords: { lat: parseFloat(clinicLat), lng: parseFloat(clinicLng) } }
+        : {};
       await base44.entities.CaseRecord.update(caseData?.id, {
         doctor_confirmation_status: 'Confirmed',
         doctor_confirmed_at: new Date().toISOString(),
         doctor_notes: formData.doctor_notes,
-        status: 'Vendor-Pending'
+        status: 'Vendor-Pending',
+        ...(clinicAddress ? { clinic_address: clinicAddress } : {}),
+        ...coordsUpdate,
       });
       setSuccess(true);
     } catch (err) {
@@ -461,6 +469,62 @@ export default function PortalDoctor() {
                     className="h-32"
                   />
                 </div>
+              </div>
+
+              {/* ── Clinic Location ── */}
+              <div className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📍</span>
+                  <h3 className="font-semibold text-sm">Clinic Location</h3>
+                </div>
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Adding your clinic's exact location lets the patient see it on their Journey Map and get directions automatically.
+                </p>
+                <div>
+                  <Label>Clinic Address</Label>
+                  <input
+                    type="text"
+                    value={clinicAddress}
+                    onChange={e => setClinicAddress(e.target.value)}
+                    placeholder="e.g. Clínica Dento Care, Av. Principal 45, Caracas, Venezuela"
+                    className="w-full mt-1.5 border border-input rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Latitude</Label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={clinicLat}
+                      onChange={e => setClinicLat(e.target.value)}
+                      placeholder="e.g. 10.4806"
+                      className="w-full mt-1.5 border border-input rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <Label>Longitude</Label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={clinicLng}
+                      onChange={e => setClinicLng(e.target.value)}
+                      placeholder="e.g. -66.9036"
+                      className="w-full mt-1.5 border border-input rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  💡 Don't know the coordinates? Search your address on{' '}
+                  <a
+                    href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(clinicAddress || 'your clinic')}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    OpenStreetMap
+                  </a>{' '}
+                  and right-click the pin to copy coordinates.
+                </p>
               </div>
 
               {/* Stage 10 & 11: Surgical Execution Controls */}

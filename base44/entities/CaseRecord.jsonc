@@ -780,7 +780,41 @@
     // ── Stripe 1-Click Checkout (Stripe model) ────────────────────────────────
     "stripe_customer_id":     { "type": "string", "description": "Stripe Customer ID — enables 1-click balance payment" },
     "stripe_payment_method_id":{ "type": "string", "description": "Saved Stripe payment method for 1-click" },
-    "stripe_payment_method_last4": { "type": "string", "description": "Last 4 digits for display in Pay Now email" }
+    "stripe_payment_method_last4": { "type": "string", "description": "Last 4 digits for display in Pay Now email" },
+
+    // ── Logistics & Location (Board Directive: Spatial Awareness) ─────────────
+    "clinic_address": {
+      "type": "string",
+      "description": "Full street address of the assigned clinic — entered by doctor on confirmation"
+    },
+    "clinic_coords": {
+      "type": "object",
+      "description": "GPS coordinates of clinic, set by doctor on confirmation",
+      "properties": {
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
+      }
+    },
+    "hotel_name": {
+      "type": "string",
+      "description": "Name of the booked hotel — entered by travel agency"
+    },
+    "hotel_address": {
+      "type": "string",
+      "description": "Full street address of the hotel — entered by travel agency"
+    },
+    "hotel_coords": {
+      "type": "object",
+      "description": "GPS coordinates of hotel — entered by travel agency",
+      "properties": {
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
+      }
+    },
+    "logistics_flight_number": {
+      "type": "string",
+      "description": "Patient's confirmed inbound flight number — entered by travel agency, e.g. AA123"
+    }
   },
   "required": [
     "client_name",
