@@ -1,0 +1,38 @@
+{
+  "name": "SatelliteDevice",
+  "type": "object",
+  "description": "Satellite communication device registered to a patient for offline-world fallback when cellular networks are down. Supports Rock Seven / Iridium SBD and Garmin inReach (via SMS number).",
+  "properties": {
+    "case_id":          { "type": "string" },
+    "patient_email":    { "type": "string", "format": "email" },
+    "patient_name":     { "type": "string" },
+    "device_type": {
+      "type": "string",
+      "enum": ["rockblock_iridium", "inreach_sms", "inreach_email", "iphone_guidance"],
+      "default": "rockblock_iridium",
+      "description": "rockblock_iridium = Rock Seven API (bidirectional). inreach_sms = Garmin inReach via SMS number. iphone_guidance = no hardware, app guides patient to use native iPhone satellite SOS."
+    },
+    "rock7_imei":       { "type": "string", "description": "14-digit IMEI for Rock Seven / Iridium SBD devices" },
+    "device_phone":     { "type": "string", "description": "E.164 phone number for inReach SMS-capable devices" },
+    "device_label":     { "type": "string", "description": "Human label, e.g. 'Garmin inReach Mini 2 — silver'" },
+    "registration_status": {
+      "type": "string",
+      "enum": ["pending", "verified", "inactive"],
+      "default": "pending"
+    },
+    "last_ping_at":        { "type": "string", "format": "date-time" },
+    "last_message_at":     { "type": "string", "format": "date-time" },
+    "last_gps_lat":        { "type": "number" },
+    "last_gps_lng":        { "type": "number" },
+    "last_mo_message":     { "type": "string", "description": "Last Mobile-Originated message received from device" },
+    "messages_sent":       { "type": "number", "default": 0 },
+    "messages_received":   { "type": "number", "default": 0 },
+    "include_in_package":  { "type": "boolean", "default": false, "description": "Device included as part of patient's care package (rental)" }
+  },
+  "required": ["case_id", "patient_email", "device_type"],
+  "rls": {
+    "read":   { "user_condition": { "$or": [{ "role": "admin" }, { "role": "platform_admin" }] } },
+    "create": { "user_condition": { "$or": [{ "role": "admin" }, { "role": "platform_admin" }] } },
+    "update": { "user_condition": { "$or": [{ "role": "admin" }, { "role": "platform_admin" }] } }
+  }
+}

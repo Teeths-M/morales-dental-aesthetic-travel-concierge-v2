@@ -174,6 +174,18 @@ Deno.serve(async (req) => {
         ).then(list => list.find(c => c.id === checkIn.id));
         const stillOverdue = freshCheckIn && !['acknowledged', 'resolved'].includes(freshCheckIn.status);
 
+        // ── Satellite message — fires when voice call fires (cellular may be down) ──
+        // If the patient has a registered satellite device, send a parallel message
+        // that bypasses cellular entirely. This is the tier that works when all towers
+        // go dark (grid collapse, remote area, cyberattack on infrastructure).
+        if (checkIn.case_id) {
+          base44.asServiceRole.functions?.invoke?.('sendSatelliteMessage', {
+            case_id: checkIn.case_id,
+            message: `MORALES SAFETY: We cannot reach you. Reply SAFE if okay or SOS if emergency. Help is on standby. — Morales Concierge`,
+            reason:  'missed_check_in_satellite_fallback',
+          }).catch(() => {}); // non-blocking — doesn't gate the rest of escalation
+        }
+
         // Voice call attempt via Twilio
         if (!isValidPhone(checkIn.user_phone)) {
           console.warn(`[escalateSoloCheckIn] Invalid or missing phone for ${checkIn.id}: ${checkIn.user_phone}`);

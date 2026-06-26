@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AdminLayout from '@/components/layout/AdminLayout';
+import SatelliteDevicePanel from '@/components/admin/SatelliteDevicePanel';
 
 const STATUS_CONFIG = {
   pending:       { label: 'Awaiting',    color: 'bg-amber-100 text-amber-800', priority: 3 },
@@ -175,9 +176,10 @@ export default function AdminSoloMonitor() {
         {/* Tab Navigation */}
         <div className="flex gap-1 bg-slate-100 rounded-2xl p-1 border border-slate-200 overflow-x-auto scrollbar-hide">
           {[
-            { id: 'incidents', label: 'Active Incidents', icon: Shield },
-            { id: 'nightlife', label: `Nightlife Modes (${nightlifeSessions.length})`, icon: Moon },
-            { id: 'transport', label: `Recovery Transport (${transportRequests.length})`, icon: Car },
+            { id: 'incidents',  label: 'Active Incidents', icon: Shield },
+            { id: 'satellite',  label: '🛰️ Satellite', icon: Globe },
+            { id: 'nightlife',  label: `Nightlife Modes (${nightlifeSessions.length})`, icon: Moon },
+            { id: 'transport',  label: `Recovery Transport (${transportRequests.length})`, icon: Car },
           ].map(tab => {
             const Icon = tab.icon;
             return (
@@ -212,6 +214,11 @@ export default function AdminSoloMonitor() {
             </Button>
           </div>
         </div>
+
+        {/* Satellite Device Panel */}
+        {activeTab === 'satellite' && (
+          <SatelliteDevicePanel />
+        )}
 
         {/* Nightlife Sessions Panel */}
         {activeTab === 'nightlife' && (
