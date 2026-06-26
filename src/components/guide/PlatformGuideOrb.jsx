@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { Send, Sparkles, ChevronDown, WifiOff } from 'lucide-react';
 import { findAnswer } from './orbKnowledge';
+import { isSystemPaused } from '@/lib/systemPause';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -146,27 +147,28 @@ export default function PlatformGuideOrb() {
     setMessages(m => [...m, { role: 'user', text: q }]);
     setThinking(true);
 
-    // 1. Try local knowledge base first (instant, works offline)
+    const paused  = isSystemPaused();
+    const canLLM  = isOnline && !paused;
+
+    // 1. Try local knowledge base first (instant, always works)
     const kbAnswer = findAnswer(q);
 
     // 2. Check session cache for LLM response
-    const cached = getCached(q);
+    const cached = !paused ? getCached(q) : null;
 
     if (cached) {
-      // Cached LLM answer available — use it immediately
       setMessages(m => [...m, { role: 'assistant', text: cached, source: 'llm' }]);
       setThinking(false);
       return;
     }
 
     if (kbAnswer) {
-      // Show KB answer instantly
-      setMessages(m => [...m, { role: 'assistant', text: kbAnswer, source: 'kb', id: Date.now() }]);
+      const msgId = Date.now();
+      setMessages(m => [...m, { role: 'assistant', text: kbAnswer, source: 'kb', id: msgId }]);
       setThinking(false);
 
-      // If online, quietly enhance with LLM in background
-      if (isOnline) {
-        const msgId = Date.now();
+      // Quietly enhance with LLM only if online AND not paused
+      if (canLLM) {
         try {
           const res = await base44.integrations.Core.InvokeLLM({
             prompt:        q,
@@ -176,7 +178,6 @@ export default function PlatformGuideOrb() {
           const llmText = typeof res === 'string' ? res : (res?.result || res?.text || '');
           if (llmText && llmText.length > 20) {
             setCached(q, llmText);
-            // Silently upgrade the KB answer to LLM answer
             setMessages(m => m.map(msg =>
               msg.id === msgId ? { ...msg, text: llmText, source: 'llm' } : msg
             ));
@@ -186,18 +187,19 @@ export default function PlatformGuideOrb() {
       return;
     }
 
-    // 3. No KB answer
-    if (!isOnline) {
+    // 3. No KB match — offline or paused fallback
+    if (!canLLM) {
+      const reason = paused ? 'System is paused to save integration credits.' : 'Working offline right now.';
       setMessages(m => [...m, {
         role: 'assistant',
-        text: `I'm working offline right now. I can answer questions about:\n\n• Handshakes & Golden M\n• SAFE-T & MedGuard\n• Journey Map\n• SOS & Emergency PIN\n• Booking & Procedures\n• Doctor, Travel Agency, Companion portals\n• System Pause, Journey Credit, Companion Package\n\nTry asking about any of those topics.`,
+        text: `${reason} I can still answer questions about:\n\n• Handshakes & Golden M\n• SAFE-T & MedGuard\n• Journey Map & SOS\n• Booking, Procedures, Portals\n• System Pause, Journey Credit, Companion Package\n\nTry asking about any of those topics.`,
         source: 'offline',
       }]);
       setThinking(false);
       return;
     }
 
-    // 4. Online, no KB match — call LLM
+    // 4. Online + not paused, no KB match — call LLM
     try {
       const res = await base44.integrations.Core.InvokeLLM({
         prompt:        q,

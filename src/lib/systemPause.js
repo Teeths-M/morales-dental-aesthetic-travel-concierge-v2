@@ -15,8 +15,9 @@ const PAUSE_KEY    = 'morales_system_paused';
 const CONFIG_KEY   = 'system_paused';
 const ADMIN_EMAIL  = 'admin@moralesmedical.com';
 
-// Stash the real invoke so we can restore it on resume
-let _originalInvoke = null;
+// Stash the real methods so we can restore them on resume
+let _originalInvoke    = null;
+let _originalInvokeLLM = null;
 
 // ── Local flag helpers ────────────────────────────────────────────────────────
 
@@ -32,24 +33,48 @@ function setLocalPaused(paused) {
   } catch (_) {}
 }
 
-// ── Base44 invoke intercept ───────────────────────────────────────────────────
+// ── Base44 full intercept (functions + integrations) ─────────────────────────
 
 export function applyPauseIntercept() {
-  if (_originalInvoke) return; // already patched
-  _originalInvoke = base44.functions.invoke.bind(base44.functions);
-  base44.functions.invoke = async (name, payload) => {
-    if (isSystemPaused()) {
-      console.warn(`[SYSTEM PAUSED] Blocked: ${name}`);
-      return { data: null, __paused: true };
+  // Patch functions.invoke
+  if (!_originalInvoke) {
+    _originalInvoke = base44.functions.invoke.bind(base44.functions);
+    base44.functions.invoke = async (name, payload) => {
+      if (isSystemPaused()) {
+        console.warn(`[SYSTEM PAUSED] Blocked function: ${name}`);
+        return { data: null, __paused: true };
+      }
+      return _originalInvoke(name, payload);
+    };
+  }
+
+  // Patch integrations.Core.InvokeLLM — this is the biggest credit consumer
+  // (MedGuard analysis, Orb AI responses, clinical note extraction all use this)
+  try {
+    if (!_originalInvokeLLM && base44.integrations?.Core?.InvokeLLM) {
+      _originalInvokeLLM = base44.integrations.Core.InvokeLLM.bind(base44.integrations.Core);
+      base44.integrations.Core.InvokeLLM = async (payload) => {
+        if (isSystemPaused()) {
+          console.warn('[SYSTEM PAUSED] Blocked InvokeLLM call');
+          return { result: '', __paused: true };
+        }
+        return _originalInvokeLLM(payload);
+      };
     }
-    return _originalInvoke(name, payload);
-  };
+  } catch (_) {}
 }
 
 export function removePauseIntercept() {
-  if (!_originalInvoke) return;
-  base44.functions.invoke = _originalInvoke;
-  _originalInvoke = null;
+  if (_originalInvoke) {
+    base44.functions.invoke = _originalInvoke;
+    _originalInvoke = null;
+  }
+  try {
+    if (_originalInvokeLLM && base44.integrations?.Core) {
+      base44.integrations.Core.InvokeLLM = _originalInvokeLLM;
+      _originalInvokeLLM = null;
+    }
+  } catch (_) {}
 }
 
 // ── Server-side sync (entity reads — zero integration credits) ────────────────
