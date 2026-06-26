@@ -11,6 +11,7 @@ import CredentialBadge from '@/components/doctors/CredentialBadge';
 import { base44 } from '@/api/base44Client';
 import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
 import ClinicalExtractionModal from '@/components/doctor/ClinicalExtractionModal';
+import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
 
 export default function PortalDoctor() {
   const { token } = useParams();
@@ -595,6 +596,7 @@ export default function PortalDoctor() {
         onClose={() => setShowExtractModal(false)}
       />
     )}
+    <PlatformGuideOrb />
     </>
   );
 }

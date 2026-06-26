@@ -15,6 +15,7 @@ import GlobalEventBroadcaster from '@/components/notifications/GlobalEventBroadc
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
+import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
@@ -61,6 +62,9 @@ export default function AppLayout() {
           <Outlet />
         </main>
         <Footer />
+
+        {/* Guide orb — available to ALL users on ALL pages (bottom-left) */}
+        <PlatformGuideOrb />
 
         {/* Patient-facing floating elements — hidden on admin pages */}
         {!isAdmin && (
