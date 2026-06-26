@@ -14,6 +14,7 @@ import GlobalNotificationStack from '@/components/notifications/GlobalNotificati
 import GlobalEventBroadcaster from '@/components/notifications/GlobalEventBroadcaster';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
+import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
@@ -42,6 +43,9 @@ export default function AppLayout() {
 
   return (
     <BiometricGate>
+      {/* System Pause banner — only visible to admin, fixed at top of screen */}
+      {isAdmin && <SystemPauseBanner />}
+
       {/* First-time onboarding wizard — shown once per account */}
       {showOnboarding && !suppressOnboarding && (
         <FirstTimeOnboarding

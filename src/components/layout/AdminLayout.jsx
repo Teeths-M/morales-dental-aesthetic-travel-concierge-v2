@@ -6,6 +6,7 @@ import {
   LogOut, ChevronLeft,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import SystemPauseToggle, { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 
 // Essential-only navigation — 10 items, 4 sections.
 // Advanced tools (imports, IQ-200, portal viewer, etc.) still exist at their
@@ -97,7 +98,10 @@ function SidebarContent({ location, onClose }) {
       </nav>
 
       {/* Footer — always visible at the bottom */}
-      <div className="border-t border-slate-100 px-3 py-3 flex-shrink-0 space-y-0.5">
+      <div className="border-t border-slate-100 px-3 py-3 flex-shrink-0 space-y-1">
+        {/* ⏸ System Pause — saves integration credits during development */}
+        <SystemPauseToggle compact />
+
         <Link
           to="/"
           onClick={onClose}
@@ -125,6 +129,8 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Red banner when system is paused — fixed position, sits above everything */}
+      <SystemPauseBanner />
       <div className="flex">
         {/* Desktop sidebar — fixed, full-height, flex column so footer pins to bottom */}
         <aside className="hidden lg:flex flex-col w-64 h-screen bg-white border-r border-slate-200 fixed left-0 top-0 z-20">
