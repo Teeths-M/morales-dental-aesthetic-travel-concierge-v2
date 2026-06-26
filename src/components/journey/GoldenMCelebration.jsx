@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
+import GoldenMCertificate from './GoldenMCertificate';
 
 const GOLD = '#D4AF37';
 
@@ -11,8 +12,9 @@ const GOLD = '#D4AF37';
  *   trip     — TravelRequest object (for summary stats)
  *   onClose  — callback
  */
-export default function GoldenMCelebration({ visible, trip, onClose }) {
+export default function GoldenMCelebration({ visible, trip, patientName, onClose }) {
   const [canClose, setCanClose] = useState(false);
+  const [showCert, setShowCert] = useState(false);
 
   useEffect(() => {
     if (!visible) { setCanClose(false); return; }
@@ -51,6 +53,7 @@ export default function GoldenMCelebration({ visible, trip, onClose }) {
   }
 
   return (
+    <>
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{ background: 'rgba(6,11,22,0.95)', backdropFilter: 'blur(8px)' }}
@@ -154,15 +157,24 @@ export default function GoldenMCelebration({ visible, trip, onClose }) {
         </div>
       </div>
 
-      {/* Close */}
+      {/* Actions */}
       {canClose ? (
-        <button
-          onClick={onClose}
-          className="rounded-xl px-8 py-3 font-semibold text-sm transition-all duration-200 hover:opacity-80 active:scale-95"
-          style={{ background: GOLD, color: '#060B16' }}
-        >
-          Close
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          <button
+            onClick={() => setShowCert(true)}
+            className="rounded-xl px-8 py-3 font-bold text-sm transition-all duration-200 hover:opacity-90 active:scale-95"
+            style={{ background: GOLD, color: '#060B16', letterSpacing: '0.05em' }}
+          >
+            🏆 Download My Certificate
+          </button>
+          <button
+            onClick={onClose}
+            className="text-sm font-medium hover:opacity-70 transition-opacity"
+            style={{ color: 'rgba(212,175,55,0.55)' }}
+          >
+            Close
+          </button>
+        </div>
       ) : (
         <div className="flex gap-1.5">
           {[0, 1, 2].map(i => (
@@ -185,5 +197,18 @@ export default function GoldenMCelebration({ visible, trip, onClose }) {
         }
       `}</style>
     </div>
+
+    {/* Certificate overlay — shown when patient clicks Download */}
+    {showCert && (
+      <GoldenMCertificate
+        patientName={patientName}
+        procedure={(trip?.procedure_types || []).join(', ')}
+        destination={trip?.destination_country || ''}
+        completedDate={trip?.handshake_timestamps?.['9'] || new Date().toISOString()}
+        duration={durationLabel}
+        onClose={() => setShowCert(false)}
+      />
+    )}
+    </>
   );
 }

@@ -30,6 +30,8 @@ import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline'
 import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
+import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
+import PatientJourneyCredit from '@/components/dashboard/PatientJourneyCredit';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
 import FirstTimeTooltip from '@/components/ui-system/FirstTimeTooltip';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
@@ -239,6 +241,20 @@ function DashboardHome({ user, consultations, language }) {
         />
       )}
 
+      {/* Destination Safety Index — proprietary Morales intelligence */}
+      {latestConsultation?.procedure_country && (
+        <DestinationSafetyIndex
+          country={latestConsultation.procedure_country}
+          caseId={latestConsultation.id}
+        />
+      )}
+
+      {/* Patient Journey Credit — loyalty moat */}
+      <PatientJourneyCredit
+        credit={latestConsultation?.journey_credit ?? 0}
+        journeyCount={consultations.filter(c => c.status === 'Completed').length}
+      />
+
       {/* Journey Map — hotel + clinic pins, above the fold */}
       {latestConsultation && (
         <JourneyMap
@@ -279,6 +295,7 @@ function DashboardHome({ user, consultations, language }) {
         <GoldenMCelebration
           visible
           trip={activeTrip}
+          patientName={user?.full_name || displayName}
           onClose={() => setShowGoldenM(false)}
         />
       )}
