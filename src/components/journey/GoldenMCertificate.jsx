@@ -18,8 +18,6 @@ import React from 'react';
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
 
-function pad(n) { return String(n).padStart(2, '0'); }
-
 function generateCertNumber() {
   const now = new Date();
   const year = now.getFullYear();

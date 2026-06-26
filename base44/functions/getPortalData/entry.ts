@@ -65,13 +65,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Consultation not found', consultation_id }, { status: 404 });
     }
 
+    // Look up the linked CaseRecord so portals can update logistics fields
+    let caseId: string | null = null;
+    try {
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter(
+        { consultation_id }, '-created_date', 1
+      );
+      caseId = cases[0]?.id ?? null;
+    } catch (_) {}
+
     // Return only the fields the partner actually needs — never return the full record
     const safeConsultation = {
-      patient_name: consultation.patient_name,
-      procedure_interest: consultation.procedure_interest,
-      preferred_date: consultation.preferred_date,
-      duration_of_stay: consultation.duration_of_stay,
-      procedure_country: consultation.procedure_country,
+      id:                  caseId,          // CaseRecord ID — used by portals to save logistics
+      consultation_id:     consultation_id, // Consultation entity ID
+      patient_name:        consultation.patient_name,
+      procedure_interest:  consultation.procedure_interest,
+      preferred_date:      consultation.preferred_date,
+      duration_of_stay:    consultation.duration_of_stay,
+      procedure_country:   consultation.procedure_country,
+      hotel_name:          consultation.hotel_name     || null,
+      hotel_address:       consultation.hotel_address  || null,
+      hotel_coords:        consultation.hotel_coords   || null,
+      clinic_address:      consultation.clinic_address || null,
+      clinic_coords:       consultation.clinic_coords  || null,
     };
 
     // BUG-R10-05 FIX: try/catch on .get() silently swallows legitimate not-found vs auth errors.

@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
 import { Heart, ChefHat, Calendar, CheckCircle2, Upload, Receipt } from 'lucide-react';
-import { useState as useLocalState } from 'react';
+// useLocalState is an alias for useState — keeps sub-component state reads obvious
+const useLocalState = useState;
 
 const GOLD = '#D4AF37';
 

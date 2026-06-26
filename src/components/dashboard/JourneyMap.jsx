@@ -68,13 +68,15 @@ export default function JourneyMap({ hotelCoords, hotelName, hotelAddress, clini
     return [10, 0];
   }, [hasBoth, hasHotel, hasClinic, hotelCoords, clinicCoords]);
 
-  const bounds = hasBoth
+  const bounds = useMemo(() => hasBoth
     ? [[hotelCoords.lat, hotelCoords.lng], [clinicCoords.lat, clinicCoords.lng]]
-    : null;
+    : null,
+  [hasBoth, hotelCoords, clinicCoords]);
 
-  const routePositions = hasBoth
+  const routePositions = useMemo(() => hasBoth
     ? [[hotelCoords.lat, hotelCoords.lng], [clinicCoords.lat, clinicCoords.lng]]
-    : null;
+    : null,
+  [hasBoth, hotelCoords, clinicCoords]);
 
   const directionsUrl = hasBoth
     ? `https://www.google.com/maps/dir/${hotelCoords.lat},${hotelCoords.lng}/${clinicCoords.lat},${clinicCoords.lng}`
