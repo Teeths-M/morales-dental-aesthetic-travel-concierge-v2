@@ -43,7 +43,18 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: { en, es, pt, fr, de, it, tr, th, zh, ar },
+    resources: {
+      en: { translation: en },
+      es: { translation: es },
+      pt: { translation: pt },
+      fr: { translation: fr },
+      de: { translation: de },
+      it: { translation: it },
+      tr: { translation: tr },
+      th: { translation: th },
+      zh: { translation: zh },
+      ar: { translation: ar },
+    },
     fallbackLng: 'en',
     supportedLngs: SUPPORTED_LANGUAGES.map(l => l.code),
     ns: ['translation'],
