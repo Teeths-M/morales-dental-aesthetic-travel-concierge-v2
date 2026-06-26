@@ -1,52 +1,146 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText,
   MessageCircle, Shield, Settings, Menu, ChevronRight,
-  Stethoscope, Plane, AlertTriangle, Globe
+  Stethoscope, Plane, AlertTriangle, Globe, Camera,
 } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
-// PREMIUM COLOR PALETTE
+const PHOTO_KEY = 'morales_profile_photo';
+const GOLD      = '#D4AF37';
+
 const LUXURY_COLORS = {
-  header: 'bg-gradient-to-br from-slate-900 to-slate-950',
+  header:         'bg-gradient-to-br from-slate-900 to-slate-950',
   activeGradient: 'bg-gradient-to-br from-slate-800 to-slate-900',
-  gold: '#D4AF37',
-  goldLight: '#E5C55A',
-  textPrimary: 'text-slate-700',
-  textSecondary: 'text-slate-500',
-  badge: 'bg-rose-400',
+  textPrimary:    'text-slate-700',
+  textSecondary:  'text-slate-500',
+  badge:          'bg-rose-400',
 };
 
-// PERFORMANCE: Memoized nav items — prevents array recreation on every render
 const NAV_ITEMS = Object.freeze([
   { icon: LayoutDashboard, label: 'All Features', path: '/dashboard' },
-  { icon: Stethoscope, label: 'Medical', path: '/booking' },
-  { icon: Plane, label: 'Travel', path: '/travel-concierge' },
-  { icon: Shield, label: 'Safety', path: '/safe-t' },
-  { icon: FileText, label: 'Documents', path: '/passport-vault' },
-  { icon: MessageCircle, label: 'Messages', path: '/dashboard/messages', badge: 2 },
-  { icon: AlertTriangle, label: 'Emergency', path: '/emergency' },
-  { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+  { icon: Stethoscope,     label: 'Medical',      path: '/booking' },
+  { icon: Plane,           label: 'Travel',        path: '/travel-concierge' },
+  { icon: Shield,          label: 'Safety',        path: '/safe-t' },
+  { icon: FileText,        label: 'Documents',     path: '/passport-vault' },
+  { icon: MessageCircle,   label: 'Messages',      path: '/dashboard/messages', badge: 2 },
+  { icon: AlertTriangle,   label: 'Emergency',     path: '/emergency' },
+  { icon: Settings,        label: 'Settings',      path: '/dashboard/settings' },
 ]);
 
-// PERFORMANCE: Memoized sidebar content component — prevents re-render on parent updates
-const SidebarContent = React.memo(({ location, onClose }) => {
+// ── Profile Avatar — clickable, uploadable ────────────────────────────────────
+function ProfileAvatar({ photo, onUpload }) {
+  const [hovered, setHovered] = useState(false);
+  const fileRef = useRef(null);
+
+  function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      try { localStorage.setItem(PHOTO_KEY, dataUrl); } catch (_) {}
+      onUpload(dataUrl);
+    };
+    reader.readAsDataURL(file);
+    // Reset so the same file can be re-selected
+    e.target.value = '';
+  }
+
+  return (
+    <>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFile}
+        aria-label="Upload profile photo"
+      />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="relative flex-shrink-0 focus:outline-none"
+        aria-label="Change profile photo"
+        title="Tap to upload your photo"
+        style={{ width: 48, height: 48 }}
+      >
+        {/* Avatar */}
+        <div
+          className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg transition-all duration-200"
+          style={{
+            background: photo ? 'transparent' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+            boxShadow: hovered ? `0 0 0 2px ${GOLD}, 0 4px 16px rgba(0,0,0,0.4)` : '0 2px 8px rgba(0,0,0,0.3)',
+            transform: hovered ? 'scale(1.05)' : 'scale(1)',
+          }}
+        >
+          {photo ? (
+            <img src={photo} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-white font-serif font-semibold text-xl">M</span>
+          )}
+        </div>
+
+        {/* Camera overlay on hover */}
+        <div
+          className="absolute inset-0 rounded-xl flex items-center justify-center transition-opacity duration-200"
+          style={{
+            background: 'rgba(0,0,0,0.55)',
+            opacity: hovered ? 1 : 0,
+          }}
+        >
+          <Camera className="w-4 h-4 text-white" />
+        </div>
+
+        {/* Upload badge when no photo */}
+        {!photo && (
+          <div
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+            style={{ background: GOLD, boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }}
+          >
+            <Camera className="w-2.5 h-2.5 text-slate-900" />
+          </div>
+        )}
+      </button>
+    </>
+  );
+}
+
+// ── Sidebar content ───────────────────────────────────────────────────────────
+function SidebarContent({ location, onClose }) {
+  const { user } = useAuth();
+  const [photo, setPhoto] = useState(() => {
+    try { return localStorage.getItem(PHOTO_KEY) || null; } catch { return null; }
+  });
+
+  const displayName  = user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Patient';
+  const fullName     = user?.full_name || 'My Portal';
+
+  const handleUpload = useCallback((dataUrl) => setPhoto(dataUrl), []);
+
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Premium Brand Header - Single Clean Logo */}
-      <div className={`${LUXURY_COLORS.header} px-5 py-8 mb-2`}>
+      {/* ── Header: avatar + name + upload ── */}
+      <div className={`${LUXURY_COLORS.header} px-5 py-6 mb-2`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-serif font-semibold text-xl">M</span>
-          </div>
-          <div>
-            <p className="text-white font-serif font-semibold text-sm tracking-wide">MORALES</p>
+          <ProfileAvatar photo={photo} onUpload={handleUpload} />
+
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-serif font-semibold text-sm tracking-wide truncate">
+              {fullName.toUpperCase()}
+            </p>
             <p className="text-amber-400/70 text-[10px] tracking-widest uppercase">Patient Portal</p>
+            {!photo && (
+              <p className="text-white/35 text-[9px] mt-0.5">Tap photo to upload</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Premium Navigation */}
+      {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
         {NAV_ITEMS.map(({ icon: Icon, label, path, badge }) => {
           const isActive = location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
@@ -66,9 +160,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
               {badge && (
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                   isActive ? 'bg-white/20 text-white' : `${LUXURY_COLORS.badge} text-white`
-                }`}>
-                  {badge}
-                </span>
+                }`}>{badge}</span>
               )}
               {isActive && <ChevronRight className="w-4 h-4 opacity-60" />}
             </Link>
@@ -76,7 +168,7 @@ const SidebarContent = React.memo(({ location, onClose }) => {
         })}
       </nav>
 
-      {/* Premium Footer */}
+      {/* Footer */}
       <div className="px-4 py-4 border-t border-slate-100 space-y-3">
         <Link to="/trip-overview">
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl px-4 py-3 text-white text-center hover:opacity-90 transition-all shadow-lg shadow-amber-500/20">
@@ -84,11 +176,10 @@ const SidebarContent = React.memo(({ location, onClose }) => {
               <Globe className="w-4 h-4" />
               <p className="text-xs font-semibold">My Trip Overview</p>
             </div>
-            <p className="text-[10px] text-white/80">View itinerary & partners</p>
+            <p className="text-[10px] text-white/80">View itinerary &amp; partners</p>
           </div>
         </Link>
-        
-        {/* SAFE-T Badge */}
+
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl px-4 py-3">
           <div className="flex items-center gap-2.5 mb-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
@@ -107,12 +198,10 @@ const SidebarContent = React.memo(({ location, onClose }) => {
       </div>
     </div>
   );
-});
-
-SidebarContent.displayName = 'SidebarContent';
+}
 
 export default function DashboardSidebar() {
-  const location = useLocation();
+  const location    = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
