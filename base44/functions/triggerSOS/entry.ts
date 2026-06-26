@@ -38,7 +38,12 @@ Deno.serve(async (req) => {
     try { user = await base44.auth.me(); } catch (_) {}
 
     const body = await req.json();
-    const { trigger_type, latitude, longitude, location_label, case_id, patient_email, patient_name, patient_phone, is_silent, destination_country, pin_session_token } = body;
+    const {
+      trigger_type, latitude, longitude, location_label,
+      case_id, patient_email, patient_name, patient_phone,
+      is_silent, destination_country, pin_session_token,
+      hardware_channels_detected = [],   // goTenna, inReach, satellite, sms, qr, webshare
+    } = body;
 
     // Require authentication: either JWT session or PIN session
     if (!user && !pin_session_token) {
@@ -97,6 +102,7 @@ Deno.serve(async (req) => {
       escalation_level: isWilderness ? 5 : 1, // wilderness = highest urgency
       is_silent: !!is_silent || trigger_type === 'silent_sos',
       translated_message: translatedMessage,
+      hardware_channels_detected: Array.isArray(hardware_channels_detected) ? hardware_channels_detected : [],
       notifications_sent: [],
       triggered_at: now
     });
@@ -125,6 +131,7 @@ Deno.serve(async (req) => {
     ${latitude ? `<p><a href="https://maps.google.com/?q=${latitude},${longitude}" style="color:#dc2626;">📍 Open in Google Maps</a></p>` : ''}
     <p><strong>Case ID:</strong> ${case_id || 'N/A'}</p>
     <p><strong>Time:</strong> ${new Date(now).toLocaleString()}</p>
+    ${hardware_channels_detected.length > 0 ? `<p><strong>Patient Hardware Channels:</strong> ${hardware_channels_detected.join(', ')}</p>` : ''}
     <hr/>
     <p style="color:#dc2626;font-weight:bold;">IMMEDIATE ACTION REQUIRED — Dispatch ${route.label}</p>
     <p><strong>Translated Message for Local First Responders:</strong><br/><em>${translatedMessage}</em></p>

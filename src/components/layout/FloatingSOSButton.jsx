@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, ShieldCheck, Bot } from 'lucide-react';
 import SafeTAssistantPanel from './SafeTAssistantPanel';
+import ChannelList from '@/components/sos/ChannelList';
 
 /**
  * FloatingSOSButton — pill stack, bottom-right, z-9999.
@@ -33,8 +34,9 @@ const PILL_BASE = {
 };
 
 export default function FloatingSOSButton() {
-  const [isPanelOpen,    setIsPanelOpen]    = useState(false);
-  const [isMenuOpen,     setIsMenuOpen]     = useState(false);
+  const [isPanelOpen,      setIsPanelOpen]      = useState(false);
+  const [isMenuOpen,       setIsMenuOpen]       = useState(false);
+  const [detectedChannels, setDetectedChannels] = useState([]);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -133,6 +135,20 @@ export default function FloatingSOSButton() {
                     <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>Safe-T4life · always on</p>
                   </div>
                 </button>
+
+                {/* SOS channel availability strip */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 9, fontWeight: 700, letterSpacing: '0.14em',
+                    textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
+                    SOS Channels
+                  </p>
+                  <ChannelList compact onDetected={setDetectedChannels} />
+                  {detectedChannels.includes('gotenna') || detectedChannels.includes('inreach') ? (
+                    <p style={{ margin: '4px 0 0', fontSize: 9, color: '#3b82f6', textAlign: 'center' }}>
+                      BLE hardware detected
+                    </p>
+                  ) : null}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
