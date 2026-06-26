@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import CredentialBadge from '@/components/doctors/CredentialBadge';
 import { base44 } from '@/api/base44Client';
 import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
+import ClinicalExtractionModal from '@/components/doctor/ClinicalExtractionModal';
 
 export default function PortalDoctor() {
   const { token } = useParams();
@@ -24,6 +25,7 @@ export default function PortalDoctor() {
   const [formData, setFormData] = useState({
     doctor_notes: ''
   });
+  const [showExtractModal, setShowExtractModal] = useState(false);
   const [showInfoRequest, setShowInfoRequest] = useState(false);
   const [infoRequest, setInfoRequest] = useState('');
   const [infoRequestSent, setInfoRequestSent] = useState(false);
@@ -223,6 +225,7 @@ export default function PortalDoctor() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-background py-6 px-4 sm:py-12 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <BackButton fallback="/" className="mb-4" />
@@ -440,7 +443,17 @@ export default function PortalDoctor() {
               <div className="space-y-4">
                 <h3 className="font-semibold">Your Response</h3>
                 <div>
-                  <Label>Doctor Notes (Optional)</Label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label>Doctor Notes (Optional)</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowExtractModal(true)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors px-2.5 py-1 rounded-lg hover:bg-violet-50"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Extract Clinical Data
+                    </button>
+                  </div>
                   <Textarea
                     value={formData.doctor_notes}
                     onChange={(e) => setFormData({...formData, doctor_notes: e.target.value})}
@@ -511,5 +524,13 @@ export default function PortalDoctor() {
         </Card>
       </div>
     </div>
+
+    {showExtractModal && (
+      <ClinicalExtractionModal
+        onApply={(text) => setFormData(fd => ({ ...fd, doctor_notes: text }))}
+        onClose={() => setShowExtractModal(false)}
+      />
+    )}
+    </>
   );
 }
