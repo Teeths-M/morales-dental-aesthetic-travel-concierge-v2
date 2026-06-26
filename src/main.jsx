@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/react'
 import App from '@/App.jsx'
 import '@/index.css'
+import { syncPauseFromServer } from '@/lib/systemPause'
 
 // ── Sentry Error Tracking (Production Only) ──────────────────────────────────
 
@@ -52,6 +53,10 @@ if (import.meta.env.PROD && SENTRY_DSN) {
 // null React instance, causing "Cannot read properties of null (reading 'useState')"
 
 async function mountApp() {
+  // Sync pause state from server BEFORE mounting — so phones/tablets automatically
+  // pick up the paused state set on any other device. Zero integration credits used.
+  await syncPauseFromServer().catch(() => {});
+
   if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
