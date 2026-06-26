@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Footer from './Footer';
-import WhatsAppButton from './WhatsAppButton';
 import FloatingSOSButton from './FloatingSOSButton';
 import Header from './Header';
 import HeartNotificationCenter from '@/components/notifications/HeartNotificationCenter';
@@ -69,7 +68,7 @@ export default function AppLayout() {
         {/* Patient-facing floating elements — hidden on admin pages */}
         {!isAdmin && (
           <>
-            <WhatsAppButton />
+            {/* WhatsApp is now inside FloatingSOSButton stack (bottom-right) */}
             <HeartNotificationCenter user={user} />
             <GuardianTicker />
             {user && <FloatingCheckInAlert user={user} />}
