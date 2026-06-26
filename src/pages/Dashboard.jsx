@@ -33,6 +33,7 @@ import JourneyMap from '@/components/dashboard/JourneyMap';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import PatientJourneyCredit from '@/components/dashboard/PatientJourneyCredit';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
+import { useBehavioralTracking } from '@/hooks/useBehavioralTracking';
 import FirstTimeTooltip from '@/components/ui-system/FirstTimeTooltip';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
@@ -124,6 +125,12 @@ function DashboardHome({ user, consultations, language }) {
   // GPS breadcrumb trail — captures every 30s or 50m; syncs to Base44 when online
   useLocationHistory({ caseId: latestActive?.id, enabled: !!isSolo });
 
+  // MedGuard Pattern Intelligence — silent behavioral fingerprint tracking
+  const { nudge, dismissNudge, isLearning } = useBehavioralTracking({
+    caseId:     latestActive?.id,
+    caseStatus: latestActive?.status,
+  });
+
   // Country detection — triggers WelcomeCountryModal on new country arrival
   const { country, flag, isNewCountry, acknowledgeCountry } = useCountryDetection({
     lat: currentLocation?.lat,
@@ -192,6 +199,29 @@ function DashboardHome({ user, consultations, language }) {
 
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
+
+      {/* MedGuard Pattern Intelligence nudge — gentle, context-aware check-in */}
+      {nudge && (
+        <div style={{
+          borderRadius: 16, padding: '12px 16px',
+          background: nudge.action === 'escalated' ? 'rgba(239,68,68,0.12)' : 'rgba(212,175,55,0.10)',
+          border: `1px solid ${nudge.action === 'escalated' ? 'rgba(239,68,68,0.35)' : 'rgba(212,175,55,0.30)'}`,
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+        }}>
+          <span style={{ fontSize: 20, flexShrink: 0 }}>
+            {nudge.action === 'escalated' ? '🛡️' : nudge.action === 'check_in_requested' ? '👋' : '💡'}
+          </span>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.4 }}>
+              {nudge.message}
+            </p>
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+              MedGuard Pattern Intelligence™
+            </p>
+          </div>
+          <button onClick={dismissNudge} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', fontSize: 18, lineHeight: 1, padding: 0, flexShrink: 0 }}>×</button>
+        </div>
+      )}
 
       {/* GPS permission banners — only shown during active solo journeys */}
       {isSolo && locationStatus === 'denied' && (
