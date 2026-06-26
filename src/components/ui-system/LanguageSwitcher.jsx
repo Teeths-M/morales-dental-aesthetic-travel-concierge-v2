@@ -7,9 +7,8 @@
  * Placement: inject into Header.jsx or Footer.jsx.
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
-import { SUPPORTED_LANGUAGES, LANG_KEY } from '@/i18n';
+import { useTranslation, SUPPORTED_LANGUAGES, LANG_KEY } from '@/i18n';
 
 const GOLD = '#D4AF37';
 

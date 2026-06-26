@@ -1,17 +1,13 @@
 /**
  * Babel Engine — Morales Universal Auto-Translation
+ * Zero-dependency mini-i18n. Identical API to react-i18next's useTranslation().
  *
  * Detection order:
- *   1. localStorage 'morales_lang' (user has manually selected or was persisted)
- *   2. navigator.languages / navigator.language (browser preference)
+ *   1. localStorage 'morales_lang'
+ *   2. navigator.languages / navigator.language
  *   3. Fallback → English
- *
- * Admin dashboard always stays in English (handled via LanguageSwitcher
- * which skips translation on /admin routes).
  */
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import { useState, useEffect } from 'react';
 
 import en from './locales/en/translation.json';
 import es from './locales/es/translation.json';
@@ -25,54 +21,87 @@ import zh from './locales/zh/translation.json';
 import ar from './locales/ar/translation.json';
 
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', label: 'English',    flag: '🇺🇸', dir: 'ltr' },
-  { code: 'es', label: 'Español',    flag: '🇻🇪', dir: 'ltr' },
-  { code: 'pt', label: 'Português',  flag: '🇧🇷', dir: 'ltr' },
-  { code: 'fr', label: 'Français',   flag: '🇫🇷', dir: 'ltr' },
-  { code: 'de', label: 'Deutsch',    flag: '🇩🇪', dir: 'ltr' },
-  { code: 'it', label: 'Italiano',   flag: '🇮🇹', dir: 'ltr' },
-  { code: 'tr', label: 'Türkçe',     flag: '🇹🇷', dir: 'ltr' },
-  { code: 'th', label: 'ภาษาไทย',   flag: '🇹🇭', dir: 'ltr' },
-  { code: 'zh', label: '中文',       flag: '🇨🇳', dir: 'ltr' },
-  { code: 'ar', label: 'العربية',    flag: '🇸🇦', dir: 'rtl' },
+  { code: 'en', label: 'English',   flag: '🇺🇸', dir: 'ltr' },
+  { code: 'es', label: 'Español',   flag: '🇻🇪', dir: 'ltr' },
+  { code: 'pt', label: 'Português', flag: '🇧🇷', dir: 'ltr' },
+  { code: 'fr', label: 'Français',  flag: '🇫🇷', dir: 'ltr' },
+  { code: 'de', label: 'Deutsch',   flag: '🇩🇪', dir: 'ltr' },
+  { code: 'it', label: 'Italiano',  flag: '🇮🇹', dir: 'ltr' },
+  { code: 'tr', label: 'Türkçe',    flag: '🇹🇷', dir: 'ltr' },
+  { code: 'th', label: 'ภาษาไทย',  flag: '🇹🇭', dir: 'ltr' },
+  { code: 'zh', label: '中文',      flag: '🇨🇳', dir: 'ltr' },
+  { code: 'ar', label: 'العربية',   flag: '🇸🇦', dir: 'rtl' },
 ];
 
 export const LANG_KEY = 'morales_lang';
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources: {
-      en: { translation: en },
-      es: { translation: es },
-      pt: { translation: pt },
-      fr: { translation: fr },
-      de: { translation: de },
-      it: { translation: it },
-      tr: { translation: tr },
-      th: { translation: th },
-      zh: { translation: zh },
-      ar: { translation: ar },
-    },
-    fallbackLng: 'en',
-    supportedLngs: SUPPORTED_LANGUAGES.map(l => l.code),
-    ns: ['translation'],
-    defaultNS: 'translation',
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      lookupLocalStorage: LANG_KEY,
-      caches: ['localStorage'],
-    },
-    interpolation: { escapeValue: false },
-    react: { useSuspense: false },
-  });
+const RESOURCES = { en, es, pt, fr, de, it, tr, th, zh, ar };
 
-// Apply RTL for Arabic
-i18n.on('languageChanged', (lng) => {
+function detectLanguage() {
+  try {
+    const stored = localStorage.getItem(LANG_KEY);
+    if (stored && RESOURCES[stored]) return stored;
+    const nav = (navigator.languages?.[0] || navigator.language || 'en');
+    const code = nav.split('-')[0].toLowerCase();
+    return RESOURCES[code] ? code : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
+// Module-level state — shared across all useTranslation() callers
+let currentLang = detectLanguage();
+const listeners = new Set();
+
+function applyDir(lng) {
+  if (typeof document === 'undefined') return;
   const lang = SUPPORTED_LANGUAGES.find(l => l.code === lng);
-  document.documentElement.dir  = lang?.dir  || 'ltr';
+  document.documentElement.dir  = lang?.dir || 'ltr';
   document.documentElement.lang = lng;
-});
+}
+
+applyDir(currentLang);
+
+export function changeLanguage(code) {
+  if (!RESOURCES[code]) return;
+  currentLang = code;
+  try { localStorage.setItem(LANG_KEY, code); } catch {}
+  applyDir(code);
+  listeners.forEach(fn => fn(code));
+}
+
+// Dot-notation key lookup with {{param}} interpolation
+function resolve(dict, key, params) {
+  const value = key.split('.').reduce((o, k) => o?.[k], dict);
+  if (typeof value !== 'string') return key;
+  if (!params) return value;
+  return value.replace(/\{\{(\w+)\}\}/g, (_, k) => String(params[k] ?? `{{${k}}}`));
+}
+
+// Drop-in replacement for react-i18next's useTranslation()
+export function useTranslation() {
+  const [lang, setLang] = useState(currentLang);
+
+  useEffect(() => {
+    listeners.add(setLang);
+    return () => listeners.delete(setLang);
+  }, []);
+
+  function t(key, params) {
+    const dict = RESOURCES[lang] || RESOURCES['en'];
+    return resolve(dict, key, params);
+  }
+
+  return {
+    t,
+    i18n: { language: lang, changeLanguage },
+  };
+}
+
+// Compat shim — code that calls i18n.changeLanguage() directly
+const i18n = {
+  get language() { return currentLang; },
+  changeLanguage,
+};
 
 export default i18n;
