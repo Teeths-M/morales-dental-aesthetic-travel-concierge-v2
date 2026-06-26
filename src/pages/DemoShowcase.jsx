@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
   Shield, MapPin, Bell, Lock, Zap, CheckCircle2,
-  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio
+  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio, Brain
 } from 'lucide-react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import EmergencyScenarioDemo from '@/pages/EmergencyScenarioDemo';
@@ -490,6 +490,7 @@ const TABS = [
   { id: 'medguard',   label: '🛡️ MedGuard™ Live' },
   { id: 'emergency',  label: '🚨 Kidnapping Scenario' },
   { id: 'nightlife',  label: '🔒 Vault Lockdown' },
+  { id: 'pattern',    label: '🧠 Pattern Intelligence', link: '/demo/medguard' },
 ];
 
 export default function DemoShowcase() {
@@ -525,18 +526,29 @@ export default function DemoShowcase() {
       {/* ── TAB BAR ── */}
       <div className="flex gap-2 px-4 pt-4 max-w-5xl mx-auto overflow-x-auto pb-1">
         {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all"
-            style={{
-              background: activeTab === tab.id ? GOLD : '#0C1A1D',
-              color: activeTab === tab.id ? DARK : '#64748b',
-              border: activeTab === tab.id ? 'none' : '1px solid #2A3F4A',
-            }}
-          >
-            {tab.label}
-          </button>
+          tab.link ? (
+            <Link
+              key={tab.id}
+              to={tab.link}
+              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all"
+              style={{ background: '#0C1A1D', color: '#64748b', border: '1px solid #2A3F4A', textDecoration: 'none' }}
+            >
+              {tab.label}
+            </Link>
+          ) : (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all"
+              style={{
+                background: activeTab === tab.id ? GOLD : '#0C1A1D',
+                color: activeTab === tab.id ? DARK : '#64748b',
+                border: activeTab === tab.id ? 'none' : '1px solid #2A3F4A',
+              }}
+            >
+              {tab.label}
+            </button>
+          )
         ))}
       </div>
 
@@ -629,6 +641,14 @@ export default function DemoShowcase() {
             >
               <Shield style={{ width: 15, height: 15 }} />
               Drugged & Robbed — Vault Lockdown Demo
+            </Link>
+            <Link
+              to="/demo/medguard"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.35)', color: '#60a5fa' }}
+            >
+              <Brain style={{ width: 15, height: 15 }} />
+              Pattern Intelligence — Theon vs Maria
             </Link>
           </div>
         </section>

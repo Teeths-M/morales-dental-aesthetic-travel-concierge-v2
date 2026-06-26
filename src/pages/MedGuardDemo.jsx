@@ -8,7 +8,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Brain, Zap, Moon, Battery, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Brain } from 'lucide-react';
 
 const GOLD  = '#D4AF37';
 const GREEN = '#22c55e';
