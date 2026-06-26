@@ -1,21 +1,30 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import RadioGroup from './FormRadioGroup';
+import MedicalHistoryPills from './MedicalHistoryPills';
+import SmartAllergyInput from './SmartAllergyInput';
 
-const anesthesiaTypes = ['Allergic reactions','Breathing difficulties','Nausea/Vomiting','Excessive bleeding','Other'];
-const allergyTypes = ['Medications','Latex','Food Allergies','Anesthesia Reactions','None','Other'];
+const ANESTHESIA_TYPES = [
+  { label: 'Allergic reactions',        icon: '⚠️' },
+  { label: 'Breathing difficulties',    icon: '🫁' },
+  { label: 'Nausea / Vomiting',         icon: '🤢' },
+  { label: 'Excessive bleeding',        icon: '🩸' },
+  { label: 'Other',                     icon: '📝' },
+];
 
 export default function Section5Anesthesia({ form, update }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-lg">💉</span>
-        <h3 className="font-display text-lg text-foreground">Anesthesia & Allergies</h3>
+        <h3 className="font-display text-lg text-foreground">Anesthesia &amp; Allergies</h3>
       </div>
 
+      {/* ── Anesthesia complications — Yes/No ──────────────────────────────── */}
       <div>
-        <Label className="text-sm font-medium">Have you ever experienced complications from anesthesia?</Label>
+        <Label className="text-sm font-medium">
+          Have you ever experienced complications from anesthesia?
+        </Label>
         <RadioGroup
           value={form.anesthesia_complications}
           onChange={v => update('anesthesia_complications', v)}
@@ -24,32 +33,30 @@ export default function Section5Anesthesia({ form, update }) {
         />
       </div>
 
+      {/* Complication type pills — only if Yes */}
       {form.anesthesia_complications === true && (
         <div className="pl-4 border-l-2 border-primary/20">
-          <RadioGroup
-            value={form.anesthesia_complication_types?.[0] || ''}
-            onChange={v => update('anesthesia_complication_types', v ? [v] : [])}
-            options={anesthesiaTypes.map(a => ({ label: a, value: a }))}
+          <Label className="text-sm font-medium mb-2 block">What type of reaction?</Label>
+          <MedicalHistoryPills
+            selected={form.anesthesia_complication_types || []}
+            onChange={v => update('anesthesia_complication_types', v)}
+            options={ANESTHESIA_TYPES}
+            exclusive={[]}
+            multiSelect
+            accent="#ef4444"
+            hint="Tap all that apply"
           />
         </div>
       )}
 
+      {/* ── Allergies — SmartAllergyInput (the crown jewel) ──────────────── */}
       <div>
-        <Label className="text-sm font-medium mb-2 block">Do you have any allergies?</Label>
-        <RadioGroup
-          value={form.allergies?.[0] || ''}
-          onChange={v => update('allergies', v ? [v] : [])}
-          options={allergyTypes.map(a => ({ label: a, value: a }))}
-        />
-      </div>
-
-      <div>
-        <Label>Optional Details</Label>
-        <Textarea
-          value={form.allergy_details}
-          onChange={e => update('allergy_details', e.target.value)}
-          placeholder="Describe any allergies in detail..."
-          className="mt-1.5 h-20"
+        <Label className="text-sm font-medium mb-2 block">
+          Do you have any known allergies?
+        </Label>
+        <SmartAllergyInput
+          selected={form.allergies || []}
+          onChange={v => update('allergies', v)}
         />
       </div>
     </div>

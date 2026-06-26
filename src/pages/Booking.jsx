@@ -137,6 +137,19 @@ export default function Booking() {
     getUser();
   }, []);
 
+  // ── Layer 1: Passive auto-fill from authenticated user ────────────────────
+  // Zero-type: name, email, phone pulled from auth profile on mount.
+  // Never overwrites values the user has already changed.
+  useEffect(() => {
+    if (!currentUser) return;
+    setForm(prev => ({
+      ...prev,
+      patient_name: prev.patient_name || currentUser.full_name || '',
+      email:        prev.email        || currentUser.email      || '',
+      phone:        prev.phone        || currentUser.phone      || '',
+    }));
+  }, [currentUser]);
+
   // Check for existing draft on mount
   const { data: existingDraft } = useQuery({
     queryKey: ['consultation_draft', userEmail],
