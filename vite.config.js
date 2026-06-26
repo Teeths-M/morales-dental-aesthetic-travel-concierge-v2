@@ -14,9 +14,9 @@ export default defineConfig({
     // node-resolve fails to match on Linux CI. Pin direct paths to the ESM
     // dist files so Rollup never needs to walk the package.json exports field.
     alias: {
-      'i18next': path.resolve(__dirname, 'node_modules/i18next/dist/esm/i18next.js'),
-      'react-i18next': path.resolve(__dirname, 'node_modules/react-i18next/dist/es/index.js'),
-      'i18next-browser-languagedetector': path.resolve(__dirname, 'node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js'),
+      'i18next': path.resolve(__dirname, 'node_modules/i18next/dist/cjs/i18next.js'),
+      'react-i18next': path.resolve(__dirname, 'node_modules/react-i18next/dist/commonjs/index.js'),
+      'i18next-browser-languagedetector': path.resolve(__dirname, 'node_modules/i18next-browser-languagedetector/dist/cjs/i18nextBrowserLanguageDetector.js'),
     },
   },
   server: {
