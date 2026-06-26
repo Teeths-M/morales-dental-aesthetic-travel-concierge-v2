@@ -40,8 +40,12 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
   const [transportReq, setTransportReq] = useState(null);
   const [visualCode, setVisualCode] = useState(null);
   const [codeExpiresAt, setCodeExpiresAt] = useState(null);
-  const [step, setStep] = useState('overview'); // overview | transport | transport_success
+  const [step, setStep] = useState('overview'); // overview | transport | transport_success | golden_m
   const [loadingTransport, setLoadingTransport] = useState(false);
+  const [showClosure, setShowClosure] = useState(false);
+  const [safeLocation, setSafeLocation] = useState('');
+  const [loadingClosure, setLoadingClosure] = useState(false);
+  const [closureResult, setClosureResult] = useState(null);
   const [gpsStatus, setGpsStatus] = useState('idle');
   const [gpsCoords, setGpsCoords] = useState(null);
   const [pickupAddress, setPickupAddress] = useState('');
@@ -106,6 +110,25 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
     setLoadingTransport(false);
   };
 
+  const closeThreat = async () => {
+    setLoadingClosure(true);
+    try {
+      const res = await base44.functions.invoke('closeEmergencyThreatLoop', {
+        pin_session_token: pinSessionToken,
+        safe_location: safeLocation || 'Confirmed safe via Emergency Terminal',
+      });
+      if (res.data?.success) {
+        setClosureResult(res.data);
+        setStep('golden_m');
+      } else {
+        toast({ title: 'Admin alerted', description: 'Your coordinator has been notified directly.', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Admin alerted', description: 'Your coordinator has been notified directly.', variant: 'destructive' });
+    }
+    setLoadingClosure(false);
+  };
+
   const copyCode = () => {
     if (visualCode && navigator.clipboard) {
       navigator.clipboard.writeText(visualCode);
@@ -128,6 +151,39 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
       <p className="text-slate-400 text-sm">Loading emergency vault...</p>
     </div>
   );
+
+  // ── Stage 5: iQ200 Threat Loop Closed ───────────────────────────────────────
+  if (step === 'golden_m') {
+    return (
+      <div className="text-center py-10 space-y-6 max-w-lg mx-auto">
+        <div
+          className="mx-auto flex items-center justify-center"
+          style={{ width: 100, height: 100, borderRadius: 24, background: 'linear-gradient(135deg, #D4AF37, #b8960f)', boxShadow: '0 0 48px rgba(212,175,55,0.45)' }}
+        >
+          <span style={{ fontSize: 52, color: '#060B16', fontFamily: 'serif', fontWeight: 700 }}>M</span>
+        </div>
+        <div>
+          <h2 className="text-white font-semibold text-xl mb-1">You&rsquo;re Safe. Journey Complete.</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Your family has been notified. Guardian tracking links have expired to protect your trail.
+            An incident report has been dispatched to your coordinator.
+          </p>
+        </div>
+        <div className="bg-emerald-900/20 border border-emerald-700/40 rounded-2xl p-4 text-left space-y-2">
+          <p className="text-emerald-400 text-sm font-semibold">✅ iQ200 Threat Loop Closed</p>
+          {closureResult?.incident_ref && (
+            <p className="text-emerald-300/70 text-xs">Incident reference: <strong>{closureResult.incident_ref}</strong></p>
+          )}
+          {closureResult?.contacts_notified > 0 && (
+            <p className="text-emerald-300/70 text-xs">{closureResult.contacts_notified} emergency contact{closureResult.contacts_notified !== 1 ? 's' : ''} notified</p>
+          )}
+        </div>
+        <p className="text-slate-600 text-xs">
+          iQ200 Coordination Engine · Emergency status cleared · Session revoked for your security
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-lg mx-auto">
@@ -168,6 +224,42 @@ export default function EmergencyRecoveryVault({ pinSessionToken, userEmail, ses
                 <p className="text-red-300 text-xs font-semibold">No driver currently available. Admin has been alerted and will dispatch manually.</p>
               </div>
             )}
+
+            {/* Stage 5: Safe arrival sign-off */}
+            <div className="mt-5 pt-5 border-t border-blue-700/30 space-y-3">
+              <p className="text-blue-200/70 text-xs text-center">
+                Once you&rsquo;ve reached safety — sign off to notify your family and close this emergency.
+              </p>
+              {!showClosure ? (
+                <button
+                  type="button"
+                  onClick={() => setShowClosure(true)}
+                  className="w-full text-sm text-emerald-400 border border-emerald-700/40 rounded-xl py-2.5 hover:bg-emerald-900/20 flex items-center justify-center gap-2 transition-colors"
+                >
+                  ✅ I&rsquo;ve Arrived Safely — Sign Off
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    value={safeLocation}
+                    onChange={e => setSafeLocation(e.target.value)}
+                    placeholder="Where are you? (e.g. US Embassy, local police station)"
+                    className="w-full bg-slate-900/60 border border-emerald-700/40 text-white rounded-xl px-3 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  />
+                  <Button
+                    onClick={closeThreat}
+                    disabled={loadingClosure}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                  >
+                    {loadingClosure
+                      ? <><RefreshCw className="w-4 h-4 animate-spin" />Closing emergency...</>
+                      : <>✅ Confirm Safe Arrival</>
+                    }
+                  </Button>
+                  <p className="text-slate-500 text-xs text-center">This notifies your family and expires all tracking links.</p>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

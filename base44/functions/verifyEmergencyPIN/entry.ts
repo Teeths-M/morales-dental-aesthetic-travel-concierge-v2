@@ -199,6 +199,48 @@ Deno.serve(async (req) => {
           use_count: 0
         });
 
+        // ── Silent alarm: fire-and-forget when accessed from an unauthenticated device ──
+        // (Stage 3 of the Non-Medical Security Breach scenario — foreign terminal detection)
+        ;(async () => {
+          try {
+            const authedUser = await base44.auth.me().catch(() => null);
+            if (!authedUser) {
+              const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+                || req.headers.get('x-real-ip') || 'unknown';
+              const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+              if (adminEmail) {
+                await base44.asServiceRole.integrations.Core.SendEmail({
+                  from_name: 'Morales — SILENT ALARM',
+                  to: adminEmail,
+                  subject: `🔕 SILENT ALARM — Emergency Terminal: ${normalizedEmail}`,
+                  body: `<div style="font-family:sans-serif;max-width:600px;padding:24px;border:2px solid #dc2626;border-radius:12px;">
+<h2 style="color:#dc2626;margin:0 0 16px;">🔕 SILENT ALARM — Emergency Terminal Access</h2>
+<p><strong>${normalizedEmail}</strong> has verified their Emergency PIN from an unauthenticated device (public terminal / new device).</p>
+<table style="width:100%;margin-top:12px;border-collapse:collapse;">
+  <tr><td style="color:#6b7280;padding:4px 0;width:140px;">IP Address</td><td>${clientIp}</td></tr>
+  <tr><td style="color:#6b7280;padding:4px 0;">Time</td><td>${new Date().toUTCString()}</td></tr>
+  <tr><td style="color:#6b7280;padding:4px 0;">Account</td><td>${normalizedEmail}</td></tr>
+  <tr><td style="color:#6b7280;padding:4px 0;">Status</td><td><strong style="color:#dc2626;">Case flagged: In-Transit Compromised</strong></td></tr>
+</table>
+<p style="margin-top:16px;color:#374151;">This is a precautionary alert. The traveler may be stranded or in an emergency. Check their Solo Check-In status and Guardian links immediately.</p>
+</div>`,
+                }).catch(() => {});
+              }
+              // Flag case as compromised (best-effort)
+              await base44.asServiceRole.entities.CaseRecord.filter({ client_email: normalizedEmail }, '-created_date', 1)
+                .then((cases: any[]) => {
+                  if (cases?.[0]?.id) {
+                    return base44.asServiceRole.entities.CaseRecord.update(cases[0].id, {
+                      is_compromised: true,
+                      emergency_terminal_accessed_at: new Date().toISOString(),
+                      emergency_terminal_ip: clientIp,
+                    });
+                  }
+                }).catch(() => {});
+            }
+          } catch (_) {}
+        })();
+
         return Response.json({ verified: true, pin_session_token: rawToken, expires_at: expiresAt, user_email });
       } else {
         const newFailCount = (record.failed_attempts || 0) + 1;
