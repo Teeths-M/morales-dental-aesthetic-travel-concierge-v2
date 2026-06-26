@@ -163,7 +163,7 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
             >
-              {query.trim().length >= 2 ? (
+              {query.trim().length >= 1 ? (
                 results.length > 0 ? (
                   <div className="p-2">
                     {results.map(p => (
