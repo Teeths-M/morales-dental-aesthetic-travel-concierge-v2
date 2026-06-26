@@ -5,6 +5,12 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
+  resolve: {
+    // Vite 6 default conditions omit 'import'; i18next@26 only exports under
+    // 'import' and 'require', so without this Rollup emits UNRESOLVED_IMPORT
+    // on Linux CI which the base44 plugin converts into a fatal build error.
+    conditions: ['import', 'module', 'browser', 'default'],
+  },
   server: {
     headers: {
       'X-Frame-Options': 'DENY',
