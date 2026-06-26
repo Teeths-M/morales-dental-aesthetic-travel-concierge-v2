@@ -1,8 +1,19 @@
 import { QueryClient } from '@tanstack/react-query';
+import { isSystemPaused } from '@/lib/systemPause';
+
+// Read pause state at module load time so the QueryClient starts correctly
+// even after a page reload while paused. This is the only file that needs
+// to import isSystemPaused — no circular dependency since systemPause.js
+// does not import from query-client.js.
+const _startPaused = isSystemPaused();
 
 export const queryClientInstance = new QueryClient({
   defaultOptions: {
     queries: {
+      // Honour the saved pause state on startup — prevents any query from
+      // running on page load when the system is paused
+      enabled:              !_startPaused,
+      refetchInterval:      _startPaused ? false : undefined,
       refetchOnWindowFocus: false,
       // Default networkMode is 'online', which PAUSES queries indefinitely
       // when navigator.onLine is false — isLoading never resolves to true/false,
