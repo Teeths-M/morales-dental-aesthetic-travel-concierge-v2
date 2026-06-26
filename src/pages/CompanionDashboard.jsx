@@ -240,6 +240,145 @@ import CompanionHandshakePanel from '@/components/companion/CompanionHandshakePa
 import DietaryInfoCard from '@/components/companion/DietaryInfoCard';
 import { toast } from 'sonner';
 
+// ── Job Offers Panel — incoming companion job offers ─────────────────────────
+function JobOffersPanel({ userId, userEmail }) {
+  const queryClient = useQueryClient();
+  const [responding, setResponding] = useState(null); // assignment_id being acted on
+
+  const { data: offers = [], refetch } = useQuery({
+    queryKey: ['companion-job-offers', userId, userEmail],
+    queryFn: async () => {
+      const byId    = userId    ? await base44.entities.CompanionAssignment.filter({ companion_user_id: userId,    status: 'offered' }).catch(() => []) : [];
+      const byEmail = userEmail ? await base44.entities.CompanionAssignment.filter({ companion_email:   userEmail, status: 'offered' }).catch(() => []) : [];
+      const seen = new Set();
+      return [...byId, ...byEmail].filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; });
+    },
+    enabled: !!(userId || userEmail),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  async function respond(assignment_id, action) {
+    setResponding(assignment_id);
+    try {
+      await base44.functions.invoke('respondToCompanionJob', { assignment_id, action });
+      queryClient.invalidateQueries({ queryKey: ['companion-job-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['companion_assignments'] });
+      refetch();
+    } catch (_) {}
+    setResponding(null);
+  }
+
+  if (offers.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl overflow-hidden border-2 border-amber-400/40"
+      style={{ background: 'linear-gradient(135deg, #0d1c20, #060B16)' }}>
+      {/* Gold header bar */}
+      <div style={{ height: 3, background: 'linear-gradient(to right, transparent, #D4AF37, transparent)' }} />
+      <div className="px-6 py-4">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
+          </span>
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: '#D4AF37' }}>
+            New Job Offers ({offers.length})
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          {offers.map(offer => {
+            const isActing = responding === offer.id;
+            const arrivalLabel  = offer.arrival_date  ? new Date(offer.arrival_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+            const departureLabel = offer.departure_date ? new Date(offer.departure_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
+
+            return (
+              <motion.div key={offer.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.18)' }}>
+
+                {/* Job header */}
+                <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+                  <div>
+                    <p className="font-semibold text-white text-sm">
+                      Patient: <span style={{ color: '#D4AF37' }}>{offer.patient_first_name || 'Patient'}</span>
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+                      {(offer.procedure_types || []).join(', ') || offer.procedures || 'Procedure TBC'}
+                    </p>
+                  </div>
+                  <span className="text-lg font-black" style={{ color: '#22c55e' }}>
+                    ${offer.package_fee || 650}
+                  </span>
+                </div>
+
+                {/* Detail grid */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-4">
+                  {offer.destination_country && (
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94a3b8' }}>
+                      <span style={{ color: '#D4AF37' }}>📍</span> {offer.destination_country}
+                    </div>
+                  )}
+                  {offer.hotel_name && (
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94a3b8' }}>
+                      <span>🏨</span> {offer.hotel_name}
+                    </div>
+                  )}
+                  {arrivalLabel && (
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94a3b8' }}>
+                      <span>✈️</span> Arrives {arrivalLabel}
+                    </div>
+                  )}
+                  {departureLabel && (
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94a3b8' }}>
+                      <span>🏠</span> Departs {departureLabel}
+                    </div>
+                  )}
+                  {offer.duration_of_stay && (
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color: '#94a3b8' }}>
+                      <span>📅</span> {offer.duration_of_stay}
+                    </div>
+                  )}
+                  {offer.meals_included && (
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color: '#22c55e' }}>
+                      <span>🍽️</span> Meals included
+                    </div>
+                  )}
+                </div>
+
+                {/* Hotel address if available */}
+                {offer.hotel_address && (
+                  <p className="text-[11px] mb-3" style={{ color: '#64748b' }}>{offer.hotel_address}</p>
+                )}
+
+                {/* Accept / Reject */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => respond(offer.id, 'accept')}
+                    disabled={!!responding}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-opacity disabled:opacity-50"
+                    style={{ background: '#D4AF37', color: '#060B16' }}
+                  >
+                    {isActing && responding === offer.id ? '…' : '✓ Accept Job'}
+                  </button>
+                  <button
+                    onClick={() => respond(offer.id, 'reject')}
+                    disabled={!!responding}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                    style={{ border: '1px solid rgba(239,68,68,0.35)', color: '#f87171', background: 'transparent' }}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CompanionDashboard() {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -381,6 +520,9 @@ export default function CompanionDashboard() {
             </Button>
           </div>
         </div>
+
+        {/* ── Job Offers Panel ── */}
+        <JobOffersPanel userId={user?.id} userEmail={user?.email} />
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-4">
