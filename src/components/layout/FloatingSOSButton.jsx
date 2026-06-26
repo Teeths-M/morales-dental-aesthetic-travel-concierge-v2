@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Bot } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import SafeTAssistantPanel from './SafeTAssistantPanel';
 import ChannelList from '@/components/sos/ChannelList';
 
@@ -43,6 +44,7 @@ function WhatsAppIcon({ size = 16 }) {
 }
 
 export default function FloatingSOSButton() {
+  const { t } = useTranslation();
   const [isPanelOpen,      setIsPanelOpen]      = useState(false);
   const [isMenuOpen,       setIsMenuOpen]       = useState(false);
   const [detectedChannels, setDetectedChannels] = useState([]);
@@ -122,8 +124,8 @@ export default function FloatingSOSButton() {
                 >
                   <WhatsAppIcon size={18} />
                   <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: WHATSAPP_GREEN, lineHeight: 1.2 }}>WhatsApp</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>Fastest response · global</p>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: WHATSAPP_GREEN, lineHeight: 1.2 }}>{t('sos.whatsapp')}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>{t('sos.fastest_response')}</p>
                   </div>
                 </a>
 
@@ -140,8 +142,8 @@ export default function FloatingSOSButton() {
                 >
                   <Bot style={{ width: 18, height: 18, color: '#34d399', flexShrink: 0 }} />
                   <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#34d399', lineHeight: 1.2 }}>AI Assistant</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>Safe-T4life · always on</p>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#34d399', lineHeight: 1.2 }}>{t('sos.ai_assistant')}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>{t('sos.always_on')}</p>
                   </div>
                 </button>
 
@@ -184,7 +186,7 @@ export default function FloatingSOSButton() {
             </div>
             <WhatsAppIcon size={16} />
             <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: WHATSAPP_GREEN, lineHeight: 1 }}>
-              WhatsApp
+              {t('sos.whatsapp')}
             </span>
           </motion.div>
         </div>
@@ -207,7 +209,7 @@ export default function FloatingSOSButton() {
             </div>
             <ShieldAlert style={{ width: 16, height: 16, color: '#ef4444', filter: 'drop-shadow(0 0 4px rgba(239,68,68,0.6))', flexShrink: 0 }} strokeWidth={2} />
             <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ef4444', lineHeight: 1 }}>
-              SOS
+              {t('sos.label')}
             </span>
           </motion.div>
         </Link>

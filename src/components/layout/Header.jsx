@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, Settings, LogOut } from 'lucide-react';
+import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 
 export default function Header() {
   const [isPortalOpen,   setIsPortalOpen]   = useState(false);
@@ -286,35 +287,9 @@ export default function Header() {
             </Link>
           )}
 
-          {/* Language selector — isolated far right */}
-          <div className="relative ml-1">
-            <button
-              onClick={() => { setIsLangOpen(p => !p); setIsPortalOpen(false); setIsUserMenuOpen(false); }}
-              className="px-3 py-2 rounded-lg text-[13px] font-medium flex items-center gap-1 transition-colors"
-              style={{ color: '#8A9099' }}
-            >
-              {currentLang}
-              <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {isLangOpen && (
-              <div
-                className="absolute right-0 mt-2 w-16 rounded-xl border border-white/[0.07] p-1 flex flex-col gap-0.5 shadow-xl"
-                style={{ background: 'rgba(10,20,25,0.96)', backdropFilter: 'blur(16px)' }}
-              >
-                {['EN', 'ES', 'FR'].map(lang => (
-                  <button
-                    key={lang}
-                    onClick={() => setLang(lang)}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg text-left transition-colors hover:bg-white/[0.04]"
-                    style={{ color: currentLang === lang ? '#D4AF37' : 'rgba(169,169,169,0.8)' }}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Language selector — Babel Engine globe switcher */}
+          <div className="ml-1">
+            <LanguageSwitcher />
           </div>
         </div>
 
