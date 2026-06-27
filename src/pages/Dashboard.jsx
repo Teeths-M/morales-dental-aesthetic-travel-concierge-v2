@@ -84,6 +84,7 @@ function DashboardHome({ user, consultations, language }) {
   const queryClient = useQueryClient();
   const navigate    = useNavigate();
   const [showGoldenM,       setShowGoldenM]       = useState(false);
+  const [showFingerprintModal, setShowFingerprintModal] = useState(false);
   const [showWelcomeCountry, setShowWelcomeCountry] = useState(false);
   const [showSafeT,         setShowSafeT]         = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -128,7 +129,7 @@ function DashboardHome({ user, consultations, language }) {
   useLocationHistory({ caseId: latestActive?.id, enabled: !!isSolo });
 
   // MedGuard Pattern Intelligence — silent behavioral fingerprint tracking
-  const { nudge, dismissNudge, isLearning, resetFingerprint } = useBehavioralTracking({
+  const { nudge, dismissNudge, isLearning, resetFingerprint, profile: behavioralProfile } = useBehavioralTracking({
     caseId:     latestActive?.id,
     caseStatus: latestActive?.status,
   });
@@ -213,13 +214,58 @@ function DashboardHome({ user, consultations, language }) {
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
 
-      {/* ── MedGuard "knows you" indicator — shown when fingerprint is complete ── */}
+      {/* ── MedGuard "knows you" chip — tappable, shows fingerprint in plain language ── */}
       {!isLearning && activeTrip && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: 'rgba(168,85,247,0.10)', border: '1px solid rgba(168,85,247,0.22)', fontSize: 11, fontWeight: 600, color: 'rgba(216,180,254,0.85)' }}>
-            🧠 MedGuard knows you — personalized protection active
-          </span>
-        </div>
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setShowFingerprintModal(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: 'rgba(168,85,247,0.10)', border: '1px solid rgba(168,85,247,0.22)', fontSize: 11, fontWeight: 600, color: 'rgba(216,180,254,0.85)', cursor: 'pointer' }}
+            >
+              🧠 MedGuard knows you — tap to see your profile
+            </button>
+          </div>
+
+          {/* Fingerprint modal */}
+          {showFingerprintModal && behavioralProfile?.fingerprint && (
+            <div
+              onClick={() => setShowFingerprintModal(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            >
+              <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'rgba(8,16,28,0.98)', border: '1px solid rgba(168,85,247,0.30)', borderRadius: 24, padding: 28, boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <span style={{ fontSize: 28 }}>🧠</span>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff' }}>Your MedGuard Profile</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(216,180,254,0.6)' }}>Built from {behavioralProfile.fingerprint.samples_collected || 0} observations over 72 hours</p>
+                  </div>
+                  <button onClick={() => setShowFingerprintModal(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: 20 }}>×</button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    { label: 'Sleep window', value: `${behavioralProfile.fingerprint.sleep_start_hour ?? 23}:00 – ${behavioralProfile.fingerprint.sleep_end_hour ?? 7}:00`, icon: '🌙' },
+                    { label: 'App opens per hour', value: `~${Math.round(behavioralProfile.fingerprint.app_opens_per_hour ?? 3)} times`, icon: '📱' },
+                    { label: 'Typical offline window', value: `~${Math.round(behavioralProfile.fingerprint.avg_offline_duration_min ?? 60)} minutes`, icon: '⏱️' },
+                    { label: 'Check-in reliability', value: `${Math.round((behavioralProfile.fingerprint.checkin_on_time_rate ?? 0.8) * 100)}% on time`, icon: '✅' },
+                  ].map(({ label, value, icon }) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 12 }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{label}</p>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p style={{ margin: '16px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: 1.5 }}>
+                  When you stop being you, MedGuard asks why. 🛡️
+                </p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* ── Night Mode banner (Layer 2: Time of Day) ── */}
