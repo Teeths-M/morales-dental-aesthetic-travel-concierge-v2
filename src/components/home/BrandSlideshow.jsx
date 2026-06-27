@@ -7,24 +7,7 @@ import { Button } from '@/components/ui/button';
 const DEFAULT_IMG = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/1ca89ed08_Addhome3.png';
 
 const slides = [
-  {
-    icon: Sparkles,
-    eyebrow: 'Our Promise',
-    headline: 'Heal Beautifully.\nTravel Confidently.',
-    body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
-    color: 'from-accent/10 to-transparent',
-    image: DEFAULT_IMG,
-  },
-  {
-    icon: ShieldCheck,
-    eyebrow: 'Safe-T4life™ Protected Journey',
-    headline: '9 Checkpoints.\nZero Gaps.',
-    body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically. No other platform does this.',
-    color: 'from-primary/10 to-transparent',
-    image: DEFAULT_IMG,
-  },
-
-  // ── Destination flashcards — each with matching country photo ─────────────
+  // ── Destination flashcards first — image changes immediately on load ───────
   {
     icon: Globe,
     eyebrow: '🇨🇴 Why Colombia?',
@@ -89,7 +72,23 @@ const slides = [
     imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
-  // ── Trust slides ───────────────────────────────────────────────────────────
+  // ── Brand/trust slides ─────────────────────────────────────────────────────
+  {
+    icon: Sparkles,
+    eyebrow: 'Our Promise',
+    headline: 'Heal Beautifully.\nTravel Confidently.',
+    body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
+    color: 'from-accent/10 to-transparent',
+    image: DEFAULT_IMG,
+  },
+  {
+    icon: ShieldCheck,
+    eyebrow: 'Safe-T4life™ Protected Journey',
+    headline: '9 Checkpoints.\nZero Gaps.',
+    body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically.',
+    color: 'from-primary/10 to-transparent',
+    image: DEFAULT_IMG,
+  },
   {
     icon: Lock,
     eyebrow: 'Secure & Confidential',
@@ -184,7 +183,7 @@ export default function BrandSlideshow() {
               {/* Dark overlay so the testimonial card reads clearly */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.45) 100%)' }} />
               {/* Destination label — only on destination slides */}
-              {slide.eyebrow?.startsWith('🇨🇴') || slide.eyebrow?.startsWith('🇹🇭') || slide.eyebrow?.startsWith('🇹🇷') || slide.eyebrow?.startsWith('🇻🇪') || slide.eyebrow?.startsWith('🇧🇷') || slide.eyebrow?.startsWith('🇲🇽') || slide.eyebrow?.startsWith('🇮🇳') ? (
+              {slide.image !== DEFAULT_IMG ? (
                 <motion.div
                   key={`label-${current}`}
                   initial={{ opacity: 0, y: 8 }}
