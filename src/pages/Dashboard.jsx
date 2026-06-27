@@ -244,7 +244,7 @@ function DashboardHome({ user, consultations, language }) {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {[
-                    { label: 'Sleep window', value: `${behavioralProfile.fingerprint.sleep_start_hour ?? 23}:00 – ${behavioralProfile.fingerprint.sleep_end_hour ?? 7}:00`, icon: '🌙' },
+                    { label: 'Sleep window', value: `${behavioralProfile.fingerprint.sleep_start_hour != null ? behavioralProfile.fingerprint.sleep_start_hour : 23}:00 – ${behavioralProfile.fingerprint.sleep_end_hour != null ? behavioralProfile.fingerprint.sleep_end_hour : 7}:00`, icon: '🌙' },
                     { label: 'App opens per hour', value: `~${Math.round(behavioralProfile.fingerprint.app_opens_per_hour ?? 3)} times`, icon: '📱' },
                     { label: 'Typical offline window', value: `~${Math.round(behavioralProfile.fingerprint.avg_offline_duration_min ?? 60)} minutes`, icon: '⏱️' },
                     { label: 'Check-in reliability', value: `${Math.round((behavioralProfile.fingerprint.checkin_on_time_rate ?? 0.8) * 100)}% on time`, icon: '✅' },
