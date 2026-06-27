@@ -499,6 +499,28 @@
         "companion_required_pending"
       ],
       "default": "not_required"
+    },
+
+    // ── Silent Guardian fields (opt-in, Red Team revised) ──────────────────
+    "traveling_companion_type": {
+      "type": "string",
+      "enum": ["solo", "partner_family", "group"],
+      "default": "solo",
+      "description": "How the patient is traveling — drives Guardian Mode sensitivity"
+    },
+    "traveling_solo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Derived from traveling_companion_type === 'solo'"
+    },
+    "guardian_mode_opted_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicit opt-in for 24/7 GPS+motion monitoring. Battery warning shown."
+    },
+    "last_check_in_response": {
+      "type": "string",
+      "description": "ISO timestamp of the patient's last Guardian check-in response"
     }
   },
   "required": [

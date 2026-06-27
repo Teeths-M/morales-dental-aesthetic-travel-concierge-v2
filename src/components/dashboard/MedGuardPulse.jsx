@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, AlertTriangle, Zap } from 'lucide-react';
+import { Shield, AlertTriangle, Zap, Moon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
@@ -23,7 +23,7 @@ const RISK_CONFIG = {
  *
  * Props: caseId — the patient's active CaseRecord ID
  */
-export default function MedGuardPulse({ caseId, tripPhase }) {
+export default function MedGuardPulse({ caseId, tripPhase, timeBonus = 0, isNight = false }) {
   const [analysis, setAnalysis] = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -49,9 +49,10 @@ export default function MedGuardPulse({ caseId, tripPhase }) {
 
   if (!isActiveTravel) return null;
 
-  const cfg      = analysis ? (RISK_CONFIG[analysis.risk_level] || RISK_CONFIG.SAFE) : null;
-  const score    = analysis?.score ?? null;
-  const Icon     = cfg?.icon ?? Shield;
+  const cfg       = analysis ? (RISK_CONFIG[analysis.risk_level] || RISK_CONFIG.SAFE) : null;
+  const baseScore = analysis?.score ?? null;
+  const score     = baseScore !== null ? Math.min(100, baseScore + timeBonus) : null;
+  const Icon      = cfg?.icon ?? Shield;
 
   return (
     <motion.div
@@ -83,6 +84,12 @@ export default function MedGuardPulse({ caseId, tripPhase }) {
               <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                 style={{ background: `${cfg?.color}20`, color: cfg?.color }}>
                 {score}/100
+              </span>
+            )}
+            {isNight && (
+              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.25)' }}>
+                <Moon style={{ width: 9, height: 9 }} /> Night +{timeBonus}pts
               </span>
             )}
           </div>

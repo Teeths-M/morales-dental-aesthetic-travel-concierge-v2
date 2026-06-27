@@ -34,6 +34,7 @@ import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyInde
 import PatientJourneyCredit from '@/components/dashboard/PatientJourneyCredit';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
 import { useBehavioralTracking } from '@/hooks/useBehavioralTracking';
+import { useContextAwareSafety } from '@/hooks/useContextAwareSafety';
 import FirstTimeTooltip from '@/components/ui-system/FirstTimeTooltip';
 import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
@@ -131,6 +132,17 @@ function DashboardHome({ user, consultations, language }) {
     caseStatus: latestActive?.status,
   });
 
+  // Silent Guardian — 4 context layers (time, solo, activity, schedule)
+  const safetyCx = useContextAwareSafety({
+    consultationId:     latestActive?.id,
+    travelingSolo:      latestActive?.traveling_solo ?? true,
+    guardianModeOptedIn: latestActive?.guardian_mode_opted_in ?? false,
+    companionType:      latestActive?.traveling_companion_type || 'solo',
+    isActiveJourney:    !!activeTrip,
+    hasGPSMoved:        locationStatus === 'active',
+    lastGPSUpdateAt:    currentLocation?.timestamp || null,
+  });
+
   // Country detection — triggers WelcomeCountryModal on new country arrival
   const { country, flag, isNewCountry, acknowledgeCountry } = useCountryDetection({
     lat: currentLocation?.lat,
@@ -200,6 +212,70 @@ function DashboardHome({ user, consultations, language }) {
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
 
+      {/* ── Night Mode banner (Layer 2: Time of Day) ── */}
+      {safetyCx.isNight && activeTrip && (
+        <div style={{ borderRadius: 14, padding: '10px 16px', background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 16 }}>🌙</span>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(165,180,252,0.9)', fontWeight: 600 }}>
+            Night Mode active
+            {safetyCx.isSleepHours ? ' · Non-critical alerts paused until 6 AM' : ` · MedGuard risk +${safetyCx.riskBonus}pts`}
+          </p>
+        </div>
+      )}
+
+      {/* ── Guardian Mode status (Layer 4) ── */}
+      {safetyCx.isFullGuardianMode && (
+        <div style={{ borderRadius: 14, padding: '10px 16px', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14 }}>🛡️</span>
+            <p style={{ margin: 0, fontSize: 12, color: 'rgba(212,175,55,0.9)', fontWeight: 600 }}>Guardian Mode active</p>
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+              {safetyCx.guardian.checkInDue ? '· Check-in due' : safetyCx.guardian.gpsAlertDue ? '· GPS silent too long' : '· Watching over you'}
+            </p>
+          </div>
+          {(safetyCx.guardian.checkInDue || safetyCx.guardian.gpsAlertDue) && (
+            <button
+              onClick={() => safetyCx.guardian.acknowledgeCheckIn()}
+              style={{ padding: '5px 14px', borderRadius: 99, background: '#D4AF37', color: '#060B16', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer' }}
+            >
+              I'm Safe ✓
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Fall Detection prompt (Layer 3: Activity Detection) ── */}
+      {safetyCx.activity.showFallPrompt && (
+        <div style={{ borderRadius: 16, padding: '16px 20px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.40)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff' }}>⚠️ Are you okay?</p>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+            We detected unusual movement. Are you hiking, running, or did you fall?<br />
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>If we don't hear from you in 60 seconds, we'll queue an SOS.</span>
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => safetyCx.activity.dismissFallPrompt()}
+              style={{ flex: 1, padding: '9px 0', borderRadius: 10, background: '#22c55e', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+              👍 I'm Fine
+            </button>
+            <button onClick={() => window.location.href = '/emergency'}
+              style={{ flex: 1, padding: '9px 0', borderRadius: 10, background: 'rgba(239,68,68,0.25)', color: '#ef4444', fontSize: 13, fontWeight: 700, border: '1px solid rgba(239,68,68,0.4)', cursor: 'pointer' }}>
+              🆘 I Need Help
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SOS queued notification */}
+      {safetyCx.activity.queuedSOS && (
+        <div style={{ borderRadius: 14, padding: '12px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <p style={{ margin: 0, fontSize: 12, color: '#ef4444', fontWeight: 700 }}>🚨 SOS queued — tap to cancel if you're safe</p>
+          <button onClick={() => safetyCx.activity.clearQueuedSOS()}
+            style={{ padding: '5px 14px', borderRadius: 99, background: '#22c55e', color: '#fff', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+            Cancel — I'm Safe
+          </button>
+        </div>
+      )}
+
       {/* MedGuard Pattern Intelligence nudge — gentle, context-aware check-in */}
       {nudge && (
         <div style={{
@@ -256,6 +332,8 @@ function DashboardHome({ user, consultations, language }) {
         <MedGuardPulse
           caseId={latestConsultation.id}
           tripPhase={activeTrip?.trip_phase || latestConsultation.trip_phase}
+          timeBonus={safetyCx.riskBonus}
+          isNight={safetyCx.isNight}
         />
       )}
 

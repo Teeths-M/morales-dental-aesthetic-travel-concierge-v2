@@ -145,6 +145,10 @@ export default function ConsultationForm() {
     communication_style_preference: 'gentle',
     companion_can_translate: false,
     companion_translation_limitations: '',
+    // Silent Guardian fields
+    traveling_companion_type: 'solo',
+    traveling_solo:           true,
+    guardian_mode_opted_in:   false,
   });
 
   const update = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
@@ -237,6 +241,9 @@ export default function ConsultationForm() {
         communication_style_preference: formData.communication_style_preference,
         companion_can_translate: formData.companion_can_translate,
         companion_translation_limitations: formData.companion_translation_limitations,
+        traveling_companion_type: formData.traveling_companion_type,
+        traveling_solo:           formData.traveling_solo,
+        guardian_mode_opted_in:   formData.guardian_mode_opted_in,
       });
 
       try {
@@ -504,6 +511,69 @@ export default function ConsultationForm() {
 
               {/* ── Section 7: Clinical Boundary ── */}
               <SectionClinicalBoundary form={formData} update={update} showValidation={showValidation} />
+
+              {/* ── Section 8: Silent Guardian — Travel Companion + Opt-In ── */}
+              <div className="space-y-5 rounded-2xl p-5" style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.20)' }}>
+                <div className="flex items-center gap-2 pb-1 border-b border-yellow-900/30">
+                  <span className="text-lg">🛡️</span>
+                  <h3 className="font-semibold text-base">Travel Companion & Guardian Mode</h3>
+                </div>
+
+                {/* Who are you traveling with? */}
+                <div>
+                  <p className="text-sm font-medium mb-3">How will you be traveling?</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { value: 'solo',           emoji: '🌍', label: 'Traveling Solo',           sub: 'Guardian Mode activates — highest protection' },
+                      { value: 'partner_family', emoji: '👨‍👩‍👧‍👦', label: 'With Partner / Family', sub: 'Standard protection & check-ins' },
+                      { value: 'group',          emoji: '👥', label: 'With a Group',              sub: 'Minimal individual alerts' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          update('traveling_companion_type', opt.value);
+                          update('traveling_solo', opt.value === 'solo');
+                        }}
+                        className="rounded-xl p-4 text-left transition-all"
+                        style={{
+                          background: formData.traveling_companion_type === opt.value ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.04)',
+                          border:     formData.traveling_companion_type === opt.value ? '1.5px solid rgba(212,175,55,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                        }}
+                      >
+                        <span className="text-2xl block mb-1">{opt.emoji}</span>
+                        <p className="text-sm font-semibold text-white">{opt.label}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{opt.sub}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Guardian Mode opt-in */}
+                {formData.traveling_companion_type === 'solo' && (
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="guardian_opt_in"
+                        checked={formData.guardian_mode_opted_in}
+                        onChange={e => update('guardian_mode_opted_in', e.target.checked)}
+                        className="mt-1 w-4 h-4 rounded accent-yellow-500 flex-shrink-0"
+                      />
+                      <label htmlFor="guardian_opt_in" className="cursor-pointer">
+                        <p className="text-sm font-semibold text-white">Enable Guardian Mode 🛡️</p>
+                        <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                          Morales can watch over you 24/7 during your journey using scheduled check-ins and motion detection when the app is open.
+                          This may use slightly more battery. You can disable it anytime. <strong className="text-white">This is 100% opt-in.</strong>
+                        </p>
+                        <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                          Includes: 9 AM + 9 PM daily SMS check-ins · Gentle nudges if silent too long · Fall detection (when app is open) · Guardian contacts notified on escalation
+                        </p>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <Button type="submit" className="w-full h-12 text-base font-semibold rounded-xl" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
