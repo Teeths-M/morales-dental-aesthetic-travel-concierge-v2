@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
   Shield, MapPin, Bell, Lock, Zap, CheckCircle2,
-  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio, Brain
+  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio, Brain, Mail
 } from 'lucide-react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import EmergencyScenarioDemo from '@/pages/EmergencyScenarioDemo';
@@ -491,6 +491,7 @@ const TABS = [
   { id: 'emergency',  label: '🚨 Kidnapping Scenario' },
   { id: 'nightlife',  label: '🔒 Vault Lockdown' },
   { id: 'pattern',    label: '🧠 Pattern Intelligence', link: '/demo/medguard' },
+  { id: 'emails',     label: '📧 Email System',         link: '/demo/emails' },
 ];
 
 export default function DemoShowcase() {
@@ -649,6 +650,14 @@ export default function DemoShowcase() {
             >
               <Brain style={{ width: 15, height: 15 }} />
               Pattern Intelligence — Theon vs Maria
+            </Link>
+            <Link
+              to="/demo/emails"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.35)', color: '#c084fc' }}
+            >
+              <Mail style={{ width: 15, height: 15 }} />
+              Email System — 5 Live Templates
             </Link>
           </div>
         </section>

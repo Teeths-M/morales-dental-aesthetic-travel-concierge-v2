@@ -91,6 +91,81 @@ Deno.serve(async (req) => {
         }).catch(() => {});
       }
 
+      // Companion Mission Briefing — sent to companion on acceptance
+      const companionEmail = assignment.companion_email || user.email;
+      const GOLD = '#D4AF37';
+      const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+      const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const arrivalStr = assignment.arrival_date ? new Date(assignment.arrival_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'To be confirmed';
+      const departureStr = assignment.departure_date ? new Date(assignment.departure_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'To be confirmed';
+
+      const briefingHtml = `<!doctype html><html><body style="margin:0;background:#060B16;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
+<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
+<tr><td style="background:#0C1A1D;padding:28px 32px;border-bottom:1px solid #2A3F4A;">
+  <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Dental &amp; Aesthetics</div>
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:6px;">Companion Mission Briefing</div>
+</td></tr>
+<tr><td style="padding:32px;">
+  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#fff;">
+    Your assignment is confirmed, ${e(companionDisplay)}.
+  </h1>
+  <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:rgba(255,255,255,0.6);">
+    Thank you for accepting this mission. Your patient is counting on your presence and care. Here is everything you need.
+  </p>
+
+  <div style="background:#0C1A1D;border:1px solid #2A3F4A;border-radius:14px;padding:20px;margin-bottom:20px;">
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:14px;">Mission Details</div>
+    <table width="100%" cellspacing="0" cellpadding="0">
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;width:42%;">Patient (first name only)</td><td style="padding:7px 0;color:#fff;font-size:14px;font-weight:700;">${e(assignment.patient_first_name || 'Your patient')}</td></tr>
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;">Destination</td><td style="padding:7px 0;color:#fff;font-size:14px;">${e(assignment.destination_country || 'TBC')}</td></tr>
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;">Hotel</td><td style="padding:7px 0;color:#fff;font-size:14px;">${e(assignment.hotel_name || 'To be confirmed')}</td></tr>
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;">Arrival</td><td style="padding:7px 0;color:#fff;font-size:14px;">${e(arrivalStr)}</td></tr>
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;">Departure</td><td style="padding:7px 0;color:#fff;font-size:14px;">${e(departureStr)}</td></tr>
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;">Package fee</td><td style="padding:7px 0;color:${GOLD};font-size:14px;font-weight:700;">$${assignment.package_fee || 650}</td></tr>
+      <tr><td style="padding:7px 0;color:#94a3b8;font-size:13px;">Meals included</td><td style="padding:7px 0;color:#fff;font-size:14px;">${assignment.meals_included ? '✓ Yes' : 'No'}</td></tr>
+    </table>
+  </div>
+
+  <div style="background:#0C1A1D;border:1px solid #2A3F4A;border-radius:14px;padding:20px;margin-bottom:20px;">
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:14px;">Your Responsibilities</div>
+    <ul style="margin:0;padding:0 0 0 18px;color:rgba(255,255,255,0.7);font-size:13px;line-height:1.9;">
+      <li>Meet the patient at their hotel upon arrival</li>
+      <li>Accompany them to the clinic for their procedure</li>
+      <li>Coordinate meal delivery during recovery</li>
+      <li>Be available via WhatsApp during their stay</li>
+      <li>Complete HS6 (Companion Meal Delivery) in the Morales app</li>
+      <li>Report any safety concerns immediately to Morales Concierge</li>
+    </ul>
+  </div>
+
+  <div style="text-align:center;margin-bottom:24px;">
+    <a href="${appUrl}/companion-dashboard" style="display:inline-block;background:${GOLD};color:#060B16;text-decoration:none;padding:14px 32px;border-radius:999px;font-size:14px;font-weight:700;">
+      Open Companion Dashboard →
+    </a>
+  </div>
+
+  <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:16px 20px;">
+    <p style="margin:0;font-size:12px;color:#fca5a5;line-height:1.6;">
+      <strong>Emergency Protocol:</strong> If you or the patient are in danger at any time, contact Morales Emergency Line immediately. Do not hesitate. Patient safety is always the priority.
+    </p>
+  </div>
+
+  <p style="margin:24px 0 0;font-size:12px;color:#475569;text-align:center;">
+    Morales Dental &amp; Aesthetics · Companion Mission Briefing · ${e(assignment.destination_country || '')}
+  </p>
+</td></tr>
+</table></td></tr></table></body></html>`;
+
+      if (companionEmail) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: 'Morales — Companion Briefing',
+          to: companionEmail,
+          subject: `🌍 Your Mission Briefing — ${e(assignment.patient_first_name || 'Patient')} in ${e(assignment.destination_country || 'your destination')}`,
+          body: briefingHtml,
+        }).catch(() => {});
+      }
+
       return Response.json({ success: true, action: 'accepted', status: 'confirmed', companion: companionDisplay });
     }
 

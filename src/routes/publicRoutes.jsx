@@ -29,6 +29,7 @@ const EmergencyScenarioDemo  = lazy(() => import('@/pages/EmergencyScenarioDemo'
 const NightlifeRobberyDemo   = lazy(() => import('@/pages/NightlifeRobberyDemo'));
 const PublicRecoveryTracker  = lazy(() => import('@/pages/PublicRecoveryTracker'));
 const MedGuardDemo           = lazy(() => import('@/pages/MedGuardDemo'));
+const EmailShowcase          = lazy(() => import('@/pages/EmailShowcase'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -52,6 +53,7 @@ export const publicRoutes = (
     <Route path="/demo/emergency"      element={<EmergencyScenarioDemo />} />
     <Route path="/demo/nightlife"      element={<NightlifeRobberyDemo />} />
     <Route path="/demo/medguard"       element={<MedGuardDemo />} />
+    <Route path="/demo/emails"         element={<EmailShowcase />} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<PublicRecoveryTracker />} />
   </Route>
