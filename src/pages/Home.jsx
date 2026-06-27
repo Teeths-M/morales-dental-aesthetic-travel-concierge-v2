@@ -11,6 +11,7 @@ import RealMoments from '../components/home/RealMoments';
 import BrandSlideshow from '../components/home/BrandSlideshow';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 import LuxuryTestimonials from '../components/home/LuxuryTestimonials';
+import ProtectionStackSection from '../components/home/ProtectionStackSection';
 
 
 export default function Home() {
@@ -55,6 +56,7 @@ export default function Home() {
       <LuxuryTrustBar />
       <LuxuryHowItWorks />
       <LuxuryWhyMorales />
+      <ProtectionStackSection />
       <RealMoments />
       <OurExpertsTeaser />
       <LuxuryTestimonials />
