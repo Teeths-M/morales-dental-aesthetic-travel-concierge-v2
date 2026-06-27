@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Lock, Globe, User, Eye, CheckCircle2 } from 'lucide-react';
+import { Bell, Lock, Globe, User, Eye, CheckCircle2, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -35,7 +35,75 @@ const getLabels = (lang) => ({
   saved: lang === 'es' ? '¡Guardado!' : lang === 'fr' ? 'Enregistré !' : lang === 'pt' ? 'Salvo!' : 'Saved!',
 });
 
-export default function SettingsModule() {
+function ResetSafetyProfileCard({ onReset }) {
+  const [confirm,   setConfirm]   = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [done,      setDone]      = useState(false);
+
+  async function handleReset() {
+    if (!confirm) { setConfirm(true); return; }
+    setResetting(true);
+    await onReset();
+    setResetting(false);
+    setDone(true);
+    setConfirm(false);
+    setTimeout(() => setDone(false), 4000);
+  }
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+          <Brain className="w-5 h-5 text-purple-600" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-800 text-sm">MedGuard Safety Profile</h3>
+          <p className="text-xs text-slate-500">Behavioral fingerprint built over your first 72 hours</p>
+        </div>
+        {done && (
+          <span className="ml-auto text-xs font-semibold text-emerald-600 flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Reset complete
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+        MedGuard learns your unique patterns — when you sleep, when you charge, how often you open the app.
+        Reset your profile to start fresh. MedGuard will rebuild it over your next 72 hours of activity.
+      </p>
+
+      {!confirm ? (
+        <button
+          onClick={handleReset}
+          className="text-xs font-semibold text-slate-500 hover:text-red-500 transition-colors"
+        >
+          Reset my safety profile →
+        </button>
+      ) : (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+          <p className="text-xs text-red-600 flex-1">
+            This clears your fingerprint. MedGuard re-learns from scratch. Confirm?
+          </p>
+          <button
+            onClick={handleReset}
+            disabled={resetting}
+            className="text-xs font-bold text-red-600 hover:text-red-700 flex-shrink-0"
+          >
+            {resetting ? 'Resetting…' : 'Yes, reset'}
+          </button>
+          <button
+            onClick={() => setConfirm(false)}
+            className="text-xs text-slate-400 hover:text-slate-600 flex-shrink-0"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function SettingsModule({ onResetSafetyProfile }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -286,6 +354,11 @@ export default function SettingsModule() {
           </label>
         </div>
       </div>
+
+      {/* ── MedGuard Safety Profile Reset ── */}
+      {onResetSafetyProfile && (
+        <ResetSafetyProfileCard onReset={onResetSafetyProfile} />
+      )}
 
       <div className="flex justify-end">
         <Button

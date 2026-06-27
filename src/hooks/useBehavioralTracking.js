@@ -43,8 +43,8 @@ function loadCachedFingerprint(email) {
     const fp  = obj.fp;
     if (!fp) return null;
     // Completed fingerprints never expire by time — only by explicit reset.
-    // An incomplete fingerprint (still learning) expires after 90 days of inactivity.
-    if (fp.learning_completed_at) return fp;
+    // Guard: must have at least 5 samples to be considered valid (not a race-condition ghost).
+    if (fp.learning_completed_at && (fp.samples_collected || 0) >= 5) return fp;
     if (Date.now() - (obj.ts || 0) > 90 * 24 * 3600_000) return null;
     return fp;
   } catch { return null; }
@@ -404,10 +404,36 @@ export function useBehavioralTracking({ caseId, caseStatus } = {}) {
 
   const dismissNudge = useCallback(() => setNudge(null), []);
 
+  // Full lifecycle: build → persist → reset → rebuild
+  const resetFingerprint = useCallback(async () => {
+    if (!user?.email) return;
+    try { localStorage.removeItem(fpKey(user.email)); } catch {}
+    if (profile?.id) {
+      await base44.entities.BehavioralProfile.update(profile.id, {
+        fingerprint:    blankFingerprint(),
+        learning_phase: true,
+        status:         'learning',
+        anomaly_score:  0,
+        nudge_count:    0,
+        signals_buffer: [],
+        last_signal_at: new Date().toISOString(),
+      }).catch(() => {});
+    }
+    setProfile(prev => prev ? {
+      ...prev,
+      fingerprint:    blankFingerprint(),
+      learning_phase: true,
+      status:         'learning',
+      anomaly_score:  0,
+    } : prev);
+    setNudge(null);
+  }, [user?.email, profile?.id]);
+
   return {
     profile,
     nudge,
     dismissNudge,
+    resetFingerprint,
     isLearning: profile?.learning_phase ?? true,
     anomalyScore: profile?.anomaly_score ?? 0,
   };

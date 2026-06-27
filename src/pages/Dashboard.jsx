@@ -127,7 +127,7 @@ function DashboardHome({ user, consultations, language }) {
   useLocationHistory({ caseId: latestActive?.id, enabled: !!isSolo });
 
   // MedGuard Pattern Intelligence — silent behavioral fingerprint tracking
-  const { nudge, dismissNudge, isLearning } = useBehavioralTracking({
+  const { nudge, dismissNudge, isLearning, resetFingerprint } = useBehavioralTracking({
     caseId:     latestActive?.id,
     caseStatus: latestActive?.status,
   });
@@ -767,7 +767,7 @@ export default function Dashboard() {
     if (p === '/dashboard/messages') return <MessagesModule />;
     if (p === '/dashboard/journey') return <JourneyModule />;
     if (p === '/dashboard/support') return <SupportModule />;
-    if (p === '/dashboard/settings') return <SettingsModule />;
+    if (p === '/dashboard/settings') return <SettingsModule onResetSafetyProfile={resetFingerprint} />;
     if (p === '/dashboard/case-status') return <CaseStatusModule userEmail={user?.email} />;
     if (p === '/dashboard') return <FeatureHub />;
     if (loadingConsultations) return <LoadingState rows={4} dark={false} label="Loading your dashboard" className="mt-4" />;
