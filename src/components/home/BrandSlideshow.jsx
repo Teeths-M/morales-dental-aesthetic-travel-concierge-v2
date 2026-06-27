@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, ShieldCheck, Star, Heart, Globe, Lock, Spark
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
+const DEFAULT_IMG = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/1ca89ed08_Addhome3.png';
+
 const slides = [
   {
     icon: Sparkles,
@@ -11,6 +13,7 @@ const slides = [
     headline: 'Heal Beautifully.\nTravel Confidently.',
     body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
     color: 'from-accent/10 to-transparent',
+    image: DEFAULT_IMG,
   },
   {
     icon: ShieldCheck,
@@ -18,16 +21,18 @@ const slides = [
     headline: '9 Checkpoints.\nZero Gaps.',
     body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically. No other platform does this.',
     color: 'from-primary/10 to-transparent',
+    image: DEFAULT_IMG,
   },
 
-  // ── Destination flashcards — slow enough to read ──────────────────────────
+  // ── Destination flashcards — each with matching country photo ─────────────
   {
     icon: Globe,
     eyebrow: '🇨🇴 Why Colombia?',
     headline: 'World-Class Dentistry.\nCaribbean Warmth.',
     body: 'Bogotá and Medellín are home to elite, internationally accredited clinics. Full smile makeovers at 65% less than the US. English-speaking surgeons. Morales partners vetted personally.',
     color: 'from-green-500/10 to-transparent',
-    flag: '🇨🇴',
+    image: 'https://images.unsplash.com/photo-1601001815894-4a796f8c5a56?w=800&fit=crop&q=80',
+    imageAlt: 'Medellín, Colombia — vibrant city and world-class medical hub',
   },
   {
     icon: Globe,
@@ -35,7 +40,8 @@ const slides = [
     headline: 'Asia\'s Medical\nTourism Capital.',
     body: 'Bangkok\'s JCI-accredited hospitals treat 2 million international patients yearly. Dental implants from $600 vs $4,000 in the US. Recover in paradise. Fly home transformed.',
     color: 'from-orange-500/10 to-transparent',
-    flag: '🇹🇭',
+    image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&fit=crop&q=80',
+    imageAlt: 'Bangkok, Thailand — Asia\'s medical tourism capital',
   },
   {
     icon: Globe,
@@ -43,7 +49,8 @@ const slides = [
     headline: 'Europe\'s #1 Medical\nTourism Destination.',
     body: 'Istanbul has 32 JCI-certified hospitals — more than any city in Europe. Rhinoplasty, veneers, hair restoration at half the European price. Surgeons trained in London and Paris.',
     color: 'from-red-500/10 to-transparent',
-    flag: '🇹🇷',
+    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&fit=crop&q=80',
+    imageAlt: 'Istanbul, Turkey — Europe\'s #1 medical tourism destination',
   },
   {
     icon: Globe,
@@ -51,7 +58,8 @@ const slides = [
     headline: 'Caribbean Recovery.\nWorld-Class Aesthetic Surgeons.',
     body: 'Venezuela trains some of Latin America\'s most celebrated aesthetic surgeons. Warm Caribbean climate ideal for post-op recovery. Morales partners are internationally certified and personally screened.',
     color: 'from-yellow-500/10 to-transparent',
-    flag: '🇻🇪',
+    image: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&fit=crop&q=80',
+    imageAlt: 'Venezuela — Caribbean recovery paradise',
   },
   {
     icon: Globe,
@@ -59,7 +67,8 @@ const slides = [
     headline: 'The Plastic Surgery\nCapital of the World.',
     body: 'Brazil performs more cosmetic procedures per capita than anywhere on earth. Rio and São Paulo surgeons have decade-long international reputations. Recovery on the world\'s most beautiful beaches.',
     color: 'from-emerald-500/10 to-transparent',
-    flag: '🇧🇷',
+    image: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=800&fit=crop&q=80',
+    imageAlt: 'Rio de Janeiro, Brazil — plastic surgery capital of the world',
   },
   {
     icon: Globe,
@@ -67,7 +76,8 @@ const slides = [
     headline: 'One Million Americans\nCross the Border for Dental Care.',
     body: 'Los Algodones alone has 350 dental clinics in 4 city blocks. Savings of $5,000–$20,000 on full-mouth restorations. Morales coordinates everything — you just show up and smile.',
     color: 'from-red-500/10 to-transparent',
-    flag: '🇲🇽',
+    image: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&fit=crop&q=80',
+    imageAlt: 'Mexico City — top dental tourism destination',
   },
   {
     icon: Globe,
@@ -75,7 +85,8 @@ const slides = [
     headline: 'Elite Care.\nFraction of the Cost.',
     body: 'Mumbai and Chennai have hospitals that rival the best in the UK and USA at 80% lower cost. Heart surgery, dental implants, knee replacements — all with JCI-accredited surgeons.',
     color: 'from-orange-500/10 to-transparent',
-    flag: '🇮🇳',
+    image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&fit=crop&q=80',
+    imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
   // ── Trust slides ───────────────────────────────────────────────────────────
@@ -85,6 +96,7 @@ const slides = [
     headline: 'Your Privacy Is\nOur Priority.',
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
+    image: DEFAULT_IMG,
   },
   {
     icon: Heart,
@@ -92,6 +104,7 @@ const slides = [
     headline: 'Real People.\n24/7 Concierge Support.',
     body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
+    image: DEFAULT_IMG,
   },
 ];
 
@@ -147,19 +160,45 @@ export default function BrandSlideshow() {
 
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-          {/* Left: Image + emotional testimonial overlay */}
+          {/* Left: Destination image — crossfades to match current slide */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <div className="rounded-2xl overflow-hidden shadow-2xl">
-              <img
-                src="https://media.base44.com/images/public/6a01c1305c540b75f24dd373/1ca89ed08_Addhome3.png"
-                alt="Your Transformation Our Priority"
-                className="w-full h-auto object-cover"
-              />
+            <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ position: 'relative', aspectRatio: '4/3', background: '#0C1A1D' }}>
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={slide.image}
+                  src={slide.image}
+                  alt={slide.imageAlt || 'Morales Medical Travel'}
+                  className="w-full h-full object-cover"
+                  style={{ position: 'absolute', inset: 0 }}
+                  initial={{ opacity: 0, scale: 1.04 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.6, ease: 'easeInOut' }}
+                />
+              </AnimatePresence>
+              {/* Dark overlay so the testimonial card reads clearly */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.45) 100%)' }} />
+              {/* Destination label — only on destination slides */}
+              {slide.eyebrow?.startsWith('🇨🇴') || slide.eyebrow?.startsWith('🇹🇭') || slide.eyebrow?.startsWith('🇹🇷') || slide.eyebrow?.startsWith('🇻🇪') || slide.eyebrow?.startsWith('🇧🇷') || slide.eyebrow?.startsWith('🇲🇽') || slide.eyebrow?.startsWith('🇮🇳') ? (
+                <motion.div
+                  key={`label-${current}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                  style={{ position: 'absolute', bottom: 70, left: 16, right: 16 }}
+                >
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(6,11,22,0.75)', backdropFilter: 'blur(8px)', border: '1px solid rgba(212,175,55,0.35)', borderRadius: 99, padding: '6px 14px' }}>
+                    <span style={{ fontSize: 18 }}>{slide.eyebrow.slice(0, 2)}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>{slide.eyebrow.slice(3)}</span>
+                  </div>
+                </motion.div>
+              ) : null}
             </div>
 
             {/* Floating emotional testimonial card */}
