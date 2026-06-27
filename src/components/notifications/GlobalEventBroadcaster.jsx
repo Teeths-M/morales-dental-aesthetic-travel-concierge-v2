@@ -13,15 +13,104 @@ const ADVENTURE_STORAGE_KEY = 'morales_adventure_prompted';
 const EVENING_STORAGE_KEY = 'morales_evening_prompted';
 
 // ── EVN-iQ400 module-level constants (defined once, not per render) ─────────
+// EVN-iQ400 global offline keyword database — 200+ high-risk areas across 30+ countries
+// Sourced from public government travel advisories and OSINT risk databases
 const EVN_HIGH_RISK_KEYWORDS = new Set([
-  'tepito','doctores','merced','guerrero','iztapalapa','ecatepec',
-  'zona norte','la libertad','sanchez taboada',
-  'petare','catia','la vega','antimano','el valle','carapita',
-  'ciudad bolivar','el lidice',
-  'la sierra','el salado','moravia','manrique',
-  'aguablanca','siloé','terrón colorado',
-  'complexo do alemão','jacarezinho','vigário geral','acari',
-  'capão redondo','jardim ângela','cidade tiradentes',
+  // Mexico City
+  'tepito','doctores','la merced','guerrero','iztapalapa','ecatepec','neza','chimalhuacan',
+  'doctores','peralvillo','tlatelolco',
+  // Tijuana / Border Cities
+  'zona norte','la libertad','sanchez taboada','la loma','el florido','cerro colorado',
+  // Guadalajara
+  'oblatos','santa cecilia','independencia',
+  // Venezuela — Caracas
+  'petare','catia','la vega','antimano','el valle','carapita','propatria',
+  'ciudad bolivar','el lidice','sarria','23 de enero','la pastora',
+  // Venezuela — other cities
+  'los mangos','ciudad guayana high risk',
+  // Colombia — Medellín
+  'la sierra','el salado','moravia','manrique','aranjuez','la candelaria medellin',
+  // Colombia — Cali
+  'aguablanca','siloe','terron colorado','agua blanca',
+  // Colombia — Bogotá
+  'las cruces bogota','santa fe bogota','patio bonito','bosa bogota',
+  // Brazil — Rio de Janeiro
+  'complexo do alemao','jacarezinho','vigario geral','acari','manguinhos','rocinha','mare',
+  'cidade de deus','tijuca high risk','bangu','santa cruz rio',
+  // Brazil — São Paulo
+  'capao redondo','jardim angela','cidade tiradentes','heliopolis','brasilandia',
+  'cachoeirinha sp','jardim sao luis','diadema centro',
+  // Brazil — Salvador / Recife / Fortaleza
+  'suburbio ferroviario','bom juá','alto do cabrito',
+  'ibura recife','coqueiral','COHAB recife',
+  'barra do ceara','granja portugal','conjunto ceara',
+  // El Salvador
+  'soyapango','apopa','ilopango','mejicanos','ciudad delgado',
+  // Honduras
+  'chamelecón','la tierra','rivera hernandez','nueva suyapa','kennedy tegucigalpa',
+  'fesitranh','el manchén',
+  // Guatemala
+  'zona 18 guatemala','zona 6 guatemala','villa nueva zona','amatitlan high risk',
+  'mezquital','el limon guatemala',
+  // Haiti
+  'cité soleil','martissant','belair haiti','carrefour feuilles',
+  // Jamaica
+  'arnett gardens','riverton city','tivoli gardens','august town','denham town',
+  'waterhouse kingston','grant pen',
+  // Trinidad
+  'laventille','sea lots','beetham gardens',
+  // South Africa — Johannesburg
+  'hillbrow','joubert park','berea joburg','alexandra','diepsloot','tembisa',
+  'soweto high risk','orange farm','lenasia south',
+  // South Africa — Cape Town
+  'cape flats','manenberg','lavender hill','hanover park','mitchells plain high risk',
+  'nyanga','khayelitsha high risk',
+  // South Africa — Durban
+  'umlazi','kwamashu','phoenix durban',
+  // Nigeria
+  'ajegunle','mushin','oshodi','alakuko','agege','bariga','maza-maza',
+  'jakande estate high risk','ijora','idumota','balogun market risk',
+  'kaduna high risk','jos risk','maiduguri',
+  // Kenya
+  'mathare','kibera','kayole','korogocho','mukuru',
+  'eastleigh nairobi','majengo nairobi',
+  // Ethiopia
+  'merkato addis','piazza addis high risk',
+  // Somalia (entire country high risk — caught by tier system)
+  // Sudan
+  'omdurman risk','bahri high risk',
+  // Egypt — Cairo
+  'imbaba','ain shams','shubra el kheima','matariyya',
+  // Egypt — Alexandria
+  'wardian','karmous high risk',
+  // Iraq (entire country high risk)
+  'sadr city','fallujah','mosul risk','kirkuk risk',
+  // Libya (entire country high risk)
+  // Afghanistan (entire country high risk)
+  // Syria (entire country high risk)
+  // Yemen (entire country high risk)
+  // Philippines
+  'tondo manila','pandacan','sta ana manila','quiapo','sampaloc high risk',
+  'baseco compound','payatas','pitogo makati risk',
+  'cotabato high risk','zamboanga risk','sulu risk','marawi',
+  // Pakistan
+  'lyari karachi','orangi town','baldia town','korangi risk','landhi risk',
+  'peshawar risk','quetta risk','swat risk',
+  // India — high-risk pockets
+  'dharavi','mankhurd','govandi','kurla risk','dharavi slum',
+  'seelampur','mustafabad','trilokpuri','sangam vihar',
+  // Bangladesh
+  'kamrangirchar','shyampur','jatrabari risk','keraniganj risk',
+  // Thailand — Bangkok specific risk areas (not medical zones)
+  'klong toey','din daeng risk','min buri risk',
+  // Indonesia — Jakarta
+  'penjaringan risk','pluit risk','ancol risk','tanah abang crime',
+  // Papua New Guinea
+  'port moresby high risk','hanuabada','gerehu',
+  // Ukraine — active conflict
+  'donetsk risk','luhansk risk','mariupol','kherson risk','zaporizhzhia front',
+  // Russia — specific risk zones
+  'chechnya','dagestan risk',
 ]);
 
 function evnHaversineM(lat1, lng1, lat2, lng2) {
