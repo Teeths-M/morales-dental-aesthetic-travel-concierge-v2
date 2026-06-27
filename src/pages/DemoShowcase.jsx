@@ -554,6 +554,14 @@ export default function DemoShowcase() {
             Home
           </Link>
           <Link
+            to="/demo/cheatsheet"
+            className="text-xs font-semibold w-8 h-8 rounded-xl flex items-center justify-center"
+            title="Presenter Cheat Sheet"
+            style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', border: '1px solid #2A3F4A' }}
+          >
+            ?
+          </Link>
+          <Link
             to="/login"
             className="text-xs font-semibold px-4 py-2 rounded-xl"
             style={{ background: GOLD, color: DARK }}
