@@ -22,7 +22,7 @@ const BLUE  = '#3b82f6';
 
 const THEON = {
   name: 'Theon',
-  avatar: '👨🏽',
+  avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Theon&backgroundColor=0f172a&skinColor=f2d3b1',
   tag: 'Night owl · Reliable · Active',
   color: BLUE,
   fp: {
@@ -38,7 +38,7 @@ const THEON = {
 
 const MARIA = {
   name: 'Maria',
-  avatar: '👩🏻',
+  avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Maria&backgroundColor=0f172a&skinColor=ffd5c4',
   tag: 'Early bird · Sporadic · Flexible',
   color: '#a855f7',
   fp: {
@@ -231,7 +231,7 @@ function UserCard({ user, result, scenarioId }) {
     >
       {/* User header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 36 }}>{user.avatar}</span>
+        <img src={user.avatar} alt={user.name} style={{ width: 52, height: 52, borderRadius: '50%', border: `2px solid ${user.color}50`, background: '#0f172a', flexShrink: 0 }} />
         <div>
           <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff' }}>{user.name}</p>
           <p style={{ margin: 0, fontSize: 11, color: user.color, fontWeight: 600 }}>{user.tag}</p>

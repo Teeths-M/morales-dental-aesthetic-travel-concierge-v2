@@ -39,7 +39,7 @@ export default function AppLayout() {
   // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)
   // - Partner signup pages: patient SOS/Vault/WhatsApp are irrelevant to
   //   business partners and create visual noise (causes the stray red icon)
-  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup');
+  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup') || pathname.startsWith('/demo');
 
   return (
     <BiometricGate>
