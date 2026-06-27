@@ -321,7 +321,7 @@ const MEDGUARD_SCENARIOS = [
 function MedGuardDemo() {
   const [sceneIdx, setSceneIdx] = useState(0);
   const [running,  setRunning]  = useState(true);
-  const [tick,     setTick]     = useState(0);
+  const [keyHint,  setKeyHint]  = useState(true);
 
   useEffect(() => {
     if (!running) return;
@@ -333,6 +333,23 @@ function MedGuardDemo() {
     }, 3500);
     return () => clearInterval(t);
   }, [running]);
+
+  // Space / arrow keys: presenter advances scenarios with clicker or keyboard
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setRunning(false);
+        setSceneIdx(i => Math.min(i + 1, MEDGUARD_SCENARIOS.length - 1));
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        setRunning(false);
+        setSceneIdx(i => Math.max(i - 1, 0));
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    const t = setTimeout(() => setKeyHint(false), 4000);
+    return () => { window.removeEventListener('keydown', onKey); clearTimeout(t); };
+  }, []);
 
   // Score counter animation
   const scene    = MEDGUARD_SCENARIOS[sceneIdx];
@@ -455,7 +472,12 @@ function MedGuardDemo() {
 
       {/* Scene selector / controls */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {keyHint && (
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap' }}>
+              Space / → to advance
+            </span>
+          )}
           {MEDGUARD_SCENARIOS.map((s, i) => (
             <button key={s.label} onClick={() => { setSceneIdx(i); setRunning(false); }}
               className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
@@ -465,7 +487,7 @@ function MedGuardDemo() {
               {s.label}
             </button>
           ))}
-        </div>
+        </div>  {/* end scene buttons */}
         <button onClick={restart}
           className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{ background: running ? GOLD : '#0C1A1D', color: running ? DARK : GOLD,
