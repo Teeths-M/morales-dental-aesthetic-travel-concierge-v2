@@ -10,35 +10,39 @@ const GOLD = '#D4AF37';
 
 const STAGES = [
   {
-    label: 'Driver Pickup',
-    icon: '🚗',
-    sub: 'Home → Airport',
-    photo: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=700&h=220&fit=crop&q=80',
-    overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(180,90,0,0.25) 100%)',
+    label: 'Your Driver',
+    icon: '🧑‍✈️',
+    sub: 'At your door. On time.',
+    hs: 1,
+    photo: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=700&h=220&fit=crop&crop=faces&q=80',
+    overlay: 'linear-gradient(to right, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.50) 50%, rgba(180,90,0,0.20) 100%)',
     accent: '#F4A261',
   },
   {
-    label: 'Hotel Check-in',
-    icon: '🏨',
-    sub: 'Boutique. Warm welcome.',
-    photo: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&h=220&fit=crop&q=80',
-    overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(0,40,100,0.30) 100%)',
-    accent: '#60A5FA',
-  },
-  {
-    label: 'Clinic Arrival',
-    icon: '🏥',
-    sub: 'Verified. Ready for you.',
-    photo: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=700&h=220&fit=crop&q=80',
-    overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(0,80,40,0.25) 100%)',
+    label: 'Your Doctor',
+    icon: '👨‍⚕️',
+    sub: 'Verified. Waiting for you.',
+    hs: 5,
+    photo: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
+    overlay: 'linear-gradient(to right, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.50) 50%, rgba(0,80,40,0.20) 100%)',
     accent: '#34D399',
   },
   {
-    label: 'Welcome Home',
-    icon: '🏠',
-    sub: 'The Golden M is yours.',
-    photo: 'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=700&h=220&fit=crop&q=80',
-    overlay: `linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, ${GOLD}30 100%)`,
+    label: 'Your Companion',
+    icon: '🤝',
+    sub: 'With you through recovery.',
+    hs: 6,
+    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=700&h=220&fit=crop&crop=faces&q=80',
+    overlay: 'linear-gradient(to right, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.50) 50%, rgba(190,30,100,0.20) 100%)',
+    accent: '#ec4899',
+  },
+  {
+    label: 'Your Air Hostess',
+    icon: '✈️',
+    sub: 'Safe travels home.',
+    hs: 8,
+    photo: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=700&h=220&fit=crop&q=80',
+    overlay: `linear-gradient(to right, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.50) 50%, ${GOLD}22 100%)`,
     accent: GOLD,
   },
 ];
@@ -143,7 +147,7 @@ export default function JourneyStagesCard() {
                 fontSize: 10, fontWeight: 800,
                 color: stage.accent,
               }}>
-                HS{[1, 4, 5, 9][i]}
+                HS{stage.hs}
               </div>
             </div>
           </div>
