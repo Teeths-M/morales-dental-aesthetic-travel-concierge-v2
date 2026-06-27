@@ -35,7 +35,7 @@ const getLabels = (lang) => ({
   saved: lang === 'es' ? '¡Guardado!' : lang === 'fr' ? 'Enregistré !' : lang === 'pt' ? 'Salvo!' : 'Saved!',
 });
 
-function ResetSafetyProfileCard({ onReset }) {
+function ResetSafetyProfileCard({ onReset, isActiveJourney = false }) {
   const [confirm,   setConfirm]   = useState(false);
   const [resetting, setResetting] = useState(false);
   const [done,      setDone]      = useState(false);
@@ -72,6 +72,15 @@ function ResetSafetyProfileCard({ onReset }) {
         Reset your profile to start fresh. MedGuard will rebuild it over your next 72 hours of activity.
       </p>
 
+      {isActiveJourney && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+          <span className="text-base flex-shrink-0">⚠️</span>
+          <p className="text-xs text-red-700 leading-relaxed">
+            <strong>You are on an active journey.</strong> Resetting now means MedGuard needs 72 hours to relearn your patterns — during that window, anomaly detection will be less accurate and nudges may not fire on time.
+          </p>
+        </div>
+      )}
+
       {!confirm ? (
         <button
           onClick={handleReset}
@@ -103,7 +112,7 @@ function ResetSafetyProfileCard({ onReset }) {
   );
 }
 
-export default function SettingsModule({ onResetSafetyProfile }) {
+export default function SettingsModule({ onResetSafetyProfile, isActiveJourney = false }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -357,7 +366,7 @@ export default function SettingsModule({ onResetSafetyProfile }) {
 
       {/* ── MedGuard Safety Profile Reset ── */}
       {onResetSafetyProfile && (
-        <ResetSafetyProfileCard onReset={onResetSafetyProfile} />
+        <ResetSafetyProfileCard onReset={onResetSafetyProfile} isActiveJourney={isActiveJourney} />
       )}
 
       <div className="flex justify-end">
