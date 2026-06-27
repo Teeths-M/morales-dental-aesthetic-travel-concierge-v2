@@ -16,61 +16,63 @@ const DARK = BRAND.dark;
 
 /* ── Static demo stats ───────────────────────────────────────────────────── */
 const STATS = [
-  { value: '9',    unit: 'Handshakes',     label: 'Per Journey' },
-  { value: '24/7', unit: 'Safe-T4life',    label: 'AI Protection' },
-  { value: '200+', unit: 'Edge Functions', label: 'Backend APIs' },
-  { value: '98',   unit: 'Platform Score', label: '/ 100' },
+  { value: '9',    unit: 'Handshakes',    label: 'GPS-verified per journey' },
+  { value: '195',  unit: 'Countries',     label: 'EVN-iQ400 global coverage' },
+  { value: '24/7', unit: 'AI Protection', label: 'Behavioral + environmental' },
+  { value: '5',    unit: 'Escalation',    label: 'Tiers — police at 9h' },
 ];
 
 /* ── Feature cards ───────────────────────────────────────────────────────── */
 const FEATURES = [
   {
-    icon: Zap,
-    color: '#D4AF37',
-    title: '9-Handshake Journey',
-    desc: 'Every physical checkpoint confirmed — pickup, airport, hotel, clinic, and home drop-off. Sequential GPS-validated handshakes with offline queuing.',
-  },
-  {
-    icon: Shield,
-    color: '#34d399',
-    title: 'Safe-T4life AI',
-    desc: 'Mandatory 12-hour check-ins with a 5-tier escalation chain. 9h no-response triggers local authority notification automatically.',
-  },
-  {
-    icon: MapPin,
-    color: '#60a5fa',
-    title: 'Live GPS Beacon',
-    desc: 'Continuous watchPosition tracking with 25m movement threshold. Guardian map updates in real-time. Falls back to offline cache on disconnect.',
-  },
-  {
-    icon: Lock,
-    color: '#a78bfa',
-    title: 'Passport Vault',
-    desc: 'PBKDF2-SHA256 encrypted PIN vault. One-time-use guardian tokens. Offline emergency access via pre-loaded QR.',
-  },
-  {
-    icon: Bell,
-    color: '#f97316',
-    title: 'Escalation Chain',
-    desc: 'Miss a check-in → 2h SMS → 3h voice call → 5h private security dispatch → 9h police + embassy. Fully automated.',
-  },
-  {
     icon: Globe,
-    color: '#ec4899',
-    title: 'Country Arrival Detection',
-    desc: 'GPS + Nominatim reverse-geocoding detects country on landing. Welcome modal with hotel, driver, and vault quick-actions appears automatically.',
+    color: '#60a5fa',
+    title: 'EVN-iQ400™ Environmental Intelligence',
+    badge: 'NEW',
+    desc: 'Real-time area scanning in 195 countries. GPS triggers a neighbourhood risk assessment — live government advisories + AI. Fires an alert before danger strikes. Works offline and in airplane mode.',
   },
   {
     icon: Zap,
     color: '#f43f5e',
-    title: 'MedGuard™ AI Safety Score',
-    desc: 'Behavioral prediction engine analyzes 6 real-time signals — check-in patterns, GPS silence, night-alone risk, app inactivity — and dispatches security BEFORE the patient calls for help.',
+    title: 'MedGuard™ Behavioural Safety AI',
+    desc: 'Behavioral prediction engine analyzes 6 real-time signals every 5 minutes — GPS silence, check-in patterns, activity anomalies — and dispatches security 45 minutes before a missed check-in.',
+  },
+  {
+    icon: Zap,
+    color: '#D4AF37',
+    title: '9-Handshake Journey',
+    desc: 'Every physical checkpoint GPS-confirmed — home pickup through home drop-off. SMS shortcode backup (HS1–HS9) for zero-signal situations. Golden M awarded on completion.',
+  },
+  {
+    icon: Shield,
+    color: '#34d399',
+    title: 'Safe-T4life™ Check-In Protocol',
+    desc: 'Mandatory 12-hour check-ins with a 5-tier escalation chain. Police and embassy engaged automatically at 9h no-response. Offline queue — never misses a sync.',
+  },
+  {
+    icon: MapPin,
+    color: '#a78bfa',
+    title: 'Live GPS Beacon + Guardian Map',
+    desc: 'Continuous watchPosition tracking with 25m movement threshold. Family members watch live in real-time — no login, no app download. Falls back to offline cache on disconnect.',
+  },
+  {
+    icon: Lock,
+    color: '#f97316',
+    title: 'Passport Vault + Emergency PIN',
+    desc: 'PBKDF2-SHA256 encrypted document vault. Emergency PIN unlocks safety features on any device — no internet, no login required. Wrong PIN = silent alarm dispatched.',
+  },
+  {
+    icon: Bell,
+    color: '#ec4899',
+    title: 'Automated Escalation Chain',
+    desc: '+2h SMS → +3h voice call + emergency contact → +5h private security dispatch → +9h police + embassy. Predictive escalation fires 45 min before the patient misses a check-in.',
   },
   {
     icon: Users,
     color: '#8b5cf6',
-    title: 'Recovery Status Widget',
-    desc: 'Zero-login shareable link. Friends and family watch a live journey tracker — like a flight tracker for medical travel. Built-in viral marketing.',
+    title: 'AI Pre-Departure Briefing',
+    badge: 'NEW',
+    desc: 'Before every trip, the LLM generates a personalized safety briefing — destination threat level, specific precautions, emergency protocol, cultural tips. No other platform does this.',
   },
 ];
 
@@ -636,11 +638,10 @@ export default function DemoShowcase() {
               style={{ color: '#f8fafc', letterSpacing: '-0.04em', fontFamily: 'Georgia, serif' }}
             >
               Medical Tourism,<br />
-              <span style={{ color: GOLD }}>Engineered for Safety.</span>
+              <span style={{ color: GOLD }}>Protected at Every Step.</span>
             </h1>
             <p className="text-lg max-w-2xl mx-auto mb-10" style={{ color: '#64748b' }}>
-              Morales is the only medical travel concierge with a 9-handshake physical journey spine,
-              offline-first emergency protection, and a real-time guardian safety net.
+              The world's first complete medical travel protection stack — combining environmental intelligence, behavioural AI, GPS handshakes, and satellite SOS across 195 countries. Works offline. Works in airplane mode. Works when nothing else does.
             </p>
           </motion.div>
 
@@ -782,23 +783,30 @@ export default function DemoShowcase() {
             Platform Capabilities
           </SectionTitle>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map(({ icon: Icon, color, title, desc }) => (
+            {FEATURES.map(({ icon: Icon, color, title, badge, desc }) => (
               <motion.div
                 key={title}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 className="rounded-2xl p-5"
-                style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}
+                style={{ background: '#0C1A1D', border: `1px solid ${badge ? color + '40' : '#2A3F4A'}` }}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
                     <Icon style={{ width: 18, height: 18, color }} />
                   </div>
-                  <p className="font-semibold text-sm text-white">{title}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm text-white leading-tight">{title}</p>
+                      {badge && (
+                        <span style={{ fontSize: 8, fontWeight: 800, padding: '2px 5px', borderRadius: 4, background: `${color}25`, color, letterSpacing: '0.08em', flexShrink: 0 }}>{badge}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
+                <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>{desc}</p>
               </motion.div>
             ))}
           </div>

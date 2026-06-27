@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { Shield, Award, Heart, Headphones, CheckCircle } from 'lucide-react';
 
 const trustItems = [
-  { icon: Shield, label: 'Trusted Specialists' },
-  { icon: Award, label: 'Advanced Technology' },
-  { icon: Heart, label: 'Personalized Care' },
-  { icon: Headphones, label: 'Complete Concierge' },
-  { icon: CheckCircle, label: 'Your Safety, Our Mission' },
+  { icon: Shield,      label: 'EVN-iQ400™ · 195 Countries' },
+  { icon: Award,       label: 'MedGuard™ · Behavioural AI' },
+  { icon: Heart,       label: 'Safe-T4life™ · 5-Tier Escalation' },
+  { icon: Headphones,  label: '24/7 Concierge · Always On' },
+  { icon: CheckCircle, label: 'Satellite SOS · Zero Signal Ready' },
 ];
 
 export default function Footer() {
@@ -43,7 +43,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-sm text-background/60 leading-relaxed">
-              Premium dental, aesthetic and wellness care with door-to-door concierge service.
+              The world's first complete medical travel protection stack — environmental intelligence, behavioural AI, and GPS handshakes protecting patients across 195 countries.
             </p>
           </div>
 
