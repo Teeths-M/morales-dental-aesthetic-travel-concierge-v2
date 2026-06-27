@@ -264,7 +264,7 @@ export default function PassportVault() {
                   Documents are encrypted on your device before upload. We cannot read them.
                 </p>
               </div>
-              <VaultUploader onTokenIssued={() => setHasVault(true)} />
+              <VaultUploader onTokenIssued={() => setHasVault(true)} consultationId={null} />
             </div>
           )}
         </div>

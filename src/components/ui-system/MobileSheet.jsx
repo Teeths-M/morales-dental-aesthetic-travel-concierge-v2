@@ -1,9 +1,10 @@
+﻿// @ts-nocheck — pre-existing type gaps in custom ui-system components
 /**
  * MobileSheet
  *
  * Bottom sheet for mobile-first actions/filters. Thin, accessible
  * wrapper over the shadcn Sheet primitive with a consistent header.
- * On desktop it still works as a bottom sheet — keep contents compact.
+ * On desktop it still works as a bottom sheet â€” keep contents compact.
  *
  * Props:
  *   open       {boolean}
@@ -11,7 +12,7 @@
  *   title      {string}
  *   description {string?}
  *   children   {ReactNode}
- *   side       {'bottom'|'right'} — default 'bottom'
+ *   side       {'bottom'|'right'} â€” default 'bottom'
  *   className  {string?}
  */
 import React from 'react';

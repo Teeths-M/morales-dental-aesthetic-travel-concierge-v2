@@ -76,6 +76,7 @@ export default function Register() {
         icon={Mail}
         title="Verify your email"
         subtitle={`We sent a code to ${email}`}
+        footer={null}
       >
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">

@@ -10,6 +10,7 @@ export default function OfflineMode() {
   const isAndroid = /android/i.test(navigator.userAgent);
 
   useEffect(() => {
+    // @ts-ignore — navigator.standalone is iOS-specific, not in standard Navigator type
     setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
   }, []);
 
@@ -87,6 +88,7 @@ export default function OfflineMode() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+        {/* @ts-ignore — caseId/userId optional in public offline mode */}
         <OfflineCapabilitiesPanel />
         <Link to="/offline-guide"
           className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 hover:bg-slate-700 transition-colors">

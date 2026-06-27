@@ -1,3 +1,4 @@
+// @ts-nocheck — Web Bluetooth API is experimental; navigator.bluetooth not in standard DOM types
 /**
  * useWebBluetooth
  *

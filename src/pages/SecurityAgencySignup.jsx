@@ -26,7 +26,7 @@ function Toggle({ label, selected, onToggle }) {
   );
 }
 
-function Field({ label, required, children }) {
+function Field({ label, required = false, children }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-slate-700 mb-1.5">

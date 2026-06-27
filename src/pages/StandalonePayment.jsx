@@ -24,6 +24,7 @@ export default function StandalonePayment() {
   });
 
   const processPaymentMutation = useMutation({
+    // @ts-ignore — TanStack Query v5 infers variables as void without explicit generics in JSX
     mutationFn: async ({ plan_type }) => {
       // Map plan_type to deposit_option for generateStripePaymentLink
       const depositOption = plan_type === 'full_payment' ? 'Full' :
@@ -43,6 +44,7 @@ export default function StandalonePayment() {
     if (!selectedPlan) return;
     setIsProcessing(true);
     try {
+      // @ts-ignore — TanStack Query v5 variables inference
       const result = await processPaymentMutation.mutateAsync({ plan_type: selectedPlan });
       if (result.payment_url) {
         window.location.href = result.payment_url;

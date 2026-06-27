@@ -679,7 +679,7 @@ export default function VaultDashboard({ user }) {
 
         {/* ── Add New ── */}
         {activeTab === 'upload' && (
-          <VaultUploader onTokenIssued={() => { reload(); setActiveTab('documents'); }} />
+          <VaultUploader onTokenIssued={() => { reload(); setActiveTab('documents'); }} consultationId={null} />
         )}
 
         {/* ── Audit Log ── */}
@@ -731,6 +731,7 @@ export default function VaultDashboard({ user }) {
         message={`"${deleteTarget?.file_name}" will be removed from your active vault. This action cannot be undone.`}
         confirmLabel="Yes, archive"
         variant="danger"
+        icon={null}
       />
     </div>
   );

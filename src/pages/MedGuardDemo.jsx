@@ -254,7 +254,7 @@ function UserCard({ user, result, scenarioId }) {
       </div>
 
       {/* Score */}
-      <ScoreBar score={result.score} action={result.action} />
+      <ScoreBar score={result.score} action={result.action} color={actionColor} label={result.label} />
 
       {/* Explanation */}
       <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>

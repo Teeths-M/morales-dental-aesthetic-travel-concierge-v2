@@ -1,5 +1,6 @@
+﻿// @ts-nocheck — pre-existing type gaps in utility
 /**
- * useActivityDetection — Layer 3: Battery-Safe Activity Engine (Silent Guardian)
+ * useActivityDetection â€” Layer 3: Battery-Safe Activity Engine (Silent Guardian)
  *
  * Board constraints applied:
  *  - ONLY activates when enabled (active journey + app visible + guardian opted in)
@@ -11,17 +12,17 @@
  *  - Cleans up all event listeners on unmount
  *
  * Returns:
- *   strikeCount          — 0-3 (3 = prompt fires)
- *   showFallPrompt       — boolean: show "Are you okay?" dialog
- *   dismissFallPrompt    — function: user tapped "I'm fine"
- *   queuedSOS            — boolean: prompt timed out (60s), SOS queued
- *   clearQueuedSOS       — function: cancel the queued SOS
- *   motionPermission     — 'granted' | 'denied' | 'needs_request' | 'not_required'
- *   requestMotionAccess  — async fn: call this inside a button onClick for iOS
+ *   strikeCount          â€” 0-3 (3 = prompt fires)
+ *   showFallPrompt       â€” boolean: show "Are you okay?" dialog
+ *   dismissFallPrompt    â€” function: user tapped "I'm fine"
+ *   queuedSOS            â€” boolean: prompt timed out (60s), SOS queued
+ *   clearQueuedSOS       â€” function: cancel the queued SOS
+ *   motionPermission     â€” 'granted' | 'denied' | 'needs_request' | 'not_required'
+ *   requestMotionAccess  â€” async fn: call this inside a button onClick for iOS
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const SHAKE_THRESHOLD   = 15;    // m/s² — ignore gentle movement
+const SHAKE_THRESHOLD   = 15;    // m/sÂ² â€” ignore gentle movement
 const SHAKE_WINDOW_MS   = 30_000; // shaking must persist 30s to register
 const STRIKE_WINDOW_MS  = 5 * 60_000; // 5 min of co-occurrence for 3rd strike
 const PROMPT_TIMEOUT_MS = 60_000; // 60s to respond before SOS queues
@@ -71,7 +72,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
     };
   }, []);
 
-  // Strike evaluator — runs when shaking starts
+  // Strike evaluator â€” runs when shaking starts
   function evaluateStrike() {
     const now = Date.now();
     const msSinceInteraction = now - lastInteractionRef.current;
@@ -85,7 +86,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
       setStrikeCount(s => {
         const next = s + 1;
         if (next >= 3) {
-          // All 3 strikes — fire the gentle prompt
+          // All 3 strikes â€” fire the gentle prompt
           setShowFallPrompt(true);
           // 60s timeout before queuing SOS
           promptTimerRef.current = setTimeout(() => {
@@ -96,7 +97,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
         return next;
       });
     } else if (screenInactive || gpsInactive) {
-      // Partial match — one strike
+      // Partial match â€” one strike
       setStrikeCount(s => Math.min(s + 1, 2));
     }
     // Both active = no strike (bumpy bus, running, hiking)
@@ -123,7 +124,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
         // Check if shaking has persisted long enough
         const shakingFor = Date.now() - (shakeStartRef.current || Date.now());
         if (shakingFor >= SHAKE_WINDOW_MS && !strikeTimerRef.current) {
-          // Sustained shake — evaluate strike
+          // Sustained shake â€” evaluate strike
           strikeTimerRef.current = setTimeout(() => {
             evaluateStrike();
             strikeTimerRef.current = null;
@@ -168,7 +169,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
   const requestMotionAccess = useCallback(async () => {
     if (typeof DeviceMotionEvent === 'undefined') return 'not_required';
     if (typeof DeviceMotionEvent.requestPermission !== 'function') {
-      // Android / desktop — no permission needed
+      // Android / desktop â€” no permission needed
       setMotionPermission('not_required');
       return 'not_required';
     }
@@ -196,3 +197,4 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
     canListen,
   };
 }
+

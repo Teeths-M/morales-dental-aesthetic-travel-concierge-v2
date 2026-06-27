@@ -1,3 +1,4 @@
+﻿// @ts-nocheck — Web Speech API not in standard DOM types
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mic, MicOff, Loader2, RefreshCw } from 'lucide-react';
@@ -14,7 +15,7 @@ const SUGGESTED = [
   "What is a medical invitation letter?",
 ];
 
-const SYSTEM_PROMPT = `You are SAFE-T VISA ASSIST™, a friendly, warm, and reassuring AI travel visa advisor for Morales Dental & Aesthetic Travel Concierge. 
+const SYSTEM_PROMPT = `You are SAFE-T VISA ASSISTâ„¢, a friendly, warm, and reassuring AI travel visa advisor for Morales Dental & Aesthetic Travel Concierge. 
 
 Your role is to:
 - Help international medical travelers understand visa requirements
@@ -24,20 +25,20 @@ Your role is to:
 - Always remind users to verify with official embassy sources
 
 Your tone is:
-- Warm, friendly, and reassuring — like a knowledgeable travel companion
-- Simple language — no government jargon
+- Warm, friendly, and reassuring â€” like a knowledgeable travel companion
+- Simple language â€” no government jargon
 - Empathetic to the anxiety of international travel
 - Professional but approachable
 
 Always end responses with a helpful next step or offer to answer follow-up questions.
-Keep responses concise (2–4 short paragraphs max) and easy to read.
+Keep responses concise (2â€“4 short paragraphs max) and easy to read.
 Use occasional emojis to keep the tone friendly and approachable.`;
 
 export default function VisaAIChat() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hello! 👋 I'm your SAFE-T VISA ASSIST™ AI advisor. I'm here to help you understand visa requirements, prepare your travel documents, and feel confident about your international medical journey.\n\nWhat would you like to know? You can ask me anything about visas, travel documents, or entry requirements — or choose one of the common questions below!",
+      content: "Hello! ðŸ‘‹ I'm your SAFE-T VISA ASSISTâ„¢ AI advisor. I'm here to help you understand visa requirements, prepare your travel documents, and feel confident about your international medical journey.\n\nWhat would you like to know? You can ask me anything about visas, travel documents, or entry requirements â€” or choose one of the common questions below!",
     }
   ]);
   const [input, setInput] = useState('');
@@ -73,17 +74,17 @@ export default function VisaAIChat() {
     setLoading(true);
 
     const recentMessages = messages.slice(-6);
-    const history = recentMessages.map(m => `${m.role === 'user' ? 'Patient' : 'VISA ASSIST™'}: ${m.content}`).join('\n\n');
+    const history = recentMessages.map(m => `${m.role === 'user' ? 'Patient' : 'VISA ASSISTâ„¢'}: ${m.content}`).join('\n\n');
 
     try {
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `${SYSTEM_PROMPT}\n\nConversation history:\n${history}\n\nPatient: ${userMsg}\n\nSAFE-T VISA ASSIST™:`,
+        prompt: `${SYSTEM_PROMPT}\n\nConversation history:\n${history}\n\nPatient: ${userMsg}\n\nSAFE-T VISA ASSISTâ„¢:`,
       });
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (e) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I apologize — I'm having a brief technical moment. 😊 For immediate assistance with visa requirements, please contact our concierge team or check your destination's official embassy website. Is there anything else I can help you with?"
+        content: "I apologize â€” I'm having a brief technical moment. ðŸ˜Š For immediate assistance with visa requirements, please contact our concierge team or check your destination's official embassy website. Is there anything else I can help you with?"
       }]);
     }
     setLoading(false);
@@ -125,7 +126,7 @@ export default function VisaAIChat() {
             <span className="text-white font-semibold text-sm">AI</span>
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">SAFE-T VISA ASSIST™</p>
+            <p className="text-white font-semibold text-sm">SAFE-T VISA ASSISTâ„¢</p>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
               <p className="text-white/70 text-xs">Online & Ready</p>
@@ -134,7 +135,7 @@ export default function VisaAIChat() {
           <button
             onClick={() => setMessages([{
               role: 'assistant',
-              content: "Hello again! 👋 I've cleared our conversation. What visa or travel question can I help you with?"
+              content: "Hello again! ðŸ‘‹ I've cleared our conversation. What visa or travel question can I help you with?"
             }])}
             className="ml-auto text-white/60 hover:text-white transition-colors"
           >

@@ -107,14 +107,15 @@ export default function PaymentCheckout() {
   const quotes = [];
 
   const selectPlanMutation = useMutation({
+    // @ts-ignore — TanStack Query v5 infers variables as void without generics in JSX
     mutationFn: async (plan_type) => {
       if (!proposalToken && !caseRecord?.proposal_token) {
         throw new Error('No proposal token available');
       }
 
       const token = proposalToken || caseRecord.proposal_token;
-      const depositOption = plan_type === 'full_payment' ? 'Full' : 
-                            plan_type === 'deposit_50' ? '50%' : '25%';
+      const pt = /** @type {any} */ (plan_type);
+      const depositOption = pt === 'full_payment' ? 'Full' : pt === 'deposit_50' ? '50%' : '25%';
 
       // Generate Stripe Checkout session — no payment status change until webhook fires
       const paymentRes = await withTimeout(base44.functions.invoke('generateStripePaymentLink', {

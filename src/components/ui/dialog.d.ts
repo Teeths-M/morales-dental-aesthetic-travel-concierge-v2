@@ -1,0 +1,11 @@
+import * as React from 'react';
+export declare const Dialog: React.FC<{ open?: boolean; onOpenChange?: (open: boolean) => void; defaultOpen?: boolean; modal?: boolean; children?: React.ReactNode }>;
+export declare const DialogTrigger: React.FC<React.HTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>;
+export declare const DialogPortal: React.FC<{ children?: React.ReactNode }>;
+export declare const DialogClose: React.FC<React.HTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>;
+export declare const DialogOverlay: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const DialogContent: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const DialogHeader: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const DialogFooter: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const DialogTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>>;
+export declare const DialogDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>>;

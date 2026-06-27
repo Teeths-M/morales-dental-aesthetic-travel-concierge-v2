@@ -169,7 +169,7 @@ export default function PartnerPortal() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" onClick={refetch}>
+              <Button variant="outline" size="icon" onClick={() => refetch()}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
               <Button variant="outline" size="icon">

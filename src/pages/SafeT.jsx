@@ -244,6 +244,7 @@ export default function SafeT() {
                 caseId={activeTrip.case_id}
                 currentStep={currentStep}
                 user={user}
+                shortcode={null}
                 onComplete={({ is_complete }) => {
                   queryClient.invalidateQueries({ queryKey: ['safet-active-trip'] });
                   if (is_complete) setShowGoldenM(true);
@@ -340,6 +341,7 @@ export default function SafeT() {
         <GoldenMCelebration
           visible
           trip={activeTrip}
+          patientName={user?.full_name || user?.email || ''}
           onClose={() => setShowGoldenM(false)}
         />
       )}

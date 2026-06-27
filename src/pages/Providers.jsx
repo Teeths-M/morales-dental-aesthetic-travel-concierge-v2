@@ -95,7 +95,7 @@ export default function Providers() {
                     <div className="flex-shrink-0">
                       <div className="w-40 h-40 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-4xl font-semibold overflow-hidden flex-shrink-0">
                         {doctor.photo_url && doctor.photo_url.trim() ? (
-                          <img src={doctor.photo_url} alt={doctor.full_name} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+                          <img src={doctor.photo_url} alt={doctor.full_name} className="w-full h-full object-cover" onError={(e) => /** @type {any} */(e.target).style.display = 'none'} />
                         ) : null}
                         {!doctor.photo_url || !doctor.photo_url.trim() ? (
                           doctor.full_name?.charAt(0) || 'D'

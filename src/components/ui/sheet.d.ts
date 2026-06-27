@@ -1,0 +1,11 @@
+import * as React from 'react';
+export declare const Sheet: React.FC<React.HTMLAttributes<HTMLDivElement> & { open?: boolean; onOpenChange?: (o: boolean) => void; defaultOpen?: boolean; modal?: boolean }>;
+export declare const SheetTrigger: React.FC<React.HTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>;
+export declare const SheetClose: React.FC<React.HTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>;
+export declare const SheetPortal: React.FC<{ children?: React.ReactNode }>;
+export declare const SheetOverlay: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SheetContent: React.FC<React.HTMLAttributes<HTMLDivElement> & { side?: 'top' | 'right' | 'bottom' | 'left' }>;
+export declare const SheetHeader: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SheetFooter: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SheetTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>>;
+export declare const SheetDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>>;

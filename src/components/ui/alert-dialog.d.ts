@@ -1,0 +1,12 @@
+import * as React from 'react';
+export declare const AlertDialog: React.FC<{ open?: boolean; onOpenChange?: (open: boolean) => void; defaultOpen?: boolean; children?: React.ReactNode }>;
+export declare const AlertDialogTrigger: React.FC<React.HTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>;
+export declare const AlertDialogPortal: React.FC<{ children?: React.ReactNode }>;
+export declare const AlertDialogOverlay: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const AlertDialogContent: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const AlertDialogHeader: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const AlertDialogFooter: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const AlertDialogTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>>;
+export declare const AlertDialogDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>>;
+export declare const AlertDialogAction: React.FC<React.HTMLAttributes<HTMLButtonElement>>;
+export declare const AlertDialogCancel: React.FC<React.HTMLAttributes<HTMLButtonElement>>;

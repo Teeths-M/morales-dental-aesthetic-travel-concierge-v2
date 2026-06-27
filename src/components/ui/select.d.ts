@@ -1,0 +1,11 @@
+import * as React from 'react';
+export declare const Select: React.FC<{ value?: string; defaultValue?: string; onValueChange?: (value: string) => void; open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void; disabled?: boolean; required?: boolean; children?: React.ReactNode; name?: string }>;
+export declare const SelectGroup: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SelectValue: React.FC<{ placeholder?: string; children?: React.ReactNode }>;
+export declare const SelectTrigger: React.FC<React.HTMLAttributes<HTMLButtonElement> & { asChild?: boolean }>;
+export declare const SelectScrollUpButton: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SelectScrollDownButton: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SelectContent: React.FC<React.HTMLAttributes<HTMLDivElement> & { position?: 'item-aligned' | 'popper'; side?: 'top' | 'right' | 'bottom' | 'left'; sideOffset?: number; align?: 'start' | 'center' | 'end'; alignOffset?: number }>;
+export declare const SelectLabel: React.FC<React.HTMLAttributes<HTMLDivElement>>;
+export declare const SelectItem: React.FC<React.HTMLAttributes<HTMLDivElement> & { value: string; disabled?: boolean }>;
+export declare const SelectSeparator: React.FC<React.HTMLAttributes<HTMLDivElement>>;
