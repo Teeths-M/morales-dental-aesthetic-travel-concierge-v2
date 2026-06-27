@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ShieldCheck, Star, Heart, Globe, Lock, Spark
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
-const DEFAULT_IMG = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/1ca89ed08_Addhome3.png';
+const DEFAULT_IMG = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
 
 const slides = [
   // ── Destination flashcards first — image changes immediately on load ───────
