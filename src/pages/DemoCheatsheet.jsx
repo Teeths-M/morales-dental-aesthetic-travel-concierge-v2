@@ -8,7 +8,19 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Copy, CheckCircle2, Keyboard, Link2, PlayCircle, Lightbulb, QrCode } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+
+function QRImg({ value, size = 140, dark = '#060B16' }) {
+  const encoded = encodeURIComponent(value);
+  const color = dark.replace('#', '');
+  return (
+    <img
+      src={`https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}&choe=UTF-8&chld=M|1&chco=${color}`}
+      width={size} height={size}
+      alt="QR code"
+      style={{ display: 'block', borderRadius: 8 }}
+    />
+  );
+}
 
 const GOLD = '#D4AF37';
 const BASE = window.location.origin;
@@ -182,7 +194,7 @@ export default function DemoCheatsheet() {
             {/* QR 1 — Follow along */}
             <div style={{ flex: 1, minWidth: 260, display: 'flex', gap: 16, alignItems: 'center', padding: '18px', borderRadius: 16, background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
               <div style={{ background: '#fff', borderRadius: 10, padding: 10, flexShrink: 0 }}>
-                <QRCodeSVG value={`${BASE}/demo`} size={110} level="M" fgColor="#060B16" bgColor="#ffffff" />
+                <QRImg value={`${BASE}/demo`} size={110} dark="#060B16" />
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#fff' }}>Follow Along</p>
@@ -198,7 +210,7 @@ export default function DemoCheatsheet() {
             {/* QR 2 — Drop the mic */}
             <div style={{ flex: 1, minWidth: 260, display: 'flex', gap: 16, alignItems: 'center', padding: '18px', borderRadius: 16, background: '#0C1A1D', border: `1px solid rgba(220,38,38,0.35)` }}>
               <div style={{ background: '#fff', borderRadius: 10, padding: 10, flexShrink: 0 }}>
-                <QRCodeSVG value={`${BASE}/demo?tab=medguard&start=critical`} size={110} level="M" fgColor="#7f1d1d" bgColor="#ffffff" />
+                <QRImg value={`${BASE}/demo?tab=medguard&start=critical`} size={110} dark="#7f1d1d" />
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#fff' }}>Drop the Mic 🎤</p>
