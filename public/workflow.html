@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Morales — Agentic Workflow Code-Verified Submission</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 48px 64px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* ── Print button (hidden in print) ── */
+  #print-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #0d5c4a;
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  #print-btn:hover { background: #0a4a3a; }
+  @media print {
+    #print-btn { display: none; }
+    body { padding: 24px 36px; }
+    .stage { break-inside: avoid; page-break-inside: avoid; }
+  }
+
+  /* ── Header ── */
+  .doc-header { margin-bottom: 10px; }
+  .doc-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    color: #111;
+  }
+  .doc-subtitle {
+    color: #0d7a5f;
+    font-size: 14px;
+    font-style: italic;
+    margin: 8px 0 6px;
+    font-weight: 500;
+  }
+  .doc-meta {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  /* ── Divider ── */
+  .gold-line {
+    height: 2px;
+    background: linear-gradient(to right, #b8963a, #e0be5a, #b8963a);
+    margin: 16px 0 24px;
+    border: none;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .badge-live   { background: #0d5c4a; color: #fff; }
+  .badge-partial { background: #c97a1a; color: #fff; }
+  .badge-planned { background: #8b1c1c; color: #fff; }
+  .badge-live-new { background: #0d3d6b; color: #fff; }
+  .badge-narrow { background: #0d5c4a; color: #fff; }
+
+  /* ── Stage card ── */
+  .stage {
+    border: 1px solid #d8dde3;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .stage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #d8dde3;
+    gap: 12px;
+  }
+  .stage-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .stage-num {
+    min-width: 36px;
+    height: 36px;
+    background: #111;
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .stage-num.new-stage { background: #0d3d6b; }
+  .stage-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #111;
+  }
+  .stage-body { padding: 16px 18px; }
+
+  /* ── Tags ── */
+  .tags {
+    font-size: 11px;
+    color: #0d7a5f;
+    margin-bottom: 12px;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #0d7a5f;
+    margin: 12px 0 4px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── Body text ── */
+  p { margin-bottom: 6px; color: #333; }
+  code, .mono {
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 12px;
+    background: #f0f4f8;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: block;
+    color: #1a1a1a;
+    line-height: 1.7;
+    margin: 4px 0;
+  }
+
+  /* ── Note ── */
+  .note {
+    font-size: 12px;
+    font-style: italic;
+    color: #666;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+  }
+
+  /* ── Architecture section ── */
+  .arch-section { margin-top: 40px; }
+  .arch-section h2 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #b8963a;
+  }
+  .arch-layer { margin: 20px 0; }
+  .arch-layer h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .arch-layer p { font-size: 13px; color: #444; }
+
+  /* ── NEW badge inline ── */
+  .new-tag {
+    display: inline-block;
+    background: #0d3d6b;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<button id="print-btn" onclick="window.print()">⬇ Save as PDF</button>
+
+<!-- ── HEADER ── -->
+<div class="doc-header">
+  <h1>AGENTIC WORKFLOW — CODE-VERIFIED<br>SUBMISSION</h1>
+  <p class="doc-subtitle">Morales + SAFE-T4LIFE™ + EVN-iQ400™ — Every stage below maps to a real, running function in the live codebase</p>
+  <p class="doc-meta">Built in Trinidad &amp; Tobago · Open Track · Future Caribbean Agentic AI Buildathon</p>
+  <p class="doc-meta">Each stage is labeled with its real implementation status — no stage claims a capability that isn't in the repository.</p>
+</div>
+
+<hr class="gold-line" />
+
+<!-- ── LEGEND ── -->
+<div class="legend">
+  <span class="badge badge-live">LIVE — VERIFIED</span>
+  <span class="badge badge-live-new">LIVE — NEW (Session 3–5)</span>
+  <span class="badge badge-partial">PARTIALLY BUILT</span>
+  <span class="badge badge-planned">PLANNED (21-DAY)</span>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- STAGE 1 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">1</div>
+      <div class="stage-title">Patient Entry Point</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="section-label">What It Does</div>
+    <p>Captures the patient's procedure interest, medical history, country, and travel details through a consultation intake form. Drafts are saved before formal submission.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>Consultation, ConsultationDraft (entities) — form-driven intake flow</code>
+    <div class="section-label">Data Entities</div>
+    <p>Consultation.jsonc, ConsultationDraft.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Patient Intake Profile, stored as a Consultation record</p>
+  </div>
+</div>
+
+
+<!-- STAGE 2 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">2</div>
+      <div class="stage-title">Procedure &amp; Pricing Match</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">◆ Decision Gate · ■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Matches the requested procedure(s) against the master procedure list and verified doctors who perform them; calculates a price quote and reviews unusual procedure requests for manual handling.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>matchDoctorsForProcedure, calculatePriceQuote, reviewProcedureRequest</code>
+    <div class="section-label">Data Entities</div>
+    <p>MasterProcedure.jsonc, DoctorProcedureOutreach.jsonc, ProcedureRequest.jsonc, PriceQuote.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Matched doctor list + price quote</p>
+    <p class="note">Note: this stage performs rule-based matching and pricing lookup, not predictive/AI-based ranking. It is correctly described as deterministic matching.</p>
+  </div>
+</div>
+
+
+<!-- STAGE 3 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">3</div>
+      <div class="stage-title">SAFE-T4LIFE™ Risk &amp; Safety Engine</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">◆ Decision Gate · ■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Server-side risk scoring engine. Scans medical history, medications, allergies, age, and BMI against a deterministic rule set: absolute-contraindication triggers force a permanent HARD BLOCK with zero override; weighted risk factors produce Low / High tiers. High risk requires a signed digital waiver (e-signature, IP address, timestamp) before the case may proceed.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>safeT4LifeScan, handleWaiverRequest, safeTProceedWithOverride</code>
+    <div class="section-label">Data Entities</div>
+    <p>CaseRecord.jsonc, AuditLog.jsonc, WaiverRequest.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Safety Tier (Low / High / Critical) + Waiver Status + immutable Audit Log entry</p>
+    <p class="note">This is the system's core safety gate. It is intentionally deterministic, not an LLM call — a hard safety block must not be able to hallucinate. Every rule traces to an explicit, citable trigger.</p>
+  </div>
+</div>
+
+
+<!-- STAGE 4 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">4</div>
+      <div class="stage-title">Doctor &amp; Partner Verification</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">■ Human-in-the-Loop · ✦ Real LLM Call</div>
+    <div class="section-label">What It Does</div>
+    <p>Verifies doctor licenses and partner (driver, hospitality) credentials. Uses an LLM with live internet search to cross-reference licenses against known registries where available; falls back to a manual review queue when automated lookup is inconclusive.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>verifyDoctorCredentials, runDoctorVerification, analyzeDoctorLicense,
+runKYPVerification, analyzePartnerDocuments</code>
+    <div class="section-label">Data Entities</div>
+    <p>DoctorVerification.jsonc, KYPVerification.jsonc, ManualVerificationQueue.jsonc, PartnerVerification.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Verification status: Verified / Pending Manual Review / Rejected</p>
+    <p class="note">Real LLM call with internet search — this is a genuine agentic reasoning step, not a static lookup. Falls back to a human reviewer queue when confidence is low, by design.</p>
+  </div>
+</div>
+
+
+<!-- STAGE 5 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">5</div>
+      <div class="stage-title">Visa &amp; Travel Compliance Check</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">✦ Real LLM Call</div>
+    <div class="section-label">What It Does</div>
+    <p>Given the patient's nationality and destination country, an LLM with live internet context determines visa requirements and returns a structured, confidence-scored answer with required documentation.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>checkVisaRequirements</code>
+    <div class="section-label">Data Entities</div>
+    <p>(response returned directly to the case record)</p>
+    <div class="section-label">Output</div>
+    <p>Visa requirement determination + document checklist</p>
+    <p class="note">Real LLM call with add_context_from_internet enabled and structured JSON output — reasoning over live regulatory context, not a hardcoded chart.</p>
+  </div>
+</div>
+
+
+<!-- ════════════ NEW: STAGE 5B ════════════ -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num new-stage">5B</div>
+      <div class="stage-title">AI Pre-Departure Briefing <span class="new-tag">NEW</span></div>
+    </div>
+    <span class="badge badge-live-new">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">✦ Real LLM Call</div>
+    <div class="section-label">What It Does</div>
+    <p>Before departure, an LLM synthesizes the patient's destination EVN-iQ400™ risk score, procedure type, and personal profile into a personalized safety brief. Covers threat level, cultural precautions, emergency protocol, procedure-specific recovery notes, and local emergency numbers. 12-hour localStorage cache prevents re-billing on page reload; offline fallback templates derived from EVN tier ensure zero downtime.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>PreDepartureBriefing (component), InvokeLLM with structured JSON response_type,
+offlineBriefing() fallback (tier-based hardcoded templates)</code>
+    <div class="section-label">Data Entities</div>
+    <p>CaseRecord.jsonc (destination_country, procedure_types), 12h cache: morales_briefing_{caseId}</p>
+    <div class="section-label">Output</div>
+    <p>Personalized pre-departure safety brief — threat level banner, precautions list, emergency protocol, cultural note, recovery note. Regenerate button clears cache and re-invokes the model.</p>
+    <p class="note">Real LLM call with system_prompt and structured response_type. Integrates EVN-iQ400™ score from Stage 5C — the briefing's threat level is informed by live environmental intelligence, not static country templates.</p>
+  </div>
+</div>
+
+
+<!-- ════════════ NEW: STAGE 5C ════════════ -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num new-stage">5C</div>
+      <div class="stage-title">EVN-iQ400™ Environmental Intelligence <span class="new-tag">NEW</span></div>
+    </div>
+    <span class="badge badge-live-new">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="section-label">What It Does</div>
+    <p>Continuous real-time environmental risk scoring for the patient's destination country, running from pre-departure through the entire active journey. Pulls from 14 live government advisory feeds (travel-advisory.info, free CORS-enabled API) across all 195 UN member states and converts advisory levels into a Composite Risk Score (0–100). GPS area safety monitor fires an alert if the patient dwells in a flagged neighbourhood for 30+ consecutive seconds — tested online, offline, and in airplane mode. Three-tier fallback: live gov advisory API → 24h localStorage cached intelligence → 200+ keyword neighbourhood threat database. Fully functional with zero connectivity.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>useEnvironmentalIntelligence (hook — 195-country ISO map, COUNTRY_TIER risk
+baseline, DESTINATION_CONTEXT profiles, advisoryToRisk, getRiskLevel),
+GlobalEventBroadcaster (area safety monitor — evnHaversineM,
+evnReadAreaCache, evnWriteAreaCache, EVN_HIGH_RISK_KEYWORDS 200+ entries),
+EVNiQ400Card (animated score ring, signal details),
+EVNiQ400Demo (offline/airplane-mode capable demo),
+AdminMissionControl (Global Intelligence Ticker — EVN scores for all
+active patient destinations in parallel)</code>
+    <div class="section-label">Data Entities</div>
+    <p>195-country ISO 3166-1 alpha-2 map, COUNTRY_TIER (4 tiers), 40+ DESTINATION_CONTEXT profiles, 6h sessionStorage advisory cache, 24h localStorage area assessment cache</p>
+    <div class="section-label">Output</div>
+    <p>Composite Risk Score (0–100) + advisory tier label + Live/Offline/Airplane badge + area threat alert (if patient dwells 30s+ in a flagged zone)</p>
+    <p class="note">Deterministic scoring — no LLM inference. The EVN score is computed from government advisory data + offline tier baseline; it cannot hallucinate. The area safety monitor uses a 200+ keyword threat database covering 30+ countries for offline operation. Timer stored in a ref (not useEffect cleanup) so GPS position updates do not reset the 30-second dwell window.</p>
+  </div>
+</div>
+
+
+<!-- STAGE 6 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">6</div>
+      <div class="stage-title">Geolocation, Currency &amp; Limited External Data</div>
+    </div>
+    <span class="badge badge-live" style="font-size:9px;">LIVE — VERIFIED (NARROW SCOPE)</span>
+  </div>
+  <div class="stage-body">
+    <div class="section-label">What It Does</div>
+    <p>Pulls live currency exchange rates and geolocation data to localize pricing and regional context for the patient.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>getExchangeRate, getGeolocationAndCurrency</code>
+    <div class="section-label">Data Entities</div>
+    <p>CountryPricing.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Localized currency &amp; geolocation context</p>
+    <p class="note">Scope check: only currency and geolocation APIs are integrated today. Flight, hotel, and transport booking APIs are NOT yet integrated — see Stage 6B below for the honest status of that gap.</p>
+  </div>
+</div>
+
+
+<!-- STAGE 6B -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">6B</div>
+      <div class="stage-title">Flight / Hotel / Transport Booking APIs</div>
+    </div>
+    <span class="badge badge-planned">PLANNED (21-DAY)</span>
+  </div>
+  <div class="stage-body">
+    <div class="section-label">What It Does</div>
+    <p>Direct booking integrations with flight, hotel, and ground transport providers. Travel logistics are currently coordinated manually by travel agency partners through the portal system (Stage 8), not through automated third-party booking APIs.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>Not yet implemented — no flight/hotel/transport API calls exist in the current codebase</code>
+    <div class="section-label">Data Entities</div>
+    <p>TravelRequest.jsonc, TravelAgency.jsonc (manual coordination records)</p>
+    <div class="section-label">Output</div>
+    <p>Planned: automated travel package generation. Today: travel agency partners coordinate this manually via the Partner Coordination Engine (Stage 8).</p>
+    <p class="note">This is the most honest correction from the prior draft of this diagram, which implied automated flight/hotel/visa API orchestration across the board. Visa checking (Stage 5) is real; flight/hotel booking automation is a roadmap item, accurately disclosed here as such.</p>
+  </div>
+</div>
+
+
+<!-- STAGE 7 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">7</div>
+      <div class="stage-title">Patient Approval Loop</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">◆ Decision Gate · ■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Patient reviews the matched doctor, price quote, and safety screening result, and explicitly confirms or requests changes before the case proceeds — this is the same "Confirm &amp; Submit to Doctor" decision point shown in the live app.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>syncConsultationToCaseRecord, generateClientProposal</code>
+    <div class="section-label">Data Entities</div>
+    <p>CaseRecord.jsonc, Quote.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Confirmed case, routed to assigned doctor for final clinical sign-off</p>
+  </div>
+</div>
+
+
+<!-- STAGE 8 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">8</div>
+      <div class="stage-title">Partner Coordination Engine (iQ200)</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">◆ Decision Gate · ■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Coordinates handshakes across every partner touchpoint in the journey — doctor, travel agency, driver, companion. If a partner fails to confirm a handshake within its time window, the engine automatically escalates and can reassign a backup partner; offline SMS confirms handshakes when no data connection is available.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>iq200HandshakeEngine, iq200Pipeline, createHandshake,
+escalateMissedDriverHandshake, processSmsShortcode, retryFailedDispatches</code>
+    <div class="section-label">Data Entities</div>
+    <p>DigitalHandshake.jsonc, OfflineHandshake.jsonc, CheckInToken.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Fully coordinated journey with a logged handshake at every partner touchpoint</p>
+  </div>
+</div>
+
+
+<!-- STAGE 9 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">9</div>
+      <div class="stage-title">Active Journey Monitoring</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">◆ Decision Gate · ■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Monitors live location data and check-in cadence throughout the trip. Detects stale GPS pings or missed solo-traveler check-ins and automatically escalates: app warning → voice call → emergency contact → logged dispatch request to a registered security/medical partner, where one exists. EVN-iQ400™ area safety monitor runs in parallel — any 30s+ dwell in a flagged neighbourhood fires an independent alert channel.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>checkStaleLiveLocations, scheduleSoloCheckIns, escalateSoloCheckIn,
+dispatchSoloSecurity, triggerSOS, GlobalEventBroadcaster (EVN area monitor)</code>
+    <div class="section-label">Data Entities</div>
+    <p>LiveLocation.jsonc, SoloCheckIn.jsonc, SOSEvent.jsonc, SecurityAgency.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Journey health status; logged escalation chain on any anomaly; neighbourhood threat alert from EVN monitor</p>
+    <p class="note">Dispatch to a security/medical partner only succeeds where a verified SecurityAgency record exists for that country. The escalation logic itself runs everywhere; physical-world response depends on partner coverage, which is a market-by-market rollout, not a software gap.</p>
+  </div>
+</div>
+
+
+<!-- ════════════ NEW: STAGE 9B ════════════ -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num new-stage">9B</div>
+      <div class="stage-title">9-Handshake GPS Spine + Golden M <span class="new-tag">NEW</span></div>
+    </div>
+    <span class="badge badge-live-new">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">◆ Decision Gate · ■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Nine GPS-confirmed physical checkpoints span the entire patient journey — from home pickup to home drop-off — each confirmed by the patient in real time via the app or SMS. Each handshake is time-stamped, GPS-tagged, and audited. Missed handshakes auto-escalate via <code style="display:inline; padding:1px 5px; background:#f0f4f8; font-size:11px;">escalateMissedDriverHandshake</code> within 15 minutes. Completing all 9 unlocks the <strong>Golden M</strong>: confetti burst, downloadable digital certificate, and an SMS to the patient's phone.</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:10px 0; font-size:12px;">
+      <tr style="background:#f0f4f8;">
+        <th style="padding:5px 8px; text-align:left; border:1px solid #ddd; font-weight:700;">#</th>
+        <th style="padding:5px 8px; text-align:left; border:1px solid #ddd; font-weight:700;">Checkpoint</th>
+        <th style="padding:5px 8px; text-align:left; border:1px solid #ddd; font-weight:700;">handshake_type</th>
+        <th style="padding:5px 8px; text-align:left; border:1px solid #ddd; font-weight:700;">Phase</th>
+      </tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">1</td><td style="padding:4px 8px; border:1px solid #eee;">Driver Pickup (Home)</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">driver_pickup</td><td style="padding:4px 8px; border:1px solid #eee;">transit_out</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">2</td><td style="padding:4px 8px; border:1px solid #eee;">Airport Drop-off</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">airport_dropoff</td><td style="padding:4px 8px; border:1px solid #eee;">transit_out</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">3</td><td style="padding:4px 8px; border:1px solid #eee;">Landed at Destination</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">airport_checkin</td><td style="padding:4px 8px; border:1px solid #eee;">arrived</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">4</td><td style="padding:4px 8px; border:1px solid #eee;">Hotel Check-in</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">hotel_checkin</td><td style="padding:4px 8px; border:1px solid #eee;">arrived</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">5</td><td style="padding:4px 8px; border:1px solid #eee;">Clinic Appointment</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">clinic_arrival</td><td style="padding:4px 8px; border:1px solid #eee;">recovery</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">6</td><td style="padding:4px 8px; border:1px solid #eee;">Companion Meal Delivery</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">recovery_handoff</td><td style="padding:4px 8px; border:1px solid #eee;">recovery</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">7</td><td style="padding:4px 8px; border:1px solid #eee;">Return Transport</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">hotel_checkout</td><td style="padding:4px 8px; border:1px solid #eee;">transit_return</td></tr>
+      <tr><td style="padding:4px 8px; border:1px solid #eee;">8</td><td style="padding:4px 8px; border:1px solid #eee;">Home Airport Arrival</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">airport_boarding</td><td style="padding:4px 8px; border:1px solid #eee;">transit_return</td></tr>
+      <tr style="background:#fffbf0;"><td style="padding:4px 8px; border:1px solid #eee; font-weight:700;">9</td><td style="padding:4px 8px; border:1px solid #eee; font-weight:700;">Home Drop-off ← Golden M 🏆</td><td style="padding:4px 8px; border:1px solid #eee; font-family:monospace; font-size:11px;">home_dropoff</td><td style="padding:4px 8px; border:1px solid #eee; font-weight:700;">completed</td></tr>
+    </table>
+
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>completeHandshake (edge function — sequential validation, phase tracking,
+Golden M SMS), TripProgressStepper (9-heart visual spine, role-colored:
+driver=green, airport=purple, patient=red, doctor=gold, companion=pink),
+HandshakeButton (GPS capture, online/offline path, queue sync),
+GoldenMCelebration (confetti burst, M mark, certificate),
+GoldenMCertificate (downloadable PDF-style certificate),
+offlineHandshakeQueue (buildHandshakePacket, enqueueHandshake,
+markHandshakeSynced)</code>
+    <div class="section-label">Data Entities</div>
+    <p>TravelRequest.jsonc (current_step, handshake_status, handshake_timestamps, trip_phase), OfflineHandshake.jsonc (home_dropoff enum added)</p>
+    <div class="section-label">Output</div>
+    <p>Step-by-step journey health status per checkpoint + Golden M certificate + SMS confirmation on completion</p>
+    <p class="note">The 9-handshake spine is the patient-facing layer on top of the iQ200 engine (Stage 8). Stage 8 handles partner-side coordination; Stage 9B handles patient-side physical GPS confirmation. SMS fallback: text HS[1–9] to shortcode — zero data connection required. completeHandshake enforces sequential order (cannot confirm HS3 before HS2) and is idempotent (re-confirming an already-confirmed step returns 200 with no side effects).</p>
+  </div>
+</div>
+
+
+<!-- STAGE 10 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">10</div>
+      <div class="stage-title">Recovery Mode</div>
+    </div>
+    <span class="badge badge-live">LIVE — VERIFIED</span>
+  </div>
+  <div class="stage-body">
+    <div class="tags">■ Human-in-the-Loop</div>
+    <div class="section-label">What It Does</div>
+    <p>Activates automatically once the clinic checkout handshake completes. Mutes non-critical notifications, schedules recovery check-ins on a cadence tied to procedure severity, and routes recovery support (meals, monitoring) through the companion marketplace.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>activateRecoveryMode, submitRecoveryCheckin, RecoverySession</code>
+    <div class="section-label">Data Entities</div>
+    <p>RecoverySession.jsonc, MothersTouchAssignment.jsonc, CompanionAssignment.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Recovery progress tracking + companion care coordination</p>
+  </div>
+</div>
+
+
+<!-- STAGE 11 -->
+<div class="stage">
+  <div class="stage-header">
+    <div class="stage-left">
+      <div class="stage-num">11</div>
+      <div class="stage-title">Post-Care Feedback &amp; Reputation Loop</div>
+    </div>
+    <span class="badge badge-live" style="font-size:9px; text-align:center;">LIVE — VERIFIED<br>(RENAMED FOR ACCURACY)</span>
+  </div>
+  <div class="stage-body">
+    <div class="section-label">What It Does</div>
+    <p>Sends an automated post-surgery feedback survey and a reputation survey after journey completion; positive responses are routed toward public review platforms.</p>
+    <div class="section-label">Actual Function(s) in Codebase</div>
+    <code>sendPostSurgeryFeedback, submitPostSurgeryFeedback, sendReputationSurvey,
+submitReputationSurvey</code>
+    <div class="section-label">Data Entities</div>
+    <p>OutcomeRecord.jsonc, ReputationSurvey.jsonc</p>
+    <div class="section-label">Output</div>
+    <p>Patient satisfaction record + review submission</p>
+    <p class="note">Renamed from "Relationship Intelligence Engine" in the prior draft. There is no predictive/repeat-journey model in the current codebase — this stage is an automated survey and feedback loop, which is accurately and still meaningfully described without implying machine-learning prediction.</p>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SYSTEM ARCHITECTURE -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="arch-section">
+  <h2>SYSTEM ARCHITECTURE — WHAT'S ACTUALLY RUNNING</h2>
+
+  <div class="arch-layer">
+    <h3>Deterministic Layer (no LLM — rules-based, fully testable)</h3>
+    <p>The SAFE-T4LIFE™ risk engine (Stage 3), procedure/pricing matching (Stage 2), and EVN-iQ400™ environmental scoring (Stage 5C) run on explicit, versioned rules — not model inference. This is the layer that must never hallucinate, and it doesn't, because it isn't a model.</p>
+  </div>
+
+  <div class="arch-layer">
+    <h3>Agentic / LLM-Reasoning Layer (real model calls, with live context)</h3>
+    <p>Doctor &amp; partner verification (Stage 4), visa/compliance checking (Stage 5), and AI Pre-Departure Briefing (Stage 5B) make genuine LLM calls with live internet search and structured outputs — this is the system's real agentic reasoning, correctly scoped to judgment-heavy tasks rather than absolute safety locks.</p>
+  </div>
+
+  <div class="arch-layer">
+    <h3>Human-in-the-Loop Layer</h3>
+    <p>Licensed medical reviewers, care coordinators, doctors, and the patient themselves remain the final decision-makers at every consequential point — Stage 3's waiver signature, Stage 4's manual verification fallback, and Stage 7's explicit patient approval are all logged, auditable human decisions, not automated overrides.</p>
+  </div>
+
+  <div class="arch-layer">
+    <h3>Coordination, Monitoring &amp; Intelligence Layer</h3>
+    <p>The iQ200 handshake engine (Stage 8), 9-Handshake GPS Spine (Stage 9B), active journey monitoring (Stage 9), and EVN-iQ400™ environmental intelligence (Stage 5C) run continuously across the physical journey, with offline SMS fallback for zero-connectivity scenarios — this is real, tested infrastructure, not a planned feature. The Situation Room at <code style="display:inline; padding:1px 5px; background:#f0f4f8; font-size:11px;">/admin/situation-room</code> provides a live tactical world map of all active patient positions, updated every 90 seconds.</p>
+  </div>
+
+  <div class="arch-layer">
+    <h3>Honest Gap — External Travel Booking APIs</h3>
+    <p>Flight, hotel, and ground transport booking automation (Stage 6B) is the one area where the prior workflow draft overstated current capability. Today this is coordinated manually through verified travel agency partners. This is disclosed explicitly rather than folded into a vague "External API Orchestration" claim.</p>
+  </div>
+</div>
+
+<hr class="gold-line" style="margin-top:40px;" />
+<p style="font-size:11px; color:#888; text-align:center; margin-top:8px;">
+  Morales Dental &amp; Aesthetic Travel Concierge · Future Caribbean Agentic AI Buildathon · Trinidad &amp; Tobago
+  <br>Generated from live codebase — all LIVE—VERIFIED stages are running functions, not mockups.
+</p>
+
+</body>
+</html>
