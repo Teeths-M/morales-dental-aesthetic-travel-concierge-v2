@@ -183,8 +183,25 @@ export default function RecoveryTrackerDemo() {
   const [stageIdx, setStageIdx] = useState(2); // start at 'recovery' — most interesting
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [copied, setCopied] = useState(false);
+  const [keyHint, setKeyHint] = useState(false);
 
   const stage = DEMO_STAGES[stageIdx];
+
+  // Arrow-key navigation — presenter advances/rewinds Maria's journey without touching the mouse
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        setStageIdx(i => Math.min(i + 1, DEMO_STAGES.length - 1));
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        setStageIdx(i => Math.max(i - 1, 0));
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    // Show hint briefly on mount so presenters know the shortcut exists
+    setKeyHint(true);
+    const t = setTimeout(() => setKeyHint(false), 3500);
+    return () => { window.removeEventListener('keydown', onKey); clearTimeout(t); };
+  }, []);
 
   function handleShare() {
     const url = `${window.location.origin}/demo/recovery`;
@@ -213,7 +230,12 @@ export default function RecoveryTrackerDemo() {
           <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>
             Recovery Tracker — Family View
           </span>
-          <div className="flex gap-1.5 ml-auto flex-wrap">
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            {keyHint && (
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                ← → keys
+              </span>
+            )}
             {DEMO_STAGES.map((s, i) => (
               <button key={s.id} onClick={() => setStageIdx(i)}
                 style={{
