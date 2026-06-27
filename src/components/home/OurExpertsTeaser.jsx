@@ -20,8 +20,8 @@ const PROCEDURES = [
     tagline: 'The smile you were born to have.',
     save: 'Save up to $8,000',
     destinations: ['🇹🇷', '🇨🇴', '🇧🇷'],
-    // Close-up of a radiant perfect-teeth smile
-    image: 'https://images.unsplash.com/photo-1570158268183-d296b2892211?w=480&h=640&fit=crop&q=80',
+    // Woman with beautiful bright white veneer smile
+    image: 'https://images.unsplash.com/photo-1543342384-1f1350e27861?w=480&h=640&fit=crop&q=80',
     color: GOLD,
   },
   {
