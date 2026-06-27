@@ -108,7 +108,7 @@ const slides = [
     body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
     type: 'brand',
-    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8018f783e_generated_image.png',
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
   },
 ];
 
