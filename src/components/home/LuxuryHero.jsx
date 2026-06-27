@@ -129,6 +129,27 @@ export default function LuxuryHero() {
               </motion.h1>
             </AnimatePresence>
 
+            {/* ── FEAR ACKNOWLEDGMENT — medical mode only ── */}
+            {isMedical && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7, delay: 0.08 }}
+                className="mb-5"
+                style={{
+                  fontSize:    '14px',
+                  fontStyle:   'italic',
+                  color:       `${GOLD}90`,
+                  lineHeight:  1.6,
+                  fontFamily:  'Georgia, serif',
+                  letterSpacing: '0.01em',
+                }}
+              >
+                Going abroad for surgery is the bravest thing you'll do for yourself.<br />
+                Morales was designed for that exact moment.
+              </motion.p>
+            )}
+
             {/* ── SUBHEADLINE ── */}
             <AnimatePresence mode="wait">
               <motion.p

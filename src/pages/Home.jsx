@@ -4,8 +4,10 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import LuxuryHero from '../components/home/LuxuryHero';
 import LuxuryTrustBar from '../components/home/LuxuryTrustBar';
+import LuxuryStatsBar from '../components/home/LuxuryStatsBar';
 import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
 import LuxuryWhyMorales from '../components/home/LuxuryWhyMorales';
+import RealMoments from '../components/home/RealMoments';
 import BrandSlideshow from '../components/home/BrandSlideshow';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 import LuxuryTestimonials from '../components/home/LuxuryTestimonials';
@@ -49,9 +51,11 @@ export default function Home() {
   return (
     <div style={{ background: '#060B16' }}>
       <LuxuryHero />
+      <LuxuryStatsBar />
       <LuxuryTrustBar />
       <LuxuryHowItWorks />
       <LuxuryWhyMorales />
+      <RealMoments />
       <OurExpertsTeaser />
       <LuxuryTestimonials />
       <BrandSlideshow />
