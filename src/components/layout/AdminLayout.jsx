@@ -17,6 +17,7 @@ const NAV_SECTIONS = [
     items: [
       { path: '/admin',                 label: 'Patient Journey',  icon: LayoutDashboard },
       { path: '/admin/mission-control', label: 'Mission Control',  icon: Activity },
+      { path: '/admin/situation-room',  label: '🌍 Situation Room', icon: Activity },
     ],
   },
   {

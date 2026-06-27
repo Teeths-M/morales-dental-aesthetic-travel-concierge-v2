@@ -34,6 +34,7 @@ import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
+import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
 import PatientJourneyCredit from '@/components/dashboard/PatientJourneyCredit';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
 import { useBehavioralTracking } from '@/hooks/useBehavioralTracking';
@@ -444,6 +445,14 @@ function DashboardHome({ user, consultations, language }) {
           isLoading={safetyScore.isLoading}
           isActiveTravel={safetyScore.isActiveTravel}
           phase={tripPhaseForScore}
+        />
+      )}
+
+      {/* AI Pre-Departure Safety Briefing — personalized per patient */}
+      {latestConsultation?.procedure_country && latestConsultation?.status !== 'Completed' && (
+        <PreDepartureBriefing
+          caseRecord={latestConsultation}
+          userName={user?.full_name || user?.name || ''}
         />
       )}
 

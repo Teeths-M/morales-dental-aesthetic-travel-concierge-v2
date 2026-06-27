@@ -40,6 +40,7 @@ const AdminSoloMonitor          = lazy(() => import('@/pages/AdminSoloMonitor'))
 const AdminWildernessRescue     = lazy(() => import('@/pages/AdminWildernessRescue'));
 const AdminSosSyncMonitor       = lazy(() => import('@/pages/AdminSosSyncMonitor'));
 const AdminMissionControl       = lazy(() => import('@/pages/AdminMissionControl'));
+const SituationRoom             = lazy(() => import('@/pages/SituationRoom'));
 
 export const adminRoutes = (
   <Route key="admin-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -66,6 +67,7 @@ export const adminRoutes = (
       <Route path="/admin/partner-verification/:id"  element={<ErrorBoundary><PartnerVerificationHub /></ErrorBoundary>} />
       <Route path="/admin/audit-log"                 element={<ErrorBoundary><AdminAuditLog /></ErrorBoundary>} />
       <Route path="/admin/mission-control"          element={<ErrorBoundary><AdminMissionControl /></ErrorBoundary>} />
+      <Route path="/admin/situation-room"           element={<ErrorBoundary><SituationRoom /></ErrorBoundary>} />
       <Route path="/admin/provider-performance"      element={<ErrorBoundary><ProviderPerformanceDashboard /></ErrorBoundary>} />
       <Route path="/admin/config-approvals"          element={<ErrorBoundary><AdminConfigApprovals /></ErrorBoundary>} />
       <Route path="/admin/audit-chain"               element={<ErrorBoundary><AdminAuditChain /></ErrorBoundary>} />
