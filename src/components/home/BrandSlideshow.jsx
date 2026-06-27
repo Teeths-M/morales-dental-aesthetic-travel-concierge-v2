@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ShieldCheck, Star, Heart, Globe, Lock, Spark
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import JourneyStagesCard from './JourneyStagesCard';
+import VaultGraphic from './VaultGraphic';
 
 const DEFAULT_IMG = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
 
@@ -98,7 +99,7 @@ const slides = [
     headline: 'Your Privacy Is\nOur Priority.',
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
-    type: 'brand',
+    type: 'vault',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/4ff2fab82_generated_image.png',
   },
   {
@@ -172,7 +173,13 @@ export default function BrandSlideshow() {
             viewport={{ once: true }}
           >
             <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ position: 'relative', aspectRatio: '4/3', background: '#0C1A1D' }}>
-              {slide.type === 'brand' ? (
+              {slide.type === 'vault' ? (
+                <AnimatePresence mode="wait">
+                  <motion.div key="vault" style={{ position: 'absolute', inset: 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <VaultGraphic />
+                  </motion.div>
+                </AnimatePresence>
+              ) : slide.type === 'brand' ? (
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={slide.eyebrow}
