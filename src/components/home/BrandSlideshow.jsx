@@ -41,8 +41,8 @@ const slides = [
     headline: 'Caribbean Recovery.\nWorld-Class Aesthetic Surgeons.',
     body: 'Venezuela trains some of Latin America\'s most celebrated aesthetic surgeons. Warm Caribbean climate ideal for post-op recovery. Morales partners are internationally certified and personally screened.',
     color: 'from-yellow-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&fit=crop&q=80',
-    imageAlt: 'Venezuela — Caribbean recovery paradise',
+    image: 'https://images.unsplash.com/photo-1540202404-a2f29016b523?w=800&fit=crop&q=80',
+    imageAlt: 'Margarita Island, Venezuela — Caribbean turquoise waters and recovery paradise',
   },
   {
     icon: Globe,
