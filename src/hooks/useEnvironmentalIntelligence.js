@@ -115,14 +115,12 @@ const DESTINATION_CONTEXT = {
   CR: { note: 'Costa Rica has one of the lowest crime rates in Latin America. San José medical zone is well-regarded and internationally accredited.', timeNote: 'Standard urban precautions. Avoid isolated beach areas at night.' },
   DO: { note: 'Punta Cana and Santo Domingo medical zones are active and well-monitored. Tourist areas have dedicated police presence.', timeNote: 'Stay in resort and medical corridors. Avoid unmarked taxis.' },
   // Europe
-  TR: { note: 'Istanbul and Ankara are globally recognized for medical tourism quality. Clinics in Şişli, Nişantaşı, and Levent are Morales-verified.', timeNote: 'Standard urban caution. Avoid protest areas and border regions.' },
+  TR: { note: 'Istanbul leads Europe with 32 JCI-accredited hospitals. Şişli, Nişantaşı, and Levent are Morales-verified medical zones. Ankara is safe for medical visits.', timeNote: 'Standard urban caution. Avoid political gatherings and Syrian border regions.' },
   PL: { note: 'Warsaw and Kraków offer excellent dental and aesthetic surgery at 60% less than Western Europe. Safe and well-regulated.', timeNote: 'Very safe by European standards. Standard precautions apply.' },
   HU: { note: 'Budapest is Eastern Europe\'s dental tourism capital. Highly regulated healthcare with EU-standard clinics.', timeNote: 'Extremely safe. Enjoy the city — standard urban awareness.' },
   UA: { note: 'Active conflict advisory in eastern regions. Medical tourism limited to western cities (Lviv). Coordinate all movement with Morales.', timeNote: 'Follow all Morales security guidance. Avoid eastern regions entirely.' },
   GE: { note: 'Tbilisi is emerging as a medical tourism hub with modern facilities and competitive pricing. Generally safe for international patients.', timeNote: 'Exercise normal caution. Tbilisi is one of the safest capitals in the region.' },
   RS: { note: 'Belgrade offers excellent dental and aesthetic procedures at significant savings. Safe and welcoming to international patients.', timeNote: 'Standard precautions apply. City centre is well-monitored.' },
-  // Middle East
-  TR: { note: 'Istanbul leads Europe in JCI-accredited hospitals. Nisantasi and Levent districts are prime medical zones.', timeNote: 'Safe in Istanbul. Avoid Syrian border regions.' },
   JO: { note: 'Jordan is a trusted Middle East medical hub with JCI hospitals. Amman is safe and welcoming to international patients.', timeNote: 'Amman is very safe. Standard precautions apply.' },
   IL: { note: 'Israel has world-class medical facilities, particularly in Tel Aviv. Security is high throughout.', timeNote: 'Follow current advisories regarding border areas. Tel Aviv medical zone is safe.' },
   AE: { note: 'Dubai and Abu Dhabi have exceptional medical infrastructure. Extremely low street crime with strong rule of law.', timeNote: 'One of the safest countries globally for international patients.' },

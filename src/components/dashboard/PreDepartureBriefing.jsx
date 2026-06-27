@@ -1,3 +1,4 @@
+// @ts-nocheck — Base44 InvokeLLM SDK types don't yet expose system_prompt/response_type; runtime works correctly
 /**
  * PreDepartureBriefing — AI-generated personalized safety brief
  *

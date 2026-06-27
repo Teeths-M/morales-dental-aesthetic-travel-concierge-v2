@@ -160,7 +160,7 @@ export default function SituationRoom() {
     queryFn: async () => {
       const statuses = ['Travel-Coordination', 'Ready-For-Travel', 'Procedure-In-Progress', 'Recovery', 'Deposit-Paid'];
       const results = await Promise.allSettled(
-        statuses.map(s => base44.asServiceRole?.entities?.CaseRecord?.filter({ status: s }, '-updated_date', 20).catch(() => []) ?? Promise.resolve([]))
+        statuses.map(s => (base44.asServiceRole?.entities?.CaseRecord?.filter({ status: s }, '-updated_date', 20) ?? Promise.resolve([])).catch(() => []))
       );
       return results.flatMap(r => r.status === 'fulfilled' ? (r.value || []) : []);
     },
