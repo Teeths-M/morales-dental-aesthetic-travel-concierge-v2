@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -320,6 +321,7 @@ export default function Discover() {
         <SheetContent className="w-full sm:max-w-md bg-[#0C1A1D] border-[#2A3F4A] text-white">
           <SheetHeader>
             <SheetTitle className="text-white">Filters</SheetTitle>
+            <SheetDescription className="sr-only">Filter doctors by procedure, destination, and rating</SheetDescription>
           </SheetHeader>
           <DoctorFilterPanel
             filters={filters}
