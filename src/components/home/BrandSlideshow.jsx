@@ -73,14 +73,14 @@ const slides = [
     imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
-  // ── Brand/trust slides — left panel shows JourneyStagesCard (type: 'brand') ──
+  // visual: 'photo' → shows image | visual: 'journey' → shows JourneyStagesCard
   {
     icon: Sparkles,
     eyebrow: 'Our Promise',
     headline: 'Heal Beautifully.\nTravel Confidently.',
     body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
     color: 'from-accent/10 to-transparent',
-    type: 'brand',
+    visual: 'photo',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png',
   },
   {
@@ -89,8 +89,8 @@ const slides = [
     headline: '9 Checkpoints.\nZero Gaps.',
     body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically.',
     color: 'from-primary/10 to-transparent',
-    type: 'brand',
-    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
+    visual: 'journey',
+    image: null,
   },
   {
     icon: Lock,
@@ -98,7 +98,7 @@ const slides = [
     headline: 'Your Privacy Is\nOur Priority.',
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
-    type: 'brand',
+    visual: 'photo',
     image: 'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&fit=crop&q=80',
   },
   {
@@ -107,7 +107,7 @@ const slides = [
     headline: 'Real People.\n24/7 Concierge Support.',
     body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
-    type: 'brand',
+    visual: 'photo',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
   },
 ];
@@ -172,7 +172,13 @@ export default function BrandSlideshow() {
             viewport={{ once: true }}
           >
             <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ position: 'relative', aspectRatio: '4/3', background: '#0C1A1D' }}>
-              {slide.type === 'brand' && slide.image?.includes('unsplash') ? (
+              {slide.visual === 'journey' ? (
+                <AnimatePresence mode="wait">
+                  <motion.div key="journey" style={{ position: 'absolute', inset: 0 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <JourneyStagesCard />
+                  </motion.div>
+                </AnimatePresence>
+              ) : slide.visual === 'photo' || slide.image ? (
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={slide.image}
@@ -185,19 +191,6 @@ export default function BrandSlideshow() {
                     exit={{ opacity: 0, scale: 0.97 }}
                     transition={{ duration: 0.6 }}
                   />
-                </AnimatePresence>
-              ) : slide.type === 'brand' ? (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={slide.eyebrow}
-                    style={{ position: 'absolute', inset: 0 }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <JourneyStagesCard />
-                  </motion.div>
                 </AnimatePresence>
               ) : (
               <AnimatePresence mode="wait">
