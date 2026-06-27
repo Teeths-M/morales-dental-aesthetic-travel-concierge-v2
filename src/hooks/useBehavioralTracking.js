@@ -40,8 +40,8 @@ function loadCachedFingerprint(email) {
     const raw = localStorage.getItem(fpKey(email));
     if (!raw) return null;
     const obj = JSON.parse(raw);
-    // Sanity-check: reject entries older than 30 days
-    if (Date.now() - (obj.ts || 0) > 30 * 24 * 3600_000) return null;
+    // Returning patients keep their fingerprint for 90 days — their most valuable data
+    if (Date.now() - (obj.ts || 0) > 90 * 24 * 3600_000) return null;
     return obj.fp || null;
   } catch { return null; }
 }
