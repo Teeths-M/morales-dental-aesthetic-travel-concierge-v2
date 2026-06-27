@@ -508,6 +508,7 @@ export default function DemoShowcase() {
   function switchTab(id) {
     setActiveTab(id);
     setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true });
+    window.scrollTo(0, 0);
   }
 
   useEffect(() => {

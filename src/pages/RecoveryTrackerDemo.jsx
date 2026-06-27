@@ -241,7 +241,7 @@ export default function RecoveryTrackerDemo() {
         {/* Share + Refresh */}
         <div className="flex items-center justify-center gap-3 mt-3">
           <button onClick={handleShare}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: GOLD, color: '#060B16', border: 'none' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: copied ? '#22c55e' : GOLD, color: '#060B16', border: 'none', transition: 'background 0.2s', animation: copied ? 'copyPulse 0.3s ease' : 'none' }}>
             <Share2 style={{ width: 12, height: 12 }} />
             {copied ? '✓ Link Copied!' : 'Copy Share Link'}
           </button>
@@ -252,9 +252,37 @@ export default function RecoveryTrackerDemo() {
         </div>
       </div>
 
-      {/* Tracker content */}
-      <div className="px-4 py-8">
-        <TrackerCard caseData={stage.data} lastRefresh={lastRefresh} />
+      {/* Phone frame wrapper */}
+      <div className="flex flex-col items-center py-8 px-4">
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 12, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          What Maria's family sees on their phone
+        </p>
+        <div style={{
+          width: '100%', maxWidth: 390,
+          background: '#111827',
+          borderRadius: 44,
+          border: '8px solid #1e293b',
+          boxShadow: '0 0 0 1px #0f172a, 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(212,175,55,0.06)',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          {/* Notch */}
+          <div style={{ height: 28, background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <div style={{ width: 90, height: 18, background: '#0f172a', borderRadius: 99, position: 'absolute', top: 5 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'absolute', right: 20, top: 7, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+              <span>9:41</span>
+              <span>▣ ▸ 🔋</span>
+            </div>
+          </div>
+          {/* Screen content — scrollable */}
+          <div style={{ background: '#060B16', maxHeight: 680, overflowY: 'auto' }}>
+            <TrackerCard caseData={stage.data} lastRefresh={lastRefresh} />
+          </div>
+          {/* Home indicator */}
+          <div style={{ height: 20, background: '#060B16', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 100, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.2)' }} />
+          </div>
+        </div>
       </div>
 
       {/* Judge callout at bottom */}
@@ -275,6 +303,7 @@ export default function RecoveryTrackerDemo() {
 
       <style>{`
         @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.15)} 28%{transform:scale(1)} 42%{transform:scale(1.1)} }
+        @keyframes copyPulse { 0%{transform:scale(1)} 40%{transform:scale(1.08)} 100%{transform:scale(1)} }
       `}</style>
     </div>
   );
