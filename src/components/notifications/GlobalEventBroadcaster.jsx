@@ -12,6 +12,41 @@ const COUNTRY_STORAGE_KEY = 'morales_last_notified_country';
 const ADVENTURE_STORAGE_KEY = 'morales_adventure_prompted';
 const EVENING_STORAGE_KEY = 'morales_evening_prompted';
 
+// ── EVN-iQ400 module-level constants (defined once, not per render) ─────────
+const EVN_HIGH_RISK_KEYWORDS = new Set([
+  'tepito','doctores','merced','guerrero','iztapalapa','ecatepec',
+  'zona norte','la libertad','sanchez taboada',
+  'petare','catia','la vega','antimano','el valle','carapita',
+  'ciudad bolivar','el lidice',
+  'la sierra','el salado','moravia','manrique',
+  'aguablanca','siloé','terrón colorado',
+  'complexo do alemão','jacarezinho','vigário geral','acari',
+  'capão redondo','jardim ângela','cidade tiradentes',
+]);
+
+function evnHaversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+    * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const EVN_AREA_CACHE_TTL = 24 * 60 * 60 * 1000;
+function evnReadAreaCache(key) {
+  try {
+    const raw = localStorage.getItem(`evn_area_${key}`);
+    if (!raw) return null;
+    const { risk, ts } = JSON.parse(raw);
+    return (Date.now() - ts < EVN_AREA_CACHE_TTL) ? risk : null;
+  } catch { return null; }
+}
+function evnWriteAreaCache(key, risk) {
+  try { localStorage.setItem(`evn_area_${key}`, JSON.stringify({ risk, ts: Date.now() })); } catch {}
+}
+
 /**
  * GlobalEventBroadcaster
  *
@@ -378,7 +413,7 @@ export default function GlobalEventBroadcaster({ user }) {
 
   // Known high-risk neighbourhood keywords for offline fallback.
   // Sourced from public government travel advisory data.
-  const HIGH_RISK_KEYWORDS = new Set([
+  const EVN_HIGH_RISK_KEYWORDS = new Set([
     'tepito','doctores','merced','guerrero','iztapalapa','ecatepec',    // Mexico City
     'zona norte','la libertad','sanchez taboada',                        // Tijuana
     'petare','catia','la vega','antimano','el valle','carapita',         // Caracas
@@ -389,7 +424,7 @@ export default function GlobalEventBroadcaster({ user }) {
     'capão redondo','jardim ângela','cidade tiradentes',                 // São Paulo
   ]);
 
-  function haversineM(lat1, lng1, lat2, lng2) {
+  function evnHaversineM(lat1, lng1, lat2, lng2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
@@ -401,7 +436,7 @@ export default function GlobalEventBroadcaster({ user }) {
 
   // Persist assessment results to localStorage (24h TTL) to avoid
   // re-burning LLM credits if the patient visits the same area later.
-  function readAreaCache(key) {
+  function evnReadAreaCache(key) {
     try {
       const raw = localStorage.getItem(`evn_area_${key}`);
       if (!raw) return null;
@@ -409,7 +444,7 @@ export default function GlobalEventBroadcaster({ user }) {
       return (Date.now() - ts < 24 * 60 * 60 * 1000) ? risk : null;
     } catch { return null; }
   }
-  function writeAreaCache(key, risk) {
+  function evnWriteAreaCache(key, risk) {
     try { localStorage.setItem(`evn_area_${key}`, JSON.stringify({ risk, ts: Date.now() })); } catch {}
   }
 
@@ -422,11 +457,11 @@ export default function GlobalEventBroadcaster({ user }) {
 
     // Already assessed a nearby point recently? Skip.
     const lastA = lastAssessedRef.current;
-    if (lastA && haversineM(lat, lng, lastA.lat, lastA.lng) < 400) return;
+    if (lastA && evnHaversineM(lat, lng, lastA.lat, lastA.lng) < 400) return;
 
     // Already have a pending timer for this vicinity? Don't restart it.
     const pending = pendingPointRef.current;
-    if (pending && haversineM(lat, lng, pending.lat, pending.lng) < 400) return;
+    if (pending && evnHaversineM(lat, lng, pending.lat, pending.lng) < 400) return;
 
     // New area — cancel any existing timer and set a fresh one.
     clearTimeout(areaTimerRef.current);
@@ -449,7 +484,7 @@ export default function GlobalEventBroadcaster({ user }) {
         const areaKey = `${suburb}_${city}`.toLowerCase().replace(/\W+/g, '_').slice(0, 60);
 
         // ── Step 2: Check 24h localStorage cache ──────────────────────────
-        const cached = readAreaCache(areaKey);
+        const cached = evnReadAreaCache(areaKey);
         if (cached) {
           if (cached === 'HIGH' || cached === 'MODERATE') {
             showNotification({
@@ -483,7 +518,7 @@ export default function GlobalEventBroadcaster({ user }) {
           }
 
           const risk = (parsed.risk || '').toUpperCase();
-          writeAreaCache(areaKey, risk);
+          evnWriteAreaCache(areaKey, risk);
 
           if (risk === 'HIGH' || risk === 'MODERATE') {
             showNotification({
@@ -499,9 +534,9 @@ export default function GlobalEventBroadcaster({ user }) {
 
         // ── Step 3b: Offline → keyword fallback ───────────────────────────
         const suburbLow = suburb.toLowerCase();
-        const isKnownRisk = HIGH_RISK_KEYWORDS.has(suburbLow) || [...HIGH_RISK_KEYWORDS].some(kw => suburbLow.includes(kw));
+        const isKnownRisk = EVN_HIGH_RISK_KEYWORDS.has(suburbLow) || [...EVN_HIGH_RISK_KEYWORDS].some(kw => suburbLow.includes(kw));
         if (isKnownRisk) {
-          writeAreaCache(areaKey, 'HIGH');
+          evnWriteAreaCache(areaKey, 'HIGH');
           showNotification({
             type: 'alert', icon: '🔴',
             title: 'EVN-iQ400 · High-Risk Area (Offline)',
