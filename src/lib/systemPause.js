@@ -17,7 +17,37 @@ const ADMIN_EMAIL  = 'admin@moralesmedical.com';
 
 // Stash the real methods so we can restore them on resume
 let _originalInvoke        = null;
-let _originalIntegrations  = null; // entire integrations object before Proxy
+let _originalIntegrations  = null;
+
+// ── BroadcastChannel — instant cross-tab pause/resume (iOS 15.4+, all modern Android) ──
+// When admin pauses on any tab, ALL other open tabs receive the signal in <10ms.
+// Falls back silently on older browsers that don't support BroadcastChannel.
+const BROADCAST_CH = 'morales_system_pause';
+let _channel = null;
+
+function getBroadcastChannel() {
+  if (_channel) return _channel;
+  try {
+    _channel = new BroadcastChannel(BROADCAST_CH);
+    _channel.onmessage = ({ data }) => {
+      if (data?.event === 'paused') {
+        setLocalPaused(true);
+        applyPauseIntercept();
+      } else if (data?.event === 'resumed') {
+        setLocalPaused(false);
+        removePauseIntercept();
+      }
+    };
+  } catch { _channel = null; }
+  return _channel;
+}
+
+function broadcastPause(paused) {
+  try {
+    const ch = getBroadcastChannel();
+    ch?.postMessage({ event: paused ? 'paused' : 'resumed', ts: Date.now() });
+  } catch {}
+}
 
 // ── Local flag helpers ────────────────────────────────────────────────────────
 
@@ -154,8 +184,8 @@ export async function syncPauseFromServer() {
 export function pauseSystem(queryClient) {
   setLocalPaused(true);
   applyPauseIntercept();
-  // Sync to server so all other devices pick it up
-  writeServerPauseState(true);
+  broadcastPause(true);          // instant signal to all open tabs
+  writeServerPauseState(true);   // persists to server for other devices
   if (queryClient) {
     queryClient.cancelQueries();
     queryClient.setDefaultOptions({
@@ -173,8 +203,8 @@ export function pauseSystem(queryClient) {
 export function resumeSystem(queryClient) {
   setLocalPaused(false);
   removePauseIntercept();
-  // Sync resume to server so all other devices pick it up
-  writeServerPauseState(false);
+  broadcastPause(false);         // instant signal to all open tabs
+  writeServerPauseState(false);  // persists to server for other devices
   if (queryClient) {
     queryClient.setDefaultOptions({
       queries: {
@@ -194,3 +224,7 @@ export function resumeSystem(queryClient) {
 if (isSystemPaused()) {
   applyPauseIntercept();
 }
+
+// Init BroadcastChannel listener immediately so this tab can receive
+// pause/resume signals from other tabs before any user interaction.
+getBroadcastChannel();

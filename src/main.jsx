@@ -78,13 +78,17 @@ mountApp();
 // ── Mobile/Tablet: re-sync pause state every time the app returns to foreground ──
 // Scenario: admin pauses on laptop while phone is backgrounded. Without this,
 // the phone has no way to learn about the pause until the next cold start.
-// visibilitychange fires on iOS Safari + Android Chrome when the user switches
-// back to the browser tab — zero battery cost, instant protection.
+// BroadcastChannel handles same-browser tabs instantly (<10ms).
+// visibilitychange + server sync handles cross-device (laptop → phone).
+let _lastVisibilitySync = 0;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   // 1. Belt-and-suspenders: re-apply from localStorage instantly (works offline)
   if (isSystemPaused()) applyPauseIntercept();
-  // 2. Then re-sync from server to pick up changes made on other devices
+  // 2. Throttle: only hit the server once per 30 seconds to avoid spam
+  const now = Date.now();
+  if (now - _lastVisibilitySync < 30_000) return;
+  _lastVisibilitySync = now;
   syncPauseFromServer().catch(() => {});
 });
 
