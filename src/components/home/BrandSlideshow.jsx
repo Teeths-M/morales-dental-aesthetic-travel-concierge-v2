@@ -72,13 +72,14 @@ const slides = [
     imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
-  // ── Brand/trust slides — each needs a unique image URL so AnimatePresence transitions ──
+  // ── Brand/trust slides — each has a unique image matched to its message ──
   {
     icon: Sparkles,
     eyebrow: 'Our Promise',
     headline: 'Heal Beautifully.\nTravel Confidently.',
     body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
     color: 'from-accent/10 to-transparent',
+    // Woman on plane — the journey begins
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png',
   },
   {
@@ -87,6 +88,7 @@ const slides = [
     headline: '9 Checkpoints.\nZero Gaps.',
     body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically.',
     color: 'from-primary/10 to-transparent',
+    // Verified medical team — trust and safety
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
   },
   {
@@ -95,7 +97,8 @@ const slides = [
     headline: 'Your Privacy Is\nOur Priority.',
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
-    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8018f783e_generated_image.png',
+    // Elegant face profile — discreet and personal
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/4ff2fab82_generated_image.png',
   },
   {
     icon: Heart,
@@ -103,7 +106,8 @@ const slides = [
     headline: 'Real People.\n24/7 Concierge Support.',
     body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
-    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9b31409d1_generated_image.png',
+    // Happy smiling patient — the human result of care
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8018f783e_generated_image.png',
   },
 ];
 
