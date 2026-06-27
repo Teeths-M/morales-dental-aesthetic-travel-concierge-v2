@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart } from 'lucide-react';
+import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart, EyeOff } from 'lucide-react';
+import { isCovertSOSEnabled, enableCovertSOS, disableCovertSOS } from '@/hooks/useCovertSOS';
 import { BackButton } from '@/components/nav/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -54,6 +55,72 @@ function SoloCheckInBanner() {
           <p className="text-xs text-blue-700 mt-0.5">Mandatory safety protocol for your unaccompanied journey. Check-ins occur every 12 hours.</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CovertSOSPanel() {
+  const [armed, setArmed]   = useState(isCovertSOSEnabled);
+  const [tested, setTested] = useState(false);
+
+  function toggle() {
+    if (armed) { disableCovertSOS(); setArmed(false); }
+    else        { enableCovertSOS();  setArmed(true);  }
+  }
+
+  return (
+    <div className={`rounded-2xl border p-5 mb-5 ${armed ? 'bg-slate-900 border-red-900/40' : 'bg-white border-slate-100 shadow-sm'}`}>
+      <div className="flex items-start gap-3 mb-4">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${armed ? 'bg-red-900/30' : 'bg-slate-100'}`}>
+          <EyeOff className={`w-5 h-5 ${armed ? 'text-red-400' : 'text-slate-500'}`} />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <h3 className={`font-semibold text-sm ${armed ? 'text-white' : 'text-slate-800'}`}>
+              Silent / Covert SOS
+            </h3>
+            <button
+              onClick={toggle}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${armed ? 'bg-red-600' : 'bg-slate-300'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${armed ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
+          <p className={`text-xs mt-1 leading-relaxed ${armed ? 'text-red-200/70' : 'text-slate-500'}`}>
+            {armed
+              ? 'Armed — tap the screen 5 times rapidly to send a silent SOS. No sound, no screen change. Your emergency team is alerted invisibly.'
+              : 'When enabled, 5 rapid taps anywhere on screen sends a silent emergency alert — no visible feedback. Use when you cannot safely press the SOS button.'
+            }
+          </p>
+        </div>
+      </div>
+
+      {armed && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="rounded-xl bg-red-950/40 border border-red-900/30 p-3 mb-3">
+            <p className="text-xs font-semibold text-red-300 mb-1">How to trigger:</p>
+            <ul className="text-xs text-red-200/60 space-y-1">
+              <li>• Tap the screen <strong className="text-red-200">5 times quickly</strong> within 2 seconds — anywhere</li>
+              <li>• Or type <strong className="text-red-200">MORALESHELP</strong> in any search/text field</li>
+              <li>• <strong className="text-red-200">No confirmation shown</strong> — the attacker will not know</li>
+              <li>• Security dispatch fires immediately. Guardian is SMS'd with your GPS.</li>
+            </ul>
+          </div>
+          {!tested && (
+            <button
+              onClick={() => setTested(true)}
+              className="w-full py-2 rounded-xl text-xs font-semibold border border-red-900/40 text-red-400 hover:bg-red-900/20 transition-colors"
+            >
+              I understand — I have read the trigger instructions
+            </button>
+          )}
+          {tested && (
+            <p className="text-center text-xs text-emerald-400 font-semibold">
+              ✓ Confirmed. Covert SOS is armed and ready.
+            </p>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -361,6 +428,9 @@ export default function SoloCheckInSettings() {
               onCaseSaved={loadCheckIns}
             />
           </div>
+
+          {/* ── Covert SOS Setup ── */}
+          <CovertSOSPanel />
 
           {/* Check-In History */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">

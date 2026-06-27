@@ -42,6 +42,7 @@ import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
+import { useCovertSOS } from '@/hooks/useCovertSOS';
 import { useLocationHistory } from '@/hooks/useLocationHistory';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import LoadingState from '@/components/ui-system/LoadingState';
@@ -139,6 +140,13 @@ function DashboardHome({ user, consultations, language }) {
 
   // GPS breadcrumb trail — captures every 30s or 50m; syncs to Base44 when online
   useLocationHistory({ caseId: latestActive?.id, enabled: !!isSolo });
+
+  // Covert SOS — 5-tap or keyword trigger, silent, no visual feedback
+  useCovertSOS({
+    caseId:          latestActive?.id,
+    currentLocation: currentLocation,
+    enabled:         !!user,
+  });
 
   // MedGuard Pattern Intelligence — silent behavioral fingerprint tracking
   const { nudge, dismissNudge, isLearning, resetFingerprint, profile: behavioralProfile } = useBehavioralTracking({
