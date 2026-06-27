@@ -5,14 +5,15 @@ import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
 
+const BASE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/';
+
 const PROCEDURES = [
   {
     name: 'Dental Implants',
     tagline: 'Permanent smile. Life changed.',
     save: 'Save up to $12,000',
     destinations: ['🇨🇴', '🇲🇽', '🇹🇷'],
-    // Happy confident woman showing perfect white teeth after implants
-    image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=480&h=640&fit=crop&q=80',
+    image: BASE + '2487f91b8_generated_image.png',
     color: '#22c55e',
   },
   {
@@ -20,8 +21,7 @@ const PROCEDURES = [
     tagline: 'The smile you were born to have.',
     save: 'Save up to $8,000',
     destinations: ['🇹🇷', '🇨🇴', '🇧🇷'],
-    // Woman with beautiful bright white veneer smile
-    image: 'https://images.unsplash.com/photo-1543342384-1f1350e27861?w=480&h=640&fit=crop&q=80',
+    image: BASE + '591289dd5_generated_image.png',
     color: GOLD,
   },
   {
@@ -29,8 +29,7 @@ const PROCEDURES = [
     tagline: 'Natural. Balanced. You.',
     save: 'Save up to $6,000',
     destinations: ['🇹🇷', '🇨🇴', '🇮🇳'],
-    // Elegant woman profile — refined facial features
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=480&h=640&fit=crop&q=80',
+    image: BASE + '4ff2fab82_generated_image.png',
     color: '#a855f7',
   },
   {
@@ -38,8 +37,7 @@ const PROCEDURES = [
     tagline: 'Full arch. Full confidence.',
     save: 'Save up to $20,000',
     destinations: ['🇲🇽', '🇹🇷', '🇨🇴'],
-    // Mature person with full bright confident smile
-    image: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=480&h=640&fit=crop&q=80',
+    image: BASE + '835718b01_generated_image.png',
     color: '#60a5fa',
   },
   {
@@ -47,8 +45,7 @@ const PROCEDURES = [
     tagline: 'Confidence, restored.',
     save: 'Save up to $15,000',
     destinations: ['🇧🇷', '🇨🇴', '🇹🇷'],
-    // Elegant woman looking youthful and radiant
-    image: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=480&h=640&fit=crop&q=80',
+    image: BASE + '9b31409d1_generated_image.png',
     color: '#ec4899',
   },
   {
@@ -56,8 +53,7 @@ const PROCEDURES = [
     tagline: 'The body you worked for.',
     save: 'Save up to $10,000',
     destinations: ['🇧🇷', '🇻🇪', '🇨🇴'],
-    // Toned flat midsection — body confidence result
-    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=480&h=640&fit=crop&q=80',
+    image: BASE + '8493029e5_generated_image.png',
     color: '#f97316',
   },
   {
@@ -65,8 +61,7 @@ const PROCEDURES = [
     tagline: 'One journey. Total transformation.',
     save: 'Save up to $18,000',
     destinations: ['🇹🇷', '🇲🇽', '🇧🇷'],
-    // Woman with radiant full smile — total transformation
-    image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=480&h=640&fit=crop&q=80',
+    image: BASE + '8018f783e_generated_image.png',
     color: GOLD,
   },
 ];
