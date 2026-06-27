@@ -21,7 +21,7 @@ const STAGES = [
     label: 'Hotel Check-in',
     icon: '🏨',
     sub: 'Boutique. Warm welcome.',
-    photo: 'https://images.unsplash.com/photo-1551882547-ff40c599fb6c?w=700&h=220&fit=crop&q=80',
+    photo: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&h=220&fit=crop&q=80',
     overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(0,40,100,0.30) 100%)',
     accent: '#60A5FA',
   },
