@@ -5,6 +5,7 @@ import { useNotification } from '@/context/NotificationContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
+import { isSystemPaused } from '@/lib/systemPause';
 
 const DRIVER_ETA_POLL_MS = 45 * 1000;
 const COUNTRY_STORAGE_KEY = 'morales_last_notified_country';
@@ -358,6 +359,89 @@ export default function GlobalEventBroadcaster({ user }) {
     const interval = setInterval(checkQuake, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [activeTrip?.id, currentLocation?.lat]);
+
+  // ── EVN-iQ400: Area Safety Monitor ─────────────────────────────────────────
+  // Fires when the patient moves >400m from the last assessed point during an
+  // active trip. Waits 30s before assessing (avoids alerts for drive-throughs).
+  // Uses Nominatim to name the neighbourhood, then InvokeLLM to assess risk.
+  // Results are cached in the session — each unique area is only assessed once.
+  const lastAssessedRef  = useRef(null);  // { lat, lng }
+  const areaRiskCacheRef = useRef({});    // area key → 'LOW'|'MODERATE'|'HIGH'
+
+  useEffect(() => {
+    if (!activeTrip || !currentLocation?.lat || !currentLocation?.lng) return;
+    if (!ACTIVE_TRAVEL_PHASES.has(activeTrip.trip_phase)) return;
+
+    // Compute distance from last assessed point
+    const last = lastAssessedRef.current;
+    if (last) {
+      const R = 6371000;
+      const dLat = (currentLocation.lat - last.lat) * Math.PI / 180;
+      const dLng = (currentLocation.lng - last.lng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2
+        + Math.cos(last.lat * Math.PI / 180) * Math.cos(currentLocation.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      const distM = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      if (distM < 400) return; // not moved enough
+    }
+
+    // Require online and system not paused (LLM call consumes credits)
+    if (!navigator.onLine || isSystemPaused()) return;
+
+    const lat = currentLocation.lat;
+    const lng = currentLocation.lng;
+
+    // Wait 30s — if user is still there, assess the area
+    const timer = setTimeout(async () => {
+      try {
+        // Reverse-geocode to neighbourhood level (zoom=10)
+        const geoRes  = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&zoom=10`,
+          { headers: { 'Accept-Language': 'en', 'User-Agent': 'MoralesMedical/1.0' }, signal: AbortSignal.timeout(6000) }
+        );
+        const geoData = await geoRes.json();
+
+        const suburb  = geoData.address?.suburb || geoData.address?.neighbourhood || geoData.address?.city_district || '';
+        const city    = geoData.address?.city || geoData.address?.town || geoData.address?.village || '';
+        const nation  = geoData.address?.country || '';
+        const areaKey = `${suburb}_${city}`.toLowerCase().replace(/\W+/g, '_').slice(0, 60);
+
+        // Skip if already assessed this session
+        if (areaRiskCacheRef.current[areaKey]) return;
+        lastAssessedRef.current = { lat, lng };
+
+        // Ask the LLM to assess safety for this specific area
+        const res = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are a travel safety AI for Morales Medical Concierge.\nAssess safety for an international medical tourist who is currently in: "${suburb ? suburb + ', ' : ''}${city}, ${nation}".\nRespond with compact JSON only (no markdown fences):\n{"risk":"LOW","reason":"one factual sentence under 18 words","tip":"one protective action under 12 words"}`,
+          response_type: 'text',
+        });
+
+        const text   = typeof res === 'string' ? res : (res?.result || res?.text || '');
+        const clean  = text.replace(/```[\w]*\n?|\n?```/g, '').trim();
+        const parsed = JSON.parse(clean);
+
+        areaRiskCacheRef.current[areaKey] = parsed.risk;
+
+        if (parsed.risk === 'HIGH' || parsed.risk === 'MODERATE') {
+          showNotification({
+            type:     'alert',
+            icon:     parsed.risk === 'HIGH' ? '🔴' : '🟡',
+            title:    `EVN-iQ400 · ${parsed.risk === 'HIGH' ? 'High-Risk Area Detected' : 'Area Advisory'}`,
+            body:     `${parsed.reason || ''} ${parsed.tip || ''}`.trim(),
+            duration: parsed.risk === 'HIGH' ? 0 : 12000,
+            position: 'top',
+            action: parsed.risk === 'HIGH' ? {
+              label:   'Contact Concierge →',
+              onPress: () => { window.location.href = '/emergency'; },
+            } : null,
+          });
+        }
+      } catch (_) {
+        // Silent — network errors and LLM failures are non-fatal
+      }
+    }, 30_000);
+
+    return () => clearTimeout(timer);
+  }, [currentLocation?.lat, currentLocation?.lng]);
 
   return null; // pure side-effect component
 }
