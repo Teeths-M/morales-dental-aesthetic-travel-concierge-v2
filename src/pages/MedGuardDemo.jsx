@@ -22,7 +22,7 @@ const BLUE  = '#3b82f6';
 
 const THEON = {
   name: 'Theon',
-  avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Theon&backgroundColor=0f172a&skinColor=f2d3b1',
+  avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=faces&q=80',
   tag: 'Night owl · Reliable · Active',
   color: BLUE,
   fp: {
@@ -38,7 +38,7 @@ const THEON = {
 
 const MARIA = {
   name: 'Maria',
-  avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Maria&backgroundColor=0f172a&skinColor=ffd5c4',
+  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces&q=80',
   tag: 'Early bird · Sporadic · Flexible',
   color: '#a855f7',
   fp: {
