@@ -20,8 +20,8 @@ const CONTENT = {
   },
   nonmedical: {
     headline:    'THE WORLD,\nEFFORTLESSLY YOURS.',
-    subheadline: 'Private jets. Exclusive hotels. Personal companions.',
-    body:        'Travel designed entirely around you — seamlessly integrated, impeccably executed.',
+    subheadline: '24/7 protection — even at 35,000 feet.',
+    body:        'Wherever you land, Morales is already there. Verified transfers, vetted hotels, personal companions, and a safety net that follows you across every border and time zone.',
     cta:         { label: 'Plan My Journey', path: '/travel-concierge' },
   },
 };
