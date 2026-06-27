@@ -161,8 +161,6 @@ export const procedureTitleToEnum = {
   'Mommy Makeover': 'other',
   'Brazilian Butt Lift': 'other',
   'BBL': 'other',
-  'Arm Lift': 'other',
-  'Thigh Lift': 'other',
   // Non-surgical
   'Botox': 'other',
   'Dermal Fillers': 'other',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
+import { COUNTRY_ISO, getRiskLevel } from '@/hooks/useEnvironmentalIntelligence';
 
 const GOLD = '#D4AF37';
 
@@ -42,7 +43,7 @@ function SignalDot({ color, size = 10 }) {
 }
 
 // ── Patient card ───────────────────────────────────────────────────────────
-function PatientCard({ c, medguardScore, onContact }) {
+function PatientCard({ c, medguardScore, evnScore, onContact }) {
   const riskLevel = medguardScore >= 81 ? 'CRITICAL' : medguardScore >= 61 ? 'ALERT' : medguardScore >= 31 ? 'WATCH' : 'SAFE';
   const risk      = RISK_CONFIG[riskLevel];
   const RiskIcon  = risk.icon;
@@ -103,14 +104,24 @@ function PatientCard({ c, medguardScore, onContact }) {
           ))}
         </div>
 
-        {/* Risk badge + action */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
-            style={{ background: risk.bg, border: `1px solid ${risk.color}30` }}>
-            <RiskIcon className="w-3 h-3" style={{ color: risk.color }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: risk.color }}>
-              {risk.label}
-            </span>
+        {/* Risk badge + EVN + action */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
+              style={{ background: risk.bg, border: `1px solid ${risk.color}30` }}>
+              <RiskIcon className="w-3 h-3" style={{ color: risk.color }} />
+              <span className="text-[9px] font-bold uppercase" style={{ color: risk.color }}>{risk.label}</span>
+            </div>
+            {evnScore != null && (() => {
+              const evnLvl = getRiskLevel(evnScore);
+              return (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                  style={{ background: evnLvl.bg, border: `1px solid ${evnLvl.border}` }}>
+                  <Globe className="w-2.5 h-2.5" style={{ color: evnLvl.color }} />
+                  <span className="text-[9px] font-bold" style={{ color: evnLvl.color }}>ENV {evnScore}</span>
+                </div>
+              );
+            })()}
           </div>
           {c.client_phone && (
             <a href={`tel:${c.client_phone}`}
@@ -201,6 +212,37 @@ export default function AdminMissionControl() {
   const inTransit = activeCases.filter((c) => ACTIVE_TRAVEL_PHASES.has(c.trip_phase));
   const countries  = [...new Set(activeCases.map((c) => c.procedure_country).filter(Boolean))];
 
+  // ── EVN-iQ400 batch fetch — country advisory scores for all active destinations ──
+  const [evnScores, setEvnScores] = useState({}); // iso2 → { score, riskScore, source }
+  useEffect(() => {
+    if (!countries.length) return;
+    (async () => {
+      try {
+        const res  = await fetch('https://www.travel-advisory.info/api', { signal: AbortSignal.timeout(8000) });
+        const json = await res.json();
+        const out  = {};
+        countries.forEach(name => {
+          const iso2  = COUNTRY_ISO[name];
+          if (!iso2) return;
+          const entry = json?.data?.[iso2];
+          if (!entry) return;
+          const score     = entry.advisory?.score ?? 2;
+          const riskScore = Math.round(((Math.max(1, Math.min(5, score)) - 1) / 4) * 85 + 5);
+          out[iso2] = { name, iso2, score, riskScore, source: 'live' };
+        });
+        setEvnScores(out);
+      } catch {
+        // Offline — set moderate baseline for all
+        const out = {};
+        countries.forEach(name => {
+          const iso2 = COUNTRY_ISO[name];
+          if (iso2) out[iso2] = { name, iso2, score: 2, riskScore: 33, source: 'offline' };
+        });
+        setEvnScores(out);
+      }
+    })();
+  }, [countries.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="min-h-screen" style={{ background: '#060B16' }}>
 
@@ -248,6 +290,33 @@ export default function AdminMissionControl() {
           ))}
         </div>
 
+        {/* ── EVN-iQ400 Global Intelligence Ticker ── */}
+        {Object.keys(evnScores).length > 0 && (
+          <div style={{ background: '#080F1C', border: `1px solid ${GOLD}25`, borderRadius: 16, padding: '12px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Globe style={{ width: 13, height: 13, color: GOLD }} />
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: GOLD, textTransform: 'uppercase' }}>
+                EVN-iQ400 · Environmental Intelligence · Active Destinations
+              </span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 4 }}>
+                {Object.values(evnScores)[0]?.source === 'live' ? '🟢 Live' : '🟡 Offline cache'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {Object.values(evnScores).sort((a,b) => b.riskScore - a.riskScore).map(ev => {
+                const lvl = getRiskLevel(ev.riskScore);
+                return (
+                  <div key={ev.iso2} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 10, background: lvl.bg, border: `1px solid ${lvl.border}` }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: lvl.color }}>{ev.riskScore}</span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>{ev.name}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: lvl.color }}>{lvl.emoji} {lvl.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Main grid: patient cards + feed ── */}
         <div className="grid lg:grid-cols-[1fr_320px] gap-6">
 
@@ -284,9 +353,14 @@ export default function AdminMissionControl() {
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {/* Sort: Critical first, then Alert, then Watch, then Safe */}
                 {[...activeCases].sort((a, b) => (medguardScores[b.id] || 0) - (medguardScores[a.id] || 0))
-                  .map((c) => (
-                    <PatientCard key={c.id} c={c} medguardScore={medguardScores[c.id] || 12} onContact={() => {}} />
-                  ))}
+                  .map((c) => {
+                    const iso2    = COUNTRY_ISO[c.procedure_country];
+                    const evnData = iso2 ? evnScores[iso2] : null;
+                    return (
+                      <PatientCard key={c.id} c={c} medguardScore={medguardScores[c.id] || 12}
+                        evnScore={evnData?.riskScore ?? null} onContact={() => {}} />
+                    );
+                  })}
               </div>
             )}
           </div>
