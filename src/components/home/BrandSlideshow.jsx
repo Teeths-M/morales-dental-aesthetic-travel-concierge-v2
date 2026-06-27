@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ShieldCheck, Headphones, Star, Heart, Globe, Lock, Plane, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShieldCheck, Star, Heart, Globe, Lock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -9,56 +9,88 @@ const slides = [
     icon: Sparkles,
     eyebrow: 'Our Promise',
     headline: 'Heal Beautifully.\nTravel Confidently.',
-    body: 'Premium care. Expert guidance. A journey designed entirely around you.',
+    body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
     color: 'from-accent/10 to-transparent',
   },
   {
     icon: ShieldCheck,
-    eyebrow: 'SAFE-T 4LIFE™ Protected Journey',
-    headline: 'Intelligent Guidance\nAt Every Step',
-    body: 'Safety awareness and careful coordination throughout your entire treatment journey — before you leave home to after you return.',
+    eyebrow: 'Safe-T4life™ Protected Journey',
+    headline: '9 Checkpoints.\nZero Gaps.',
+    body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically. No other platform does this.',
     color: 'from-primary/10 to-transparent',
   },
+
+  // ── Destination flashcards — slow enough to read ──────────────────────────
   {
-    icon: Headphones,
-    eyebrow: 'End-to-End Concierge Care',
-    headline: 'We Handle Every Detail\nSo You Can Focus on Healing',
-    body: 'Your health, comfort, and peace of mind — handled for you from start to finish.',
+    icon: Globe,
+    eyebrow: '🇨🇴 Why Colombia?',
+    headline: 'World-Class Dentistry.\nCaribbean Warmth.',
+    body: 'Bogotá and Medellín are home to elite, internationally accredited clinics. Full smile makeovers at 65% less than the US. English-speaking surgeons. Morales partners vetted personally.',
+    color: 'from-green-500/10 to-transparent',
+    flag: '🇨🇴',
+  },
+  {
+    icon: Globe,
+    eyebrow: '🇹🇭 Why Thailand?',
+    headline: 'Asia\'s Medical\nTourism Capital.',
+    body: 'Bangkok\'s JCI-accredited hospitals treat 2 million international patients yearly. Dental implants from $600 vs $4,000 in the US. Recover in paradise. Fly home transformed.',
+    color: 'from-orange-500/10 to-transparent',
+    flag: '🇹🇭',
+  },
+  {
+    icon: Globe,
+    eyebrow: '🇹🇷 Why Turkey?',
+    headline: 'Europe\'s #1 Medical\nTourism Destination.',
+    body: 'Istanbul has 32 JCI-certified hospitals — more than any city in Europe. Rhinoplasty, veneers, hair restoration at half the European price. Surgeons trained in London and Paris.',
+    color: 'from-red-500/10 to-transparent',
+    flag: '🇹🇷',
+  },
+  {
+    icon: Globe,
+    eyebrow: '🇻🇪 Why Venezuela?',
+    headline: 'Caribbean Recovery.\nWorld-Class Aesthetic Surgeons.',
+    body: 'Venezuela trains some of Latin America\'s most celebrated aesthetic surgeons. Warm Caribbean climate ideal for post-op recovery. Morales partners are internationally certified and personally screened.',
+    color: 'from-yellow-500/10 to-transparent',
+    flag: '🇻🇪',
+  },
+  {
+    icon: Globe,
+    eyebrow: '🇧🇷 Why Brazil?',
+    headline: 'The Plastic Surgery\nCapital of the World.',
+    body: 'Brazil performs more cosmetic procedures per capita than anywhere on earth. Rio and São Paulo surgeons have decade-long international reputations. Recovery on the world\'s most beautiful beaches.',
+    color: 'from-emerald-500/10 to-transparent',
+    flag: '🇧🇷',
+  },
+  {
+    icon: Globe,
+    eyebrow: '🇲🇽 Why Mexico?',
+    headline: 'One Million Americans\nCross the Border for Dental Care.',
+    body: 'Los Algodones alone has 350 dental clinics in 4 city blocks. Savings of $5,000–$20,000 on full-mouth restorations. Morales coordinates everything — you just show up and smile.',
+    color: 'from-red-500/10 to-transparent',
+    flag: '🇲🇽',
+  },
+  {
+    icon: Globe,
+    eyebrow: '🇮🇳 Why India?',
+    headline: 'Elite Care.\nFraction of the Cost.',
+    body: 'Mumbai and Chennai have hospitals that rival the best in the UK and USA at 80% lower cost. Heart surgery, dental implants, knee replacements — all with JCI-accredited surgeons.',
+    color: 'from-orange-500/10 to-transparent',
+    flag: '🇮🇳',
+  },
+
+  // ── Trust slides ───────────────────────────────────────────────────────────
+  {
+    icon: Lock,
+    eyebrow: 'Secure & Confidential',
+    headline: 'Your Privacy Is\nOur Priority.',
+    body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
-  },
-  {
-    icon: Star,
-    eyebrow: 'World-Class Experts',
-    headline: 'Verified Specialists &\nAccredited Clinics',
-    body: 'Partnered with board-certified professionals and accredited clinics you can trust.',
-    color: 'from-primary/10 to-transparent',
   },
   {
     icon: Heart,
     eyebrow: 'Human Support. Always.',
     headline: 'Real People.\n24/7 Concierge Support.',
-    body: 'Before, during, and after your journey — our team is with you every step of the way.',
-    color: 'from-accent/10 to-transparent',
-  },
-  {
-    icon: Globe,
-    eyebrow: 'Why Margarita Island?',
-    headline: 'Recover. Restore.\nRejuvenate in Caribbean Paradise.',
-    body: 'Margarita Island, Venezuela — stunning beaches, warm hospitality, and exceptional care. The perfect place to heal, relax, and enjoy renewal.',
-    color: 'from-primary/10 to-transparent',
-  },
-  {
-    icon: Lock,
-    eyebrow: 'Secure & Confidential',
-    headline: 'Your Privacy Is\nOur Priority.',
-    body: 'Your information is always protected. World-class treatments at a fraction of the cost compared to the US and Europe.',
-    color: 'from-accent/10 to-transparent',
-  },
-  {
-    icon: Plane,
-    eyebrow: 'Seamless Travel Coordination',
-    headline: 'Flights, Stays, Transfers\n— All Handled for You.',
-    body: 'Multilingual team. English, Spanish, and more. Easy flights, welcoming environment, and a hassle-free travel experience.',
+    body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
   },
 ];
@@ -79,7 +111,7 @@ export default function BrandSlideshow() {
 
   useEffect(() => {
     if (paused) return;
-    const timer = setInterval(next, 5000);
+    const timer = setInterval(next, 6500);
     return () => clearInterval(timer);
   }, [paused, next]);
 
