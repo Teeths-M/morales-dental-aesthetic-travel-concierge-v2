@@ -14,7 +14,7 @@ function QRImg({ value, size = 140, dark = '#060B16' }) {
   const color = dark.replace('#', '');
   return (
     <img
-      src={`https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}&choe=UTF-8&chld=M|1&chco=${color}`}
+      src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&color=${color}&bgcolor=ffffff&margin=2&format=png`}
       width={size} height={size}
       alt="QR code"
       style={{ display: 'block', borderRadius: 8 }}
