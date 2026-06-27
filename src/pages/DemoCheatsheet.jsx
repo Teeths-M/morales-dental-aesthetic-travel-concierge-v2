@@ -89,8 +89,8 @@ export default function DemoCheatsheet() {
     <div style={{ minHeight: '100vh', background: '#060B16', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px 48px' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        {/* Header — hidden on print */}
+        <div id="cs-nav" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <Link to="/demo" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
             <ArrowLeft style={{ width: 14, height: 14 }} /> Demo
           </Link>
@@ -101,7 +101,14 @@ export default function DemoCheatsheet() {
           </span>
         </div>
 
-        <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(212,175,55,0.07)', border: `1px solid ${GOLD}25`, marginBottom: 28 }}>
+        {/* Print-only title */}
+        <div id="cs-print-title" style={{ display: 'none' }}>
+          <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#060B16' }}>Morales — Presenter Cheat Sheet</h1>
+          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#475569' }}>moralesdentalandaesthetics.com · Pitch day reference card</p>
+          <hr style={{ borderColor: '#D4AF37', marginBottom: 16 }} />
+        </div>
+
+        <div id="cs-hint" style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(212,175,55,0.07)', border: `1px solid ${GOLD}25`, marginBottom: 28 }}>
           <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
             Open this on your phone before the pitch. Every link, shortcut, and talking point in one place.
             Works offline once loaded.
@@ -226,11 +233,47 @@ export default function DemoCheatsheet() {
           </div>
         </Section>
 
+        {/* Print button */}
+        <div id="cs-print-btn" style={{ textAlign: 'center', margin: '8px 0 20px' }}>
+          <button onClick={() => window.print()}
+            style={{ padding: '8px 22px', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(255,255,255,0.06)', color: '#94a3b8', border: '1px solid #2A3F4A' }}>
+            🖨 Print as A4 Backup Card
+          </button>
+        </div>
+
         <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.15)', marginTop: 8 }}>
           Morales Dental & Aesthetic Travel Concierge · Presenter Use Only
         </p>
 
       </div>
+
+      <style>{`
+        @media print {
+          body { background: #fff !important; color: #060B16 !important; margin: 0; }
+          #cs-nav, #cs-hint, #cs-print-btn { display: none !important; }
+          #cs-print-title { display: block !important; }
+
+          /* Reset all card backgrounds to white */
+          div[style] { background: #fff !important; border-color: #e2e8f0 !important; box-shadow: none !important; }
+          p, span, code, em, strong { color: #1e293b !important; }
+          h2 { color: #060B16 !important; }
+
+          /* Keep QR images */
+          img { max-width: 110px !important; }
+
+          /* Prevent awkward splits */
+          section, [style*="marginBottom: 28"] { page-break-inside: avoid; }
+
+          /* Keyboard badges */
+          kbd { background: #f1f5f9 !important; color: #334155 !important; border: 1px solid #cbd5e1 !important; }
+
+          /* Hide copy buttons on print — URLs are already shown */
+          button { display: none !important; }
+
+          /* Gold accents → dark print-friendly */
+          [style*="#D4AF37"] { color: #92400e !important; border-color: #92400e !important; }
+        }
+      `}</style>
     </div>
   );
 }
