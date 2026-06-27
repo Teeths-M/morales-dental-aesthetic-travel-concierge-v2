@@ -4,7 +4,7 @@
  * Shows all 5 key Morales email templates as live rendered previews.
  * Public, no login required. Built for buildathon judges.
  */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -211,13 +211,22 @@ const EMAILS = [
 const DEMO_EMAIL = 'theonmorales@gmail.com';
 
 export default function EmailShowcase() {
-  const [active,   setActive]   = useState('golden_m');
-  const [sending,  setSending]  = useState(false);
-  const [sent,     setSent]     = useState(null); // template id of last sent
-  const [sendErr,  setSendErr]  = useState(false);
+  const [active,      setActive]      = useState('golden_m');
+  const [sending,     setSending]     = useState(false);
+  const [sent,        setSent]        = useState(null); // template id of last sent
+  const [sendErr,     setSendErr]     = useState(false);
+  const [cooldownMsg, setCooldownMsg] = useState(null);
+  const cooldowns = useRef({});
   const current = EMAILS.find(e => e.id === active);
 
   async function sendToInbox() {
+    const lastSent  = cooldowns.current[active] ?? 0;
+    const remaining = Math.ceil((10_000 - (Date.now() - lastSent)) / 1000);
+    if (remaining > 0) {
+      setCooldownMsg(`Wait ${remaining}s before resending`);
+      setTimeout(() => setCooldownMsg(null), 2500);
+      return;
+    }
     setSending(true);
     setSent(null);
     setSendErr(false);
@@ -226,6 +235,7 @@ export default function EmailShowcase() {
         to:          DEMO_EMAIL,
         template_id: active,
       });
+      cooldowns.current[active] = Date.now();
       setSent(active);
       setTimeout(() => setSent(null), 5000);
     } catch {
@@ -282,30 +292,38 @@ export default function EmailShowcase() {
                 <div style={{ flex: 1 }}><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Subject</span><br /><span style={{ fontSize: 13, color: GOLD, fontWeight: 600 }}>{current.subject}</span></div>
               </div>
               {/* Send to inbox CTA */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-                  {sent === active ? `✓ Sent to ${DEMO_EMAIL}` : sendErr ? '✗ Send failed — check System Pause' : `Send a live version to ${DEMO_EMAIL}`}
-                </span>
-                <button
-                  onClick={sendToInbox}
-                  disabled={sending}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 7,
-                    padding: '8px 18px', borderRadius: 99,
-                    background: sent === active ? 'rgba(34,197,94,0.15)' : sendErr ? 'rgba(239,68,68,0.12)' : GOLD,
-                    color: sent === active ? '#22c55e' : sendErr ? '#ef4444' : '#060B16',
-                    border: `1px solid ${sent === active ? 'rgba(34,197,94,0.35)' : sendErr ? 'rgba(239,68,68,0.35)' : 'transparent'}`,
-                    fontSize: 12, fontWeight: 700, cursor: sending ? 'wait' : 'pointer',
-                    opacity: sending ? 0.7 : 1, transition: 'all 0.2s',
-                  }}
-                >
-                  {sent === active
-                    ? <><CheckCircle2 style={{ width: 13, height: 13 }} /> Delivered</>
-                    : sending
-                      ? 'Sending…'
-                      : <><Send style={{ width: 13, height: 13 }} /> Send to My Inbox</>
-                  }
-                </button>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ fontSize: 12, color: cooldownMsg ? '#f59e0b' : sent === active ? '#22c55e' : sendErr ? '#ef4444' : 'rgba(255,255,255,0.4)' }}>
+                    {cooldownMsg ?? (sent === active ? `✓ Sent to ${DEMO_EMAIL}` : sendErr ? '✗ Send failed — resume System Pause first' : `Send a live version to ${DEMO_EMAIL}`)}
+                  </span>
+                  <button
+                    onClick={sendToInbox}
+                    disabled={sending}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7,
+                      padding: '8px 18px', borderRadius: 99,
+                      background: sent === active ? 'rgba(34,197,94,0.15)' : sendErr ? 'rgba(239,68,68,0.12)' : cooldownMsg ? 'rgba(245,158,11,0.12)' : GOLD,
+                      color: sent === active ? '#22c55e' : sendErr ? '#ef4444' : cooldownMsg ? '#f59e0b' : '#060B16',
+                      border: `1px solid ${sent === active ? 'rgba(34,197,94,0.35)' : sendErr ? 'rgba(239,68,68,0.35)' : cooldownMsg ? 'rgba(245,158,11,0.35)' : 'transparent'}`,
+                      fontSize: 12, fontWeight: 700, cursor: sending ? 'wait' : 'pointer',
+                      opacity: sending ? 0.7 : 1, transition: 'all 0.2s',
+                    }}
+                  >
+                    {sent === active
+                      ? <><CheckCircle2 style={{ width: 13, height: 13 }} /> Delivered</>
+                      : sending
+                        ? 'Sending…'
+                        : <><Send style={{ width: 13, height: 13 }} /> Send to My Inbox</>
+                    }
+                  </button>
+                </div>
+                <p style={{ margin: '8px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.22)' }}>
+                  ⚠️ System Pause blocks sends.{' '}
+                  <Link to="/admin" style={{ color: 'rgba(212,175,55,0.55)', textDecoration: 'none' }}>
+                    Resume from Admin
+                  </Link>{' '}before the demo.
+                </p>
               </div>
             </div>
             <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.10)', height: 560 }}>
