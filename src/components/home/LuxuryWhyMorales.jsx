@@ -1,29 +1,29 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Shield, Activity, Smile } from 'lucide-react';
+import { Users, Shield, Brain, WifiOff } from 'lucide-react';
 
 const GOLD = '#D4AF37';
 
 const features = [
   {
-    icon: Users,
-    title: 'Human Concierge',
-    desc: 'Real people guiding you every step of the way.',
-  },
-  {
     icon: Shield,
-    title: 'Safe Connections',
-    desc: 'Only vetted specialists and accredited facilities.',
+    title: '9-Point Safety Spine',
+    desc: 'Every checkpoint digitally confirmed — driver, hotel, clinic, companion, return. One missed check-in triggers automatic escalation: SMS → call → security dispatch → police.',
   },
   {
-    icon: Activity,
-    title: 'Better Outcomes',
-    desc: 'Personalized care plans for optimal results.',
+    icon: Users,
+    title: 'Your Family Watches Live',
+    desc: 'Share a zero-login link before you fly. They see every checkpoint confirmed in real time — like a flight tracker, built entirely for your surgery journey.',
   },
   {
-    icon: Smile,
-    title: 'Stress-Free Experience',
-    desc: 'We manage the details. You focus on you.',
+    icon: Brain,
+    title: 'MedGuard™ Pattern Intelligence',
+    desc: 'Our AI learns your habits — activity, sleep, check-in rhythm. It detects risk before you even feel it, and dispatches help automatically. Invisible. Always on.',
+  },
+  {
+    icon: WifiOff,
+    title: 'Works Without Internet',
+    desc: 'No signal. No wifi. Airplane mode. Morales still protects you — offline GPS cache, queued emergency SOS, encrypted PIN vault. Built for the worst-case scenario.',
   },
 ];
 
@@ -48,9 +48,11 @@ export default function LuxuryWhyMorales() {
             </p>
             <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-6" style={{ letterSpacing: '-0.02em' }}>
               More Than Travel.<br />
-              It's{' '}
-              <span style={{ color: GOLD, fontStyle: 'italic' }}>Peace of Mind.</span>
+              <span style={{ color: GOLD, fontStyle: 'italic' }}>Protection That Never Sleeps.</span>
             </h2>
+            <p className="text-white/60 text-[16px] leading-[1.8] font-light mt-5">
+              No other medical travel platform dispatches security when you miss a check-in, tracks you offline, or gives your family a live window into your journey. Morales does all three.
+            </p>
             <div className="w-10 h-[2px] mt-7" style={{ background: GOLD }} />
           </motion.div>
 

@@ -9,26 +9,26 @@ const steps = [
   {
     number: '01',
     icon: MessageCircle,
-    title: 'Consultation',
-    desc: 'Share your goals. We listen and guide you with expert advice.',
+    title: 'Tell Us Your Goal',
+    desc: 'One consultation. We match you with a verified doctor, pre-screen your health, and design your full journey — flights, hotel, companion, and safety plan included.',
   },
   {
     number: '02',
     icon: Users,
-    title: 'Specialist Matching',
-    desc: 'We connect you with carefully vetted specialists.',
+    title: 'Everything Confirmed',
+    desc: 'Your driver is booked. Your doctor is verified. Your family receives a live tracking link. Every detail locked in before you leave home.',
   },
   {
     number: '03',
     icon: Plane,
-    title: 'Travel & Stay',
-    desc: 'Flights, accommodation and transport. All arranged for you.',
+    title: '9 Checkpoints. Zero Gaps.',
+    desc: 'From home pickup to clinic arrival, every handshake is digitally confirmed. Miss one — and our system escalates automatically: SMS, call, security, authorities.',
   },
   {
     number: '04',
     icon: Heart,
-    title: 'Recovery & Return',
-    desc: "Personalized recovery support until you're safely back home.",
+    title: 'Home Safe. Golden M Earned.',
+    desc: 'Your final checkpoint confirmed. The Golden M is yours — proof that Morales walked every step beside you, from your front door to your safe return.',
   },
 ];
 
@@ -47,11 +47,11 @@ export default function LuxuryHowItWorks() {
               HOW IT WORKS
             </p>
             <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-5" style={{ letterSpacing: '-0.02em' }}>
-              Your Journey,<br />Simplified
+              Your Journey,<br />Protected
             </h2>
             <div className="w-10 h-[2px] mb-6" style={{ background: GOLD }} />
             <p className="text-white/70 text-[17px] leading-[1.75] mb-9" style={{ fontWeight: 300 }}>
-              We make world-class care accessible and stress-free.
+              Most platforms book you a flight and a doctor. Morales builds a 9-point safety spine around your entire journey — from your front door to your safe return home.
             </p>
             <Link
               to="/how-it-works"
