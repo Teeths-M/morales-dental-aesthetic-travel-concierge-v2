@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shield, AlertTriangle, Wifi, WifiOff, Plane, Globe, ArrowLeft, Play, RotateCcw, MapPin, Phone } from 'lucide-react';
+import { Shield, Wifi, WifiOff, Plane, Globe, ArrowLeft, RotateCcw, MapPin, Phone } from 'lucide-react';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
