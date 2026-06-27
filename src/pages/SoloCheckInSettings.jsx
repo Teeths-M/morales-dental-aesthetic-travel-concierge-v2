@@ -174,13 +174,15 @@ export default function SoloCheckInSettings() {
 
       setAllCheckIns(fetched);
       setCheckIns(fetched.filter(c => !['acknowledged', 'resolved'].includes(c.status)));
+    } catch (_) {
+      // Entity unavailable or network error — stay in safe empty state
     } finally {
       setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    if (user) loadCheckIns(user);
+    if (user) loadCheckIns(user).catch(() => {});
   }, [user]);
 
   useEffect(() => {
