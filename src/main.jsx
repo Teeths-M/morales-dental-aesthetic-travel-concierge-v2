@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/react'
 import App from '@/App.jsx'
 import '@/index.css'
-import { syncPauseFromServer } from '@/lib/systemPause'
+import { syncPauseFromServer, isSystemPaused, applyPauseIntercept } from '@/lib/systemPause'
 
 // ── Sentry Error Tracking (Production Only) ──────────────────────────────────
 
@@ -74,6 +74,19 @@ async function mountApp() {
 }
 
 mountApp();
+
+// ── Mobile/Tablet: re-sync pause state every time the app returns to foreground ──
+// Scenario: admin pauses on laptop while phone is backgrounded. Without this,
+// the phone has no way to learn about the pause until the next cold start.
+// visibilitychange fires on iOS Safari + Android Chrome when the user switches
+// back to the browser tab — zero battery cost, instant protection.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  // 1. Belt-and-suspenders: re-apply from localStorage instantly (works offline)
+  if (isSystemPaused()) applyPauseIntercept();
+  // 2. Then re-sync from server to pick up changes made on other devices
+  syncPauseFromServer().catch(() => {});
+});
 
 // Register service worker in production for offline tile caching + app shell
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

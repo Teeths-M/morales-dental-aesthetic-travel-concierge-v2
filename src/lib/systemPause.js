@@ -51,6 +51,9 @@ export function applyPauseIntercept() {
   // Wrap the ENTIRE integrations object with a Proxy — catches InvokeLLM,
   // InvokeVision, GenerateImage, SendEmail, and any future integration method
   // without needing to patch each one individually.
+  // Re-entrant safe: if already proxied (_originalIntegrations is set), skip.
+  // But if base44.integrations was unavailable on first call (lazy SDK init),
+  // retry now that it may be populated.
   try {
     if (!_originalIntegrations && base44.integrations) {
       _originalIntegrations = base44.integrations;
@@ -135,7 +138,10 @@ export async function syncPauseFromServer() {
     if (!record) return;
     const serverPaused = record.requested_value?.paused === true;
     if (serverPaused) {
-      // Server says paused — enforce on this device
+      // Server says paused — enforce on this device.
+      // Always call applyPauseIntercept() here even if already paused:
+      // on mobile the Proxy may not have been applied yet if base44.integrations
+      // was unavailable at cold-start time or if the app returned from background.
       setLocalPaused(true);
       applyPauseIntercept();
     }
