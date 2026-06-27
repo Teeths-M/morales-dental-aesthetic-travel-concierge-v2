@@ -17,8 +17,9 @@ const CONFIG_KEY   = 'system_paused';
 const ADMIN_EMAIL  = 'admin@moralesmedical.com';
 
 // Stash the real methods so we can restore them on resume
-let _originalInvoke        = null;
-let _originalIntegrations  = null;
+let _originalInvoke              = null;
+let _originalIntegrations        = null;
+let _originalServiceIntegrations = null;
 
 // ── BroadcastChannel — instant cross-tab pause/resume (iOS 15.4+, all modern Android) ──
 // When admin pauses on any tab, ALL other open tabs receive the signal in <10ms.
@@ -92,29 +93,41 @@ export function applyPauseIntercept() {
   // Re-entrant safe: if already proxied (_originalIntegrations is set), skip.
   // But if base44.integrations was unavailable on first call (lazy SDK init),
   // retry now that it may be populated.
+  function makeIntegrationProxy(integrationsObj, label) {
+    return new Proxy(integrationsObj, {
+      get(target, serviceName) {
+        const service = target[serviceName];
+        if (!service || typeof service !== 'object') return service;
+        return new Proxy(service, {
+          get(svc, methodName) {
+            const method = svc[methodName];
+            if (typeof method !== 'function') return method;
+            return async (...args) => {
+              if (isSystemPaused()) {
+                console.warn(`[SYSTEM PAUSED] Blocked ${label}: ${String(serviceName)}.${String(methodName)}`);
+                return { result: '', __paused: true };
+              }
+              return method.apply(svc, args);
+            };
+          },
+        });
+      },
+    });
+  }
+
+  // Proxy base44.integrations (user-role calls)
   try {
     if (!_originalIntegrations && base44.integrations) {
       _originalIntegrations = base44.integrations;
-      base44.integrations = new Proxy(base44.integrations, {
-        get(target, serviceName) {
-          const service = target[serviceName];
-          if (!service || typeof service !== 'object') return service;
-          // Return a proxy of each service (Core, Twilio, etc.)
-          return new Proxy(service, {
-            get(svc, methodName) {
-              const method = svc[methodName];
-              if (typeof method !== 'function') return method;
-              return async (...args) => {
-                if (isSystemPaused()) {
-                  console.warn(`[SYSTEM PAUSED] Blocked integration: ${String(serviceName)}.${String(methodName)}`);
-                  return { result: '', __paused: true };
-                }
-                return method.apply(svc, args);
-              };
-            },
-          });
-        },
-      });
+      base44.integrations = makeIntegrationProxy(base44.integrations, 'integration');
+    }
+  } catch (_) {}
+
+  // Proxy base44.asServiceRole.integrations (service-role calls — the main bypass path)
+  try {
+    if (!_originalServiceIntegrations && base44.asServiceRole?.integrations) {
+      _originalServiceIntegrations = base44.asServiceRole.integrations;
+      base44.asServiceRole.integrations = makeIntegrationProxy(base44.asServiceRole.integrations, 'asServiceRole.integration');
     }
   } catch (_) {}
 }
@@ -127,6 +140,10 @@ export function removePauseIntercept() {
   if (_originalIntegrations) {
     base44.integrations = _originalIntegrations;
     _originalIntegrations = null;
+  }
+  if (_originalServiceIntegrations && base44.asServiceRole) {
+    base44.asServiceRole.integrations = _originalServiceIntegrations;
+    _originalServiceIntegrations = null;
   }
 }
 

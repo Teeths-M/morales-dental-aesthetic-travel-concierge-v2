@@ -174,6 +174,15 @@ export async function governedAICall(base44, options) {
     context = {}
   } = options;
 
+  // Guard: respect System Pause — asServiceRole.integrations bypasses the Proxy
+  try {
+    const { isSystemPaused } = await import('@/lib/systemPause');
+    if (isSystemPaused()) {
+      console.warn('[SYSTEM PAUSED] Blocked governedAICall — returning fallback');
+      return { success: false, data: null, is_fallback: true, reason: 'system_paused' };
+    }
+  } catch (_) {}
+
   const profile = AIPerformanceProfile.getProfile(useCase);
 
   try {
