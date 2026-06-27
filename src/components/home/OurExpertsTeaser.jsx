@@ -13,6 +13,7 @@ const PROCEDURES = [
     destinations: ['🇨🇴', '🇲🇽', '🇹🇷'],
     image: 'https://images.unsplash.com/photo-1606902965551-dce093cda6e7?w=480&h=640&fit=crop&q=80',
     color: '#22c55e',
+    key: 'implant',
   },
   {
     name: 'Porcelain Veneers',
@@ -21,6 +22,7 @@ const PROCEDURES = [
     destinations: ['🇹🇷', '🇨🇴', '🇧🇷'],
     image: 'https://images.unsplash.com/photo-1559599101-f09722fb4948?w=480&h=640&fit=crop&q=80',
     color: GOLD,
+    key: 'Porcelain Veneers',
   },
   {
     name: 'Rhinoplasty',
@@ -29,6 +31,7 @@ const PROCEDURES = [
     destinations: ['🇹🇷', '🇨🇴', '🇮🇳'],
     image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=480&h=640&fit=crop&q=80',
     color: '#a855f7',
+    key: 'Rhinoplasty',
   },
   {
     name: 'All-on-4 Implants',
@@ -37,6 +40,7 @@ const PROCEDURES = [
     destinations: ['🇲🇽', '🇹🇷', '🇨🇴'],
     image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=480&h=640&fit=crop&q=80',
     color: '#60a5fa',
+    key: 'All-on-4',
   },
   {
     name: 'Facelift',
@@ -45,6 +49,7 @@ const PROCEDURES = [
     destinations: ['🇧🇷', '🇨🇴', '🇹🇷'],
     image: 'https://images.unsplash.com/photo-1601412436009-d964bd02edbc?w=480&h=640&fit=crop&q=80',
     color: '#ec4899',
+    key: 'Facelift',
   },
   {
     name: 'Tummy Tuck',
@@ -53,6 +58,7 @@ const PROCEDURES = [
     destinations: ['🇧🇷', '🇻🇪', '🇨🇴'],
     image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=480&h=640&fit=crop&q=80',
     color: '#f97316',
+    key: 'Tummy Tuck',
   },
   {
     name: 'Smile Makeover',
@@ -61,6 +67,7 @@ const PROCEDURES = [
     destinations: ['🇹🇷', '🇲🇽', '🇧🇷'],
     image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=480&h=640&fit=crop&q=80',
     color: GOLD,
+    key: 'Smile Makeover',
   },
 ];
 
@@ -142,7 +149,7 @@ export default function OurExpertsTeaser() {
           {PROCEDURES.map((proc, i) => (
             <Link
               key={proc.name}
-              to={`/discover?procedure=${encodeURIComponent(proc.name.toLowerCase().split(' ')[0])}`}
+              to={`/discover?procedure=${encodeURIComponent(proc.key)}`}
               className="group flex-shrink-0 relative rounded-2xl overflow-hidden block"
               style={{
                 width:  '260px',
