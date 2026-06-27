@@ -293,7 +293,7 @@ export default function ConsultationForm() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <Label>Full Name <span className="text-destructive">*</span></Label>
-                    <Input value={formData.client_name} onChange={e => update('client_name', e.target.value)} placeholder="As it appears on your passport" className="mt-1.5" required />
+                    <Input value={formData.client_name} onChange={e => update('client_name', e.target.value)} placeholder="e.g. Sofia Morales" className="mt-1.5" required />
                   </div>
                   <div>
                     <Label>Email <span className="text-destructive">*</span></Label>

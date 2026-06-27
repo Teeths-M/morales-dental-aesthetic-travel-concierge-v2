@@ -72,6 +72,22 @@ export default function EmergencyHub() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950/20 to-slate-900">
+
+      {/* ── Stay Calm Banner — first thing they see ── */}
+      <div style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.15), rgba(220,38,38,0.08))', borderBottom: '1px solid rgba(239,68,68,0.25)', padding: '14px 24px' }}>
+        <div style={{ maxWidth: 896, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <motion.div animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: 14, height: 14, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 12px rgba(239,68,68,0.8)', flexShrink: 0 }} />
+          <div>
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
+              You are not alone. We are here. 🛡️
+            </p>
+            <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+              Stay calm — your Morales concierge is being alerted. Tap SOS below to activate all 6 emergency channels instantly.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="border-b border-red-900/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-10">
@@ -83,8 +99,8 @@ export default function EmergencyHub() {
                 <AlertTriangle className="w-7 h-7 text-red-400" />
               </div>
               <div>
-                <p className="text-red-400 text-xs font-semibold uppercase tracking-widest">Safe-T Emergency Suite</p>
-                <h1 className="text-2xl font-semibold text-white">Emergency & Security Center</h1>
+                <p className="text-red-400 text-xs font-semibold uppercase tracking-widest">Morales Emergency Center</p>
+                <h1 className="text-2xl font-semibold text-white">We Are Sending Help</h1>
               </div>
             </div>
             {/* Live SOS button always visible in hero */}
@@ -97,16 +113,16 @@ export default function EmergencyHub() {
             />
           </div>
           <p className="text-slate-400 text-sm mt-4 max-w-xl leading-relaxed">
-            1-tap emergency dispatch · Guardian view links · Real-time space intel · Location breadcrumbs · Universal device PIN
+            Tap SOS to alert your concierge instantly · Share your location with family · Access your documents · Set your Emergency PIN
           </p>
           {/* Feature pills */}
           <div className="flex flex-wrap gap-2 mt-4">
             {[
-              { icon: AlertTriangle, label: '1-Tap SOS', color: 'bg-red-900/40 text-red-300 border-red-800/50' },
-              { icon: Globe2, label: 'Know Your Space AI', color: 'bg-blue-900/40 text-blue-300 border-blue-800/50' },
-              { icon: Eye, label: 'Guardian View', color: 'bg-violet-900/40 text-violet-300 border-violet-800/50' },
-              { icon: Navigation, label: 'Auto-Purge Breadcrumbs', color: 'bg-emerald-900/40 text-emerald-300 border-emerald-800/50' },
-              { icon: Smartphone, label: 'Universal 6-Digit PIN', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
+              { icon: AlertTriangle, label: 'SOS — 6 Channels', color: 'bg-red-900/40 text-red-300 border-red-800/50' },
+              { icon: Globe2, label: 'Area Safety Intel', color: 'bg-blue-900/40 text-blue-300 border-blue-800/50' },
+              { icon: Eye, label: 'Share with Family', color: 'bg-violet-900/40 text-violet-300 border-violet-800/50' },
+              { icon: Navigation, label: 'Private Location History', color: 'bg-emerald-900/40 text-emerald-300 border-emerald-800/50' },
+              { icon: Smartphone, label: 'Emergency PIN — Any Device', color: 'bg-slate-700/50 text-slate-300 border-slate-600/50' },
               { icon: Mic, label: 'Walkie-Talkie', color: 'bg-cyan-900/40 text-cyan-300 border-cyan-800/50', link: '/walkie-talkie' },
               { icon: Moon, label: 'Nightlife Safety', color: 'bg-purple-900/40 text-purple-300 border-purple-800/50', link: '/nightlife-safety' },
               { icon: TreePine, label: 'Wilderness SOS', color: 'bg-green-900/40 text-green-300 border-green-800/50', link: '/wilderness-safety' },

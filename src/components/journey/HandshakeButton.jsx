@@ -22,6 +22,20 @@ const HANDSHAKE_LABELS = [
   'I\'m Safely Home',
 ];
 
+// Human-friendly "what happens next" shown after each confirmation
+const NEXT_STEP_HINTS = [
+  null,
+  'Next: airport drop-off when you arrive.',        // after HS1
+  'Next: your Morales team meets you at arrivals.', // after HS2
+  'Next: hotel check-in — rest up!',                // after HS3
+  'Next: clinic visit — your doctor is ready.',     // after HS4
+  'Next: companion delivery — recovery begins.',    // after HS5
+  'Next: return transport — heading home!',         // after HS6
+  'Next: home airport arrival.',                    // after HS7
+  'Next: home drop-off — almost there!',            // after HS8
+  null,                                             // HS9 = complete
+];
+
 const HANDSHAKE_TYPES = [
   null,
   'driver_pickup', 'airport_dropoff', 'airport_checkin', 'hotel_checkin',
@@ -103,7 +117,7 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
           gpsAccuracyM:    gps?.accuracy_m ?? null,
         });
         enqueueHandshake(packet);
-        showToast(`Handshake ${nextStep} saved offline — will sync when connected.`, 'queued');
+        showToast(`Saved! We'll confirm this step when you reconnect. ${NEXT_STEP_HINTS[nextStep] || ''}`, 'queued');
       } else {
         // Sync any previously queued handshakes first
         await syncOfflineQueue().catch(() => {});
@@ -120,8 +134,8 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
 
         showToast(
           data.is_complete
-            ? 'Journey Complete — The Golden M is Yours!'
-            : `Handshake ${nextStep}/9 confirmed.`
+            ? '🏆 You made it! Welcome home — The Golden M is yours!'
+            : `✅ Confirmed! ${NEXT_STEP_HINTS[nextStep] || 'Your journey continues.'}`
         );
         onComplete?.({ current_step: data.current_step, is_complete: data.is_complete });
       }
