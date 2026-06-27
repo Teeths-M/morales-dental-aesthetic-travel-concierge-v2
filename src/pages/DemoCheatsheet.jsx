@@ -34,6 +34,7 @@ const DEEP_LINKS = [
   { label: 'Email system — 5 templates',     url: `${BASE}/demo/emails`,                         tag: '📧 Email' },
   { label: 'Pattern Intelligence demo',      url: `${BASE}/demo/medguard`,                       tag: '🧠 AI' },
   { label: 'Full platform overview',         url: `${BASE}/demo`,                                tag: '🏥 Overview' },
+  { label: 'EVN-iQ400 · Danger Zone Demo',  url: `${BASE}/demo/evn`,                            tag: '🌍 Moat' },
 ];
 
 const SHORTCUTS = [
@@ -48,6 +49,7 @@ const PITCH_ORDER = [
   { step: 2, emoji: '🚨', title: 'Run the Kidnapping Scenario',    url: '/demo?tab=emergency',                desc: 'Full automated rescue chain. No other platform does this.' },
   { step: 3, emoji: '📡', title: 'Show the Family Tracker',        url: '/demo/recovery',                    desc: 'Press → to advance Maria home. Viral marketing angle explained.' },
   { step: 4, emoji: '📧', title: 'Send a live email',              url: '/demo/emails',                      desc: 'Tap "Send to My Inbox" — golden email lands in real inbox live.' },
+  { step: 5, emoji: '🌍', title: 'EVN-iQ400 Danger Zone',         url: '/demo/evn',                         desc: 'Patient walks into gang zone in Tijuana. System fires HIGH-RISK alert in real time. Works offline.' },
 ];
 
 function CopyButton({ url }) {
