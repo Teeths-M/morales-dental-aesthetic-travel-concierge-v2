@@ -105,6 +105,19 @@ export default function LuxuryHero() {
               <ModeToggle />
             </motion.div>
 
+            {/* ── LEADERSHIP BADGE ── */}
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20, alignSelf: 'flex-start' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)` }}>
+                <img src="/morales-m-mark.png" alt="M" style={{ width: 14, filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.8))' }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.15em', textTransform: 'uppercase' }}>The Golden Standard for Medical Travel</span>
+              </div>
+            </motion.div>
+
             {/* ── COMMANDING HEADLINE ── */}
             <AnimatePresence mode="wait">
               <motion.h1

@@ -48,16 +48,30 @@ function DocCard({ doc, onUpload }) {
 
 export default function DocumentsModule() {
   const [uploading, setUploading] = useState(null);
-  const [uploaded, setUploaded] = useState([]);
-  const [dragging, setDragging] = useState(false);
+  const [uploaded,  setUploaded]  = useState([]);
+  const [dragging,  setDragging]  = useState(false);
+  const [uploadMsg, setUploadMsg] = useState(null); // { type: 'success'|'error', text }
   const fileRef = useRef();
 
   const handleFile = async (file) => {
     if (!file) return;
+    const MAX_MB = 25;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setUploadMsg({ type: 'error', text: `That file is over ${MAX_MB}MB. Please compress it and try again.` });
+      return;
+    }
     setUploading(file.name);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setUploaded(prev => [...prev, { name: file.name, url: file_url }]);
-    setUploading(null);
+    setUploadMsg(null);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setUploaded(prev => [...prev, { name: file.name, url: file_url }]);
+      setUploadMsg({ type: 'success', text: `✅ "${file.name}" is safely stored in your Vault.` });
+      setTimeout(() => setUploadMsg(null), 5000);
+    } catch {
+      setUploadMsg({ type: 'error', text: `We couldn't upload your file. Please check your connection and try again.` });
+    } finally {
+      setUploading(null);
+    }
   };
 
   const missing = requiredDocs.filter(d => d.status === 'missing').length;
@@ -125,6 +139,25 @@ export default function DocumentsModule() {
           </>
         )}
       </div>
+
+      {/* Upload feedback message */}
+      <AnimatePresence>
+        {uploadMsg && (
+          <motion.div
+            key="upload-msg"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className={`rounded-xl px-4 py-3 text-sm font-medium ${
+              uploadMsg.type === 'success'
+                ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}
+          >
+            {uploadMsg.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Uploaded files */}
       <AnimatePresence>

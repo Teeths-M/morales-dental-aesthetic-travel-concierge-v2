@@ -78,7 +78,22 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-background/10 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        {/* Leadership badges */}
+        <div className="border-t border-background/10 mt-12 pt-6 mb-4 flex flex-wrap justify-center gap-3">
+          {[
+            '🌍 195 Countries Covered',
+            '🛡️ EVN-iQ400™ Environmental Intelligence',
+            '🧠 MedGuard™ Behavioural AI',
+            '✈️ Satellite SOS — Zero Signal Ready',
+            '🏆 The Golden Standard for Medical Travel',
+          ].map(b => (
+            <span key={b} className="text-[10px] font-semibold px-3 py-1.5 rounded-full border text-background/50 border-background/15">
+              {b}
+            </span>
+          ))}
+        </div>
+
+        <div className="border-t border-background/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-background/40">© 2026 Morales Dental & Aesthetic Travel Concierge. All rights reserved.</p>
           <div className="flex gap-6 text-xs text-background/40">
             <span className="hover:text-background/60 cursor-pointer">Privacy Policy</span>
