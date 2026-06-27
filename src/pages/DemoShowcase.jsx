@@ -318,9 +318,11 @@ const MEDGUARD_SCENARIOS = [
   },
 ];
 
-function MedGuardDemo() {
-  const [sceneIdx, setSceneIdx] = useState(0);
-  const [running,  setRunning]  = useState(true);
+const SCENE_LABEL_TO_IDX = { safe: 0, watch: 1, alert: 2, critical: 3 };
+
+function MedGuardDemo({ initialScene = 0 }) {
+  const [sceneIdx, setSceneIdx] = useState(initialScene);
+  const [running,  setRunning]  = useState(initialScene === 0); // auto-play only when starting from SAFE
   const [keyHint,  setKeyHint]  = useState(true);
 
   useEffect(() => {
@@ -526,6 +528,7 @@ export default function DemoShowcase() {
     return t && IN_PAGE_TAB_IDS.has(t) ? t : 'overview';
   })();
   const [activeTab, setActiveTab] = useState(initialTab);
+  const initialScene = SCENE_LABEL_TO_IDX[searchParams.get('start')?.toLowerCase()] ?? 0;
 
   function switchTab(id) {
     setActiveTab(id);
@@ -592,7 +595,7 @@ export default function DemoShowcase() {
       {/* ── MEDGUARD TAB ── */}
       {activeTab === 'medguard' && (
         <div className="max-w-5xl mx-auto px-4 py-12">
-          <MedGuardDemo />
+          <MedGuardDemo initialScene={initialScene} />
         </div>
       )}
 
