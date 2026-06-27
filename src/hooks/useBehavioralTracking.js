@@ -24,20 +24,29 @@ const LEARNING_HOURS     = 72;
 const HEARTBEAT_MS       = 5 * 60 * 1000;   // 5 min
 const ANALYSIS_INTERVAL  = 15 * 60 * 1000;  // 15 min between anomaly checks
 const BUFFER_MAX         = 288;              // max 24h of 5-min heartbeats
-const MIN_NUDGE_GAP_MIN  = 30;              // throttle nudges
-const FP_CACHE_KEY       = 'morales_behavioral_fp'; // localStorage fingerprint backup
+const MIN_NUDGE_GAP_MIN  = 30;
 
-// ── LocalStorage fingerprint cache (survives entity write failures) ───────────
+// ── LocalStorage fingerprint cache (namespaced per user, survives entity write failures) ─
+// Key is per-email hash so two users on the same device don't overwrite each other's fingerprint.
+function fpKey(email) {
+  // Simple 8-char hash — not cryptographic, just for namespacing
+  let h = 0;
+  for (let i = 0; i < email.length; i++) { h = (Math.imul(31, h) + email.charCodeAt(i)) | 0; }
+  return `morales_fp_${(h >>> 0).toString(16).padStart(8, '0')}`;
+}
+
 function loadCachedFingerprint(email) {
   try {
-    const raw = localStorage.getItem(FP_CACHE_KEY);
+    const raw = localStorage.getItem(fpKey(email));
     if (!raw) return null;
     const obj = JSON.parse(raw);
-    return obj.email === email ? obj.fp : null;
+    // Sanity-check: reject entries older than 30 days
+    if (Date.now() - (obj.ts || 0) > 30 * 24 * 3600_000) return null;
+    return obj.fp || null;
   } catch { return null; }
 }
 function saveCachedFingerprint(email, fp) {
-  try { localStorage.setItem(FP_CACHE_KEY, JSON.stringify({ email, fp, ts: Date.now() })); } catch {}
+  try { localStorage.setItem(fpKey(email), JSON.stringify({ fp, ts: Date.now() })); } catch {}
 }
 
 // ── Fingerprint helpers ──────────────────────────────────────────────────────
