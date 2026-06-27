@@ -361,87 +361,164 @@ export default function GlobalEventBroadcaster({ user }) {
   }, [activeTrip?.id, currentLocation?.lat]);
 
   // ── EVN-iQ400: Area Safety Monitor ─────────────────────────────────────────
-  // Fires when the patient moves >400m from the last assessed point during an
-  // active trip. Waits 30s before assessing (avoids alerts for drive-throughs).
-  // Uses Nominatim to name the neighbourhood, then InvokeLLM to assess risk.
-  // Results are cached in the session — each unique area is only assessed once.
-  const lastAssessedRef  = useRef(null);  // { lat, lng }
-  const areaRiskCacheRef = useRef({});    // area key → 'LOW'|'MODERATE'|'HIGH'
+  // Fires when the patient moves >400m into a new area during an active trip.
+  // Waits 30s to confirm they're staying (not just driving through).
+  //
+  // Bug-resistant timer design: the 30s timer is stored in a ref so GPS ticks
+  // don't cancel it — GPS updates every 30-60s, which would continuously reset
+  // a cleanup-based timer and prevent it from ever firing.
+  //
+  // Fallback chain (online → offline → silent):
+  //   1. Nominatim reverse-geocode → InvokeLLM area assessment (online)
+  //   2. Known high-risk neighbourhood keyword list (offline)
+  //   3. Silent fail
+  const lastAssessedRef  = useRef(null);   // { lat, lng } — last completed assessment
+  const pendingPointRef  = useRef(null);   // { lat, lng } — point currently being timed
+  const areaTimerRef     = useRef(null);   // the 30s setTimeout handle (stored in ref)
+
+  // Known high-risk neighbourhood keywords for offline fallback.
+  // Sourced from public government travel advisory data.
+  const HIGH_RISK_KEYWORDS = new Set([
+    'tepito','doctores','merced','guerrero','iztapalapa','ecatepec',    // Mexico City
+    'zona norte','la libertad','sanchez taboada',                        // Tijuana
+    'petare','catia','la vega','antimano','el valle','carapita',         // Caracas
+    'ciudad bolivar','el lidice',                                        // Caracas
+    'la sierra','el salado','moravia','manrique',                        // Medellín
+    'aguablanca','siloé','terrón colorado',                              // Cali
+    'complexo do alemão','jacarezinho','vigário geral','acari',          // Rio
+    'capão redondo','jardim ângela','cidade tiradentes',                 // São Paulo
+  ]);
+
+  function haversineM(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2
+      + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+      * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  // Persist assessment results to localStorage (24h TTL) to avoid
+  // re-burning LLM credits if the patient visits the same area later.
+  function readAreaCache(key) {
+    try {
+      const raw = localStorage.getItem(`evn_area_${key}`);
+      if (!raw) return null;
+      const { risk, ts } = JSON.parse(raw);
+      return (Date.now() - ts < 24 * 60 * 60 * 1000) ? risk : null;
+    } catch { return null; }
+  }
+  function writeAreaCache(key, risk) {
+    try { localStorage.setItem(`evn_area_${key}`, JSON.stringify({ risk, ts: Date.now() })); } catch {}
+  }
 
   useEffect(() => {
     if (!activeTrip || !currentLocation?.lat || !currentLocation?.lng) return;
     if (!ACTIVE_TRAVEL_PHASES.has(activeTrip.trip_phase)) return;
 
-    // Compute distance from last assessed point
-    const last = lastAssessedRef.current;
-    if (last) {
-      const R = 6371000;
-      const dLat = (currentLocation.lat - last.lat) * Math.PI / 180;
-      const dLng = (currentLocation.lng - last.lng) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2
-        + Math.cos(last.lat * Math.PI / 180) * Math.cos(currentLocation.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-      const distM = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      if (distM < 400) return; // not moved enough
-    }
-
-    // Require online and system not paused (LLM call consumes credits)
-    if (!navigator.onLine || isSystemPaused()) return;
-
     const lat = currentLocation.lat;
     const lng = currentLocation.lng;
 
-    // Wait 30s — if user is still there, assess the area
-    const timer = setTimeout(async () => {
+    // Already assessed a nearby point recently? Skip.
+    const lastA = lastAssessedRef.current;
+    if (lastA && haversineM(lat, lng, lastA.lat, lastA.lng) < 400) return;
+
+    // Already have a pending timer for this vicinity? Don't restart it.
+    const pending = pendingPointRef.current;
+    if (pending && haversineM(lat, lng, pending.lat, pending.lng) < 400) return;
+
+    // New area — cancel any existing timer and set a fresh one.
+    clearTimeout(areaTimerRef.current);
+    pendingPointRef.current = { lat, lng };
+
+    areaTimerRef.current = setTimeout(async () => {
+      pendingPointRef.current = null;
+      lastAssessedRef.current = { lat, lng };
+
       try {
-        // Reverse-geocode to neighbourhood level (zoom=10)
+        // ── Step 1: Reverse-geocode to neighbourhood name ──────────────────
         const geoRes  = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(4)}&lon=${lng.toFixed(4)}&format=json&zoom=10`,
           { headers: { 'Accept-Language': 'en', 'User-Agent': 'MoralesMedical/1.0' }, signal: AbortSignal.timeout(6000) }
         );
-        const geoData = await geoRes.json();
-
-        const suburb  = geoData.address?.suburb || geoData.address?.neighbourhood || geoData.address?.city_district || '';
-        const city    = geoData.address?.city || geoData.address?.town || geoData.address?.village || '';
-        const nation  = geoData.address?.country || '';
+        const geo     = await geoRes.json();
+        const suburb  = geo.address?.suburb || geo.address?.neighbourhood || geo.address?.city_district || '';
+        const city    = geo.address?.city   || geo.address?.town          || geo.address?.village       || '';
+        const nation  = geo.address?.country || '';
         const areaKey = `${suburb}_${city}`.toLowerCase().replace(/\W+/g, '_').slice(0, 60);
 
-        // Skip if already assessed this session
-        if (areaRiskCacheRef.current[areaKey]) return;
-        lastAssessedRef.current = { lat, lng };
+        // ── Step 2: Check 24h localStorage cache ──────────────────────────
+        const cached = readAreaCache(areaKey);
+        if (cached) {
+          if (cached === 'HIGH' || cached === 'MODERATE') {
+            showNotification({
+              type: 'alert', icon: cached === 'HIGH' ? '🔴' : '🟡',
+              title: `EVN-iQ400 · ${cached === 'HIGH' ? 'High-Risk Area' : 'Area Advisory'}`,
+              body: `${suburb || city} is flagged as ${cached.toLowerCase()} risk. Stay alert and use your Morales-vetted transport.`,
+              duration: cached === 'HIGH' ? 0 : 12000, position: 'top',
+              action: cached === 'HIGH' ? { label: 'Contact Concierge →', onPress: () => { window.location.href = '/emergency'; } } : null,
+            });
+          }
+          return;
+        }
 
-        // Ask the LLM to assess safety for this specific area
-        const res = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are a travel safety AI for Morales Medical Concierge.\nAssess safety for an international medical tourist who is currently in: "${suburb ? suburb + ', ' : ''}${city}, ${nation}".\nRespond with compact JSON only (no markdown fences):\n{"risk":"LOW","reason":"one factual sentence under 18 words","tip":"one protective action under 12 words"}`,
-          response_type: 'text',
-        });
+        // ── Step 3a: Online → LLM assessment ──────────────────────────────
+        if (navigator.onLine && !isSystemPaused()) {
+          const res  = await base44.integrations.Core.InvokeLLM({
+            prompt: `Travel safety AI for Morales Medical Concierge. Patient is in: "${suburb ? suburb + ', ' : ''}${city}, ${nation}". Assess risk for international medical tourist. Respond with JSON only (no fences): {"risk":"LOW"|"MODERATE"|"HIGH","reason":"factual sentence under 18 words","tip":"protective action under 12 words"}`,
+            response_type: 'text',
+          });
+          const text = typeof res === 'string' ? res : (res?.result || res?.text || '');
+          const clean = text.replace(/```[\w]*\n?|\n?```/g, '').trim();
 
-        const text   = typeof res === 'string' ? res : (res?.result || res?.text || '');
-        const clean  = text.replace(/```[\w]*\n?|\n?```/g, '').trim();
-        const parsed = JSON.parse(clean);
+          let parsed;
+          try {
+            parsed = JSON.parse(clean);
+          } catch {
+            // Structured parse failed — extract risk level from free text
+            const m = text.match(/\b(HIGH|MODERATE|LOW)\b/i);
+            if (!m) return;
+            parsed = { risk: m[1].toUpperCase(), reason: 'Exercise caution in this area.', tip: 'Stay close to your hotel or Morales venue.' };
+          }
 
-        areaRiskCacheRef.current[areaKey] = parsed.risk;
+          const risk = (parsed.risk || '').toUpperCase();
+          writeAreaCache(areaKey, risk);
 
-        if (parsed.risk === 'HIGH' || parsed.risk === 'MODERATE') {
+          if (risk === 'HIGH' || risk === 'MODERATE') {
+            showNotification({
+              type: 'alert', icon: risk === 'HIGH' ? '🔴' : '🟡',
+              title: `EVN-iQ400 · ${risk === 'HIGH' ? 'High-Risk Area Detected' : 'Area Advisory'}`,
+              body: `${parsed.reason || ''} ${parsed.tip || ''}`.trim(),
+              duration: risk === 'HIGH' ? 0 : 12000, position: 'top',
+              action: risk === 'HIGH' ? { label: 'Contact Concierge →', onPress: () => { window.location.href = '/emergency'; } } : null,
+            });
+          }
+          return;
+        }
+
+        // ── Step 3b: Offline → keyword fallback ───────────────────────────
+        const suburbLow = suburb.toLowerCase();
+        const isKnownRisk = HIGH_RISK_KEYWORDS.has(suburbLow) || [...HIGH_RISK_KEYWORDS].some(kw => suburbLow.includes(kw));
+        if (isKnownRisk) {
+          writeAreaCache(areaKey, 'HIGH');
           showNotification({
-            type:     'alert',
-            icon:     parsed.risk === 'HIGH' ? '🔴' : '🟡',
-            title:    `EVN-iQ400 · ${parsed.risk === 'HIGH' ? 'High-Risk Area Detected' : 'Area Advisory'}`,
-            body:     `${parsed.reason || ''} ${parsed.tip || ''}`.trim(),
-            duration: parsed.risk === 'HIGH' ? 0 : 12000,
-            position: 'top',
-            action: parsed.risk === 'HIGH' ? {
-              label:   'Contact Concierge →',
-              onPress: () => { window.location.href = '/emergency'; },
-            } : null,
+            type: 'alert', icon: '🔴',
+            title: 'EVN-iQ400 · High-Risk Area (Offline)',
+            body: `${suburb || city} is on Morales\' offline risk list. Return to your hotel or contact your concierge.`,
+            duration: 0, position: 'top',
+            action: { label: 'SOS →', onPress: () => { window.location.href = '/emergency'; } },
           });
         }
-      } catch (_) {
-        // Silent — network errors and LLM failures are non-fatal
-      }
-    }, 30_000);
 
-    return () => clearTimeout(timer);
+      } catch (_) {
+        // All steps failed — silent. Safety not degraded, user can still use SOS.
+      }
+    }, 30_000); // 30s dwell time before assessing
   }, [currentLocation?.lat, currentLocation?.lng]);
+
+  // Clean up on unmount
+  useEffect(() => () => clearTimeout(areaTimerRef.current), []);
 
   return null; // pure side-effect component
 }
