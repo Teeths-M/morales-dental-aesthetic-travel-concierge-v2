@@ -11,63 +11,63 @@ const PROCEDURES = [
     tagline: 'Permanent smile. Life changed.',
     save: 'Save up to $12,000',
     destinations: ['🇨🇴', '🇲🇽', '🇹🇷'],
-    image: 'https://images.unsplash.com/photo-1606902965551-dce093cda6e7?w=480&h=640&fit=crop&q=80',
+    // Happy confident woman showing perfect white teeth after implants
+    image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=480&h=640&fit=crop&q=80',
     color: '#22c55e',
-    key: 'implant',
   },
   {
     name: 'Porcelain Veneers',
     tagline: 'The smile you were born to have.',
     save: 'Save up to $8,000',
     destinations: ['🇹🇷', '🇨🇴', '🇧🇷'],
-    image: 'https://images.unsplash.com/photo-1559599101-f09722fb4948?w=480&h=640&fit=crop&q=80',
+    // Close-up of a radiant perfect-teeth smile
+    image: 'https://images.unsplash.com/photo-1570158268183-d296b2892211?w=480&h=640&fit=crop&q=80',
     color: GOLD,
-    key: 'Porcelain Veneers',
   },
   {
     name: 'Rhinoplasty',
     tagline: 'Natural. Balanced. You.',
     save: 'Save up to $6,000',
     destinations: ['🇹🇷', '🇨🇴', '🇮🇳'],
-    image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=480&h=640&fit=crop&q=80',
+    // Elegant woman profile — refined facial features
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=480&h=640&fit=crop&q=80',
     color: '#a855f7',
-    key: 'Rhinoplasty',
   },
   {
     name: 'All-on-4 Implants',
     tagline: 'Full arch. Full confidence.',
     save: 'Save up to $20,000',
     destinations: ['🇲🇽', '🇹🇷', '🇨🇴'],
-    image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=480&h=640&fit=crop&q=80',
+    // Mature person with full bright confident smile
+    image: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=480&h=640&fit=crop&q=80',
     color: '#60a5fa',
-    key: 'All-on-4',
   },
   {
     name: 'Facelift',
     tagline: 'Confidence, restored.',
     save: 'Save up to $15,000',
     destinations: ['🇧🇷', '🇨🇴', '🇹🇷'],
-    image: 'https://images.unsplash.com/photo-1601412436009-d964bd02edbc?w=480&h=640&fit=crop&q=80',
+    // Elegant woman looking youthful and radiant
+    image: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=480&h=640&fit=crop&q=80',
     color: '#ec4899',
-    key: 'Facelift',
   },
   {
     name: 'Tummy Tuck',
     tagline: 'The body you worked for.',
     save: 'Save up to $10,000',
     destinations: ['🇧🇷', '🇻🇪', '🇨🇴'],
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=480&h=640&fit=crop&q=80',
+    // Toned flat midsection — body confidence result
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=480&h=640&fit=crop&q=80',
     color: '#f97316',
-    key: 'Tummy Tuck',
   },
   {
     name: 'Smile Makeover',
     tagline: 'One journey. Total transformation.',
     save: 'Save up to $18,000',
     destinations: ['🇹🇷', '🇲🇽', '🇧🇷'],
+    // Woman with radiant full smile — total transformation
     image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=480&h=640&fit=crop&q=80',
     color: GOLD,
-    key: 'Smile Makeover',
   },
 ];
 
@@ -126,7 +126,7 @@ export default function OurExpertsTeaser() {
               <ChevronRight className="w-4 h-4" />
             </button>
             <Link
-              to="/discover"
+              to="/procedures"
               className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all"
               style={{
                 background:   `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
@@ -149,7 +149,7 @@ export default function OurExpertsTeaser() {
           {PROCEDURES.map((proc, i) => (
             <Link
               key={proc.name}
-              to={`/discover?procedure=${encodeURIComponent(proc.key)}`}
+              to="/procedures"
               className="group flex-shrink-0 relative rounded-2xl overflow-hidden block"
               style={{
                 width:  '260px',
