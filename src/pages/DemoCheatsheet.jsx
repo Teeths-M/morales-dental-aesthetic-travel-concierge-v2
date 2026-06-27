@@ -7,7 +7,8 @@
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Copy, CheckCircle2, Keyboard, Link2, PlayCircle, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Copy, CheckCircle2, Keyboard, Link2, PlayCircle, Lightbulb, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const GOLD = '#D4AF37';
 const BASE = window.location.origin;
@@ -171,6 +172,35 @@ export default function DemoCheatsheet() {
                 <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{tip}</p>
               </div>
             ))}
+          </div>
+        </Section>
+
+        {/* ── QR Code ── */}
+        <Section icon={QrCode} iconColor="#a855f7" title="Judge Scan-to-Follow">
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: '20px', borderRadius: 16, background: '#0C1A1D', border: '1px solid #2A3F4A', flexWrap: 'wrap' }}>
+            {/* QR — white background so it scans cleanly */}
+            <div style={{ background: '#fff', borderRadius: 12, padding: 12, flexShrink: 0 }}>
+              <QRCodeSVG
+                value={`${BASE}/demo`}
+                size={140}
+                level="M"
+                fgColor="#060B16"
+                bgColor="#ffffff"
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                Let judges follow along on their phone
+              </p>
+              <p style={{ margin: '0 0 12px', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+                Say: <em style={{ color: GOLD }}>"Scan this — you can try the demo yourself."</em><br />
+                They land on the full platform overview with all 7 tabs.
+              </p>
+              <code style={{ fontSize: 11, color: '#475569' }}>{BASE}/demo</code>
+              <div style={{ marginTop: 10 }}>
+                <CopyButton url={`${BASE}/demo`} />
+              </div>
+            </div>
           </div>
         </Section>
 
