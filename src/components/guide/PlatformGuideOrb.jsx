@@ -17,8 +17,15 @@ const GOLD = '#D4AF37';
 const DARK = '#060B16';
 const CACHE_KEY = 'morales_guide_cache';
 
+// Public pages where all users should see visitor-facing tips (not internal admin nudges)
+const PUBLIC_PATHS = new Set(['/', '/discover', '/providers', '/about', '/procedures', '/how-it-works', '/partners']);
+
 // ── Role detection ────────────────────────────────────────────────────────────
 function detectRole(user, pathname) {
+  // On public marketing pages, everyone sees visitor-appropriate tips —
+  // prevents internal admin nudges from appearing on the landing page.
+  if (PUBLIC_PATHS.has(pathname)) return 'visitor';
+
   if (!user) {
     if (pathname.startsWith('/portal/doctor'))   return 'doctor_portal';
     if (pathname.startsWith('/portal/travel'))   return 'travel_portal';

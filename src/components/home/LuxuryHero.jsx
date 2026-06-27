@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
-import { BadgeCheck, Shield, Map, CheckCircle, Play } from 'lucide-react';
+import { BadgeCheck, Shield, Map, CheckCircle, Play, Heart } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD       = BRAND.gold;
@@ -14,8 +14,8 @@ const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd
 const CONTENT = {
   medical: {
     headline:    'YOUR JOURNEY.\nPERFECTED.',
-    subheadline: 'World-Class Dental & Aesthetic Care. Zero Compromises.',
-    body:        'From consultation to recovery, Morales orchestrates every detail. Exceptional results, zero stress.',
+    subheadline: 'Travel abroad for world-class dental & aesthetic surgery — and come home safely.',
+    body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. And if anything goes wrong — we dispatch help, automatically.',
     cta:         { label: 'Start Your Journey', path: '/booking' },
   },
   nonmedical: {
@@ -30,14 +30,14 @@ const CONTENT = {
 const TRUST_BADGES = [
   { icon: BadgeCheck, label: 'ISO 21101 Certified' },
   { icon: BadgeCheck, label: '100+ Verified Surgeons' },
-  { icon: Shield,     label: '24/7 Global Concierge' },
+  { icon: Heart,      label: 'Safe-T4life™ Protected' },
 ];
 
 /* ── Feature cards below hero ─────────────────────────────────────────────── */
 const FEATURES = [
-  { icon: Map,         title: 'End-to-End Concierge',   desc: 'Every logistics detail handled from departure to return.' },
-  { icon: Shield,      title: 'Offline Safety Net',     desc: 'Safe-T4life protection works even without internet.' },
-  { icon: CheckCircle, title: 'Verified Specialists',   desc: 'Only the top 1% of surgeons and aesthetic doctors.' },
+  { icon: Heart,       title: 'Your Family Stays Close',    desc: 'Share a zero-login link and they watch every checkpoint in real time — like a flight tracker, but for your surgery.' },
+  { icon: Shield,      title: '9-Point Safety System',      desc: 'Miss a check-in and we escalate automatically — SMS, voice call, security dispatch, police. You are never alone.' },
+  { icon: CheckCircle, title: 'Verified Specialists Only',  desc: 'Every doctor is screened for credentials, procedure history, and patient outcomes. Only the top 1% earn the Morales badge.' },
 ];
 
 
