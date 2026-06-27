@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Morales — Buildathon Application Answers</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #0a0f1a;
+    color: #e2e8f0;
+    padding: 32px 24px 80px;
+    max-width: 780px;
+    margin: 0 auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #D4AF37;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 32px;
+  }
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #00c9b1;
+    border-bottom: 1px solid rgba(0,201,177,0.2);
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+  }
+  .qa {
+    background: #0d1626;
+    border: 1px solid #1e2d45;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .qa:hover { border-color: rgba(212,175,55,0.3); }
+  .q-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .answer {
+    color: #e2e8f0;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.65;
+    cursor: text;
+    user-select: text;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(212,175,55,0.12);
+    border: 1px solid rgba(212,175,55,0.25);
+    color: #D4AF37;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: rgba(212,175,55,0.22); }
+  .copy-btn.copied { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.4); color: #86efac; }
+  .tick-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .tick {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
+    color: #86efac;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .note {
+    background: rgba(212,175,55,0.07);
+    border-left: 3px solid #D4AF37;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    font-size: 12px;
+    color: rgba(212,175,55,0.8);
+    margin-bottom: 12px;
+  }
+  @media print {
+    body { background: #fff; color: #111; padding: 20px; }
+    .copy-btn { display: none; }
+    .qa { background: #f8f9fa; border-color: #ddd; }
+    .q-label { color: #666; }
+    .answer { color: #111; }
+    .section-title { color: #0d7a5f; }
+    h1 { color: #b8963a; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🏆 Buildathon Application — Your Answers</h1>
+<p class="subtitle">Future Caribbean Agentic AI Buildathon · Click any box to select text, or use the Copy button</p>
+
+
+<!-- ══════ BASIC INFO ══════ -->
+<div class="section">
+  <div class="section-title">Basic Information</div>
+
+  <div class="qa">
+    <div class="q-label">1. Full Name</div>
+    <div class="answer">Portia Morales</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">2. Preferred / Display Name</div>
+    <div class="answer">Portia</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">3. Email Address</div>
+    <div class="answer">portia.morales@gmail.com</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">5. Country of Residence</div>
+    <div class="answer">Trinidad and Tobago</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">6. Nationality</div>
+    <div class="answer">Trinidadian</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">9. GitHub Profile</div>
+    <div class="answer">https://github.com/Teeths-M</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+</div>
+
+
+<!-- ══════ PROFESSIONAL BACKGROUND ══════ -->
+<div class="section">
+  <div class="section-title">Professional Background</div>
+
+  <div class="qa">
+    <div class="q-label">13. Current Role / Title</div>
+    <div class="answer">Founder & Product Builder</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">14. Current Company / Organization</div>
+    <div class="answer">Morales Dental & Aesthetic Travel Concierge</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">16. Primary Skillset — SELECT THIS OPTION</div>
+    <div class="tick-row">
+      <span class="tick">✅ AI / ML Engineer</span>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">17. Secondary Skillsets</div>
+    <div class="answer">Product Design, UX/UI, Full-Stack Development, Healthcare Operations, Agentic AI Systems, Business Strategy</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">18. Technical Stack Experience</div>
+    <div class="answer">React 18, Vite, TanStack React Query v5, Framer Motion, Tailwind CSS — frontend.
+Base44 BaaS with 188 Deno edge functions — backend/serverless.
+Claude Sonnet (Anthropic) — LLM for doctor verification, visa compliance, AI Pre-Departure Briefing.
+travel-advisory.info API — 195-country live government advisory feeds.
+Nominatim/OpenStreetMap — GPS reverse geocoding for area safety.
+Twilio — SMS handshake fallback, SOS dispatch.
+Stripe — payment processing.
+Web Crypto API — PBKDF2-SHA256 PIN vault (600k iterations).
+SHA-256 hash-chained audit log — tamper-detectable event trail.
+Offline-first architecture with localStorage/sessionStorage caching layers.</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">19–21. Radio Buttons</div>
+    <div class="tick-row">
+      <span class="tick">✅ Q19: Yes — worked with AI/Agentic AI</span>
+      <span class="tick">✅ Q21: Yes — launched a startup before</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════ TRACK SELECTION ══════ -->
+<div class="section">
+  <div class="section-title">Track Selection</div>
+
+  <div class="note">
+    Select Track <strong>01 — AI for Tourism & Transportation</strong>. Its description says "concierge systems, travel logistics, guest experience, transportation coordination" — that is exactly what Morales is.
+  </div>
+
+  <div class="qa">
+    <div class="q-label">23. Why did you choose this track?</div>
+    <div class="answer">Medical tourism is the fastest-growing segment of global travel — 15 million people cross borders annually for dental and aesthetic procedures. But every existing platform focuses on booking the procedure. No one has built the safety and logistics infrastructure that actually gets the patient home. Track 01's focus on concierge systems, transportation coordination, and guest experience is precisely where Morales operates. We are not a healthcare app — we are a travel protection platform built around the most vulnerable 10 days of a patient's life.</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">24. What real-world opportunity are you trying to solve?</div>
+    <div class="answer">Medical tourists are the most vulnerable travelers in the world. They travel to countries they don't know, often alone, after procedures that leave them physically compromised. Their driver may not show. Their hotel may be in a high-crime area. A medical emergency may occur at 2am in a city where they don't speak the language.
+
+Existing medical tourism platforms all compete on price and clinic network. None of them protect the patient during the journey itself. That protection gap is what Morales closes — with AI-powered environmental intelligence, behavioral monitoring, GPS-confirmed handshakes, and a 6-channel emergency cascade that works with zero internet connectivity.</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">25. Describe your proposed solution or idea</div>
+    <div class="answer">Morales is the world's first complete medical travel protection stack. Four proprietary systems work together:
+
+EVN-iQ400™ — Environmental Intelligence: Real-time composite risk scoring for 195 countries, pulling from 14 live government advisory feeds. GPS area safety monitor fires an alert if a patient dwells in a flagged neighbourhood for 30+ seconds. Fully operational offline and in airplane mode via a 200+ keyword threat database.
+
+MedGuard™ — Behavioural AI: Pattern detection running in the background. Silent SOS (no screen change when triggered), 5-tier escalation chain: concierge → family → local police → private security → satellite SOS.
+
+Safe-T4life™ — Emergency Infrastructure: 6-channel SOS cascade (app, SMS, email, Bluetooth, satellite, QR). Universal 6-digit Emergency PIN, accessible from any device without login. Works with zero signal.
+
+9-Handshake GPS Spine: Nine physical GPS checkpoints from home pickup to home drop-off, confirmed by the patient in real time. Complete all 9 → earn The Golden M: a digital certificate proving the safest medical journey ever made.
+
+The platform runs on 188 Deno edge functions with a cryptographically hash-chained audit log. Every event is immutable and verifiable.</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">26. Why does this matter for the Caribbean or the world?</div>
+    <div class="answer">Trinidad & Tobago and the wider Caribbean send thousands of patients abroad every year for dental and cosmetic procedures — primarily to Mexico, Colombia, and Costa Rica. They go with no safety net. When a Trinidadian patient flies to Tijuana for dental implants, there is currently no system monitoring their safety, confirming their driver arrived, tracking whether they made it to their hotel, or dispatching help if they go silent.
+
+Morales changes that — and it was built here, in Trinidad & Tobago, for exactly these patients.
+
+Globally, the medical tourism market will reach $111B by 2027 (CAGR 21.1%). The safety and protection layer is a zero-billion-dollar market today because no one has built it. Morales is the category creator. A successful platform doesn't just protect Caribbean patients abroad — it positions the Caribbean as the origin of the global standard for medical travel safety. The Golden M becomes the certification every medical tourism patient on earth wants before they board a plane.</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">27. If your solution succeeds, what could it become in 5 years?</div>
+    <div class="answer">In 5 years, Morales becomes the global safety certification layer for medical tourism — the way PCI-DSS is for payments or TSA PreCheck is for airports.
+
+Every medical tourism clinic worldwide licenses The Golden M certification. Every patient who books a procedure abroad expects a Morales protection package as part of the booking — not as an add-on, but as the standard.
+
+Revenue at scale: SaaS subscriptions for clinics ($299/mo), per-patient protection packages ($149/journey), enterprise licensing for hospital networks and insurance providers, and a B2B intelligence API that sells EVN-iQ400 risk scores to travel insurers.
+
+The Situation Room (our tactical world map of all active patients) becomes the nerve center that global medical tourism coordinators use to manage thousands of simultaneous journeys across 195 countries — all from one screen, all in real time.</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+</div>
+
+
+<!-- ══════ TEAM INFO ══════ -->
+<div class="section">
+  <div class="section-title">Team Information</div>
+  <div class="qa">
+    <div class="q-label">28 / 31 / 33 / 34 — Radio Buttons</div>
+    <div class="tick-row">
+      <span class="tick">✅ Q28: Solo</span>
+      <span class="tick">✅ Q31: Yes — open to team matching</span>
+      <span class="tick">✅ Q33: Yes — international collaboration</span>
+      <span class="tick">✅ Q34: Yes — continuing after buildathon</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════ TECHNICAL & OPERATIONAL ══════ -->
+<div class="section">
+  <div class="section-title">Technical & Operational</div>
+
+  <div class="qa">
+    <div class="q-label">35. Tools, models, APIs, frameworks</div>
+    <div class="answer">Frontend: React 18, Vite, TanStack React Query v5, Framer Motion, Tailwind CSS, Radix UI/shadcn
+Backend: Base44 BaaS, 188 Deno edge functions (serverless, edge-deployed)
+AI/LLM: Claude Sonnet (Anthropic) — doctor credential verification, visa compliance, AI Pre-Departure Safety Briefing
+Environmental Intelligence: travel-advisory.info (14 live government advisory feeds, 195 countries)
+Geolocation: Nominatim / OpenStreetMap (GPS reverse geocoding, neighbourhood-level)
+Communications: Twilio (SMS handshake fallback, SOS dispatch, voice escalation)
+Payments: Stripe
+Security: Web Crypto API — PBKDF2-SHA256 (600k iterations) PIN vault; SHA-256 hash-chained audit log
+Offline: localStorage/sessionStorage caching — full offline operation including emergency dispatch</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">36. Checkboxes — TICK THESE</div>
+    <div class="tick-row">
+      <span class="tick">✅ Multi-agent systems</span>
+      <span class="tick">✅ LLM orchestration</span>
+      <span class="tick">✅ APIs & integrations</span>
+      <span class="tick">✅ Cloud infrastructure</span>
+      <span class="tick">✅ AI deployment systems</span>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q-label">37 / 39 / 40 — Radio Buttons</div>
+    <div class="tick-row">
+      <span class="tick">✅ Q37: Yes — compute resources (LLM inference)</span>
+      <span class="tick">✅ Q39: Yes — external datasets (gov advisory API)</span>
+      <span class="tick">✅ Q40: Yes — sensitive data (medical, GPS, PIN)</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════ VIDEO ══════ -->
+<div class="section">
+  <div class="section-title">Video Submission (Q42 — Loom)</div>
+  <div class="note">
+    Record a 2–5 min Loom. Use this script:
+  </div>
+  <div class="qa">
+    <div class="q-label">Your video script</div>
+    <div class="answer">"Hi, I'm Portia Morales from Trinidad and Tobago.
+
+Every year, millions of people travel abroad for dental and medical procedures. They go alone, to countries they don't know, after surgeries that leave them vulnerable. Their driver might not show. Their hotel might be in a dangerous area. Something goes wrong — and there's no one to catch them.
+
+I built Morales — the world's first complete medical travel protection stack.
+
+[Show homepage] This is Morales. The Golden Standard for Medical Travel.
+
+[Show EVN demo at /demo/evn] This is EVN-iQ400 — our environmental intelligence system. It monitors risk in 195 countries in real time. If a patient walks into a dangerous neighbourhood, the system alerts them in under 30 seconds. It works offline. It works in airplane mode. No other platform on earth does this.
+
+[Show dashboard] When a patient is on their journey, they confirm nine GPS checkpoints — from their front door to home arrival. Every step is verified, time-stamped, and audited.
+
+[Show Golden M] Complete all nine? They earn The Golden M — a certificate that proves they made the safest medical journey possible.
+
+[Show Situation Room at /admin/situation-room] And our team watches every active patient on this tactical world map. In real time. Across 195 countries.
+
+This was built here in Trinidad and Tobago. For patients like us. We are Morales. We are the Golden Standard."</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+</div>
+
+
+<!-- ══════ AVAILABILITY ══════ -->
+<div class="section">
+  <div class="section-title">Availability & Commitment + Startup & Venture</div>
+  <div class="qa">
+    <div class="q-label">Q43 / Q44 / Q45 / Q47 / Q48 / Q49</div>
+    <div class="tick-row">
+      <span class="tick">✅ Q43: Yes — full 3-week commitment</span>
+      <span class="tick">✅ Q45: Yes — check-ins & demos</span>
+      <span class="tick">✅ Q48: Yes — turning into a startup</span>
+      <span class="tick">✅ Q49: Yes — incubation & investment</span>
+    </div>
+    <div style="margin-top:10px;">
+      <div class="q-label">Q44 — Hours per week</div>
+      <div class="answer" style="color:#e2e8f0;">40+ hours</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════ ADDITIONAL INFO ══════ -->
+<div class="section">
+  <div class="section-title">Additional Information</div>
+  <div class="qa">
+    <div class="q-label">50. Anything else you'd like us to know?</div>
+    <div class="answer">The platform is fully live and running. Every stage in the submitted agentic workflow diagram maps to a real, deployed function in the codebase — no mockups, no wireframes. The code-verified workflow document was designed specifically to give judges and evaluators a direct path from claim to implementation.
+
+Key differentiators judges won't find elsewhere:
+— EVN-iQ400™ is the only system that scores environmental risk for 195 countries, works offline to airplane mode, and fires a GPS neighbourhood dwell alert in under 30 seconds
+— The 9-Handshake GPS Spine with Golden M is the only patient journey system that physically confirms every checkpoint from home pickup to home drop-off
+— The SHA-256 hash-chained audit log means every safety decision is cryptographically tamper-detectable
+— 188 Deno edge functions, all using shared middleware with auth, role enforcement, structured logging, and sanitized error responses — production-grade infrastructure, not a hackathon prototype
+
+Demo (no login required): /demo
+EVN-iQ400 live demo: /demo/evn
+Tactical Situation Room: /admin/situation-room
+GitHub: https://github.com/Teeths-M/morales-dental-aesthetic-travel-concierge-v2</div>
+    <button class="copy-btn" onclick="copyThis(this)">Copy</button>
+  </div>
+</div>
+
+
+<!-- ══════ LEGAL ══════ -->
+<div class="section">
+  <div class="section-title">Legal & Consent (Q51–54)</div>
+  <div class="qa">
+    <div class="q-label">All four questions</div>
+    <div class="tick-row">
+      <span class="tick">✅ Q51: Yes — agree to rules</span>
+      <span class="tick">✅ Q52: Yes — consent to sharing</span>
+      <span class="tick">✅ Q53: Yes — consent to contact</span>
+      <span class="tick">✅ Q54: Yes — understand no guarantee</span>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function copyThis(btn) {
+  const answer = btn.previousElementSibling;
+  const text = answer.innerText || answer.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
