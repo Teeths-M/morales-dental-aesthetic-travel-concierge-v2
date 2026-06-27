@@ -33,9 +33,16 @@ function getBroadcastChannel() {
       if (data?.event === 'paused') {
         setLocalPaused(true);
         applyPauseIntercept();
+        // Notify this tab's React app so it can freeze React Query polling.
+        // We dispatch a custom event rather than calling pauseSystem() to
+        // avoid re-broadcasting (BroadcastChannel senders don't receive their
+        // own messages, but re-calling pauseSystem() would trigger another
+        // broadcastPause() to other tabs → cascade loop).
+        window.dispatchEvent(new CustomEvent('morales:paused'));
       } else if (data?.event === 'resumed') {
         setLocalPaused(false);
         removePauseIntercept();
+        window.dispatchEvent(new CustomEvent('morales:resumed'));
       }
     };
   } catch { _channel = null; }
@@ -168,12 +175,10 @@ export async function syncPauseFromServer() {
     if (!record) return;
     const serverPaused = record.requested_value?.paused === true;
     if (serverPaused) {
-      // Server says paused — enforce on this device.
-      // Always call applyPauseIntercept() here even if already paused:
-      // on mobile the Proxy may not have been applied yet if base44.integrations
-      // was unavailable at cold-start time or if the app returned from background.
       setLocalPaused(true);
       applyPauseIntercept();
+      // Notify React app to freeze React Query polling (same no-rebroadcast pattern)
+      window.dispatchEvent(new CustomEvent('morales:paused'));
     }
     // Never auto-resume from server — resume only via explicit button press
   } catch (_) {}

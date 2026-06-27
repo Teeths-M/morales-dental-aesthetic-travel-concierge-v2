@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react'
 import App from '@/App.jsx'
 import '@/index.css'
 import { syncPauseFromServer, isSystemPaused, applyPauseIntercept } from '@/lib/systemPause'
+import { queryClientInstance } from '@/lib/query-client'
 
 // ── Sentry Error Tracking (Production Only) ──────────────────────────────────
 
@@ -74,6 +75,36 @@ async function mountApp() {
 }
 
 mountApp();
+
+// ── Cross-tab React Query sync via custom events ─────────────────────────────
+// BroadcastChannel (and syncPauseFromServer) dispatch these events on tabs that
+// received a pause/resume signal but didn't originate it. We directly update
+// React Query here rather than calling pauseSystem/resumeSystem to avoid
+// re-triggering broadcastPause() → cascade loop.
+window.addEventListener('morales:paused', () => {
+  queryClientInstance.cancelQueries();
+  queryClientInstance.setDefaultOptions({
+    queries: {
+      enabled:              false,
+      refetchInterval:      false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect:   false,
+      retry:                false,
+    },
+  });
+});
+window.addEventListener('morales:resumed', () => {
+  queryClientInstance.setDefaultOptions({
+    queries: {
+      enabled:              true,
+      refetchInterval:      undefined,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect:   true,
+      retry:                3,
+    },
+  });
+  setTimeout(() => queryClientInstance.invalidateQueries(), 300);
+});
 
 // ── Mobile/Tablet: re-sync pause state every time the app returns to foreground ──
 // Scenario: admin pauses on laptop while phone is backgrounded. Without this,
