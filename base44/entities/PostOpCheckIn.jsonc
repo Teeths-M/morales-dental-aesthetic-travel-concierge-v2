@@ -1,0 +1,97 @@
+{
+  "name": "PostOpCheckIn",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Links to the CaseRecord"
+    },
+    "patient_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "patient_name": {
+      "type": "string"
+    },
+    "procedure": {
+      "type": "string",
+      "description": "Procedure performed, e.g. 'Dental Veneers'"
+    },
+    "doctor_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "day": {
+      "type": "number",
+      "enum": [3, 7, 14, 30],
+      "description": "Which post-op day this check-in is for"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this check-in was due"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "submitted", "overdue", "skipped"],
+      "default": "pending"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Patient recovery satisfaction (1=poor, 5=excellent)"
+    },
+    "pain_level": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Self-reported pain level 0-10"
+    },
+    "note": {
+      "type": "string",
+      "description": "Patient's free-text note about their recovery"
+    },
+    "concerns": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Flagged concerns: swelling, bleeding, infection, pain, other"
+    },
+    "needs_doctor_followup": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if patient flagged a concern requiring doctor attention"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "response_token": {
+      "type": "string",
+      "description": "One-use token for the public response link (no login required)"
+    },
+    "notification_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["case_id", "patient_email", "day"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.patient_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } },
+        { "user_condition": { "role": "doctor" } }
+      ]
+    },
+    "create": { "user_condition": { "isAuthenticated": true } },
+    "update": {
+      "$or": [
+        { "data.patient_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

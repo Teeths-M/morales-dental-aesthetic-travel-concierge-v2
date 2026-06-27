@@ -25,6 +25,7 @@ import SupportModule from '@/components/dashboard/modules/SupportModule';
 import SettingsModule from '@/components/dashboard/modules/SettingsModule';
 import CaseStatusModule from '@/components/dashboard/modules/CaseStatusModule';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
+import PostOpRecoveryTracker from '@/components/dashboard/PostOpRecoveryTracker';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
 import JourneyStatusTimeline from '@/components/dashboard/JourneyStatusTimeline';
@@ -110,6 +111,15 @@ function DashboardHome({ user, consultations, language }) {
   });
 
   const latestActive = consultations.find(c => c.status !== 'Completed');
+  const completedCase = consultations.find(c => c.status === 'Completed');
+
+  // Post-op recovery check-ins — shown after journey is complete
+  const { data: postOpCheckIns = [] } = useQuery({
+    queryKey: ['post-op-checkins', completedCase?.id],
+    queryFn: () => base44.entities.PostOpCheckIn.filter({ case_id: completedCase.id }, '-day', 4),
+    enabled: !!completedCase?.id,
+    staleTime: 5 * 60_000,
+  });
 
   // Morales Safety Score — powered by MedGuard™ 6-signal analysis
   const tripPhaseForScore = activeTrip?.trip_phase || latestActive?.trip_phase;
@@ -475,6 +485,13 @@ function DashboardHome({ user, consultations, language }) {
               if (is_complete) setShowGoldenM(true);
             }}
           />
+        </div>
+      )}
+
+      {/* Post-op recovery tracker — visible after journey completes */}
+      {postOpCheckIns.length > 0 && (
+        <div className="mb-5">
+          <PostOpRecoveryTracker checkIns={postOpCheckIns} />
         </div>
       )}
 

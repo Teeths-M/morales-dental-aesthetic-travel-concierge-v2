@@ -222,6 +222,16 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         trip_id,
       }).catch(() => {}) ?? Promise.resolve()
     );
+
+    // Schedule 30-day post-op recovery check-ins (Day 3, 7, 14, 30)
+    if (trip.case_id) {
+      downstream.push(
+        base44.asServiceRole.functions?.invoke?.('schedulePostOpCheckIns', {
+          case_id: trip.case_id,
+          trip_id,
+        }).catch(() => {}) ?? Promise.resolve()
+      );
+    }
   }
 
   // Fire all downstream tasks concurrently — failures are non-fatal
