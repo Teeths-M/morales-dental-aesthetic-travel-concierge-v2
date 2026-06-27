@@ -213,6 +213,15 @@ function DashboardHome({ user, consultations, language }) {
       <ArrivalActivityPrompt caseId={latestConsultation?.id} />
       <SoloCheckInBanner />
 
+      {/* ── MedGuard "knows you" indicator — shown when fingerprint is complete ── */}
+      {!isLearning && activeTrip && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: 'rgba(168,85,247,0.10)', border: '1px solid rgba(168,85,247,0.22)', fontSize: 11, fontWeight: 600, color: 'rgba(216,180,254,0.85)' }}>
+            🧠 MedGuard knows you — personalized protection active
+          </span>
+        </div>
+      )}
+
       {/* ── Night Mode banner (Layer 2: Time of Day) ── */}
       {safetyCx.isNight && activeTrip && (
         <div style={{ borderRadius: 14, padding: '10px 16px', background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
