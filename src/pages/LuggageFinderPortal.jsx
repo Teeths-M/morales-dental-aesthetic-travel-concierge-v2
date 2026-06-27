@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { isSystemPaused } from '@/lib/systemPause';
 import { motion } from 'framer-motion';
 import { Heart, CheckCircle2, Loader2, Luggage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,13 +49,13 @@ export default function LuggageFinderPortal() {
     });
 
     // Notify owner + admin via email — no owner details shown to finder
-    await base44.asServiceRole.integrations.Core.SendEmail({
+    if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
       to: bag.patient_email,
       subject: '🎉 Your Lost Bag Has Been Found!',
       body: `Great news! Someone found your bag.\n\nBag: ${bag.bag_label}\nFound by: ${form.finder_name}\nLocation: ${form.current_location}\n${form.finder_phone ? `Finder phone: ${form.finder_phone}` : ''}\n${form.finder_email ? `Finder email: ${form.finder_email}` : ''}\n\nYour concierge team will coordinate the return. We'll be in touch shortly.\n\nMorales Medical`
     });
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
+    if (!isSystemPaused()) await base44.asServiceRole.integrations.Core.SendEmail({
       to: 'admin@moralesmedical.com',
       subject: `🧳 Luggage Found — ${bag.token_code}`,
       body: `Lost bag has been found via QR scan.\n\nToken: ${bag.token_code}\nBag: ${bag.bag_label}\nOwner case: ${bag.case_id}\nFound by: ${form.finder_name} at ${form.current_location}\nFinder contact: ${form.finder_phone || form.finder_email || 'None provided'}`
