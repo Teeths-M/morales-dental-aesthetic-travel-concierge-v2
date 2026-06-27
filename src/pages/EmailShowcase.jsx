@@ -6,7 +6,8 @@
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
 const APP_URL = window.location.origin;
@@ -207,9 +208,33 @@ const EMAILS = [
   },
 ];
 
+const DEMO_EMAIL = 'theonmorales@gmail.com';
+
 export default function EmailShowcase() {
-  const [active, setActive] = useState('golden_m');
+  const [active,   setActive]   = useState('golden_m');
+  const [sending,  setSending]  = useState(false);
+  const [sent,     setSent]     = useState(null); // template id of last sent
+  const [sendErr,  setSendErr]  = useState(false);
   const current = EMAILS.find(e => e.id === active);
+
+  async function sendToInbox() {
+    setSending(true);
+    setSent(null);
+    setSendErr(false);
+    try {
+      await base44.functions.invoke('sendTestEmail', {
+        to:          DEMO_EMAIL,
+        template_id: active,
+      });
+      setSent(active);
+      setTimeout(() => setSent(null), 5000);
+    } catch {
+      setSendErr(true);
+      setTimeout(() => setSendErr(false), 4000);
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#060B16', fontFamily: 'system-ui, sans-serif' }}>
@@ -250,11 +275,37 @@ export default function EmailShowcase() {
 
           {/* Email preview */}
           <div>
-            <div style={{ marginBottom: 14, padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ marginBottom: 14, padding: '14px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 12 }}>
                 <div><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>To</span><br /><span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{current.who}</span></div>
                 <div><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Fires when</span><br /><span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{current.when}</span></div>
                 <div style={{ flex: 1 }}><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Subject</span><br /><span style={{ fontSize: 13, color: GOLD, fontWeight: 600 }}>{current.subject}</span></div>
+              </div>
+              {/* Send to inbox CTA */}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                  {sent === active ? `✓ Sent to ${DEMO_EMAIL}` : sendErr ? '✗ Send failed — check System Pause' : `Send a live version to ${DEMO_EMAIL}`}
+                </span>
+                <button
+                  onClick={sendToInbox}
+                  disabled={sending}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '8px 18px', borderRadius: 99,
+                    background: sent === active ? 'rgba(34,197,94,0.15)' : sendErr ? 'rgba(239,68,68,0.12)' : GOLD,
+                    color: sent === active ? '#22c55e' : sendErr ? '#ef4444' : '#060B16',
+                    border: `1px solid ${sent === active ? 'rgba(34,197,94,0.35)' : sendErr ? 'rgba(239,68,68,0.35)' : 'transparent'}`,
+                    fontSize: 12, fontWeight: 700, cursor: sending ? 'wait' : 'pointer',
+                    opacity: sending ? 0.7 : 1, transition: 'all 0.2s',
+                  }}
+                >
+                  {sent === active
+                    ? <><CheckCircle2 style={{ width: 13, height: 13 }} /> Delivered</>
+                    : sending
+                      ? 'Sending…'
+                      : <><Send style={{ width: 13, height: 13 }} /> Send to My Inbox</>
+                  }
+                </button>
               </div>
             </div>
             <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.10)', height: 560 }}>
