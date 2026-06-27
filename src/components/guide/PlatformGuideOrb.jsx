@@ -85,16 +85,21 @@ Answer in plain language. Stay on platform topics.`;
 }
 
 // Session cache for LLM responses
+// Normalize keys: lowercase, strip punctuation, collapse whitespace
+// "What is MedGuard?" and "what is medguard" → same cache hit
+function normalizeKey(q) {
+  return q.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+}
 function getCached(q) {
   try {
     const cache = JSON.parse(sessionStorage.getItem(CACHE_KEY) || '{}');
-    return cache[q.toLowerCase().trim()] || null;
+    return cache[normalizeKey(q)] || null;
   } catch { return null; }
 }
 function setCached(q, answer) {
   try {
     const cache = JSON.parse(sessionStorage.getItem(CACHE_KEY) || '{}');
-    cache[q.toLowerCase().trim()] = answer;
+    cache[normalizeKey(q)] = answer;
     sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
   } catch {}
 }

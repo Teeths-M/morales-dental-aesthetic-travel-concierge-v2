@@ -25,6 +25,20 @@ const HEARTBEAT_MS       = 5 * 60 * 1000;   // 5 min
 const ANALYSIS_INTERVAL  = 15 * 60 * 1000;  // 15 min between anomaly checks
 const BUFFER_MAX         = 288;              // max 24h of 5-min heartbeats
 const MIN_NUDGE_GAP_MIN  = 30;              // throttle nudges
+const FP_CACHE_KEY       = 'morales_behavioral_fp'; // localStorage fingerprint backup
+
+// ── LocalStorage fingerprint cache (survives entity write failures) ───────────
+function loadCachedFingerprint(email) {
+  try {
+    const raw = localStorage.getItem(FP_CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj.email === email ? obj.fp : null;
+  } catch { return null; }
+}
+function saveCachedFingerprint(email, fp) {
+  try { localStorage.setItem(FP_CACHE_KEY, JSON.stringify({ email, fp, ts: Date.now() })); } catch {}
+}
 
 // ── Fingerprint helpers ──────────────────────────────────────────────────────
 
@@ -215,19 +229,25 @@ export function useBehavioralTracking({ caseId, caseStatus } = {}) {
               return;
             }
           }
+          // Merge localStorage fingerprint cache if entity has fewer samples
+          const cached = loadCachedFingerprint(user.email);
+          if (cached && (cached.samples_collected || 0) > (p.fingerprint?.samples_collected || 0)) {
+            p = { ...p, fingerprint: cached };
+          }
           setProfile(p);
         } else {
-          // First time — create profile and start learning
-          const now = new Date().toISOString();
-          const created = await base44.entities.BehavioralProfile.create({
+          // First time — use cached fingerprint if available, otherwise blank
+          const cached   = loadCachedFingerprint(user.email);
+          const now      = new Date().toISOString();
+          const created  = await base44.entities.BehavioralProfile.create({
             user_email:          user.email,
             case_id:             caseId || null,
-            learning_phase:      true,
+            learning_phase:      !cached || (cached.samples_collected || 0) < 5,
             learning_started_at: now,
-            fingerprint:         blankFingerprint(),
+            fingerprint:         cached || blankFingerprint(),
             last_signal_at:      now,
             signals_buffer:      [],
-            status:              'learning',
+            status:              cached ? 'monitoring' : 'learning',
             nudge_count:         0,
           }).catch(() => null);
           if (created) setProfile(created);
@@ -265,17 +285,19 @@ export function useBehavioralTracking({ caseId, caseStatus } = {}) {
     const buffer = [...(p.signals_buffer || []), { ts: nowIso, type, h: now.getHours() }]
       .slice(-BUFFER_MAX);
 
+    // Always save to localStorage first — survives entity write failures
+    if (user?.email) saveCachedFingerprint(user.email, fp);
+
     try {
       const updated = await base44.entities.BehavioralProfile.update(p.id, {
         last_signal_at: nowIso,
         fingerprint:    fp,
         signals_buffer: buffer,
-        // Reset anomaly score when user is actively present
         anomaly_score:  type === 'app_open' ? 0 : p.anomaly_score,
         status: type === 'app_open' && p.status !== 'learning' ? 'monitoring' : p.status,
       });
       if (updated) setProfile(prev => ({ ...prev, ...updated, fingerprint: fp, last_signal_at: nowIso }));
-    } catch { /* non-blocking */ }
+    } catch { /* entity write failed — localStorage cache already saved */ }
 
     offlineStartRef.current = null;
     if (type === 'app_open') {
@@ -315,13 +337,14 @@ export function useBehavioralTracking({ caseId, caseStatus } = {}) {
     if (result.action === 'check_in_requested' || result.action === 'escalated') {
       try {
         await base44.functions.invoke('analyzePatternAnomaly', {
-          profile_id:    p.id,
-          case_id:       caseId || p.case_id,
-          anomaly_score: result.score,
-          action:        result.action,
-          nudge_message: result.message,
-          context_note:  `${result.reason} — score ${result.score}`,
-          anomaly_reason: result.reason,
+          profile_id:       p.id,
+          case_id:          caseId || p.case_id,
+          anomaly_score:    result.score,
+          action:           result.action,
+          nudge_message:    result.message,
+          context_note:     `${result.reason} — score ${result.score}`,
+          anomaly_reason:   result.reason,
+          emergency_bypass: result.action === 'escalated', // critical escalations bypass System Pause
         });
       } catch { /* edge function dispatch failure is non-blocking */ }
     }

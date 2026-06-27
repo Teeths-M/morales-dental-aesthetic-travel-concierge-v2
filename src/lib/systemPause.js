@@ -16,8 +16,8 @@ const CONFIG_KEY   = 'system_paused';
 const ADMIN_EMAIL  = 'admin@moralesmedical.com';
 
 // Stash the real methods so we can restore them on resume
-let _originalInvoke    = null;
-let _originalInvokeLLM = null;
+let _originalInvoke        = null;
+let _originalIntegrations  = null; // entire integrations object before Proxy
 
 // ── Local flag helpers ────────────────────────────────────────────────────────
 
@@ -48,18 +48,32 @@ export function applyPauseIntercept() {
     };
   }
 
-  // Patch integrations.Core.InvokeLLM — this is the biggest credit consumer
-  // (MedGuard analysis, Orb AI responses, clinical note extraction all use this)
+  // Wrap the ENTIRE integrations object with a Proxy — catches InvokeLLM,
+  // InvokeVision, GenerateImage, SendEmail, and any future integration method
+  // without needing to patch each one individually.
   try {
-    if (!_originalInvokeLLM && base44.integrations?.Core?.InvokeLLM) {
-      _originalInvokeLLM = base44.integrations.Core.InvokeLLM.bind(base44.integrations.Core);
-      base44.integrations.Core.InvokeLLM = async (payload) => {
-        if (isSystemPaused()) {
-          console.warn('[SYSTEM PAUSED] Blocked InvokeLLM call');
-          return { result: '', __paused: true };
-        }
-        return _originalInvokeLLM(payload);
-      };
+    if (!_originalIntegrations && base44.integrations) {
+      _originalIntegrations = base44.integrations;
+      base44.integrations = new Proxy(base44.integrations, {
+        get(target, serviceName) {
+          const service = target[serviceName];
+          if (!service || typeof service !== 'object') return service;
+          // Return a proxy of each service (Core, Twilio, etc.)
+          return new Proxy(service, {
+            get(svc, methodName) {
+              const method = svc[methodName];
+              if (typeof method !== 'function') return method;
+              return async (...args) => {
+                if (isSystemPaused()) {
+                  console.warn(`[SYSTEM PAUSED] Blocked integration: ${String(serviceName)}.${String(methodName)}`);
+                  return { result: '', __paused: true };
+                }
+                return method.apply(svc, args);
+              };
+            },
+          });
+        },
+      });
     }
   } catch (_) {}
 }
@@ -69,12 +83,10 @@ export function removePauseIntercept() {
     base44.functions.invoke = _originalInvoke;
     _originalInvoke = null;
   }
-  try {
-    if (_originalInvokeLLM && base44.integrations?.Core) {
-      base44.integrations.Core.InvokeLLM = _originalInvokeLLM;
-      _originalInvokeLLM = null;
-    }
-  } catch (_) {}
+  if (_originalIntegrations) {
+    base44.integrations = _originalIntegrations;
+    _originalIntegrations = null;
+  }
 }
 
 // ── Server-side sync (entity reads — zero integration credits) ────────────────

@@ -26,23 +26,34 @@ export default function ConsultationSuccess() {
   const showGuardianPrompt = travelingSolo && !alreadyOptedIn && consultationId;
 
   const [enabling,  setEnabling]  = useState(false);
-  const [skipStep,  setSkipStep]  = useState(false);  // first click shows warning
-  const [enabled,   setEnabled]   = useState(false);  // opted in successfully
-  const [skipped,   setSkipped]   = useState(false);  // explicitly declined
+  const [skipStep,  setSkipStep]  = useState(false);
+  const [enabled,   setEnabled]   = useState(false);
+  const [skipped,   setSkipped]   = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   async function handleEnable() {
     setEnabling(true);
-    try {
-      await base44.entities.Consultation.update(consultationId, {
-        guardian_mode_opted_in: true,
-      });
-      setEnabled(true);
-    } catch {
-      // Non-blocking — user can still proceed
-      setEnabled(true);
-    } finally {
-      setEnabling(false);
+    setSaveError(false);
+    const payload = { guardian_mode_opted_in: true };
+
+    // Try once, retry once on failure — covers flaky mobile connections
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await base44.entities.Consultation.update(consultationId, payload);
+        setEnabled(true);
+        setEnabling(false);
+        return;
+      } catch {
+        if (attempt === 1) {
+          // Both attempts failed — show error but still let user proceed
+          setSaveError(true);
+          setEnabled(true); // UI proceeds; patient isn't blocked
+        } else {
+          await new Promise(r => setTimeout(r, 1200)); // wait 1.2s before retry
+        }
+      }
     }
+    setEnabling(false);
   }
 
   function handleSkipRequest() {
@@ -77,6 +88,13 @@ export default function ConsultationSuccess() {
                   ✓ GPS silence detection (active journey only)<br />
                   ✓ Fall detection when app is open<br />
                   ✓ Guardian contacts notified on escalation
+                </p>
+              </div>
+            )}
+            {saveError && (
+              <div style={{ margin: '8px 0 0', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10 }}>
+                <p style={{ margin: 0, fontSize: 11, color: '#fca5a5' }}>
+                  Could not save preference — you can enable Guardian Mode anytime from your Dashboard settings.
                 </p>
               </div>
             )}

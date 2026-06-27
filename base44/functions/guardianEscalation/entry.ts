@@ -25,11 +25,12 @@ function isLocalSleepHours(tz: number): boolean {
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {
     consultation_id,
-    strike        = 1,    // 1 | 2 | 3
-    reason        = 'missed_checkin',
-    anomaly_score = 0,
-    tz_offset     = 0,
-    context_note  = '',
+    strike           = 1,     // 1 | 2 | 3
+    reason           = 'missed_checkin',
+    anomaly_score    = 0,
+    tz_offset        = 0,
+    context_note     = '',
+    emergency_bypass = false, // true = ignore System Pause (safety-critical SMS must always fire)
   } = await body();
 
   if (!consultation_id) return err('consultation_id required');
@@ -42,8 +43,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (!cons) return err('Consultation not found');
   if (!cons.guardian_mode_opted_in) return ok({ skipped: true, reason: 'not_opted_in' });
 
-  // Sleep-hour gate (only critical strike 3 bypasses sleep)
-  if (isLocalSleepHours(tz_offset) && strike < 3) {
+  // Emergency bypass: strike 3 or explicit emergency_bypass always fires regardless of pause/sleep
+  // The client-side Proxy blocks integrations, but edge functions run server-side and
+  // bypass it naturally. emergency_bypass is documented for clarity, not enforcement.
+
+  // Sleep-hour gate (only critical strike 3 or emergency bypass clears it)
+  if (isLocalSleepHours(tz_offset) && strike < 3 && !emergency_bypass) {
     return ok({ held: true, reason: 'sleep_hours', retry_at: '06:00 AM local' });
   }
 
