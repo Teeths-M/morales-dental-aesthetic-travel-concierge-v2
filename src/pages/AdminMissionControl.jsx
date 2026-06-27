@@ -7,6 +7,7 @@ import {
   Radio, ArrowRight, RefreshCw, Phone
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 const GOLD = '#D4AF37';
 
@@ -197,8 +198,7 @@ export default function AdminMissionControl() {
     { icon: '📩', text: 'Quote reminder sent (Stage 1) — Prestige Travel Agency.', time: '2h ago', color: '#94a3b8' },
   ];
 
-  const ACTIVE_PHASES = ['transit_out', 'arrived', 'recovery', 'transit_return'];
-  const inTransit = activeCases.filter((c) => ACTIVE_PHASES.includes(c.trip_phase));
+  const inTransit = activeCases.filter((c) => ACTIVE_TRAVEL_PHASES.has(c.trip_phase));
   const countries  = [...new Set(activeCases.map((c) => c.procedure_country).filter(Boolean))];
 
   return (

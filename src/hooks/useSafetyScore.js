@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-
-const ACTIVE_PHASES = new Set(['transit_out', 'arrived', 'recovery', 'transit_return']);
+import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 /**
  * useSafetyScore — Morales Safety Score
@@ -11,7 +10,7 @@ const ACTIVE_PHASES = new Set(['transit_out', 'arrived', 'recovery', 'transit_re
  * During pre-travel or no-phase, returns score: 0 with isActiveTravel: false.
  */
 export function useSafetyScore({ caseId, tripPhase, enabled = true }) {
-  const isActiveTravel = ACTIVE_PHASES.has(tripPhase);
+  const isActiveTravel = ACTIVE_TRAVEL_PHASES.has(tripPhase);
 
   const { data, isLoading } = useQuery({
     queryKey: ['safety-score', caseId],

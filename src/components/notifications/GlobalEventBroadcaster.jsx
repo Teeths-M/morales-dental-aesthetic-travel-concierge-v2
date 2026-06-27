@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useNotification } from '@/context/NotificationContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
+import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 const DRIVER_ETA_POLL_MS = 45 * 1000;
 const COUNTRY_STORAGE_KEY = 'morales_last_notified_country';
@@ -59,8 +60,7 @@ export default function GlobalEventBroadcaster({ user }) {
   const medguardActivatedRef = useRef(false);
   useEffect(() => {
     if (!activeTrip || medguardActivatedRef.current) return;
-    const ACTIVE = ['transit_out', 'arrived', 'recovery', 'transit_return'];
-    if (!ACTIVE.includes(activeTrip.trip_phase)) return;
+    if (!ACTIVE_TRAVEL_PHASES.has(activeTrip.trip_phase)) return;
 
     const key = `morales_medguard_activated_${activeTrip.id}`;
     if (sessionStorage.getItem(key)) return;
