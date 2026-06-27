@@ -293,7 +293,6 @@ export function useBehavioralTracking({ caseId, caseStatus } = {}) {
     if (now - lastAnalysisRef.current < ANALYSIS_INTERVAL) return;
     lastAnalysisRef.current = now;
 
-    // TODO: get actual missed check-ins from case data (passed via context)
     const result = computeAnomaly(p, { isRecoveryPhase });
 
     if (result.action === 'normal' || result.action === 'learning') {
