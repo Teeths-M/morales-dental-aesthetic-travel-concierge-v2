@@ -14,8 +14,8 @@ const slides = [
     headline: 'World-Class Dentistry.\nCaribbean Warmth.',
     body: 'Bogotá and Medellín are home to elite, internationally accredited clinics. Full smile makeovers at 65% less than the US. English-speaking surgeons. Morales partners vetted personally.',
     color: 'from-green-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=800&fit=crop&q=80',
-    imageAlt: 'Medellín, Colombia — vibrant city and world-class medical hub',
+    image: 'https://images.unsplash.com/photo-1573790387438-4da905039392?w=800&fit=crop&q=80',
+    imageAlt: 'Cartagena, Colombia — colorful colonial city and medical tourism hub',
   },
   {
     icon: Globe,
@@ -41,7 +41,7 @@ const slides = [
     headline: 'Caribbean Recovery.\nWorld-Class Aesthetic Surgeons.',
     body: 'Venezuela trains some of Latin America\'s most celebrated aesthetic surgeons. Warm Caribbean climate ideal for post-op recovery. Morales partners are internationally certified and personally screened.',
     color: 'from-yellow-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1540202404-a2f29016b523?w=800&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&fit=crop&q=80',
     imageAlt: 'Margarita Island, Venezuela — Caribbean turquoise waters and recovery paradise',
   },
   {
@@ -72,14 +72,14 @@ const slides = [
     imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
-  // ── Brand/trust slides ─────────────────────────────────────────────────────
+  // ── Brand/trust slides — each needs a unique image URL so AnimatePresence transitions ──
   {
     icon: Sparkles,
     eyebrow: 'Our Promise',
     headline: 'Heal Beautifully.\nTravel Confidently.',
     body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
     color: 'from-accent/10 to-transparent',
-    image: DEFAULT_IMG,
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png',
   },
   {
     icon: ShieldCheck,
@@ -87,7 +87,7 @@ const slides = [
     headline: '9 Checkpoints.\nZero Gaps.',
     body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically.',
     color: 'from-primary/10 to-transparent',
-    image: DEFAULT_IMG,
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
   },
   {
     icon: Lock,
@@ -95,7 +95,7 @@ const slides = [
     headline: 'Your Privacy Is\nOur Priority.',
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
-    image: DEFAULT_IMG,
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8018f783e_generated_image.png',
   },
   {
     icon: Heart,
@@ -103,7 +103,7 @@ const slides = [
     headline: 'Real People.\n24/7 Concierge Support.',
     body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
-    image: DEFAULT_IMG,
+    image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/9b31409d1_generated_image.png',
   },
 ];
 
