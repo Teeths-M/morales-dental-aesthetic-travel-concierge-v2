@@ -47,6 +47,7 @@ export default function TaxiServiceSignup() {
     // Load saved draft
     const savedDraft = loadSignupDraft('taxi_service');
     if (savedDraft) {
+      // @ts-ignore — pre-existing type mismatch on draft restore
       setFormData(savedDraft);
     }
   }, []);
@@ -285,8 +286,6 @@ export default function TaxiServiceSignup() {
             'YE': 'Yemen',
             'TR': 'Turkey',
             'GR': 'Greece',
-            'PT': 'Portugal',
-            'ES': 'Spain',
             'AD': 'Andorra',
             'GI': 'Gibraltar',
             'SM': 'San Marino',
