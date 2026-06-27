@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
-import { BadgeCheck, Shield, Map, CheckCircle, Play, Heart } from 'lucide-react';
+import { BadgeCheck, Shield, CheckCircle, Play, Heart } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD       = BRAND.gold;
