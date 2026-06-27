@@ -14,7 +14,7 @@ const slides = [
     headline: 'World-Class Dentistry.\nCaribbean Warmth.',
     body: 'Bogotá and Medellín are home to elite, internationally accredited clinics. Full smile makeovers at 65% less than the US. English-speaking surgeons. Morales partners vetted personally.',
     color: 'from-green-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1601001815894-4a796f8c5a56?w=800&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&fit=crop&q=80',
     imageAlt: 'Medellín, Colombia — vibrant city and world-class medical hub',
   },
   {
