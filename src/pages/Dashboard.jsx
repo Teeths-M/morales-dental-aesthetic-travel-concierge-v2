@@ -46,6 +46,7 @@ import LoadingState from '@/components/ui-system/LoadingState';
 import ErrorState from '@/components/ui-system/ErrorState';
 import EmptyState from '@/components/ui-system/EmptyState';
 import { formatDate } from '@/lib/format';
+import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 function WhatsAppMini() {
   return (
@@ -138,7 +139,7 @@ function DashboardHome({ user, consultations, language }) {
     travelingSolo:      latestActive?.traveling_solo ?? true,
     guardianModeOptedIn: latestActive?.guardian_mode_opted_in ?? false,
     companionType:      latestActive?.traveling_companion_type || 'solo',
-    isActiveJourney:    !!activeTrip || ['transit_out','arrived','recovery','transit_return'].includes(latestActive?.trip_phase),
+    isActiveJourney:    !!activeTrip || ACTIVE_TRAVEL_PHASES.has(latestActive?.trip_phase),
     hasGPSMoved:        locationStatus === 'active',
     lastGPSUpdateAt:    currentLocation?.timestamp || null,
   });
@@ -767,7 +768,7 @@ export default function Dashboard() {
     if (p === '/dashboard/messages') return <MessagesModule />;
     if (p === '/dashboard/journey') return <JourneyModule />;
     if (p === '/dashboard/support') return <SupportModule />;
-    if (p === '/dashboard/settings') return <SettingsModule onResetSafetyProfile={resetFingerprint} isActiveJourney={!!activeTrip || ['transit_out','arrived','recovery','transit_return'].includes(latestActive?.trip_phase)} />;
+    if (p === '/dashboard/settings') return <SettingsModule onResetSafetyProfile={resetFingerprint} isActiveJourney={!!activeTrip || ACTIVE_TRAVEL_PHASES.has(latestActive?.trip_phase)} />;
     if (p === '/dashboard/case-status') return <CaseStatusModule userEmail={user?.email} />;
     if (p === '/dashboard') return <FeatureHub />;
     if (loadingConsultations) return <LoadingState rows={4} dark={false} label="Loading your dashboard" className="mt-4" />;

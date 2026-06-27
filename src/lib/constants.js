@@ -329,6 +329,16 @@ export const CACHE = {
   INFINITY: Infinity,
 };
 
+// Journey phases where the patient is physically traveling.
+// Single source of truth — import this everywhere instead of duplicating the array.
+// MedGuard, Guardian Mode, and isActiveJourney checks all derive from this set.
+export const ACTIVE_TRAVEL_PHASES = new Set([
+  'transit_out',
+  'arrived',
+  'recovery',
+  'transit_return',
+]);
+
 // Export everything as a single namespace for convenience
 export const CONSTANTS = {
   ROLES,

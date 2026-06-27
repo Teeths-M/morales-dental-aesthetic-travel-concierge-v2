@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, AlertTriangle, Zap, Moon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 const GOLD = '#D4AF37';
 
@@ -28,8 +29,7 @@ export default function MedGuardPulse({ caseId, tripPhase, timeBonus = 0, isNigh
   const [loading,  setLoading]  = useState(true);
   const [expanded, setExpanded] = useState(false);
 
-  const ACTIVE_PHASES = new Set(['transit_out', 'arrived', 'recovery', 'transit_return']);
-  const isActiveTravel = ACTIVE_PHASES.has(tripPhase);
+  const isActiveTravel = ACTIVE_TRAVEL_PHASES.has(tripPhase);
 
   const runAnalysis = async () => {
     if (!caseId || !isActiveTravel) { setLoading(false); return; }
