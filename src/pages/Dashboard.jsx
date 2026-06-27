@@ -33,6 +33,7 @@ import MedGuardPulse from '@/components/dashboard/MedGuardPulse';
 import SafetyScoreGauge from '@/components/dashboard/SafetyScoreGauge';
 import JourneyMap from '@/components/dashboard/JourneyMap';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
+import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PatientJourneyCredit from '@/components/dashboard/PatientJourneyCredit';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
 import { useBehavioralTracking } from '@/hooks/useBehavioralTracking';
@@ -444,6 +445,11 @@ function DashboardHome({ user, consultations, language }) {
           isActiveTravel={safetyScore.isActiveTravel}
           phase={tripPhaseForScore}
         />
+      )}
+
+      {/* EVN-iQ400 — Environmental Intelligence Layer */}
+      {latestConsultation?.procedure_country && (
+        <EVNiQ400Card country={latestConsultation.procedure_country} />
       )}
 
       {/* Destination Safety Index — proprietary Morales intelligence */}
