@@ -13,32 +13,32 @@ const STAGES = [
     label: 'Driver Pickup',
     icon: '🚗',
     sub: 'Home → Airport',
-    gradient: 'linear-gradient(160deg, #1C0A00 0%, #3D1F00 35%, #7A4000 65%, #B35900 100%)',
-    shimmer: 'radial-gradient(ellipse at 30% 80%, rgba(244,162,97,0.35) 0%, transparent 60%)',
+    photo: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=700&h=220&fit=crop&q=80',
+    overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(180,90,0,0.25) 100%)',
     accent: '#F4A261',
   },
   {
     label: 'Hotel Check-in',
     icon: '🏨',
     sub: 'Boutique. Warm welcome.',
-    gradient: 'linear-gradient(160deg, #001830 0%, #002855 35%, #003D7A 65%, #005580 100%)',
-    shimmer: 'radial-gradient(ellipse at 70% 30%, rgba(96,165,250,0.3) 0%, transparent 60%)',
+    photo: 'https://images.unsplash.com/photo-1551882547-ff40c599fb6c?w=700&h=220&fit=crop&q=80',
+    overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(0,40,100,0.30) 100%)',
     accent: '#60A5FA',
   },
   {
     label: 'Clinic Arrival',
     icon: '🏥',
     sub: 'Verified. Ready for you.',
-    gradient: 'linear-gradient(160deg, #001A12 0%, #003320 35%, #005533 65%, #007A4D 100%)',
-    shimmer: 'radial-gradient(ellipse at 30% 70%, rgba(52,211,153,0.3) 0%, transparent 60%)',
+    photo: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=700&h=220&fit=crop&q=80',
+    overlay: 'linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, rgba(0,80,40,0.25) 100%)',
     accent: '#34D399',
   },
   {
     label: 'Welcome Home',
     icon: '🏠',
     sub: 'The Golden M is yours.',
-    gradient: 'linear-gradient(160deg, #1A0F00 0%, #3D2200 35%, #7A4500 65%, #C49A1A 100%)',
-    shimmer: `radial-gradient(ellipse at 70% 80%, ${GOLD}60 0%, transparent 60%)`,
+    photo: 'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=700&h=220&fit=crop&q=80',
+    overlay: `linear-gradient(to right, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.45) 55%, ${GOLD}30 100%)`,
     accent: GOLD,
   },
 ];
@@ -72,14 +72,16 @@ export default function JourneyStagesCard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            position:   'relative',
-            height:     '25%',
-            background: stage.gradient,
-            overflow:   'hidden',
+            position:           'relative',
+            height:             '25%',
+            backgroundImage:    `url(${stage.photo})`,
+            backgroundSize:     'cover',
+            backgroundPosition: 'center',
+            overflow:           'hidden',
           }}
         >
-          {/* Inner shimmer */}
-          <div style={{ position: 'absolute', inset: 0, background: stage.shimmer }} />
+          {/* Dark + accent overlay so text stays readable */}
+          <div style={{ position: 'absolute', inset: 0, background: stage.overlay }} />
 
           {/* Separator line — gold for all but last */}
           {i < 3 && (
