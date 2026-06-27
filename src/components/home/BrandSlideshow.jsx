@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ShieldCheck, Star, Heart, Globe, Lock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import JourneyStagesCard from './JourneyStagesCard';
 
 const DEFAULT_IMG = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png';
 
@@ -72,14 +73,14 @@ const slides = [
     imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
-  // ── Brand/trust slides — each has a unique image matched to its message ──
+  // ── Brand/trust slides — left panel shows JourneyStagesCard (type: 'brand') ──
   {
     icon: Sparkles,
     eyebrow: 'Our Promise',
     headline: 'Heal Beautifully.\nTravel Confidently.',
     body: 'Premium care. Expert guidance. A 9-checkpoint safety system. A journey designed entirely around you.',
     color: 'from-accent/10 to-transparent',
-    // Woman on plane — the journey begins
+    type: 'brand',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/102642e19_generated_image.png',
   },
   {
@@ -88,7 +89,7 @@ const slides = [
     headline: '9 Checkpoints.\nZero Gaps.',
     body: 'Every handshake digitally confirmed — driver, hotel, clinic, companion, return home. Miss one and our system escalates automatically.',
     color: 'from-primary/10 to-transparent',
-    // Verified medical team — trust and safety
+    type: 'brand',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/03cdc6bc8_image.png',
   },
   {
@@ -97,7 +98,7 @@ const slides = [
     headline: 'Your Privacy Is\nOur Priority.',
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
-    // Elegant face profile — discreet and personal
+    type: 'brand',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/4ff2fab82_generated_image.png',
   },
   {
@@ -106,7 +107,7 @@ const slides = [
     headline: 'Real People.\n24/7 Concierge Support.',
     body: 'Before, during, and after your journey — your Morales coordinator is one message away. Day or night. Any country. Any situation.',
     color: 'from-primary/10 to-transparent',
-    // Happy smiling patient — the human result of care
+    type: 'brand',
     image: 'https://media.base44.com/images/public/6a01c1305c540b75f24dd373/8018f783e_generated_image.png',
   },
 ];
@@ -171,6 +172,20 @@ export default function BrandSlideshow() {
             viewport={{ once: true }}
           >
             <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ position: 'relative', aspectRatio: '4/3', background: '#0C1A1D' }}>
+              {slide.type === 'brand' ? (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={slide.eyebrow}
+                    style={{ position: 'absolute', inset: 0 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <JourneyStagesCard />
+                  </motion.div>
+                </AnimatePresence>
+              ) : (
               <AnimatePresence mode="wait">
                 <motion.img
                   key={slide.image}
@@ -184,6 +199,7 @@ export default function BrandSlideshow() {
                   transition={{ duration: 0.6, ease: 'easeInOut' }}
                 />
               </AnimatePresence>
+              )}
               {/* Dark overlay so the testimonial card reads clearly */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.45) 100%)' }} />
               {/* Destination label — only on destination slides */}
