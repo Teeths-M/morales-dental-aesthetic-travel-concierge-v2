@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
@@ -495,8 +495,20 @@ const TABS = [
   { id: 'recovery',   label: '📡 Family Tracker',        link: '/demo/recovery' },
 ];
 
+const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
+
 export default function DemoShowcase() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    return t && IN_PAGE_TAB_IDS.has(t) ? t : 'overview';
+  })();
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  function switchTab(id) {
+    setActiveTab(id);
+    setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true });
+  }
 
   useEffect(() => {
     document.title = 'Morales Concierge — Platform Demo';
@@ -540,7 +552,7 @@ export default function DemoShowcase() {
           ) : (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => switchTab(tab.id)}
               className="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all"
               style={{
                 background: activeTab === tab.id ? GOLD : '#0C1A1D',
