@@ -29,6 +29,7 @@ const EstimateDashboard      = lazy(() => import('@/pages/EstimateDashboard'));
 const NightlifeSafetyMode    = lazy(() => import('@/pages/NightlifeSafetyMode'));
 const WildernessSafetyMode   = lazy(() => import('@/pages/WildernessSafetyMode'));
 const MedicalIntakeForm      = lazy(() => import('@/pages/MedicalIntakeForm'));
+const EmergencyMedCard       = lazy(() => import('@/pages/EmergencyMedCard'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -47,6 +48,7 @@ export const clientRoutes = (
       <Route path="/dashboard/documents"        element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/bookings"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/messages"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/emergency-card"   element={<ErrorBoundary><EmergencyMedCard /></ErrorBoundary>} />
       <Route path="/dashboard/journey"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/case-status"      element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/support"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />

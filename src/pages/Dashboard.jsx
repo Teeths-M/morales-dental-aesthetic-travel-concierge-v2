@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
   Upload, MessageCircle, HeartPulse, Users,
-  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Star, Lock, FileText, ChevronDown
+  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Star, Lock, FileText, ChevronDown, FileHeart
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import FeatureHub from '@/components/dashboard/FeatureHub';
@@ -65,20 +65,21 @@ const notifications = [
 ];
 
 const quickActions = [
-  { icon: Lock, label: 'My Vault', to: '/passport-vault', color: 'emerald' },
-  { icon: Upload, label: 'Upload Documents', to: '/dashboard/documents', color: 'emerald' },
-  { icon: MessageCircle, label: 'Message Coordinator', to: '/dashboard/messages', color: 'blue' },
-  { icon: HeartPulse, label: 'View Recovery Plan', to: '/safe-t', color: 'sky' },
-  { icon: Users, label: 'Companion Package', to: '/dashboard/bookings', color: 'pink' },
-  { icon: Star, label: 'My Case Status', to: '/dashboard/case-status', color: 'violet' },
+  { icon: Lock,       label: 'My Vault',            to: '/passport-vault',              color: 'emerald' },
+  { icon: FileHeart,  label: 'Emergency Med Card',   to: '/dashboard/emergency-card',    color: 'red'     },
+  { icon: Upload,     label: 'Upload Documents',     to: '/dashboard/documents',         color: 'emerald' },
+  { icon: MessageCircle, label: 'Message Coordinator', to: '/dashboard/messages',        color: 'blue' },
+  { icon: HeartPulse, label: 'View Recovery Plan',  to: '/safe-t',                      color: 'sky' },
+  { icon: Star,       label: 'My Case Status',       to: '/dashboard/case-status',       color: 'violet' },
 ];
 
 const colorMap = {
   emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-700', hover: 'hover:bg-emerald-100' },
-  blue: { bg: 'bg-blue-50', icon: 'text-blue-700', hover: 'hover:bg-blue-100' },
-  violet: { bg: 'bg-violet-50', icon: 'text-violet-700', hover: 'hover:bg-violet-100' },
-  sky: { bg: 'bg-sky-50', icon: 'text-sky-700', hover: 'hover:bg-sky-100' },
-  pink: { bg: 'bg-pink-50', icon: 'text-pink-600', hover: 'hover:bg-pink-100' },
+  blue:    { bg: 'bg-blue-50',    icon: 'text-blue-700',    hover: 'hover:bg-blue-100'    },
+  violet:  { bg: 'bg-violet-50',  icon: 'text-violet-700',  hover: 'hover:bg-violet-100'  },
+  sky:     { bg: 'bg-sky-50',     icon: 'text-sky-700',     hover: 'hover:bg-sky-100'     },
+  pink:    { bg: 'bg-pink-50',    icon: 'text-pink-600',    hover: 'hover:bg-pink-100'    },
+  red:     { bg: 'bg-red-50',     icon: 'text-red-700',     hover: 'hover:bg-red-100'     },
 };
 
 function DashboardHome({ user, consultations, language }) {
