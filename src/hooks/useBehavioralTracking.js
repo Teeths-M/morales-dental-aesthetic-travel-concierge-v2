@@ -40,9 +40,13 @@ function loadCachedFingerprint(email) {
     const raw = localStorage.getItem(fpKey(email));
     if (!raw) return null;
     const obj = JSON.parse(raw);
-    // Returning patients keep their fingerprint for 90 days — their most valuable data
+    const fp  = obj.fp;
+    if (!fp) return null;
+    // Completed fingerprints never expire by time — only by explicit reset.
+    // An incomplete fingerprint (still learning) expires after 90 days of inactivity.
+    if (fp.learning_completed_at) return fp;
     if (Date.now() - (obj.ts || 0) > 90 * 24 * 3600_000) return null;
-    return obj.fp || null;
+    return fp;
   } catch { return null; }
 }
 function saveCachedFingerprint(email, fp) {
