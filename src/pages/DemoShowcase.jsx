@@ -492,6 +492,7 @@ const TABS = [
   { id: 'nightlife',  label: '🔒 Vault Lockdown' },
   { id: 'pattern',    label: '🧠 Pattern Intelligence', link: '/demo/medguard' },
   { id: 'emails',     label: '📧 Email System',         link: '/demo/emails' },
+  { id: 'recovery',   label: '📡 Family Tracker',        link: '/demo/recovery' },
 ];
 
 export default function DemoShowcase() {
@@ -658,6 +659,14 @@ export default function DemoShowcase() {
             >
               <Mail style={{ width: 15, height: 15 }} />
               Email System — 5 Live Templates
+            </Link>
+            <Link
+              to="/demo/recovery"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ade80' }}
+            >
+              <Radio style={{ width: 15, height: 15 }} />
+              Family Tracker — Live View
             </Link>
           </div>
         </section>
