@@ -7,6 +7,8 @@
  * Auto-advances through 5 scenarios every 6 seconds.
  */
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain } from 'lucide-react';
 
@@ -299,6 +301,13 @@ export default function MedGuardDemo() {
   return (
     <div style={{ minHeight: '100vh', background: '#060B16', padding: '32px 24px', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
+
+        {/* Back button */}
+        <div style={{ marginBottom: 24 }}>
+          <Link to="/demo" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
+            <ArrowLeft style={{ width: 14, height: 14 }} /> Back to Demo
+          </Link>
+        </div>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>

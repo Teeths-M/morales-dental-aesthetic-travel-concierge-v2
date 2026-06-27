@@ -45,6 +45,7 @@ export default function TravelAgencySignup() {
     // Load saved draft
     const savedDraft = loadSignupDraft('travel_agency');
     if (savedDraft) {
+      // @ts-ignore — loadSignupDraft returns sync data; pre-existing type mismatch
       setFormData(savedDraft);
     }
   }, []);

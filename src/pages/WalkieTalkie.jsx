@@ -185,6 +185,7 @@ export default function WalkieTalkie() {
 
     try {
       const uploadResponse = await base44.integrations.Core.UploadFile({ file: audioBlob });
+      // @ts-ignore — UploadFileResult type omits data wrapper; actual response shape varies
       const audioUrl = uploadResponse.data?.file_url || uploadResponse.file_url;
 
       if (!audioUrl) throw new Error('Upload failed');
