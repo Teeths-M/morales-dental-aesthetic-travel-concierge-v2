@@ -4,7 +4,7 @@
  * Shows a patient walking through Tijuana, Mexico entering a danger zone
  * and the full EVN-iQ400 threat detection + alert cascade.
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, Wifi, WifiOff, Plane, Globe, ArrowLeft, RotateCcw, MapPin, Phone } from 'lucide-react';
@@ -172,88 +172,82 @@ export default function EVNiQ400Demo() {
     setScanLogs([]); setAlert(null); setShowDanger(false); setHighRiskSeq(0);
   }, []);
 
+  // Mode-specific messaging — what makes each mode LOOK different
+  const MSG = {
+    online: {
+      boot:    ['📡 Connecting to live advisory network...', '✅ Connected · 14 government advisory sources active · AI layer ready'],
+      scan:    '⏳ Querying live AI intelligence...',
+      cross:   '⚡ Cross-referencing LLM threat model · 14 live data sources...',
+      confirm: '🔴 HIGH RISK CONFIRMED via LLM · 14 live sources · AI confidence: 98%',
+    },
+    offline: {
+      boot:    ['📱 Network unavailable · Loading 24h intelligence cache...', '✅ Cache loaded · Last sync 6h ago · 200+ risk zones active'],
+      scan:    '⏳ Checking local intelligence cache...',
+      cross:   '⚡ Cache hit: Zona Norte flagged in last 24h · verifying...',
+      confirm: '🔴 HIGH RISK CONFIRMED via cache · Zona Norte in 24h local database · No network needed',
+    },
+    airplane: {
+      boot:    ['✈️ Airplane mode · Zero network dependency activated', '✅ Morales Offline KB v4.0 loaded · 200+ pre-loaded risk zones · 30+ countries'],
+      scan:    '⏳ Scanning offline knowledge base...',
+      cross:   '⚡ Offline KB match: Zona Norte — pre-loaded gang zone data...',
+      confirm: '🔴 HIGH RISK CONFIRMED via Offline KB · No internet · No API · Pre-loaded Morales Intelligence',
+    },
+  };
+
   const runDemo = useCallback(() => {
     if (running) return;
     reset();
     setRunning(true);
+    const m = MSG[mode] || MSG.online;
 
-    // t=0 — GPS locked
+    // t=0 — boot sequence (mode-specific)
     addLog('📡 GPS signal acquired · 32.5340°N, 117.0360°W');
-    addLog('🔒 EVN-iQ400 active · scanning radius: 400m');
-    addLog('🛡️ Patient: Sofia M. · Mode: ' + (mode === 'airplane' ? 'AIRPLANE (offline KB)' : mode === 'offline' ? 'OFFLINE (local cache)' : 'ONLINE (live AI)'));
+    addLog(m.boot[0], null, true);
+    schedule(() => addLog(m.boot[1]), 800);
+    schedule(() => addLog(`🛡️ Patient: Sofia M. · EVN-iQ400 ACTIVE`), 1200);
 
-    // t=800 — arrive at WP0
-    schedule(() => {
-      setCurrentWP(0);
-      addLog(`📍 Location: ${WAYPOINTS[0].label}`);
-    }, 800);
+    // t=1600 — WP0
+    schedule(() => { setCurrentWP(0); addLog(`📍 Location: ${WAYPOINTS[0].label}`); }, 1600);
+    schedule(() => addLog(m.scan, null, true), 2000);
+    schedule(() => addLog(`${RISK.SAFE.emoji} ${WAYPOINTS[0].label} — ${WAYPOINTS[0].scanMsg}`, 'SAFE'), 3000);
 
-    // t=1800 — scan WP0
-    schedule(() => {
-      addLog('⏳ Scanning area...', null, true);
-    }, 1800);
-    schedule(() => {
-      addLog(`${RISK.SAFE.emoji} ${WAYPOINTS[0].label} — ${WAYPOINTS[0].scanMsg}`, 'SAFE');
-    }, 3200);
+    // t=3500 — move to WP1
+    schedule(() => { setMoving(true); addLog('🔄 Patient in motion...'); }, 3500);
+    schedule(() => { setCurrentWP(1); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[1].label}`); }, 4500);
+    schedule(() => addLog(m.scan, null, true), 4800);
+    schedule(() => addLog(`${RISK.SAFE.emoji} ${WAYPOINTS[1].label} — ${WAYPOINTS[1].scanMsg}`, 'SAFE'), 5700);
 
-    // t=4200 — move to WP1
-    schedule(() => {
-      setMoving(true);
-      addLog('🔄 Patient in motion — tracking...');
-    }, 4200);
-    schedule(() => { setCurrentWP(1); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[1].label}`); }, 5600);
+    // t=6200 — move to WP2
+    schedule(() => { setMoving(true); addLog('🔄 Patient in motion...'); }, 6200);
+    schedule(() => { setCurrentWP(2); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[2].label}`); }, 7200);
+    schedule(() => addLog(m.scan, null, true), 7500);
+    schedule(() => addLog(`${RISK.SAFE.emoji} ${WAYPOINTS[2].label} — ${WAYPOINTS[2].scanMsg}`, 'SAFE'), 8400);
 
-    // Scan WP1
-    schedule(() => addLog('⏳ Scanning area...', null, true), 6000);
-    schedule(() => addLog(`${RISK.SAFE.emoji} ${WAYPOINTS[1].label} — ${WAYPOINTS[1].scanMsg}`, 'SAFE'), 7500);
-
-    // Move to WP2
-    schedule(() => { setMoving(true); addLog('🔄 Patient in motion — tracking...'); }, 8300);
-    schedule(() => { setCurrentWP(2); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[2].label}`); }, 9800);
-
-    // Scan WP2
-    schedule(() => addLog('⏳ Scanning area...', null, true), 10200);
-    schedule(() => addLog(`${RISK.SAFE.emoji} ${WAYPOINTS[2].label} — ${WAYPOINTS[2].scanMsg}`, 'SAFE'), 12000);
-
-    // Move to WP3
-    schedule(() => { setMoving(true); addLog('🔄 Patient moving toward commercial district...'); }, 12800);
-    schedule(() => { setCurrentWP(3); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[3].label}`); }, 14300);
-
-    // Scan WP3 — MODERATE
-    schedule(() => addLog('⏳ Scanning area...', null, true), 14800);
-    schedule(() => addLog('⚡ Elevated activity signal detected — cross-referencing data...', null, true), 16000);
+    // t=9000 — move to WP3 MODERATE
+    schedule(() => { setMoving(true); addLog('🔄 Patient heading toward commercial district...'); }, 9000);
+    schedule(() => { setCurrentWP(3); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[3].label}`); }, 10000);
+    schedule(() => addLog(m.scan, null, true), 10300);
+    schedule(() => addLog('⚡ Elevated activity signal detected...', null, true), 11000);
     schedule(() => {
       addLog(`${RISK.MODERATE.emoji} ${WAYPOINTS[3].label} — ${WAYPOINTS[3].scanMsg}`, 'MODERATE');
       setAlert({ risk: 'MODERATE', wp: WAYPOINTS[3] });
-    }, 17500);
+    }, 12000);
 
-    // Move to WP4 — after 2.5s showing moderate alert
-    schedule(() => {
-      setAlert(null);
-      setMoving(true);
-      addLog('🔄 PATIENT CONTINUES MOVING — entering restricted zone...');
-    }, 20500);
-    schedule(() => { setCurrentWP(4); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[4].label}`); }, 22200);
-
-    // HIGH RISK dramatic sequence
-    schedule(() => addLog('🔍 Initiating deep area scan...', null, true), 22800);
-    schedule(() => { setHighRiskSeq(1); addLog('⚡ Threat signature detected · cross-referencing 14 data sources...', null, true); }, 24000);
-    schedule(() => { setHighRiskSeq(2); addLog('🔴 Pattern match: GANG ACTIVITY ZONE confirmed · 3 incidents in 30 days', null, true); }, 25500);
-    schedule(() => setShowDanger(true), 26200);
+    // t=14000 — move to WP4 HIGH
+    schedule(() => { setAlert(null); setMoving(true); addLog('🔄 PATIENT CONTINUES MOVING — entering restricted zone...'); }, 14000);
+    schedule(() => { setCurrentWP(4); setMoving(false); addLog(`📍 Location: ${WAYPOINTS[4].label}`); }, 15000);
+    schedule(() => addLog(m.scan, null, true), 15300);
+    schedule(() => { setHighRiskSeq(1); addLog(m.cross, null, true); }, 16000);
+    schedule(() => { setHighRiskSeq(2); addLog('🔴 GANG ACTIVITY ZONE · 3 incidents in 30 days · THREAT CONFIRMED', null, true); }, 16800);
+    schedule(() => setShowDanger(true), 17200);
     schedule(() => {
       setHighRiskSeq(3);
-      addLog(`🔴 HIGH RISK CONFIRMED · ${WAYPOINTS[4].label} — ${WAYPOINTS[4].scanMsg}`, 'HIGH');
+      addLog(m.confirm, 'HIGH');
       setAlert({ risk: 'HIGH', wp: WAYPOINTS[4] });
-    }, 27000);
-    schedule(() => setDone(true), 32000);
+    }, 17800);
+    schedule(() => setDone(true), 21000);
 
-  }, [running, mode, addLog, schedule, reset]);
-
-  // Auto-start after a brief pause on mount
-  useEffect(() => {
-    const t = setTimeout(() => runDemo(), 1200);
-    return () => clearTimeout(t);
-  }, []);
+  }, [running, mode, addLog, schedule, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const curWPData = WAYPOINTS[currentWP];
 
@@ -500,18 +494,38 @@ export default function EVNiQ400Demo() {
               )}
             </AnimatePresence>
 
+            {/* Play button — shown before demo starts */}
+            {!running && !done && scanLogs.length === 0 && (
+              <div style={{ padding: '24px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
+                  Select a mode above, then press Play
+                </p>
+                <motion.button
+                  onClick={runDemo}
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '14px 32px', borderRadius: 50,
+                    background: `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
+                    border: 'none', cursor: 'pointer', color: '#060B16',
+                    fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
+                    boxShadow: `0 8px 32px ${GOLD}50`,
+                  }}
+                >
+                  ▶ Run Demo
+                </motion.button>
+                <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>~18 seconds · works offline</p>
+              </div>
+            )}
+
             {/* Scan log */}
-            <div style={{ maxHeight: 320, overflowY: 'auto', paddingRight: 4 }}>
+            <div style={{ maxHeight: 300, overflowY: 'auto', paddingRight: 4 }}>
               <AnimatePresence initial={false}>
                 {scanLogs.map(log => (
                   <ScanLine key={log.id} text={log.text} risk={log.risk} isScanning={log.isScanning} />
                 ))}
               </AnimatePresence>
-              {scanLogs.length === 0 && (
-                <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', padding: '20px 0' }}>
-                  Starting EVN-iQ400...
-                </p>
-              )}
             </div>
           </div>
 
