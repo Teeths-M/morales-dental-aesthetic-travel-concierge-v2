@@ -187,7 +187,7 @@ export default function RecoveryTrackerDemo() {
   const stage = DEMO_STAGES[stageIdx];
 
   function handleShare() {
-    const url = `${window.location.origin}/track/eyJjYXNlX2lkIjoiTVJDLTIwMjYtMDAxIiwiZXhwaXJlc19hdCI6OTk5OTk5OTk5OTk5OX0=`;
+    const url = `${window.location.origin}/demo/recovery`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(() => {
         setCopied(true);
@@ -268,6 +268,7 @@ export default function RecoveryTrackerDemo() {
           </p>
           <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Zero medical data exposed — only name, phase, and checkpoint progress.
+            In production, family links are unique per patient and expire after the journey.
           </p>
         </div>
       </div>
