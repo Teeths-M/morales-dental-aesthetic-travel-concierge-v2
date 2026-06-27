@@ -244,6 +244,27 @@ function DashboardHome({ user, consultations, language }) {
         </div>
       )}
 
+      {/* ── iOS Motion Permission Request (one-time, seamless) ── */}
+      {safetyCx.activity.needsMotionPermission && (
+        <div style={{ borderRadius: 16, padding: '14px 18px', background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>📳 Enable Fall Detection</p>
+            <p style={{ margin: '3px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>
+              Guardian Mode needs motion access to detect falls. One tap — we'll ask your device.
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const result = await safetyCx.activity.requestMotionAccess();
+              if (result === 'denied') alert('Motion access denied. Fall detection will be unavailable, but all other Guardian features remain active.');
+            }}
+            style={{ padding: '8px 18px', borderRadius: 99, background: '#6366f1', color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0 }}
+          >
+            Enable ›
+          </button>
+        </div>
+      )}
+
       {/* ── Fall Detection prompt (Layer 3: Activity Detection) ── */}
       {safetyCx.activity.showFallPrompt && (
         <div style={{ borderRadius: 16, padding: '16px 20px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.40)', display: 'flex', flexDirection: 'column', gap: 12 }}>

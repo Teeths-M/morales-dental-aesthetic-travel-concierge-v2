@@ -7,14 +7,17 @@
  *    for 5 continuous minutes before the "Did you fall?" prompt fires
  *  - Never triggers on a bumpy bus ride (single short shake = ignored)
  *  - Web reality: DeviceMotionEvent only works while app is in foreground
+ *  - iOS 13+: DeviceMotionEvent.requestPermission() MUST be called from a user gesture
  *  - Cleans up all event listeners on unmount
  *
  * Returns:
- *   strikeCount       — 0-3 (3 = prompt fires)
- *   showFallPrompt    — boolean: show "Are you okay?" dialog
- *   dismissFallPrompt — function: user tapped "I'm fine"
- *   queuedSOS         — boolean: prompt timed out (60s), SOS queued
- *   clearQueuedSOS    — function: cancel the queued SOS
+ *   strikeCount          — 0-3 (3 = prompt fires)
+ *   showFallPrompt       — boolean: show "Are you okay?" dialog
+ *   dismissFallPrompt    — function: user tapped "I'm fine"
+ *   queuedSOS            — boolean: prompt timed out (60s), SOS queued
+ *   clearQueuedSOS       — function: cancel the queued SOS
+ *   motionPermission     — 'granted' | 'denied' | 'needs_request' | 'not_required'
+ *   requestMotionAccess  — async fn: call this inside a button onClick for iOS
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 
@@ -22,11 +25,32 @@ const SHAKE_THRESHOLD   = 15;    // m/s² — ignore gentle movement
 const SHAKE_WINDOW_MS   = 30_000; // shaking must persist 30s to register
 const STRIKE_WINDOW_MS  = 5 * 60_000; // 5 min of co-occurrence for 3rd strike
 const PROMPT_TIMEOUT_MS = 60_000; // 60s to respond before SOS queues
+const PERM_KEY          = 'morales_motion_permission';
+
+function getStoredPermission() {
+  try { return localStorage.getItem(PERM_KEY) || null; } catch { return null; }
+}
+function storePermission(v) {
+  try { localStorage.setItem(PERM_KEY, v); } catch {}
+}
+
+function detectInitialPermission() {
+  // iOS 13+: needs explicit request
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    const stored = getStoredPermission();
+    return stored || 'needs_request';
+  }
+  // Android / desktop: no permission needed
+  if (typeof DeviceMotionEvent !== 'undefined') return 'not_required';
+  return 'not_required'; // DeviceMotionEvent not supported at all
+}
 
 export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
   const [strikeCount,    setStrikeCount]    = useState(0);
   const [showFallPrompt, setShowFallPrompt] = useState(false);
   const [queuedSOS,      setQueuedSOS]      = useState(false);
+  const [motionPermission, setMotionPermission] = useState(detectInitialPermission);
 
   const shakeStartRef       = useRef(null);   // when continuous shaking began
   const lastInteractionRef  = useRef(Date.now());
@@ -81,6 +105,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
     if (!window.DeviceMotionEvent) return; // not supported (desktop)
+    if (motionPermission === 'needs_request' || motionPermission === 'denied') return; // wait for user gesture
 
     function onMotion(e) {
       const acc = e.accelerationIncludingGravity;
@@ -123,7 +148,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
       clearTimeout(strikeTimerRef.current);
       clearTimeout(promptTimerRef.current);
     };
-  }, [enabled, hasGPSMoved]);
+  }, [enabled, hasGPSMoved, motionPermission]);
 
   const dismissFallPrompt = useCallback(() => {
     clearTimeout(promptTimerRef.current);
@@ -138,5 +163,36 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
     setStrikeCount(0);
   }, []);
 
-  return { strikeCount, showFallPrompt, queuedSOS, dismissFallPrompt, clearQueuedSOS };
+  // iOS 13+: must be called directly inside a user gesture (button onClick).
+  // Returns 'granted' | 'denied' | 'not_required'.
+  const requestMotionAccess = useCallback(async () => {
+    if (typeof DeviceMotionEvent === 'undefined') return 'not_required';
+    if (typeof DeviceMotionEvent.requestPermission !== 'function') {
+      // Android / desktop — no permission needed
+      setMotionPermission('not_required');
+      return 'not_required';
+    }
+    try {
+      const result = await DeviceMotionEvent.requestPermission();
+      storePermission(result);
+      setMotionPermission(result);
+      return result;
+    } catch {
+      storePermission('denied');
+      setMotionPermission('denied');
+      return 'denied';
+    }
+  }, []);
+
+  // Only attach motion listener when permission is confirmed
+  const canListen = motionPermission === 'granted' || motionPermission === 'not_required';
+
+  return {
+    strikeCount, showFallPrompt, queuedSOS,
+    dismissFallPrompt, clearQueuedSOS,
+    motionPermission,
+    requestMotionAccess,
+    needsMotionPermission: motionPermission === 'needs_request' && enabled,
+    canListen,
+  };
 }

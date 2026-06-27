@@ -252,7 +252,15 @@ export default function ConsultationForm() {
         console.error('IQ200 Pipeline error:', pipelineErr);
       }
 
-      navigate('/consultation-success');
+      navigate('/consultation-success', {
+        state: {
+          consultationId:       newConsultation.id,
+          travelingSolo:        formData.traveling_solo,
+          guardianModeOptedIn:  formData.guardian_mode_opted_in,
+          companionType:        formData.traveling_companion_type,
+          patientName:          formData.client_name,
+        },
+      });
     } catch (err) {
       setError('Failed to submit consultation. Please try again.');
       console.error(err);
