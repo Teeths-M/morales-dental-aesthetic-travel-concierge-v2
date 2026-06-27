@@ -168,6 +168,20 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
             🏆 Download My Certificate
           </button>
           <button
+            onClick={async () => {
+              const text = `I just completed my Morales Medical journey — all 9 safety handshakes confirmed. The Golden M is mine. 🏆 #MoralesMedical #GoldenM #MedicalTravel`;
+              if (navigator.share) {
+                try { await navigator.share({ title: 'My Golden M — Morales Medical', text }); } catch (_) {}
+              } else {
+                try { await navigator.clipboard.writeText(text); alert('Journey story copied — paste it anywhere!'); } catch (_) {}
+              }
+            }}
+            className="rounded-xl px-8 py-3 font-bold text-sm transition-all duration-200 hover:opacity-90 active:scale-95"
+            style={{ background: 'rgba(212,175,55,0.15)', color: GOLD, border: `1px solid ${GOLD}40`, letterSpacing: '0.05em' }}
+          >
+            🌍 Share My Journey
+          </button>
+          <button
             onClick={onClose}
             className="text-sm font-medium hover:opacity-70 transition-opacity"
             style={{ color: 'rgba(212,175,55,0.55)' }}

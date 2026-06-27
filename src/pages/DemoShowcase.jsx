@@ -716,6 +716,32 @@ export default function DemoShowcase() {
               <Radio style={{ width: 15, height: 15 }} />
               Family Tracker — Live View
             </Link>
+            <Link
+              to="/demo/evn"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.5)', color: '#60a5fa' }}
+            >
+              <Globe style={{ width: 15, height: 15 }} />
+              EVN-iQ400 — Danger Zone Demo ✨ NEW
+            </Link>
+          </div>
+
+          {/* Admin Intelligence Suite */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/admin/situation-room"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm justify-center"
+              style={{ background: 'linear-gradient(135deg, #0A1520, #0C1A2A)', border: `1px solid ${GOLD}50`, color: GOLD, boxShadow: `0 4px 20px rgba(212,175,55,0.2)` }}
+            >
+              🌍 Situation Room — Global Tactical Display
+            </Link>
+            <Link
+              to="/admin/mission-control"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm justify-center"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
+            >
+              🛡️ Mission Control — Operations Board
+            </Link>
           </div>
         </section>
 

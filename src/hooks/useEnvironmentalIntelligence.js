@@ -176,7 +176,8 @@ function readCache(iso2) {
     const raw = sessionStorage.getItem(`evn_iq400_${iso2}`);
     if (!raw) return null;
     const { payload, ts } = JSON.parse(raw);
-    return (Date.now() - ts < CACHE_TTL_MS) ? payload : null;
+    if (Date.now() - ts > CACHE_TTL_MS) return null;
+    return { ...payload, cachedAt: ts };
   } catch { return null; }
 }
 

@@ -26,15 +26,17 @@ const GOLD = '#D4AF37';
 const BASE = window.location.origin;
 
 const DEEP_LINKS = [
-  { label: 'Cold open — CRITICAL scenario',  url: `${BASE}/demo?tab=medguard&start=critical`,    tag: '🔥 Max impact' },
-  { label: 'Full MedGuard auto-advance',     url: `${BASE}/demo?tab=medguard`,                   tag: '🛡️ MedGuard' },
-  { label: 'Kidnapping rescue demo',         url: `${BASE}/demo?tab=emergency`,                  tag: '🚨 Emergency' },
-  { label: 'Vault lockdown / robbery',       url: `${BASE}/demo?tab=nightlife`,                  tag: '🔒 Nightlife' },
-  { label: 'Family Recovery Tracker',        url: `${BASE}/demo/recovery`,                       tag: '📡 Viral hook' },
-  { label: 'Email system — 5 templates',     url: `${BASE}/demo/emails`,                         tag: '📧 Email' },
-  { label: 'Pattern Intelligence demo',      url: `${BASE}/demo/medguard`,                       tag: '🧠 AI' },
-  { label: 'Full platform overview',         url: `${BASE}/demo`,                                tag: '🏥 Overview' },
-  { label: 'EVN-iQ400 · Danger Zone Demo',  url: `${BASE}/demo/evn`,                            tag: '🌍 Moat' },
+  { label: 'Cold open — CRITICAL scenario',   url: `${BASE}/demo?tab=medguard&start=critical`,    tag: '🔥 Max impact' },
+  { label: 'Full MedGuard auto-advance',      url: `${BASE}/demo?tab=medguard`,                   tag: '🛡️ MedGuard' },
+  { label: 'Kidnapping rescue demo',          url: `${BASE}/demo?tab=emergency`,                  tag: '🚨 Emergency' },
+  { label: 'Vault lockdown / robbery',        url: `${BASE}/demo?tab=nightlife`,                  tag: '🔒 Nightlife' },
+  { label: 'Family Recovery Tracker',         url: `${BASE}/demo/recovery`,                       tag: '📡 Viral hook' },
+  { label: 'Email system — 5 templates',      url: `${BASE}/demo/emails`,                         tag: '📧 Email' },
+  { label: 'Pattern Intelligence demo',       url: `${BASE}/demo/medguard`,                       tag: '🧠 AI' },
+  { label: 'EVN-iQ400 · Danger Zone Demo',   url: `${BASE}/demo/evn`,                            tag: '🌍 Moat' },
+  { label: 'Situation Room · Global Tactical',url: `${BASE}/admin/situation-room`,               tag: '🗺️ Wow factor' },
+  { label: 'Mission Control · Operations',    url: `${BASE}/admin/mission-control`,              tag: '⚡ Command center' },
+  { label: 'Full platform overview',          url: `${BASE}/demo`,                                tag: '🏥 Overview' },
 ];
 
 const SHORTCUTS = [
@@ -42,14 +44,16 @@ const SHORTCUTS = [
   { keys: ['←'],           where: 'MedGuard tab',        action: 'Rewind to previous scenario' },
   { keys: ['→'],           where: '/demo/recovery',      action: 'Advance Maria\'s journey stage' },
   { keys: ['←'],           where: '/demo/recovery',      action: 'Rewind journey stage' },
+  { keys: ['ONLINE/OFFLINE/AIRPLANE'], where: '/demo/evn', action: 'Switch intelligence mode before pressing Play' },
 ];
 
 const PITCH_ORDER = [
-  { step: 1, emoji: '🛡️', title: 'Open with MedGuard CRITICAL',   url: '/demo?tab=medguard&start=critical',  desc: 'Judges see security dispatch before you say a word. Hook landed.' },
-  { step: 2, emoji: '🚨', title: 'Run the Kidnapping Scenario',    url: '/demo?tab=emergency',                desc: 'Full automated rescue chain. No other platform does this.' },
-  { step: 3, emoji: '📡', title: 'Show the Family Tracker',        url: '/demo/recovery',                    desc: 'Press → to advance Maria home. Viral marketing angle explained.' },
-  { step: 4, emoji: '📧', title: 'Send a live email',              url: '/demo/emails',                      desc: 'Tap "Send to My Inbox" — golden email lands in real inbox live.' },
-  { step: 5, emoji: '🌍', title: 'EVN-iQ400 Danger Zone',         url: '/demo/evn',                         desc: 'Patient walks into gang zone in Tijuana. System fires HIGH-RISK alert in real time. Works offline.' },
+  { step: 1, emoji: '🛡️', title: 'Open with MedGuard CRITICAL',    url: '/demo?tab=medguard&start=critical',  desc: 'Judges see security dispatch before you say a word. Hook landed.' },
+  { step: 2, emoji: '🚨', title: 'Run the Kidnapping Scenario',     url: '/demo?tab=emergency',                desc: 'Full automated rescue chain. No other platform does this.' },
+  { step: 3, emoji: '🌍', title: 'EVN-iQ400 Danger Zone',          url: '/demo/evn',                          desc: 'Select AIRPLANE mode first, press Play. Patient walks into gang zone — HIGH RISK alert fires. Works with zero internet.' },
+  { step: 4, emoji: '🗺️', title: 'Open the Situation Room',        url: '/admin/situation-room',              desc: 'Global tactical display. Radar sweep, live patient pins on world map. Nobody has seen anything like this.' },
+  { step: 5, emoji: '📡', title: 'Show the Family Tracker',         url: '/demo/recovery',                    desc: 'Press → to advance Maria home. Viral marketing angle explained.' },
+  { step: 6, emoji: '📧', title: 'Send a live email',               url: '/demo/emails',                      desc: 'Tap "Send to My Inbox" — golden email lands in real inbox live.' },
 ];
 
 function CopyButton({ url }) {

@@ -114,12 +114,13 @@ export default function EVNiQ400Card({ country, countryCode }) {
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 2 }}>
             Environmental Intelligence
           </span>
-          {data?.source === 'live' && (
-            <Wifi style={{ width: 10, height: 10, color: '#22c55e', marginLeft: 'auto' }} />
-          )}
-          {data?.source === 'offline' && (
-            <WifiOff style={{ width: 10, height: 10, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }} />
-          )}
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
+            {data?.source === 'live' ? (
+              <><Wifi style={{ width: 9, height: 9, color: '#22c55e' }} /><span style={{ fontSize: 8, color: '#22c55e', fontWeight: 600 }}>Live</span></>
+            ) : data?.source === 'offline' ? (
+              <><WifiOff style={{ width: 9, height: 9, color: 'rgba(255,255,255,0.2)' }} /><span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>Offline</span></>
+            ) : null}
+          </div>
         </div>
 
         {/* Score block */}
@@ -223,11 +224,14 @@ export default function EVNiQ400Card({ country, countryCode }) {
                       : 'Not required for this destination'}
                     color={data.riskScore >= 55 ? '#f97316' : '#22c55e'}
                   />
-                  {data.updated && (
-                    <div style={{ marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'right' }}>
-                      Advisory data updated {data.updated}
-                    </div>
-                  )}
+                  <div style={{ marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'right' }}>
+                    {data.cachedAt
+                      ? `Last updated ${Math.round((Date.now() - data.cachedAt) / 60000)} min ago`
+                      : data.updated
+                        ? `Advisory data: ${data.updated}`
+                        : 'Live advisory data'
+                    }
+                  </div>
                 </>
               )}
             </div>
