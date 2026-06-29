@@ -388,20 +388,22 @@ export default function Header() {
                 </button>
               </>
             ) : (
-              <Link
-                to="/consultation" onClick={() => setIsMobileOpen(false)}
-                className="w-full text-center py-3.5 rounded-full text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
-              >
-                Book Free Consult
-              </Link>
-              <Link
-                to="/dashboard" onClick={() => setIsMobileOpen(false)}
-                className="w-full text-center py-3 text-sm font-medium"
-                style={{ color: 'rgba(255,255,255,0.45)' }}
-              >
-                Sign In
-              </Link>
+              <>
+                <Link
+                  to="/consultation" onClick={() => setIsMobileOpen(false)}
+                  className="w-full text-center py-3.5 rounded-full text-sm font-bold"
+                  style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
+                >
+                  Book Free Consult
+                </Link>
+                <Link
+                  to="/dashboard" onClick={() => setIsMobileOpen(false)}
+                  className="w-full text-center py-3 text-sm font-medium"
+                  style={{ color: 'rgba(255,255,255,0.45)' }}
+                >
+                  Sign In
+                </Link>
+              </>
             )}
             <div className="flex gap-2 pt-1">
               {['EN', 'ES', 'FR'].map(lang => (
