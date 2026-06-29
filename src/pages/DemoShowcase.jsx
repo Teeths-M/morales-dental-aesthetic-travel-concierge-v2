@@ -517,9 +517,9 @@ const TABS = [
   { id: 'emergency',  label: '🚨 Kidnapping Scenario' },
   { id: 'nightlife',  label: '🔒 Vault Lockdown' },
   { id: 'pattern',    label: '🧠 Pattern Intelligence', link: '/demo/medguard' },
-  { id: 'emails',     label: '📧 Email System',         link: '/demo/emails' },
   { id: 'recovery',   label: '📡 Family Tracker',        link: '/demo/recovery' },
   { id: 'evn',        label: '🌍 EVN-iQ400 · Danger Zone', link: '/demo/evn' },
+  { id: 'james',      label: '🎤 The James Standard',    link: '/demo/james' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
