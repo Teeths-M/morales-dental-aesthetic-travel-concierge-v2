@@ -47,10 +47,10 @@ Deno.serve(async (req) => {
         // Generate portal link using existing function
         let portalUrl = `${APP_URL}/portal/doctor/`;
         try {
-          // BUG-R12-06 FIX: base44.asServiceRole.functions does not exist.
-          // The functions namespace is only on the user-scoped client.
           const linkRes = await base44.functions.invoke('generateDoctorPortalLink', { doctor_id: doctor.id });
-          if (linkRes?.data?.portal_url) portalUrl = linkRes.data.portal_url;
+          // SDK may return data directly or wrapped in .data; portal_url may be relative
+          const raw = linkRes?.portal_url ?? linkRes?.data?.portal_url;
+          if (raw) portalUrl = raw.startsWith('http') ? raw : `${APP_URL}${raw}`;
         } catch (_) { /* fallback to base url */ }
 
         const smsMsg = `Hi Dr. ${doctor.full_name}! Access your Morales D&A doctor portal here: ${portalUrl} - Questions? Reply to this message.`;
@@ -97,9 +97,9 @@ Deno.serve(async (req) => {
 
         let portalUrl = `${APP_URL}/portal/travel`;
         try {
-          // BUG-R12-06 FIX: use base44.functions.invoke (not asServiceRole.functions)
           const linkRes = await base44.functions.invoke('generateTravelAgencyPortalLink', { agency_id: agency.id });
-          if (linkRes?.data?.portal_url) portalUrl = linkRes.data.portal_url;
+          const raw = linkRes?.portal_url ?? linkRes?.data?.portal_url;
+          if (raw) portalUrl = raw.startsWith('http') ? raw : `${APP_URL}${raw}`;
         } catch (_) { /* fallback */ }
 
         const smsMsg = `Hi ${agency.agency_name}! Access your Morales D&A travel agency portal here: ${portalUrl} - Submit travel quotes and manage bookings directly.`;
@@ -147,9 +147,9 @@ Deno.serve(async (req) => {
 
         let portalUrl = `${APP_URL}/portal/transfer`;
         try {
-          // BUG-R12-06 FIX: use base44.functions.invoke (not asServiceRole.functions)
           const linkRes = await base44.functions.invoke('generateChauffeurPortalLink', { driver_id: driver.id });
-          if (linkRes?.data?.portal_url) portalUrl = linkRes.data.portal_url;
+          const raw = linkRes?.portal_url ?? linkRes?.data?.portal_url;
+          if (raw) portalUrl = raw.startsWith('http') ? raw : `${APP_URL}${raw}`;
         } catch (_) { /* fallback */ }
 
         const name = driver.driver_name || driver.company_name;

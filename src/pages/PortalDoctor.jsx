@@ -78,8 +78,9 @@ export default function PortalDoctor() {
       }
       
       try {
-        const cases = await base44.entities.CaseRecord.filter({});
-        const matchingCase = cases.find(c => c.doctor_portal_token === token);
+        // Filter by token directly — avoids loading entire table
+        const cases = await base44.entities.CaseRecord.filter({ doctor_portal_token: token });
+        const matchingCase = (cases ?? []).find(c => c.doctor_portal_token === token);
         
         if (!matchingCase) {
           setError('Invalid or expired portal link');

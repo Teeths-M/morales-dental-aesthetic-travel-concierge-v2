@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     for (const sub of subs) {
       try {
-        const parsed = JSON.parse(sub.subscription);
+        const parsed = typeof sub.subscription === 'string' ? JSON.parse(sub.subscription) : sub.subscription;
         await webPush.sendNotification(parsed, payload);
         results.sent.push(sub.id);
       } catch (e) {

@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const APP_URL = Deno.env.get('APP_URL') || 'https://app.safe-t4life.com';
+const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 function doctorEmailBody(doctor) {
   return `
