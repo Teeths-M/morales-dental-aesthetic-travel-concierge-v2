@@ -218,13 +218,41 @@ export default function PortalDoctor() {
         <Card className="max-w-2xl mx-auto">
           <CardHeader className="text-center">
             <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
-            <CardTitle className="text-2xl font-display">Quote Submitted Successfully</CardTitle>
+            <CardTitle className="text-2xl font-display">Notes Submitted Successfully</CardTitle>
           </CardHeader>
-          <CardContent className="text-center">
+          <CardContent className="text-center space-y-6">
             <p className="text-muted-foreground">
-              Thank you for providing your quote. The case will now proceed to vendor coordination.
+              Thank you, Doctor. Your notes have been logged. When the procedure is fully complete, please confirm below.
             </p>
-            <Button onClick={() => navigate('/')} className="mt-6">
+
+            {/* Finish Procedure button */}
+            <div style={{ padding: '20px 24px', borderRadius: 16, background: '#D4AF3710', border: '2px solid #D4AF3750' }}>
+              <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 700, color: '#D4AF37', letterSpacing: '0.08em' }}>PROCEDURE COMPLETE?</p>
+              <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                Pressing this button will notify the patient's guardian, activate recovery mode, and schedule post-operative check-ins automatically.
+              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const token = new URLSearchParams(window.location.search).get('token') || window.location.pathname.split('/').pop();
+                    await base44.functions.invoke('logProcedureComplete', { token, outcome_notes: formData.doctor_notes });
+                    alert('Procedure confirmed. Guardian notified. Recovery mode activated.');
+                  } catch (e) {
+                    alert('Could not confirm procedure. Please contact admin directly.');
+                  }
+                }}
+                style={{
+                  width: '100%', padding: '14px 0', borderRadius: 12, cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #D4AF37, #E8C85C)',
+                  border: 'none', color: '#060B16', fontSize: 14, fontWeight: 800,
+                  boxShadow: '0 8px 24px rgba(212,175,55,0.35)',
+                }}
+              >
+                ✅ Confirm Procedure Complete — Notify Guardian
+              </button>
+            </div>
+
+            <Button onClick={() => navigate('/')} variant="outline" className="mt-2">
               Return to Home
             </Button>
           </CardContent>

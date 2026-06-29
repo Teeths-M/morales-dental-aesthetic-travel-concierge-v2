@@ -5,6 +5,19 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sendSms(to: string, body: string): Promise<void> {
+  const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !auth || !from || !sid.startsWith('AC')) return;
+  const form = new URLSearchParams({ To: to, From: from, Body: body });
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString(),
+  }).catch(e => console.warn('[logProcedureComplete] SMS failed:', e.message));
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -124,6 +137,15 @@ Deno.serve(async (req) => {
       });
     } catch (recoveryErr) {
       console.error('[logProcedureComplete] Recovery auto-trigger failed (non-fatal):', recoveryErr.message);
+    }
+
+    // Guardian SMS — procedure confirmed by doctor
+    const guardianPhone = caseRecord?.emergency_contact?.phone || caseRecord?.guardian_phone || null;
+    if (guardianPhone) {
+      sendSms(
+        guardianPhone,
+        `${caseRecord.client_name}'s procedure is complete. The doctor has confirmed. They are now in recovery and being cared for. — Morales Concierge`
+      ).catch(() => {});
     }
 
     return Response.json({

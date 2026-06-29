@@ -178,6 +178,26 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     // base44.asServiceRole.functions?.invoke?.('releaseEscrowPayment', { case_id: trip_id, handshake_number: n }).catch(() => {});
   }
 
+  // ── Guardian / Safety Circle SMS — key safety checkpoints ──────────────────
+  // Family gets a calm message at airport, hotel, clinic, and home arrival.
+  // Guardian phone comes from case emergency_contact field.
+  const GUARDIAN_MESSAGES: Record<number, string> = {
+    3: `${trip.patient_name || 'Your traveller'} has landed safely at the destination airport. They are in good hands. — Morales Concierge`,
+    4: `${trip.patient_name || 'Your traveller'} has checked in safely at the hotel. They are comfortable and settling in. — Morales Concierge`,
+    5: `${trip.patient_name || 'Your traveller'} has arrived safely at the clinic. The care team is ready. — Morales Concierge`,
+    9: `${trip.patient_name || 'Your traveller'} is home safely. Journey complete. The Golden M is theirs. Thank you for trusting Morales. — Morales Concierge`,
+  };
+
+  if (GUARDIAN_MESSAGES[n]) {
+    // Fetch case record to get emergency_contact phone
+    const caseRecords = await base44.asServiceRole.entities.CaseRecord.filter({ id: trip.case_id || trip_id }).catch(() => []);
+    const caseRecord = caseRecords?.[0];
+    const guardianPhone = caseRecord?.emergency_contact?.phone || caseRecord?.guardian_phone || null;
+    if (guardianPhone) {
+      sendSms(guardianPhone, GUARDIAN_MESSAGES[n]).catch(() => {}); // non-blocking
+    }
+  }
+
   // ── Async dispatch cluster — Promise.allSettled so no single failure blocks ──
   // Matches the Enterprise Asynchronous Infrastructure diagram:
   // every handshake fans out to Patient App Portal + Master Admin Log + Partner notifications.
