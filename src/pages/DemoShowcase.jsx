@@ -11,8 +11,9 @@ import EmergencyScenarioDemo from '@/pages/EmergencyScenarioDemo';
 import NightlifeRobberyDemo from '@/pages/NightlifeRobberyDemo';
 import { BRAND } from '@/lib/brandTokens';
 
-const GOLD = BRAND.gold;
-const DARK = BRAND.dark;
+const GOLD  = BRAND.gold;
+const DARK  = BRAND.dark;
+const GREEN = '#22c55e';
 
 /* ── Static demo stats ───────────────────────────────────────────────────── */
 const STATS = [
