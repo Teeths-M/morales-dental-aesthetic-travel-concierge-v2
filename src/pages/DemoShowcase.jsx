@@ -523,6 +523,7 @@ const TABS = [
   { id: 'silent',     label: '🔇 Silent Mode — I\'m Being Watched', link: '/demo/silent' },
   { id: 'trust',      label: '⭐ Partner Trust Score',              link: '/demo/trust' },
   { id: 'tap',        label: '👆 Tap Protocol — 2 tap & 3 tap',    link: '/demo/tap' },
+  { id: 'language',   label: '🌐 Language Bridge — Invisible Interpreter', link: '/demo/language' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
@@ -757,6 +758,13 @@ export default function DemoShowcase() {
               style={{ background: 'rgba(212,175,55,0.12)', border: '2px solid rgba(212,175,55,0.7)', color: '#D4AF37', fontWeight: 800 }}
             >
               👆 Tap Protocol — 2 tap &amp; 3 tap ✨ NEW
+            </Link>
+            <Link
+              to="/demo/language"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.4)', color: '#60a5fa', fontWeight: 700 }}
+            >
+              🌐 Language Bridge — Invisible Interpreter ✨ NEW
             </Link>
           </div>
 
