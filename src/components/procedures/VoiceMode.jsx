@@ -11,33 +11,10 @@ export default function VoiceMode({ onProceduresDetected, onClose }) {
   const [transcript, setTranscript] = useState('');
   const [detected, setDetected] = useState([]);
   const [bars, setBars] = useState([0.3, 0.5, 0.7, 0.4, 0.6, 0.8, 0.5, 0.3, 0.6, 0.4]);
-  const [pricingEngine, setPricingEngine] = useState(null);
   const [estimatedPrice, setEstimatedPrice] = useState(null);
   const recognitionRef = useRef(null);
   const animFrameRef = useRef(null);
-
-  // Initialize pricing engine
-  useEffect(() => {
-    const initEngine = async () => {
-      try {
-        const [procedures, countryPricing, doctorPricing, bundles, modifiers, rules] = await Promise.all([
-          base44.entities.ProcedurePricing.list(),
-          base44.entities.CountryPricing.list(),
-          base44.entities.DoctorPricing.list(),
-          base44.entities.ProcedureBundle.list(),
-          base44.entities.ComplexityModifier.list(),
-          base44.entities.PricingRule.list(),
-        ]);
-
-        const engine = new PricingEngine(procedures, countryPricing, doctorPricing, bundles, modifiers, rules);
-        setPricingEngine(engine);
-      } catch (error) {
-        console.error('Failed to initialize pricing:', error);
-      }
-    };
-
-    initEngine();
-  }, []);
+  const pricingEngineRef = useRef(null); // lazy — only loaded after procedures detected
 
   // Animate waveform bars
   useEffect(() => {
@@ -51,22 +28,32 @@ export default function VoiceMode({ onProceduresDetected, onClose }) {
     return () => clearTimeout(animFrameRef.current);
   }, [phase]);
 
-  // Calculate price when procedures detected
-  useEffect(() => {
-    if (!pricingEngine || detected.length === 0) {
-      setEstimatedPrice(null);
-      return;
+  // Load pricing engine lazily — only called after procedures are detected, not on mount
+  const loadPriceEstimate = async (results) => {
+    if (!results.length) return;
+    try {
+      if (!pricingEngineRef.current) {
+        const [procedures, countryPricing, doctorPricing, bundles, modifiers, rules] = await Promise.all([
+          base44.entities.ProcedurePricing.list(),
+          base44.entities.CountryPricing.list(),
+          base44.entities.DoctorPricing.list(),
+          base44.entities.ProcedureBundle.list(),
+          base44.entities.ComplexityModifier.list(),
+          base44.entities.PricingRule.list(),
+        ]);
+        pricingEngineRef.current = new PricingEngine(procedures, countryPricing, doctorPricing, bundles, modifiers, rules);
+      }
+      const procedureInput = results.map(item => ({
+        procedure_name: item.title || item.name,
+        quantity: 1,
+        complexity: 'moderate',
+      }));
+      const quote = pricingEngineRef.current.calculateFullQuote(procedureInput);
+      setEstimatedPrice(quote.estimatedTotalLow);
+    } catch (_) {
+      // Price estimate is optional — never block the flow
     }
-
-    const procedures = detected.map(item => ({
-      procedure_name: item.title || item.name,
-      quantity: 1,
-      complexity: 'moderate',
-    }));
-
-    const quote = pricingEngine.calculateFullQuote(procedures);
-    setEstimatedPrice(quote.estimatedTotalLow);
-  }, [pricingEngine, detected]);
+  };
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -162,6 +149,8 @@ Examples:
     
     setDetected(results);
     setPhase('done');
+    // Load pricing only now — after we know what procedures matched (saves 6 reads on every open)
+    loadPriceEstimate(results);
   };
 
   const confirmAndAdd = () => {

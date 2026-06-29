@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
   Upload, MessageCircle, HeartPulse, Users,
-  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Star, Lock, FileText, ChevronDown, FileHeart
+  Shield, Bell, ArrowRight, CheckCircle2, Clock, AlertTriangle, Lock, FileText, ChevronDown, FileHeart
 } from 'lucide-react';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import FeatureHub from '@/components/dashboard/FeatureHub';
@@ -71,10 +71,10 @@ const notifications = [
 const quickActions = [
   { icon: Lock,       label: 'My Vault',            to: '/passport-vault',              color: 'emerald' },
   { icon: FileHeart,  label: 'Emergency Med Card',   to: '/dashboard/emergency-card',    color: 'red'     },
+  { icon: FileText,   label: 'Read Discharge Papers',to: '/discharge-reader',            color: 'amber'   },
   { icon: Upload,     label: 'Upload Documents',     to: '/dashboard/documents',         color: 'emerald' },
   { icon: MessageCircle, label: 'Message Coordinator', to: '/dashboard/messages',        color: 'blue' },
   { icon: HeartPulse, label: 'View Recovery Plan',  to: '/safe-t',                      color: 'sky' },
-  { icon: Star,       label: 'My Case Status',       to: '/dashboard/case-status',       color: 'violet' },
 ];
 
 const colorMap = {
