@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
       
       try {
         const transcription = await base44.asServiceRole.integrations.Core.TranscribeAudio({ audio_url });
-        originalText = transcription.data || '';
+        // SDK may return text directly or wrapped in .data
+        originalText = (typeof transcription === 'string' ? transcription : transcription?.data || transcription?.text) || '';
         console.log('[walkieTalkieTranslate] Transcription result:', originalText);
       } catch (e) {
         console.error('[walkieTalkieTranslate] Transcription failed:', e.message);

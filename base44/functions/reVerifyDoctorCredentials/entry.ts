@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
             required: ['found', 'confidence', 'details']
           }
         });
-        stillValid = result.found === true && result.confidence >= 70;
+        stillValid = result?.found === true && result?.confidence >= 70;
       } catch (e) {
         errors.push({ doctorId, error: e.message });
         // Network/API failure — do NOT suspend, just log

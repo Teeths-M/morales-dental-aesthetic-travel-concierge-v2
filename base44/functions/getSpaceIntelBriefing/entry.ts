@@ -45,7 +45,9 @@ Return as JSON matching this exact schema:
   "briefing_summary": "two sentence summary"
 }`;
 
-    const aiResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
+    let aiResult = null;
+    try {
+    aiResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt,
       add_context_from_internet: true,
       model: 'gemini_3_flash',
@@ -63,6 +65,7 @@ Return as JSON matching this exact schema:
         }
       }
     });
+    } catch (_) {}
 
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
@@ -73,18 +76,18 @@ Return as JSON matching this exact schema:
       destination_city: destination_city || '',
       generated_at: now,
       briefing_expires_at: expiresAt,
-      geopolitical_risk: aiResult.geopolitical_risk || 'moderate',
-      crime_risk: aiResult.crime_risk || 'moderate',
-      health_alerts: aiResult.health_alerts || [],
-      scam_warnings: aiResult.scam_warnings || [],
-      emergency_numbers: aiResult.emergency_numbers || {},
-      safe_zones: aiResult.safe_zones || [],
-      avoid_areas: aiResult.avoid_areas || [],
-      briefing_summary: aiResult.briefing_summary || ''
+      geopolitical_risk: aiResult?.geopolitical_risk || 'moderate',
+      crime_risk: aiResult?.crime_risk || 'moderate',
+      health_alerts: aiResult?.health_alerts || [],
+      scam_warnings: aiResult?.scam_warnings || [],
+      emergency_numbers: aiResult?.emergency_numbers || {},
+      safe_zones: aiResult?.safe_zones || [],
+      avoid_areas: aiResult?.avoid_areas || [],
+      briefing_summary: aiResult?.briefing_summary || 'Briefing data temporarily unavailable — standard precautions apply.'
     });
 
-    return Response.json({ briefing, cached: false });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ briefing, cached: false, ai_available: !!aiResult });
+  } catch (_) {
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

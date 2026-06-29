@@ -13,7 +13,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'file_url is required' }, { status: 400 });
     }
 
-    const extracted = await base44.integrations.Core.InvokeLLM({
+    let extracted = null;
+    try {
+    extracted = await base44.integrations.Core.InvokeLLM({
       prompt: `Extract all text and data fields from this passport image. Return the data in JSON format with these fields:
 - passport_number: the full passport number
 - expiry_date: expiry date in YYYY-MM-DD format
@@ -36,6 +38,11 @@ Return null for any field you cannot clearly read. Be accurate.`,
         required: ['full_name']
       }
     });
+    } catch (_) {}
+
+    if (!extracted) {
+      return Response.json({ error: 'Could not read passport — please try with a clearer image.' }, { status: 422 });
+    }
 
     // Basic validation
     const warnings = [];
@@ -56,7 +63,7 @@ Return null for any field you cannot clearly read. Be accurate.`,
       warnings
     });
 
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  } catch (_) {
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

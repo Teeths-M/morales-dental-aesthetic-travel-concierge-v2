@@ -11,9 +11,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'message and destination_country are required' }, { status: 400 });
     }
 
-    const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      model: 'gpt_5_mini',
-      prompt: `You are an emergency medical translation engine for a medical tourism platform.
+    let result = null;
+    try {
+      result = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        model: 'gpt_5_mini',
+        prompt: `You are an emergency medical translation engine for a medical tourism platform.
 
 TASK: Translate the following emergency SOS message into the PRIMARY LOCAL LANGUAGE used by first responders, hospitals, and emergency services in ${destination_country}.
 
@@ -29,22 +31,41 @@ Return a JSON object with:
 5. "urgency_level": "critical" | "urgent" | "moderate"
 
 Be precise and clinically accurate. Prioritize patient safety above all else.`,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          translated_message: { type: 'string' },
-          local_language: { type: 'string' },
-          emergency_numbers: { type: 'array', items: { type: 'string' } },
-          phonetic_key_phrases: { type: 'array', items: { type: 'string' } },
-          urgency_level: { type: 'string' }
-        },
-        required: ['translated_message', 'local_language', 'emergency_numbers', 'phonetic_key_phrases', 'urgency_level']
-      }
-    });
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            translated_message: { type: 'string' },
+            local_language: { type: 'string' },
+            emergency_numbers: { type: 'array', items: { type: 'string' } },
+            phonetic_key_phrases: { type: 'array', items: { type: 'string' } },
+            urgency_level: { type: 'string' }
+          },
+          required: ['translated_message', 'local_language', 'emergency_numbers', 'phonetic_key_phrases', 'urgency_level']
+        }
+      });
+    } catch (_) {}
 
-    return Response.json({ success: true, ...result });
+    // Always return something safe — never crash an SOS function
+    return Response.json({
+      success: true,
+      translated_message: result?.translated_message || message,
+      local_language: result?.local_language || 'English (translation unavailable)',
+      emergency_numbers: result?.emergency_numbers || [],
+      phonetic_key_phrases: result?.phonetic_key_phrases || [],
+      urgency_level: result?.urgency_level || 'critical',
+      is_fallback: !result,
+    });
   } catch (error) {
-    console.error('translateEmergencySOS error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('translateEmergencySOS error');
+    // SEC-10: never expose error.message — return safe fallback for SOS
+    return Response.json({
+      success: true,
+      translated_message: message,
+      local_language: 'English (translation unavailable)',
+      emergency_numbers: [],
+      phonetic_key_phrases: [],
+      urgency_level: 'critical',
+      is_fallback: true,
+    });
   }
 });

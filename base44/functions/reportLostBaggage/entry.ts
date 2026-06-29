@@ -17,10 +17,12 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') || 'https://app.moralesmedical.com';
     const finderUrl = `${appUrl}/luggage/${bag.finder_contact_token}`;
 
-    // Generate claim summary via AI
-    const claimSummary = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      model: 'gpt_5_mini',
-      prompt: `Generate a formal lost baggage claim report for submission to airline/iLost tracking network.
+    // Generate claim summary via AI — plain text fallback if LLM unavailable
+    let claimSummary = `Lost baggage claim for ${bag.bag_label || 'suitcase'} on flight ${bag.airline_code || ''}${bag.flight_number || ''} (${bag.origin_airport || '?'} → ${bag.destination_airport || '?'}). Claim reference: ${claimRef}. Filed automatically by Morales Medical Concierge.`;
+    try {
+      const aiSummary = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        model: 'gpt_5_mini',
+        prompt: `Generate a formal lost baggage claim report for submission to airline/iLost tracking network.
 
 Patient: ${bag.patient_name || 'Medical Tourist'}
 Bag Description: ${bag.bag_label || 'Suitcase'}
@@ -31,7 +33,9 @@ Claim Reference: ${claimRef}
 Reported: ${new Date().toISOString()}
 
 Write a professional 150-word claim body suitable for email submission to the airline's baggage services and iLost network. Include all key details.`
-    });
+      });
+      if (aiSummary && typeof aiSummary === 'string') claimSummary = aiSummary;
+    } catch (_) {}
 
     // Update luggage status
     const updatedHistory = [...(bag.status_history || []), {
@@ -66,6 +70,6 @@ Write a professional 150-word claim body suitable for email submission to the ai
     return Response.json({ success: true, claim_reference: claimRef, claim_body: claimSummary, finder_url: finderUrl });
   } catch (error) {
     console.error('reportLostBaggage error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

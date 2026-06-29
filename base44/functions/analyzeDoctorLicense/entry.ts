@@ -25,7 +25,9 @@ Deno.serve(async (req) => {
     }
 
     // Use AI vision to analyze the license document
-    const analysis = await base44.integrations.Core.InvokeLLM({
+    let analysis = null;
+    try {
+    analysis = await base44.integrations.Core.InvokeLLM({
       prompt: `Analyze this medical license document image. Extract and verify:
 1. Doctor's full name
 2. License number
@@ -72,15 +74,25 @@ Return JSON format:
         required: ["appears_legitimate", "confidence_score", "recommendation"]
       }
     });
+    } catch (_) {}
+
+    // If AI unavailable, fall back to manual review — never crash
+    if (!analysis) {
+      await base44.asServiceRole.entities.Doctor.update(doctorId, {
+        verification_status: 'manual_review',
+        verification_notes: 'AI analysis unavailable — manual review required.',
+      }).catch(() => {});
+      return Response.json({ success: true, status: 'manual_review', ai_available: false });
+    }
 
     // Determine verification status based on AI analysis
     let verificationStatus = 'manual_review';
     let verificationNotes = '';
 
-    if (analysis.recommendation === 'ai_verified' && analysis.confidence_score >= 85 && analysis.appears_legitimate) {
+    if (analysis?.recommendation === 'ai_verified' && analysis?.confidence_score >= 85 && analysis?.appears_legitimate) {
       verificationStatus = 'ai_verified';
       verificationNotes = `AI Verified: ${analysis.confidence_score}% confidence. License #${analysis.license_number || 'N/A'} from ${analysis.issuing_country || 'Unknown'}. Valid until ${analysis.expiry_date || 'N/A'}. Name matches: ${analysis.extracted_name || 'N/A'}`;
-    } else if (analysis.recommendation === 'rejected' || !analysis.appears_legitimate) {
+    } else if (analysis?.recommendation === 'rejected' || !analysis?.appears_legitimate) {
       verificationStatus = 'manual_review';
       verificationNotes = `AI Flagged: ${analysis.confidence_score}% confidence. Red flags: ${analysis.red_flags?.join(', ') || 'Low confidence'}. Requires manual review.`;
     } else {

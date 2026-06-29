@@ -57,7 +57,8 @@ Return a JSON response with:
         model: 'gemini_3_flash' // Using Gemini for vision analysis
       });
 
-      const docAnalysis = analysisResult.data;
+      // SDK returns data directly — never wrapped in .data
+      const docAnalysis = analysisResult?.data ?? analysisResult ?? {};
       
       analyzedDocs.push({
         ...doc,

@@ -61,7 +61,7 @@ Return JSON: { "found": boolean, "confidence": number (0-100), "details": string
             required: ['found', 'confidence', 'details']
           }
         });
-        registryFound = result.found === true && result.confidence >= 70;
+        registryFound = result?.found === true && result?.confidence >= 70;
         console.log('Registry lookup result:', result);
       } catch (e) {
         console.error('Registry lookup failed:', e);

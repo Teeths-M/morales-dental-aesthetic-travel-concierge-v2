@@ -185,29 +185,32 @@ Return a JSON with:
 - recommendation: brief action note for the concierge team
 `;
 
-  const riskAssessment = await base44.asServiceRole.integrations.Core.InvokeLLM({
-    prompt: riskPrompt,
-    response_json_schema: {
-      type: 'object',
-      properties: {
-        result: { type: 'string' },
-        risk_level: { type: 'string' },
-        flags: { type: 'array', items: { type: 'string' } },
-        summary: { type: 'string' },
-        recommendation: { type: 'string' },
+  let riskAssessment = null;
+  try {
+    riskAssessment = await base44.asServiceRole.integrations.Core.InvokeLLM({
+      prompt: riskPrompt,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          result: { type: 'string' },
+          risk_level: { type: 'string' },
+          flags: { type: 'array', items: { type: 'string' } },
+          summary: { type: 'string' },
+          recommendation: { type: 'string' },
+        },
       },
-    },
-  });
+    });
+  } catch (_) {}
 
-  const riskResult = normalizeRiskResult(riskAssessment.result);
-  const riskLevel = normalizeRiskLevel(riskAssessment.risk_level);
+  const riskResult = normalizeRiskResult(riskAssessment?.result);
+  const riskLevel = normalizeRiskLevel(riskAssessment?.risk_level);
   const isBlocked = riskResult === 'blocked';
 
   // 4. Update workflow with risk result
   await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, {
     risk_result: riskResult,
-    risk_summary: `${riskAssessment.summary || 'Risk assessment completed.'} — ${riskAssessment.recommendation || 'Review workflow details.'}`,
-    risk_flags: toArray(riskAssessment.flags),
+    risk_summary: `${riskAssessment?.summary || 'Risk assessment completed.'} — ${riskAssessment?.recommendation || 'Review workflow details.'}`,
+    risk_flags: toArray(riskAssessment?.flags),
     stage: isBlocked ? 'blocked' : 'doctor',
   });
 
