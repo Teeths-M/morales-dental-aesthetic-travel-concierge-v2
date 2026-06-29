@@ -525,6 +525,7 @@ const TABS = [
   { id: 'tap',        label: '👆 Tap Protocol — 2 tap & 3 tap',    link: '/demo/tap' },
   { id: 'language',   label: '🌐 Language Bridge — Invisible Interpreter', link: '/demo/language' },
   { id: 'waiting',    label: '🏥 Waiting Room Voice — M Speaks Unbidden',  link: '/demo/waiting' },
+  { id: 'weather',    label: '🌡️ Weather to Health — 4 Parties, 1 Event', link: '/demo/weather' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
@@ -773,6 +774,13 @@ export default function DemoShowcase() {
               style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37', fontWeight: 700 }}
             >
               🏥 Waiting Room Voice — M Speaks Unbidden ✨ NEW
+            </Link>
+            <Link
+              to="/demo/weather"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.4)', color: '#60a5fa', fontWeight: 700 }}
+            >
+              🌡️ Weather to Health — 4 Parties, 1 Event ✨ NEW
             </Link>
           </div>
 
