@@ -15,12 +15,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     patient_name,
     consultation_id,
     violations,
-  } = await body<{
-    patient_email?:   string;
-    patient_name?:    string;
-    consultation_id?: string;
-    violations:       Array<{ pair: string; reason: string; code: string }>;
-  }>();
+  } = await body();
 
   if (!violations || violations.length === 0) {
     return err('violations array is required and must be non-empty');

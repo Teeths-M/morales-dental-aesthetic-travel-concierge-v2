@@ -32,13 +32,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     gps_lng,
     accuracy_m,
     trigger_method = 'gesture',   // 'gesture' | 'orb_keyword'
-  } = await body<{
-    case_id?:       string;
-    gps_lat?:       number;
-    gps_lng?:       number;
-    accuracy_m?:    number;
-    trigger_method?: string;
-  }>();
+  } = await body();
 
   const now = new Date().toISOString();
 

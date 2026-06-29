@@ -26,7 +26,7 @@ const QUESTIONS: Record<number, { subject: string; question: string }> = {
 };
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-  const { case_id, trip_id } = await body<{ case_id: string; trip_id?: string }>();
+  const { case_id, trip_id } = await body();
 
   if (!case_id) return err('case_id is required');
 

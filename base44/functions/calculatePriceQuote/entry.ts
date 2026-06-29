@@ -112,11 +112,7 @@ async function getPricingIndex(base44: Base44Client): Promise<PricingIndex> {
 Deno.serve(createHandler(async ({ req, base44, user, body }) => {
   if (req.method !== 'POST') return err('Method not allowed', 405);
 
-  const { procedures = [], country = null, doctorId = null } = await body<{
-    procedures: Array<{ name: string; quantity?: number; complexity?: string; material?: string }>;
-    country?: string;
-    doctorId?: string;
-  }>();
+  const { procedures = [], country = null, doctorId = null } = await body();
 
   if (!procedures.length) return err('No procedures selected');
 

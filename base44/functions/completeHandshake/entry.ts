@@ -42,13 +42,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     gps_location,
     trigger_method = 'app',
     offline_packet_id,
-  } = await body<{
-    trip_id: string;
-    handshake_number: number;
-    gps_location?: { lat: number; lng: number; accuracy_m?: number };
-    trigger_method?: 'app' | 'sms';
-    offline_packet_id?: string;
-  }>();
+  } = await body();
 
   if (!trip_id)          return err('trip_id is required');
   if (!handshake_number) return err('handshake_number is required');

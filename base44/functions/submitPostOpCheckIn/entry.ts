@@ -13,13 +13,7 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { token, rating, pain_level, note, concerns } = await body<{
-    token:       string;
-    rating:      number;
-    pain_level:  number;
-    note?:       string;
-    concerns?:   string[];
-  }>();
+  const { token, rating, pain_level, note, concerns } = await body();
 
   if (!token)  return err('token is required');
   if (!rating || rating < 1 || rating > 5) return err('rating must be 1–5');
