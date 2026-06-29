@@ -272,7 +272,7 @@ export default function ConsultationForm() {
   const filteredNationalities = NATIONALITIES.filter(n => n.toLowerCase().includes(nationalitySearch.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="dark min-h-screen bg-background py-8 px-4" style={{ background: '#060B16' }}>
       <div className="max-w-3xl mx-auto">
         <Card className="border-border">
           <CardHeader className="pb-4">
