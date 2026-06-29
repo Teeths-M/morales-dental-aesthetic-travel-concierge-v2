@@ -158,6 +158,8 @@ export default function FamilyEyeDemo() {
   const liveDirUrl    = `https://www.google.com/maps/dir/?api=1&destination=${tom.lat},${tom.lng}&travelmode=driving`;
   const liveWazeUrl   = `https://waze.com/ul?ll=${tom.lat},${tom.lng}&navigate=yes`;
   const liveShareText = `Tom's live location — Tijuana, Mexico\nhttps://www.google.com/maps/search/?api=1&query=${tom.lat},${tom.lng}`;
+  const whatsappMsg   = encodeURIComponent(`🔴 Tom's live location — Tijuana, Mexico\nClick to get directions:\nhttps://www.google.com/maps/search/?api=1&query=${tom.lat},${tom.lng}`);
+  const smsMsg        = encodeURIComponent(`Tom is here — Tijuana, Mexico: https://www.google.com/maps/search/?api=1&query=${tom.lat},${tom.lng}`);
 
   return (
     <div style={{ minHeight: '100vh', background: DARK, fontFamily: '"SF Pro Display", system-ui, sans-serif' }}>
@@ -284,29 +286,36 @@ export default function FamilyEyeDemo() {
             </div>
           </div>
 
-          {/* Navigation action buttons — always track Tom's live position */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '12px 16px', background: '#0C1A1D', borderBottom: `1px solid ${BORDER}` }}>
+          {/* Navigation + Share — 5 buttons, always track Tom's live position */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, padding: '10px 12px', background: '#0C1A1D', borderBottom: `1px solid ${BORDER}` }}>
             <button onClick={() => openNav(liveGoogleUrl)}
-              style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(66,133,244,0.12)', border: '1px solid rgba(66,133,244,0.35)', color: '#4285F4', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <ExternalLink style={{ width: 14, height: 14 }} />
-              Google Maps
+              style={{ padding: '9px 4px', borderRadius: 10, background: 'rgba(66,133,244,0.12)', border: '1px solid rgba(66,133,244,0.35)', color: '#4285F4', fontSize: 9, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <ExternalLink style={{ width: 13, height: 13 }} />
+              Google
             </button>
             <button onClick={() => openNav(liveWazeUrl)}
-              style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(51,204,255,0.10)', border: '1px solid rgba(51,204,255,0.3)', color: '#33CCFF', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <Navigation style={{ width: 14, height: 14 }} />
+              style={{ padding: '9px 4px', borderRadius: 10, background: 'rgba(51,204,255,0.10)', border: '1px solid rgba(51,204,255,0.3)', color: '#33CCFF', fontSize: 9, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Navigation style={{ width: 13, height: 13 }} />
               Waze
             </button>
+            {/* WhatsApp — pre-filled message with live location link */}
+            <button onClick={() => openNav(`https://wa.me/?text=${whatsappMsg}`)}
+              style={{ padding: '9px 4px', borderRadius: 10, background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.35)', color: '#25D366', fontSize: 9, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.527 5.845L.057 23.571a.75.75 0 0 0 .92.92l5.733-1.47A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.686-.528-5.208-1.443l-.374-.222-3.405.874.89-3.328-.241-.385A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+              WhatsApp
+            </button>
+            {/* SMS — pre-filled message */}
+            <button onClick={() => openNav(`sms:?body=${smsMsg}`)}
+              style={{ padding: '9px 4px', borderRadius: 10, background: 'rgba(96,165,250,0.10)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', fontSize: 9, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              SMS
+            </button>
+            {/* Copy to clipboard */}
             <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: "Tom's Location", text: liveShareText }).catch(() => {});
-                } else {
-                  navigator.clipboard.writeText(liveShareText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
-                }
-              }}
-              style={{ padding: '10px 6px', borderRadius: 10, background: copied ? 'rgba(34,197,94,0.12)' : `rgba(212,175,55,0.10)`, border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : 'rgba(212,175,55,0.3)'}`, color: copied ? GREEN : GOLD, fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <Share2 style={{ width: 14, height: 14 }} />
-              {copied ? 'Copied!' : 'Share'}
+              onClick={() => { navigator.clipboard.writeText(liveShareText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); }); }}
+              style={{ padding: '9px 4px', borderRadius: 10, background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(212,175,55,0.08)', border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : 'rgba(212,175,55,0.25)'}`, color: copied ? GREEN : GOLD, fontSize: 9, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Share2 style={{ width: 13, height: 13 }} />
+              {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
 
