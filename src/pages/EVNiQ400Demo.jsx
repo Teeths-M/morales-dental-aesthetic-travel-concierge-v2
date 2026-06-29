@@ -8,7 +8,13 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, Wifi, WifiOff, Plane, Globe, ArrowLeft, RotateCcw, MapPin, Phone } from 'lucide-react';
-import { MapContainer, TileLayer, Polyline, CircleMarker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, useMap } from 'react-leaflet';
+
+function MapFlyTo({ lat, lng }) {
+  const map = useMap();
+  map.setView([lat, lng], 15, { animate: true, duration: 1.2 });
+  return null;
+}
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -324,15 +330,15 @@ export default function EVNiQ400Demo() {
               .leaflet-container { background: #1a2035 !important; }
             `}</style>
             <MapContainer
-              key={`evn-map-${currentWP}`}
-              center={[curWPData.lat, curWPData.lng]}
-              zoom={15}
-              style={{ height: 280, width: '100%' }}
+              center={[32.5310, -117.0260]}
+              zoom={14}
+              style={{ height: '280px', width: '100%' }}
               zoomControl={false}
               attributionControl={false}
               scrollWheelZoom={false}
               dragging={false}
             >
+              <MapFlyTo lat={curWPData.lat} lng={curWPData.lng} />
               {/* Esri satellite imagery */}
               <TileLayer
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"

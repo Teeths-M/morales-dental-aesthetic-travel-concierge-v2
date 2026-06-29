@@ -81,8 +81,8 @@ export default function AppLayout() {
           </>
         )}
 
-        {/* Global notification stack — Apple/Uber style banners, always present */}
-        <GlobalNotificationStack />
+        {/* Global notification stack — suppressed on demo pages */}
+        {!isDemo && <GlobalNotificationStack />}
       </div>
     </BiometricGate>
   );
