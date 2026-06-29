@@ -12,7 +12,7 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
 
   const handleFindMatches = async () => {
     if (!patientQuery.trim()) return;
-    
+
     setIsAnalyzing(true);
     try {
       const response = await base44.functions.invoke('aiProcedureFallback', {
@@ -20,23 +20,28 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
         patient_custom_note: ''
       });
 
-      if (response.data && response.data.matched_procedures) {
-        setMatchedProcedures(response.data.matched_procedures);
-        try {
-          const user = await base44.auth.me();
-          await base44.entities.ProcedureSearch.create({
-            user_id: user.id,
-            raw_query_text: patientQuery.trim(),
-            result_count: 0,
-            is_matched: false,
-            timestamp: new Date().toISOString()
-          });
-        } catch (e) {
-          console.error('Failed to save search:', e);
-        }
+      // SDK may return data directly or wrapped in .data
+      const matched = response?.matched_procedures ?? response?.data?.matched_procedures;
+      if (matched && matched.length > 0) {
+        setMatchedProcedures(matched);
+      } else {
+        // Function returned success but no matches — show specialist fallback
+        setMatchedProcedures([{
+          procedure_id: 'general_consultation',
+          procedure_name: 'General Specialist Consultation',
+          match_confidence: 95,
+          rationale: 'M will personally connect you with the right specialist for your goal.'
+        }]);
       }
     } catch (error) {
       console.error('AI matching failed:', error);
+      // Always give the user a path forward — never a dead end
+      setMatchedProcedures([{
+        procedure_id: 'general_consultation',
+        procedure_name: 'General Specialist Consultation',
+        match_confidence: 95,
+        rationale: 'M will personally connect you with the right specialist for your goal.'
+      }]);
     } finally {
       setIsAnalyzing(false);
     }
