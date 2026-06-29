@@ -1,6 +1,7 @@
-const CACHE_NAME      = 'morales-vault-v1';
-const TILE_CACHE_NAME = 'morales-map-tiles-v1';
-const OSM_TILE_RE     = /^https:\/\/[abc]\.tile\.openstreetmap\.org\//;
+const CACHE_NAME      = 'morales-vault-v2';
+const TILE_CACHE_NAME = 'morales-map-tiles-v2';
+// Esri World Imagery + labels overlay (primary) + OSM fallback
+const TILE_RE = /^https:\/\/(server\.arcgisonline\.com|[abc]\.tile\.openstreetmap\.org)\//;
 
 // 1×1 transparent PNG — returned when a tile can't load offline
 const BLANK_TILE_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=';
@@ -11,6 +12,8 @@ const APP_SHELL = [
   '/offline-guide',
   '/emergency-manifest',
   '/emergency-access',
+  '/demo',
+  '/offline-vault-guide',
 ];
 
 // Install: cache app shell
@@ -48,7 +51,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Map tiles: cache-first (tiles are immutable — same z/x/y never changes)
-  if (OSM_TILE_RE.test(request.url)) {
+  // Covers Esri World Imagery satellite tiles + OSM fallback
+  if (TILE_RE.test(request.url)) {
     event.respondWith(
       caches.open(TILE_CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);
