@@ -5,6 +5,24 @@ import {
   Radio, ArrowLeft, Play, RotateCcw,
   MessageSquare, Navigation, Siren
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Maria's real Caracas GPS coordinates
+const MARIA_LAT = 10.4815;
+const MARIA_LNG = -66.9037;
+
+const MARIA_ICON_SAFE = L.divIcon({
+  className: '',
+  html: `<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:40px;height:40px;border-radius:50%;border:3px solid #22c55e;overflow:hidden;box-shadow:0 0 16px rgba(34,197,94,0.7);"><img src='https://i.pravatar.cc/80?img=47' style='width:100%;height:100%;object-fit:cover;'/></div><div style='width:2px;height:12px;background:#22c55e;'></div><div style='width:6px;height:6px;border-radius:50%;background:#22c55e;margin-top:-1px;'></div></div>`,
+  iconSize: [40, 60], iconAnchor: [20, 58],
+});
+const MARIA_ICON_LOST = L.divIcon({
+  className: '',
+  html: `<div style="display:flex;flex-direction:column;align-items:center;opacity:0.6;"><div style="width:40px;height:40px;border-radius:50%;border:3px solid #ef4444;overflow:hidden;box-shadow:0 0 16px rgba(239,68,68,0.7);filter:grayscale(0.5);"><img src='https://i.pravatar.cc/80?img=47' style='width:100%;height:100%;object-fit:cover;'/></div><div style='width:2px;height:12px;background:#ef4444;'></div><div style='width:6px;height:6px;border-radius:50%;background:#ef4444;margin-top:-1px;'></div></div>`,
+  iconSize: [40, 60], iconAnchor: [20, 58],
+});
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -149,103 +167,44 @@ function SmsPopup({ sms, onDismiss }) {
   );
 }
 
-/* ── GPS Map Pin ─────────────────────────────────────────────────────────── */
+/* ── GPS Map Pin — Real Esri Satellite ───────────────────────────────────── */
 function GpsMapPin({ active, lost }) {
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden flex items-center justify-center"
-      style={{ height: 180, background: '#0a1420', border: '1px solid #1e3040' }}
-    >
-      {/* Grid lines */}
-      <svg className="absolute inset-0 w-full h-full opacity-20">
-        {[20, 40, 60, 80].map(y => (
-          <line key={y} x1="0" y1={`${y}%`} x2="100%" y2={`${y}%`} stroke="#2A3F4A" strokeWidth="1" />
-        ))}
-        {[20, 40, 60, 80].map(x => (
-          <line key={x} x1={`${x}%`} y1="0" x2={`${x}%`} y2="100%" stroke="#2A3F4A" strokeWidth="1" />
-        ))}
-      </svg>
+    <div className="relative rounded-2xl overflow-hidden" style={{ height: 180, border: `1px solid ${lost ? 'rgba(239,68,68,0.4)' : active ? 'rgba(34,197,94,0.3)' : '#1e3040'}` }}>
+      {/* Real satellite map */}
+      <MapContainer center={[MARIA_LAT, MARIA_LNG]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false} scrollWheelZoom={false} dragging={false}>
+        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={19} />
+        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" maxZoom={19} opacity={0.75} />
+        {active && <Marker position={[MARIA_LAT, MARIA_LNG]} icon={lost ? MARIA_ICON_LOST : MARIA_ICON_SAFE} />}
+        {active && !lost && <Circle center={[MARIA_LAT, MARIA_LNG]} radius={80} pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.06, weight: 1.5 }} />}
+        {lost && <Circle center={[MARIA_LAT, MARIA_LNG]} radius={120} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.06, weight: 1.5, dashArray: '5 4' }} />}
+      </MapContainer>
 
-      {/* Location label */}
-      <div className="absolute top-3 left-3 flex items-center gap-1.5">
-        <Navigation className="w-3 h-3" style={{ color: GOLD }} />
-        <span className="text-[10px] font-semibold" style={{ color: GOLD }}>Caracas, Venezuela</span>
+      {/* Overlay — location label */}
+      <div className="absolute top-2 left-3 flex items-center gap-1.5 z-[1000]" style={{ pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(6,11,22,0.85)', backdropFilter: 'blur(4px)', borderRadius: 6, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <Navigation className="w-3 h-3" style={{ color: GOLD }} />
+          <span className="text-[10px] font-semibold" style={{ color: GOLD }}>Caracas, Venezuela</span>
+        </div>
       </div>
 
-      {/* Coordinates */}
-      <div className="absolute bottom-3 left-3">
-        <p className="text-[9px] font-mono" style={{ color: '#475569' }}>10.4815°N  66.9037°W</p>
-        <p className="text-[9px]" style={{ color: '#475569' }}>Av. Libertador · Last cached {lost ? '09:47 PM' : 'live'}</p>
+      {/* Overlay — GPS status */}
+      <div className="absolute top-2 right-3 flex items-center gap-1.5 z-[1000]" style={{ pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(6,11,22,0.85)', backdropFilter: 'blur(4px)', borderRadius: 6, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: lost ? '#ef4444' : active ? '#22c55e' : '#475569', boxShadow: !lost && active ? '0 0 6px rgba(34,197,94,0.7)' : 'none', display: 'inline-block', width: 7, height: 7, borderRadius: '50%' }} />
+          <span className="text-[10px] font-semibold" style={{ color: lost ? '#ef4444' : active ? '#22c55e' : '#475569' }}>
+            {lost ? 'SIGNAL LOST' : active ? 'LIVE' : 'IDLE'}
+          </span>
+        </div>
       </div>
 
-      {/* GPS status */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5">
-        <span
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{
-            background: lost ? '#ef4444' : active ? '#22c55e' : '#475569',
-            boxShadow: !lost && active ? '0 0 6px rgba(34,197,94,0.7)' : 'none',
-          }}
-        />
-        <span className="text-[10px] font-semibold" style={{ color: lost ? '#ef4444' : active ? '#22c55e' : '#475569' }}>
-          {lost ? 'SIGNAL LOST' : active ? 'LIVE' : 'IDLE'}
-        </span>
+      {/* Overlay — coordinates */}
+      <div className="absolute bottom-2 left-3 z-[1000]" style={{ pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(6,11,22,0.8)', backdropFilter: 'blur(4px)', borderRadius: 6, padding: '3px 8px' }}>
+          <p className="text-[9px] font-mono" style={{ color: '#94a3b8', margin: 0 }}>10.4815°N  66.9037°W</p>
+          <p className="text-[9px]" style={{ color: '#64748b', margin: 0 }}>Av. Libertador · Last cached {lost ? '09:47 PM' : 'live'}</p>
+        </div>
       </div>
-
-      {/* Maria's face + pin */}
-      <AnimatePresence>
-        {active && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative flex flex-col items-center"
-            style={{ gap: 0 }}
-          >
-            {/* Face avatar */}
-            <div className="relative flex flex-col items-center">
-              {/* Pulse rings around face */}
-              {!lost && (
-                <>
-                  <motion.div className="absolute rounded-full"
-                    style={{ inset: -10, border: `2px solid ${lost ? '#ef4444' : '#22c55e'}`, opacity: 0.4 }}
-                    animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity }} />
-                  <motion.div className="absolute rounded-full"
-                    style={{ inset: -6, border: `2px solid ${lost ? '#ef4444' : '#22c55e'}`, opacity: 0.6 }}
-                    animate={{ scale: [1, 1.4], opacity: [0.6, 0] }}
-                    transition={{ duration: 2.2, delay: 0.5, repeat: Infinity }} />
-                </>
-              )}
-              {/* Face photo */}
-              <img
-                src="https://i.pravatar.cc/150?img=47"
-                alt="Maria C."
-                style={{
-                  width: 44, height: 44,
-                  borderRadius: '50%',
-                  border: `3px solid ${lost ? '#ef4444' : '#22c55e'}`,
-                  boxShadow: `0 0 20px ${lost ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'}`,
-                  objectFit: 'cover',
-                  position: 'relative',
-                  zIndex: 2,
-                }}
-              />
-              {/* Name tag */}
-              <div style={{
-                position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)',
-                background: lost ? '#ef4444' : '#22c55e',
-                color: '#fff', fontSize: 8, fontWeight: 700,
-                padding: '2px 6px', borderRadius: 999, whiteSpace: 'nowrap', zIndex: 3,
-              }}>
-                Maria C.
-              </div>
-            </div>
-            {/* Pin stem */}
-            <div style={{ width: 2, height: 16, background: lost ? '#ef4444' : '#22c55e', marginTop: 22, borderRadius: 1 }} />
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: lost ? '#ef4444' : '#22c55e', marginTop: -2 }} />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {lost && active && (
         <div className="absolute inset-0 flex items-end justify-center pb-10">
