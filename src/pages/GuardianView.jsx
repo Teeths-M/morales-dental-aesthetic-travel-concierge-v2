@@ -115,7 +115,8 @@ export default function GuardianView() {
     if (isInitial) setLoading(true);
     try {
       const res = await base44.functions.invoke('getGuardianViewData', { token });
-      const d = res?.data;
+      // SDK may return data directly or wrapped in .data — handle both
+      const d = res?.data ?? res;
       if (!d || d.status === 'invalid' || d.status === 'revoked' || d.status === 'error') {
         setPageState('error');
         setErrorMsg(d?.error || 'This guardian link does not exist or has been revoked.');
