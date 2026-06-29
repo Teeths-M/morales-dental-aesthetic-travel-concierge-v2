@@ -5,7 +5,46 @@ import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
 
-export default function SmartFallback({ onProcedureSelect, language = 'en', originalQuery }) {
+// Local keyword scorer — runs instantly, zero API credits
+function localMatch(query, procedures = []) {
+  const q = query.toLowerCase().trim();
+  const words = q.split(/\s+/).filter(w => w.length > 2);
+
+  const scored = procedures.map(proc => {
+    let score = 0;
+    const title = (proc.title || '').toLowerCase();
+    const desc = (proc.desc || '').toLowerCase();
+    const keywords = proc.keywords || [];
+    const categoryLabel = (proc.categoryLabel || '').toLowerCase();
+
+    // Exact keyword phrase match — highest weight
+    for (const kw of keywords) {
+      if (q.includes(kw)) score += 50;
+    }
+    // Individual word matches against keyword list
+    for (const word of words) {
+      for (const kw of keywords) {
+        if (kw.includes(word)) score += 20;
+      }
+      if (title.includes(word)) score += 15;
+      if (categoryLabel.includes(word)) score += 10;
+      if (desc.includes(word)) score += 5;
+    }
+    return { proc, score };
+  }).filter(x => x.score > 0);
+
+  scored.sort((a, b) => b.score - a.score);
+  const maxScore = scored[0]?.score || 1;
+
+  return scored.slice(0, 3).map(({ proc, score }) => ({
+    procedure_id: proc.title.toLowerCase().replace(/[\s/()&]+/g, '_'),
+    procedure_name: proc.title,
+    match_confidence: Math.min(99, Math.round(60 + (score / maxScore) * 35)),
+    rationale: (proc.desc || '').split('.')[0],
+  }));
+}
+
+export default function SmartFallback({ onProcedureSelect, language = 'en', originalQuery, procedures = [] }) {
   const [patientQuery, setPatientQuery] = useState(originalQuery || '');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [matchedProcedures, setMatchedProcedures] = useState(null);
@@ -15,32 +54,38 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
     if (!patientQuery.trim()) return;
 
     setIsAnalyzing(true);
+
+    // 1. Try local keyword matching first — instant, zero credits
+    const localResults = localMatch(patientQuery, procedures);
+
+    if (localResults.length > 0) {
+      setMatchedProcedures(localResults);
+      setIsAnalyzing(false);
+      return;
+    }
+
+    // 2. No local match — fall back to AI edge function
     try {
       const response = await base44.functions.invoke('aiProcedureFallback', {
         patient_query: patientQuery.trim(),
         patient_custom_note: ''
       });
-
-      // SDK may return data directly or wrapped in .data
       const matched = response?.matched_procedures ?? response?.data?.matched_procedures;
       if (matched && matched.length > 0) {
         setMatchedProcedures(matched);
       } else {
-        // Function returned success but no matches — show specialist fallback
         setMatchedProcedures([{
           procedure_id: 'general_consultation',
           procedure_name: 'General Specialist Consultation',
-          match_confidence: 95,
+          match_confidence: 92,
           rationale: 'M will personally connect you with the right specialist for your goal.'
         }]);
       }
-    } catch (error) {
-      console.error('AI matching failed:', error);
-      // Always give the user a path forward — never a dead end
+    } catch (_) {
       setMatchedProcedures([{
         procedure_id: 'general_consultation',
         procedure_name: 'General Specialist Consultation',
-        match_confidence: 95,
+        match_confidence: 92,
         rationale: 'M will personally connect you with the right specialist for your goal.'
       }]);
     } finally {

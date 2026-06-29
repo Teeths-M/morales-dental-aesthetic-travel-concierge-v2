@@ -199,6 +199,11 @@ export default function Procedures() {
     ? procedureCategories
     : procedureCategories.filter(c => c.parent === activeParent);
 
+  // Flat list for SmartFallback local matching — includes categoryLabel for better scoring
+  const allProceduresFlat = procedureCategories.flatMap(cat =>
+    cat.procedures.map(p => ({ ...p, categoryLabel: cat.label, parent: cat.parent }))
+  );
+
   return (
     <div className="min-h-screen bg-[#060B16]">
       <PageHeroBand />
@@ -262,6 +267,7 @@ export default function Procedures() {
             originalQuery=""
             onProcedureSelect={handleFallbackSelect}
             language={language}
+            procedures={allProceduresFlat}
           />
         </div>
 
