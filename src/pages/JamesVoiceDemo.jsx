@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Mic, MicOff, Volume2, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Mic, MicOff, Volume2, ArrowLeft, RotateCcw, Mail, Printer } from 'lucide-react';
 
 const GOLD  = '#D4AF37';
 const DARK  = '#060B16';
@@ -328,25 +328,80 @@ export default function JamesVoiceDemo() {
 
           {/* End state */}
           {done && (
-            <div style={{ marginTop: 32, padding: 28, borderRadius: 20, background: `${GOLD}10`, border: `1px solid ${GOLD}30`, textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>👑</div>
-              <p style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: '#fff' }}>Journey Complete</p>
-              <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
-                James traveled alone, blind, to a foreign country — and M was with him every step.<br />
-                That's The James Standard. If it works for James, it works for everyone.
-              </p>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={reset}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDER}`, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <RotateCcw style={{ width: 14, height: 14 }} /> Replay
-                </button>
-                <Link to="/demo"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 12, background: `linear-gradient(135deg, ${GOLD}, #E8C85C)`, border: 'none', color: DARK, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
-                >
-                  See full platform demo
-                </Link>
+            <div style={{ marginTop: 32, borderRadius: 20, overflow: 'hidden', border: `1px solid ${GOLD}30` }}>
+              {/* End card */}
+              <div style={{ padding: 28, background: `${GOLD}10`, textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>👑</div>
+                <p style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: '#fff' }}>Journey Complete</p>
+                <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+                  James traveled alone, blind, to a foreign country — and M was with him every step.<br />
+                  That's The James Standard. If it works for James, it works for everyone.
+                </p>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button onClick={reset} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDER}`, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                    <RotateCcw style={{ width: 14, height: 14 }} /> Replay
+                  </button>
+                  <Link to="/demo" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 12, background: `linear-gradient(135deg, ${GOLD}, #E8C85C)`, border: 'none', color: DARK, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>
+                    See full platform demo
+                  </Link>
+                </div>
+              </div>
+
+              {/* Emergency Medical Brief — file backup */}
+              <div style={{ padding: '20px 28px', background: CARD, borderTop: `1px solid ${BORDER}` }}>
+                <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>EMERGENCY MEDICAL BRIEF — SYSTEM DOWN BACKUP</p>
+                <p style={{ margin: '0 0 14px', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
+                  M generates this brief for every patient. Save it to email or print it — a doctor in Mexico can use it even if the system is offline.
+                </p>
+
+                {/* Brief card */}
+                <div style={{ padding: '16px 20px', borderRadius: 12, background: '#fff', color: '#111', fontSize: 12, lineHeight: 1.8, fontFamily: 'Arial, sans-serif' }} id="james-brief">
+                  <div style={{ borderBottom: '2px solid #D4AF37', paddingBottom: 10, marginBottom: 14 }}>
+                    <strong style={{ fontSize: 15, color: '#060B16' }}>MORALES CONCIERGE — PATIENT EMERGENCY BRIEF</strong><br />
+                    <span style={{ color: '#888', fontSize: 11 }}>Generated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px' }}>
+                    {[
+                      ['PATIENT', 'James Emmanuel Williams'],
+                      ['DOB', 'March 19, 1987'],
+                      ['BLOOD TYPE', 'O+'],
+                      ['PROCEDURE', 'Dental Implants (Day 4 post-op)'],
+                      ['CONDITIONS', 'Asthma, Type 2 Diabetes'],
+                      ['MEDICATIONS', 'Metformin 500mg, Ventolin inhaler'],
+                      ['ALLERGIES', 'Shellfish (anaphylaxis), Penicillin'],
+                      ['DOCTOR', 'Dr. Martinez — Tijuana Clinic'],
+                      ['COMPANION', 'Maria — +52 664 000 0000'],
+                      ['EMERGENCY CONTACT', 'Sandra — +1 868 000 0000'],
+                    ].map(([label, value]) => (
+                      <div key={label}>
+                        <span style={{ color: '#888', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em' }}>{label}</span><br />
+                        <span style={{ fontWeight: 700, color: '#111' }}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid #eee', color: '#888', fontSize: 10 }}>
+                    MORALES CONCIERGE 24/7 HOTLINE — concierge@morales-dental.com · This document is valid for this journey only.
+                  </div>
+                </div>
+
+                {/* Save/print actions */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                  <button
+                    onClick={() => window.print()}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 0', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDER}`, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    <Printer style={{ width: 13, height: 13 }} /> Print Brief
+                  </button>
+                  <a
+                    href={`mailto:?subject=James%20Williams%20—%20Emergency%20Medical%20Brief&body=MORALES%20CONCIERGE%20EMERGENCY%20BRIEF%0A%0APatient%3A%20James%20Emmanuel%20Williams%0ADOB%3A%20March%2019%2C%201987%0ABlood%20Type%3A%20O%2B%0AProcedure%3A%20Dental%20Implants%20(Day%204%20post-op)%0AConditions%3A%20Asthma%2C%20Type%202%20Diabetes%0AMedications%3A%20Metformin%20500mg%2C%20Ventolin%20inhaler%0AAllergies%3A%20Shellfish%20(anaphylaxis)%2C%20Penicillin%0ADoctor%3A%20Dr.%20Martinez%20—%20Tijuana%20Clinic%0ACompanion%3A%20Maria%20—%20%2B52%20664%20000%200000%0AEmergency%20Contact%3A%20Sandra%20—%20%2B1%20868%20000%200000%0A%0AMorales%20Concierge%2024%2F7%3A%20concierge%40morales-dental.com`}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 0', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
+                  >
+                    <Mail style={{ width: 13, height: 13 }} /> Email Brief
+                  </a>
+                </div>
+                <p style={{ margin: '10px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
+                  Works offline · No system access needed · Doctor in Mexico can read this without internet
+                </p>
               </div>
             </div>
           )}
