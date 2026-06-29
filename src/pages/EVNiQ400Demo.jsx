@@ -8,6 +8,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, Wifi, WifiOff, Plane, Globe, ArrowLeft, RotateCcw, MapPin, Phone } from 'lucide-react';
+import { MapContainer, TileLayer, Polyline, CircleMarker, Circle } from 'react-leaflet';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -314,117 +315,98 @@ export default function EVNiQ400Demo() {
             </div>
           </div>
 
-          {/* SVG Map */}
-          <div style={{ position: 'relative', padding: 16 }}>
-            <svg viewBox="0 0 420 280" style={{ width: '100%', height: 'auto', display: 'block' }}>
-              {/* Grid */}
-              {[0,1,2,3,4,5,6].map(i => (
-                <line key={`h${i}`} x1="0" y1={i * 46} x2="420" y2={i * 46} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-              ))}
-              {[0,1,2,3,4,5,6,7,8,9,10].map(i => (
-                <line key={`v${i}`} x1={i * 42} y1="0" x2={i * 42} y2="280" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-              ))}
+          {/* Real Satellite Map — Esri World Imagery */}
+          <div style={{ position: 'relative' }}>
+            <style>{`
+              .evn-patient { width:26px;height:26px;border-radius:50%;background:var(--pc);border:2.5px solid #060B16;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 0 12px var(--pc); }
+              .evn-scan-ring { width:80px;height:80px;border-radius:50%;border:1.5px solid rgba(212,175,55,0.35);animation:evnPulse 2.5s ease-out infinite;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%); }
+              @keyframes evnPulse { 0%{transform:translate(-50%,-50%) scale(0.4);opacity:0.8} 100%{transform:translate(-50%,-50%) scale(1.8);opacity:0} }
+              .leaflet-container { background: #1a2035 !important; }
+            `}</style>
+            <MapContainer
+              key={`evn-map-${currentWP}`}
+              center={[curWPData.lat, curWPData.lng]}
+              zoom={15}
+              style={{ height: 280, width: '100%' }}
+              zoomControl={false}
+              attributionControl={false}
+              scrollWheelZoom={false}
+              dragging={false}
+            >
+              {/* Esri satellite imagery */}
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+              />
+              {/* Street labels over satellite */}
+              <TileLayer
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+                opacity={0.8}
+              />
 
-              {/* Major streets */}
-              <line x1="0" y1="92" x2="420" y2="92" stroke="rgba(255,255,255,0.09)" strokeWidth="2" />
-              <line x1="0" y1="185" x2="420" y2="185" stroke="rgba(255,255,255,0.09)" strokeWidth="2" />
-              <line x1="105" y1="0" x2="105" y2="280" stroke="rgba(255,255,255,0.09)" strokeWidth="2" />
-              <line x1="315" y1="0" x2="315" y2="280" stroke="rgba(255,255,255,0.09)" strokeWidth="2" />
+              {/* Full ghost route */}
+              <Polyline
+                positions={WAYPOINTS.map(w => [w.lat, w.lng])}
+                pathOptions={{ color: 'rgba(255,255,255,0.2)', weight: 2, dashArray: '5 4' }}
+              />
 
-              {/* Street labels */}
-              <text x="108" y="88" fill="rgba(255,255,255,0.2)" fontSize="7" fontFamily="system-ui">Blvd. Agua Caliente</text>
-              <text x="108" y="182" fill="rgba(255,255,255,0.2)" fontSize="7" fontFamily="system-ui">Av. Constitución</text>
-              <text x="320" y="55" fill="rgba(255,255,255,0.2)" fontSize="7" fontFamily="system-ui" transform="rotate(-90,320,55)">Calle 1ra</text>
+              {/* Travelled route */}
+              <Polyline
+                positions={WAYPOINTS.slice(0, currentWP + 1).map(w => [w.lat, w.lng])}
+                pathOptions={{ color: GOLD, weight: 3, opacity: 0.85 }}
+              />
 
-              {/* Danger zone pulse */}
-              {(showDanger || currentWP >= 4) && (
-                <>
-                  <motion.circle cx="362" cy="238" r="38"
-                    fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.3)" strokeWidth="1"
-                    animate={{ r: [32, 48, 32], opacity: [0.4, 0.1, 0.4] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  <motion.circle cx="362" cy="238" r="22"
-                    fill="rgba(239,68,68,0.12)" stroke="rgba(239,68,68,0.5)" strokeWidth="1.5"
-                    animate={{ opacity: [0.8, 0.3, 0.8] }} transition={{ duration: 1.2, repeat: Infinity }}
-                  />
-                  <text x="322" y="270" fill="rgba(239,68,68,0.7)" fontSize="7" fontFamily="system-ui" fontWeight="bold">⚠ ZONA NORTE</text>
-                </>
-              )}
-
-              {/* MODERATE zone */}
+              {/* Moderate risk zone */}
               {currentWP >= 3 && (
-                <circle cx="302" cy="210" r="18" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" strokeDasharray="3 2" />
+                <Circle
+                  center={[WAYPOINTS[3].lat, WAYPOINTS[3].lng]}
+                  radius={120}
+                  pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.08, weight: 1.5, dashArray: '4 3' }}
+                />
               )}
 
-              {/* Route travelled */}
-              <polyline
-                points={WAYPOINTS.slice(0, currentWP + 1).map(w => `${w.svg.x},${w.svg.y}`).join(' ')}
-                fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                opacity="0.7"
-              />
+              {/* High risk danger zone */}
+              {(showDanger || currentWP >= 4) && (
+                <Circle
+                  center={[WAYPOINTS[4].lat, WAYPOINTS[4].lng]}
+                  radius={200}
+                  pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.1, weight: 2 }}
+                />
+              )}
 
-              {/* Full route (ghost) */}
-              <polyline points={WAYPOINTS.map(w => `${w.svg.x},${w.svg.y}`).join(' ')}
-                fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5"
-                strokeDasharray="4 3" strokeLinecap="round"
-              />
-
-              {/* Past waypoints */}
+              {/* Past waypoint dots */}
               {WAYPOINTS.slice(0, currentWP).map((w, i) => (
-                <circle key={i} cx={w.svg.x} cy={w.svg.y} r="5"
-                  fill={RISK[w.risk].color} opacity="0.6"
+                <CircleMarker key={i} center={[w.lat, w.lng]} radius={6}
+                  pathOptions={{ color: '#060B16', fillColor: RISK[w.risk].color, fillOpacity: 0.9, weight: 2 }}
                 />
               ))}
 
               {/* Current patient position */}
-              <motion.g key={`wp-${currentWP}`}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.4 }}
-              >
-                {/* Outer ring */}
-                <motion.circle
-                  cx={curWPData.svg.x} cy={curWPData.svg.y} r="16"
-                  fill="transparent"
-                  stroke={RISK[curWPData.risk].color}
-                  strokeWidth="1.5"
-                  animate={{ r: [12, 22, 12], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                {/* Patient dot */}
-                <circle cx={curWPData.svg.x} cy={curWPData.svg.y} r="7"
-                  fill={RISK[curWPData.risk].color}
-                  stroke="#060B16" strokeWidth="2"
-                />
-                {/* Patient icon */}
-                <text x={curWPData.svg.x} y={curWPData.svg.y + 4}
-                  textAnchor="middle" fontSize="7" fontFamily="system-ui" fill="#fff" fontWeight="bold">S</text>
-              </motion.g>
-
-              {/* EVN scan circle */}
+              <CircleMarker
+                center={[curWPData.lat, curWPData.lng]}
+                radius={10}
+                pathOptions={{ color: '#060B16', fillColor: RISK[curWPData.risk].color, fillOpacity: 1, weight: 2.5 }}
+              />
+              {/* EVN scan ring */}
               {running && (
-                <motion.circle cx={curWPData.svg.x} cy={curWPData.svg.y} r="40"
-                  fill="transparent"
-                  stroke={`${GOLD}30`} strokeWidth="1"
-                  animate={{ r: [20, 55, 20], opacity: [0.6, 0, 0.6] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeOut' }}
+                <Circle
+                  center={[curWPData.lat, curWPData.lng]}
+                  radius={180}
+                  pathOptions={{ color: GOLD, fillColor: 'transparent', fillOpacity: 0, weight: 1, opacity: 0.4 }}
                 />
               )}
+            </MapContainer>
 
-              {/* Location label */}
-              <motion.g key={`label-${currentWP}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <rect x={curWPData.svg.x - 52} y={curWPData.svg.y - 26} width="104" height="16" rx="4"
-                  fill="rgba(6,11,22,0.9)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
-                <text x={curWPData.svg.x} y={curWPData.svg.y - 14}
-                  textAnchor="middle" fontSize="7.5" fontFamily="system-ui" fill="rgba(255,255,255,0.85)" fontWeight="600">
-                  {curWPData.label}
-                </text>
-              </motion.g>
-            </svg>
+            {/* Current location label overlay */}
+            <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, pointerEvents: 'none' }}>
+              <div style={{ background: 'rgba(6,11,22,0.88)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '4px 12px', backdropFilter: 'blur(8px)' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>{curWPData.label}</span>
+              </div>
+            </div>
 
             {/* Legend */}
-            <div style={{ display: 'flex', gap: 16, marginTop: 8, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: 16, padding: '8px 16px', justifyContent: 'center', background: 'rgba(6,11,22,0.6)' }}>
               {[['#22c55e', 'Safe'], ['#f59e0b', 'Moderate'], ['#ef4444', 'High Risk'], [GOLD, 'Route']].map(([c, l]) => (
                 <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
