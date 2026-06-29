@@ -142,10 +142,16 @@ export default function JourneyMap({ hotelCoords, hotelName, hotelAddress, clini
           scrollWheelZoom={false}
           attributionControl={false}
         >
-          {/* Dark-tinted OSM tiles — CartoDB dark matter for premium feel */}
+          {/* Esri World Imagery — real satellite, free, no API key */}
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            subdomains="abcd"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            maxZoom={19}
+          />
+          {/* Street labels over satellite */}
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            maxZoom={19}
+            opacity={0.75}
           />
           {bounds && <FitBounds bounds={bounds} />}
 
