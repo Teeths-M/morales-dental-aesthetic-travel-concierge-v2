@@ -110,24 +110,54 @@ function FaceIDScan({ onComplete }) {
 }
 
 function openNav(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
-const googleMapsUrl  = `https://www.google.com/maps/search/?api=1&query=${CURRENT.lat},${CURRENT.lng}`;
-const googleDirUrl   = `https://www.google.com/maps/dir/?api=1&destination=${CURRENT.lat},${CURRENT.lng}&travelmode=driving`;
-const wazeUrl        = `https://waze.com/ul?ll=${CURRENT.lat},${CURRENT.lng}&navigate=yes`;
-const shareText      = `Tom's live location — Tijuana, Mexico\nhttps://www.google.com/maps/search/?api=1&query=${CURRENT.lat},${CURRENT.lng}`;
 
 export default function FamilyEyeDemo() {
-  const [phase, setPhase] = useState('intro'); // intro | scanning | map
-  const [liveTime, setLiveTime] = useState('');
-  const [timeSince, setTimeSince] = useState(0);
-  const [copied, setCopied] = useState(false);
+  const [phase,       setPhase]       = useState('intro');
+  const [liveTime,    setLiveTime]    = useState('');
+  const [tomStep,     setTomStep]     = useState(0);   // which waypoint Tom is at
+  const [sinceUpdate, setSinceUpdate] = useState(0);   // seconds since last GPS ping
+  const [copied,      setCopied]      = useState(false);
+  const [arrived,     setArrived]     = useState(false);
+  const stepRef = useRef(0);
 
+  // Clock
   useEffect(() => {
     const t = setInterval(() => {
       setLiveTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-      setTimeSince(s => s + 1);
+      setSinceUpdate(s => s + 1);
     }, 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Tom walks — advances one waypoint every 6 seconds
+  useEffect(() => {
+    if (phase !== 'map') return;
+    stepRef.current = 0;
+    setTomStep(0);
+    setSinceUpdate(0);
+    setArrived(false);
+
+    const walk = setInterval(() => {
+      stepRef.current += 1;
+      if (stepRef.current >= TOM_TRAIL.length) {
+        clearInterval(walk);
+        setArrived(true);
+        return;
+      }
+      setTomStep(stepRef.current);
+      setSinceUpdate(0); // GPS ping resets
+    }, 6000);
+
+    return () => clearInterval(walk);
+  }, [phase]);
+
+  const tom = TOM_TRAIL[tomStep];
+
+  // Dynamic nav URLs follow Tom's live position
+  const liveGoogleUrl = `https://www.google.com/maps/search/?api=1&query=${tom.lat},${tom.lng}`;
+  const liveDirUrl    = `https://www.google.com/maps/dir/?api=1&destination=${tom.lat},${tom.lng}&travelmode=driving`;
+  const liveWazeUrl   = `https://waze.com/ul?ll=${tom.lat},${tom.lng}&navigate=yes`;
+  const liveShareText = `Tom's live location — Tijuana, Mexico\nhttps://www.google.com/maps/search/?api=1&query=${tom.lat},${tom.lng}`;
 
   return (
     <div style={{ minHeight: '100vh', background: DARK, fontFamily: '"SF Pro Display", system-ui, sans-serif' }}>
@@ -176,87 +206,92 @@ export default function FamilyEyeDemo() {
         <div style={{ animation: 'fadeUp 0.5s ease' }}>
 
           {/* SAFE status banner */}
-          <div style={{ padding: '12px 24px', background: `${GREEN}15`, borderBottom: `1px solid ${GREEN}30`, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <CheckCircle2 style={{ width: 18, height: 18, color: GREEN, flexShrink: 0 }} />
+          <div style={{ padding: '12px 24px', background: arrived ? `${GOLD}12` : `${GREEN}15`, borderBottom: `1px solid ${arrived ? GOLD + '40' : GREEN + '30'}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+            {arrived
+              ? <span style={{ fontSize: 18 }}>🏥</span>
+              : <CheckCircle2 style={{ width: 18, height: 18, color: GREEN, flexShrink: 0 }} />}
             <div>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: GREEN }}>Tom is SAFE — Tijuana, Mexico</p>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Last GPS update: {timeSince} seconds ago · Clinic area · No alerts</p>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: arrived ? GOLD : GREEN }}>
+                {arrived ? 'Tom has arrived at the clinic ✓' : `Tom is SAFE — ${tom.label}`}
+              </p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                {arrived ? 'Dental procedure beginning — M monitoring recovery room' : `Last GPS ping: ${sinceUpdate}s ago · Moving toward clinic · No alerts`}
+              </p>
             </div>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: GREEN, animation: 'pulse 1.5s ease infinite' }} />
-              <span style={{ fontSize: 10, color: GREEN, fontWeight: 700 }}>LIVE</span>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: arrived ? GOLD : GREEN, animation: 'pulse 1.5s ease infinite' }} />
+              <span style={{ fontSize: 10, color: arrived ? GOLD : GREEN, fontWeight: 700 }}>LIVE</span>
             </div>
           </div>
 
-          {/* Real satellite map */}
+          {/* Real satellite map — Tom moves live */}
           <div style={{ position: 'relative' }}>
             <MapContainer
-              center={[CURRENT.lat, CURRENT.lng]}
+              center={[TOM_TRAIL[0].lat, TOM_TRAIL[0].lng]}
               zoom={15}
-              style={{ height: '320px', width: '100%' }}
+              style={{ height: '340px', width: '100%' }}
               zoomControl={true}
               attributionControl={false}
               scrollWheelZoom={true}
             >
-              <TileLayer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                maxZoom={19}
-              />
-              <TileLayer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-                maxZoom={19}
-                opacity={0.8}
-              />
-              <MapCenter lat={CURRENT.lat} lng={CURRENT.lng} />
+              <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={19} />
+              <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" maxZoom={19} opacity={0.8} />
 
-              {/* Full breadcrumb trail */}
-              <Polyline
-                positions={TOM_TRAIL.map(p => [p.lat, p.lng])}
-                pathOptions={{ color: '#60a5fa', weight: 3, opacity: 0.7 }}
-              />
+              {/* Map follows Tom */}
+              <MapCenter lat={tom.lat} lng={tom.lng} />
 
-              {/* Start point */}
-              <Marker position={[START.lat, START.lng]} icon={START_ICON} />
-
-              {/* Past breadcrumb dots */}
-              {TOM_TRAIL.slice(1, -1).map((p, i) => (
-                <CircleMarker key={i} center={[p.lat, p.lng]} radius={4}
-                  pathOptions={{ color: '#fff', fillColor: '#60a5fa', fillOpacity: 0.8, weight: 1 }}
+              {/* Trail only up to Tom's current position */}
+              {tomStep > 0 && (
+                <Polyline
+                  positions={TOM_TRAIL.slice(0, tomStep + 1).map(p => [p.lat, p.lng])}
+                  pathOptions={{ color: '#60a5fa', weight: 3, opacity: 0.8 }}
                 />
+              )}
+
+              {/* Waypoints Tom has passed */}
+              {TOM_TRAIL.slice(0, tomStep).map((p, i) => (
+                <CircleMarker key={i} center={[p.lat, p.lng]} radius={4}
+                  pathOptions={{ color: '#fff', fillColor: '#60a5fa', fillOpacity: 0.9, weight: 1 }} />
               ))}
 
-              {/* Tom — current position with tap-to-navigate popup */}
-              <Marker position={[CURRENT.lat, CURRENT.lng]} icon={TOM_ICON}>
-                <Popup closeButton={false} className="tom-popup">
-                  <div style={{ background: '#0C1A1D', border: '1px solid rgba(34,197,94,0.4)', borderRadius: 10, padding: '10px 12px', minWidth: 160 }}>
-                    <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 800, color: '#22c55e' }}>📍 Tom is here</p>
-                    <p style={{ margin: '0 0 10px', fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{CURRENT.label}</p>
+              {/* Destination clinic — always visible */}
+              <CircleMarker center={[CURRENT.lat, CURRENT.lng]} radius={8}
+                pathOptions={{ color: GOLD, fillColor: GOLD, fillOpacity: arrived ? 1 : 0.25, weight: 2 }} />
+
+              {/* Tom — live position with popup */}
+              <Marker position={[tom.lat, tom.lng]} icon={TOM_ICON}>
+                <Popup closeButton={false}>
+                  <div style={{ background: '#0C1A1D', border: '1px solid rgba(34,197,94,0.4)', borderRadius: 10, padding: '10px 12px', minWidth: 165 }}>
+                    <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: GREEN }}>📍 Tom is here</p>
+                    <p style={{ margin: '0 0 10px', fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{tom.label}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <button onClick={() => openNav(googleDirUrl)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗺 Directions — Google</button>
-                      <button onClick={() => openNav(wazeUrl)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📡 Navigate — Waze</button>
+                      <button onClick={() => openNav(liveDirUrl)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗺 Directions — Google</button>
+                      <button onClick={() => openNav(liveWazeUrl)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📡 Navigate — Waze</button>
                     </div>
                   </div>
                 </Popup>
               </Marker>
             </MapContainer>
 
-            {/* Map label */}
+            {/* Live pulse label */}
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, pointerEvents: 'none' }}>
-              <div style={{ background: 'rgba(6,11,22,0.88)', border: `1px solid ${GREEN}40`, borderRadius: 8, padding: '4px 12px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Tom — {CURRENT.label} · Tap marker for directions</span>
+              <div style={{ background: 'rgba(6,11,22,0.92)', border: `1px solid ${arrived ? GOLD + '60' : GREEN + '40'}`, borderRadius: 8, padding: '4px 12px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: arrived ? GOLD : GREEN, animation: 'pulse 1.2s ease infinite' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>
+                  {arrived ? '🏥 Arrived at clinic' : `Tom · ${tom.label} · tap marker for nav`}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Navigation action buttons */}
+          {/* Navigation action buttons — always track Tom's live position */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '12px 16px', background: '#0C1A1D', borderBottom: `1px solid ${BORDER}` }}>
-            <button onClick={() => openNav(googleMapsUrl)}
+            <button onClick={() => openNav(liveGoogleUrl)}
               style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(66,133,244,0.12)', border: '1px solid rgba(66,133,244,0.35)', color: '#4285F4', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <ExternalLink style={{ width: 14, height: 14 }} />
               Google Maps
             </button>
-            <button onClick={() => openNav(wazeUrl)}
+            <button onClick={() => openNav(liveWazeUrl)}
               style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(51,204,255,0.10)', border: '1px solid rgba(51,204,255,0.3)', color: '#33CCFF', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <Navigation style={{ width: 14, height: 14 }} />
               Waze
@@ -264,9 +299,9 @@ export default function FamilyEyeDemo() {
             <button
               onClick={() => {
                 if (navigator.share) {
-                  navigator.share({ title: "Tom's Location", text: shareText }).catch(() => {});
+                  navigator.share({ title: "Tom's Location", text: liveShareText }).catch(() => {});
                 } else {
-                  navigator.clipboard.writeText(shareText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
+                  navigator.clipboard.writeText(liveShareText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
                 }
               }}
               style={{ padding: '10px 6px', borderRadius: 10, background: copied ? 'rgba(34,197,94,0.12)' : `rgba(212,175,55,0.10)`, border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : 'rgba(212,175,55,0.3)'}`, color: copied ? GREEN : GOLD, fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -275,32 +310,51 @@ export default function FamilyEyeDemo() {
             </button>
           </div>
 
-          {/* Journey timeline */}
+          {/* Journey timeline — lights up as Tom moves */}
           <div style={{ padding: '16px 20px', maxWidth: 560, margin: '0 auto' }}>
             <p style={{ margin: '0 0 12px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.08em' }}>TOM'S JOURNEY TODAY</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {TOM_TRAIL.map((p, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12, background: i === TOM_TRAIL.length - 1 ? `${GREEN}10` : CARD, border: `1px solid ${i === TOM_TRAIL.length - 1 ? GREEN + '40' : BORDER}` }}>
-                  <MapPin style={{ width: 13, height: 13, color: i === TOM_TRAIL.length - 1 ? GREEN : '#60a5fa', flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: i === TOM_TRAIL.length - 1 ? '#fff' : 'rgba(255,255,255,0.6)' }}>{p.label}</p>
+              {TOM_TRAIL.map((p, i) => {
+                const isNow    = i === tomStep && !arrived;
+                const isPast   = i < tomStep || arrived;
+                const isFuture = i > tomStep && !arrived;
+                return (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12,
+                    background: isNow ? `${GREEN}12` : isPast ? `rgba(96,165,250,0.06)` : CARD,
+                    border: `1px solid ${isNow ? GREEN + '50' : isPast ? 'rgba(96,165,250,0.25)' : BORDER}`,
+                    opacity: isFuture ? 0.4 : 1,
+                    transition: 'all 0.5s ease',
+                  }}>
+                    <MapPin style={{ width: 13, height: 13, color: isNow ? GREEN : isPast ? '#60a5fa' : 'rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: isNow ? '#fff' : isPast ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)' }}>{p.label}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Clock style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)' }} />
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{p.time}</span>
+                      {isNow && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 20, background: `${GREEN}20`, color: GREEN, fontWeight: 800, animation: 'pulse 1.2s ease infinite' }}>LIVE</span>}
+                      {isPast && !isNow && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 20, background: 'rgba(96,165,250,0.15)', color: '#60a5fa', fontWeight: 700 }}>✓</span>}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Clock style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.3)' }} />
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{p.time}</span>
-                    {i === TOM_TRAIL.length - 1 && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 20, background: `${GREEN}20`, color: GREEN, fontWeight: 800 }}>NOW</span>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* Bottom message */}
-            <div style={{ marginTop: 20, padding: '16px 20px', borderRadius: 14, background: `${GOLD}08`, border: `1px solid ${GOLD}25`, textAlign: 'center' }}>
+            {/* Bottom message — changes when Tom arrives */}
+            <div style={{ marginTop: 20, padding: '16px 20px', borderRadius: 14, background: arrived ? `${GOLD}12` : `${GOLD}08`, border: `1px solid ${GOLD}25`, textAlign: 'center', transition: 'all 0.5s' }}>
               <Heart style={{ width: 16, height: 16, color: GOLD, margin: '0 auto 8px' }} />
-              <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#fff' }}>Sandra didn't need to call. She didn't need a link.</p>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-                Face ID → Tom's map. 3 seconds. That's The Mother's Eye.
-              </p>
+              {arrived ? (
+                <>
+                  <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: GOLD }}>Tom is at the clinic. Sandra saw every step.</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>Face ID → live satellite → arrived safe. The Mother's Eye never blinks.</p>
+                </>
+              ) : (
+                <>
+                  <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: '#fff' }}>Sandra didn't need to call. She didn't need a link.</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>She's watching Tom walk to the clinic — live — from 4,000 km away.</p>
+                </>
+              )}
             </div>
           </div>
         </div>
