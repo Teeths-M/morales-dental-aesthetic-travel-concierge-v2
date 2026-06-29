@@ -434,7 +434,17 @@ export default function GuardianView() {
                   zoomControl={true}
                   attributionControl={false}
                 >
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  {/* Esri World Imagery — real satellite, free, no API key */}
+                  <TileLayer
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    maxZoom={19}
+                  />
+                  {/* Esri street labels overlay on top of satellite */}
+                  <TileLayer
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                    maxZoom={19}
+                    opacity={0.7}
+                  />
                   <MapRecenter lat={loc.latitude} lng={loc.longitude} />
 
                   {/* Breadcrumb trail polyline */}
