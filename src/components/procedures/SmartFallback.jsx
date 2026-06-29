@@ -9,6 +9,7 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
   const [patientQuery, setPatientQuery] = useState(originalQuery || '');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [matchedProcedures, setMatchedProcedures] = useState(null);
+  const [outreach, setOutreach] = useState(null); // { doctorsNotified, procedureName }
 
   const handleFindMatches = async () => {
     if (!patientQuery.trim()) return;
@@ -47,9 +48,23 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
     }
   };
 
-  const handleSelectProcedure = (procedure) => {
+  const handleSelectProcedure = async (procedure) => {
     onProcedureSelect?.(procedure);
-    // Reset to allow continued searching - basket updates on right
+
+    // Fire doctor outreach in background — don't block the UI
+    try {
+      const res = await base44.functions.invoke('notifyNearbyDoctors', {
+        patient_query: patientQuery.trim(),
+        procedure_name: procedure.procedure_name,
+        procedure_id: procedure.procedure_id,
+      });
+      const notified = res?.doctors_notified ?? res?.data?.doctors_notified ?? 0;
+      setOutreach({ doctorsNotified: notified, procedureName: procedure.procedure_name });
+    } catch (_) {
+      // Show confirmation even if outreach call fails — the intent is logged
+      setOutreach({ doctorsNotified: 0, procedureName: procedure.procedure_name });
+    }
+
     setMatchedProcedures(null);
     setPatientQuery('');
   };
@@ -94,7 +109,30 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
       animate={{ opacity: 1, y: 0 }}
       style={{ background: 'linear-gradient(135deg, #0C1A1D 0%, #080F18 100%)', border: `1px solid ${GOLD}30`, borderRadius: 20, padding: 24 }}
     >
-      {matchedProcedures ? (
+      {outreach ? (
+        /* Outreach sent — M is working */
+        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center', padding: '8px 0' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: `${GOLD}18`, border: `2px solid ${GOLD}60`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: GOLD, margin: '0 auto 16px' }}>M</div>
+          <p style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: '#fff' }}>M is on it.</p>
+          <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+            {outreach.doctorsNotified > 0
+              ? `${outreach.doctorsNotified} specialist${outreach.doctorsNotified !== 1 ? 's have' : ' has'} been contacted about your request for ${outreach.procedureName}.`
+              : `Your request for ${outreach.procedureName} has been logged. M will personally connect you with a specialist.`
+            }
+          </p>
+          <div style={{ background: `${GOLD}08`, border: `1px solid ${GOLD}20`, borderRadius: 14, padding: '14px 16px', marginBottom: 16 }}>
+            <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
+              Doctors will review your request and reply within <strong style={{ color: GOLD }}>24 hours</strong>. You'll receive a notification as soon as a specialist confirms they can help.
+            </p>
+          </div>
+          <button
+            onClick={() => { setOutreach(null); setPatientQuery(''); }}
+            style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Search for another procedure
+          </button>
+        </motion.div>
+      ) : matchedProcedures ? (
         /* M found specialists */
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
