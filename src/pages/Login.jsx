@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Mail, Lock, ArrowRight, Globe } from 'lucide-react';
+import { Loader2, Phone, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
 
-const GOLD = '#D4AF37';
-const DARK = '#060B16';
+const GOLD  = '#D4AF37';
+const DARK  = '#060B16';
+const CARD  = '#0C1A1D';
+const BORDER = '#2A3F4A';
 
 function GoogleIcon() {
   return (
@@ -17,23 +19,108 @@ function GoogleIcon() {
   );
 }
 
-export default function Login() {
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+// 6 individual OTP digit boxes
+function OtpInput({ value, onChange, onComplete }) {
+  const inputs = useRef([]);
+  const digits  = (value || '').split('').slice(0, 6);
+  while (digits.length < 6) digits.push('');
 
-  const handleSubmit = async (e) => {
+  const update = (idx, char) => {
+    const next = [...digits];
+    next[idx] = char.slice(-1);
+    const joined = next.join('');
+    onChange(joined);
+    if (char && idx < 5) inputs.current[idx + 1]?.focus();
+    if (joined.length === 6) onComplete(joined);
+  };
+
+  const handleKey = (idx, e) => {
+    if (e.key === 'Backspace' && !digits[idx] && idx > 0) {
+      inputs.current[idx - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length === 6) { onChange(pasted); onComplete(pasted); }
     e.preventDefault();
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+      {digits.map((d, i) => (
+        <input
+          key={i}
+          ref={el => inputs.current[i] = el}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={d}
+          autoFocus={i === 0}
+          onChange={e => update(i, e.target.value.replace(/\D/g, ''))}
+          onKeyDown={e => handleKey(i, e)}
+          onPaste={i === 0 ? handlePaste : undefined}
+          style={{
+            width: 48, height: 56, textAlign: 'center', fontSize: 22, fontWeight: 800,
+            borderRadius: 12, border: `2px solid ${d ? GOLD : BORDER}`,
+            background: d ? `${GOLD}12` : 'rgba(255,255,255,0.04)',
+            color: '#fff', outline: 'none', transition: 'border-color 0.15s, background 0.15s',
+            caretColor: GOLD,
+          }}
+          onFocus={e => e.target.style.borderColor = GOLD}
+          onBlur={e => e.target.style.borderColor = digits[i] ? GOLD : BORDER}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default function Login() {
+  const [step,          setStep]          = useState('phone');   // 'phone' | 'otp'
+  const [phone,         setPhone]         = useState('');
+  const [otp,           setOtp]           = useState('');
+  const [demoCode,      setDemoCode]      = useState(null);      // mock mode only
+  const [error,         setError]         = useState('');
+  const [loading,       setLoading]       = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [countdown,     setCountdown]     = useState(0);
+
+  // Resend countdown timer
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const handleSendCode = async (e) => {
+    e?.preventDefault();
+    if (!phone.trim()) { setError('Please enter your phone number'); return; }
     setError('');
     setLoading(true);
     try {
-      await base44.auth.loginViaEmailPassword(email, password);
-      window.location.href = '/dashboard';
+      const res = await base44.functions.invoke('sendOtp', { phone: phone.trim() });
+      if (res.data?.demo_code) setDemoCode(res.data.demo_code);  // mock mode
+      setStep('otp');
+      setCountdown(30);
     } catch (err) {
-      setError(err.message || 'Invalid email or password. Please check your credentials.');
+      setError(err.message || 'Could not send code. Please try again.');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (code) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await base44.functions.invoke('verifyOtp', { phone: phone.trim(), code });
+      if (res.data?.verified) {
+        // OTP confirmed — proceed via Google to create/resume Base44 session
+        setDemoCode(null);
+        base44.auth.loginWithProvider('google', '/dashboard');
+      }
+    } catch (err) {
+      setError(err.message || 'Incorrect code. Please try again.');
       setLoading(false);
     }
   };
@@ -43,177 +130,220 @@ export default function Login() {
     base44.auth.loginWithProvider('google', '/dashboard');
   };
 
+  // ── PHONE STEP ──
+  const phoneScreen = (
+    <div style={{ width: '100%', maxWidth: 400 }}>
+      {/* Logo */}
+      <div style={{ marginBottom: 40 }}>
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
+          <div>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>Morales</p>
+            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>CONCIERGE</p>
+          </div>
+        </Link>
+      </div>
+
+      <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Welcome</h1>
+      <p style={{ margin: '0 0 32px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
+        Enter your phone number to sign in
+      </p>
+
+      {error && (
+        <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13, marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSendCode}>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6, letterSpacing: '0.04em' }}>
+            PHONE NUMBER
+          </label>
+          <div style={{ position: 'relative' }}>
+            <Phone style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(255,255,255,0.3)' }} />
+            <input
+              type="tel"
+              autoFocus
+              placeholder="+1 868 000 0000"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              required
+              style={{
+                width: '100%', padding: '13px 14px 13px 42px', borderRadius: 12, boxSizing: 'border-box',
+                background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`,
+                color: '#fff', fontSize: 15, outline: 'none',
+              }}
+              onFocus={e => e.target.style.borderColor = `${GOLD}80`}
+              onBlur={e => e.target.style.borderColor = BORDER}
+            />
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>
+            Include country code · SMS or WhatsApp
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%', padding: '14px 0', borderRadius: 14, cursor: loading ? 'not-allowed' : 'pointer',
+            background: loading ? 'rgba(212,175,55,0.4)' : `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
+            border: 'none', color: DARK, fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
+            boxShadow: loading ? 'none' : `0 8px 24px rgba(212,175,55,0.35)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          {loading
+            ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Sending code...</>
+            : <>Send verification code <ArrowRight style={{ width: 15, height: 15 }} /></>
+          }
+        </button>
+      </form>
+
+      {/* Divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em' }}>OR</span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+      </div>
+
+      <button
+        onClick={handleGoogle}
+        disabled={googleLoading}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          padding: '13px 0', borderRadius: 14, cursor: 'pointer',
+          background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDER}`,
+          color: '#fff', fontSize: 14, fontWeight: 600,
+        }}
+      >
+        {googleLoading ? <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} /> : <GoogleIcon />}
+        Continue with Google
+      </button>
+
+      <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+        New to Morales?{' '}
+        <Link to="/register" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
+      </p>
+
+      {/* Judges panel */}
+      <div style={{ marginTop: 28, padding: '16px 18px', borderRadius: 14, background: `${GOLD}0A`, border: `1px solid ${GOLD}25` }}>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>JUDGES & INVESTORS</p>
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+          The full demo is available without login.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link to="/demo/evn" style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
+            🌍 EVN-iQ400 Demo
+          </Link>
+          <Link to="/demo" style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
+            🛡️ Full Platform
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── OTP STEP ──
+  const otpScreen = (
+    <div style={{ width: '100%', maxWidth: 400 }}>
+      {/* Back */}
+      <button
+        onClick={() => { setStep('phone'); setOtp(''); setError(''); setDemoCode(null); }}
+        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, padding: 0, marginBottom: 32 }}
+      >
+        <ChevronLeft style={{ width: 16, height: 16 }} /> Back
+      </button>
+
+      {/* Logo */}
+      <div style={{ marginBottom: 32 }}>
+        <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
+      </div>
+
+      <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Check your phone</h1>
+      <p style={{ margin: '0 0 8px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
+        We sent a 6-digit code to
+      </p>
+      <p style={{ margin: '0 0 32px', fontSize: 15, fontWeight: 700, color: '#fff' }}>{phone}</p>
+
+      {/* Demo mode banner */}
+      {demoCode && (
+        <div style={{ padding: '12px 16px', borderRadius: 12, background: `${GOLD}12`, border: `1px solid ${GOLD}30`, marginBottom: 24, textAlign: 'center' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>DEMO MODE — NO SMS CREDITS</p>
+          <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '0.3em' }}>{demoCode}</p>
+          <p style={{ margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>This code will be hidden when Twilio is live</p>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13, marginBottom: 20 }}>
+          {error}
+        </div>
+      )}
+
+      <OtpInput value={otp} onChange={setOtp} onComplete={handleVerify} />
+
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+          <Loader2 style={{ width: 20, height: 20, color: GOLD, animation: 'spin 1s linear infinite' }} />
+        </div>
+      )}
+
+      <button
+        onClick={() => handleVerify(otp)}
+        disabled={otp.length < 6 || loading}
+        style={{
+          width: '100%', padding: '14px 0', borderRadius: 14, marginTop: 24, cursor: otp.length < 6 || loading ? 'not-allowed' : 'pointer',
+          background: otp.length < 6 ? 'rgba(212,175,55,0.2)' : `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
+          border: 'none', color: otp.length < 6 ? 'rgba(255,255,255,0.3)' : DARK,
+          fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
+          boxShadow: otp.length < 6 ? 'none' : `0 8px 24px rgba(212,175,55,0.35)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}
+      >
+        {loading ? <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> : <>Verify & sign in <ArrowRight style={{ width: 15, height: 15 }} /></>}
+      </button>
+
+      {/* Resend */}
+      <div style={{ textAlign: 'center', marginTop: 20 }}>
+        {countdown > 0 ? (
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+            Resend code in <span style={{ color: GOLD, fontWeight: 700 }}>{countdown}s</span>
+          </p>
+        ) : (
+          <button
+            onClick={handleSendCode}
+            style={{ background: 'none', border: 'none', color: GOLD, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+          >
+            Resend code
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ minHeight: '100vh', background: DARK, display: 'flex', fontFamily: '"SF Pro Display", system-ui, sans-serif' }}>
 
-      {/* ── Left: Login form ── */}
+      {/* ── Left: form ── */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-        <div style={{ width: '100%', maxWidth: 400 }}>
-
-          {/* Logo */}
-          <div style={{ marginBottom: 40 }}>
-            <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-              <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
-              <div>
-                <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>Morales</p>
-                <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>CONCIERGE</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Heading */}
-          <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-            Welcome back
-          </h1>
-          <p style={{ margin: '0 0 32px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
-            Sign in to your Morales account
-          </p>
-
-          {/* Google */}
-          <button
-            onClick={handleGoogle}
-            disabled={googleLoading}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              padding: '13px 0', borderRadius: 14, marginBottom: 20, cursor: 'pointer',
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: '#fff', fontSize: 14, fontWeight: 600, transition: 'background 0.2s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.10)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-          >
-            {googleLoading ? <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} /> : <GoogleIcon />}
-            Continue with Google
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em' }}>OR</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13, marginBottom: 16 }}>
-              {error}
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit}>
-            {/* Email */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6, letterSpacing: '0.04em' }}>
-                EMAIL
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(255,255,255,0.3)' }} />
-                <input
-                  type="email"
-                  autoComplete="email"
-                  autoFocus
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  style={{
-                    width: '100%', padding: '13px 14px 13px 42px', borderRadius: 12, boxSizing: 'border-box',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#fff', fontSize: 14, outline: 'none',
-                  }}
-                  onFocus={e => e.target.style.borderColor = `${GOLD}60`}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>PASSWORD</label>
-                <Link to="/forgot-password" style={{ fontSize: 11, color: GOLD, textDecoration: 'none', fontWeight: 600 }}>Forgot?</Link>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <Lock style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(255,255,255,0.3)' }} />
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  style={{
-                    width: '100%', padding: '13px 14px 13px 42px', borderRadius: 12, boxSizing: 'border-box',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#fff', fontSize: 14, outline: 'none',
-                  }}
-                  onFocus={e => e.target.style.borderColor = `${GOLD}60`}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%', padding: '14px 0', borderRadius: 14, marginTop: 20, cursor: loading ? 'not-allowed' : 'pointer',
-                background: loading ? 'rgba(212,175,55,0.4)' : `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
-                border: 'none', color: DARK, fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
-                boxShadow: loading ? 'none' : `0 8px 24px rgba(212,175,55,0.35)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'all 0.2s',
-              }}
-            >
-              {loading ? (
-                <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Signing in...</>
-              ) : (
-                <>Sign in <ArrowRight style={{ width: 15, height: 15 }} /></>
-              )}
-            </button>
-          </form>
-
-          <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-            New to Morales?{' '}
-            <Link to="/register" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
-          </p>
-
-          {/* Judge / Demo access section */}
-          <div style={{ marginTop: 32, padding: '16px 18px', borderRadius: 14, background: `${GOLD}0A`, border: `1px solid ${GOLD}25` }}>
-            <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>JUDGES & INVESTORS</p>
-            <p style={{ margin: '0 0 12px', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
-              The full demo is available without login. See every feature live.
-            </p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Link to="/demo/evn"
-                style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
-                🌍 EVN-iQ400 Demo
-              </Link>
-              <Link to="/demo"
-                style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
-                🛡️ Full Platform
-              </Link>
-            </div>
-          </div>
-
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
+        {step === 'phone' ? phoneScreen : otpScreen}
       </div>
 
-      {/* ── Right: Brand panel (desktop only) ── */}
-      <div style={{
-        width: 480, flexShrink: 0,
-        background: 'linear-gradient(135deg, #080F1C 0%, #0A1424 100%)',
-        borderLeft: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 48, position: 'relative', overflow: 'hidden',
-      }}
+      {/* ── Right: brand panel (desktop) ── */}
+      <div
+        style={{
+          width: 480, flexShrink: 0,
+          background: 'linear-gradient(135deg, #080F1C 0%, #0A1424 100%)',
+          borderLeft: `1px solid rgba(255,255,255,0.06)`,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: 48, position: 'relative', overflow: 'hidden',
+        }}
         className="hidden lg:flex"
       >
-        {/* Background glow */}
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, borderRadius: '50%', background: `radial-gradient(circle, ${GOLD}12 0%, transparent 70%)`, pointerEvents: 'none' }} />
 
-        {/* M mark large */}
         <img src="/morales-m-mark.png" alt="M" style={{ width: 80, filter: `drop-shadow(0 0 32px ${GOLD}80)`, marginBottom: 24 }} />
 
         <h2 style={{ margin: '0 0 12px', fontSize: 28, fontWeight: 800, color: '#fff', textAlign: 'center', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
@@ -224,12 +354,11 @@ export default function Login() {
           Environmental intelligence, behavioral AI, and GPS handshakes — protecting patients across 195 countries.
         </p>
 
-        {/* 4 system pills */}
         {[
-          { emoji: '🌍', name: 'EVN-iQ400™', desc: 'Environmental Intelligence', color: '#60a5fa', badge: 'NEW' },
-          { emoji: '🧠', name: 'MedGuard™',  desc: 'Behavioural Safety AI',     color: '#a855f7' },
-          { emoji: '🛡️', name: 'Safe-T4life™', desc: 'Check-In Protocol',      color: '#22c55e' },
-          { emoji: '✈️', name: 'iQ200™',     desc: 'Journey Coordination',     color: GOLD },
+          { emoji: '🌍', name: 'EVN-iQ400™',    desc: 'Environmental Intelligence',  color: '#60a5fa', badge: 'NEW' },
+          { emoji: '🧠', name: 'MedGuard™',      desc: 'Behavioural Safety AI',       color: '#a855f7' },
+          { emoji: '🛡️', name: 'Safe-T4life™',  desc: 'Check-In Protocol',           color: '#22c55e' },
+          { emoji: '✈️', name: 'iQ200™',        desc: 'Journey Coordination',        color: GOLD },
         ].map(s => (
           <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', width: '100%', maxWidth: 300, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
             <span style={{ fontSize: 18 }}>{s.emoji}</span>
@@ -248,6 +377,8 @@ export default function Login() {
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em' }}>195 countries · Works offline · Airplane mode ready</span>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

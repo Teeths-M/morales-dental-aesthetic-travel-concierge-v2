@@ -1,0 +1,24 @@
+{
+  "name": "OtpSession",
+  "type": "object",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "description": "Sanitized phone number including country code"
+    },
+    "code": {
+      "type": "string",
+      "description": "6-digit OTP code"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "ISO timestamp — code invalid after this time"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the code has been successfully used (single-use enforcement)"
+    }
+  },
+  "required": ["phone", "code", "expires_at"]
+}
