@@ -663,124 +663,61 @@ export default function DemoShowcase() {
             ))}
           </div>
 
-          {/* Master Journey Demo — top CTA */}
-          <div className="flex justify-center mb-4">
-            <Link
-              to="/demo/journey"
-              className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base"
-              style={{ background: `linear-gradient(135deg, ${GOLD}, #E8C85C)`, color: DARK, boxShadow: `0 12px 40px rgba(212,175,55,0.45)`, letterSpacing: '0.01em' }}
-            >
-              👑 Watch James's Complete Journey — All Features Live
+          {/* Master Journey — full width gold CTA */}
+          <Link
+            to="/demo/journey"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-base mb-6"
+            style={{ background: `linear-gradient(135deg, ${GOLD}, #E8C85C)`, color: DARK, boxShadow: `0 12px 40px rgba(212,175,55,0.45)` }}
+          >
+            👑 Watch James's Complete Journey
+          </Link>
+
+          {/* Action CTAs */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Link to="/consultation" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: GOLD, color: DARK }}>
+              Start Journey <ArrowRight style={{ width: 14, height: 14 }} />
+            </Link>
+            <Link to="/login" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: '#0C1A1D', color: '#94a3b8', border: '1px solid #2A3F4A' }}>
+              Dashboard <ChevronRight style={{ width: 14, height: 14 }} />
             </Link>
           </div>
 
-          <div className="flex justify-center gap-3 flex-wrap">
-            <Link
-              to="/consultation"
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm"
-              style={{ background: GOLD, color: DARK }}
-            >
-              Start Your Journey <ArrowRight style={{ width: 16, height: 16 }} />
-            </Link>
-            <Link
-              to="/login"
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm"
-              style={{ background: '#0C1A1D', color: '#94a3b8', border: '1px solid #2A3F4A' }}
-            >
-              View Live Dashboard <ChevronRight style={{ width: 16, height: 16 }} />
-            </Link>
+          {/* New CR demos — 2-column grid */}
+          <p className="text-center text-xs font-bold mb-3" style={{ color: GOLD, letterSpacing: '0.1em' }}>CR ALIENWARE DEMOS</p>
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {[
+              { to: '/demo/james',    label: '🎤 James Voice',        color: GOLD,     border: `2px solid ${GOLD}60` },
+              { to: '/demo/silent',   label: '🔇 Silent Mode',        color: '#ef4444', border: '2px solid rgba(239,68,68,0.5)' },
+              { to: '/demo/tap',      label: '👆 Tap Protocol',       color: GOLD,     border: `2px solid ${GOLD}70` },
+              { to: '/demo/trust',    label: '⭐ Partner Trust',      color: GOLD,     border: `1px solid ${GOLD}40` },
+              { to: '/demo/waiting',  label: '🏥 Waiting Room',       color: GOLD,     border: `1px solid ${GOLD}40` },
+              { to: '/demo/language', label: '🌐 Language Bridge',    color: '#60a5fa', border: '1px solid rgba(96,165,250,0.4)' },
+              { to: '/demo/weather',  label: '🌡️ Weather to Health',  color: '#60a5fa', border: '1px solid rgba(96,165,250,0.4)' },
+              { to: '/demo/evn',      label: '🌍 EVN-iQ400',          color: '#60a5fa', border: '1px solid rgba(96,165,250,0.5)' },
+            ].map(d => (
+              <Link key={d.to} to={d.to}
+                className="flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-xs text-center"
+                style={{ background: `${d.color}10`, border: d.border, color: d.color, minHeight: 52 }}
+              >
+                {d.label}
+              </Link>
+            ))}
           </div>
 
-          {/* Emergency scenario CTAs */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/demo/emergency"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}
-            >
-              <AlertTriangle style={{ width: 15, height: 15 }} />
-              Kidnapping — Auto Rescue Demo
+          {/* Scenario demos */}
+          <p className="text-center text-xs font-bold mb-3" style={{ color: '#64748b', letterSpacing: '0.08em' }}>SCENARIO DEMOS</p>
+          <div className="grid grid-cols-1 gap-3">
+            <Link to="/demo/emergency" className="flex items-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm justify-center" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}>
+              <AlertTriangle style={{ width: 14, height: 14 }} /> Kidnapping — Auto Rescue
             </Link>
-            <Link
-              to="/demo/nightlife"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.35)', color: '#D4AF37' }}
-            >
-              <Shield style={{ width: 15, height: 15 }} />
-              Drugged & Robbed — Vault Lockdown Demo
+            <Link to="/demo/nightlife" className="flex items-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm justify-center" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.35)', color: GOLD }}>
+              <Shield style={{ width: 14, height: 14 }} /> Drugged &amp; Robbed — Vault Lockdown
             </Link>
-            <Link
-              to="/demo/medguard"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.35)', color: '#60a5fa' }}
-            >
-              <Brain style={{ width: 15, height: 15 }} />
-              Pattern Intelligence — Theon vs Maria
+            <Link to="/demo/medguard" className="flex items-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm justify-center" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.35)', color: '#60a5fa' }}>
+              <Brain style={{ width: 14, height: 14 }} /> Pattern Intelligence — Theon vs Maria
             </Link>
-            <Link
-              to="/demo/recovery"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ade80' }}
-            >
-              <Radio style={{ width: 15, height: 15 }} />
-              Family Tracker — Live View
-            </Link>
-            <Link
-              to="/demo/evn"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.5)', color: '#60a5fa' }}
-            >
-              <Globe style={{ width: 15, height: 15 }} />
-              EVN-iQ400 — Danger Zone Demo ✨ NEW
-            </Link>
-            <Link
-              to="/demo/james"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: `rgba(212,175,55,0.12)`, border: `2px solid rgba(212,175,55,0.6)`, color: '#D4AF37', fontWeight: 800 }}
-            >
-              🎤 The James Standard — Voice Demo ✨ NEW
-            </Link>
-            <Link
-              to="/demo/silent"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.5)', color: '#ef4444', fontWeight: 800 }}
-            >
-              🔇 Silent Mode — I'm Being Watched ✨ NEW
-            </Link>
-            <Link
-              to="/demo/trust"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37', fontWeight: 700 }}
-            >
-              ⭐ Partner Trust Score ✨ NEW
-            </Link>
-            <Link
-              to="/demo/tap"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(212,175,55,0.12)', border: '2px solid rgba(212,175,55,0.7)', color: '#D4AF37', fontWeight: 800 }}
-            >
-              👆 Tap Protocol — 2 tap &amp; 3 tap ✨ NEW
-            </Link>
-            <Link
-              to="/demo/language"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.4)', color: '#60a5fa', fontWeight: 700 }}
-            >
-              🌐 Language Bridge — Invisible Interpreter ✨ NEW
-            </Link>
-            <Link
-              to="/demo/waiting"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37', fontWeight: 700 }}
-            >
-              🏥 Waiting Room Voice — M Speaks Unbidden ✨ NEW
-            </Link>
-            <Link
-              to="/demo/weather"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.4)', color: '#60a5fa', fontWeight: 700 }}
-            >
-              🌡️ Weather to Health — 4 Parties, 1 Event ✨ NEW
+            <Link to="/demo/recovery" className="flex items-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm justify-center" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ade80' }}>
+              <Radio style={{ width: 14, height: 14 }} /> Family Tracker — Live View
             </Link>
           </div>
 
