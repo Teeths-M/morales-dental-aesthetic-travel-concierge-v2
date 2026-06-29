@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, CheckCircle2, Heart } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, useMap } from 'react-leaflet';
+import { ArrowLeft, MapPin, Clock, CheckCircle2, Heart, Navigation, Share2, ExternalLink } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -109,10 +109,17 @@ function FaceIDScan({ onComplete }) {
   );
 }
 
+function openNav(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
+const googleMapsUrl  = `https://www.google.com/maps/search/?api=1&query=${CURRENT.lat},${CURRENT.lng}`;
+const googleDirUrl   = `https://www.google.com/maps/dir/?api=1&destination=${CURRENT.lat},${CURRENT.lng}&travelmode=driving`;
+const wazeUrl        = `https://waze.com/ul?ll=${CURRENT.lat},${CURRENT.lng}&navigate=yes`;
+const shareText      = `Tom's live location — Tijuana, Mexico\nhttps://www.google.com/maps/search/?api=1&query=${CURRENT.lat},${CURRENT.lng}`;
+
 export default function FamilyEyeDemo() {
   const [phase, setPhase] = useState('intro'); // intro | scanning | map
   const [liveTime, setLiveTime] = useState('');
   const [timeSince, setTimeSince] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -218,17 +225,54 @@ export default function FamilyEyeDemo() {
                 />
               ))}
 
-              {/* Tom — current position */}
-              <Marker position={[CURRENT.lat, CURRENT.lng]} icon={TOM_ICON} />
+              {/* Tom — current position with tap-to-navigate popup */}
+              <Marker position={[CURRENT.lat, CURRENT.lng]} icon={TOM_ICON}>
+                <Popup closeButton={false} className="tom-popup">
+                  <div style={{ background: '#0C1A1D', border: '1px solid rgba(34,197,94,0.4)', borderRadius: 10, padding: '10px 12px', minWidth: 160 }}>
+                    <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 800, color: '#22c55e' }}>📍 Tom is here</p>
+                    <p style={{ margin: '0 0 10px', fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{CURRENT.label}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <button onClick={() => openNav(googleDirUrl)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗺 Directions — Google</button>
+                      <button onClick={() => openNav(wazeUrl)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📡 Navigate — Waze</button>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
             </MapContainer>
 
             {/* Map label */}
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, pointerEvents: 'none' }}>
               <div style={{ background: 'rgba(6,11,22,0.88)', border: `1px solid ${GREEN}40`, borderRadius: 8, padding: '4px 12px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Tom — {CURRENT.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Tom — {CURRENT.label} · Tap marker for directions</span>
               </div>
             </div>
+          </div>
+
+          {/* Navigation action buttons */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '12px 16px', background: '#0C1A1D', borderBottom: `1px solid ${BORDER}` }}>
+            <button onClick={() => openNav(googleMapsUrl)}
+              style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(66,133,244,0.12)', border: '1px solid rgba(66,133,244,0.35)', color: '#4285F4', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <ExternalLink style={{ width: 14, height: 14 }} />
+              Google Maps
+            </button>
+            <button onClick={() => openNav(wazeUrl)}
+              style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(51,204,255,0.10)', border: '1px solid rgba(51,204,255,0.3)', color: '#33CCFF', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Navigation style={{ width: 14, height: 14 }} />
+              Waze
+            </button>
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: "Tom's Location", text: shareText }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(shareText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
+                }
+              }}
+              style={{ padding: '10px 6px', borderRadius: 10, background: copied ? 'rgba(34,197,94,0.12)' : `rgba(212,175,55,0.10)`, border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : 'rgba(212,175,55,0.3)'}`, color: copied ? GREEN : GOLD, fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Share2 style={{ width: 14, height: 14 }} />
+              {copied ? 'Copied!' : 'Share'}
+            </button>
           </div>
 
           {/* Journey timeline */}
