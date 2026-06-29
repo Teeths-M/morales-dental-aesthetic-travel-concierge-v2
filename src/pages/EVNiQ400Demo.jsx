@@ -309,7 +309,7 @@ export default function EVNiQ400Demo() {
       </div>
 
       {/* ── Body ── */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
 
         {/* ── LEFT: City Map ── */}
         <div style={{ background: '#080F1C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, overflow: 'hidden' }}>

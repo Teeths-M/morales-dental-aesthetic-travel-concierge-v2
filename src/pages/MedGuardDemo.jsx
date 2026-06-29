@@ -387,7 +387,7 @@ export default function MedGuardDemo() {
           <p style={{ margin: '0 0 16px', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             How the fingerprint is built
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { icon: '📱', label: 'Phase 1 (72h)', desc: 'Silent observation. Records every app open, session, charge cycle. No alerts.' },
               { icon: '🧠', label: 'Fingerprint Built', desc: 'Exponential moving average across 200+ data points. Unique to each person.' },
