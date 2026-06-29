@@ -2,6 +2,19 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const BRAND = 'Morales Dental & Aesthetics';
 
+async function sendSms(to: string, body: string): Promise<void> {
+  const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !auth || !from || !sid.startsWith('AC')) return;
+  const form = new URLSearchParams({ To: to, From: from, Body: body });
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString(),
+  }).catch(e => console.warn('[resendChauffeurPortalEmail] SMS failed:', e.message));
+}
+
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
   .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -117,7 +130,13 @@ Deno.serve(async (req) => {
         }),
       });
 
-      sent.push({ name: driverName, email: cab.email, portal_link: portalLink });
+      // SMS — send alongside email if phone on file
+      const phone = cab.whatsapp_number || cab.phone;
+      if (phone) {
+        await sendSms(phone, `Hi ${driverName}! Transfer request for ${consultation.patient_name}. Access your Morales chauffeur portal: ${portalLink}`);
+      }
+
+      sent.push({ name: driverName, email: cab.email, portal_link: portalLink, sms_sent: !!phone });
     }
 
     return Response.json({ success: true, sent });

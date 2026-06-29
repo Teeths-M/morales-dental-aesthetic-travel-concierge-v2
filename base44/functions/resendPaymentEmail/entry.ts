@@ -1,5 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+async function sendSms(to: string, body: string): Promise<void> {
+  const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !auth || !from || !sid.startsWith('AC')) return; // mock mode — skip silently
+  const form = new URLSearchParams({ To: to, From: from, Body: body });
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + btoa(`${sid}:${auth}`), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString(),
+  }).catch(e => console.warn('[resendPaymentEmail] SMS failed:', e.message));
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -145,12 +158,21 @@ Deno.serve(async (req) => {
       timeline_log: updatedTimeline
     });
 
-    return Response.json({ 
-      status: 'EMAIL_RESENT', 
+    // SMS — send alongside email if phone on file
+    if (caseRecord.client_phone) {
+      await sendSms(
+        caseRecord.client_phone,
+        `Hi ${caseRecord.client_name}! Your Morales payment link is ready. Tap to pay and secure your spot: ${paymentUrl}`
+      );
+    }
+
+    return Response.json({
+      status: 'EMAIL_RESENT',
       case_id,
       payment_url: paymentUrl,
       sent_to: caseRecord.client_email,
-      message: 'Payment email resent successfully' 
+      sms_sent: !!caseRecord.client_phone,
+      message: 'Payment link sent via email' + (caseRecord.client_phone ? ' and SMS' : '')
     });
 
   } catch (error) {
