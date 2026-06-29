@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Premium mobile feel — smooth scroll, no tap flash, hardware-accelerated transitions */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+* {
+  -webkit-backface-visibility: hidden;
+}
+
+button, a {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active, a:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
 @layer base {
   :root {
     --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;

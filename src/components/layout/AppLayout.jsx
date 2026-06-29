@@ -39,12 +39,14 @@ export default function AppLayout() {
   // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)
   // - Partner signup pages: patient SOS/Vault/WhatsApp are irrelevant to
   //   business partners and create visual noise (causes the stray red icon)
-  const isAdmin = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup') || pathname.startsWith('/demo');
+  const isAdmin   = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup') || pathname.startsWith('/demo');
+  const isDemo    = pathname.startsWith('/demo');
+  const isActualAdmin = pathname.startsWith('/admin');
 
   return (
     <BiometricGate>
-      {/* System Pause banner — only visible to admin, fixed at top of screen */}
-      {isAdmin && <SystemPauseBanner />}
+      {/* System Pause banner — only visible on actual admin pages, never on demo pages */}
+      {isActualAdmin && <SystemPauseBanner />}
 
       {/* First-time onboarding wizard — shown once per account */}
       {showOnboarding && !suppressOnboarding && (
@@ -62,8 +64,8 @@ export default function AppLayout() {
         </main>
         <Footer />
 
-        {/* Guide orb — available to ALL users on ALL pages (bottom-left) */}
-        <PlatformGuideOrb />
+        {/* Guide orb — hidden on demo pages so judges see a clean experience */}
+        {!isDemo && <PlatformGuideOrb />}
 
         {/* Patient-facing floating elements — hidden on admin pages */}
         {!isAdmin && (
