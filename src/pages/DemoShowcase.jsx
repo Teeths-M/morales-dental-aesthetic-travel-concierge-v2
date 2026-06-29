@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
   Shield, MapPin, Bell, Lock, Zap, CheckCircle2,
-  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio, Brain, Mail
+  AlertTriangle, ArrowRight, ChevronRight, Play, Users, Globe, Radio, Brain
 } from 'lucide-react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import EmergencyScenarioDemo from '@/pages/EmergencyScenarioDemo';
