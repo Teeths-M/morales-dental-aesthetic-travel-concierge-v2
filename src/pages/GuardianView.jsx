@@ -226,6 +226,33 @@ export default function GuardianView() {
         </div>
       </div>
 
+      {/* ── HAND OF GOD — SAFE Banner ───────────────────────────────────── */}
+      {!wildernessSOS && !escalation && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.08))',
+          borderBottom: '1px solid rgba(34,197,94,0.3)',
+          padding: '14px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+        }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 12px #22c55e', animation: 'pulse 1.5s ease infinite' }} />
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#22c55e', letterSpacing: '0.02em' }}>
+              {session.patient_name} IS SAFE
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.04em' }}>
+              EVN-iQ400™ scanning · No threats detected · M is watching
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end' }}>
+            {[4, 7, 10, 13].map((h, i) => (
+              <div key={i} style={{ width: 3, height: h, borderRadius: 1, background: '#22c55e', opacity: 0.7 + i * 0.1 }} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} @keyframes evnScan{0%{r:20;opacity:0.7}100%{r:80;opacity:0}}`}</style>
+
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
 
         {/* 9-Handshake Journey Progress — read-only for guardian */}
@@ -446,6 +473,18 @@ export default function GuardianView() {
                     opacity={0.7}
                   />
                   <MapRecenter lat={loc.latitude} lng={loc.longitude} />
+
+                  {/* EVN-iQ400 scan ring — The Eye of God */}
+                  <Circle
+                    center={[loc.latitude, loc.longitude]}
+                    radius={80}
+                    pathOptions={{ color: '#D4AF37', fillColor: 'transparent', fillOpacity: 0, weight: 1.5, opacity: 0.5, dashArray: '4 3' }}
+                  />
+                  <Circle
+                    center={[loc.latitude, loc.longitude]}
+                    radius={160}
+                    pathOptions={{ color: '#D4AF37', fillColor: 'transparent', fillOpacity: 0, weight: 1, opacity: 0.25, dashArray: '6 4' }}
+                  />
 
                   {/* Breadcrumb trail polyline */}
                   {trailPositions.length >= 2 && (
