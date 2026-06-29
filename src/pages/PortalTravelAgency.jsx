@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { decodePortalToken, getTokenFromUrl } from '@/lib/portalToken';
 import { BackButton } from '@/components/nav/BackButton';
+import PortalQRCode from '@/components/portal/PortalQRCode';
 import { parseISO, addDays, format as dateFnsFormat } from 'date-fns';
 import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
 
@@ -261,7 +262,10 @@ export default function PortalTravelAgency() {
   return (
     <>
     <div style={{ minHeight: '100vh', background: '#f8faf8', fontFamily: 'Arial, Helvetica, sans-serif' }}>
-      <div style={{ padding: '12px 24px' }}><BackButton fallback="/" /></div>
+      <div style={{ padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <BackButton fallback="/" />
+        <PortalQRCode label="Share this portal link — scan to open on phone" />
+      </div>
       <style>{`
         @media (max-width: 600px) {
           .ta-header { padding: 20px 16px !important; }

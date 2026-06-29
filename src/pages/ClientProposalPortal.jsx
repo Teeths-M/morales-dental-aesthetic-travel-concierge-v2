@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, Shield, Sparkles, Lock, AlertCircle, Plane } from 'lucide-react';
+import PortalQRCode from '@/components/portal/PortalQRCode';
 import { Button } from '@/components/ui/button';
 
 function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0); }
@@ -114,9 +115,12 @@ export default function ClientProposalPortal() {
             <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>MORALES CONCIERGE</p>
             <p className="text-white font-semibold text-sm">Your Medical Travel Proposal</p>
           </div>
-          <div className="ml-auto flex items-center gap-1.5 text-[10px] text-white/40">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live
+          <div className="ml-auto flex items-center gap-3">
+            <PortalQRCode label="Scan to open payment portal on another device" />
+            <div className="flex items-center gap-1.5 text-[10px] text-white/40">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live
+            </div>
           </div>
         </div>
       </div>
