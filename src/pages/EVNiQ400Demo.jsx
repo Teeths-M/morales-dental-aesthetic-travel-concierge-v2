@@ -4,16 +4,16 @@
  * Shows a patient walking through Tijuana, Mexico entering a danger zone
  * and the full EVN-iQ400 threat detection + alert cascade.
  */
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, Wifi, WifiOff, Plane, Globe, ArrowLeft, RotateCcw, MapPin, Phone } from 'lucide-react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-function MapFlyTo({ lat, lng }) {
+function MapFlyTo({ lat, lng, zoom }) {
   const map = useMap();
-  map.setView([lat, lng], 15, { animate: true, duration: 1.2 });
+  map.setView([lat, lng], zoom, { animate: true, duration: 1.4 });
   return null;
 }
 
@@ -161,7 +161,13 @@ export default function EVNiQ400Demo() {
   const [alert, setAlert]         = useState(null);   // { risk, wp }
   const [showDanger, setShowDanger] = useState(false);
   const [highRiskSeq, setHighRiskSeq] = useState(0); // 0=none,1=detecting,2=analyzing,3=confirmed
+  const [liveTime, setLiveTime] = useState(() => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
   const timersRef = useRef([]);
+
+  useEffect(() => {
+    const t = setInterval(() => setLiveTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const addLog = useCallback((text, risk = null, isScanning = false) => {
     setScanLogs(prev => [...prev.slice(-30), { text, risk, isScanning, id: Date.now() + Math.random() }]);
@@ -313,7 +319,15 @@ export default function EVNiQ400Demo() {
               <MapPin style={{ width: 14, height: 14, color: GOLD }} />
               <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>Tijuana, Baja California, México</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {/* Signal bars */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
+                {[3, 5, 7, 9].map((h, i) => (
+                  <div key={i} style={{ width: 3, height: h, borderRadius: 1, background: mode === 'airplane' ? 'rgba(255,255,255,0.15)' : (i < (mode === 'offline' ? 1 : 4) ? '#22c55e' : 'rgba(255,255,255,0.15)') }} />
+                ))}
+              </div>
+              {/* Live clock */}
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>{liveTime}</span>
               {moving && (
                 <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }}
                   style={{ fontSize: 10, color: '#60a5fa', fontWeight: 700 }}>TRACKING</motion.div>
@@ -325,11 +339,20 @@ export default function EVNiQ400Demo() {
           {/* Real Satellite Map — Esri World Imagery */}
           <div style={{ position: 'relative' }}>
             <style>{`
-              .evn-patient { width:26px;height:26px;border-radius:50%;background:var(--pc);border:2.5px solid #060B16;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 0 12px var(--pc); }
-              .evn-scan-ring { width:80px;height:80px;border-radius:50%;border:1.5px solid rgba(212,175,55,0.35);animation:evnPulse 2.5s ease-out infinite;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%); }
-              @keyframes evnPulse { 0%{transform:translate(-50%,-50%) scale(0.4);opacity:0.8} 100%{transform:translate(-50%,-50%) scale(1.8);opacity:0} }
               .leaflet-container { background: #1a2035 !important; }
+              @keyframes redFlash { 0%,100%{opacity:0} 15%,45%{opacity:1} 30%,60%{opacity:0.4} }
+              @keyframes evnPing  { 0%{transform:scale(1);opacity:0.7} 100%{transform:scale(3);opacity:0} }
             `}</style>
+
+            {/* HIGH RISK red flash overlay */}
+            {(showDanger || currentWP >= 4) && (
+              <div style={{
+                position: 'absolute', inset: 0, zIndex: 999, pointerEvents: 'none',
+                background: 'rgba(239,68,68,0.18)',
+                animation: 'redFlash 2s ease infinite',
+                borderRadius: 'inherit',
+              }} />
+            )}
             <MapContainer
               center={[32.5310, -117.0260]}
               zoom={14}
@@ -339,7 +362,7 @@ export default function EVNiQ400Demo() {
               scrollWheelZoom={false}
               dragging={false}
             >
-              <MapFlyTo lat={curWPData.lat} lng={curWPData.lng} />
+              <MapFlyTo lat={curWPData.lat} lng={curWPData.lng} zoom={curWPData.risk === 'HIGH' ? 17 : 15} />
               {/* Esri satellite imagery */}
               <TileLayer
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
