@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Check, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
@@ -54,25 +53,31 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
 
   const translations = {
     en: {
-      heading: "No exact matches found",
-      subheading: "Tell us what you want to achieve, and our AI will match it for you.",
-      placeholder: "Describe what procedure or treatment you want in your own words...",
-      button: "Find Closest Options",
-      analyzing: "Analyzing your request..."
+      heading: "Don't see your procedure? M will find it.",
+      subheading: "Describe what you want in your own words — any procedure, any goal. M searches our entire specialist network to find the right doctor for you.",
+      placeholder: "e.g. 'I want a smaller nose' · 'fix my back pain' · 'whiter straighter teeth' · anything...",
+      button: "M — Find My Specialist",
+      analyzing: "M is searching our specialist network...",
+      matchHeading: "M found the right specialists for you",
+      noMatchFallback: "M will personally connect you with a specialist — no procedure request is too specific."
     },
     es: {
-      heading: "No se encontraron coincidencias exactas",
-      subheading: "Cuéntanos qué quieres lograr, y nuestra IA lo emparejará por ti.",
-      placeholder: "Describe qué procedimiento o tratamiento quieres con tus propias palabras...",
-      button: "Encontrar las opciones más cercanas",
-      analyzing: "Analizando tu solicitud..."
+      heading: "¿No ves tu procedimiento? M lo encontrará.",
+      subheading: "Describe lo que quieres con tus propias palabras. M busca en toda nuestra red de especialistas.",
+      placeholder: "ej. 'quiero una nariz más pequeña' · 'dolor de espalda' · 'dientes más blancos'...",
+      button: "M — Encontrar mi especialista",
+      analyzing: "M está buscando en la red de especialistas...",
+      matchHeading: "M encontró los especialistas correctos para ti",
+      noMatchFallback: "M te conectará personalmente con un especialista."
     },
     fr: {
-      heading: "Aucune correspondance exacte trouvée",
-      subheading: "Dites-nous ce que vous voulez accomplir, et notre IA le correspondra pour vous.",
-      placeholder: "Décrivez quelle procédure ou traitement vous voulez avec vos propres mots...",
-      button: "Trouver les options les plus proches",
-      analyzing: "Analyse de votre demande..."
+      heading: "Vous ne voyez pas votre procédure ? M la trouvera.",
+      subheading: "Décrivez ce que vous voulez avec vos propres mots. M recherche dans tout notre réseau de spécialistes.",
+      placeholder: "ex. 'je veux un nez plus petit' · 'douleur au dos' · 'dents plus blanches'...",
+      button: "M — Trouver mon spécialiste",
+      analyzing: "M recherche dans le réseau de spécialistes...",
+      matchHeading: "M a trouvé les bons spécialistes pour vous",
+      noMatchFallback: "M vous connectera personnellement avec un spécialiste."
     }
   };
 
@@ -80,97 +85,94 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full bg-white border border-slate-100 rounded-2xl p-6 shadow-sm"
+      style={{ background: 'linear-gradient(135deg, #0C1A1D 0%, #080F18 100%)', border: `1px solid ${GOLD}30`, borderRadius: 20, padding: 24 }}
     >
       {matchedProcedures ? (
-        /* Matched Procedures Display */
-        <div className="space-y-3">
-          <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
-            Top 3 AI Matches
-          </p>
-          <div className="space-y-2">
+        /* M found specialists */
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${GOLD}18`, border: `1.5px solid ${GOLD}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: GOLD }}>M</div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{t.matchHeading}</p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {matchedProcedures.map((match, idx) => (
               <motion.button
                 key={match.procedure_id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 onClick={() => handleSelectProcedure(match)}
-                className="w-full text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:shadow-sm transition-all group"
+                style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = `${GOLD}50`; e.currentTarget.style.background = `${GOLD}08`; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[10px] font-semibold text-emerald-600">
-                        {match.match_confidence}% match
-                      </span>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.06em' }}>{match.match_confidence}% MATCH</span>
                     </div>
-                    <h4 className="font-semibold text-slate-800 text-xs mb-0.5 truncate">
-                      {match.procedure_name}
-                    </h4>
-                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2">
-                      {match.rationale}
-                    </p>
+                    <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#fff' }}>{match.procedure_name}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{match.rationale}</p>
                   </div>
-                  <Check className="w-4 h-4 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <Check style={{ width: 16, height: 16, color: GOLD, flexShrink: 0 }} />
                 </div>
               </motion.button>
             ))}
           </div>
-          <p className="text-[10px] text-slate-400 italic mt-2">Click to add to your basket</p>
+          <div style={{ marginTop: 14, padding: '12px 14px', borderRadius: 12, background: `${GOLD}08`, border: `1px solid ${GOLD}20` }}>
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+              {t.noMatchFallback}
+            </p>
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>Tap a procedure to add it to your plan</p>
         </div>
       ) : (
-        /* Input Mode - Horizontal Layout */
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Left Side - Icon + Heading + Description */}
-          <div className="flex items-start gap-4 flex-1 min-w-0">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-md">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-semibold text-slate-800 text-lg mb-1 whitespace-nowrap">
-                {t.heading}
-              </h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                {t.subheading}
-              </p>
+        /* Input Mode */
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: `${GOLD}18`, border: `1.5px solid ${GOLD}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: GOLD, flexShrink: 0 }}>M</div>
+            <div>
+              <p style={{ margin: '0 0 2px', fontSize: 15, fontWeight: 800, color: '#fff' }}>{t.heading}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{t.subheading}</p>
             </div>
           </div>
 
-          {/* Right Side - Input + Button (side-by-side) */}
-          <div className="flex items-center gap-3 w-full md:w-auto flex-1">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <textarea
               value={patientQuery}
               onChange={(e) => setPatientQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && patientQuery.trim()) { e.preventDefault(); handleFindMatches(); } }}
               placeholder={t.placeholder}
-              className="flex-1 min-w-0 p-3 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-none text-sm leading-relaxed min-h-[80px] md:min-h-[60px]"
+              rows={2}
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1px solid rgba(255,255,255,0.12)`, background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13, outline: 'none', resize: 'none', lineHeight: 1.6, boxSizing: 'border-box', fontFamily: 'inherit' }}
+              onFocus={e => e.target.style.borderColor = `${GOLD}60`}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
             />
-            <Button
+            <button
               onClick={handleFindMatches}
               disabled={!patientQuery.trim() || isAnalyzing}
-              className="flex-shrink-0 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              style={{
+                padding: '13px 0', borderRadius: 12, cursor: patientQuery.trim() && !isAnalyzing ? 'pointer' : 'not-allowed',
+                background: patientQuery.trim() && !isAnalyzing ? `linear-gradient(135deg, ${GOLD}, #E8C85C)` : 'rgba(212,175,55,0.2)',
+                border: 'none', color: patientQuery.trim() && !isAnalyzing ? '#060B16' : 'rgba(255,255,255,0.3)',
+                fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                boxShadow: patientQuery.trim() && !isAnalyzing ? '0 6px 20px rgba(212,175,55,0.3)' : 'none',
+                transition: 'all 0.2s',
+              }}
             >
               {isAnalyzing ? (
-                <span className="flex items-center gap-2">
-                  <span className="relative flex h-3 w-3 mr-1">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-white/90"></span>
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-1 h-4 bg-white/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]"></span>
-                    <span className="w-1 h-4 bg-white/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.2s]"></span>
-                    <span className="w-1 h-4 bg-white/60 rounded-full animate-[pulse_0.6s_ease-in-out_infinite_0.4s]"></span>
+                <>
+                  <span style={{ display: 'flex', gap: 3 }}>
+                    {[0,1,2].map(i => <span key={i} style={{ width: 4, height: 14, background: 'rgba(255,255,255,0.5)', borderRadius: 2, animation: `pulse 0.6s ease ${i * 0.2}s infinite` }} />)}
                   </span>
                   {t.analyzing}
-                </span>
+                </>
               ) : (
-                <span className="flex items-center gap-2">
-                  {t.button} <ArrowRight className="w-4 h-4" />
-                </span>
+                <>{t.button} <ArrowRight style={{ width: 15, height: 15 }} /></>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       )}
