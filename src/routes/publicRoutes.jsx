@@ -63,24 +63,24 @@ export const publicRoutes = (
     <Route path="/travel-concierge" element={<TravelConcierge />} />
     <Route path="/emergency"        element={<EmergencyHub />} />
     <Route path="/offline-guide"    element={<OfflineGuide />} />
-    <Route path="/demo"                element={<DemoShowcase />} />
-    <Route path="/demo/emergency"      element={<EmergencyScenarioDemo />} />
-    <Route path="/demo/nightlife"      element={<NightlifeRobberyDemo />} />
-    <Route path="/demo/medguard"       element={<MedGuardDemo />} />
-    <Route path="/demo/emails"          element={<EmailShowcase />} />
-    <Route path="/demo/recovery"        element={<RecoveryTrackerDemo />} />
-    <Route path="/demo/cheatsheet"           element={<DemoCheatsheet />} />
-    <Route path="/demo/evn"                   element={<EVNiQ400Demo />} />
-    <Route path="/demo/james"                 element={<JamesVoiceDemo />} />
-    <Route path="/demo/silent"                element={<SilentModeDemo />} />
-    <Route path="/demo/trust"                 element={<PartnerTrustDemo />} />
-    <Route path="/demo/tap"                   element={<TapProtocolDemo />} />
-    <Route path="/demo/journey"               element={<MasterJourneyDemo />} />
-    <Route path="/demo/language"              element={<LanguageBridgeDemo />} />
-    <Route path="/demo/waiting"               element={<WaitingRoomDemo />} />
-    <Route path="/demo/weather"               element={<WeatherHealthDemo />} />
-    <Route path="/demo/family"                element={<FamilyEyeDemo />} />
-    <Route path="/demo/arrival"               element={<ArrivalIntelDemo />} />
+    <Route path="/demo"                element={<ErrorBoundary><DemoShowcase /></ErrorBoundary>} />
+    <Route path="/demo/emergency"      element={<ErrorBoundary><EmergencyScenarioDemo /></ErrorBoundary>} />
+    <Route path="/demo/nightlife"      element={<ErrorBoundary><NightlifeRobberyDemo /></ErrorBoundary>} />
+    <Route path="/demo/medguard"       element={<ErrorBoundary><MedGuardDemo /></ErrorBoundary>} />
+    <Route path="/demo/emails"          element={<ErrorBoundary><EmailShowcase /></ErrorBoundary>} />
+    <Route path="/demo/recovery"        element={<ErrorBoundary><RecoveryTrackerDemo /></ErrorBoundary>} />
+    <Route path="/demo/cheatsheet"      element={<ErrorBoundary><DemoCheatsheet /></ErrorBoundary>} />
+    <Route path="/demo/evn"             element={<ErrorBoundary><EVNiQ400Demo /></ErrorBoundary>} />
+    <Route path="/demo/james"           element={<ErrorBoundary><JamesVoiceDemo /></ErrorBoundary>} />
+    <Route path="/demo/silent"          element={<ErrorBoundary><SilentModeDemo /></ErrorBoundary>} />
+    <Route path="/demo/trust"           element={<ErrorBoundary><PartnerTrustDemo /></ErrorBoundary>} />
+    <Route path="/demo/tap"             element={<ErrorBoundary><TapProtocolDemo /></ErrorBoundary>} />
+    <Route path="/demo/journey"         element={<ErrorBoundary><MasterJourneyDemo /></ErrorBoundary>} />
+    <Route path="/demo/language"        element={<ErrorBoundary><LanguageBridgeDemo /></ErrorBoundary>} />
+    <Route path="/demo/waiting"         element={<ErrorBoundary><WaitingRoomDemo /></ErrorBoundary>} />
+    <Route path="/demo/weather"         element={<ErrorBoundary><WeatherHealthDemo /></ErrorBoundary>} />
+    <Route path="/demo/family"          element={<ErrorBoundary><FamilyEyeDemo /></ErrorBoundary>} />
+    <Route path="/demo/arrival"         element={<ErrorBoundary><ArrivalIntelDemo /></ErrorBoundary>} />
     <Route path="/recovery-check-in/:token"  element={<RecoveryCheckIn />} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<PublicRecoveryTracker />} />
