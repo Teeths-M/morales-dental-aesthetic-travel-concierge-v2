@@ -35,22 +35,25 @@ const SCENARIOS = [
         to: 'Maria (Companion)',
         icon: '👩🏽‍⚕️',
         color: PURPLE,
-        message: 'James arrives during extreme heat. Please bring: cooling cloth, extra water, electrolyte sachets, and a portable fan. Keep outdoor exposure under 10 minutes.',
-        mDid: 'Maria briefed on heat protocol · Supply checklist sent · Outdoor route minimised',
+        lang: '🇲🇽 Español',
+        message: 'James llega durante calor extremo. Por favor traiga: paño frío, agua extra, sobres de electrolitos y un ventilador portátil. Mantenga la exposición al exterior a menos de 10 minutos.',
+        mDid: 'M tradujo al español · Maria informada sobre protocolo de calor · Lista de suministros enviada · Ruta exterior minimizada',
       },
       {
         to: 'Dr. Martinez (Clinic)',
         icon: '👨🏽‍⚕️',
         color: GREEN,
-        message: 'Patient arriving during 38°C heat wave. Please ensure recovery room is air-conditioned to 22°C. Cold compress available post-procedure. Extended monitoring recommended.',
-        mDid: 'Clinic environment request sent · Recovery room temp logged · Extended monitoring flag added to case',
+        lang: '🇲🇽 Español',
+        message: 'Paciente llega durante ola de calor de 38°C. Por favor asegure que la sala de recuperación esté climatizada a 22°C. Compresa fría disponible post-procedimiento. Se recomienda monitoreo extendido.',
+        mDid: 'M tradujo al español · Solicitud de ambiente clínico enviada · Temperatura de sala registrada · Monitoreo extendido marcado en el caso',
       },
       {
         to: 'Mario (Driver)',
         icon: '🚗',
         color: BLUE,
-        message: 'Extreme heat alert for pickup day. Please ensure AC is running before patient enters vehicle. Use covered parking. Minimise time in direct sun.',
-        mDid: 'Driver heat protocol sent · Covered parking route pre-loaded · Estimated outdoor exposure: under 2 minutes',
+        lang: '🇲🇽 Español',
+        message: 'Alerta de calor extremo para el día de recogida. Por favor asegure que el AC esté encendido antes de que el paciente entre al vehículo. Use estacionamiento cubierto. Minimice el tiempo bajo el sol directo.',
+        mDid: 'M tradujo al español · Protocolo de calor enviado al conductor · Ruta de estacionamiento cubierto pre-cargada · Exposición estimada: menos de 2 minutos',
       },
     ],
   },
@@ -289,6 +292,11 @@ export default function WeatherHealthDemo() {
                     <div style={{ padding: '10px 14px', background: `${action.color}10`, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 18 }}>{action.icon}</span>
                       <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: action.color, letterSpacing: '0.06em' }}>{action.to.toUpperCase()}</p>
+                      {action.lang && (
+                        <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: GOLD, background: `${GOLD}15`, border: `1px solid ${GOLD}30`, borderRadius: 6, padding: '2px 7px', letterSpacing: '0.04em' }}>
+                          {action.lang}
+                        </span>
+                      )}
                     </div>
                     <div style={{ padding: '12px 14px', background: CARD }}>
                       <p style={{ margin: '0 0 8px', fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.65 }}>
