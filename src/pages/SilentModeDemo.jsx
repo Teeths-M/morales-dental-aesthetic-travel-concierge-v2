@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ShieldOff, Shield, MapPin, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, ShieldOff, MapPin } from 'lucide-react';
 import { useSilentMode } from '@/hooks/useSilentMode';
 
 const GOLD  = '#D4AF37';
