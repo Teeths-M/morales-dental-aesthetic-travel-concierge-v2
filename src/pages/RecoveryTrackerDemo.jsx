@@ -8,7 +8,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Heart, MapPin, ArrowLeft, Share2, RefreshCw } from 'lucide-react';
+import { Shield, Heart, MapPin, ArrowLeft, Share2, RefreshCw, ExternalLink, Navigation, MessageCircle, MessageSquare } from 'lucide-react';
+
+function openNav(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
 
 const GOLD = '#D4AF37';
 
@@ -98,6 +100,29 @@ function TrackerCard({ caseData, lastRefresh }) {
             <MapPin className="w-3.5 h-3.5" style={{ color: GOLD }} />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{dest}</span>
           </div>
+          {/* Navigation & share buttons */}
+          {!isComplete && (() => {
+            const destQuery = encodeURIComponent(dest);
+            const googleUrl = `https://www.google.com/maps/search/?api=1&query=${destQuery}`;
+            const wazeUrl   = `https://waze.com/ul?q=${destQuery}&navigate=yes`;
+            const shareMsg  = encodeURIComponent(`${firstName} is in ${dest} — follow their journey`);
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+                <button onClick={() => openNav(googleUrl)} style={{ padding: '8px 6px', borderRadius: 8, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <ExternalLink size={12} />Google Maps
+                </button>
+                <button onClick={() => openNav(wazeUrl)} style={{ padding: '8px 6px', borderRadius: 8, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <Navigation size={12} />Waze
+                </button>
+                <button onClick={() => openNav(`https://wa.me/?text=${shareMsg}`)} style={{ padding: '8px 6px', borderRadius: 8, background: '#25D366', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <MessageCircle size={12} />WhatsApp
+                </button>
+                <button onClick={() => openNav(`sms:?body=${shareMsg}`)} style={{ padding: '8px 6px', borderRadius: 8, background: '#1e3040', border: '1px solid #2A3F4A', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <MessageSquare size={12} />SMS
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </motion.div>
 

@@ -3,15 +3,22 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Radio, ArrowLeft, Play, RotateCcw,
-  MessageSquare, Navigation, Siren
+  MessageSquare, Navigation, Siren, ExternalLink, MessageCircle
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
 // Maria's real Caracas GPS coordinates
 const MARIA_LAT = 10.4815;
 const MARIA_LNG = -66.9037;
+
+const MARIA_GOOGLE_URL = `https://www.google.com/maps/search/?api=1&query=${MARIA_LAT},${MARIA_LNG}`;
+const MARIA_DIR_URL    = `https://www.google.com/maps/dir/?api=1&destination=${MARIA_LAT},${MARIA_LNG}&travelmode=driving`;
+const MARIA_WAZE_URL   = `https://waze.com/ul?ll=${MARIA_LAT},${MARIA_LNG}&navigate=yes`;
+const MARIA_SHARE_MSG  = encodeURIComponent(`Maria's last known location — Av. Libertador, Caracas, Venezuela\nhttps://www.google.com/maps/search/?api=1&query=${MARIA_LAT},${MARIA_LNG}`);
+
+function openNav(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
 
 const MARIA_ICON_SAFE = L.divIcon({
   className: '',
@@ -175,7 +182,20 @@ function GpsMapPin({ active, lost }) {
       <MapContainer center={[MARIA_LAT, MARIA_LNG]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false} attributionControl={false} scrollWheelZoom={false} dragging={false}>
         <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={19} />
         <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" maxZoom={19} opacity={0.75} />
-        {active && <Marker position={[MARIA_LAT, MARIA_LNG]} icon={lost ? MARIA_ICON_LOST : MARIA_ICON_SAFE} />}
+        {active && (
+          <Marker position={[MARIA_LAT, MARIA_LNG]} icon={lost ? MARIA_ICON_LOST : MARIA_ICON_SAFE}>
+            <Popup closeButton={false} className="morales-popup">
+              <div style={{ background: '#0C1A1D', border: '1px solid rgba(212,175,55,0.4)', borderRadius: 10, padding: '10px 12px', minWidth: 165 }}>
+                <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: '#D4AF37' }}>📍 Maria — last known</p>
+                <p style={{ margin: '0 0 10px', fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>Av. Libertador, Caracas, Venezuela</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <button onClick={() => openNav(MARIA_DIR_URL)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗺 Directions — Google</button>
+                  <button onClick={() => openNav(MARIA_WAZE_URL)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📡 Navigate — Waze</button>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
         {active && !lost && <Circle center={[MARIA_LAT, MARIA_LNG]} radius={80} pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.06, weight: 1.5 }} />}
         {lost && <Circle center={[MARIA_LAT, MARIA_LNG]} radius={120} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.06, weight: 1.5, dashArray: '5 4' }} />}
       </MapContainer>
@@ -347,6 +367,21 @@ export default function EmergencyScenarioDemo({ minimal = false }) {
             <div className="rounded-2xl p-4" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
               <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: GOLD }}>Live GPS Beacon</p>
               <GpsMapPin active={gpsActive} lost={gpsLost} />
+              {/* Navigation & share action bar */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+                <button onClick={() => openNav(MARIA_GOOGLE_URL)} style={{ padding: '8px 6px', borderRadius: 8, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <ExternalLink size={12} />Google Maps
+                </button>
+                <button onClick={() => openNav(MARIA_WAZE_URL)} style={{ padding: '8px 6px', borderRadius: 8, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <Navigation size={12} />Waze
+                </button>
+                <button onClick={() => openNav(`https://wa.me/?text=${MARIA_SHARE_MSG}`)} style={{ padding: '8px 6px', borderRadius: 8, background: '#25D366', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <MessageCircle size={12} />WhatsApp
+                </button>
+                <button onClick={() => openNav(`sms:?body=${MARIA_SHARE_MSG}`)} style={{ padding: '8px 6px', borderRadius: 8, background: '#1e3040', border: '1px solid #2A3F4A', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <MessageSquare size={12} />SMS
+                </button>
+              </div>
             </div>
 
             {/* Status badge */}
