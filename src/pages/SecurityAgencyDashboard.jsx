@@ -25,7 +25,7 @@ function ActiveEscortsPanel({ agencyId }) {
     ).catch(() => []),
     enabled: !!agencyId,
     staleTime: 60_000,
-    refetchInterval: 90_000,
+    refetchInterval: 300_000,
   });
 
   const { data: sosAlerts = [] } = useQuery({

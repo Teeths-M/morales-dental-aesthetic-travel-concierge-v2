@@ -341,7 +341,7 @@ export default function IQ200AdminCenter() {
   const { data: cases = [], isLoading, isError: casesError, refetch } = useQuery({
     queryKey: ['iq200_cases'],
     queryFn: () => base44.asServiceRole.entities.CaseRecord.filter({}, '-created_date', 50),
-    refetchInterval: 30000,
+    refetchInterval: 300_000,
   });
 
   const { data: consultations = [], isError: consultationsError } = useQuery({

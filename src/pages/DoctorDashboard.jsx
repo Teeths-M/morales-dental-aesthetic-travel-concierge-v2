@@ -128,7 +128,7 @@ export default function DoctorDashboard() {
     queryFn: () => base44.entities.CaseRecord.filter({ doctor_email: doctor.email }, '-departure_date', 30),
     enabled: !!doctor?.email,
     staleTime: 90_000,
-    refetchInterval: 120_000,
+    refetchInterval: 300_000,
   });
   const inProgressCases = activeCases.filter(c => !['Completed', 'Closed', 'Cancelled', 'Admin-Review'].includes(c.status));
   const completedCases  = activeCases.filter(c => ['Completed', 'Closed'].includes(c.status));

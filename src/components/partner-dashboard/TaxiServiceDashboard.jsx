@@ -31,7 +31,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
     ).catch(() => []) ?? Promise.resolve([]),
     enabled: !!taxi?.id,
     staleTime: 60_000,
-    refetchInterval: 90_000,
+    refetchInterval: 300_000,
   });
 
   // Pending quote requests — cases in Travel-Coordination needing transfer pricing
@@ -42,7 +42,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
       '-updated_date', 10
     ).catch(() => []),
     staleTime: 60_000,
-    refetchInterval: 120_000,
+    refetchInterval: 300_000,
   });
 
   const activeCases  = cases.filter(c => ['In-Progress', 'Travel-Coordination', 'confirmed'].includes(c.status));

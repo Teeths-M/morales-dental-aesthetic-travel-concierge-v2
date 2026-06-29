@@ -91,7 +91,7 @@ export default function SafeT() {
     },
     enabled:   !!user?.email,
     staleTime: 60_000,
-    refetchInterval: 120_000,
+    refetchInterval: 300_000,
   });
 
   // Case record — for stored MedGuard risk level

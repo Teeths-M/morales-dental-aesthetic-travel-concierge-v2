@@ -17,7 +17,7 @@ export default function TravelAgencyDashboard({ agency, language }) {
       '-updated_date', 15
     ).catch(() => []),
     staleTime: 60_000,
-    refetchInterval: 120_000,
+    refetchInterval: 300_000,
   });
 
   // Cases this agency has active itineraries for

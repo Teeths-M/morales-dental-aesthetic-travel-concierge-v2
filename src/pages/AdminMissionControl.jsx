@@ -173,7 +173,7 @@ export default function AdminMissionControl() {
       return results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
     },
     staleTime: 60_000,
-    refetchInterval: 90_000,
+    refetchInterval: 300_000,
   });
 
   // Simulated MedGuard scores (in real use: read from AuditLog last analysis)

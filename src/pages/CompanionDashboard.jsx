@@ -257,7 +257,7 @@ function JobOffersPanel({ userId, userEmail }) {
     },
     enabled: !!(userId || userEmail),
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 300_000,
   });
 
   async function respond(assignment_id, action) {

@@ -165,7 +165,7 @@ export default function SituationRoom() {
       return results.flatMap(r => r.status === 'fulfilled' ? (r.value || []) : []);
     },
     staleTime: 90_000,
-    refetchInterval: 90_000,
+    refetchInterval: 300_000,
   });
 
   // Group patients by destination country ISO
