@@ -34,6 +34,45 @@ function minsAgo(ts) {
   return Math.round((Date.now() - new Date(ts).getTime()) / 60000);
 }
 
+function BreadcrumbTrail({ caseId, onNav }) {
+  const [crumbs, setCrumbs] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!caseId) return;
+    base44.entities.LocationBreadcrumb
+      .filter({ case_id: caseId, is_purged: false }, '-logged_at', 20)
+      .then(data => { setCrumbs((data ?? []).filter(c => c.latitude != null)); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [caseId]);
+
+  if (loading) return <p className="text-xs text-slate-400">Loading breadcrumb trail...</p>;
+  if (crumbs.length === 0) return <p className="text-xs text-slate-400">No GPS breadcrumbs recorded for this case yet.</p>;
+
+  return (
+    <div>
+      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+        GPS Breadcrumb Trail ({crumbs.length} points)
+      </p>
+      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+        {crumbs.map((c, i) => (
+          <div key={i} className="flex items-center gap-2 text-xs">
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${i === 0 ? 'bg-emerald-500' : 'bg-blue-300'}`} />
+            <span className="font-mono text-slate-600">{Number(c.latitude).toFixed(5)}, {Number(c.longitude).toFixed(5)}</span>
+            {c.accuracy_meters != null && <span className="text-slate-400">±{Math.round(c.accuracy_meters)}m</span>}
+            <span className="text-slate-400 ml-auto shrink-0">{c.logged_at ? `${minsAgo(c.logged_at)}m ago` : ''}</span>
+            <button onClick={() => onNav(`https://waze.com/ul?ll=${c.latitude},${c.longitude}&navigate=yes`)}
+              className="text-cyan-600 hover:underline shrink-0">Waze</button>
+            <button onClick={() => onNav(`https://www.google.com/maps/dir/?api=1&destination=${c.latitude},${c.longitude}&travelmode=driving`)}
+              className="text-blue-600 hover:underline shrink-0">Google</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminSoloMonitor() {
   const [checkIns, setCheckIns] = useState([]);
   const [locations, setLocations] = useState({});
@@ -138,12 +177,20 @@ export default function AdminSoloMonitor() {
     setRunningEscalation(false);
   };
 
-  const openMap = (loc) => {
-    if (!loc) return;
-    const url = loc.latitude != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}&travelmode=driving`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([loc.city, loc.country].filter(Boolean).join(', '))}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const openNav = (url) => window.open(url, '_blank', 'noopener,noreferrer');
+
+  const navLinks = (loc) => {
+    if (!loc) return null;
+    if (loc.latitude != null) {
+      return {
+        google:   `https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}&travelmode=driving`,
+        waze:     `https://waze.com/ul?ll=${loc.latitude},${loc.longitude}&navigate=yes`,
+        whatsapp: encodeURIComponent(`🔴 Patient location alert\nDirections: https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}&travelmode=driving`),
+        sms:      encodeURIComponent(`Patient location: https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`),
+      };
+    }
+    const query = [loc.city, loc.country].filter(Boolean).join(', ') || loc.place_label;
+    return query ? { google: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` } : null;
   };
 
   const openGuardianLink = async (ci) => {
@@ -152,7 +199,9 @@ export default function AdminSoloMonitor() {
       guardian_name: 'Admin View',
       expires_hours: 24,
     }).catch(() => null);
-    if (res?.data?.guardian_url) window.open(res.data.guardian_url, '_blank', 'noopener,noreferrer');
+    // SDK may return data directly or wrapped in .data
+    const url = res?.data?.guardian_url ?? res?.guardian_url;
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const stats = {
@@ -417,12 +466,24 @@ export default function AdminSoloMonitor() {
 
                       {/* Actions */}
                       <div className="flex gap-2 flex-wrap items-center">
-                        {loc && (
-                          <button onClick={() => openMap(loc)}
+                        {loc && (() => { const nav = navLinks(loc); return nav ? (<>
+                          <button onClick={() => openNav(nav.google)}
                             className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">
-                            <Navigation className="w-3.5 h-3.5" /> Maps
+                            <Navigation className="w-3.5 h-3.5" /> Google
                           </button>
-                        )}
+                          {nav.waze && <button onClick={() => openNav(nav.waze)}
+                            className="flex items-center gap-1.5 text-xs text-cyan-600 border border-cyan-200 px-3 py-1.5 rounded-lg hover:bg-cyan-50">
+                            <Navigation className="w-3.5 h-3.5" /> Waze
+                          </button>}
+                          {nav.whatsapp && <button onClick={() => openNav(`https://wa.me/?text=${nav.whatsapp}`)}
+                            className="flex items-center gap-1.5 text-xs text-green-600 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-50">
+                            <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
+                          </button>}
+                          {nav.sms && <button onClick={() => openNav(`sms:?body=${nav.sms}`)}
+                            className="flex items-center gap-1.5 text-xs text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
+                            <MessageSquare className="w-3.5 h-3.5" /> SMS
+                          </button>}
+                        </>) : null; })()}
                         <button onClick={() => openGuardianLink(ci)}
                           className="flex items-center gap-1.5 text-xs text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
                           <Globe className="w-3.5 h-3.5" /> Guardian Link
@@ -498,9 +559,13 @@ export default function AdminSoloMonitor() {
                       </div>
                     )}
 
-                    {/* Expanded: notification log */}
+                    {/* Expanded: breadcrumb trail + notification log */}
                     {isExpanded && (
-                      <div className="border-t border-slate-100 pt-4 space-y-2">
+                      <div className="border-t border-slate-100 pt-4 space-y-4">
+
+                        {/* Breadcrumb trail */}
+                        <BreadcrumbTrail caseId={ci.case_id} onNav={openNav} />
+
                         <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Notification Log</p>
                         {logs.length === 0 ? (
                           <p className="text-xs text-slate-400">No notifications logged for this case.</p>
