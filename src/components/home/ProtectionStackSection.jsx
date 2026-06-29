@@ -162,8 +162,8 @@ export default function ProtectionStackSection() {
           </p>
         </div>
 
-        {/* Centre ring — mobile: above cards, desktop: between cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 24 }} className="lg:hidden">
+        {/* Centre ring — mobile only (inline style removed so lg:hidden works) */}
+        <div className="flex flex-col items-center gap-2 mb-6 lg:hidden">
           <ConnectionRing size={160} />
           <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>ALL SYSTEMS ACTIVE</p>
         </div>
