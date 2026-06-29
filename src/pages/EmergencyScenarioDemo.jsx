@@ -315,18 +315,12 @@ export default function EmergencyScenarioDemo({ minimal = false }) {
           <div className="md:col-span-2 space-y-4">
 
             {/* Patient card */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
-              {/* Hero background */}
-              <div style={{ height: 64, background: 'linear-gradient(135deg, #0a1628 0%, #1a1a2e 100%)', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=60)', backgroundSize: 'cover', backgroundPosition: 'center top', opacity: 0.18 }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 28, background: 'linear-gradient(to top, #0C1A1D, transparent)' }} />
-              </div>
-              <div className="p-4" style={{ paddingTop: 0 }}>
-              <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: GOLD, paddingTop: 12 }}>Patient Profile</p>
-              <div className="flex items-center gap-3 mb-4" style={{ marginTop: -24 }}>
+            <div className="rounded-2xl p-4" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+              <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: GOLD }}>Patient Profile</p>
+              <div className="flex items-center gap-3 mb-4">
                 <img src="https://i.pravatar.cc/150?img=47" alt="Maria Castellanos"
                   className="w-14 h-14 rounded-full flex-shrink-0"
-                  style={{ border: '3px solid #22c55e', boxShadow: '0 0 16px rgba(34,197,94,0.4)', objectFit: 'cover' }}
+                  style={{ border: '3px solid #22c55e', boxShadow: '0 0 14px rgba(34,197,94,0.35)', objectFit: 'cover' }}
                 />
                 <div>
                   <p className="font-semibold text-white text-sm">Maria Castellanos</p>
@@ -346,7 +340,6 @@ export default function EmergencyScenarioDemo({ minimal = false }) {
                     <span className="font-medium text-white">{val}</span>
                   </div>
                 ))}
-              </div>
               </div>
             </div>
 

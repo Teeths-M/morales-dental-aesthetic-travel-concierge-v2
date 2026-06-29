@@ -365,15 +365,10 @@ export default function NightlifeRobberyDemo({ minimal = false }) {
             {/* Patient */}
             <div className="rounded-2xl p-4" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
               <p className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: GOLD }}>Patient Profile</p>
-              {/* Hero background */}
-              <div style={{ margin: '-16px -16px 16px', height: 72, background: 'linear-gradient(135deg, #0a1628 0%, #1a2a1a 100%)', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=60)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(to top, #0C1A1D, transparent)' }} />
-              </div>
-              <div className="flex items-center gap-3 mb-4" style={{ marginTop: -28 }}>
+              <div className="flex items-center gap-3 mb-4">
                 <img src="https://i.pravatar.cc/150?img=12" alt="Marco Delgado"
                   className="w-14 h-14 rounded-full flex-shrink-0"
-                  style={{ border: `3px solid ${GOLD}`, boxShadow: `0 0 16px rgba(212,175,55,0.4)`, objectFit: 'cover' }}
+                  style={{ border: `3px solid ${GOLD}`, boxShadow: `0 0 14px rgba(212,175,55,0.35)`, objectFit: 'cover' }}
                 />
                 <div>
                   <p className="font-semibold text-white text-sm">Marco Delgado</p>
