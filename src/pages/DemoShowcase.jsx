@@ -701,14 +701,6 @@ export default function DemoShowcase() {
               Pattern Intelligence — Theon vs Maria
             </Link>
             <Link
-              to="/demo/emails"
-              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
-              style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.35)', color: '#c084fc' }}
-            >
-              <Mail style={{ width: 15, height: 15 }} />
-              Email System — 5 Live Templates
-            </Link>
-            <Link
               to="/demo/recovery"
               className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
               style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.35)', color: '#4ade80' }}
