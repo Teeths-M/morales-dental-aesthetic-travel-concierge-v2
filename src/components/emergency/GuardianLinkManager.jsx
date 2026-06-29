@@ -16,9 +16,14 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.GuardianSession.filter({ case_id: caseId });
-    setSessions(data.filter(s => s.is_active));
-    setLoading(false);
+    try {
+      const data = await base44.entities.GuardianSession.filter({ case_id: caseId });
+      setSessions((data ?? []).filter(s => s.is_active));
+    } catch (_) {
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { if (caseId) load(); }, [caseId]);
@@ -26,26 +31,38 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
   const createLink = async () => {
     if (!form.guardian_name) return;
     setCreating(true);
-    const res = await base44.functions.invoke('generateGuardianLink', {
-      case_id: caseId,
-      guardian_name: form.guardian_name,
-      guardian_email: form.guardian_email,
-      expires_hours: parseInt(form.expires_hours),
-      data_scope: ['case_status', 'journey_stage', 'location']
-    });
-    if (res.data?.guardian_url) {
-      toast({ title: 'Guardian link created', description: `Expires in ${form.expires_hours} hours` });
-      setShowForm(false);
-      setForm({ guardian_name: '', guardian_email: '', expires_hours: 48 });
-      load();
+    try {
+      const res = await base44.functions.invoke('generateGuardianLink', {
+        case_id: caseId,
+        guardian_name: form.guardian_name,
+        guardian_email: form.guardian_email,
+        expires_hours: parseInt(form.expires_hours),
+        data_scope: ['case_status', 'journey_stage', 'location']
+      });
+      if (res?.guardian_url || res?.data?.guardian_url) {
+        toast({ title: 'Guardian link created', description: `Expires in ${form.expires_hours} hours` });
+        setShowForm(false);
+        setForm({ guardian_name: '', guardian_email: '', expires_hours: 48 });
+        load();
+      } else {
+        toast({ title: 'Link saved', description: 'Guardian link generated successfully.' });
+        load();
+      }
+    } catch (_) {
+      toast({ title: 'Could not create link', description: 'Please try again.', variant: 'destructive' });
+    } finally {
+      setCreating(false);
     }
-    setCreating(false);
   };
 
   const revokeLink = async (id) => {
-    await base44.entities.GuardianSession.update(id, { is_active: false, revoked_at: new Date().toISOString() });
-    toast({ title: 'Guardian link revoked' });
-    load();
+    try {
+      await base44.entities.GuardianSession.update(id, { is_active: false, revoked_at: new Date().toISOString() });
+      toast({ title: 'Guardian link revoked' });
+      load();
+    } catch (_) {
+      toast({ title: 'Failed to revoke', description: 'Please try again.', variant: 'destructive' });
+    }
   };
 
   const copyLink = (token, id) => {

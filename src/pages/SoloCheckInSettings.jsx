@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Clock, Bell, MapPin, Shield, CheckCircle2, AlertTriangle, Calendar, Radio, Heart, EyeOff } from 'lucide-react';
 import { isCovertSOSEnabled, enableCovertSOS, disableCovertSOS } from '@/hooks/useCovertSOS';
@@ -197,7 +198,7 @@ export default function SoloCheckInSettings() {
     setAcknowledging(true);
     try {
       const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10);
-      if (cases.length === 0) { alert('No active journey found.'); return; }
+      if (cases.length === 0) { toast.error('No active journey found.'); return; }
       const ac = cases.find(c => c.status !== 'Completed') || cases[0];
       const loc = locRef.current;
       await base44.functions.invoke('acknowledgeSoloCheckIn', {
@@ -213,8 +214,8 @@ export default function SoloCheckInSettings() {
         region: loc?.region ?? null,
         timezone: loc?.timezone ?? null,
       });
-      alert('✅ You are safe! Location and check-in recorded.');
-      loadCheckIns();
+      toast.success('You are safe! Location and check-in recorded.');
+      loadCheckIns(user);
     } catch (err) {
       const isNetworkError = !navigator.onLine
         || (err?.message && (err.message.toLowerCase().includes('network') || err.message.toLowerCase().includes('fetch')));
@@ -222,9 +223,9 @@ export default function SoloCheckInSettings() {
         const cases = await base44.entities.CaseRecord.filter({ client_email: user.email }, '-created_date', 10).catch(() => []);
         const ac = cases.find(c => c.status !== 'Completed') || cases[0];
         if (ac) queueSafeCheckin(ac.id);
-        alert('Queued — will sync when online');
+        toast('Queued — will sync when online');
       } else {
-        alert('Failed to record check-in. Please try again.');
+        toast.error('Failed to record check-in. Please try again.');
       }
     } finally {
       setAcknowledging(false);
