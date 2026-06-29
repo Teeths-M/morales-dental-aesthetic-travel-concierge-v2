@@ -38,6 +38,7 @@ const JamesVoiceDemo         = lazy(() => import('@/pages/JamesVoiceDemo'));
 const SilentModeDemo         = lazy(() => import('@/pages/SilentModeDemo'));
 const PartnerTrustDemo       = lazy(() => import('@/pages/PartnerTrustDemo'));
 const TapProtocolDemo        = lazy(() => import('@/pages/TapProtocolDemo'));
+const MasterJourneyDemo      = lazy(() => import('@/pages/MasterJourneyDemo'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -69,6 +70,7 @@ export const publicRoutes = (
     <Route path="/demo/silent"                element={<SilentModeDemo />} />
     <Route path="/demo/trust"                 element={<PartnerTrustDemo />} />
     <Route path="/demo/tap"                   element={<TapProtocolDemo />} />
+    <Route path="/demo/journey"               element={<MasterJourneyDemo />} />
     <Route path="/recovery-check-in/:token"  element={<RecoveryCheckIn />} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<PublicRecoveryTracker />} />

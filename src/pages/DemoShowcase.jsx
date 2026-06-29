@@ -660,6 +660,17 @@ export default function DemoShowcase() {
             ))}
           </div>
 
+          {/* Master Journey Demo — top CTA */}
+          <div className="flex justify-center mb-4">
+            <Link
+              to="/demo/journey"
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base"
+              style={{ background: `linear-gradient(135deg, ${GOLD}, #E8C85C)`, color: DARK, boxShadow: `0 12px 40px rgba(212,175,55,0.45)`, letterSpacing: '0.01em' }}
+            >
+              👑 Watch James's Complete Journey — All Features Live
+            </Link>
+          </div>
+
           <div className="flex justify-center gap-3 flex-wrap">
             <Link
               to="/consultation"
