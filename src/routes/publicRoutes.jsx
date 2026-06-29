@@ -34,6 +34,7 @@ const RecoveryTrackerDemo    = lazy(() => import('@/pages/RecoveryTrackerDemo'))
 const DemoCheatsheet         = lazy(() => import('@/pages/DemoCheatsheet'));
 const RecoveryCheckIn        = lazy(() => import('@/pages/RecoveryCheckIn'));
 const EVNiQ400Demo           = lazy(() => import('@/pages/EVNiQ400Demo'));
+const JamesVoiceDemo         = lazy(() => import('@/pages/JamesVoiceDemo'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -61,6 +62,7 @@ export const publicRoutes = (
     <Route path="/demo/recovery"        element={<RecoveryTrackerDemo />} />
     <Route path="/demo/cheatsheet"           element={<DemoCheatsheet />} />
     <Route path="/demo/evn"                   element={<EVNiQ400Demo />} />
+    <Route path="/demo/james"                 element={<JamesVoiceDemo />} />
     <Route path="/recovery-check-in/:token"  element={<RecoveryCheckIn />} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<PublicRecoveryTracker />} />
