@@ -162,30 +162,35 @@ export default function ProtectionStackSection() {
           </p>
         </div>
 
-        {/* Main content: ring + system cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 40, alignItems: 'center' }}>
+        {/* Centre ring — mobile: above cards, desktop: between cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 24 }} className="lg:hidden">
+          <ConnectionRing size={160} />
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>ALL SYSTEMS ACTIVE</p>
+        </div>
 
-          {/* Left cards: EVN + MedGuard */}
+        {/* System cards — mobile: 2-column grid, desktop: 3-col with ring in centre */}
+        <div className="hidden lg:grid" style={{ gridTemplateColumns: '1fr auto 1fr', gap: 40, alignItems: 'center' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {SYSTEMS.slice(0, 2).map((sys, i) => (
               <SystemCard key={sys.id} sys={sys} isActive={activeIdx === i} onClick={() => setActiveIdx(i)} />
             ))}
           </div>
-
-          {/* Centre ring */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
             <ConnectionRing size={200} />
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', textAlign: 'center' }}>
-              ALL SYSTEMS ACTIVE
-            </p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', textAlign: 'center' }}>ALL SYSTEMS ACTIVE</p>
           </div>
-
-          {/* Right cards: Safe-T + iQ200 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {SYSTEMS.slice(2, 4).map((sys, i) => (
               <SystemCard key={sys.id} sys={sys} isActive={activeIdx === i + 2} onClick={() => setActiveIdx(i + 2)} />
             ))}
           </div>
+        </div>
+
+        {/* Mobile: 2-col card grid */}
+        <div className="grid grid-cols-2 gap-3 lg:hidden">
+          {SYSTEMS.map((sys, i) => (
+            <SystemCard key={sys.id} sys={sys} isActive={activeIdx === i} onClick={() => setActiveIdx(i)} />
+          ))}
         </div>
 
         {/* Bottom CTA */}
