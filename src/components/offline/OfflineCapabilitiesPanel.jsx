@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 // IndexedDB helper for offline document caching
 const OFFLINE_CACHE_KEY = 'morales_offline_vault';
@@ -273,14 +274,9 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
               </p>
               {qrToken ? (
                 <div className="space-y-3">
-                  {/* Visual QR placeholder — in production render with a QR library */}
-                  <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-6 mx-auto max-w-[200px]">
-                    <div className="grid grid-cols-7 gap-0.5">
-                      {Array.from({ length: 49 }).map((_, i) => (
-                        <div key={i} className={`w-full aspect-square rounded-[1px] ${Math.random() > 0.5 ? 'bg-slate-800' : 'bg-white'}`} />
-                      ))}
-                    </div>
-                    <p className="text-[9px] text-slate-400 mt-2 font-mono break-all">{qrToken.slice(0, 24)}...</p>
+                  <div className="bg-white rounded-2xl p-4 mx-auto w-fit shadow-sm border border-slate-100">
+                    <QRCodeSVG value={qrToken} size={160} bgColor="#ffffff" fgColor="#060B16" level="M" />
+                    <p className="text-[9px] text-slate-400 mt-2 font-mono text-center break-all">{qrToken.slice(0, 24)}...</p>
                   </div>
                   <div className="flex gap-2 justify-center">
                     <button onClick={() => copyToClipboard(qrToken, 'qr')}

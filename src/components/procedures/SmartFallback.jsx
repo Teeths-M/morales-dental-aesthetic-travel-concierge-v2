@@ -50,6 +50,13 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
   const [matchedProcedures, setMatchedProcedures] = useState(null);
   const [outreach, setOutreach] = useState(null); // { doctorsNotified, procedureName }
 
+  // When search bar populates a query, sync it into the textarea (but don't overwrite active states)
+  React.useEffect(() => {
+    if (originalQuery && !matchedProcedures && !outreach) {
+      setPatientQuery(originalQuery);
+    }
+  }, [originalQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleFindMatches = async () => {
     if (!patientQuery.trim()) return;
 

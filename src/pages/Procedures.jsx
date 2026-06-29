@@ -136,6 +136,7 @@ export default function Procedures() {
   const [selectedModal, setSelectedModal] = useState(null);
   const [selectDoctorProc, setSelectDoctorProc] = useState(null);
   const [language, setLanguage] = useState('en');
+  const [searchQuery, setSearchQuery] = useState('');
   const { items, addItem, removeItem, clearCart, setProcedureCountry, setProcedureCity } = useCart();
 
   useEffect(() => {
@@ -229,7 +230,7 @@ export default function Procedures() {
           {/* Search + Voice */}
           <div className="max-w-2xl mx-auto flex gap-3">
             <div className="flex-1">
-              <ProcedureSearch onSelect={addProc} />
+              <ProcedureSearch onSelect={addProc} onQueryChange={setSearchQuery} />
             </div>
             <button
               onClick={() => setVoiceOpen(true)}
@@ -264,7 +265,7 @@ export default function Procedures() {
         {/* Full-Width AI Concierge Banner */}
         <div className="mb-8">
           <SmartFallback
-            originalQuery=""
+            originalQuery={searchQuery}
             onProcedureSelect={handleFallbackSelect}
             language={language}
             procedures={allProceduresFlat}

@@ -3,18 +3,24 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, FileText, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminProcedureRequests() {
   const [requests, setRequests] = useState([]);
+  const [outreachRecords, setOutreachRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewingId, setReviewingId] = useState(null);
+  const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'outreach'
 
   const loadRequests = async () => {
     try {
-      const data = await base44.entities.ProcedureRequest.filter({}, '-submitted_date');
+      const [data, outreach] = await Promise.all([
+        base44.entities.ProcedureRequest.filter({}, '-submitted_date'),
+        base44.entities.DoctorProcedureOutreach.filter({}, '-email_sent_at', 50),
+      ]);
       setRequests(data);
+      setOutreachRecords(outreach);
     } catch (e) {
       console.error('Failed to load requests:', e);
     } finally {
@@ -96,12 +102,64 @@ export default function AdminProcedureRequests() {
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const reviewedRequests = requests.filter(r => r.status !== 'pending');
 
+  const outreachResponseColors = { yes: 'bg-emerald-100 text-emerald-700', no: 'bg-red-100 text-red-700', maybe: 'bg-amber-100 text-amber-700', pending: 'bg-slate-100 text-slate-600' };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-800 mb-1">Procedure Requests</h2>
-        <p className="text-xs text-slate-500">Review and approve new procedure submissions from doctors</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800 mb-1">Procedure Requests</h2>
+          <p className="text-xs text-slate-500">Review new submissions and track M doctor outreach</p>
+        </div>
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
+          <button onClick={() => setActiveTab('requests')} className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'requests' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+            Requests {requests.filter(r => r.status === 'pending').length > 0 && <span className="ml-1.5 bg-amber-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{requests.filter(r => r.status === 'pending').length}</span>}
+          </button>
+          <button onClick={() => setActiveTab('outreach')} className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'outreach' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}>
+            M Outreach {outreachRecords.filter(o => o.doctor_response === 'pending').length > 0 && <span className="ml-1.5 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{outreachRecords.filter(o => o.doctor_response === 'pending').length}</span>}
+          </button>
+        </div>
       </div>
+
+      {/* Doctor Outreach Tab */}
+      {activeTab === 'outreach' && (
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500">When patients request unlisted procedures, M contacts nearby doctors automatically. Track responses here.</p>
+          {outreachRecords.length === 0 ? (
+            <div className="text-center py-12">
+              <Mail className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+              <p className="text-sm text-slate-400">No outreach records yet — M will contact doctors as patients request unlisted procedures.</p>
+            </div>
+          ) : (
+            outreachRecords.map(rec => (
+              <Card key={rec.id} className="border-slate-200">
+                <CardContent className="pt-4 pb-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{rec.procedure_name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Patient: {rec.client_email}</p>
+                      <p className="text-xs text-slate-500">Doctor: {rec.doctor_email}</p>
+                      {rec.email_sent_at && (
+                        <p className="text-[10px] text-slate-400 mt-1">Sent {new Date(rec.email_sent_at).toLocaleString()}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <Badge className={outreachResponseColors[rec.doctor_response] || outreachResponseColors.pending}>
+                        {rec.doctor_response === 'pending' ? 'Awaiting reply' : rec.doctor_response?.toUpperCase()}
+                      </Badge>
+                      <Badge className={rec.status === 'converted' ? 'bg-emerald-100 text-emerald-700' : rec.status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}>
+                        {rec.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'requests' && <>
 
       {/* Pending */}
       {pendingRequests.length > 0 && (
@@ -195,6 +253,8 @@ export default function AdminProcedureRequests() {
           <p className="text-sm text-slate-500">No procedure requests yet</p>
         </div>
       )}
+
+      </>}
     </div>
   );
 }
