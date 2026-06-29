@@ -699,6 +699,7 @@ export default function DemoShowcase() {
               { to: '/demo/evn',      label: '🌍 EVN-iQ400',          color: '#60a5fa', border: '1px solid rgba(96,165,250,0.5)' },
               { to: '/demo/family',   label: '👩🏽 Mother\'s Eye',      color: '#f472b6', border: '1px solid rgba(244,114,182,0.4)' },
               { to: '/demo/arrival',  label: '🏥 Arrival Intel',       color: GREEN,     border: `1px solid ${GREEN}40` },
+              { to: '/discharge-reader', label: '📄 Discharge AI Reader', color: GOLD,  border: `2px solid ${GOLD}50` },
             ].map(d => (
               <Link key={d.to} to={d.to}
                 className="flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-xs text-center"
