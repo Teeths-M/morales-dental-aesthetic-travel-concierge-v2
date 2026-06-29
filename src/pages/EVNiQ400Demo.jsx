@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, Wifi, WifiOff, Plane, Globe, ArrowLeft, RotateCcw, MapPin, Phone } from 'lucide-react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 function MapFlyTo({ lat, lng }) {
   const map = useMap();
