@@ -865,7 +865,7 @@ export default function Dashboard() {
     if (p === '/dashboard/messages') return <MessagesModule />;
     if (p === '/dashboard/journey') return <JourneyModule />;
     if (p === '/dashboard/support') return <SupportModule />;
-    if (p === '/dashboard/settings') return <SettingsModule onResetSafetyProfile={resetFingerprint} isActiveJourney={!!activeTrip || ACTIVE_TRAVEL_PHASES.has(latestActive?.trip_phase)} />;
+    if (p === '/dashboard/settings') return <SettingsModule />;
     if (p === '/dashboard/case-status') return <CaseStatusModule userEmail={user?.email} />;
     if (p === '/dashboard') return <FeatureHub />;
     if (loadingConsultations) return <LoadingState rows={4} dark={false} label="Loading your dashboard" className="mt-4" />;
