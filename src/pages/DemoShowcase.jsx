@@ -724,6 +724,13 @@ export default function DemoShowcase() {
               <Globe style={{ width: 15, height: 15 }} />
               EVN-iQ400 — Danger Zone Demo ✨ NEW
             </Link>
+            <Link
+              to="/demo/james"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: `rgba(212,175,55,0.12)`, border: `2px solid rgba(212,175,55,0.6)`, color: '#D4AF37', fontWeight: 800 }}
+            >
+              🎤 The James Standard — Voice Demo ✨ NEW
+            </Link>
           </div>
 
           {/* Admin Intelligence Suite */}
