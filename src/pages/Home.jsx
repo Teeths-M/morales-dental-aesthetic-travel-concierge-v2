@@ -53,12 +53,12 @@ export default function Home() {
     <div style={{ background: '#060B16' }}>
       <LuxuryHero />
       <LuxuryStatsBar />
+      <OurExpertsTeaser />
       <LuxuryTrustBar />
       <LuxuryHowItWorks />
       <LuxuryWhyMorales />
       <ProtectionStackSection />
       <RealMoments />
-      <OurExpertsTeaser />
       <LuxuryTestimonials />
       <BrandSlideshow />
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import ModeToggle from './ModeToggle';
@@ -42,14 +42,23 @@ const FEATURES = [
 
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
+const QUICK_PROCEDURES = ['Dental Implants', 'Veneers', 'Rhinoplasty', 'Liposuction'];
+
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { mode }    = usePlatformMode();
   const isMedical   = mode === 'medical';
   const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
   const openModal   = useCallback(() => setShowModal(true), []);
   const closeModal  = useCallback(() => setShowModal(false), []);
+  const navigate    = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(`/providers${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ''}`);
+  };
 
   return (
     <>
@@ -257,6 +266,65 @@ export default function LuxuryHero() {
                 </motion.button>
               </Link>
             </motion.div>
+
+            {/* ── SEARCH BAR — medical mode ── */}
+            {isMedical && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="mb-8 max-w-[480px]"
+              >
+                <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <input
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search procedure or country…"
+                    style={{
+                      flex: 1, height: 46, padding: '0 18px', borderRadius: 99,
+                      background: 'rgba(255,255,255,0.07)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      color: '#fff', fontSize: 13, outline: 'none',
+                      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    }}
+                  />
+                  <button type="submit" style={{
+                    height: 46, padding: '0 20px', borderRadius: 99,
+                    background: GOLD, color: '#060B16',
+                    fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0,
+                  }}>Find Doctors</button>
+                </form>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {QUICK_PROCEDURES.map(p => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => navigate(`/providers?q=${encodeURIComponent(p)}`)}
+                      style={{
+                        padding: '5px 13px', borderRadius: 99,
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.13)',
+                        color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 500, cursor: 'pointer',
+                      }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/providers')}
+                    style={{
+                      padding: '5px 13px', borderRadius: 99,
+                      background: `rgba(212,175,55,0.10)`,
+                      border: `1px solid rgba(212,175,55,0.3)`,
+                      color: GOLD, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    All Doctors →
+                  </button>
+                </div>
+              </motion.div>
+            )}
 
             {/* ── TRUST BADGES — inline row ── */}
             <motion.div

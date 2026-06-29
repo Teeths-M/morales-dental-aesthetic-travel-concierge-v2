@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,6 +89,7 @@ function CheckboxGroup({ label, options, selected, onChange, noneOption = 'None 
 
 export default function ConsultationForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [nationalitySearch, setNationalitySearch] = useState('');
@@ -101,8 +102,8 @@ export default function ConsultationForm() {
     client_country: '',
     emergency_contact_name: '',
     emergency_contact_number: '',
-    procedure_country: '',
-    procedure_interest: '',
+    procedure_country: searchParams.get('country') || '',
+    procedure_interest: searchParams.get('procedure') || '',
     consultation_summary: '',
     preferred_date: '',
     return_date: '',
@@ -276,6 +277,16 @@ export default function ConsultationForm() {
       <div className="max-w-3xl mx-auto">
         <Card className="border-border">
           <CardHeader className="pb-4">
+            {searchParams.get('doctor') && (
+              <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#D4AF37', margin: 0 }}>
+                  Booking with Dr. {searchParams.get('doctor')}
+                </p>
+                {searchParams.get('procedure') && (
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{searchParams.get('procedure')}</p>
+                )}
+              </div>
+            )}
             <CardTitle className="text-2xl font-display">Medical Travel Consultation</CardTitle>
             <p className="text-muted-foreground text-sm">Complete your request — all information is confidential. Just tap to select.</p>
           </CardHeader>
