@@ -135,7 +135,7 @@ export default function ProcedureStackingBlocker({
                   <p className="font-semibold text-sm text-white">{v.pairLabel}</p>
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.4)' }}
+                    style={{ background: '#dc2626', color: '#fff', border: '1px solid #ef4444', fontWeight: 700 }}
                   >
                     {CODE_LABELS[v.code] || v.code}
                   </span>
