@@ -1,17 +1,13 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-  const { image_base64, image_url, language = 'en' } = await body<{
-    image_base64?: string;
-    image_url?: string;
-    language?: string;
-  }>();
+  const { image_base64, image_url, language = 'en' } = await body();
 
   if (!image_base64 && !image_url) {
     return err('image_base64 or image_url is required');
   }
 
-  const langNames: Record<string, string> = {
+  const langNames = {
     en: 'English', es: 'Spanish', fr: 'French', pt: 'Portuguese', de: 'German',
   };
   const langName = langNames[language] || 'English';
