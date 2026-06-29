@@ -185,7 +185,7 @@ export default function FloatingSOSButton() {
               <span style={{ position: 'relative', width: 10, height: 10, borderRadius: '50%', background: WHATSAPP_GREEN, boxShadow: `0 0 6px rgba(37,211,102,0.6)`, display: 'block' }} />
             </div>
             <WhatsAppIcon size={16} />
-            <span style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: WHATSAPP_GREEN, lineHeight: 1 }}>
+            <span className="hidden sm:inline" style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: WHATSAPP_GREEN, lineHeight: 1 }}>
               {t('sos.whatsapp')}
             </span>
           </motion.div>
@@ -208,7 +208,7 @@ export default function FloatingSOSButton() {
               <span style={{ position: 'relative', width: 10, height: 10, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 6px rgba(239,68,68,0.7)', display: 'block' }} />
             </div>
             <ShieldAlert style={{ width: 16, height: 16, color: '#ef4444', filter: 'drop-shadow(0 0 4px rgba(239,68,68,0.6))', flexShrink: 0 }} strokeWidth={2} />
-            <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ef4444', lineHeight: 1 }}>
+            <span className="hidden sm:inline" style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ef4444', lineHeight: 1 }}>
               {t('sos.label')}
             </span>
           </motion.div>
