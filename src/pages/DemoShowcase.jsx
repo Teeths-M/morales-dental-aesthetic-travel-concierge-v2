@@ -526,6 +526,7 @@ const TABS = [
   { id: 'language', label: '🌐 Language Bridge',   link: '/demo/language' },
   { id: 'waiting',  label: '🏥 Waiting Room',      link: '/demo/waiting' },
   { id: 'weather',  label: '🌡️ Weather to Health', link: '/demo/weather' },
+  { id: 'family',   label: '👩🏽 Mother\'s Eye',     link: '/demo/family' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
@@ -694,6 +695,7 @@ export default function DemoShowcase() {
               { to: '/demo/language', label: '🌐 Language Bridge',    color: '#60a5fa', border: '1px solid rgba(96,165,250,0.4)' },
               { to: '/demo/weather',  label: '🌡️ Weather to Health',  color: '#60a5fa', border: '1px solid rgba(96,165,250,0.4)' },
               { to: '/demo/evn',      label: '🌍 EVN-iQ400',          color: '#60a5fa', border: '1px solid rgba(96,165,250,0.5)' },
+              { to: '/demo/family',   label: '👩🏽 Mother\'s Eye',      color: '#f472b6', border: '1px solid rgba(244,114,182,0.4)' },
             ].map(d => (
               <Link key={d.to} to={d.to}
                 className="flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-xs text-center"
