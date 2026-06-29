@@ -38,7 +38,7 @@ export default function SectionClinicalBoundary({ form, update, showValidation =
           <p>
             <strong>Morales Dental & Aesthetic Travel Concierge</strong> (the "Platform") specializes in coordinating medical travel logistics — helping you connect with verified healthcare providers, arrange safe travel, and support your recovery journey.
           </p>
-          <div className="bg-white/70 rounded-xl p-4 border border-border space-y-2">
+          <div className="rounded-xl p-4 border border-border space-y-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <p className="font-semibold text-sm text-foreground">What the Platform provides:</p>
             <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
               <li>Coordination with verified, licensed medical providers</li>
@@ -48,9 +48,9 @@ export default function SectionClinicalBoundary({ form, update, showValidation =
               <li>Communication support between you and your provider</li>
             </ul>
           </div>
-          <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 space-y-2">
-            <p className="font-semibold text-sm text-amber-800">What the Platform does NOT do:</p>
-            <ul className="list-disc list-inside space-y-1 text-amber-700 text-xs">
+          <div className="rounded-xl p-4 space-y-2" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
+            <p className="font-semibold text-sm" style={{ color: '#D4AF37' }}>What the Platform does NOT do:</p>
+            <ul className="list-disc list-inside space-y-1 text-xs" style={{ color: 'rgba(212,175,55,0.75)' }}>
               <li>Diagnose medical conditions</li>
               <li>Prescribe medications or treatments</li>
               <li>Replace or substitute licensed clinical care</li>
@@ -65,7 +65,13 @@ export default function SectionClinicalBoundary({ form, update, showValidation =
       </div>
 
       {/* Required Acknowledgement */}
-      <div className={`rounded-xl border p-4 transition-all ${isMissing ? 'border-red-400 bg-red-50' : form.clinical_boundary_acknowledged ? 'border-emerald-400 bg-emerald-50' : 'border-primary/20 bg-white'}`}>
+      <div
+        className="rounded-xl border p-4 transition-all"
+        style={{
+          background: isMissing ? 'rgba(239,68,68,0.10)' : form.clinical_boundary_acknowledged ? 'rgba(34,197,94,0.10)' : 'rgba(255,255,255,0.04)',
+          borderColor: isMissing ? 'rgba(239,68,68,0.6)' : form.clinical_boundary_acknowledged ? 'rgba(34,197,94,0.6)' : 'rgba(212,175,55,0.2)',
+        }}
+      >
         <button
           type="button"
           onClick={handleToggle}
@@ -74,13 +80,13 @@ export default function SectionClinicalBoundary({ form, update, showValidation =
           {form.clinical_boundary_acknowledged
             ? <CheckSquare className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
             : <Square className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />}
-          <span className={`text-sm leading-relaxed ${form.clinical_boundary_acknowledged ? 'text-emerald-800' : 'text-foreground'}`}>
+          <span className={`text-sm leading-relaxed ${form.clinical_boundary_acknowledged ? 'text-emerald-400' : 'text-foreground'}`}>
             <strong>I understand and agree</strong> that Morales coordinates care and travel logistics, but clinical decisions, medical advice, diagnoses, prescriptions, and treatment recommendations are made only by licensed providers assigned to my care. I acknowledge that the Platform does not practice medicine and is not a substitute for professional medical care. <span className="text-destructive">*</span>
           </span>
         </button>
 
         {form.clinical_boundary_acknowledged && (
-          <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+          <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
             <Shield className="w-3 h-3" />
             Acknowledged {form.clinical_boundary_acknowledged_at ? new Date(form.clinical_boundary_acknowledged_at).toLocaleString() : ''} · Version {form.clinical_boundary_version || BOUNDARY_VERSION}
           </p>
