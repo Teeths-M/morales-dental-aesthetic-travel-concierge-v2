@@ -4,8 +4,8 @@
   "description": "Premium medical travel concierge with secure vault",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b1115",
-  "theme_color": "#1a473a",
+  "background_color": "#060B16",
+  "theme_color": "#060B16",
   "orientation": "portrait-primary",
   "icons": [
     {

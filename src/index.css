@@ -2,11 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium mobile feel — smooth scroll, no tap flash, hardware-accelerated transitions */
-html {
+/* Premium mobile feel — feels native, not a website */
+html, body {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  overscroll-behavior: none;          /* kills iOS bounce — websites bounce, apps don't */
+  -webkit-overflow-scrolling: touch;  /* smooth momentum scroll on iOS */
+}
+
+body {
+  padding-top: env(safe-area-inset-top);    /* respect iPhone notch */
+  padding-bottom: env(safe-area-inset-bottom); /* respect home bar */
 }
 
 * {
