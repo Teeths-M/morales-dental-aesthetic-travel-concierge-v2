@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { MapContainer, TileLayer, Marker, Circle, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Polyline, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
@@ -151,6 +151,18 @@ export default function GuardianView() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
+  };
+
+  const shareLocation = (lat, lng, patientName) => {
+    const text = `${patientName}'s live location\n${mapsViewUrl(lat, lng)}`;
+    if (navigator.share) {
+      navigator.share({ title: `${patientName}'s Location — Morales M`, text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      });
+    }
   };
 
   if (loading || pageState === 'loading') return (
@@ -508,8 +520,20 @@ export default function GuardianView() {
                     />
                   )}
 
-                  {/* Live position marker */}
-                  <Marker position={[loc.latitude, loc.longitude]} icon={markerIcon} />
+                  {/* Live position marker — tap for instant navigation */}
+                  <Marker position={[loc.latitude, loc.longitude]} icon={markerIcon}>
+                    <Popup closeButton={false}>
+                      <div style={{ background: '#0C1A1D', borderRadius: 10, padding: '10px 12px', minWidth: 170, border: '1px solid rgba(34,197,94,0.4)' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: '#22c55e' }}>📍 {session.patient_name}</p>
+                        <p style={{ margin: '0 0 10px', fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <button onClick={() => openMap(mapsDirectionsUrl(loc.latitude, loc.longitude))} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗺 Directions — Google</button>
+                          <button onClick={() => openMap(`https://waze.com/ul?ll=${loc.latitude},${loc.longitude}&navigate=yes`)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>📡 Navigate — Waze</button>
+                          <button onClick={() => shareLocation(loc.latitude, loc.longitude, session.patient_name)} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🔗 Share Location</button>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
                   {loc.accuracy_meters != null && loc.accuracy_meters > 0 && (
                     <Circle
                       center={[loc.latitude, loc.longitude]}
@@ -529,23 +553,26 @@ export default function GuardianView() {
               )}
 
               {/* Action buttons */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 <button onClick={() => openMap(mapsViewUrl(loc.latitude, loc.longitude))}
                   className="flex flex-col items-center gap-1.5 bg-blue-700/20 hover:bg-blue-700/40 border border-blue-700/40 rounded-xl px-2 py-3 text-blue-300 text-[11px] font-semibold transition-colors min-h-[44px]">
-                  <ExternalLink className="w-4 h-4" />View Map
+                  <ExternalLink className="w-4 h-4" />Google
                 </button>
                 <button onClick={() => openMap(mapsDirectionsUrl(loc.latitude, loc.longitude))}
                   className="flex flex-col items-center gap-1.5 bg-emerald-700/20 hover:bg-emerald-700/40 border border-emerald-700/40 rounded-xl px-2 py-3 text-emerald-300 text-[11px] font-semibold transition-colors min-h-[44px]">
                   <Navigation className="w-4 h-4" />Directions
                 </button>
+                <button onClick={() => openMap(`https://waze.com/ul?ll=${loc.latitude},${loc.longitude}&navigate=yes`)}
+                  className="flex flex-col items-center gap-1.5 bg-cyan-700/20 hover:bg-cyan-700/40 border border-cyan-700/40 rounded-xl px-2 py-3 text-cyan-300 text-[11px] font-semibold transition-colors min-h-[44px]">
+                  <Navigation className="w-4 h-4" />Waze
+                </button>
+                <button onClick={() => shareLocation(loc.latitude, loc.longitude, session.patient_name)}
+                  className="flex flex-col items-center gap-1.5 bg-yellow-700/20 hover:bg-yellow-700/40 border border-yellow-700/40 rounded-xl px-2 py-3 text-yellow-300 text-[11px] font-semibold transition-colors min-h-[44px]">
+                  <Copy className="w-4 h-4" />Share
+                </button>
                 <button onClick={() => openMap(mapsSatelliteUrl(loc.latitude, loc.longitude))}
                   className="flex flex-col items-center gap-1.5 bg-purple-700/20 hover:bg-purple-700/40 border border-purple-700/40 rounded-xl px-2 py-3 text-purple-300 text-[11px] font-semibold transition-colors min-h-[44px]">
                   <Globe className="w-4 h-4" />Satellite
-                </button>
-                <button onClick={() => copyCoords(loc.latitude, loc.longitude)}
-                  className="flex flex-col items-center gap-1.5 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-600/40 rounded-xl px-2 py-3 text-slate-300 text-[11px] font-semibold transition-colors min-h-[44px]">
-                  {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
             </div>
