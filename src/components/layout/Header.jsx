@@ -49,7 +49,7 @@ export default function Header() {
   }, [isUserMenuOpen]);
 
   const navLinks = [
-    { name: 'Discover',      path: '/discover' },
+    { name: 'Find Doctors',  path: '/providers' },
     { name: 'Procedures',    path: '/procedures' },
     { name: 'How It Works',  path: '/how-it-works' },
   ];
@@ -273,18 +273,27 @@ export default function Header() {
               )}
             </div>
           ) : (
-            /* Single "Get Started" CTA */
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center px-6 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-              style={{
-                background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
-                color: '#060B16',
-                boxShadow: '0 4px 20px rgba(212,175,55,0.28)',
-              }}
-            >
-              Get Started
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/dashboard"
+                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 500 }}
+                onMouseEnter={e => e.target.style.color = 'rgba(255,255,255,0.85)'}
+                onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/consultation"
+                className="inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
+                  color: '#060B16',
+                  boxShadow: '0 4px 20px rgba(212,175,55,0.28)',
+                }}
+              >
+                Book Free Consult
+              </Link>
+            </div>
           )}
 
           {/* Language selector — Babel Engine globe switcher */}
@@ -380,11 +389,18 @@ export default function Header() {
               </>
             ) : (
               <Link
-                to="/dashboard" onClick={() => setIsMobileOpen(false)}
-                className="w-full text-center py-3.5 rounded-full text-sm font-semibold"
+                to="/consultation" onClick={() => setIsMobileOpen(false)}
+                className="w-full text-center py-3.5 rounded-full text-sm font-bold"
                 style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
               >
-                Get Started
+                Book Free Consult
+              </Link>
+              <Link
+                to="/dashboard" onClick={() => setIsMobileOpen(false)}
+                className="w-full text-center py-3 text-sm font-medium"
+                style={{ color: 'rgba(255,255,255,0.45)' }}
+              >
+                Sign In
               </Link>
             )}
             <div className="flex gap-2 pt-1">
