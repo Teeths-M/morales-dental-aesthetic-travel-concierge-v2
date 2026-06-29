@@ -4,7 +4,7 @@ const SHAKE_THRESHOLD  = 18;   // acceleration delta to count as a shake
 const SHAKE_WINDOW_MS  = 1500; // 3 shakes must happen within this window
 const STRIKE_WINDOW_MS = 400;  // minimum ms between counted strikes
 
-export function useSilentMode({ onActivate, onCancel } = {}) {
+export function useSilentMode({ onActivate = null, onCancel = null } = {}) {
   const [active,  setActive]  = useState(false);
   const [strikes, setStrikes] = useState(0);
 

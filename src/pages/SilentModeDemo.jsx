@@ -67,11 +67,12 @@ export default function SilentModeDemo() {
     },
   });
 
-  // Request motion permission on iOS
+  // Request motion permission on iOS (uses vendor API not in standard TS types)
   const requestMotion = async () => {
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    const DME = /** @type {any} */ (DeviceMotionEvent);
+    if (typeof DME !== 'undefined' && typeof DME.requestPermission === 'function') {
       try {
-        const result = await DeviceMotionEvent.requestPermission();
+        const result = await DME.requestPermission();
         setMotionGranted(result === 'granted');
       } catch { setMotionGranted(false); }
     } else {

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const TAP_WINDOW_MS = 1000; // all taps must land within 1 second
 const TAP_GAP_MS   = 80;   // minimum ms between taps (debounce)
 
-export function useTapProtocol({ onDoubleTab, onTripleTap } = {}) {
+export function useTapProtocol({ onDoubleTab = null, onTripleTap = null } = {}) {
   const [tapCount, setTapCount]   = useState(0);
   const [lastMode, setLastMode]   = useState(null); // 'check' | 'emergency'
   const tapTimes  = useRef([]);
