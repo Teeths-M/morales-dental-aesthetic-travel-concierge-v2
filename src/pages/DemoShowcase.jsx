@@ -521,6 +521,7 @@ const TABS = [
   { id: 'evn',        label: '🌍 EVN-iQ400 · Danger Zone', link: '/demo/evn' },
   { id: 'james',      label: '🎤 The James Standard',    link: '/demo/james' },
   { id: 'silent',     label: '🔇 Silent Mode — I\'m Being Watched', link: '/demo/silent' },
+  { id: 'trust',      label: '⭐ Partner Trust Score',              link: '/demo/trust' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
@@ -730,6 +731,13 @@ export default function DemoShowcase() {
               style={{ background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.5)', color: '#ef4444', fontWeight: 800 }}
             >
               🔇 Silent Mode — I'm Being Watched ✨ NEW
+            </Link>
+            <Link
+              to="/demo/trust"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm justify-center"
+              style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37', fontWeight: 700 }}
+            >
+              ⭐ Partner Trust Score ✨ NEW
             </Link>
           </div>
 
