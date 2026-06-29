@@ -47,13 +47,16 @@ function MapCenter({ lat, lng }) {
 // Face ID scan animation
 function FaceIDScan({ onComplete }) {
   const [step, setStep] = useState(0);
-  // 0 = scanning, 1 = confirmed, 2 = done
+  const onCompleteRef = React.useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  // Empty deps — timers fire once on mount. Using ref to avoid stale closure.
   useEffect(() => {
     const t1 = setTimeout(() => setStep(1), 1800);
     const t2 = setTimeout(() => setStep(2), 2800);
-    const t3 = setTimeout(() => onComplete(), 3200);
+    const t3 = setTimeout(() => onCompleteRef.current(), 3200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onComplete]);
+  }, []);
 
   return (
     <div style={{ minHeight: 'calc(100vh - 57px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
