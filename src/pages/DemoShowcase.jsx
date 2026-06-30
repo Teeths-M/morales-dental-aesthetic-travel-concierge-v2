@@ -529,6 +529,7 @@ const TABS = [
   { id: 'weather',  label: '🌡️ Weather to Health', link: '/demo/weather' },
   { id: 'family',   label: '👩🏽 Mother\'s Eye',     link: '/demo/family' },
   { id: 'arrival',  label: '🏥 Arrival Intel',      link: '/demo/arrival' },
+  { id: 'intelligence', label: '🔍 Doctor Intel',   link: '/demo/intelligence' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
@@ -698,8 +699,9 @@ export default function DemoShowcase() {
               { to: '/demo/weather',  label: '🌡️ Weather to Health',  color: '#60a5fa', border: '1px solid rgba(96,165,250,0.4)' },
               { to: '/demo/evn',      label: '🌍 EVN-iQ400',          color: '#60a5fa', border: '1px solid rgba(96,165,250,0.5)' },
               { to: '/demo/family',   label: '👩🏽 Mother\'s Eye',      color: '#f472b6', border: '1px solid rgba(244,114,182,0.4)' },
-              { to: '/demo/arrival',  label: '🏥 Arrival Intel',       color: GREEN,     border: `1px solid ${GREEN}40` },
-              { to: '/discharge-reader', label: '📄 Discharge AI Reader', color: GOLD,  border: `2px solid ${GOLD}50` },
+              { to: '/demo/arrival',       label: '🏥 Arrival Intel',       color: GREEN,     border: `1px solid ${GREEN}40` },
+              { to: '/demo/intelligence', label: '🔍 Doctor Intel Scan',   color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)' },
+              { to: '/discharge-reader',  label: '📄 Discharge AI Reader', color: GOLD,      border: `2px solid ${GOLD}50` },
             ].map(d => (
               <Link key={d.to} to={d.to}
                 className="flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-xs text-center"
