@@ -45,7 +45,8 @@ const LanguageBridgeDemo     = lazy(() => import('@/pages/LanguageBridgeDemo'));
 const WaitingRoomDemo        = lazy(() => import('@/pages/WaitingRoomDemo'));
 const WeatherHealthDemo      = lazy(() => import('@/pages/WeatherHealthDemo'));
 const FamilyEyeDemo          = lazy(() => import('@/pages/FamilyEyeDemo'));
-const ArrivalIntelDemo       = lazy(() => import('@/pages/ArrivalIntelDemo'));
+const ArrivalIntelDemo         = lazy(() => import('@/pages/ArrivalIntelDemo'));
+const IntelligenceScanDemo     = lazy(() => import('@/pages/IntelligenceScanDemo'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -85,6 +86,7 @@ export const publicRoutes = (
     <Route path="/demo/weather"         element={<ErrorBoundary><WeatherHealthDemo /></ErrorBoundary>} />
     <Route path="/demo/family"          element={<ErrorBoundary><FamilyEyeDemo /></ErrorBoundary>} />
     <Route path="/demo/arrival"         element={<ErrorBoundary><ArrivalIntelDemo /></ErrorBoundary>} />
+    <Route path="/demo/intelligence"    element={<ErrorBoundary><IntelligenceScanDemo /></ErrorBoundary>} />
     <Route path="/recovery-check-in/:token"  element={<RecoveryCheckIn />} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<PublicRecoveryTracker />} />
