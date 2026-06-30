@@ -14,6 +14,8 @@ const Providers     = lazy(() => import('@/pages/Providers'));
 const ProviderDetail = lazy(() => import('@/pages/ProviderDetail'));
 const HowItWorksPage = lazy(() => import('@/pages/HowItWorksPage'));
 const About         = lazy(() => import('@/pages/About'));
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Procedures    = lazy(() => import('@/pages/Procedures'));
 const PartnerDirectory = lazy(() => import('@/pages/PartnerDirectory'));
 const ConsultationForm = lazy(() => import('@/pages/ConsultationForm'));
@@ -54,6 +56,8 @@ export const publicRoutes = (
     <Route path="/how-it-works"   element={<HowItWorksPage />} />
     <Route path="/partners"       element={<PartnerDirectory />} />
     <Route path="/about"          element={<About />} />
+    <Route path="/privacy"        element={<PrivacyPolicy />} />
+    <Route path="/terms"          element={<TermsOfService />} />
     <Route path="/procedures"     element={<Procedures />} />
     <Route path="/consultation"   element={<ConsultationForm />} />
     <Route path="/consultation-success" element={<ConsultationSuccess />} />

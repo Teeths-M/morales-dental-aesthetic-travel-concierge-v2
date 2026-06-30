@@ -163,6 +163,8 @@ export const ROUTES = {
   PARTNERS: '/partners',
   HOW_IT_WORKS: '/how-it-works',
   ABOUT: '/about',
+  PRIVACY: '/privacy',
+  TERMS: '/terms',
   
   // Authenticated
   DASHBOARD: '/dashboard',

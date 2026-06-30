@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Award, Heart, Headphones, CheckCircle } from 'lucide-react';
+import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
+import { ROUTES } from '@/lib/constants';
 
 const trustItems = [
   { icon: Shield,      label: 'EVN-iQ400™ · 195 Countries' },
@@ -95,9 +97,12 @@ export default function Footer() {
 
         <div className="border-t border-background/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-xs text-background/40">© 2026 Morales Dental & Aesthetic Travel Concierge. All rights reserved.</p>
-          <div className="flex gap-6 text-xs text-background/40">
-            <span className="hover:text-background/60 cursor-pointer">Privacy Policy</span>
-            <span className="hover:text-background/60 cursor-pointer">Terms of Service</span>
+          <div className="flex items-center gap-6">
+            <div className="flex gap-6 text-xs text-background/40">
+              <Link to={ROUTES.PRIVACY} className="hover:text-background/60 transition-colors">Privacy Policy</Link>
+              <Link to={ROUTES.TERMS} className="hover:text-background/60 transition-colors">Terms of Service</Link>
+            </div>
+            <LanguageSwitcher />
           </div>
         </div>
       </div>
