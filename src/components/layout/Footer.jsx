@@ -51,7 +51,7 @@ export default function Footer() {
             <h4 className="font-semibold text-sm mb-4 text-background/90">Services</h4>
             <div className="space-y-2.5">
               {['Dental Implants', 'Smile Makeover', 'All-on-4/All-on-6', 'Porcelain Veneers'].map(s => (
-                <p key={s} className="text-sm text-background/50 hover:text-background/80 cursor-pointer transition-colors">{s}</p>
+                <Link key={s} to="/procedures" className="block text-sm text-background/50 hover:text-background/80 transition-colors">{s}</Link>
               ))}
             </div>
           </div>
@@ -71,8 +71,8 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-4 text-background/90">Contact</h4>
             <div className="space-y-2.5">
-              <p className="text-sm text-background/50">info@moralesconcierge.com</p>
-              <p className="text-sm text-background/50">+1 (800) 555-0199</p>
+              <a href="mailto:info@moralesconcierge.com" className="block text-sm text-background/50 hover:text-background/80 transition-colors">info@moralesconcierge.com</a>
+              <a href="tel:+18005550199" className="block text-sm text-background/50 hover:text-background/80 transition-colors">+1 (800) 555-0199</a>
               <p className="text-sm text-background/50">Mon–Fri 8am–8pm EST</p>
             </div>
           </div>
