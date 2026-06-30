@@ -6,6 +6,7 @@ import DoctorSignupStep1 from '@/components/doctor-signup/DoctorSignupStep1';
 import DoctorSignupStep2 from '@/components/doctor-signup/DoctorSignupStep2';
 import DoctorSignupStep2Pricing from '@/components/doctor-signup/DoctorSignupStep2Pricing';
 import DoctorSignupStep3 from '@/components/doctor-signup/DoctorSignupStep3';
+import DoctorSignupStepIntelligence from '@/components/doctor-signup/DoctorSignupStepIntelligence';
 import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess';
 import { MapPin, Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -53,7 +54,7 @@ export default function DoctorSignup() {
 
   // Auto-save draft on every change
   useEffect(() => {
-    if (step < 3) { // Don't save after completion
+    if (step < 3) { // Don't save after signup form is submitted
       saveSignupDraft('doctor', formData);
     }
   }, [formData, step]);
@@ -173,11 +174,11 @@ export default function DoctorSignup() {
         </div>
 
         {/* Progress Indicator */}
-        {step < 5 && (
+        {step < 5 && step !== 4 && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-medium text-muted-foreground">
-                {step === 0 ? '1 of 5' : step === 1 ? '2 of 5' : step === 2 ? '3 of 5' : step === 3 ? '4 of 5' : '5 of 5'}
+                {step === 0 ? '1 of 5' : step === 1 ? '2 of 5' : step === 2 ? '3 of 5' : step === 3 ? '4 of 5' : step === 4 ? '5 of 5' : '5 of 5'}
               </span>
             </div>
             <div className="h-1 bg-secondary rounded-full overflow-hidden">
@@ -233,23 +234,28 @@ export default function DoctorSignup() {
                  specialties: formData.specialties,
                  procedurePrices: formData.procedurePrices
                });
+               // Step 4 = Internet Intelligence before the success screen
                setStep(4);
                clearSignupDraft('doctor');
 
-               // Send portal access email
-               try {
-                 await base44.functions.invoke('sendPartnerWelcomeEmail', {
-                   partner_type: 'doctor',
-                   partner_id: doctor.id,
-                 });
-               } catch (err) {
-                 console.error('Failed to send welcome email:', err);
-               }
+               // Send portal access email in background — don't block the intelligence step
+               base44.functions.invoke('sendPartnerWelcomeEmail', {
+                 partner_type: 'doctor',
+                 partner_id: doctor.id,
+               }).catch(err => console.error('Failed to send welcome email:', err));
              }}
            />
           )}
 
           {step === 4 && successDoctor && (
+            <DoctorSignupStepIntelligence
+              doctor={successDoctor}
+              onNext={() => setStep(5)}
+              onSkip={() => setStep(5)}
+            />
+          )}
+
+          {step === 5 && successDoctor && (
            <DoctorSignupSuccess
              doctor={successDoctor}
              specialties={successDoctor.specialties}

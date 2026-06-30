@@ -208,6 +208,44 @@
     },
     "sign_up_completed_at": {
       "type": "string"
+    },
+    "website_url": {
+      "type": "string",
+      "description": "Clinic or personal website URL"
+    },
+    "social_facebook": {
+      "type": "string",
+      "description": "Facebook page handle"
+    },
+    "social_instagram": {
+      "type": "string",
+      "description": "Instagram handle"
+    },
+    "social_tiktok": {
+      "type": "string",
+      "description": "TikTok handle"
+    },
+    "internet_risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Internet intelligence risk classification"
+    },
+    "internet_risk_score": {
+      "type": "number",
+      "description": "Raw risk score 0–100 (lower = safer)"
+    },
+    "internet_summary": {
+      "type": "string",
+      "description": "AI-generated plain-English summary of the internet risk assessment"
+    },
+    "internet_signals": {
+      "type": "object",
+      "description": "Full signal breakdown: domain age, social checks, phone flags, AI credibility"
+    },
+    "internet_last_checked": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the internet intelligence scan was last run"
     }
   },
   "required": [
