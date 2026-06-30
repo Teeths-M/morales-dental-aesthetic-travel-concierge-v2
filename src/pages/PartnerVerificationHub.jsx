@@ -35,6 +35,7 @@ import {
   Search
 } from 'lucide-react';
 import AdminLayout from '@/components/layout/AdminLayout';
+import PartnerIntelligencePanel from '@/components/admin/PartnerIntelligencePanel';
 
 export default function PartnerVerificationHub() {
   const navigate = useNavigate();
@@ -343,6 +344,9 @@ export default function PartnerVerificationHub() {
             )}
           </CardContent>
         </Card>
+
+        {/* Doctor Internet Intelligence */}
+        <PartnerIntelligencePanel />
 
         {/* Review Dialog */}
         <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
