@@ -71,7 +71,8 @@ export default function FloatingSOSButton() {
         transition={{ delay: 1.2, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position:      'fixed',
-          bottom:        'max(16px, env(safe-area-inset-bottom, 16px))',
+          bottom:        'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px))',
+          transition:    'bottom 0.35s cubic-bezier(0.4,0,0.2,1)',
           right:         '16px',
           zIndex:        9999,
           display:       'flex',

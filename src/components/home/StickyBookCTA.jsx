@@ -15,6 +15,11 @@ export default function StickyBookCTA() {
     return () => obs.disconnect();
   }, []);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sticky-cta-height', visible ? '68px' : '0px');
+    return () => document.documentElement.style.setProperty('--sticky-cta-height', '0px');
+  }, [visible]);
+
   return (
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 90,
