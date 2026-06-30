@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
 import { generatePINHash, verifyPIN } from '@/lib/vaultPINHashing';
+import ForgotPIN from '@/components/emergency/ForgotPIN';
 
 export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
   const [pin, setPin] = useState(['', '', '', '']);
@@ -12,6 +13,7 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSettingPIN, setIsSettingPIN] = useState(hasExistingPIN === false);
+  const [showForgotPIN, setShowForgotPIN] = useState(false);
   const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
   const confirmRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
@@ -229,70 +231,90 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
       className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-blue-900 flex items-center justify-center p-6"
     >
       <div className="max-w-md w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
-        {/* Back Button */}
-        <button
-          onClick={handleBack}
-          className="absolute top-4 left-4 flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
+        {!showForgotPIN && (
+          <button
+            onClick={handleBack}
+            className="absolute top-4 left-4 flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+        )}
 
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mx-auto mb-6">
-            <Shield className="w-10 h-10 text-emerald-400" />
-          </div>
-          <h1 className="font-display text-3xl text-white mb-3" style={{ letterSpacing: '-0.02em' }}>
-            {isSettingPIN ? 'Set Vault PIN' : 'Enter Vault PIN'}
-          </h1>
-          <p className="text-white/70 text-sm">
-            {isSettingPIN 
-              ? 'Create a 4-digit PIN to protect your vault' 
-              : 'Enter your PIN to access your documents'}
-          </p>
-        </div>
-
-        {renderPinInputs(false)}
-
-        {isSettingPIN && (
+        {showForgotPIN ? (
+          <ForgotPIN
+            userEmail={localStorage.getItem('morales_user_email') || user?.email || ''}
+            pinType="vault"
+            onBack={() => setShowForgotPIN(false)}
+          />
+        ) : (
           <>
-            <p className="text-white/70 text-sm text-center mb-3">Confirm PIN</p>
-            {renderPinInputs(true)}
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-10 h-10 text-emerald-400" />
+              </div>
+              <h1 className="font-display text-3xl text-white mb-3" style={{ letterSpacing: '-0.02em' }}>
+                {isSettingPIN ? 'Set Vault PIN' : 'Enter Vault PIN'}
+              </h1>
+              <p className="text-white/70 text-sm">
+                {isSettingPIN
+                  ? 'Create a 4-digit PIN to protect your vault'
+                  : 'Enter your PIN to access your documents'}
+              </p>
+            </div>
+
+            {renderPinInputs(false)}
+
+            {isSettingPIN && (
+              <>
+                <p className="text-white/70 text-sm text-center mb-3">Confirm PIN</p>
+                {renderPinInputs(true)}
+              </>
+            )}
+
+            {error && (
+              <div className="flex items-center gap-2 text-red-300 bg-red-500/20 border border-red-400/30 rounded-xl px-4 py-3 mb-6">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
+            <Button
+              onClick={isSettingPIN ? handleSetPIN : handleVerifyPIN}
+              disabled={loading || pin.some(d => d === '') || (isSettingPIN && confirmPin.some(d => d === ''))}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : isSettingPIN ? (
+                'Set PIN'
+              ) : (
+                'Unlock Vault'
+              )}
+            </Button>
+
+            {!isSettingPIN && (
+              <button
+                onClick={() => { setError(''); setShowForgotPIN(true); }}
+                className="w-full text-center text-sm text-emerald-300 hover:text-emerald-200 mt-4 transition-colors"
+              >
+                Forgot PIN?
+              </button>
+            )}
+
+            <div className="mt-6 text-center">
+              <p className="text-white/50 text-xs">
+                <Lock className="w-3 h-3 inline mr-1" />
+                {navigator.onLine
+                  ? 'Your PIN is securely hashed (PBKDF2) and never stored in plain text'
+                  : 'Offline Mode: Verifying against local secure hash'}
+              </p>
+            </div>
           </>
         )}
-
-        {error && (
-          <div className="flex items-center gap-2 text-red-300 bg-red-500/20 border border-red-400/30 rounded-xl px-4 py-3 mb-6">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
-
-        <Button
-          onClick={isSettingPIN ? handleSetPIN : handleVerifyPIN}
-          disabled={loading || pin.some(d => d === '') || (isSettingPIN && confirmPin.some(d => d === ''))}
-          className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
-        >
-          {loading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Processing...
-            </>
-          ) : isSettingPIN ? (
-            'Set PIN'
-          ) : (
-            'Unlock Vault'
-          )}
-        </Button>
-
-        <div className="mt-6 text-center">
-          <p className="text-white/50 text-xs">
-            <Lock className="w-3 h-3 inline mr-1" />
-            {navigator.onLine 
-              ? 'Your PIN is securely hashed (PBKDF2) and never stored in plain text' 
-              : 'Offline Mode: Verifying against local secure hash'}
-          </p>
-        </div>
       </div>
     </motion.div>
   );

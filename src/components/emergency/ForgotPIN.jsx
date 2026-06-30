@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Mail, ArrowLeft, CheckCircle2, WifiOff, AlertTriangle, Loader2 } from 'lucide-react';
 
-export default function ForgotPIN({ userEmail = '', onBack }) {
+export default function ForgotPIN({ userEmail = '', onBack, pinType = 'emergency' }) {
   const [email, setEmail] = useState(userEmail);
   const [state, setState] = useState('idle'); // idle | sending | sent | error
   const [errorMsg, setErrorMsg] = useState('');
@@ -45,7 +45,7 @@ export default function ForgotPIN({ userEmail = '', onBack }) {
     setState('sending');
     setErrorMsg('');
     try {
-      await base44.functions.invoke('requestPINReset', { user_email: email.toLowerCase().trim() });
+      await base44.functions.invoke('requestPINReset', { user_email: email.toLowerCase().trim(), pin_type: pinType });
       setState('sent');
     } catch {
       setState('error');

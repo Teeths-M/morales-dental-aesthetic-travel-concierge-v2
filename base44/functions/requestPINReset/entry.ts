@@ -22,7 +22,8 @@ async function signToken(data: string): Promise<string> {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user_email } = await req.json().catch(() => ({}));
+    const { user_email, pin_type } = await req.json().catch(() => ({}));
+    const pinType = pin_type === 'vault' ? 'vault' : 'emergency';
 
     if (!user_email || !String(user_email).includes('@')) {
       return Response.json({ error: 'Valid email required' }, { status: 400 });
@@ -35,15 +36,16 @@ Deno.serve(async (req) => {
     const token = btoa(payload).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
     const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || 'https://app.morales.health';
-    const resetUrl = `${origin}/reset-pin?t=${token}&s=${sig}`;
+    const resetUrl = `${origin}/reset-pin?t=${token}&s=${sig}${pinType === 'vault' ? '&type=vault' : ''}`;
+    const label = pinType === 'vault' ? 'Vault PIN' : 'Emergency PIN';
 
     await base44.integrations.Core.SendEmail({
       to: email,
-      subject: 'Reset your Morales Emergency PIN',
+      subject: `Reset your Morales ${label}`,
       body: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-          <h2 style="color:#0C1A1D">Reset your Emergency PIN</h2>
-          <p>We received a request to reset your Emergency PIN for Morales Medical Travel Concierge.</p>
+          <h2 style="color:#0C1A1D">Reset your ${label}</h2>
+          <p>We received a request to reset your ${label} for Morales Medical Travel Concierge.</p>
           <p>
             <a href="${resetUrl}"
                style="display:inline-block;background:#1d4ed8;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;margin:16px 0">

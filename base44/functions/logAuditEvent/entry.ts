@@ -24,6 +24,8 @@ const ALLOWED_EVENT_TYPES = new Set([
   'role_escalation_attempt',
   'safe_t_critical_block',
   'safe_t_high_risk_waiver_signed',
+  'emergency_pin_reset',
+  'vault_pin_reset',
 ]);
 
 async function sha256(text: string): Promise<string> {
