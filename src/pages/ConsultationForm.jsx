@@ -169,11 +169,22 @@ export default function ConsultationForm() {
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '32px 28px' }}>
 
           {searchParams.get('doctor') && (
-            <div style={{ marginBottom: 20, padding: '10px 14px', borderRadius: 10, background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)' }}>
+            <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)' }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: GOLD, margin: 0 }}>Booking with Dr. {searchParams.get('doctor')}</p>
               {searchParams.get('procedure') && <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>{searchParams.get('procedure')}</p>}
             </div>
           )}
+
+          {/* Fee notice */}
+          <div style={{ marginBottom: 24, padding: '14px 18px', borderRadius: 14, background: 'rgba(212,175,55,0.07)', border: '1px solid rgba(212,175,55,0.25)', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>💳</span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: GOLD, margin: '0 0 4px' }}>$49 Consultation Fee — Fully Credited Back</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+                This fee ensures our doctors speak only with serious patients. Once you book any procedure package, your <strong style={{ color: 'rgba(255,255,255,0.75)' }}>$49 is returned in full</strong> as a credit toward your package.
+              </p>
+            </div>
+          </div>
 
           {/* Step header + progress bar */}
           <div style={{ marginBottom: 28 }}>
@@ -385,12 +396,17 @@ export default function ConsultationForm() {
 
                 {/* Trust badges */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER}` }}>
-                  {[['🔒','HIPAA Compliant'],['🛡️','SAFE-T4LIFE™ Encrypted'],['⭐','98% Satisfaction'],['📋','No Commitment']].map(([icon, text]) => (
+                  {[['🔒','HIPAA Compliant'],['🛡️','SAFE-T4LIFE™ Encrypted'],['⭐','98% Satisfaction'],['💳','$49 Credited to Package']].map(([icon, text]) => (
                     <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
                       <span style={{ fontSize: 13 }}>{icon}</span>{text}
                     </div>
                   ))}
                 </div>
+
+                {/* Fee credit reminder */}
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: '-8px 0 0', lineHeight: 1.6 }}>
+                  Your $49 consultation fee is <span style={{ color: 'rgba(212,175,55,0.7)' }}>fully credited</span> when you book your procedure package.
+                </p>
 
                 {error && (
                   <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13 }}>
