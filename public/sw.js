@@ -1,4 +1,4 @@
-const CACHE_NAME      = 'morales-vault-v2';
+const CACHE_NAME      = 'morales-vault-v3';
 const TILE_CACHE_NAME = 'morales-map-tiles-v2';
 // Esri World Imagery + labels overlay (primary) + OSM fallback
 const TILE_RE = /^https:\/\/(server\.arcgisonline\.com|[abc]\.tile\.openstreetmap\.org)\//;
