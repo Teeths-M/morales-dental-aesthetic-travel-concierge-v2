@@ -1,13 +1,11 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
-  Globe, Shield, AlertTriangle, CheckCircle,
-  ChevronRight, Loader2, Facebook, Instagram, Phone,
+  Shield, AlertTriangle, CheckCircle,
+  ChevronRight, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 const RISK_CONFIG = {
   low: {
@@ -34,30 +32,24 @@ const RISK_CONFIG = {
 };
 
 const SCAN_STEPS = [
-  { key: 'domain',  label: 'Domain Intelligence',   desc: 'Checking domain age & registration history' },
-  { key: 'social',  label: 'Social Media Presence', desc: 'Verifying profiles are live across platforms' },
-  { key: 'phone',   label: 'Phone Analysis',        desc: 'Analyzing number origin and carrier signals' },
-  { key: 'ai',      label: 'AI Web Intelligence',   desc: 'Deep internet reputation analysis' },
+  { key: 'domain', label: 'Domain Intelligence',   desc: 'Checking domain age & registration history' },
+  { key: 'social', label: 'Social Media Presence', desc: 'Verifying profiles are live across platforms' },
+  { key: 'phone',  label: 'Phone Analysis',        desc: 'Analyzing number origin and carrier signals' },
+  { key: 'ai',     label: 'AI Web Intelligence',   desc: 'Deep internet reputation analysis' },
 ];
 
 export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip }) {
-  const [form, setForm] = useState({
-    website_url:       '',
-    facebook_handle:   '',
-    instagram_handle:  '',
-    tiktok_handle:     '',
-  });
-  const [scanning,   setScanning]   = useState(false);
-  const [scanStep,   setScanStep]   = useState(-1);
-  const [result,     setResult]     = useState(null);
-  const [error,      setError]      = useState('');
+  const [scanning,  setScanning]  = useState(false);
+  const [scanStep,  setScanStep]  = useState(-1);
+  const [result,    setResult]    = useState(null);
+  const [error,     setError]     = useState('');
+  const fired = useRef(false);
 
-  const handleScan = async () => {
+  const runScan = async () => {
     setScanning(true);
     setResult(null);
     setError('');
 
-    // Animate through each scan step with a small delay
     for (let i = 0; i < SCAN_STEPS.length; i++) {
       setScanStep(i);
       await new Promise(r => setTimeout(r, 900));
@@ -68,14 +60,14 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
         partner_id:       doctor.id,
         partner_type:     'doctor',
         registered_name:  doctor.full_name,
-        clinic_name:      doctor.clinic_name  || '',
-        phone:            doctor.phone        || '',
-        city:             doctor.clinic_city  || '',
+        clinic_name:      doctor.clinic_name    || '',
+        phone:            doctor.phone          || '',
+        city:             doctor.clinic_city    || '',
         country:          doctor.clinic_country || '',
-        website_url:      form.website_url      || null,
-        facebook_handle:  form.facebook_handle  || null,
-        instagram_handle: form.instagram_handle || null,
-        tiktok_handle:    form.tiktok_handle    || null,
+        website_url:      null,
+        facebook_handle:  null,
+        instagram_handle: null,
+        tiktok_handle:    null,
       });
       setResult(res.data);
     } catch (_) {
@@ -85,6 +77,14 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
       setScanStep(-1);
     }
   };
+
+  // Auto-start once doctor.id is available
+  useEffect(() => {
+    if (!fired.current && doctor?.id) {
+      fired.current = true;
+      runScan();
+    }
+  }, [doctor?.id]);
 
   const cfg = result ? RISK_CONFIG[result.risk_level] : null;
 
@@ -100,88 +100,28 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
         </div>
         <h2 className="text-xl font-semibold text-foreground mb-1">Internet Intelligence Scan</h2>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          We verify your digital footprint so patients trust you instantly.
-          All fields are optional — more info = better score.
+          Verifying your digital footprint so patients trust you from day one.
         </p>
       </div>
 
-      {/* Input form — hidden once result is shown */}
-      {!result && !scanning && (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Website URL <span className="font-normal normal-case">(optional)</span>
-            </Label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                className="pl-9"
-                placeholder="https://yourclinic.com"
-                value={form.website_url}
-                onChange={e => setForm(f => ({ ...f, website_url: e.target.value }))}
-              />
-            </div>
-          </div>
+      {/* Pre-scan initialising state (one-frame flash before scanning starts) */}
+      {!scanning && !result && !error && (
+        <div className="flex items-center justify-center gap-3 py-6">
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#D4AF37' }} />
+          <p className="text-sm text-muted-foreground">Initializing scan…</p>
+        </div>
+      )}
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Facebook Page <span className="font-normal normal-case">(optional)</span>
-            </Label>
-            <div className="relative">
-              <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                className="pl-9"
-                placeholder="yourpagename"
-                value={form.facebook_handle}
-                onChange={e => setForm(f => ({ ...f, facebook_handle: e.target.value }))}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground pl-1">facebook.com/yourpagename</p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Instagram <span className="font-normal normal-case">(optional)</span>
-            </Label>
-            <div className="relative">
-              <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                className="pl-9"
-                placeholder="@yourhandle"
-                value={form.instagram_handle}
-                onChange={e => setForm(f => ({ ...f, instagram_handle: e.target.value.replace(/^@/, '') }))}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              TikTok <span className="font-normal normal-case">(optional)</span>
-            </Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                className="pl-9"
-                placeholder="@yourhandle"
-                value={form.tiktok_handle}
-                onChange={e => setForm(f => ({ ...f, tiktok_handle: e.target.value.replace(/^@/, '') }))}
-              />
-            </div>
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-400 text-center">{error}</p>
-          )}
-
-          <Button onClick={handleScan} className="w-full font-semibold">
-            Run Intelligence Scan
-          </Button>
-
+      {/* Error state */}
+      {error && (
+        <div className="space-y-3">
+          <p className="text-sm text-red-400 text-center">{error}</p>
+          <Button onClick={runScan} variant="outline" className="w-full">Retry Scan</Button>
           <button
             onClick={onSkip}
             className="w-full text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
           >
-            Skip for now — I'll add this later
+            Skip — admin will review manually
           </button>
         </div>
       )}
@@ -248,10 +188,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
               <div className="h-1.5 w-24 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
                 <div
                   className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${result.risk_score}%`,
-                    background: cfg.color,
-                  }}
+                  style={{ width: `${result.risk_score}%`, background: cfg.color }}
                 />
               </div>
               <span className="text-xs font-semibold" style={{ color: cfg.color }}>
@@ -299,7 +236,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
             </div>
           )}
 
-          {/* Social signal summary */}
+          {/* Social presence grid */}
           {result.signals?.social_checks?.length > 0 && (
             <div>
               <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2">SOCIAL PRESENCE</p>
@@ -314,7 +251,10 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                     }}
                   >
                     <p className="text-[10px] font-semibold text-muted-foreground">{s.platform}</p>
-                    <p className="text-xs font-bold mt-0.5" style={{ color: s.status === 'active' ? '#10b981' : s.status === 'not_provided' ? '#6b7280' : '#ef4444' }}>
+                    <p
+                      className="text-xs font-bold mt-0.5"
+                      style={{ color: s.status === 'active' ? '#10b981' : s.status === 'not_provided' ? '#6b7280' : '#ef4444' }}
+                    >
                       {s.status === 'active' ? 'LIVE' : s.status === 'not_provided' ? 'N/A' : 'NOT FOUND'}
                     </p>
                   </div>
@@ -332,7 +272,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
               <div>
                 <p className="text-sm font-semibold text-red-300">Application Held for Review</p>
                 <p className="text-xs text-red-300/70 mt-1 leading-relaxed">
-                  Your application has been submitted and flagged for admin verification. You'll receive an email within 24–48 hours when your account is reviewed.
+                  Your application has been submitted and flagged for admin verification. You'll receive an email within 24–48 hours.
                 </p>
               </div>
               <Button className="w-full" onClick={onNext} variant="outline">

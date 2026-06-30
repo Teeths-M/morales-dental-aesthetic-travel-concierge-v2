@@ -1,5 +1,5 @@
 // @ts-nocheck — pre-existing className prop type gaps in shadcn wrappers
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -54,6 +54,18 @@ export default function PartnerVerificationHub() {
       return verifs;
     }
   });
+
+  const { data: doctors } = useQuery({
+    queryKey: ['doctors-intel'],
+    queryFn: () => base44.entities.Doctor.list('-created_date', 200),
+    staleTime: 60_000,
+  });
+
+  const doctorByEmail = useMemo(() => {
+    const m = {};
+    (doctors || []).forEach(d => { m[d.email] = d; });
+    return m;
+  }, [doctors]);
 
   const filteredVerifications = verifications?.filter(v => {
     const matchesSearch = 
@@ -116,6 +128,24 @@ export default function PartnerVerificationHub() {
         {score}/100
       </Badge>
     );
+  };
+
+  const getInternetRiskBadge = (level) => {
+    if (!level) return <span className="text-xs text-muted-foreground">Not scanned</span>;
+    const cfg = {
+      low:    { cls: 'bg-emerald-100 text-emerald-700', label: 'LOW' },
+      medium: { cls: 'bg-amber-100 text-amber-700',    label: 'MEDIUM' },
+      high:   { cls: 'bg-red-100 text-red-700',        label: 'HIGH' },
+    };
+    const { cls, label } = cfg[level] || cfg.medium;
+    return <Badge className={cls}>{label} RISK</Badge>;
+  };
+
+  const getAIVerdict = (level) => {
+    if (!level) return null;
+    if (level === 'low')    return <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">✓ Recommended</Badge>;
+    if (level === 'medium') return <Badge className="bg-amber-100 text-amber-700 text-[10px]">⚠ Review Required</Badge>;
+    return <Badge className="bg-red-100 text-red-700 text-[10px]">✗ Not Recommended</Badge>;
   };
 
   const stats = {
@@ -237,6 +267,7 @@ export default function PartnerVerificationHub() {
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>AI Fraud Score</TableHead>
+                    <TableHead>Internet Intel</TableHead>
                     <TableHead>Auto Verified</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -265,6 +296,18 @@ export default function PartnerVerificationHub() {
                         ) : (
                           <span className="text-xs text-muted-foreground">Pending</span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const doc = v.partner_type === 'doctor' ? doctorByEmail[v.partner_email] : null;
+                          if (!doc) return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <div className="space-y-1">
+                              {getInternetRiskBadge(doc.internet_risk_level)}
+                              {getAIVerdict(doc.internet_risk_level)}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         {v.auto_verified ? (
@@ -366,6 +409,34 @@ export default function PartnerVerificationHub() {
                     </div>
                   </div>
                 )}
+
+                {/* Internet Intelligence */}
+                {(() => {
+                  const doc = selectedVerification?.partner_type === 'doctor'
+                    ? doctorByEmail[selectedVerification?.partner_email]
+                    : null;
+                  if (!doc?.internet_risk_level) return null;
+                  const riskColor = { low: '#10b981', medium: '#f59e0b', high: '#ef4444' };
+                  const color = riskColor[doc.internet_risk_level] || '#6b7280';
+                  return (
+                    <div className="rounded-lg p-3 space-y-2 border" style={{ borderColor: `${color}40` }}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Internet Intelligence</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {getInternetRiskBadge(doc.internet_risk_level)}
+                        {getAIVerdict(doc.internet_risk_level)}
+                        <span className="text-xs text-muted-foreground ml-auto">Score: {doc.internet_risk_score ?? '—'}/100</span>
+                      </div>
+                      {doc.internet_summary && (
+                        <p className="text-xs text-foreground/80 leading-relaxed">{doc.internet_summary}</p>
+                      )}
+                      {doc.internet_last_checked && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Last scanned: {new Date(doc.internet_last_checked).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div>
                   <Label>Review Decision</Label>
