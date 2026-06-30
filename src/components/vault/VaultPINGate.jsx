@@ -174,7 +174,11 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
       localStorage.setItem(`vault_pin_hash_${userEmail.toLowerCase()}`, hash);
       localStorage.setItem(`vault_pin_salt_${userEmail.toLowerCase()}`, salt);
       
-      // Also sync to server if online
+      // Also sync to server if online. If this fails, the PIN only exists in
+      // localStorage on this device — hasPIN will still read false from the
+      // server on next load, sending the user right back to "Set Vault PIN"
+      // (looks like the PIN "isn't saving"). Surface the real error instead
+      // of silently letting the user in for one session.
       if (navigator.onLine) {
         try {
           await base44.functions.invoke('verifyVaultPIN', {
@@ -182,10 +186,13 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
             action: 'set'
           });
         } catch (serverErr) {
-          console.warn('Server PIN sync failed, but local PIN set successfully:', serverErr);
+          console.error('Server PIN sync failed:', serverErr);
+          setError(serverErr?.response?.data?.message || serverErr?.response?.data?.error || 'Could not save PIN to server. Please try again.');
+          setLoading(false);
+          return;
         }
       }
-      
+
       onPINVerified();
     } catch (err) {
       console.error('PIN setup error:', err);

@@ -85,9 +85,16 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => {
-          // Network failed, try cache
-          return caches.match(request);
+        .catch(async () => {
+          // Network failed, try cache — if nothing cached, return a real
+          // Response (returning undefined here throws "Failed to convert
+          // value to 'Response'" and breaks the fetch entirely).
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          return new Response(JSON.stringify({ error: 'offline' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          });
         })
     );
     return;
@@ -134,8 +141,12 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => {
-        return caches.match(request);
+      .catch(async () => {
+        // Same fix as the API branch: fall back further to the cached
+        // offline shell so navigation never resolves with `undefined`.
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        return caches.match('/offline');
       })
   );
 });

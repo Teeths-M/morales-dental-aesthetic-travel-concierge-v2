@@ -35,6 +35,7 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
   const lastSentRef = useRef(null); // { lat, lng, ts }
   const intervalRef = useRef(null);
   const mountedRef = useRef(true);
+  const currentLocationRef = useRef(null); // mirrors currentLocation without re-creating startWatch on every update
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
 
@@ -46,7 +47,10 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
       const raw = localStorage.getItem(`morales_loc_cache_${caseId}`);
       if (raw) {
         const cached = JSON.parse(raw);
-        if (cached?.lat != null && !currentLocation) setCurrentLocation(cached);
+        if (cached?.lat != null && !currentLocation) {
+          setCurrentLocation(cached);
+          currentLocationRef.current = cached;
+        }
       }
     } catch (_) {}
   }, [caseId]);
@@ -71,6 +75,7 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
       // Offline: update local state so patient UI stays accurate; sync on reconnect
       if (mountedRef.current) {
         setCurrentLocation(locSnapshot);
+        currentLocationRef.current = locSnapshot;
         setLastUpdate(ts);
       }
       return;
@@ -91,10 +96,14 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
       if (mountedRef.current) {
         setLastUpdate(ts);
         setCurrentLocation(locSnapshot);
+        currentLocationRef.current = locSnapshot;
       }
     } catch (_) {
       // Network error — local cache already written; will retry on next position event
-      if (mountedRef.current) setCurrentLocation(locSnapshot);
+      if (mountedRef.current) {
+        setCurrentLocation(locSnapshot);
+        currentLocationRef.current = locSnapshot;
+      }
     }
   }, [caseId, cacheKey]);
 
@@ -174,10 +183,15 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
       const last = lastSentRef.current;
       const age = Date.now() - new Date(last.ts).getTime();
       if (age >= MAX_INTERVAL_MS) {
-        sendUpdate(last.lat, last.lng, currentLocation?.accuracy, currentLocation?.heading, currentLocation?.speed, currentLocation?.altitude, currentLocation?.source || 'gps');
+        const loc = currentLocationRef.current;
+        sendUpdate(last.lat, last.lng, loc?.accuracy, loc?.heading, loc?.speed, loc?.altitude, loc?.source || 'gps');
       }
     }, MAX_INTERVAL_MS);
-  }, [sendUpdate, currentLocation]);
+    // currentLocation intentionally excluded — reading it here via ref keeps
+    // startWatch's identity stable, so the watch-registration effect below
+    // doesn't tear down and re-register navigator.geolocation.watchPosition
+    // (and immediately re-fire sendUpdate) on every single position update.
+  }, [sendUpdate]);
 
   useEffect(() => {
     if (!shouldRun) {
