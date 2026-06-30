@@ -37,6 +37,12 @@ const DOCTORS = [
       ],
       ai_red_flags: [],
       signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'active' }] },
+      google: {
+        status: 'verified',
+        rating: 4.9,
+        review_count: 127,
+        snippet: '"Best dental work of my life. Flew in from Texas and would do it again without hesitation." — Sarah M., Houston TX',
+      },
     },
   },
   {
@@ -59,6 +65,12 @@ const DOCTORS = [
         'Instagram handle not found or account inactive — platform presence unconfirmed',
       ],
       signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_provided' }] },
+      google: {
+        status: 'unverified',
+        rating: 3.6,
+        review_count: 9,
+        snippet: '"Good results but the clinic is hard to find and phone rarely answered." — Carlos R., Bogotá',
+      },
     },
   },
   {
@@ -80,6 +92,12 @@ const DOCTORS = [
         'AI credibility score: 0/10 — no corroborating sources detected anywhere',
       ],
       signals: { social_checks: [{ platform: 'Facebook', status: 'not_found' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_found' }] },
+      google: {
+        status: 'not_found',
+        rating: null,
+        review_count: 0,
+        snippet: null,
+      },
     },
   },
 ];
@@ -223,6 +241,45 @@ function ScanCard({ doctor, runKey }) {
                 </div>
               ))}
             </div>
+
+            {/* Google section */}
+            {result.google && (() => {
+              const g = result.google;
+              const gColor = g.status === 'verified' ? '#10b981' : g.status === 'unverified' ? '#f59e0b' : '#ef4444';
+              const gLabel = g.status === 'verified' ? 'VERIFIED LISTING' : g.status === 'unverified' ? 'UNVERIFIED LISTING' : 'NO LISTING FOUND';
+              const stars = g.rating ? Math.round(g.rating) : 0;
+              return (
+                <div className="p-3 rounded-xl space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: '#fff' }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#4285F4', lineHeight: 1 }}>G</span>
+                      </div>
+                      <span className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>GOOGLE</span>
+                    </div>
+                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded" style={{ color: gColor, background: gColor + '18', border: `1px solid ${gColor}30` }}>{gLabel}</span>
+                  </div>
+                  {g.rating ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map(n => (
+                            <span key={n} style={{ color: n <= stars ? '#f59e0b' : '#334155', fontSize: 12 }}>★</span>
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold" style={{ color: '#f1f5f9' }}>{g.rating}</span>
+                        <span className="text-[11px]" style={{ color: '#64748b' }}>({g.review_count} reviews)</span>
+                      </div>
+                      {g.snippet && (
+                        <p className="text-[10px] italic leading-relaxed" style={{ color: '#94a3b8' }}>{g.snippet}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[11px]" style={{ color: '#ef4444' }}>No Google Business profile found for this clinic name or address.</p>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* AI Analysis expandable */}
             <button
