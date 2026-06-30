@@ -35,7 +35,7 @@ export default function StickyBookCTA() {
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3 }}>Ready to start your journey?</p>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>Free consultation · No commitment</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>$49 consultation · Fully credited to your package</p>
       </div>
       <Link
         to="/consultation"
@@ -48,7 +48,7 @@ export default function StickyBookCTA() {
           display: 'block',
         }}
       >
-        Book Free Consult
+        Book Consultation
       </Link>
     </div>
   );

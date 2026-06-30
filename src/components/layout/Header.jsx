@@ -291,7 +291,7 @@ export default function Header() {
                   boxShadow: '0 4px 20px rgba(212,175,55,0.28)',
                 }}
               >
-                Book Free Consult
+                Book Consultation
               </Link>
             </div>
           )}
@@ -394,7 +394,7 @@ export default function Header() {
                   className="w-full text-center py-3.5 rounded-full text-sm font-bold"
                   style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
                 >
-                  Book Free Consult
+                  Book Consultation
                 </Link>
                 <Link
                   to="/dashboard" onClick={() => setIsMobileOpen(false)}
