@@ -9,6 +9,7 @@ import BrandSlideshow from '../components/home/BrandSlideshow';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
 import LuxuryTestimonials from '../components/home/LuxuryTestimonials';
 import ProtectionStackSection from '../components/home/ProtectionStackSection';
+import StickyBookCTA from '../components/home/StickyBookCTA';
 
 export default function Home() {
   return (
@@ -23,6 +24,7 @@ export default function Home() {
       <RealMoments />
       <LuxuryTestimonials />
       <BrandSlideshow />
+      <StickyBookCTA />
     </div>
   );
 }

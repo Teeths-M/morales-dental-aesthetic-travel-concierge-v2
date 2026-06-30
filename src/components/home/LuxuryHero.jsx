@@ -64,6 +64,7 @@ export default function LuxuryHero() {
     <>
       {/* ── HERO SECTION ── */}
       <section
+        data-hero
         className="relative overflow-hidden"
         style={{ background: '#0b1219', marginTop: '-72px', minHeight: '100svh' }}
       >
