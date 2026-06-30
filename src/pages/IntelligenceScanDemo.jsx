@@ -130,9 +130,9 @@ function ScanCard({ doctor, runKey }) {
           {doctor.initials}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">{doctor.full_name}</p>
-          <p className="text-xs text-muted-foreground">{doctor.specialty}</p>
-          <p className="text-xs text-muted-foreground">{doctor.clinic_name} · {doctor.clinic_city}, {doctor.clinic_country}</p>
+          <p className="text-sm font-semibold" style={{ color: '#f1f5f9' }}>{doctor.full_name}</p>
+          <p className="text-xs" style={{ color: '#94a3b8' }}>{doctor.specialty}</p>
+          <p className="text-xs" style={{ color: '#64748b' }}>{doctor.clinic_name} · {doctor.clinic_city}, {doctor.clinic_country}</p>
         </div>
         {result && (
           <Badge className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5" style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
@@ -148,7 +148,7 @@ function ScanCard({ doctor, runKey }) {
         {!scanning && !result && (
           <div className="flex items-center justify-center gap-2.5 py-8">
             <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#D4AF37' }} />
-            <p className="text-sm text-muted-foreground">Initializing scan…</p>
+            <p className="text-sm" style={{ color: '#94a3b8' }}>Initializing scan…</p>
           </div>
         )}
 
@@ -176,10 +176,10 @@ function ScanCard({ doctor, runKey }) {
                     :          <div className="w-1.5 h-1.5 rounded-full bg-white/20" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-semibold ${done ? 'text-emerald-400' : active ? 'text-foreground' : 'text-muted-foreground/40'}`}>
+                    <p className="text-xs font-semibold" style={{ color: done ? '#34d399' : active ? '#f1f5f9' : 'rgba(255,255,255,0.25)' }}>
                       {step.label}
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[11px]" style={{ color: active ? '#94a3b8' : done ? '#34d399' : 'rgba(255,255,255,0.15)' }}>
                       {active ? step.desc : done ? 'Complete' : 'Waiting…'}
                     </p>
                   </div>
@@ -216,7 +216,7 @@ function ScanCard({ doctor, runKey }) {
                     border: s.status === 'active' ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
-                  <p className="text-[9px] font-semibold text-muted-foreground">{s.platform}</p>
+                  <p className="text-[9px] font-semibold" style={{ color: '#94a3b8' }}>{s.platform}</p>
                   <p className="text-[10px] font-bold mt-0.5" style={{ color: s.status === 'active' ? '#10b981' : s.status === 'not_provided' ? '#6b7280' : '#ef4444' }}>
                     {s.status === 'active' ? 'LIVE' : s.status === 'not_provided' ? 'N/A' : 'NOT FOUND'}
                   </p>
@@ -231,11 +231,11 @@ function ScanCard({ doctor, runKey }) {
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold tracking-widest text-muted-foreground text-[10px]">AI ANALYSIS</span>
+                <span className="font-bold tracking-widest text-[10px]" style={{ color: '#64748b' }}>AI ANALYSIS</span>
                 <span className="text-[10px] underline underline-offset-2" style={{ color: '#D4AF37' }}>{expanded ? 'Hide' : 'Read full report'}</span>
               </div>
               {expanded && (
-                <p className="mt-2 text-foreground/80 leading-relaxed text-[11px]">{result.summary}</p>
+                <p className="mt-2 leading-relaxed text-[11px]" style={{ color: '#cbd5e1' }}>{result.summary}</p>
               )}
             </button>
 
@@ -246,7 +246,7 @@ function ScanCard({ doctor, runKey }) {
                 {result.ai_positive_indicators.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5">
                     <CheckCircle className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-foreground/80">{item}</p>
+                    <p className="text-[11px]" style={{ color: '#cbd5e1' }}>{item}</p>
                   </div>
                 ))}
               </div>
@@ -259,7 +259,7 @@ function ScanCard({ doctor, runKey }) {
                 {result.ai_red_flags.map((item, i) => (
                   <div key={i} className="flex items-start gap-1.5">
                     <AlertTriangle className="w-3 h-3 text-red-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-foreground/80">{item}</p>
+                    <p className="text-[11px]" style={{ color: '#cbd5e1' }}>{item}</p>
                   </div>
                 ))}
               </div>
@@ -308,11 +308,11 @@ export default function IntelligenceScanDemo() {
                   <Globe className="w-5 h-5" style={{ color: '#D4AF37' }} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest text-muted-foreground">SAFE-T 4LIFE™ · LIVE SYSTEM DEMO</p>
-                  <h1 className="text-xl font-semibold text-foreground">Internet Intelligence Engine</h1>
+                  <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>SAFE-T 4LIFE™ · LIVE SYSTEM DEMO</p>
+                  <h1 className="text-xl font-semibold" style={{ color: '#f1f5f9' }}>Internet Intelligence Engine</h1>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground max-w-xl leading-relaxed">
+              <p className="text-sm max-w-xl leading-relaxed" style={{ color: '#94a3b8' }}>
                 Every doctor application triggers an automatic 4-stage scan the moment they submit.
                 No admin clicks required. Watch 3 real applications being processed in real time.
               </p>
@@ -338,7 +338,7 @@ export default function IntelligenceScanDemo() {
               { label: 'Flagged — High Risk',      value: '1',  color: '#ef4444' },
             ].map(s => (
               <div key={s.label} className="p-3.5 rounded-xl" style={{ background: '#060B16', border: '1px solid #2A3F4A' }}>
-                <p className="text-[10px] text-muted-foreground font-medium leading-tight">{s.label}</p>
+                <p className="text-[10px] font-medium leading-tight" style={{ color: '#64748b' }}>{s.label}</p>
                 <p className="text-2xl font-bold mt-1" style={{ color: s.color }}>{s.value}</p>
               </div>
             ))}
@@ -363,7 +363,7 @@ export default function IntelligenceScanDemo() {
             <Shield className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#D4AF37' }} />
             <div>
               <p className="text-sm font-semibold text-foreground mb-1">How this works in production</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
                 The moment a doctor submits their signup form, the scan fires automatically in the background —
                 checking domain age via RDAP, verifying social handles live, detecting VoIP phone numbers,
                 and running an AI web credibility pass. Results appear instantly in the Partner Verification Hub
