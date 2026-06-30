@@ -234,7 +234,7 @@ export default function PlatformGuideOrb() {
     <>
       {/* ── Floating orb + bubble ── */}
       {!open && (
-        <div style={{ position: 'fixed', bottom: 'max(24px, env(safe-area-inset-bottom, 24px))', left: 20, zIndex: 9000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ position: 'fixed', bottom: 'calc(max(24px, env(safe-area-inset-bottom, 24px)) + var(--sticky-cta-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 20, zIndex: 9000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           {showBubble && !dismissed && (
             <div style={{ background: 'rgba(10,20,28,0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: '10px 14px', maxWidth: 230, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', position: 'relative', animation: 'orbBubbleIn 0.3s ease' }}>
               <button onClick={() => setDismissed(true)} style={{ position: 'absolute', top: 6, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
@@ -255,7 +255,7 @@ export default function PlatformGuideOrb() {
 
       {/* ── Guide panel ── */}
       {open && (
-        <div style={{ position: 'fixed', bottom: 'max(16px, env(safe-area-inset-bottom, 16px))', left: 16, zIndex: 9001, width: 'min(360px, calc(100vw - 32px))', background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: 'min(540px, calc(100vh - 32px))', overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', bottom: 'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 16, zIndex: 9001, width: 'min(360px, calc(100vw - 32px))', background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', maxHeight: 'min(540px, calc(100vh - 32px))', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>

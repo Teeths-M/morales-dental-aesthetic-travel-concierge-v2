@@ -49,7 +49,10 @@ export default function GuardianTicker() {
   const tip = GUARDIAN_TIPS[index];
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md pointer-events-none">
+    <div
+      className="fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md pointer-events-none transition-[bottom] duration-300"
+      style={{ bottom: 'calc(1rem + var(--sticky-cta-height, 0px))' }}
+    >
       <AnimatePresence mode="wait">
         {visible && (
           <motion.div
