@@ -323,6 +323,7 @@ export default function IntelligenceScanDemo() {
               size="sm"
               className="gap-2 flex-shrink-0"
               disabled={!allDone}
+              style={{ color: '#f1f5f9', borderColor: '#2A3F4A' }}
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Replay Demo
@@ -332,7 +333,7 @@ export default function IntelligenceScanDemo() {
           {/* Live stats */}
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Applications Processed', value: '3',  color: 'var(--foreground)' },
+              { label: 'Applications Processed', value: '3',  color: '#f1f5f9' },
               { label: 'Approved — Low Risk',     value: '1',  color: '#10b981' },
               { label: 'Under Review',             value: '1',  color: '#f59e0b' },
               { label: 'Flagged — High Risk',      value: '1',  color: '#ef4444' },
@@ -362,7 +363,7 @@ export default function IntelligenceScanDemo() {
           <div className="flex items-start gap-3">
             <Shield className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#D4AF37' }} />
             <div>
-              <p className="text-sm font-semibold text-foreground mb-1">How this works in production</p>
+              <p className="text-sm font-semibold mb-1" style={{ color: '#f1f5f9' }}>How this works in production</p>
               <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
                 The moment a doctor submits their signup form, the scan fires automatically in the background —
                 checking domain age via RDAP, verifying social handles live, detecting VoIP phone numbers,
