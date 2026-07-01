@@ -18,6 +18,7 @@ const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Procedures    = lazy(() => import('@/pages/Procedures'));
 const PartnerDirectory = lazy(() => import('@/pages/PartnerDirectory'));
+const Booking             = lazy(() => import('@/pages/Booking'));
 const ConsultationForm = lazy(() => import('@/pages/ConsultationForm'));
 const ConsultationSuccess = lazy(() => import('@/pages/ConsultationSuccess'));
 const RegisterRole  = lazy(() => import('@/pages/RegisterRole'));
@@ -60,6 +61,7 @@ export const publicRoutes = (
     <Route path="/privacy"        element={<PrivacyPolicy />} />
     <Route path="/terms"          element={<TermsOfService />} />
     <Route path="/procedures"     element={<Procedures />} />
+    <Route path="/booking"        element={<ErrorBoundary><Booking /></ErrorBoundary>} />
     <Route path="/consultation"   element={<ConsultationForm />} />
     <Route path="/consultation-success" element={<ConsultationSuccess />} />
     <Route path="/register-role"  element={<RegisterRole />} />

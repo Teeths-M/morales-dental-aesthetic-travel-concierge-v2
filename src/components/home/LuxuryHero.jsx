@@ -246,6 +246,13 @@ export default function LuxuryHero() {
                 </motion.button>
               </Link>
 
+              {/* No-account signal */}
+              {isMedical && (
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', fontWeight: 500, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  🔓 No account needed to start
+                </span>
+              )}
+
               {/* Secondary: glass demo pill */}
               <Link to="/demo">
                 <motion.button

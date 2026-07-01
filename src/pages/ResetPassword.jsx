@@ -7,7 +7,7 @@ const GOLD  = '#D4AF37';
 const DARK  = '#060B16';
 const BORDER = '#2A3F4A';
 
-function FieldRow({ label, id, value, onChange, placeholder, autoFocus }) {
+function FieldRow({ label, id, value, onChange, placeholder, autoFocus = false }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ marginBottom: 16 }}>

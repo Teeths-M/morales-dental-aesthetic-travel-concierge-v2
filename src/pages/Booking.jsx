@@ -37,6 +37,7 @@ import ProcedureRequirementNotice from '../components/booking/ProcedureRequireme
 import SafeTScan from '../components/booking/SafeTScan';
 import HighRiskReviewNotice from '../components/booking/HighRiskReviewNotice';
 import { checkMedicalRisk } from '@/lib/medicalSafetyGate';
+import GuestAuthGate from '../components/booking/GuestAuthGate';
 
 const SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
@@ -94,6 +95,8 @@ export default function Booking() {
   const [showFeeModal, setShowFeeModal] = useState(false);
   const [showHighRiskNotice, setShowHighRiskNotice] = useState(false);
   const [highRiskFlag, setHighRiskFlag] = useState(null);
+  const [showGuestAuthGate, setShowGuestAuthGate] = useState(false);
+
   const [showStackingBlock, setShowStackingBlock] = useState(() => {
     // Check on init so the block fires before the form renders
     if (typeof window === 'undefined') return false;
@@ -141,6 +144,27 @@ export default function Booking() {
         if (user?.email) {
           setUserEmail(user.email);
           setCurrentUser(user);
+
+          // Restore guest draft saved before OAuth redirect
+          try {
+            const guestDraft = localStorage.getItem('morales_guest_booking_draft');
+            const guestStep  = localStorage.getItem('morales_guest_booking_step');
+            if (guestDraft) {
+              const parsed   = JSON.parse(guestDraft);
+              const restored = { ...parsed, acknowledged_statements: new Set(parsed.acknowledged_statements || []) };
+              setForm(prev => ({
+                ...prev, ...restored,
+                patient_name: restored.patient_name || user.full_name || '',
+                email:        restored.email        || user.email      || '',
+                phone:        restored.phone        || user.phone      || '',
+              }));
+              if (guestStep) setStep(parseInt(guestStep, 10));
+              localStorage.removeItem('morales_guest_booking_draft');
+              localStorage.removeItem('morales_guest_booking_step');
+              toast.success('Welcome back! Your form has been restored.');
+            }
+          } catch (_) {}
+
           await saveUserOnboardingProfile({
             role: 'client',
             status: 'started',
@@ -148,7 +172,7 @@ export default function Booking() {
           });
         }
       } catch (e) {
-        // User not logged in
+        // User not logged in — guest mode
       }
     };
     getUser();
@@ -430,7 +454,11 @@ export default function Booking() {
           consultation_submitted: true
         }
       });
-      setShowFeeModal(true);
+      if (!currentUser) {
+        setShowGuestAuthGate(true);
+      } else {
+        setShowFeeModal(true);
+      }
     },
     onError: (error) => {
       console.error('Consultation creation failed:', error.message);
@@ -652,6 +680,16 @@ export default function Booking() {
               />
             </div>
           </div>
+
+          {/* Guest banner — shown only when not authenticated */}
+          {!currentUser && (
+            <div className="flex items-center gap-2.5 px-6 py-2.5 border-b border-slate-100" style={{ background: 'linear-gradient(90deg, rgba(212,175,55,0.06), rgba(212,175,55,0.02))' }}>
+              <span style={{ fontSize: 14 }}>🔓</span>
+              <p className="text-xs text-slate-600 m-0">
+                <strong style={{ color: '#92740f' }}>No account needed to start.</strong> Fill out the form freely — we'll ask you to sign in only when you're ready to submit.
+              </p>
+            </div>
+          )}
 
           {/* Auto-save indicator */}
           <div className="flex items-center gap-1.5 text-xs justify-end px-6 py-2 border-b border-slate-100 bg-emerald-50/50">
@@ -880,6 +918,13 @@ export default function Booking() {
           goToDashboard();
         }}
         onCancel={() => setShowFeeModal(false)}
+      />
+
+      <GuestAuthGate
+        isOpen={showGuestAuthGate}
+        form={form}
+        step={step}
+        onCancel={() => setShowGuestAuthGate(false)}
       />
 
       <HighRiskReviewNotice

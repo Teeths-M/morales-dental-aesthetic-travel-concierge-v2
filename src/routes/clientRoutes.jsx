@@ -11,7 +11,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { CLIENT_PORTAL_ROLES, ROLES } from '@/lib/roles';
 
 const SafeT               = lazy(() => import('@/pages/SafeT'));
-const Booking             = lazy(() => import('@/pages/Booking'));
 const Dashboard           = lazy(() => import('@/pages/Dashboard'));
 const ClientSignup        = lazy(() => import('@/pages/ClientSignup'));
 const PassportVault       = lazy(() => import('@/pages/PassportVault'));
@@ -42,7 +41,6 @@ export const clientRoutes = (
     {/* Core dashboard routes */}
     <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
       <Route path="/safe-t"                     element={<ErrorBoundary><SafeT /></ErrorBoundary>} />
-      <Route path="/booking"                    element={<ErrorBoundary><Booking /></ErrorBoundary>} />
       <Route path="/dashboard"                  element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/consultations"    element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/profile"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
