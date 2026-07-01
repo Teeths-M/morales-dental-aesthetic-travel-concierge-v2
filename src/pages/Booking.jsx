@@ -659,12 +659,55 @@ export default function Booking() {
               style={{ background: `linear-gradient(135deg, ${getPhaseInfo(step).color}cc, ${getPhaseInfo(step).color})` }}>
               {steps[step].emoji}
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: getPhaseInfo(step).color }}>
                 {getPhaseInfo(step).phase} · {getPhaseInfo(step).stepInPhase} of {getPhaseInfo(step).stepsInPhase}
               </p>
               <h2 className="font-semibold text-slate-800 text-base">{steps[step].label}</h2>
             </div>
+            {/* Demo fill — pre-loads sample data so judges can experience the full flow */}
+            <button
+              type="button"
+              onClick={() => {
+                setForm(prev => ({
+                  ...prev,
+                  patient_name: 'Sofia Ramirez',
+                  email: 'sofia.ramirez@demo.morales.com',
+                  phone: '+1 (305) 555-0192',
+                  age: '34', gender: 'female', height: '165', weight: '62',
+                  nationality: 'American', occupation: 'Nurse Practitioner',
+                  emergency_contact_name: 'Maria Ramirez',
+                  emergency_contact_number: '+1 (305) 555-0145',
+                  passport_number: 'A12345678',
+                  passport_issue_date: '2021-01-15',
+                  passport_expiry_date: '2031-01-15',
+                  has_companion: false, number_of_companions: 0, travel_buddy_services: [],
+                  has_cultural_preferences: false, cultural_preferences: [], cultural_notes: '',
+                  medical_conditions: ['none'], had_surgery: false, had_complications: null, surgery_complications: [],
+                  anesthesia_complications: false, anesthesia_complication_types: [],
+                  allergies: ['none'], allergy_details: '',
+                  takes_medications: false, medication_types: [], medication_notes: '',
+                  lifestyle_habits: ['none'], exercises_regularly: true, activity_level: 'moderate',
+                  emotional_concerns: false, emotional_concern_types: [], emotional_notes: '',
+                  pregnancy_status: 'not_pregnant',
+                  document_types: ['none'], uploaded_files: [],
+                  preferred_date: '2026-09-15',
+                  procedure_country: 'Colombia', procedure_city: 'Cartagena',
+                  client_country: 'United States',
+                  return_date: '2026-09-22',
+                  visa_required_status: 'not_required',
+                  notes: 'Interested in a complete smile transformation.',
+                  acknowledged_statements: new Set(['1','2','3','4','5','6','7','8']),
+                  accepted_arbitration_clause: false,
+                }));
+                setStep(8);
+                window.scrollTo(0, 0);
+                toast.success('Demo data loaded — continue from step 9 of 12!');
+              }}
+              className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-colors flex-shrink-0"
+            >
+              🎬 Demo
+            </button>
           </div>
 
           {/* Mobile step progress bar */}
