@@ -108,7 +108,7 @@ export default function DefaultDoctorConfigPanel() {
             <Input
               value={currentForm.clinic_name}
               onChange={e => setForm(f => ({ ...f, clinic_name: e.target.value }))}
-              placeholder="e.g. Dental Spa Margarita"
+              placeholder="e.g. Clínica Médica Margarita"
               className="mt-1 text-sm"
             />
           </div>

@@ -96,7 +96,7 @@ export default function GoldenMCertificate({ patientName, procedure, destination
 
             {/* Header */}
             <p style={{ margin: '0 0 2px', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#94a3b8' }}>
-              MORALES MEDICAL CONCIERGE
+              MORALES MEDICAL TRAVEL SAFETY
             </p>
             <h1 style={{ margin: '6px 0 4px', fontSize: 28, fontWeight: 700, color: DARK, letterSpacing: '0.04em' }}>
               Certificate of Journey Completion
@@ -162,7 +162,7 @@ export default function GoldenMCertificate({ patientName, procedure, destination
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ width: 140, height: 1, background: '#cbd5e1', marginBottom: 6 }} />
-                <p style={{ margin: 0, fontSize: 11, color: '#94a3b8' }}>Morales Concierge Director</p>
+                <p style={{ margin: 0, fontSize: 11, color: '#94a3b8' }}>Morales Medical Travel Safety</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ margin: '0 0 4px', fontSize: 10, color: '#94a3b8', letterSpacing: '0.08em' }}>CERTIFICATE NUMBER</p>

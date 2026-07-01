@@ -139,7 +139,7 @@ export default function Login() {
           <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
           <div>
             <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>Morales</p>
-            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>CONCIERGE</p>
+            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>MEDICAL TRAVEL SAFETY</p>
           </div>
         </Link>
       </div>

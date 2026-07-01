@@ -14,7 +14,7 @@ const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd
 const CONTENT = {
   medical: {
     headline:    'YOUR JOURNEY.\nPERFECTED.',
-    subheadline: 'Travel abroad for world-class dental & aesthetic surgery — and come home safely.',
+    subheadline: 'Travel abroad for world-class medical care — and come home safely.',
     body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. And if anything goes wrong — we dispatch help, automatically.',
     cta:         { label: 'Start Your Journey', path: '/booking' },
   },

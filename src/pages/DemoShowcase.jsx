@@ -718,7 +718,7 @@ export default function DemoShowcase() {
   }
 
   useEffect(() => {
-    document.title = 'Morales Concierge — Platform Demo';
+    document.title = 'Morales Medical Travel Safety — Platform Demo';
     return () => { document.title = 'Morales Medical Travel Safety'; };
   }, []);
 
@@ -729,7 +729,7 @@ export default function DemoShowcase() {
       <nav className="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
         style={{ background: 'rgba(6,11,22,0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <span className="font-bold text-white text-sm tracking-wide">MORALES CONCIERGE</span>
+        <span className="font-bold text-white text-sm tracking-wide">MORALES</span>
         <div className="flex items-center gap-3">
           <Link to="/" className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{ color: '#94a3b8' }}>
             Home

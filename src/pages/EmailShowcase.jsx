@@ -45,7 +45,7 @@ const EMAILS = [
     </td></tr>
     <tr><td style="padding:14px 20px;background:rgba(212,175,55,0.06);">
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.7;font-style:italic;">"We are honoured to have walked this journey beside you. Your trust means everything."</p>
-      <p style="margin:8px 0 0;font-size:12px;color:#D4AF37;">— The Morales Concierge Team</p>
+      <p style="margin:8px 0 0;font-size:12px;color:#D4AF37;">— The Morales Medical Travel Safety Team</p>
     </td></tr>
   </table>
   <div style="text-align:center;">

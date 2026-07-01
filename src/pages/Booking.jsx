@@ -70,6 +70,24 @@ const steps = [
    { label: 'SAFE-T Scan',        emoji: '🛡️', short: 'SAFE-T'      },
 ];
 
+// Phase grouping — reduces "Step 7 of 14" anxiety into manageable phase chunks
+const STEP_PHASES = [
+  { name: 'About You',     steps: [0, 1, 2],          color: '#10b981' },
+  { name: 'Your Health',   steps: [3, 4, 5, 6, 7, 8], color: '#3b82f6' },
+  { name: 'Your Journey',  steps: [9, 10],             color: '#8b5cf6' },
+  { name: 'Safety Review', steps: [11, 12, 13],        color: '#d4af37' },
+];
+
+function getPhaseInfo(stepIndex) {
+  for (const phase of STEP_PHASES) {
+    const idx = phase.steps.indexOf(stepIndex);
+    if (idx !== -1) {
+      return { phase: phase.name, color: phase.color, stepInPhase: idx + 1, stepsInPhase: phase.steps.length };
+    }
+  }
+  return { phase: '', color: '#10b981', stepInPhase: 1, stepsInPhase: 1 };
+}
+
 export default function Booking() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -576,26 +594,55 @@ export default function Booking() {
           {/* Main Form Area */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Phase stepper — 4 phases across the top */}
+          <div className="px-6 pt-4 pb-0">
+            <div className="flex items-center gap-1">
+              {STEP_PHASES.map((ph, pi) => {
+                const phaseStep = STEP_PHASES.slice(0, pi).reduce((a, p) => a + p.steps.length, 0);
+                const done = step > Math.max(...ph.steps);
+                const active = ph.steps.includes(step);
+                return (
+                  <React.Fragment key={ph.name}>
+                    <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                      <div className="w-full h-1 rounded-full transition-all duration-500"
+                        style={{ background: done ? ph.color : active ? ph.color : '#e2e8f0', opacity: done ? 1 : active ? 1 : 0.4 }} />
+                      <span className="text-[9px] font-semibold truncate w-full text-center transition-colors"
+                        style={{ color: done || active ? ph.color : '#94a3b8' }}>
+                        {done ? '✓ ' : ''}{ph.name}
+                      </span>
+                    </div>
+                    {pi < STEP_PHASES.length - 1 && <div className="w-3 shrink-0" />}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
           {/* Form Header */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-slate-50">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-lg shadow-lg">
+          <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-200 bg-slate-50 mt-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg shadow-lg"
+              style={{ background: `linear-gradient(135deg, ${getPhaseInfo(step).color}cc, ${getPhaseInfo(step).color})` }}>
               {steps[step].emoji}
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">Step {step + 1} {translations[language].stepOf} {steps.length}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: getPhaseInfo(step).color }}>
+                {getPhaseInfo(step).phase} · {getPhaseInfo(step).stepInPhase} of {getPhaseInfo(step).stepsInPhase}
+              </p>
               <h2 className="font-semibold text-slate-800 text-base">{steps[step].label}</h2>
             </div>
           </div>
 
           {/* Mobile step progress bar */}
           <div className="lg:hidden px-4 pt-2 pb-1">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[10px] font-semibold" style={{ color: getPhaseInfo(step).color }}>{getPhaseInfo(step).phase}</span>
+              <span className="text-[10px] text-slate-400">{step + 1} / {steps.length}</span>
+            </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full transition-all duration-500"
-                style={{ width: `${Math.round(((step + 1) / steps.length) * 100)}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.round(((step + 1) / steps.length) * 100)}%`, background: getPhaseInfo(step).color }}
               />
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 text-right">{step + 1} / {steps.length}</p>
           </div>
 
           {/* Auto-save indicator */}
@@ -747,22 +794,30 @@ export default function Booking() {
               <p className="text-emerald-300 text-[8px] mt-1 font-medium">{Math.round(((step + 1) / steps.length) * 100)}%</p>
             </div>
 
-            {/* Step pills */}
-            <div className="flex flex-wrap gap-0.5">
-              {steps.map((s, i) => (
-                <div
-                  key={i}
-                  className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-md whitespace-nowrap transition-all ${
-                    i < step
-                      ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
-                      : i === step
-                      ? 'bg-white/25 text-white border border-white/30'
-                      : 'bg-white/5 text-white/30 border border-white/10'
-                  }`}
-                >
-                  {i < step ? '✓' : i === step ? '●' : i + 1}
-                </div>
-              ))}
+            {/* Phase progress dots */}
+            <div className="flex flex-col gap-1.5 mt-1">
+              {STEP_PHASES.map((ph, pi) => {
+                const done = step > Math.max(...ph.steps);
+                const active = ph.steps.includes(step);
+                const phaseStepCount = ph.steps.length;
+                const stepsComplete = active ? ph.steps.indexOf(step) : done ? phaseStepCount : 0;
+                return (
+                  <div key={ph.name} className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[8px] font-bold transition-all"
+                      style={{ background: done || active ? ph.color : 'rgba(255,255,255,0.1)', color: done || active ? '#060B16' : 'rgba(255,255,255,0.3)' }}>
+                      {done ? '✓' : pi + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-semibold truncate transition-colors" style={{ color: done || active ? ph.color : 'rgba(255,255,255,0.3)' }}>{ph.name}</p>
+                      <div className="w-full h-[3px] rounded-full mt-0.5" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div className="h-full rounded-full transition-all duration-500"
+                          style={{ width: done ? '100%' : active ? `${(stepsComplete / phaseStepCount) * 100}%` : '0%', background: ph.color }} />
+                      </div>
+                    </div>
+                    <span className="text-[8px] shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }}>{done ? phaseStepCount : active ? stepsComplete : 0}/{phaseStepCount}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
           </div>

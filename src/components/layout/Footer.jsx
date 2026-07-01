@@ -52,8 +52,13 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-4 text-background/90">Services</h4>
             <div className="space-y-2.5">
-              {['Dental Implants', 'Smile Makeover', 'All-on-4/All-on-6', 'Porcelain Veneers'].map(s => (
-                <Link key={s} to="/procedures" className="block text-sm text-background/50 hover:text-background/80 transition-colors">{s}</Link>
+              {[
+                { label: 'Find Doctors',  path: '/providers' },
+                { label: 'Procedures',    path: '/procedures' },
+                { label: 'Visa Assist',   path: '/visa-assist' },
+                { label: 'Travel Safety', path: '/safet' },
+              ].map(({ label, path }) => (
+                <Link key={path} to={path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{label}</Link>
               ))}
             </div>
           </div>

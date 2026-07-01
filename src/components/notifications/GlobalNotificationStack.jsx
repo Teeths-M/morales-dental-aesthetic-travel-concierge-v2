@@ -57,7 +57,7 @@ function NotificationCard({ n, onDismiss }) {
           {/* App name + timestamp row */}
           <div className="flex items-center justify-between gap-2 mb-0.5">
             <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.02em' }}>
-              MORALES CONCIERGE
+              MORALES
             </span>
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>now</span>
           </div>

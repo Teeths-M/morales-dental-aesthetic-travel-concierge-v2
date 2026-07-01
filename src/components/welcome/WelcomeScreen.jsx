@@ -80,7 +80,7 @@ export default function WelcomeScreen({
       {/* Header bar */}
       <div className="flex items-center justify-between px-5 pt-10 pb-4">
         <div className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
-          Morales Concierge
+          Morales Medical Travel Safety
         </div>
         <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
           isOnline ? 'bg-emerald-900/60 text-emerald-400' : 'bg-amber-900/60 text-amber-400'

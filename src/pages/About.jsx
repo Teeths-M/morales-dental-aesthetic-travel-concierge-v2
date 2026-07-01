@@ -40,7 +40,7 @@ export default function About() {
             {language === 'es' ? 'Tu Seguridad, Nuestra Misión' : language === 'fr' ? 'Votre Sécurité, Notre Mission' : 'Your Safety, Our Mission'}
           </h1>
           <p className="text-[17px] text-white/60 max-w-2xl mx-auto leading-[1.8]" style={{ fontWeight: 300 }}>
-            {language === 'es' ? 'Morales Medical Travel Safety fue fundada en un principio simple: todos merecen acceso a cuidado dental y estético de clase mundial, entregado con seguridad inquebrantable y atención personalizada.' : language === 'fr' ? 'Morales Medical Travel Safety a été fondée sur un principe simple : tout le monde mérite l\'accès aux soins dentaires et esthétiques de classe mondiale, livrés avec une sécurité inébranlable et une attention personnalisée.' : 'Morales Medical Travel Safety was founded on a simple principle: everyone deserves access to world-class dental and aesthetic care, delivered with uncompromising safety and personalized attention.'}
+            {language === 'es' ? 'Morales Medical Travel Safety fue fundada en un principio simple: todos merecen acceso a atención médica de clase mundial en el extranjero, entregada con seguridad inquebrantable y atención personalizada.' : language === 'fr' ? 'Morales Medical Travel Safety a été fondée sur un principe simple : tout le monde mérite l\'accès aux soins médicaux de classe mondiale à l\'étranger, livrés avec une sécurité inébranlable et une attention personnalisée.' : 'Morales Medical Travel Safety was founded on a simple principle: everyone deserves access to world-class medical care abroad, delivered with uncompromising safety and personalized attention.'}
           </p>
         </motion.div>
 

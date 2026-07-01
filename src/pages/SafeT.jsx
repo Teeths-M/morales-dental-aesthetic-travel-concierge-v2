@@ -126,7 +126,7 @@ export default function SafeT() {
             Safe-T 4Life™
           </p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 6 }}>
-            Morales Concierge · Always On
+            Morales Medical Travel Safety · Always On
           </p>
         </div>
 
@@ -331,7 +331,7 @@ export default function SafeT() {
             margin: '22px 0 0', fontSize: 12,
             color: 'rgba(255,255,255,0.22)', textAlign: 'center', lineHeight: 1.6,
           }}>
-            Protected by MedGuard™ · Morales Concierge · 24 / 7
+            Protected by MedGuard™ · Morales Medical Travel Safety · 24 / 7
           </p>
         </motion.div>
 

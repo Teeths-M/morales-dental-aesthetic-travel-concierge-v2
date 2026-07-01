@@ -175,7 +175,7 @@ export default function SatelliteDevicePanel() {
   const sendMut = useMutation({
     mutationFn: (device) => base44.functions.invoke('sendSatelliteMessage', {
       case_id: device.case_id,
-      message: customMsg || `MORALES: Admin message. Reply SAFE to confirm. — Morales Concierge`,
+      message: customMsg || `MORALES: Admin message. Reply SAFE to confirm. — Morales Safety Team`,
       reason:  'admin_manual',
     }),
     onSuccess: () => { setSendTarget(null); setCustomMsg(''); queryClient.invalidateQueries({ queryKey: ['satellite-devices'] }); },

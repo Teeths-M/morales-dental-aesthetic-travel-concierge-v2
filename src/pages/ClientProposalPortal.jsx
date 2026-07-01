@@ -112,7 +112,7 @@ export default function ClientProposalPortal() {
             <Plane className="w-4 h-4" style={{ color: '#C5A059' }} />
           </div>
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>MORALES CONCIERGE</p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>MORALES MEDICAL TRAVEL SAFETY</p>
             <p className="text-white font-semibold text-sm">Your Medical Travel Proposal</p>
           </div>
           <div className="ml-auto flex items-center gap-3">
