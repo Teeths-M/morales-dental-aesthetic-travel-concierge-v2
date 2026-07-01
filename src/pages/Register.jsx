@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Mail, Lock, ArrowRight, ChevronLeft, Globe, Shield, BadgeCheck, Heart } from 'lucide-react';
+import { Loader2, Mail, Lock, ArrowRight, ChevronLeft, Globe } from 'lucide-react';
 
 const GOLD  = '#D4AF37';
 const DARK  = '#060B16';
