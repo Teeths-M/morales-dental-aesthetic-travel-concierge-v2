@@ -169,7 +169,7 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
             </div>
 
             {/* Social presence */}
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-5 gap-1.5">
               {result.internet.signals.social_checks.map(s => (
                 <div key={s.platform} className="p-2 rounded-lg text-center"
                   style={{ background: s.status === 'active' ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.03)', border: s.status === 'active' ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.06)' }}>

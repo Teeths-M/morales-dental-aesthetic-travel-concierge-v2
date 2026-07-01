@@ -24,12 +24,12 @@ const DOCTORS = [
       summary: 'Dr. Sofia Ramirez presents a strong and verifiable digital footprint. The clinic domain registered in 2016 demonstrates an 8-year operational history — highly consistent with a claimed established practice. Active presence across Facebook, Instagram, and TikTok with consistent patient engagement confirms authentic practice activity. The phone number resolves to a registered Mexican landline associated with the clinic address in Cancún. Cross-referencing public web sources returned multiple independent patient testimonials on Google Maps and Yelp, plus two local media features.',
       ai_positive_indicators: [
         'Domain age 8+ years confirms long-standing established practice (registered 2016)',
-        'All 3 social platforms verified live with active monthly patient engagement',
+        'All 5 social platforms verified live with active monthly patient engagement',
         'Phone resolves to verified clinic landline — not a mobile or VoIP number',
         'Multiple independent patient reviews found across Google Maps and Yelp',
       ],
       ai_red_flags: [],
-      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'active' }] },
+      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'active' }, { platform: 'X', status: 'active' }, { platform: 'LinkedIn', status: 'active' }] },
       google: { status: 'verified', rating: 4.9, review_count: 127, snippet: '"Best dental work of my life. Flew in from Texas and would do it again without hesitation." — Sarah M., Houston TX' },
     },
     fraud_result: {
@@ -65,8 +65,9 @@ const DOCTORS = [
         'Domain age 2 years is inconsistent with claimed 10+ years of practice experience',
         'Fewer than 5 independent web mentions of the clinic detected across all sources',
         'Instagram handle not found or account inactive',
+        'X (Twitter) handle not found or account inactive',
       ],
-      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_provided' }] },
+      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_provided' }, { platform: 'X', status: 'not_found' }, { platform: 'LinkedIn', status: 'active' }] },
       google: { status: 'unverified', rating: 3.6, review_count: 9, snippet: '"Good results but the clinic is hard to find and phone rarely answered." — Carlos R., Bogotá' },
     },
     fraud_result: {
@@ -104,7 +105,7 @@ const DOCTORS = [
         'Active hospital privileges at 6 institutions across UAE, UK, and Ghana',
       ],
       ai_red_flags: [],
-      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'not_provided' }] },
+      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'not_provided' }, { platform: 'X', status: 'not_provided' }, { platform: 'LinkedIn', status: 'active' }] },
       google: { status: 'not_found', rating: null, review_count: 0, snippet: null },
     },
     fraud_result: {
@@ -144,11 +145,11 @@ const DOCTORS = [
       ai_positive_indicators: [],
       ai_red_flags: [
         'No domain registration found for claimed clinic name — zero web presence',
-        'All 3 social media handles returned zero results on every platform',
+        'All 5 social media handles returned zero results on every platform',
         'Phone number resolves to VoIP service — strongly associated with fraud patterns',
         'Zero independent web mentions of clinic or practitioner across all sources',
       ],
-      signals: { social_checks: [{ platform: 'Facebook', status: 'not_found' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_found' }] },
+      signals: { social_checks: [{ platform: 'Facebook', status: 'not_found' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_found' }, { platform: 'X', status: 'not_found' }, { platform: 'LinkedIn', status: 'not_found' }] },
       google: { status: 'not_found', rating: null, review_count: 0, snippet: null },
     },
     fraud_result: {
