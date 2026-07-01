@@ -1,5 +1,40 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
+// ── High-risk checkpoints requiring dual-party confirmation ──────────────────
+// HS4 (hotel_checkin) and HS5 (clinic_arrival) are life-safety inflection points.
+// A single actor's device is not sufficient proof of physical arrival —
+// a compromised device could confirm without the patient being present.
+//
+// For these steps, the patient's tap creates a SECONDARY pending OfflineHandshake
+// record targeting the destination (hotel/clinic). An SMS challenge is sent to the
+// destination's registered phone. Their reply via the Twilio webhook closes the
+// second signal. If no reply arrives, the escalation engine will page admin.
+//
+// The trip DOES advance (journey is not blocked) but the destination_ack status
+// is recorded so admin can see which arrivals are unverified.
+const HIGH_RISK_STEPS = new Set([4, 5]);
+
+// Inline SMS helper — mirrors pattern from escalateMissedDriverHandshake
+async function sendSmsDirect(to: string, body: string) {
+  const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from  = Deno.env.get('TWILIO_PHONE_NUMBER');
+  if (!sid || !token || !from || !to) return { ok: false, reason: 'not_configured' };
+  try {
+    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${sid}:${token}`),
+        'Content-Type':  'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: body }).toString(),
+    });
+    return resp.ok ? { ok: true } : { ok: false, reason: 'twilio_error' };
+  } catch (e) {
+    return { ok: false, reason: (e as Error).message };
+  }
+}
+
 // ── Handshake sequence definition ─────────────────────────────────────────────
 // Maps handshake_number (1-9) → physical type + journey phase.
 // Phase transitions are cumulative: completing HS2 sets phase=transit_out,
@@ -135,6 +170,94 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     sensitive:  false,
     timestamp:  now,
   });
+
+  // ── Dual-signal verification for HIGH-RISK checkpoints (HS4, HS5) ────────────
+  // The patient's tap is Signal 1. We now request Signal 2 from the destination.
+  // A single device can be compromised — two independent actors from different roles
+  // eliminates the single point of failure.
+  //
+  // For HS4 (hotel_checkin): SMS challenge to hotel's registered contact number.
+  // For HS5 (clinic_arrival): SMS challenge to the assigned doctor's registered number,
+  //   and the doctor must complete logPhysicalIntakeHandshake to close the second signal.
+  //
+  // Journey advances regardless — we do not block the patient at a checkpoint if the
+  // destination is slow to respond. But the destination_ack_status is tracked and
+  // the escalation engine pages admin if it remains 'pending' past the deadline.
+  if (HIGH_RISK_STEPS.has(n)) {
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+    const dstCheckpointId = `DST_${Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+    const dstDeadline = new Date(Date.now() + 15 * 60_000).toISOString();
+
+    let destinationPhone: string | null = null;
+    let destinationLabel = hs.label;
+
+    try {
+      // Fetch the case record to get destination contact info.
+      if (trip.case_id) {
+        const caseRecords = await base44.asServiceRole.entities.CaseRecord.filter({ id: trip.case_id }).catch(() => []);
+        const cr = caseRecords?.[0];
+        if (cr) {
+          if (n === 5) {
+            // HS5 — clinic: use doctor's phone if available
+            destinationPhone = cr.doctor_phone || cr.assigned_doctor_phone || null;
+            destinationLabel = 'Clinic / Doctor';
+          } else if (n === 4) {
+            // HS4 — hotel: use hotel contact if stored on the booking
+            destinationPhone = cr.hotel_phone || cr.accommodation_phone || null;
+            destinationLabel = 'Hotel';
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Create a secondary PENDING OfflineHandshake for the destination — this is
+    // the record that the destination's SMS reply will close via the Twilio webhook.
+    await base44.asServiceRole.entities.OfflineHandshake.create({
+      case_id:              trip.case_id || '',
+      trip_id,
+      patient_email:        trip.user_email || '',
+      patient_name:         trip.user_name  || '',
+      handshake_role:       'destination',
+      handshake_type:       hs.type,
+      channel:              'sms',
+      method:               'sms',
+      status:               'pending',
+      checkpoint_id:        dstCheckpointId,
+      destination_phone:    destinationPhone || '',
+      primary_driver_phone: destinationPhone || '',  // used by phone validation in Twilio webhook
+      timeout_at:           dstDeadline,
+      parent_handshake_step: n,
+      received_at:          now,
+    }).catch(e => console.error('[completeHandshake] destination handshake create failed:', e));
+
+    if (destinationPhone) {
+      const smsBody = `Morales Medical Concierge: ${trip.user_name || 'Your patient'} says they have just arrived at ${destinationLabel}. Reply: HANDSHAKE ${dstCheckpointId} to confirm presence. If they have NOT arrived, reply: ALERT ${dstCheckpointId}`;
+      sendSmsDirect(destinationPhone, smsBody).catch(() => {});
+    } else {
+      // No destination phone on record — alert admin so they can manually verify.
+      if (adminEmail) {
+        base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: 'Morales Safety',
+          to: adminEmail,
+          subject: `⚠️ HS${n} Destination Verification Required — ${trip.user_name || trip.user_email}`,
+          body: `Patient ${trip.user_name || trip.user_email} has confirmed HS${n} (${hs.label}) arrival via app.\n\nNo ${destinationLabel} contact phone is on file for case ${trip.case_id}.\n\nManually verify the patient is physically present at the destination within 15 minutes.\n\nTrip ID: ${trip_id}\nCase ID: ${trip.case_id}\nHandshake: ${hs.label}\nConfirmed at: ${now}`,
+        }).catch(() => {});
+      }
+    }
+
+    // GPS check: if this is a high-risk checkpoint and no GPS was provided,
+    // flag it — GPS is the baseline independent signal even without destination reply.
+    if (!gps_location?.lat || !gps_location?.lng) {
+      if (adminEmail) {
+        base44.asServiceRole.integrations.Core.SendEmail({
+          from_name: 'Morales Safety',
+          to: adminEmail,
+          subject: `⚠️ HS${n} confirmed WITHOUT GPS — ${trip.user_name || trip.user_email}`,
+          body: `Patient ${trip.user_name || trip.user_email} confirmed HS${n} (${hs.label}) with no GPS coordinates attached.\n\nThis is a high-risk checkpoint. A position-verified confirmation was not possible.\n\nTrip ID: ${trip_id}\nCase ID: ${trip.case_id || 'N/A'}\nConfirmed at: ${now}`,
+        }).catch(() => {});
+      }
+    }
+  }
 
   const isComplete = n === 9;
 
