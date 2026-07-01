@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Trash2, Bookmark, Loader2, Navigation, Wifi, WifiOff, Pause, Play, Globe } from 'lucide-react';
+import { MapPin, Trash2, Bookmark, Loader2, Navigation, Wifi, WifiOff, Pause, Play, Globe, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
 
@@ -198,6 +198,16 @@ export default function LocationBreadcrumbTracker({ caseId }) {
     : ipLocation ? 'ip_geo'
     : 'none';
 
+  // Stale signal: most recent crumb is >30 min old and GPS isn't actively updating.
+  // This could be a technical drop or deliberate interference — warn the patient
+  // so they know their emergency contacts are seeing a frozen position, not current.
+  const STALE_WARN_MIN = 30;
+  const newestCrumb = crumbs[0] ?? null;
+  const newestCrumbAge = newestCrumb ? minutesSince(newestCrumb.logged_at) : null;
+  const isSignalStale = !loading && newestCrumb &&
+    newestCrumbAge != null && newestCrumbAge >= STALE_WARN_MIN &&
+    locationStatus !== 'gps';
+
   const statusConfig = {
     gps: { icon: <Navigation className="w-3.5 h-3.5" />, label: 'Precise GPS active', color: 'text-emerald-600', dot: 'bg-emerald-500' },
     ip_geo: { icon: <Globe className="w-3.5 h-3.5" />, label: 'Approximate location', color: 'text-blue-600', dot: 'bg-blue-500' },
@@ -209,6 +219,21 @@ export default function LocationBreadcrumbTracker({ caseId }) {
 
   return (
     <div className="space-y-4">
+      {/* Stale signal warning — shown when GPS drops and last crumb is >30 min old.
+          Emergency contacts are seeing a frozen position; patient needs to know. */}
+      {isSignalStale && (
+        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 text-sm">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5 animate-pulse" />
+          <div>
+            <p className="font-semibold text-amber-800">Your location is no longer broadcasting</p>
+            <p className="text-amber-700 text-xs mt-0.5">
+              Emergency contacts see your last known position as of {Math.round(newestCrumbAge)} minutes ago — not your current location.
+              Tap <span className="font-semibold">Log Now</span> to re-share.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header + controls */}
       <div className="flex items-start justify-between flex-wrap gap-2">
         <div>
@@ -261,7 +286,11 @@ export default function LocationBreadcrumbTracker({ caseId }) {
           {crumbs.map((crumb, i) => (
             <motion.div key={crumb.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${crumb.is_saved ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${i === 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                i === 0
+                  ? isSignalStale ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-pulse'
+                  : 'bg-slate-300'
+              }`} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-slate-800 truncate">{crumb.place_label}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5">

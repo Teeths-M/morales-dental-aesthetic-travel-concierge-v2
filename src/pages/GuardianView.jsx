@@ -244,7 +244,10 @@ export default function GuardianView() {
       </div>
 
       {/* ── HAND OF GOD — SAFE Banner ───────────────────────────────────── */}
-      {!wildernessSOS && !escalation && (
+      {/* Suppressed when signal is >15 min stale — do not falsely reassure family
+          when the last known position could be minutes or hours out of date.
+          An amber "signal lost" warning replaces it instead. */}
+      {!wildernessSOS && !escalation && !isStaleAlert && (
         <div style={{
           background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.08))',
           borderBottom: '1px solid rgba(34,197,94,0.3)',
@@ -264,6 +267,26 @@ export default function GuardianView() {
             {[4, 7, 10, 13].map((h, i) => (
               <div key={i} style={{ width: 3, height: h, borderRadius: 1, background: '#22c55e', opacity: 0.7 + i * 0.1 }} />
             ))}
+          </div>
+        </div>
+      )}
+      {/* Signal-loss banner — replaces the SAFE banner when location is dark >15 min.
+          Shows last known position clearly labeled; never claims current safety. */}
+      {!wildernessSOS && !escalation && isStaleAlert && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.06))',
+          borderBottom: '1px solid rgba(245,158,11,0.35)',
+          padding: '14px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+        }}>
+          <WifiOff style={{ width: 18, height: 18, color: '#f59e0b' }} />
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#f59e0b', letterSpacing: '0.02em' }}>
+              LOCATION SIGNAL LOST — {ageMin} MIN AGO
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.03em' }}>
+              Displaying last known safe coordinate · Map position may not reflect current location
+            </p>
           </div>
         </div>
       )}
@@ -528,7 +551,12 @@ export default function GuardianView() {
                   <Marker position={[loc.latitude, loc.longitude]} icon={markerIcon}>
                     <Popup closeButton={false}>
                       <div style={{ background: '#0C1A1D', borderRadius: 10, padding: '10px 12px', minWidth: 170, border: '1px solid rgba(34,197,94,0.4)' }}>
-                        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: '#22c55e' }}>📍 {session.patient_name}</p>
+                        <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: isStaleWarn ? '#f59e0b' : '#22c55e' }}>
+                          {isStaleAlert ? '⚠️ LAST KNOWN POSITION' : `📍 ${session.patient_name}`}
+                        </p>
+                        {isStaleAlert && (
+                          <p style={{ margin: '0 0 4px', fontSize: 9, color: '#f59e0b', fontWeight: 600 }}>Signal lost {ageMin}m ago · May not be current</p>
+                        )}
                         <p style={{ margin: '0 0 10px', fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}</p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                           <button onClick={() => openMap(mapsDirectionsUrl(loc.latitude, loc.longitude))} style={{ width: '100%', padding: '7px 10px', borderRadius: 7, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>🗺 Directions — Google</button>

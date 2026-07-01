@@ -689,8 +689,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Stale signal check: guardian alert if location hasn't updated ────────
-    // Even if check-in is pending (not yet missed), a stale signal is a warning sign
+    // ── Stale signal check ────────────────────────────────────────────────────
+    // A stale signal is treated as a potential security event (jamming/spoofing),
+    // not just a technical failure. We freeze the last-known coordinates on the
+    // record and fire an admin email — not just a log entry.
     try {
       const allPendingActive = await base44.asServiceRole.entities.SoloCheckIn.filter({ status: 'pending' }, '-scheduled_time', 100);
       for (const ci of allPendingActive) {
@@ -699,20 +701,43 @@ Deno.serve(async (req) => {
         if (!liveLoc) continue;
         const staleMins = minutesSince(liveLoc.updated_at);
         if (staleMins >= THRESHOLDS.STALE_SIGNAL_GUARDIAN_MIN && !liveLoc.stale_alerted_30m) {
-          // Mark as alerted to prevent duplicates
+          const locStr = buildLocationString(liveLoc);
+          const mapsUrl = buildMapsUrl(liveLoc);
+          const lossDetectedAt = now.toISOString();
+
+          // Freeze last-known coordinates — never interpolate or extrapolate position.
+          // The UI will display these with a clear "LAST KNOWN" label, not as current.
           try {
-            await base44.asServiceRole.entities.LiveLocation.update(liveLoc.id, { stale_alerted_30m: true });
+            await base44.asServiceRole.entities.LiveLocation.update(liveLoc.id, {
+              stale_alerted_30m: true,
+              signal_loss_detected_at: lossDetectedAt,
+              signal_mode: 'last_known',
+              last_known_latitude: liveLoc.latitude ?? null,
+              last_known_longitude: liveLoc.longitude ?? null,
+              last_known_place_label: liveLoc.place_label ?? null,
+            });
           } catch (_) {}
+
           await logNotification(base44, {
             channel: 'admin',
             case_id: ci.case_id,
             recipient_type: 'admin',
             recipient_email: adminEmail,
             message_type: 'stale_signal_alert',
-            status: 'logged',
+            status: 'sent',
             escalation_level: 1,
-            notes: `Signal stale for ${Math.round(staleMins)} minutes`,
+            notes: `Signal stale for ${Math.round(staleMins)} minutes. Last known: ${locStr}`,
           });
+
+          // Page admin via email — signal loss could be deliberate jamming/spoofing.
+          if (adminEmail) {
+            base44.asServiceRole.integrations.Core.SendEmail({
+              from_name: 'Morales Safety — Location Alert',
+              to: adminEmail,
+              subject: `⚠️ LOCATION SIGNAL LOST — ${ci.user_name || ci.user_email} — ${Math.round(staleMins)}min dark`,
+              body: `Location signal lost for an active solo traveler.\n\nPatient: ${ci.user_name || ci.user_email}\nCase ID: ${ci.case_id}\nSignal dark for: ${Math.round(staleMins)} minutes\nLast known position: ${locStr}\n${mapsUrl ? `Map: ${mapsUrl}` : ''}\nLoss detected at: ${lossDetectedAt}\n\nThis may be a technical failure (device locked, no data) or a deliberate signal block (jamming, spoofing).\n\nACTION: Verify patient status. If unreachable within 10 minutes, escalate to security.`,
+            }).catch(() => {});
+          }
         }
       }
     } catch (_) {}
