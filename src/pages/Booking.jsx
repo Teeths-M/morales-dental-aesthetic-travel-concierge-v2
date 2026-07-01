@@ -54,28 +54,26 @@ const SLIDE_FACTS = [
 ];
 
 const steps = [
-   { label: 'Personal Info',    emoji: '👤', short: 'Personal'  },
-   { label: 'Travel',           emoji: '✈️', short: 'Travel'    },
-   { label: 'Cultural',         emoji: '🕌', short: 'Cultural'  },
-   { label: 'Medical History',  emoji: '🩺', short: 'Medical'   },
-   { label: 'Anesthesia',       emoji: '💉', short: 'Anesthesia'},
-   { label: 'Medications',      emoji: '💊', short: 'Meds'      },
-   { label: 'Lifestyle',        emoji: '🚬', short: 'Lifestyle' },
-   { label: 'Emotional',        emoji: '🧠', short: 'Emotional' },
-   { label: "Women's Health",   emoji: '👩‍⚕️', short: 'Health'    },
-   { label: 'Documents',        emoji: '📎', short: 'Docs'      },
-   { label: 'Procedure & Date', emoji: '🏥', short: 'Procedure' },
-   { label: 'Consent & Signature', emoji: '⚖️', short: 'Consent'    },
-   { label: 'Acknowledgement',    emoji: '📋', short: 'Acknowledge' },
-   { label: 'SAFE-T Scan',        emoji: '🛡️', short: 'SAFE-T'      },
+  { label: 'Personal Info',       emoji: '👤', short: 'Personal'   },  // 0: personal + cultural merged
+  { label: 'Travel',              emoji: '✈️', short: 'Travel'     },  // 1
+  { label: 'Medical History',     emoji: '🩺', short: 'Medical'    },  // 2
+  { label: 'Anesthesia',          emoji: '💉', short: 'Anesthesia' },  // 3
+  { label: 'Medications',         emoji: '💊', short: 'Meds'       },  // 4
+  { label: 'Lifestyle & Wellness',emoji: '🚬', short: 'Lifestyle'  },  // 5: lifestyle + emotional merged
+  { label: "Women's Health",      emoji: '👩‍⚕️', short: 'Health'     },  // 6
+  { label: 'Documents',           emoji: '📎', short: 'Docs'       },  // 7
+  { label: 'Procedure & Date',    emoji: '🏥', short: 'Procedure'  },  // 8
+  { label: 'Consent & Signature', emoji: '⚖️', short: 'Consent'    },  // 9
+  { label: 'Acknowledgement',     emoji: '📋', short: 'Acknowledge' }, // 10
+  { label: 'SAFE-T Scan',         emoji: '🛡️', short: 'SAFE-T'     },  // 11
 ];
 
-// Phase grouping — reduces "Step 7 of 14" anxiety into manageable phase chunks
+// Phase grouping — 4 phases across 12 steps
 const STEP_PHASES = [
-  { name: 'About You',     steps: [0, 1, 2],          color: '#10b981' },
-  { name: 'Your Health',   steps: [3, 4, 5, 6, 7, 8], color: '#3b82f6' },
-  { name: 'Your Journey',  steps: [9, 10],             color: '#8b5cf6' },
-  { name: 'Safety Review', steps: [11, 12, 13],        color: '#d4af37' },
+  { name: 'About You',     steps: [0, 1],          color: '#10b981' },
+  { name: 'Your Health',   steps: [2, 3, 4, 5, 6], color: '#3b82f6' },
+  { name: 'Your Journey',  steps: [7, 8],           color: '#8b5cf6' },
+  { name: 'Safety Review', steps: [9, 10, 11],      color: '#d4af37' },
 ];
 
 function getPhaseInfo(stepIndex) {
@@ -442,57 +440,67 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) {
-      return form.patient_name && form.email && form.phone &&
+      // Personal Info + Cultural merged
+      const personalOk = form.patient_name && form.email && form.phone &&
              form.emergency_contact_name && form.emergency_contact_number &&
              form.passport_number && form.passport_issue_date && form.passport_expiry_date;
+      const culturalOk = form.has_cultural_preferences !== null &&
+             (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);
+      return personalOk && culturalOk;
     }
     if (step === 1) {
+      // Travel
       if (form.has_companion === null || form.has_companion === undefined) return false;
       if (form.has_companion === false) return true;
-      // Has companion: require at least count selected
       return form.number_of_companions > 0;
     }
     if (step === 2) {
-      return form.has_cultural_preferences !== null && (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);
-    }
-    if (step === 3) {
-      return form.medical_conditions.length > 0 && form.had_surgery !== null && 
+      // Medical History (was 3)
+      return form.medical_conditions.length > 0 && form.had_surgery !== null &&
              (form.had_surgery ? form.previous_procedures && form.last_surgery_date && form.had_complications !== null : true);
     }
-    if (step === 4) {
+    if (step === 3) {
+      // Anesthesia (was 4)
       return form.anesthesia_complications !== null && (form.anesthesia_complications ? form.anesthesia_complication_types.length > 0 : true) &&
              form.allergies.length > 0;
     }
-    if (step === 5) {
+    if (step === 4) {
+      // Medications (was 5)
       return form.takes_medications !== null && (form.takes_medications ? form.medication_types.length > 0 && form.medication_notes : true);
     }
-    if (step === 6) {
-      return form.lifestyle_habits.length > 0 && form.exercises_regularly !== null && 
+    if (step === 5) {
+      // Lifestyle + Emotional merged (was 6 + 7)
+      const lifestyleOk = form.lifestyle_habits.length > 0 && form.exercises_regularly !== null &&
              (form.exercises_regularly ? form.activity_level : true);
+      const emotionalOk = form.emotional_concerns !== null &&
+             (form.emotional_concerns ? form.emotional_concern_types.length > 0 && form.emotional_notes : true);
+      return lifestyleOk && emotionalOk;
     }
-    if (step === 7) {
-      return form.emotional_concerns !== null && (form.emotional_concerns ? form.emotional_concern_types.length > 0 && form.emotional_notes : true);
-    }
-    if (step === 8) {
+    if (step === 6) {
+      // Women's Health (was 8)
       return form.pregnancy_status;
     }
-    if (step === 9) {
+    if (step === 7) {
+      // Documents (was 9)
       return form.document_types.length > 0 && (form.document_types.includes('none') || form.uploaded_files.length > 0);
     }
-    if (step === 10) {
+    if (step === 8) {
+      // Procedure & Date (was 10)
       return form.preferred_date;
     }
-    if (step === 11) {
+    if (step === 9) {
+      // Consent & Signature (was 11)
       return !!form.signature_data && form.accepted_arbitration_clause === true;
     }
-    if (step === 12) {
+    if (step === 10) {
+      // Acknowledgement (was 12)
       const visaStatus = checkVisaRequirement(form.nationality, form.procedure_country);
       const required = getRequiredAckCount(visaStatus);
       return form.acknowledged_statements.size >= required;
     }
-    if (step === 13) {
+    if (step === 11) {
+      // SAFE-T Scan (was 13)
       if (!form.safet_risk_level) return false;
-      // Allow proceeding even with elevated/review risk - admin will review
       return true;
     }
     return true;
@@ -664,46 +672,58 @@ export default function Booking() {
                 exit={{ opacity: 0, x: -16 }}
                 transition={{ duration: 0.18 }}
               >
-                {step === 0  && <Section1PersonalInfo form={form} update={update} language={language} showValidation={showValidation} setShowValidation={setShowValidation} />}
-                 {step === 1  && <Section2Travel form={form} update={update} language={language} />}
-                 {step === 2  && <Section3Cultural form={form} update={update} language={language} />}
-                 {step === 3  && <Section4MedicalHistory form={form} update={update} language={language} />}
-                 {step === 4  && <Section5Anesthesia form={form} update={update} language={language} />}
-                 {step === 5  && <Section6Medications form={form} update={update} language={language} />}
-                 {step === 6  && <Section7Lifestyle form={form} update={update} language={language} />}
-                 {step === 7  && <Section8Emotional form={form} update={update} language={language} />}
-                 {step === 8  && <Section9Pregnancy form={form} update={update} language={language} />}
-                 {step === 9  && <Section10Documents form={form} update={update} language={language} />}
-                 {step === 10 && <SectionProcedure form={form} update={update} language={language} />}
-                 {step === 11 && (
-                   <MedicalRiskDisclosure
-                     signatureData={form.signature_data}
-                     onSignatureChange={(data) => {
-                       update('signature_data', data);
-                       if (data) update('signature_timestamp', new Date().toISOString());
-                     }}
-                     arbitrationAccepted={form.accepted_arbitration_clause}
-                     onArbitrationChange={(val) => update('accepted_arbitration_clause', val)}
-                   />
-                 )}
-                 {step === 12 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={checkVisaRequirement(form.nationality, form.procedure_country)} />}
-                 {step === 13 && (
-                   <SafeTScan
-                     form={form}
-                     items={items}
-                     onResult={(result) => {
-                       update('safet_risk_level', result.risk_level);
-                       update('safet_risk_flags', result.flags || []);
-                     }}
-                   />
-                 )}
+                {step === 0 && (
+                  <>
+                    <Section1PersonalInfo form={form} update={update} language={language} showValidation={showValidation} setShowValidation={setShowValidation} />
+                    <div className="mt-8 pt-6 border-t border-slate-200">
+                      <Section3Cultural form={form} update={update} language={language} />
+                    </div>
+                  </>
+                )}
+                {step === 1  && <Section2Travel form={form} update={update} language={language} />}
+                {step === 2  && <Section4MedicalHistory form={form} update={update} language={language} />}
+                {step === 3  && <Section5Anesthesia form={form} update={update} language={language} />}
+                {step === 4  && <Section6Medications form={form} update={update} language={language} />}
+                {step === 5 && (
+                  <>
+                    <Section7Lifestyle form={form} update={update} language={language} />
+                    <div className="mt-8 pt-6 border-t border-slate-200">
+                      <Section8Emotional form={form} update={update} language={language} />
+                    </div>
+                  </>
+                )}
+                {step === 6  && <Section9Pregnancy form={form} update={update} language={language} />}
+                {step === 7  && <Section10Documents form={form} update={update} language={language} />}
+                {step === 8  && <SectionProcedure form={form} update={update} language={language} />}
+                {step === 9 && (
+                  <MedicalRiskDisclosure
+                    signatureData={form.signature_data}
+                    onSignatureChange={(data) => {
+                      update('signature_data', data);
+                      if (data) update('signature_timestamp', new Date().toISOString());
+                    }}
+                    arbitrationAccepted={form.accepted_arbitration_clause}
+                    onArbitrationChange={(val) => update('accepted_arbitration_clause', val)}
+                  />
+                )}
+                {step === 10 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={checkVisaRequirement(form.nationality, form.procedure_country)} />}
+                {step === 11 && (
+                  <SafeTScan
+                    form={form}
+                    items={items}
+                    onResult={(result) => {
+                      update('safet_risk_level', result.risk_level);
+                      update('safet_risk_flags', result.flags || []);
+                    }}
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Navigation */}
           <div className="border-t border-slate-200 bg-slate-50">
-          {step === 13 && showValidation &&
+          {step === 11 && showValidation &&
            (form.safet_risk_level === 'elevated' || form.safet_risk_level === 'review') && (
             <p className="text-sm text-red-600 px-6 pt-4">
               Your SAFE-T assessment requires review before proceeding.
@@ -732,7 +752,7 @@ export default function Booking() {
                     return;
                   }
                   // Stacking safety check — fires when leaving Procedure & Date step
-                  if (step === 10 && items.length >= 2) {
+                  if (step === 8 && items.length >= 2) {
                     const { violations, isBlocked } = getViolations(items);
                     if (isBlocked) {
                       setStackingViolations(violations);

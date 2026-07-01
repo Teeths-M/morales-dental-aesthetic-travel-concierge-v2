@@ -223,117 +223,93 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
 
   if (!isOpen) return null;
 
+  const GOLD   = '#D4AF37';
+  const DARK   = '#060B16';
+  const CARD   = '#0C1A1D';
+  const BORDER = '#2A3F4A';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)', padding: 16 }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl max-w-md w-full shadow-xl p-6 space-y-6"
+        initial={{ opacity: 0, scale: 0.95, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 24, maxWidth: 420, width: '100%', padding: 28, fontFamily: '"SF Pro Display", system-ui, sans-serif' }}
       >
         {/* Header */}
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6 text-blue-600" />
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+            <Lock style={{ width: 22, height: 22, color: GOLD }} />
           </div>
-          <h2 className="font-display text-xl font-semibold text-slate-800">Secure Your Consultation</h2>
-          <p className="text-sm text-muted-foreground mt-2">
-            Pay the consultation fee to confirm your booking and prevent no-shows.
+          <h2 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>One last step</h2>
+          <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+            A $49 consultation fee secures your booking and is <strong style={{ color: '#fff' }}>fully credited</strong> to your package.
           </p>
         </div>
 
-        {/* Fee Amount */}
-        <div className="bg-slate-50 rounded-xl p-4 text-center">
-          <p className="text-sm text-muted-foreground mb-1">Consultation Fee</p>
-          <p className="font-display text-3xl font-semibold text-slate-800">$49</p>
-          <p className="text-xs text-slate-500 mt-2">
-            Refundable when you book your procedure package
-          </p>
+        {/* Fee badge */}
+        <div style={{ background: `linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.06))`, border: `1px solid rgba(212,175,55,0.3)`, borderRadius: 16, padding: '16px 20px', textAlign: 'center', marginBottom: 20 }}>
+          <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Consultation Fee</p>
+          <p style={{ margin: '0 0 4px', fontSize: 38, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>$49</p>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>100% credited when you book your procedure</p>
         </div>
 
-        {/* Benefits */}
-        <div className="space-y-2 bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-          <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wide mb-2">Why This Fee?</p>
-          <div className="space-y-2 text-xs text-emerald-700">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-              <span>Guarantees serious patient commitment</span>
+        {/* 3 reasons */}
+        <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 14, padding: '14px 16px', marginBottom: 20 }}>
+          <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: '#34d399', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Why we ask for this</p>
+          {[
+            'Reserves your spot with a verified doctor',
+            'Protects the specialist\'s time from no-shows',
+            'Fully credited — you pay $0 more when you commit',
+          ].map((t, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < 2 ? 8 : 0 }}>
+              <CheckCircle2 style={{ width: 14, height: 14, color: '#34d399', marginTop: 1, flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{t}</span>
             </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-              <span>Protects doctor's time & availability</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-              <span>Fully refunded in your package price</span>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Payment Method Selection */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Choose Payment Method</p>
-          <div className="grid grid-cols-3 gap-2">
+        {/* Payment method tabs */}
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Pay with</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             {[
               { id: 'stripe', label: 'Card', icon: '💳' },
               { id: 'paypal', label: 'PayPal', icon: '🅿️' },
-              { id: 'wipay', label: 'Wipay', icon: '💰' }
-            ].map(method => (
+              { id: 'wipay',  label: 'Wipay',  icon: '💰' },
+            ].map(m => (
               <button
-                key={method.id}
+                key={m.id}
                 type="button"
-                onClick={() => setPaymentMethod(method.id)}
-                className={`p-3 rounded-lg border-2 transition-all text-center ${
-                  paymentMethod === method.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300'
-                }`}
+                onClick={() => setPaymentMethod(m.id)}
+                style={{
+                  padding: '10px 8px', borderRadius: 12, cursor: 'pointer',
+                  background: paymentMethod === m.id ? `rgba(212,175,55,0.14)` : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${paymentMethod === m.id ? `rgba(212,175,55,0.6)` : BORDER}`,
+                  color: paymentMethod === m.id ? GOLD : 'rgba(255,255,255,0.5)',
+                  fontSize: 12, fontWeight: 700, textAlign: 'center', transition: 'all 0.15s',
+                }}
               >
-                <div className="text-xl mb-1">{method.icon}</div>
-                <p className="text-xs font-medium">{method.label}</p>
+                <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
+                {m.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Payment Forms */}
+        {/* Payment forms */}
         {paymentMethod === 'stripe' && (
-          <StripePaymentForm
-            form={form}
-            onSuccess={onSuccess}
-            onCancel={onCancel}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            clearCart={clearCart}
-            handlePaymentSuccess={handlePaymentSuccess}
-          />
+          <StripePaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} clearCart={clearCart} handlePaymentSuccess={handlePaymentSuccess} />
         )}
-
         {paymentMethod === 'paypal' && (
-          <PayPalPaymentForm
-            form={form}
-            onSuccess={onSuccess}
-            onCancel={onCancel}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            handlePaymentSuccess={handlePaymentSuccess}
-          />
+          <PayPalPaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} handlePaymentSuccess={handlePaymentSuccess} />
         )}
-
         {paymentMethod === 'wipay' && (
-          <WipayPaymentForm
-            form={form}
-            onSuccess={onSuccess}
-            onCancel={onCancel}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            handlePaymentSuccess={handlePaymentSuccess}
-          />
+          <WipayPaymentForm form={form} onSuccess={onSuccess} onCancel={onCancel} isProcessing={isProcessing} setIsProcessing={setIsProcessing} handlePaymentSuccess={handlePaymentSuccess} />
         )}
 
-        {/* Security */}
-        <div className="flex items-center justify-center gap-3 text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <Lock className="w-3 h-3" />
-          <span>Secure Payment Processing</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
+          <Lock style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.25)' }} />
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>Secured by Stripe · HIPAA Compliant · SSL Encrypted</span>
         </div>
       </motion.div>
     </div>
