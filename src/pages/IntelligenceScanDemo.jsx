@@ -170,6 +170,14 @@ const DOCTORS = [
         identity: { liveness_status: 'failed', detail: 'Static image detected — liveness bypass attempted' },
         device:   { type: 'Unknown / Headless', browser: 'Headless Chrome (bot)', timezone: 'UTC+0 (no local offset)', reuse_count: 3, fp_label: 'FRAUD FACTORY' },
       },
+      device_network: {
+        device_id: 'b3f71a',
+        entries: [
+          { clinic: 'Clinica Bella',      date: 'Nov 2024', current: false },
+          { clinic: 'Centro Estetico',    date: 'Jan 2025', current: false },
+          { clinic: 'Lagos Smile Center', date: 'NOW',      current: true  },
+        ],
+      },
     },
   },
 ];

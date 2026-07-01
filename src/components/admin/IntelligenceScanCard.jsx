@@ -249,6 +249,70 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
               </div>
             </div>
 
+            {/* Fraud Factory Network Map */}
+            {fd.device_network && (
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(239,68,68,0.45)', background: 'rgba(239,68,68,0.04)' }}>
+                {/* Header */}
+                <div className="px-4 py-3 flex items-center gap-2.5"
+                  style={{ background: 'rgba(239,68,68,0.14)', borderBottom: '1px solid rgba(239,68,68,0.25)' }}>
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 text-red-400" strokeWidth={2.5} />
+                  <div>
+                    <p className="text-[9px] font-bold tracking-widest text-red-400">FRAUD FACTORY DETECTED</p>
+                    <p className="text-[11px] font-mono" style={{ color: '#fca5a5' }}>
+                      Device {fd.device_network.device_id} · {fd.device_network.entries.length} Applications · 1 Operator
+                    </p>
+                  </div>
+                </div>
+
+                {/* Network chain */}
+                <div className="px-4 pt-3 pb-2">
+                  {fd.device_network.entries.map((entry, i) => (
+                    <div key={i} className="flex items-stretch gap-3">
+                      {/* Timeline spine */}
+                      <div className="flex flex-col items-center flex-shrink-0" style={{ width: 16 }}>
+                        {entry.current ? (
+                          <div className="w-3 h-3 rounded-full mt-2.5 flex-shrink-0 animate-pulse"
+                            style={{ background: '#ef4444', border: '2px solid #fca5a5', boxShadow: '0 0 8px #ef444488' }} />
+                        ) : (
+                          <div className="w-2.5 h-2.5 rounded-full mt-2.5 flex-shrink-0"
+                            style={{ background: '#7f1d1d', border: '2px solid rgba(239,68,68,0.5)' }} />
+                        )}
+                        {i < fd.device_network.entries.length - 1 && (
+                          <div className="w-px flex-1 mt-1" style={{ background: 'rgba(239,68,68,0.3)', minHeight: 14 }} />
+                        )}
+                      </div>
+
+                      {/* Entry row */}
+                      <div className="flex-1 mb-2 px-3 py-2 rounded-lg flex items-center justify-between gap-2"
+                        style={{
+                          background: entry.current ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.05)',
+                          border: `1px solid ${entry.current ? 'rgba(239,68,68,0.45)' : 'rgba(239,68,68,0.15)'}`,
+                        }}>
+                        <p className="text-[11px] font-semibold truncate" style={{ color: entry.current ? '#fca5a5' : '#94a3b8' }}>
+                          {entry.clinic}
+                        </p>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-[9px]" style={{ color: '#64748b' }}>{entry.date}</span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: entry.current ? '#dc2626' : '#7f1d1d', color: '#fff', border: `1px solid ${entry.current ? '#ef4444' : '#991b1b'}` }}>
+                            {entry.current ? '● REJECTED' : 'REJECTED'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tagline */}
+                <div className="px-4 py-2.5 text-center"
+                  style={{ borderTop: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.1)' }}>
+                  <p className="text-[10px] font-bold tracking-[0.18em] text-red-400">
+                    SAME DEVICE · THREE NAMES · ONE FACTORY
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Liveness */}
             {(() => {
               const lc = livenessConfig(fd.signals.identity.liveness_status);
