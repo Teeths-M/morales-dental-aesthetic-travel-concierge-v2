@@ -110,7 +110,7 @@ export default function PublicRecoveryTracker() {
           </div>
           <h2 className="text-lg font-semibold text-white mb-2">Journey Not Available</h2>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>{error || 'This journey tracker link is not available.'}</p>
-          <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.25)' }}>Morales Dental & Aesthetic — Medical Travel Concierge</p>
+          <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety</p>
         </div>
       </div>
     );
@@ -266,7 +266,7 @@ export default function PublicRecoveryTracker() {
             This update is shared with your consent by the traveller.
           </p>
           <a href="/" className="block mt-4 text-xs underline" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Powered by Morales Dental & Aesthetic Travel Concierge
+            Powered by Morales Medical Travel Safety
           </a>
         </div>
       </div>

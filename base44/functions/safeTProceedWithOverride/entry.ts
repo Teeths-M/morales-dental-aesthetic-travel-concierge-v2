@@ -77,7 +77,7 @@ Your case is now proceeding to doctor review. Our team will be in touch shortly.
 
 This document has been archived in our secure compliance system.
 
-— Morales Dental & Aesthetic Travel Concierge
+— Morales Medical Travel Safety
         `.trim(),
       });
     } catch (emailErr) {

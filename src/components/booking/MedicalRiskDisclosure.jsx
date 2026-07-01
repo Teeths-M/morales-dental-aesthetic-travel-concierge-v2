@@ -17,7 +17,7 @@ const PILLARS = [
   {
     num: '3',
     title: 'Platform Coordination Scope',
-    text: 'I explicitly agree that this platform operates solely as a logistics and travel concierge coordinating transit, lodging, and scheduling. Morales Dental & Aesthetic Travel Concierge is not a medical provider and does not render clinical services.',
+    text: 'I explicitly agree that this platform operates solely as a logistics and travel concierge coordinating transit, lodging, and scheduling. Morales Medical Travel Safety is not a medical provider and does not render clinical services.',
   },
   {
     num: '4',

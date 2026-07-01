@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * sendAIPartnerBriefs
@@ -12,7 +12,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  * Trigger: called from onDoctorConfirmed (auto) or admin CaseDetailDrawer (manual).
  */
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 // ── Language detection by country ─────────────────────────────────────────────
 function detectLanguage(country: string): string {

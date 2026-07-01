@@ -33,7 +33,7 @@ const HUMAN_ESCALATION_TRIGGERS = ['talk to a human', 'speak with a human', 'hum
 // Language map for voice recognition
 const VOICE_LANG_MAP = { en: 'en-US', es: 'es-ES', fr: 'fr-FR', pt: 'pt-BR', de: 'de-DE', it: 'it-IT' };
 
-const SYSTEM_PROMPT = `You are SAFE-T 4LIFE™, the premium AI healthcare travel companion for Morales Dental & Aesthetic Travel Concierge.
+const SYSTEM_PROMPT = `You are SAFE-T 4LIFE™, the premium AI healthcare travel companion for Morales Medical Travel Safety.
 
 Your role:
 - Emotionally support and reassure clients throughout their healthcare journey

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       const travelEmails = getPartnerEmails('travel');
       const hotelEmails = getPartnerEmails('hotel');
       
-      const BRAND = 'Morales Dental & Aesthetics';
+      const BRAND = 'Morales Medical Travel Safety';
       const TEAM = 'Morales Concierge Team';
       
       const escapeHtml = (value) => String(value ?? '')

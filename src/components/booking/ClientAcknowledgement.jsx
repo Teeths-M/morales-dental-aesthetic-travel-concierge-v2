@@ -4,7 +4,7 @@ import { Check, AlertTriangle } from 'lucide-react';
 const statements = [
   'I confirm that the information I have provided is accurate, truthful, and complete to the best of my knowledge.',
   'I understand that withholding medical information, medications, previous procedures, allergies, lifestyle factors, or health conditions may affect my safety, treatment recommendations, recovery, and travel coordination.',
-  'I understand that Morales Dental & Aesthetic Travel Concierge and participating providers are not responsible for complications or outcomes resulting from inaccurate, incomplete, or misleading information submitted during the consultation process.',
+  'I understand that Morales Medical Travel Safety and participating providers are not responsible for complications or outcomes resulting from inaccurate, incomplete, or misleading information submitted during the consultation process.',
   'I understand this platform is a healthcare coordination and educational support system and does not replace professional medical advice, diagnosis, or treatment from licensed healthcare providers.',
 ];
 
@@ -95,7 +95,7 @@ export default function ClientAcknowledgement({ acknowledged, onChange, visaStat
               </div>
               <span className="text-sm leading-relaxed text-amber-900 font-medium">
                 I acknowledge that I am solely responsible for securing the necessary international travel visas for this itinerary.
-                I understand that Morales Dental & Aesthetic Travel Concierge does not apply for, guarantee, or assume liability for
+                I understand that Morales Medical Travel Safety does not apply for, guarantee, or assume liability for
                 any visa requirements, denials, or travel disruptions.
               </span>
             </button>

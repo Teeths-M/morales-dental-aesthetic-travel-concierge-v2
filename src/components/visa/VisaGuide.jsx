@@ -272,7 +272,7 @@ function buildGenericGuide(destination, applyUrl) {
         color: 'bg-blue-500', lightColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700',
         badge: 'Step 1 — Prepare',
         title: 'Gather Your Documents',
-        desc: `Before applying, make sure you have your passport (valid 6+ months), a recent passport photo, your clinic booking confirmation from Morales Dental, proof of accommodation, and proof of funds ready.`,
+        desc: `Before applying, make sure you have your passport (valid 6+ months), a recent passport photo, your clinic booking confirmation from Morales Medical Travel Safety, proof of accommodation, and proof of funds ready.`,
         cta: null, ctaUrl: null,
         ctaSecondary: applyUrl ? 'Go to Application Portal' : null,
         ctaSecondaryUrl: applyUrl || null,

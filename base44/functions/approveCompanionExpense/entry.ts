@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * approveCompanionExpense
@@ -15,7 +15,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  * - SMS webhook: patient replies "APPROVE [code]" to Twilio number
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const usd = (n: number) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

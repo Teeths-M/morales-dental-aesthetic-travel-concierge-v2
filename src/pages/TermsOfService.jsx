@@ -3,7 +3,7 @@ import React from 'react';
 const SECTIONS = [
   {
     title: 'Services Provided',
-    body: 'Morales Dental & Aesthetic Travel Concierge coordinates medical travel logistics — provider matching, travel arrangements, companion and security services, and recovery monitoring. We are a concierge and logistics coordinator; medical care itself is provided by independently licensed doctors and facilities.',
+    body: 'Morales Medical Travel Safety coordinates medical travel logistics — provider matching, travel arrangements, companion and security services, and recovery monitoring. We are a concierge and logistics coordinator; medical care itself is provided by independently licensed doctors and facilities.',
   },
   {
     title: 'Booking & Payment',
@@ -19,7 +19,7 @@ const SECTIONS = [
   },
   {
     title: 'Limitation of Liability',
-    body: 'Morales Dental & Aesthetic Travel Concierge is not liable for the clinical outcomes of procedures performed by independent third-party providers. Our liability is limited to the concierge and coordination services we directly provide.',
+    body: 'Morales Medical Travel Safety is not liable for the clinical outcomes of procedures performed by independent third-party providers. Our liability is limited to the concierge and coordination services we directly provide.',
   },
 ];
 

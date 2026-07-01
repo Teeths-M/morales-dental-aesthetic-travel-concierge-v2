@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Inline token encoder
 function encodePortalToken({ consultation_id, partner_id, portal_type }) {
@@ -23,7 +23,7 @@ async function sendSms(to, message) {
   });
 }
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 const emailLayout = ({ eyebrow, title, intro, rows = [], ctaText, ctaUrl, note }) => `<!doctype html>
 <html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">

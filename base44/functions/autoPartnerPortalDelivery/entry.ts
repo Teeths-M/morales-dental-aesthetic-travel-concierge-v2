@@ -15,7 +15,7 @@
 
 import { createHandler, ok } from '../_shared/createHandler.ts';
 
-const BRAND   = 'Morales Dental & Aesthetic Travel Concierge';
+const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 async function sendEmail(base44, to, subject, body) {
@@ -55,7 +55,7 @@ function proposalEmailHtml(clientName, payUrl) {
     <div style="text-align:center;margin:32px 0;">
       <a href="${payUrl}" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#E8C85C);color:#060B16;font-size:14px;font-weight:800;padding:16px 40px;border-radius:99px;text-decoration:none;">Review Proposal &amp; Pay Now →</a>
     </div>
-    <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">Morales Dental &amp; Aesthetic Travel Concierge</p>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin:0;">Morales Medical Travel Safety</p>
   </div>
 </div>`;
 }

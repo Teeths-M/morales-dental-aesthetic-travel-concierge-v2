@@ -15,7 +15,7 @@ const SUGGESTED = [
   "What is a medical invitation letter?",
 ];
 
-const SYSTEM_PROMPT = `You are SAFE-T VISA ASSISTâ„¢, a friendly, warm, and reassuring AI travel visa advisor for Morales Dental & Aesthetic Travel Concierge. 
+const SYSTEM_PROMPT = `You are SAFE-T VISA ASSISTâ„¢, a friendly, warm, and reassuring AI travel visa advisor for Morales Medical Travel Safety.
 
 Your role is to:
 - Help international medical travelers understand visa requirements

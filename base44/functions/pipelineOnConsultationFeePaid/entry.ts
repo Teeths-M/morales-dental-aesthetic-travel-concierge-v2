@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Inline token encoder (no local imports allowed)
 function encodePortalToken({ consultation_id, partner_id, portal_type }) {
@@ -26,7 +26,7 @@ async function sendSms(to, message) {
   });
 }
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 const emailLayout = ({ eyebrow, title, intro, rows = [], ctaText, ctaUrl }) => `<!doctype html>
 <html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     const patientPhone = consultation.phone;
     const dashboardUrl = `${appUrl}/dashboard/case-status`;
 
-    const patientSms = `Hi ${patientName}! ✅ Your consultation fee is confirmed. Our team is reviewing your case and will assign you a doctor shortly. Track your journey: ${dashboardUrl} — Morales Dental & Aesthetics`;
+    const patientSms = `Hi ${patientName}! ✅ Your consultation fee is confirmed. Our team is reviewing your case and will assign you a doctor shortly. Track your journey: ${dashboardUrl} — Morales Medical Travel Safety`;
 
     const patientEmailHtml = emailLayout({
       eyebrow: 'Consultation Fee Confirmed',
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       const token = await encodePortalToken({ consultation_id: consultationId, partner_id: doctorId, portal_type: 'doctor' });
       const doctorPortalUrl = `${appUrl}/portal/doctor/${token}`;
 
-      const doctorSms = `Hello Dr. ${doctorName}, a new patient (${patientName}) has paid their consultation fee and awaits your review. Open your portal to confirm or decline: ${doctorPortalUrl} — Morales Dental & Aesthetics`;
+      const doctorSms = `Hello Dr. ${doctorName}, a new patient (${patientName}) has paid their consultation fee and awaits your review. Open your portal to confirm or decline: ${doctorPortalUrl} — Morales Medical Travel Safety`;
 
       const doctorEmailHtml = emailLayout({
         eyebrow: 'New Patient — Action Required',

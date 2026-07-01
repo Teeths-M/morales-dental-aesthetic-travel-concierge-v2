@@ -41,7 +41,7 @@ export default function Footer() {
               />
               <div>
                 <p className="font-display text-base text-background">MORALES</p>
-                <p className="text-[9px] tracking-[0.15em] text-background/50 uppercase">Dental & Aesthetic Travel Concierge</p>
+                <p className="text-[9px] tracking-[0.15em] text-background/50 uppercase">Medical Travel Safety</p>
               </div>
             </div>
             <p className="text-sm text-background/60 leading-relaxed">
@@ -96,7 +96,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-background/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-background/40">© 2026 Morales Dental & Aesthetic Travel Concierge. All rights reserved.</p>
+          <p className="text-xs text-background/40">© 2026 Morales Medical Travel Safety. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <div className="flex gap-6 text-xs text-background/40">
               <Link to={ROUTES.PRIVACY} className="hover:text-background/60 transition-colors">Privacy Policy</Link>

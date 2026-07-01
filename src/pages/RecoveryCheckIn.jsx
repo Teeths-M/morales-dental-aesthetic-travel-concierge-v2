@@ -1,4 +1,4 @@
-/**
+﻿/**
  * RecoveryCheckIn — /recovery-check-in/:token
  *
  * Public page — no login required. Patient clicks the link from their
@@ -172,7 +172,7 @@ export default function RecoveryCheckIn() {
                   <p style={{ margin: 0, fontSize: 13, color: '#fca5a5' }}>Your doctor has been notified and will follow up with you directly.</p>
                 </div>
               ) : null}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Morales Dental &amp; Aesthetics · Safe-T4life™ Care</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety · Safe-T4life™ Care</p>
             </div>
           </Step>
         )}

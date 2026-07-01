@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * generateItineraryCalendar — Booking.com Calendar Sync Model
@@ -12,7 +12,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  * Returns: { ics_content, google_cal_url, vault_id }
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 // Format date as YYYYMMDDTHHMMSSZ (ICS format)

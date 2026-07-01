@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Sliding-window rate limiter using RateLimitBucket entity
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
@@ -21,22 +21,22 @@ async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
 
 const SMS_TEMPLATES = {
   booking_confirmation: (name, procedure, date) =>
-    `Hi ${name}! Your booking for ${procedure} on ${date} has been confirmed. We'll be in touch soon with your full itinerary. - Morales Dental & Aesthetics`,
+    `Hi ${name}! Your booking for ${procedure} on ${date} has been confirmed. We'll be in touch soon with your full itinerary. - Morales Medical Travel Safety`,
 
   appointment_reminder: (name, procedure, date, time) =>
-    `Reminder: ${name}, your ${procedure} appointment is on ${date} at ${time}. Please reply CONFIRM or call us if you need to reschedule. - Morales Dental & Aesthetics`,
+    `Reminder: ${name}, your ${procedure} appointment is on ${date} at ${time}. Please reply CONFIRM or call us if you need to reschedule. - Morales Medical Travel Safety`,
 
   status_update: (name, status) =>
-    `Hi ${name}, your case status has been updated to: ${status}. Log in to your dashboard for details. - Morales Dental & Aesthetics`,
+    `Hi ${name}, your case status has been updated to: ${status}. Log in to your dashboard for details. - Morales Medical Travel Safety`,
 
   travel_confirmed: (name, destination, date) =>
-    `Great news ${name}! Your travel to ${destination} on ${date} has been confirmed. Check your email for full itinerary. - Morales Dental & Aesthetics`,
+    `Great news ${name}! Your travel to ${destination} on ${date} has been confirmed. Check your email for full itinerary. - Morales Medical Travel Safety`,
 
   payment_received: (name, amount) =>
-    `Hi ${name}, we've received your payment of $${amount}. Your medical travel package is now secured! - Morales Dental & Aesthetics`,
+    `Hi ${name}, we've received your payment of $${amount}. Your medical travel package is now secured! - Morales Medical Travel Safety`,
 
   proposal_ready: (name, url) =>
-    `Hi ${name}, your personalized treatment proposal is ready! View it here: ${url} - Morales Dental & Aesthetics`,
+    `Hi ${name}, your personalized treatment proposal is ready! View it here: ${url} - Morales Medical Travel Safety`,
 
   custom: (message) => message,
 };

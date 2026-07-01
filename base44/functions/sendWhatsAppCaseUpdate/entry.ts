@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const STATUS_MESSAGES = {
   en: {
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: `No template for status: ${newStatus}` });
     }
 
-    const BRAND = lang === 'es' ? 'Morales Dental & Estética' : 'Morales Dental & Aesthetics';
+    const BRAND = lang === 'es' ? 'Morales Medical Travel Safety' : 'Morales Medical Travel Safety';
     const fullMessage = `${BRAND}\n\nHello ${patientName} 👋\n\n${statusMsg}\n\nCase update: *${newStatus}*\n\nQuestions? Reply to this message or contact our concierge team.`;
 
     await sendWhatsApp(patientPhone, fullMessage);

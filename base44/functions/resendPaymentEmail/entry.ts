@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
             <div class="container">
               <div class="header">
                 <p class="brand">MORALES</p>
-                <p class="subtext">Dental & Aesthetic Travel Concierge</p>
+                <p class="subtext">Medical Travel Safety</p>
               </div>
               <div class="content">
                 <p class="greeting">Dear ${caseRecord.client_name},</p>

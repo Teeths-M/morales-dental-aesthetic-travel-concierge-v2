@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * processPaymentCascade
@@ -11,7 +11,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  * Balance:    → Remaining partners (Doctor/Driver/Companion) after 2nd installment
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

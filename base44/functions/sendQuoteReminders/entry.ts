@@ -1,6 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 function encodePortalToken({ consultation_id, partner_id, portal_type }: {
   consultation_id: string; partner_id: string; portal_type: string;

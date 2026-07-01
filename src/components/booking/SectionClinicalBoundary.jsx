@@ -36,7 +36,7 @@ export default function SectionClinicalBoundary({ form, update, showValidation =
 
         <div className="space-y-3 text-sm text-foreground leading-relaxed">
           <p>
-            <strong>Morales Dental & Aesthetic Travel Concierge</strong> (the "Platform") specializes in coordinating medical travel logistics — helping you connect with verified healthcare providers, arrange safe travel, and support your recovery journey.
+            <strong>Morales Medical Travel Safety</strong> (the "Platform") specializes in coordinating medical travel logistics — helping you connect with verified healthcare providers, arrange safe travel, and support your recovery journey.
           </p>
           <div className="rounded-xl p-4 border border-border space-y-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <p className="font-semibold text-sm text-foreground">What the Platform provides:</p>

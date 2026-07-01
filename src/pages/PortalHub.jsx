@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
@@ -205,7 +205,7 @@ export default function PortalHub() {
             </div>
             <div>
               <h1 className="font-display text-2xl lg:text-3xl text-foreground">Portal Hub</h1>
-              <p className="text-xs text-muted-foreground">SAFE-T 4LIFE™ Workflow Engine — Morales Dental & Aesthetics</p>
+              <p className="text-xs text-muted-foreground">SAFE-T 4LIFE™ Workflow Engine — Morales Medical Travel Safety</p>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
-const BRAND = 'Morales Dental & Aesthetic Travel Concierge';
+const BRAND = 'Morales Medical Travel Safety';
 const MAX_DOCTORS = 5;
 
 const CATEGORY_SPECIALTY_MAP = {

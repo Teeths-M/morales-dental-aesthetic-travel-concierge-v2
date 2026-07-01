@@ -1,4 +1,4 @@
-/**
+﻿/**
  * schedulePostOpCheckIns
  *
  * Called when Handshake 9 (home drop-off) is confirmed — the Golden M moment.
@@ -77,7 +77,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#0C1A1D;padding:24px 32px;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Dental &amp; Aesthetics</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:6px;">Post-Procedure Recovery</div>
 </td></tr>
 <tr><td style="padding:32px;">

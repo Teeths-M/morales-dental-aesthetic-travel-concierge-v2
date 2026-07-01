@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
                     <tr>
                       <td style="background: linear-gradient(135deg, #0F3A20 0%, #1a5c3a 100%); padding: 48px 40px; text-align: center;">
                         <div style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: 2px; margin-bottom: 8px;">MORALES</div>
-                        <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600;">Dental & Aesthetic Travel Concierge</div>
+                        <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600;">Medical Travel Safety</div>
                         <div style="margin-top: 20px; font-size: 18px; font-style: italic; color: #f0f0f0; font-weight: 300;">Your Journey Begins Here, ${caseRecord.client_name}.</div>
                       </td>
                     </tr>

@@ -719,7 +719,7 @@ export default function DemoShowcase() {
 
   useEffect(() => {
     document.title = 'Morales Concierge — Platform Demo';
-    return () => { document.title = 'Morales Dental & Aesthetic Travel Concierge'; };
+    return () => { document.title = 'Morales Medical Travel Safety'; };
   }, []);
 
   return (

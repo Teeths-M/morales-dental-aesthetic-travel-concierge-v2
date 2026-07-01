@@ -1,6 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   for (const agency of travelAgencies) {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Dental & Aesthetics',
+        from_name: 'Morales Medical Travel Safety',
         to: agency.email,
         subject: '✈️ Partner Notification — Flight & Hotel Package Coordination',
         body: partnerEmail({ type: 'travel agency', name: agency.agency_name }),
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     const name = taxi.company_name || taxi.driver_name;
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Dental & Aesthetics',
+        from_name: 'Morales Medical Travel Safety',
         to: taxi.email,
         subject: '🚗 Partner Notification — Client Airport & Clinic Transfers',
         body: partnerEmail({ type: 'transfer partner', name }),

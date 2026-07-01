@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
         <p style="margin-top: 20px;"><strong>Total Cases:</strong> ${stagnantCases.length}</p>
         <p><strong>Generated:</strong> ${now.toISOString()}</p>
         <p style="margin-top: 20px; font-size: 12px; color: #666;">
-          This is an automated alert from the Morales Dental case management system.
+          This is an automated alert from the Morales Medical Travel Safety case management system.
           Please review these cases and take appropriate action to move them forward.
         </p>
       `,

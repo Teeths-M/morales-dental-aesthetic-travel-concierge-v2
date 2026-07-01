@@ -250,7 +250,7 @@ export default function DemoCheatsheet() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.15)', marginTop: 8 }}>
-          Morales Dental & Aesthetic Travel Concierge · Presenter Use Only
+          Morales Medical Travel Safety · Presenter Use Only
         </p>
 
       </div>

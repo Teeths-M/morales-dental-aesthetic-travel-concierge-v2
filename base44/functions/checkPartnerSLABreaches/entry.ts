@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * checkPartnerSLABreaches — Uber Auto-Rerouting Model
@@ -13,7 +13,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  * At 48 hours with any partner still unconfirmed, escalates to human intervention.
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

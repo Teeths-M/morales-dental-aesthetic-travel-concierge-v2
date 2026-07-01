@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EmailShowcase — /demo/emails
  *
  * Shows all 5 key Morales email templates as live rendered previews.
@@ -65,7 +65,7 @@ const EMAILS = [
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#29483d;padding:24px 32px;text-align:center;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Dental &amp; Aesthetics</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
   <div style="width:100px;height:1px;background:linear-gradient(to right,transparent,#D4AF37,transparent);margin:10px auto;"></div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4AF37;">Handshake 5 / 9 — Confirmed</div>
 </td></tr>
@@ -98,7 +98,7 @@ const EMAILS = [
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#0C1A1D;padding:24px 32px;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Dental &amp; Aesthetics</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4AF37;margin-top:6px;">Companion Mission Briefing</div>
 </td></tr>
 <tr><td style="padding:32px;">
@@ -165,7 +165,7 @@ const EMAILS = [
   <div style="text-align:center;">
     <a href="#" style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:13px 28px;border-radius:999px;font-size:14px;font-weight:700;">View Guardian Tracker →</a>
   </div>
-  <p style="margin:20px 0 0;font-size:12px;color:#64746d;text-align:center;">Morales Dental &amp; Aesthetics · Guardian Safety System · Case MRC-2026-001</p>
+  <p style="margin:20px 0 0;font-size:12px;color:#64746d;text-align:center;">Morales Medical Travel Safety · Guardian Safety System · Case MRC-2026-001</p>
 </td></tr>
 </table></td></tr></table></body></html>`,
   },
@@ -180,7 +180,7 @@ const EMAILS = [
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#29483d;padding:24px 32px;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Dental &amp; Aesthetics</div>
+  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">Morales Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#D4AF37;margin-top:6px;">New Travel Quote Request</div>
 </td></tr>
 <tr><td style="padding:32px;">

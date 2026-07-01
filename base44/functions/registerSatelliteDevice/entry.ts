@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * registerSatelliteDevice
@@ -22,7 +22,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  *   send_test      — boolean, true = send verification message (default true)
  */
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {

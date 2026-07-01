@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * checkAbandonedBookings — Expedia Abandonment Recovery Model
@@ -11,7 +11,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  * Stage 3 (≥ 48hr): Release quotas — notify all 4 partners, reset pipeline
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

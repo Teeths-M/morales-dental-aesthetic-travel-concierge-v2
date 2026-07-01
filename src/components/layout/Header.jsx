@@ -135,7 +135,7 @@ export default function Header() {
                 lineHeight: 1,
               }}
             >
-              Dental &amp; Aesthetic Travel Concierge
+              Medical Travel Safety
             </span>
           </div>
         </Link>

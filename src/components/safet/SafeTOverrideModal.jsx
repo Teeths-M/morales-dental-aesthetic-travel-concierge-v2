@@ -9,7 +9,7 @@ const LIABILITY_TEXT = `By signing below, I — the undersigned patient — here
 
 2. FULL PERSONAL LIABILITY: I voluntarily choose to override this safety recommendation and accept full personal liability for any and all medical outcomes, complications, adverse events, or consequences that may arise from proceeding.
 
-3. PLATFORM INDEMNITY: I explicitly release and indemnify Morales Dental & Aesthetic Travel Concierge, its staff, and all partner providers from any and all clinical liability related to risks identified in my SAFE-T assessment.
+3. PLATFORM INDEMNITY: I explicitly release and indemnify Morales Medical Travel Safety, its staff, and all partner providers from any and all clinical liability related to risks identified in my SAFE-T assessment.
 
 4. INFORMED DECISION: I confirm I have read the risk flags identified in my assessment, I understand them, and I am making this decision of my own free will without coercion.
 

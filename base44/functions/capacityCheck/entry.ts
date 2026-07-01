@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -119,7 +119,7 @@ Procedure of interest: ${waiting_list_data.procedure_interest || 'Not specified'
 
 If you have any questions, contact our concierge team directly.
 
-— Morales Dental & Aesthetics Concierge`,
+— Morales Medical Travel Safety Concierge`,
     });
 
     return Response.json({ success: true, already_listed: false, entry });
@@ -227,7 +227,7 @@ Procedure: ${next.procedure_interest || 'As requested'}
 
 Don't miss this opportunity — slots fill fast!
 
-— Morales Dental & Aesthetics Concierge`,
+— Morales Medical Travel Safety Concierge`,
       });
 
       notified = { id: next.id, email: next.email, patient_name: next.patient_name };

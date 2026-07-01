@@ -1,4 +1,4 @@
-/**
+﻿/**
  * respondToCompanionJob
  *
  * Called from CompanionDashboard when a companion accepts or rejects a job offer.
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 <table width="100%" cellspacing="0" cellpadding="0" style="background:#060B16;padding:28px 14px;"><tr><td align="center">
 <table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#060B16;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
 <tr><td style="background:#0C1A1D;padding:28px 32px;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Dental &amp; Aesthetics</div>
+  <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Medical Travel Safety</div>
   <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:6px;">Companion Mission Briefing</div>
 </td></tr>
 <tr><td style="padding:32px;">
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
   </div>
 
   <p style="margin:24px 0 0;font-size:12px;color:#475569;text-align:center;">
-    Morales Dental &amp; Aesthetics · Companion Mission Briefing · ${e(assignment.destination_country || '')}
+    Morales Medical Travel Safety · Companion Mission Briefing · ${e(assignment.destination_country || '')}
   </p>
 </td></tr>
 </table></td></tr></table></body></html>`;

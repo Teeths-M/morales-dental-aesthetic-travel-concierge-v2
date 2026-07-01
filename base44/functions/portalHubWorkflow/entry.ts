@@ -1,6 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 const TEAM = 'Morales Concierge Team';
 
 const escapeHtml = (value) => String(value ?? '')
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
 
   // 3. AI Risk Check (SAFE-T 4LIFE™)
   const riskPrompt = `
-You are the SAFE-T 4LIFE™ medical travel safety AI for Morales Dental & Aesthetics.
+You are the SAFE-T 4LIFE™ medical travel safety AI for Morales Medical Travel Safety.
 
 Evaluate the following patient profile for medical tourism risk:
 
@@ -228,7 +228,7 @@ Return a JSON with:
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: consultation.email,
-        subject: 'Important Update Regarding Your Consultation Request — Morales Dental & Aesthetics',
+        subject: 'Important Update Regarding Your Consultation Request — Morales Medical Travel Safety',
         body: emailLayout({
           eyebrow: 'SAFE-T review',
           title: 'A concierge review is needed',

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * sendPaymentReminders
@@ -12,7 +12,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  * - 1-day: Urgent — includes SMS fallback
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

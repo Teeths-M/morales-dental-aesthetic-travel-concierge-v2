@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         } catch (_) { /* fallback to base url */ }
 
         const smsMsg = `Hi Dr. ${doctor.full_name}! Access your Morales D&A doctor portal here: ${portalUrl} - Questions? Reply to this message.`;
-        const emailBody = `<p>Dear Dr. ${doctor.full_name},</p><p>Your secure doctor portal link is ready. Click below to access your cases, confirm appointments, and manage your schedule:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Doctor Portal</a></p><p>- Morales Dental & Aesthetics Team</p>`;
+        const emailBody = `<p>Dear Dr. ${doctor.full_name},</p><p>Your secure doctor portal link is ready. Click below to access your cases, confirm appointments, and manage your schedule:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Doctor Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (doctor.email) {
           try {
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
               console.log(`Portal broadcast to ${doctor.email} suppressed — blackout active`);
               results.skipped.push({ name: doctor.full_name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'email', error: e.message }); }
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
         } catch (_) { /* fallback */ }
 
         const smsMsg = `Hi ${agency.agency_name}! Access your Morales D&A travel agency portal here: ${portalUrl} - Submit travel quotes and manage bookings directly.`;
-        const emailBody = `<p>Dear ${agency.contact_person || agency.agency_name},</p><p>Your secure travel agency portal link is ready. Click below to view patient cases and submit travel arrangements:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Travel Portal</a></p><p>- Morales Dental & Aesthetics Team</p>`;
+        const emailBody = `<p>Dear ${agency.contact_person || agency.agency_name},</p><p>Your secure travel agency portal link is ready. Click below to view patient cases and submit travel arrangements:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Travel Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (agency.email) {
           try {
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
               console.log(`Portal broadcast to ${agency.email} suppressed — blackout active`);
               results.skipped.push({ name: agency.agency_name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email', error: e.message }); }
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
 
         const name = driver.driver_name || driver.company_name;
         const smsMsg = `Hi ${name}! Access your Morales D&A chauffeur portal here: ${portalUrl} - View transfer assignments and submit quotes.`;
-        const emailBody = `<p>Dear ${name},</p><p>Your secure chauffeur portal link is ready. Click below to view patient transfers and submit pricing:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Transfer Portal</a></p><p>- Morales Dental & Aesthetics Team</p>`;
+        const emailBody = `<p>Dear ${name},</p><p>Your secure chauffeur portal link is ready. Click below to view patient transfers and submit pricing:</p><p><a href="${portalUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Open My Transfer Portal</a></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (driver.email) {
           try {
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
               console.log(`Portal broadcast to ${driver.email} suppressed — blackout active`);
               results.skipped.push({ name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name, type: 'taxi_service', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'email', error: e.message }); }
@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
 
         const payUrl = `${APP_URL}/portal/proposal/${caseRecord.proposal_token}`;
         const smsMsg = `Hi ${caseRecord.client_name}! Your Morales D&A treatment proposal & payment portal is ready. Access it here: ${payUrl} - Pay now to secure your spot!`;
-        const emailBody = `<p>Dear ${caseRecord.client_name},</p><p>Your personalized treatment proposal is ready and your payment portal is now open. Click below to review your package and complete your payment:</p><p><a href="${payUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">View Proposal & Pay Now</a></p><p>Current Status: <strong>${caseRecord.status}</strong></p><p>- Morales Dental & Aesthetics Team</p>`;
+        const emailBody = `<p>Dear ${caseRecord.client_name},</p><p>Your personalized treatment proposal is ready and your payment portal is now open. Click below to review your package and complete your payment:</p><p><a href="${payUrl}" style="background:#2d6a4f;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">View Proposal & Pay Now</a></p><p>Current Status: <strong>${caseRecord.status}</strong></p><p>- Morales Medical Travel Safety Team</p>`;
 
         if (caseRecord.client_email) {
           try {
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
             if (blackoutRes?.suppressed || blackoutRes?.data?.suppressed) {
               results.skipped.push({ name: caseRecord.client_name, reason: 'Blackout active' });
             } else {
-              await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A', body: emailBody, from_name: 'Morales Dental & Aesthetics' });
+              await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'email' });
             }
           } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'email', error: e.message }); }

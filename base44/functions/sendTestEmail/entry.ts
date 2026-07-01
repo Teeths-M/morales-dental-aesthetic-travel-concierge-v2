@@ -1,4 +1,4 @@
-/**
+﻿/**
  * sendTestEmail — fires one of the 5 key email templates to any address.
  * Used by the /demo/emails Email Showcase "Send to my inbox" button.
  * Admin-only. requireAuth is intentionally false so the demo page can call it
@@ -7,7 +7,7 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 const GOLD    = '#D4AF37';
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 

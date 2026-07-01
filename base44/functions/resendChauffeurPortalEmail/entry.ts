@@ -1,6 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');

@@ -478,7 +478,7 @@ export default function Hero() {
       <div className="absolute left-5 top-5 z-50 hidden lg:block">
         <p className="font-semibold text-white tracking-[0.12em]" style={{ fontSize: '1.05rem', letterSpacing: '0.15em' }}>MORALES</p>
         <p className="text-[9px] font-semibold tracking-[0.08em] leading-[1.5]" style={{ color: GOLD }}>
-          DENTAL &amp; AESTHETIC<br />TRAVEL CONCIERGE
+          MEDICAL TRAVEL SAFETY
         </p>
       </div>
 

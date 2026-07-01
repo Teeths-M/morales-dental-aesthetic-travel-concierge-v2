@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -85,8 +85,8 @@ function PartnerForm({ initial = emptyForm, onSave, onCancel }) {
 
 function DriverAlertModal({ partner, onClose }) {
   const defaultMsg = partner?.type === 'cab' || partner?.source === 'TaxiService'
-    ? `Hi ${partner?.name}, this is Morales Dental & Aesthetics. Please pick up our client at 4:00 PM this Sunday. Confirm receipt of this message. Thank you!`
-    : `Hi ${partner?.name}, this is Morales Dental & Aesthetics. We have an update regarding an upcoming patient. Please check your email or contact us at your earliest convenience. Thank you!`;
+    ? `Hi ${partner?.name}, this is Morales Medical Travel Safety. Please pick up our client at 4:00 PM this Sunday. Confirm receipt of this message. Thank you!`
+    : `Hi ${partner?.name}, this is Morales Medical Travel Safety. We have an update regarding an upcoming patient. Please check your email or contact us at your earliest convenience. Thank you!`;
   const [message, setMessage] = useState(defaultMsg);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);

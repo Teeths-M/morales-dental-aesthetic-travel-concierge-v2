@@ -152,7 +152,7 @@ export default function BrandSlideshow() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Morales Dental & Aesthetics Travel Concierge</p>
+          <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">Morales Medical Travel Safety</p>
           <h2 className="font-display text-3xl lg:text-5xl text-foreground mb-4">
             Your Transformation,<br />
             <span className="text-primary">Our Priority. Your Safety.</span>

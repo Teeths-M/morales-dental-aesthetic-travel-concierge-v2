@@ -385,7 +385,7 @@ Deno.serve(async (req) => {
                 <!-- Header -->
                 <div class="header">
                   <p class="brand">MORALES</p>
-                  <p class="subtext">Dental & Aesthetic Travel Concierge</p>
+                  <p class="subtext">Medical Travel Safety</p>
                 </div>
 
                 <!-- Content -->
@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
               <table width="100%" style="max-width: 640px; background: #ffffff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden;">
                 <tr><td style="background: linear-gradient(135deg, #0F3A20 0%, #1a5c3a 100%); padding: 48px 40px; text-align: center;">
                   <div style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">MORALES</div>
-                  <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600; margin-top: 8px;">Dental & Aesthetic Travel Concierge</div>
+                  <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600; margin-top: 8px;">Medical Travel Safety</div>
                 </td></tr>
                 <tr><td style="padding: 48px 40px;">
                   <p style="font-size: 16px; color: #374151; margin: 0 0 24px;">Dear ${caseRecord.client_name},</p>

@@ -51,7 +51,7 @@ Deno.serve(createHandler(async ({ base44 }) => {
 
       // Notify the doctor that verification has started
       await base44.asServiceRole.integrations.Core.SendEmail({
-        from_name: 'Morales Dental & Aesthetic Travel Concierge',
+        from_name: 'Morales Medical Travel Safety',
         to: doc.email,
         subject: 'M is verifying your credentials — Morales Concierge',
         body: `<div style="font-family:-apple-system,sans-serif;max-width:600px;margin:0 auto;background:#060B16;color:#fff;border-radius:16px;overflow:hidden;">

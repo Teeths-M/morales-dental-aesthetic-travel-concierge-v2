@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * activateMotherTouch
@@ -15,7 +15,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  * 6. Update CaseRecord with mother_touch_active = true
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

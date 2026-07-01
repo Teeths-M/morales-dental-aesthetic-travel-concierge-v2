@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * releaseEscrowPayment — Airbnb Escrow Release Model
@@ -18,7 +18,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  *   HS9 (Home drop-off confirmed)      → 100% of travel agency (flight/hotel) released
  */
 
-const BRAND   = 'Morales Dental & Aesthetics';
+const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 

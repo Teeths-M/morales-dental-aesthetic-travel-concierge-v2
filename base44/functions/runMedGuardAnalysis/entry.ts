@@ -1,4 +1,4 @@
-import { createHandler, ok, err } from '../_shared/createHandler.ts';
+﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 
 /**
  * MedGuard™ — Behavioral Safety Prediction Engine
@@ -22,7 +22,7 @@ import { createHandler, ok, err } from '../_shared/createHandler.ts';
  *   81-100: CRITICAL — security team dispatched preemptively
  */
 
-const BRAND = 'Morales Dental & Aesthetics';
+const BRAND = 'Morales Medical Travel Safety';
 
 async function sendSms(to: string, msg: string) {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID'), auth = Deno.env.get('TWILIO_AUTH_TOKEN'), from = Deno.env.get('TWILIO_PHONE_NUMBER');

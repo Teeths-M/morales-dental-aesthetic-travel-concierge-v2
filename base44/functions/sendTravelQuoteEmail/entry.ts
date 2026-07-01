@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     if (driverEmail) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: driverEmail,
-        subject: `Transfer Request — ${consultation.patient_name} | Morales Dental & Aesthetics`,
+        subject: `Transfer Request — ${consultation.patient_name} | Morales Medical Travel Safety`,
         body: `
 <!doctype html>
 <html>
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     <tr><td align="center">
       <table width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border:1px solid #dde5df;border-radius:16px;overflow:hidden;">
         <tr><td style="background:#0F3A20;padding:24px 32px;">
-          <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Dental & Aesthetics</div>
+          <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Medical Travel Safety</div>
           <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C5A059;margin-top:6px;">TRANSIT LOGISTICS REQUEST</div>
         </td></tr>
         <tr><td style="padding:28px 32px;">
