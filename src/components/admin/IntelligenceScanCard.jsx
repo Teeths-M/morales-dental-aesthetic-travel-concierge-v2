@@ -61,8 +61,14 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
   const defLayers = result && fd ? (() => {
     const netLvl = fd.signals.network.shared_device >= 3 || fd.signals.network.shared_phone >= 4 ? 'high'
       : fd.signals.network.shared_device >= 1 || fd.signals.network.shared_phone >= 1 || fd.signals.network.shared_address >= 2 ? 'medium' : 'low';
-    const devLvl = fd.signals.device.reuse_count >= 3 ? 'high' : fd.signals.device.reuse_count >= 1 ? 'medium' : 'low';
-    const ipLvl  = fd.signals.ip.label === 'vpn_or_tor' ? 'high' : fd.signals.ip.label === 'datacenter' ? 'medium' : 'low';
+    // Device layer combines fingerprint reuse AND IP intelligence — both feed the same pillar
+    const devLvl = (() => {
+      const r  = fd.signals.device.reuse_count;
+      const ip = fd.signals.ip.label;
+      if (r >= 3 || ip === 'vpn_or_tor') return 'high';
+      if (r >= 1 || ip === 'datacenter') return 'medium';
+      return 'low';
+    })();
     const idLvl  = fd.signals.identity.liveness_status === 'failed' ? 'high'
       : fd.signals.identity.liveness_status === 'passed' ? 'low' : 'medium';
     return [

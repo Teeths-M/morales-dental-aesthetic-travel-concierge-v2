@@ -105,7 +105,7 @@ const DOCTORS = [
       ],
       ai_red_flags: [],
       signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'not_provided' }] },
-      google: { status: 'unverified', rating: null, review_count: 0, snippet: null },
+      google: { status: 'not_found', rating: null, review_count: 0, snippet: null },
     },
     fraud_result: {
       fraud_risk_score: 18, xai_confidence: 82,

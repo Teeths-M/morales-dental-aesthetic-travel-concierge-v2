@@ -13,6 +13,7 @@ const CODE_LABELS = {
   SHARED_SURGICAL_FIELD:  'Shared Surgical Field',
   METABOLIC_CONFLICT:     'Metabolic Conflict',
   REDUNDANT_FIELD:        'Redundant Surgical Field',
+  ORAL_FACIAL_CONFLICT:   'Oral-Facial Conflict',
 };
 
 /**
