@@ -1,5 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Per-checkpoint default expiry (hours) — context-aware, not a single fixed timeout.
+// Driver pickup: 20 min (missed = reroute fast). Flight leg: 5h (you're airborne).
+const CHECKPOINT_DEFAULT_HOURS: Record<string, number> = {
+  driver_pickup:      0.33,  // 20 min — missed driver triggers fast reroute
+  airport_dropoff:    0.33,  // 20 min — same urgency
+  clinic_arrival:     0.5,   // 30 min — allow for clinic delays
+  clinic_departure:   0.5,   // 30 min
+  airport_checkin:    1,     // 60 min — check-in closes later
+  airport_boarding:   0.75,  // 45 min — gates close
+  hotel_checkin:      0.75,  // 45 min — allow for late arrivals
+  hotel_checkout:     0.75,  // 45 min
+  recovery_handoff:   0.5,   // 30 min — patient just left procedure
+};
+const DEFAULT_HOURS = 1; // 60 min fallback
+
 async function verifyCaseAccess(base44, case_id, user) {
   const cases = await base44.asServiceRole.entities.CaseRecord.filter({ id: case_id });
   if (!cases.length) return { allowed: false, error: 'Case not found', status: 404 };
@@ -43,7 +58,8 @@ Deno.serve(async (req) => {
         return Response.json({ error: access.error }, { status: access.status });
       }
 
-      const expiresAt = expires_hours ? new Date(Date.now() + expires_hours * 3600000).toISOString() : null;
+      const resolvedHours = expires_hours ?? CHECKPOINT_DEFAULT_HOURS[checkpoint_type] ?? DEFAULT_HOURS;
+      const expiresAt = new Date(Date.now() + resolvedHours * 3600000).toISOString();
 
       const handshake = await base44.asServiceRole.entities.DigitalHandshake.create({
         case_id,

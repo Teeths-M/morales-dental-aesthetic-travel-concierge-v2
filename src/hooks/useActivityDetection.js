@@ -22,11 +22,12 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const SHAKE_THRESHOLD   = 15;    // m/sÂ² â€” ignore gentle movement
-const SHAKE_WINDOW_MS   = 30_000; // shaking must persist 30s to register
-const STRIKE_WINDOW_MS  = 5 * 60_000; // 5 min of co-occurrence for 3rd strike
-const PROMPT_TIMEOUT_MS = 60_000; // 60s to respond before SOS queues
-const PERM_KEY          = 'morales_motion_permission';
+const SHAKE_THRESHOLD    = 15;       // m/s² — ignore gentle movement
+const SHAKE_WINDOW_MS    = 30_000;   // shaking must persist 30s to register
+const STRIKE_WINDOW_MS   = 5 * 60_000; // 5 min of co-occurrence for 3rd strike
+const PROMPT_TIMEOUT_MS  = 60_000;  // 60s to respond to “Are you okay?” before countdown starts
+const SOS_COUNTDOWN_SECS = 10;      // 10s countdown after prompt times out — tap to cancel
+const PERM_KEY           = 'morales_motion_permission';
 
 function getStoredPermission() {
   try { return localStorage.getItem(PERM_KEY) || null; } catch { return null; }
@@ -50,6 +51,7 @@ function detectInitialPermission() {
 export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
   const [strikeCount,    setStrikeCount]    = useState(0);
   const [showFallPrompt, setShowFallPrompt] = useState(false);
+  const [sosCountdown,   setSosCountdown]   = useState(null); // 10→0 before SOS fires
   const [queuedSOS,      setQueuedSOS]      = useState(false);
   const [motionPermission, setMotionPermission] = useState(detectInitialPermission);
 
@@ -57,6 +59,7 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
   const lastInteractionRef  = useRef(Date.now());
   const strikeTimerRef      = useRef(null);
   const promptTimerRef      = useRef(null);
+  const countdownRef        = useRef(null);
   const isShakingRef        = useRef(false);
 
   // Track user screen interaction (touches, clicks = not distress)
@@ -86,12 +89,24 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
       setStrikeCount(s => {
         const next = s + 1;
         if (next >= 3) {
-          // All 3 strikes â€” fire the gentle prompt
+          // All 3 strikes — fire the gentle prompt
           setShowFallPrompt(true);
-          // 60s timeout before queuing SOS
+          // 60s to respond, then start a 10s cancellable countdown before SOS fires.
+          // User can tap cancel at any point. Confirmed by inaction — logged as such.
           promptTimerRef.current = setTimeout(() => {
             setShowFallPrompt(false);
-            setQueuedSOS(true);
+            let remaining = SOS_COUNTDOWN_SECS;
+            setSosCountdown(remaining);
+            countdownRef.current = setInterval(() => {
+              remaining -= 1;
+              setSosCountdown(remaining);
+              if (remaining <= 0) {
+                clearInterval(countdownRef.current);
+                countdownRef.current = null;
+                setSosCountdown(null);
+                setQueuedSOS(true);
+              }
+            }, 1000);
           }, PROMPT_TIMEOUT_MS);
         }
         return next;
@@ -148,19 +163,33 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
       window.removeEventListener('devicemotion', onMotion);
       clearTimeout(strikeTimerRef.current);
       clearTimeout(promptTimerRef.current);
+      clearInterval(countdownRef.current);
     };
   }, [enabled, hasGPSMoved, motionPermission]);
 
   const dismissFallPrompt = useCallback(() => {
     clearTimeout(promptTimerRef.current);
+    clearInterval(countdownRef.current);
+    countdownRef.current = null;
     setShowFallPrompt(false);
+    setSosCountdown(null);
     setStrikeCount(0);
     setQueuedSOS(false);
     lastInteractionRef.current = Date.now();
   }, []);
 
+  // Cancel the SOS countdown — user tapped "Cancel" during the 10-second window
+  const cancelSosCountdown = useCallback(() => {
+    clearInterval(countdownRef.current);
+    countdownRef.current = null;
+    setSosCountdown(null);
+    setStrikeCount(0);
+    lastInteractionRef.current = Date.now();
+  }, []);
+
   const clearQueuedSOS = useCallback(() => {
     setQueuedSOS(false);
+    setSosCountdown(null);
     setStrikeCount(0);
   }, []);
 
@@ -189,8 +218,8 @@ export function useActivityDetection({ enabled = false, hasGPSMoved = true }) {
   const canListen = motionPermission === 'granted' || motionPermission === 'not_required';
 
   return {
-    strikeCount, showFallPrompt, queuedSOS,
-    dismissFallPrompt, clearQueuedSOS,
+    strikeCount, showFallPrompt, sosCountdown, queuedSOS,
+    dismissFallPrompt, cancelSosCountdown, clearQueuedSOS,
     motionPermission,
     requestMotionAccess,
     needsMotionPermission: motionPermission === 'needs_request' && enabled,

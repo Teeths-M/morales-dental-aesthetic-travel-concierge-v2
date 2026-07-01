@@ -16,14 +16,56 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // ── Configurable thresholds (minutes after missed check-in) ─────────────────
+// context_type on SoloCheckIn overrides these defaults per-checkpoint.
+// Flight legs get longer windows; local transfers get tighter ones.
 const THRESHOLDS = {
-  SMS_REMINDER_MIN:    15,
-  VOICE_CALL_MIN:      30,
-  GUARDIAN_ALERT_MIN:  60,
+  SMS_REMINDER_MIN:      15,
+  VOICE_CALL_MIN:        30,
+  GUARDIAN_ALERT_MIN:    60,
   SECURITY_DISPATCH_MIN: 120,
   POLICE_ESCALATION_MIN: 180,
-  STALE_SIGNAL_GUARDIAN_MIN: 30, // guardian alert if no location update for this long
+  STALE_SIGNAL_GUARDIAN_MIN: 30,
 };
+
+const CONTEXT_OVERRIDES: Record<string, Partial<typeof THRESHOLDS>> = {
+  // On a flight: phone off, no check-in expected — give 5h before SMS
+  flight_leg: {
+    SMS_REMINDER_MIN:      300,
+    VOICE_CALL_MIN:        360,
+    GUARDIAN_ALERT_MIN:    420,
+    SECURITY_DISPATCH_MIN: 480,
+    POLICE_ESCALATION_MIN: 600,
+  },
+  // Local transfer: driver → clinic → hotel. Tight windows.
+  local_transfer: {
+    SMS_REMINDER_MIN:      15,
+    VOICE_CALL_MIN:        25,
+    GUARDIAN_ALERT_MIN:    45,
+    SECURITY_DISPATCH_MIN: 90,
+    POLICE_ESCALATION_MIN: 180,
+  },
+  // Post-procedure recovery: patient may be sedated. Give 2h before escalation.
+  post_procedure: {
+    SMS_REMINDER_MIN:      120,
+    VOICE_CALL_MIN:        150,
+    GUARDIAN_ALERT_MIN:    180,
+    SECURITY_DISPATCH_MIN: 240,
+    POLICE_ESCALATION_MIN: 360,
+  },
+  // Hotel night — already sleep-gated by isLocalSleepHours but extend for night check-ins
+  hotel_night: {
+    SMS_REMINDER_MIN:      60,
+    VOICE_CALL_MIN:        90,
+    GUARDIAN_ALERT_MIN:    120,
+    SECURITY_DISPATCH_MIN: 180,
+    POLICE_ESCALATION_MIN: 360,
+  },
+};
+
+function getThresholds(contextType?: string): typeof THRESHOLDS {
+  const override = contextType ? CONTEXT_OVERRIDES[contextType] : null;
+  return override ? { ...THRESHOLDS, ...override } : THRESHOLDS;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function minutesSince(isoTs) {
@@ -281,6 +323,9 @@ Deno.serve(async (req) => {
     for (const ci of workable) {
       results.processed++;
       const overdueMins = minutesSince(ci.scheduled_time);
+      // Context-aware thresholds: flight legs, local transfers, and post-procedure
+      // windows each have different escalation cadences — not one-size-fits-all.
+      const T = getThresholds(ci.context_type);
 
       // Load case for contact info from pre-fetched map (best-effort, don't crash if missing)
       let caseRecord = caseRecordMap.get(ci.case_id) || null;
@@ -306,7 +351,7 @@ Deno.serve(async (req) => {
       const mapsUrl = buildMapsUrl(bestLoc);
 
       // ── STEP 1: SMS reminder (T+15m) ────────────────────────────────────
-      if (overdueMins >= THRESHOLDS.SMS_REMINDER_MIN && !ci.traveler_sms_sent_at && ci.status === 'pending') {
+      if (overdueMins >= T.SMS_REMINDER_MIN && !ci.traveler_sms_sent_at && ci.status === 'pending') {
         const checkInLink = await buildCheckInLink(base44, ci.id, ci.case_id);
         const smsBody = `Morales Safety: We haven't heard from you. Reply SAFE or tap to confirm: ${checkInLink}`;
 
@@ -353,7 +398,7 @@ Deno.serve(async (req) => {
       }
 
       // ── STEP 2: Voice call (T+30m) ───────────────────────────────────────
-      if (overdueMins >= THRESHOLDS.VOICE_CALL_MIN && !ci.traveler_voice_call_at &&
+      if (overdueMins >= T.VOICE_CALL_MIN && !ci.traveler_voice_call_at &&
           (ci.status === 'pending' || ci.status === 'escalated_2h')) {
 
         const twiml = `<Response><Say voice="alice">This is Morales Safety. We have not received your scheduled check-in. Please open your safety link or reply SAFE by text message. If this is an emergency, stay where you are. We are escalating support.</Say><Pause length="2"/><Say voice="alice">Repetimos. Por favor confirme que está seguro.</Say></Response>`;
@@ -395,7 +440,7 @@ Deno.serve(async (req) => {
       }
 
       // ── STEP 3: Guardian / emergency contact alert (T+60m) ───────────────
-      if (overdueMins >= THRESHOLDS.GUARDIAN_ALERT_MIN && !ci.guardian_alerted_at &&
+      if (overdueMins >= T.GUARDIAN_ALERT_MIN && !ci.guardian_alerted_at &&
           (ci.status === 'pending' || ci.status === 'escalated_2h')) {
 
         const guardianUrl = await ensureGuardianLink(base44, ci.case_id, ci.user_email, patientName, emergencyContact);
@@ -475,7 +520,7 @@ Deno.serve(async (req) => {
 
       // ── STEP 4: Private security dispatch (T+120m or 3 missed rounds) ────
       const missedCount = ci.missed_round_count || 0;
-      const needsSecurityByTime = overdueMins >= THRESHOLDS.SECURITY_DISPATCH_MIN;
+      const needsSecurityByTime = overdueMins >= T.SECURITY_DISPATCH_MIN;
       const needsSecurityByMissed = missedCount >= 3;
 
       if ((needsSecurityByTime || needsSecurityByMissed) && !ci.security_dispatched_at &&
@@ -578,7 +623,7 @@ Deno.serve(async (req) => {
       }
 
       // ── STEP 5: Police / admin escalation task (T+180m) ──────────────────
-      if (overdueMins >= THRESHOLDS.POLICE_ESCALATION_MIN && !ci.police_escalation_required_at &&
+      if (overdueMins >= T.POLICE_ESCALATION_MIN && !ci.police_escalation_required_at &&
           ci.status === 'escalated_5h') {
 
         await base44.asServiceRole.entities.SoloCheckIn.update(ci.id, {

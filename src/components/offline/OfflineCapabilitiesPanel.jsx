@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
+import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink, Layers } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 // IndexedDB helper for offline document caching
@@ -143,7 +143,7 @@ function OfflineDocsTab() {
 }
 
 export default function OfflineCapabilitiesPanel({ caseId, userId }) {
-  const [activeTab, setActiveTab] = useState('sms');
+  const [activeTab, setActiveTab] = useState('tiers');
   const [qrToken, setQrToken] = useState(null);
   const [emergencyPin, setEmergencyPin] = useState(null);
   const [pinSaved, setPinSaved] = useState(false);
@@ -192,6 +192,7 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
   };
 
   const TABS = [
+    { id: 'tiers', label: 'Capabilities', icon: Layers },
     { id: 'sms', label: 'SMS Shortcodes', icon: MessageSquare },
     { id: 'qr', label: 'QR Token', icon: QrCode },
     { id: 'pin', label: 'Emergency PIN', icon: Smartphone },
@@ -230,6 +231,75 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
       </div>
 
       <AnimatePresence mode="wait">
+        {/* Capability tiers — exact offline degradation matrix */}
+        {activeTab === 'tiers' && (
+          <motion.div key="tiers" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-5">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-slate-600" />
+                <h4 className="font-semibold text-slate-800 text-sm">What Works Without Internet</h4>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Exact breakdown of what degrades when you go offline — no overstatements.
+              </p>
+
+              {/* Tier 1 — Full offline */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold tracking-widest text-emerald-700 uppercase">✅ Works fully offline (no signal needed)</p>
+                {[
+                  'Emergency PIN — stored on-device',
+                  'Emergency contacts & manifest — cached locally',
+                  'Vault documents — cached to device storage (50 MB)',
+                  'Handshake tap-to-confirm — queued, syncs when online',
+                  'SOS via SMS — Twilio SMS works even without data',
+                  'QR token — generated client-side, valid 4 hours',
+                  'Last-known location & breadcrumb history',
+                  'Silent Guardian strikes — tracked locally',
+                ].map(f => (
+                  <div key={f} className="flex items-center gap-2.5 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <p className="text-xs text-emerald-800">{f}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tier 2 — Degraded */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold tracking-widest text-amber-700 uppercase">⚠️ Degrades offline (cached data only)</p>
+                {[
+                  'Case details — last fetched version, may be stale',
+                  'Partner contacts — visible but cannot be updated',
+                  'Journey stage — shows last known, no live sync',
+                  'Guardian view link — link works, data is last cached',
+                ].map(f => (
+                  <div key={f} className="flex items-center gap-2.5 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                    <p className="text-xs text-amber-800">{f}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tier 3 — Requires connection */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold tracking-widest text-red-700 uppercase">❌ Requires active connection</p>
+                {[
+                  'EVN-iQ400 real-time scan — live country intelligence needs internet',
+                  'AI partner briefs — LLM calls require connection',
+                  'Live GPS streaming — updates only while online',
+                  'Internet intelligence scan — domain/social checks are live',
+                  'New booking or payment actions',
+                  'Doctor portal updates & case stage changes',
+                ].map(f => (
+                  <div key={f} className="flex items-center gap-2.5 px-3 py-2 bg-red-50 border border-red-100 rounded-xl">
+                    <WifiOff className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                    <p className="text-xs text-red-700">{f}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* SMS Shortcodes */}
         {activeTab === 'sms' && (
           <motion.div key="sms" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
