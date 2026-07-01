@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Mail, MapPin, Activity, CreditCard, Calendar, ExternalLink, ShieldCheck, User } from 'lucide-react';
+import { X, Mail, MapPin, Activity, CreditCard, Calendar, ExternalLink, ShieldCheck, User, Sparkles, Loader2 } from 'lucide-react';
 import WaiverAdminPanel from '@/components/admin/WaiverAdminPanel';
 import HandshakeTimelinePanel from '@/components/admin/HandshakeTimelinePanel';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,15 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
     enabled: !!caseRecord?.consultation_id,
   });
   const workflow = workflowEvents[0] || null;
+
+  const sendBriefsMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('sendAIPartnerBriefs', {
+      case_id: caseRecord.id,
+      workflow_id: workflow?.id,
+    }),
+    onSuccess: (data) => toast.success(`AI briefs sent to: ${data?.data?.roles_briefed?.join(', ') || 'partners'}`),
+    onError: () => toast.error('Failed to send AI briefs'),
+  });
 
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus) => {
@@ -292,6 +301,42 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
               {/* Handshakes timeline */}
               <div className="bg-slate-50 rounded-xl p-4">
                 <HandshakeTimelinePanel caseId={caseRecord.id} />
+              </div>
+
+              {/* AI Partner Briefs */}
+              <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5" style={{ color: '#6366f1' }}>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI Partner Briefs
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: '#818cf8' }}>
+                    Generates a personalized AI brief for every assigned partner — doctor, travel agency, driver, companion, security — each in their own language.
+                  </p>
+                  {caseRecord.ai_briefs_sent_at && (
+                    <p className="text-[11px] mt-1" style={{ color: '#a5b4fc' }}>
+                      Last sent: {new Date(caseRecord.ai_briefs_sent_at).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full text-white font-semibold"
+                  style={{ background: '#6366f1' }}
+                  disabled={sendBriefsMutation.isPending}
+                  onClick={() => sendBriefsMutation.mutate()}
+                >
+                  {sendBriefsMutation.isPending ? (
+                    <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Generating AI Briefs…</>
+                  ) : (
+                    <><Sparkles className="w-3.5 h-3.5 mr-2" />Send AI Briefs to All Partners</>
+                  )}
+                </Button>
+                {sendBriefsMutation.isSuccess && sendBriefsMutation.data?.data?.roles_briefed?.length > 0 && (
+                  <p className="text-[11px] font-medium" style={{ color: '#10b981' }}>
+                    ✓ Briefs dispatched: {sendBriefsMutation.data.data.roles_briefed.join(', ')}
+                  </p>
+                )}
               </div>
 
               {/* Doctor portal link */}

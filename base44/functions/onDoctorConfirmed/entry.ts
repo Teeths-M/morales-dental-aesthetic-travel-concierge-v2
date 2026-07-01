@@ -223,6 +223,16 @@ Deno.serve(async (req) => {
       cab_status: results.cab.length > 0 ? 'notified' : 'pending',
     });
 
+    // Fire AI partner briefs — each partner receives a personalized brief in their own language
+    try {
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter({ consultation_id: workflow.consultation_id });
+      if (cases[0]?.id) {
+        await base44.functions.invoke('sendAIPartnerBriefs', { case_id: cases[0].id, workflow_id });
+      }
+    } catch (e) {
+      console.error('[onDoctorConfirmed] AI briefs (non-fatal):', e?.message);
+    }
+
     return Response.json({ status: 'ok', results });
   } catch (error) {
     console.error('[onDoctorConfirmed]', error);
