@@ -1,10 +1,11 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Globe, CheckCircle, AlertTriangle, Clock, RefreshCw, Loader2 } from 'lucide-react';
 
 const RISK = {
   low:    { cls: 'bg-emerald-100 text-emerald-700', label: 'LOW RISK' },
@@ -18,8 +19,13 @@ const VERDICT = {
   high:   { cls: 'bg-red-100 text-red-700',        icon: AlertTriangle,  label: 'Not Recommended' },
 };
 
+const SOCIAL_COLOR = { active: '#10b981', not_found: '#ef4444', not_provided: '#6b7280', check_failed: '#6b7280' };
+const SOCIAL_LABEL = { active: 'LIVE', not_found: 'NOT FOUND', not_provided: 'N/A', check_failed: 'FAILED' };
+
 export default function PartnerIntelligencePanel() {
-  const [expanded, setExpanded] = useState(null);
+  const [expanded,  setExpanded]  = useState(null);
+  const [rescanning, setRescanning] = useState(null);
+  const queryClient = useQueryClient();
 
   const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['doctors-intel-panel'],
@@ -27,7 +33,35 @@ export default function PartnerIntelligencePanel() {
     staleTime: 60_000,
   });
 
-  const scanned = doctors.filter(d => d.internet_risk_level);
+  const rescanMutation = useMutation({
+    mutationFn: (doc) => base44.functions.invoke('runInternetIntelligence', {
+      partner_id:      doc.id,
+      partner_type:    'doctor',
+      registered_name: doc.full_name,
+      clinic_name:     doc.clinic_name    || '',
+      phone:           doc.phone          || '',
+      city:            doc.clinic_city    || '',
+      country:         doc.clinic_country || '',
+      website_url:     doc.website_url    || null,
+      facebook_handle: doc.social_facebook  || null,
+      instagram_handle: doc.social_instagram || null,
+      tiktok_handle:   doc.social_tiktok   || null,
+    }),
+    onMutate: (doc) => setRescanning(doc.id),
+    onSettled: () => {
+      setRescanning(null);
+      queryClient.invalidateQueries({ queryKey: ['doctors-intel-panel'] });
+    },
+  });
+
+  // Sort: high risk first, then medium, then low; secondary sort by score desc
+  const RISK_ORDER = { high: 0, medium: 1, low: 2 };
+  const scanned = doctors
+    .filter(d => d.internet_risk_level)
+    .sort((a, b) => {
+      const ro = (RISK_ORDER[a.internet_risk_level] ?? 3) - (RISK_ORDER[b.internet_risk_level] ?? 3);
+      return ro !== 0 ? ro : (b.internet_risk_score ?? 0) - (a.internet_risk_score ?? 0);
+    });
 
   if (isLoading) {
     return (
@@ -90,6 +124,18 @@ export default function PartnerIntelligencePanel() {
                   >
                     {open ? 'Hide' : 'Why?'}
                   </button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    title="Re-run scan"
+                    disabled={rescanning === doc.id}
+                    onClick={() => rescanMutation.mutate(doc)}
+                  >
+                    {rescanning === doc.id
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <RefreshCw className="w-3.5 h-3.5" />}
+                  </Button>
                 </div>
                 {open && doc.internet_summary && (
                   <div className="mt-3 space-y-2">
@@ -122,6 +168,26 @@ export default function PartnerIntelligencePanel() {
                         </div>
                       );
                     })()}
+                    {/* Social checks */}
+                    {doc.internet_signals?.social_checks?.length > 0 && (
+                      <div className="p-3 rounded-lg border border-border bg-muted/20 space-y-2">
+                        <p className="text-[10px] font-bold tracking-widest text-muted-foreground">SOCIAL PRESENCE</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {doc.internet_signals.social_checks.map(s => (
+                            <div key={s.platform} className="text-center p-2 rounded-md" style={{ background: s.status === 'active' ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${s.status === 'active' ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.07)'}` }}>
+                              <p className="text-[9px] font-semibold text-muted-foreground">{s.platform}</p>
+                              <p className="text-[10px] font-bold mt-0.5" style={{ color: SOCIAL_COLOR[s.status] ?? '#6b7280' }}>{SOCIAL_LABEL[s.status] ?? s.status.toUpperCase()}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {doc.internet_signals?.website_live !== undefined && (
+                          <p className="text-[10px] text-muted-foreground">
+                            Website: <span style={{ color: doc.internet_signals.website_live ? '#10b981' : '#ef4444' }}>{doc.internet_signals.website_live ? 'Loads OK' : doc.internet_signals.website_flag ?? 'Not reachable'}</span>
+                            {doc.internet_signals.domain_age_months ? ` · Domain age ${doc.internet_signals.domain_age_months}mo` : ''}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     {/* AI analysis */}
                     <div className="p-3 rounded-lg bg-muted/40 border border-border">
                       <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5">AI ANALYSIS</p>

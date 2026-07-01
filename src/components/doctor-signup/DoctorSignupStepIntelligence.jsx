@@ -98,8 +98,8 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
         >
           <Shield className="w-7 h-7" style={{ color: '#D4AF37' }} />
         </div>
-        <h2 className="text-xl font-semibold text-foreground mb-1">Internet Intelligence Scan</h2>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+        <h2 className="text-xl font-semibold mb-1" style={{ color: '#f1f5f9' }}>Internet Intelligence Scan</h2>
+        <p className="text-sm max-w-sm mx-auto" style={{ color: '#94a3b8' }}>
           Verifying your digital footprint so patients trust you from day one.
         </p>
       </div>
@@ -108,7 +108,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
       {!scanning && !result && !error && (
         <div className="flex items-center justify-center gap-3 py-6">
           <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#D4AF37' }} />
-          <p className="text-sm text-muted-foreground">Initializing scan…</p>
+          <p className="text-sm" style={{ color: '#94a3b8' }}>Initializing scan…</p>
         </div>
       )}
 
@@ -153,10 +153,10 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                   }
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-sm font-semibold ${done ? 'text-emerald-400' : active ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                  <p className="text-sm font-semibold" style={{ color: done ? '#34d399' : active ? '#f1f5f9' : 'rgba(255,255,255,0.25)' }}>
                     {step.label}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs truncate" style={{ color: active ? '#94a3b8' : done ? '#34d399' : 'rgba(255,255,255,0.15)' }}>
                     {active ? step.desc : done ? 'Complete' : 'Waiting…'}
                   </p>
                 </div>
@@ -202,8 +202,8 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
             className="p-4 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
           >
-            <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2">AI ANALYSIS</p>
-            <p className="text-sm text-foreground/90 leading-relaxed">{result.summary}</p>
+            <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#64748b' }}>AI ANALYSIS</p>
+            <p className="text-sm leading-relaxed" style={{ color: '#cbd5e1' }}>{result.summary}</p>
           </div>
 
           {/* Positive signals */}
@@ -214,7 +214,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                 {result.ai_positive_indicators.map((item, i) => (
                   <div key={i} className="flex items-start gap-2">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-foreground/80">{item}</p>
+                    <p className="text-xs" style={{ color: '#cbd5e1' }}>{item}</p>
                   </div>
                 ))}
               </div>
@@ -229,7 +229,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                 {result.ai_red_flags.map((item, i) => (
                   <div key={i} className="flex items-start gap-2">
                     <AlertTriangle className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-foreground/80">{item}</p>
+                    <p className="text-xs" style={{ color: '#cbd5e1' }}>{item}</p>
                   </div>
                 ))}
               </div>
@@ -239,7 +239,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
           {/* Social presence grid */}
           {result.signals?.social_checks?.length > 0 && (
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2">SOCIAL PRESENCE</p>
+              <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#64748b' }}>SOCIAL PRESENCE</p>
               <div className="grid grid-cols-3 gap-2">
                 {result.signals.social_checks.map((s) => (
                   <div
@@ -250,7 +250,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                       border: s.status === 'active' ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.07)',
                     }}
                   >
-                    <p className="text-[10px] font-semibold text-muted-foreground">{s.platform}</p>
+                    <p className="text-[10px] font-semibold" style={{ color: '#64748b' }}>{s.platform}</p>
                     <p
                       className="text-xs font-bold mt-0.5"
                       style={{ color: s.status === 'active' ? '#10b981' : s.status === 'not_provided' ? '#6b7280' : '#ef4444' }}
@@ -275,7 +275,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                     <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: '#fff' }}>
                       <span style={{ fontSize: 11, fontWeight: 800, color: '#4285F4', lineHeight: 1 }}>G</span>
                     </div>
-                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground">GOOGLE</span>
+                    <span className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>GOOGLE</span>
                   </div>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ color: gColor, background: gColor + '18', border: `1px solid ${gColor}30` }}>{gLabel}</span>
                 </div>
@@ -283,12 +283,12 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex gap-0.5">{[1,2,3,4,5].map(n => <span key={n} style={{ color: n <= Math.round(g.rating) ? '#f59e0b' : '#334155', fontSize: 13 }}>★</span>)}</div>
                     <span className="text-sm font-bold" style={{ color: '#f1f5f9' }}>{g.rating}</span>
-                    <span className="text-xs text-muted-foreground">({g.review_count} reviews)</span>
+                    <span className="text-xs" style={{ color: '#64748b' }}>({g.review_count} reviews)</span>
                   </div>
                 ) : (
                   <p className="text-xs" style={{ color: '#ef4444' }}>No Google Business profile found for this clinic.</p>
                 )}
-                {g.snippet && <p className="text-xs italic text-muted-foreground leading-relaxed">"{g.snippet}"</p>}
+                {g.snippet && <p className="text-xs italic leading-relaxed" style={{ color: '#94a3b8' }}>"{g.snippet}"</p>}
               </div>
             );
           })()}

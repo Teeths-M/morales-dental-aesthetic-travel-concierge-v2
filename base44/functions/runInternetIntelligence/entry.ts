@@ -37,6 +37,24 @@ const COUNTRY_CODES: Record<string, string[]> = {
   'India':                   ['+91'],
   'Thailand':                ['+66'],
   'Turkey':                  ['+90'],
+  'Nigeria':                 ['+234'],
+  'Ghana':                   ['+233'],
+  'Kenya':                   ['+254'],
+  'South Africa':            ['+27'],
+  'Philippines':             ['+63'],
+  'Guatemala':               ['+502'],
+  'Honduras':                ['+504'],
+  'El Salvador':             ['+503'],
+  'Peru':                    ['+51'],
+  'Argentina':               ['+54'],
+  'Chile':                   ['+56'],
+  'Ecuador':                 ['+593'],
+  'Venezuela':               ['+58'],
+  'Germany':                 ['+49'],
+  'France':                  ['+33'],
+  'Italy':                   ['+39'],
+  'Australia':               ['+61'],
+  'UAE':                     ['+971'],
 };
 
 Deno.serve(createHandler(async ({ base44, body }) => {
@@ -61,17 +79,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const signals: Record<string, unknown> = {};
   let riskScore = 0;
 
-  // ── 1. Domain age (RDAP — free, no API key) ──────────────────────────────────
+  // ── 1. Domain age (RDAP) + website liveness — run in parallel ───────────────
   if (website_url) {
     try {
       const raw = website_url.startsWith('http') ? website_url : `https://${website_url}`;
       const domain = new URL(raw).hostname.replace(/^www\./, '');
-      const rdapRes = await fetch(`https://rdap.org/domain/${domain}`, {
-        headers: { Accept: 'application/json' },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (rdapRes.ok) {
-        const rdap: any = await rdapRes.json();
+      const [rdapOut, liveOut] = await Promise.allSettled([
+        fetch(`https://rdap.org/domain/${domain}`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(6000) }),
+        fetch(raw, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(5000) }),
+      ]);
+
+      if (rdapOut.status === 'fulfilled' && rdapOut.value.ok) {
+        const rdap: any = await rdapOut.value.json();
         const registered = (rdap.events || []).find((e: any) => e.eventAction === 'registration');
         if (registered?.eventDate) {
           const ageMonths = (Date.now() - new Date(registered.eventDate).getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -82,10 +101,22 @@ Deno.serve(createHandler(async ({ base44, body }) => {
           else if (ageMonths < 12) { riskScore += 10; signals.domain_flag = 'recent'; }
           else                     { riskScore -= 5;  signals.domain_flag = 'established'; }
         }
+      } else {
+        signals.domain_check = 'rdap_failed';
       }
+
+      if (liveOut.status === 'fulfilled') {
+        signals.website_live = liveOut.value.status < 400;
+        if (!signals.website_live) { riskScore += 15; signals.website_flag = 'not_loading'; }
+      } else {
+        signals.website_live = false;
+        signals.website_flag = 'unreachable';
+        riskScore += 10;
+      }
+
       signals.website_provided = true;
     } catch (_) {
-      signals.domain_check = 'timeout_or_failed';
+      signals.domain_check = 'error';
     }
   } else {
     signals.website_provided = false;
@@ -111,9 +142,11 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }
   }
 
-  await checkSocial(`https://www.facebook.com/${facebook_handle}`, 'Facebook', facebook_handle ?? null);
-  await checkSocial(`https://www.instagram.com/${instagram_handle}/`, 'Instagram', instagram_handle ?? null);
-  await checkSocial(`https://www.tiktok.com/@${tiktok_handle}`, 'TikTok', tiktok_handle ?? null);
+  await Promise.allSettled([
+    checkSocial(`https://www.facebook.com/${facebook_handle}`, 'Facebook', facebook_handle ?? null),
+    checkSocial(`https://www.instagram.com/${instagram_handle}/`, 'Instagram', instagram_handle ?? null),
+    checkSocial(`https://www.tiktok.com/@${tiktok_handle}`, 'TikTok', tiktok_handle ?? null),
+  ]);
 
   signals.social_checks = socialChecks;
 
@@ -269,6 +302,25 @@ Return JSON only:
     await base44.asServiceRole.entities.TaxiService.update(partner_id, patch).catch(() => {});
   } else if (partner_type === 'security') {
     await base44.asServiceRole.entities.SecurityAgency.update(partner_id, patch).catch(() => {});
+  }
+
+  // ── 8. HIGH risk — notify admin ──────────────────────────────────────────────
+  if (risk_level === 'high') {
+    const adminEmail = Deno.env.get('ADMIN_EMAIL');
+    if (adminEmail) {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: adminEmail,
+        subject: `🚨 HIGH RISK Partner Flagged — ${registered_name}`,
+        body: `<h2>Internet Intelligence Alert</h2>
+<p><strong>Partner:</strong> ${registered_name}${clinic_name ? ` (${clinic_name})` : ''}</p>
+<p><strong>Location:</strong> ${city || '—'}, ${country || '—'}</p>
+<p><strong>Risk Score:</strong> ${riskScore}/100 — HIGH RISK</p>
+<p><strong>AI Summary:</strong> ${summary}</p>
+${(ai?.red_flags?.length ?? 0) > 0 ? `<p><strong>Flags:</strong><ul>${ai.red_flags.map((f: string) => `<li>${f}</li>`).join('')}</ul></p>` : ''}
+<p><strong>Google:</strong> ${signals.google ? (signals.google as any).status : 'not checked'}</p>
+<p>This application has been held automatically. Review in the Admin Partner Hub.</p>`,
+      }).catch(() => {});
+    }
   }
 
   return ok(result);
