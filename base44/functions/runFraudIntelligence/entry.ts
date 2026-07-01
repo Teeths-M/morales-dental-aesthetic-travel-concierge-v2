@@ -21,6 +21,7 @@ function computeScore(s: {
   sharedPhone: number; sharedAddress: number; sharedDevice: number;
   ipSuspicious: boolean; ipDatacenter: boolean;
   livenessStatus: string; internetScore: number;
+  vpnOnlyException?: boolean;
 }): { score: number; flags: string[]; positives: string[] } {
   let score = 0;
   const flags: string[] = [];
@@ -53,7 +54,13 @@ function computeScore(s: {
 
   // IP intelligence
   if (s.ipSuspicious) {
-    score += 25; flags.push('Signup IP masked by VPN or Tor — identity obfuscation attempt');
+    if (s.vpnOnlyException) {
+      // VPN with zero shared infrastructure + confirmed liveness = professional security policy, not fraud.
+      // Downgrade from +25 to +8 so a security-conscious surgeon isn't auto-blocked.
+      score += 8; flags.push('Professional VPN detected — exception rule applied (clean network + liveness confirmed). Flag for admin awareness only.');
+    } else {
+      score += 25; flags.push('Signup IP masked by VPN or Tor — identity obfuscation attempt');
+    }
   } else if (s.ipDatacenter) {
     score += 8; flags.push('Signup from datacenter proxy — unusual for individual practitioner');
   } else {
@@ -130,12 +137,23 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const ipIntel = scoreIP(signup_ip);
 
+  // VPN-only exception: a practitioner with zero shared infrastructure and confirmed liveness
+  // who uses a VPN is more likely enforcing a corporate security policy than hiding fraud.
+  const vpnOnlyException = (
+    ipIntel.suspicious &&
+    sharedDevice === 0 &&
+    sharedPhone === 0 &&
+    sharedAddress === 0 &&
+    liveness_status === 'passed'
+  );
+
   const { score, flags, positives } = computeScore({
     sharedPhone, sharedAddress, sharedDevice,
     ipSuspicious: ipIntel.suspicious,
     ipDatacenter: ipIntel.datacenter,
     livenessStatus: liveness_status,
     internetScore: existing_internet_score,
+    vpnOnlyException,
   });
 
   const level = riskLevel(score);

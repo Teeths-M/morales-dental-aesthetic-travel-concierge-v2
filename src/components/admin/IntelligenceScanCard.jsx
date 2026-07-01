@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, AlertTriangle, Loader2, Fingerprint, Network, ScanFace, Brain, Globe } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Loader2, Fingerprint, Network, ScanFace, Brain, Globe, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const RISK_CONFIG = {
@@ -88,8 +88,10 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
         </div>
         {result && (
           <Badge className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5"
-            style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-            {cfg.label}
+            style={fd?.fast_track?.status === 'cleared'
+              ? { background: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.35)' }
+              : { background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+            {fd?.fast_track?.status === 'cleared' ? 'FAST-TRACK CLEARED' : cfg.label}
           </Badge>
         )}
       </div>
@@ -308,12 +310,34 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
               </div>
             )}
 
+            {/* Fast-Track Override panel */}
+            {fd?.fast_track && (
+              <div className="p-3 rounded-xl" style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.28)' }}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                  <p className="text-[9px] font-bold tracking-widest" style={{ color: '#D4AF37' }}>
+                    FAST-TRACK OVERRIDE — {fd.fast_track.status.toUpperCase()}
+                  </p>
+                </div>
+                <p className="text-[11px] leading-relaxed mb-1.5" style={{ color: '#94a3b8' }}>{fd.fast_track.reason}</p>
+                <p className="text-[9px]" style={{ color: '#64748b' }}>
+                  Cleared by {fd.fast_track.cleared_by} · {fd.fast_track.cleared_at}
+                </p>
+              </div>
+            )}
+
             {/* Verdict */}
-            <div className="p-3 rounded-xl text-center" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-              <p className="text-[11px] font-semibold" style={{ color: cfg.color }}>
-                {result.internet.risk_level === 'low'    ? '✓ Cleared for Immediate Activation'
-                : result.internet.risk_level === 'medium' ? '⚠ Admin Review Required Before Activation'
-                :                                           '✗ Application Held — Mandatory Admin Review'}
+            <div className="p-3 rounded-xl text-center"
+              style={fd?.fast_track?.status === 'cleared'
+                ? { background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.3)' }
+                : { background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+              <p className="text-[11px] font-semibold"
+                style={{ color: fd?.fast_track?.status === 'cleared' ? '#D4AF37' : cfg.color }}>
+                {fd?.fast_track?.status === 'cleared'
+                  ? '✓ Fast-Track Cleared — Approved for Activation'
+                  : result.internet.risk_level === 'low'    ? '✓ Cleared for Immediate Activation'
+                  : result.internet.risk_level === 'medium' ? '⚠ Admin Review Required Before Activation'
+                  :                                           '✗ Application Held — Mandatory Admin Review'}
               </p>
             </div>
           </div>

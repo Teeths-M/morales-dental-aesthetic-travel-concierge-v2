@@ -90,6 +90,51 @@ const DOCTORS = [
     },
   },
   {
+    id: 'amara', full_name: 'Dr. Amara Osei', clinic_name: 'International Maxillofacial Partners',
+    clinic_city: 'Dubai / London', clinic_country: 'Roaming', specialty: 'Oral & Maxillofacial Surgery',
+    initials: 'AO', avatarColor: '#D4AF37', delay: 2700,
+    result: {
+      risk_level: 'low', risk_score: 29,
+      summary: 'Dr. Amara Osei is a credentialed traveling maxillofacial surgeon operating across Gulf and European hospital networks. No fixed brick-and-mortar clinic — she holds active operating privileges at 6 affiliated hospitals. Her WHO International Registry entry (MED-2019-AO) is publicly verifiable. LinkedIn shows 4,200+ professional connections, 3 peer-reviewed publications indexed on PubMed, and 8 institutional co-author affiliations. Facebook and Instagram confirmed active. No Google Business listing is expected for her practice model — she operates exclusively through hospital booking systems. 8 completed surgical cases on this platform with zero complaints.',
+      ai_positive_indicators: [
+        'WHO International Registry — verified surgical credential MED-2019-AO',
+        '3 peer-reviewed publications indexed on PubMed — confirmed academic standing',
+        'LinkedIn verified active: 4,200+ connections across surgical networks',
+        '8 previously completed cases on this platform — zero adverse events or complaints',
+        'Active hospital privileges at 6 institutions across UAE, UK, and Ghana',
+      ],
+      ai_red_flags: [],
+      signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'not_provided' }] },
+      google: { status: 'unverified', rating: null, review_count: 0, snippet: null },
+    },
+    fraud_result: {
+      fraud_risk_score: 18, xai_confidence: 82,
+      xai_summary: 'High confidence (82/100). VPN-only exception rule applied — all network cross-checks are clean and liveness passed. A professional VPN from a credentialed surgeon with 8 completed platform cases and WHO-verified credentials is institutional security policy, not fraud infrastructure. Admin fast-tracked on review.',
+      xai_flags: [
+        'Professional VPN detected — exception rule applied (clean network + liveness confirmed). Flag for admin awareness only.',
+      ],
+      xai_positives: [
+        'Device fingerprint unique — no cross-application reuse detected',
+        'Phone number unique across all platform records',
+        'IP residential-tier VPN: downgraded from +25 to +8 (VPN-only exception — zero shared infrastructure)',
+        'Biometric liveness confirmed — applicant physically present during signup',
+        'Internet Intelligence confirms 8 prior successful cases on platform — known trusted partner',
+      ],
+      signals: {
+        network:  { shared_phone: 0, shared_address: 0, shared_device: 0 },
+        ip:       { label: 'vpn_or_tor', country: 'AE', city: 'Dubai, UAE (via VPN)' },
+        identity: { liveness_status: 'passed', detail: 'Blink + right head turn detected in 4.1s — step-up completed' },
+        device:   { type: 'MacBook Pro M3', browser: 'Safari 17.4', timezone: 'Asia/Dubai', reuse_count: 0, fp_label: 'Unique' },
+      },
+      fast_track: {
+        status: 'cleared',
+        cleared_by: 'Admin — Portia M.',
+        cleared_at: '3 min after scan',
+        reason: 'WHO credential MED-2019-AO verified. VPN use confirmed as hospital network security policy. 8 prior completed cases with zero incidents. Traveling Surgeon Protocol applied — no further review required.',
+      },
+    },
+  },
+  {
     id: 'emmanuel', full_name: 'Dr. Emmanuel Okafor', clinic_name: 'Lagos Smile Center',
     clinic_city: 'Lagos', clinic_country: 'Nigeria', specialty: 'General Dentistry',
     initials: 'EO', avatarColor: '#ef4444', delay: 1800,
@@ -135,8 +180,8 @@ export default function IntelligenceScanDemo() {
 
   useEffect(() => {
     setAllDone(false);
-    // Last doctor starts at 1800ms, 7 steps × 700ms = 4900ms, +600ms buffer
-    const t = setTimeout(() => setAllDone(true), 1800 + SCAN_STEPS.length * 700 + 600);
+    // Last doctor (Amara) starts at 2700ms, 7 steps × 700ms = 4900ms, +600ms buffer
+    const t = setTimeout(() => setAllDone(true), 2700 + SCAN_STEPS.length * 700 + 600);
     return () => clearTimeout(t);
   }, [runKey]);
 
@@ -174,9 +219,9 @@ export default function IntelligenceScanDemo() {
           {/* Stats */}
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Applications Processed', value: '3', color: '#f1f5f9' },
-              { label: 'Approved — Low Risk',     value: '1', color: '#10b981' },
-              { label: 'Under Review',             value: '1', color: '#f59e0b' },
+              { label: 'Applications Processed',  value: '4', color: '#f1f5f9' },
+              { label: 'Approved / Fast-Track',   value: '2', color: '#10b981' },
+              { label: 'Under Review',            value: '1', color: '#f59e0b' },
               { label: 'Fraud Network Flagged',   value: '1', color: '#ef4444' },
             ].map(s => (
               <div key={s.label} className="p-3.5 rounded-xl" style={{ background: '#060B16', border: '1px solid #2A3F4A' }}>
@@ -209,7 +254,7 @@ export default function IntelligenceScanDemo() {
 
       {/* Scan cards */}
       <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
           {DOCTORS.map(doc => (
             <IntelligenceScanCard key={doc.id + runKey} doctor={doc} scanSteps={SCAN_STEPS} runKey={runKey} />
           ))}
