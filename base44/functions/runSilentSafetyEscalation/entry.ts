@@ -717,6 +717,29 @@ Deno.serve(async (req) => {
       }
     } catch (_) {}
 
+    // Heartbeat: write one record per successful engine run so safetyEngineHealth
+    // can detect if this engine stops running. If the last heartbeat is stale,
+    // safetyEngineHealth returns HTTP 503 and fires an admin alert.
+    await base44.asServiceRole.entities.NotificationLog.create({
+      channel: 'internal',
+      case_id: '',
+      recipient_type: 'system',
+      recipient_phone: '',
+      recipient_email: '',
+      message_type: 'safety_engine_heartbeat',
+      provider_message_id: '',
+      status: 'ok',
+      escalation_level: 0,
+      notes: `processed:${results.processed} sms:${results.sms_sent} voice:${results.voice_attempted} security:${results.security_dispatched} police:${results.police_escalated}`,
+      created_at: now.toISOString(),
+    }).catch(() => {});
+
+    // Dead man's switch: if SAFETY_ENGINE_DEADMAN_URL is configured (healthchecks.io,
+    // BetterStack, etc.), ping it. If the ping is missed for 2× the schedule interval,
+    // the external service pages admin independently of our own health endpoint.
+    const deadmanUrl = Deno.env.get('SAFETY_ENGINE_DEADMAN_URL');
+    if (deadmanUrl) fetch(deadmanUrl, { method: 'HEAD' }).catch(() => {});
+
     return Response.json({ ...results, timestamp: now.toISOString() });
   } catch (err) {
     return Response.json({ error: err.message || 'Internal error' }, { status: 500 });
