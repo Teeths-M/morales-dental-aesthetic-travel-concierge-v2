@@ -263,6 +263,36 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
             </div>
           )}
 
+          {/* Google listing */}
+          {result.signals?.google && (() => {
+            const g = result.signals.google;
+            const gColor = g.status === 'verified' ? '#10b981' : g.status === 'unverified' ? '#f59e0b' : '#ef4444';
+            const gLabel = g.status === 'verified' ? 'VERIFIED LISTING' : g.status === 'unverified' ? 'UNVERIFIED' : 'NO LISTING FOUND';
+            return (
+              <div className="p-3.5 rounded-xl space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: '#fff' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#4285F4', lineHeight: 1 }}>G</span>
+                    </div>
+                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground">GOOGLE</span>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ color: gColor, background: gColor + '18', border: `1px solid ${gColor}30` }}>{gLabel}</span>
+                </div>
+                {g.rating ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex gap-0.5">{[1,2,3,4,5].map(n => <span key={n} style={{ color: n <= Math.round(g.rating) ? '#f59e0b' : '#334155', fontSize: 13 }}>★</span>)}</div>
+                    <span className="text-sm font-bold" style={{ color: '#f1f5f9' }}>{g.rating}</span>
+                    <span className="text-xs text-muted-foreground">({g.review_count} reviews)</span>
+                  </div>
+                ) : (
+                  <p className="text-xs" style={{ color: '#ef4444' }}>No Google Business profile found for this clinic.</p>
+                )}
+                {g.snippet && <p className="text-xs italic text-muted-foreground leading-relaxed">"{g.snippet}"</p>}
+              </div>
+            );
+          })()}
+
           {/* CTA */}
           {result.risk_level === 'high' ? (
             <div

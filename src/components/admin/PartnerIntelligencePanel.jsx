@@ -92,14 +92,46 @@ export default function PartnerIntelligencePanel() {
                   </button>
                 </div>
                 {open && doc.internet_summary && (
-                  <div className="mt-3 p-3 rounded-lg bg-muted/40 border border-border">
-                    <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5">AI ANALYSIS</p>
-                    <p className="text-xs text-foreground/80 leading-relaxed">{doc.internet_summary}</p>
-                    {doc.internet_last_checked && (
-                      <p className="text-[10px] text-muted-foreground mt-2">
-                        Scanned {new Date(doc.internet_last_checked).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                      </p>
-                    )}
+                  <div className="mt-3 space-y-2">
+                    {/* Google listing */}
+                    {doc.internet_signals?.google && (() => {
+                      const g = doc.internet_signals.google;
+                      const gColor = g.status === 'verified' ? '#10b981' : g.status === 'unverified' ? '#f59e0b' : '#ef4444';
+                      const gLabel = g.status === 'verified' ? 'VERIFIED' : g.status === 'unverified' ? 'UNVERIFIED' : 'NOT FOUND';
+                      return (
+                        <div className="p-3 rounded-lg border border-border bg-muted/20 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0" style={{ background: '#fff' }}>
+                                <span style={{ fontSize: 9, fontWeight: 800, color: '#4285F4', lineHeight: 1 }}>G</span>
+                              </div>
+                              <span className="text-[10px] font-bold tracking-widest text-muted-foreground">GOOGLE</span>
+                            </div>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ color: gColor, background: gColor + '18' }}>{gLabel}</span>
+                          </div>
+                          {g.rating ? (
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex gap-px">{[1,2,3,4,5].map(n => <span key={n} style={{ color: n <= Math.round(g.rating) ? '#f59e0b' : '#64748b', fontSize: 11 }}>★</span>)}</div>
+                              <span className="text-xs font-semibold">{g.rating}</span>
+                              <span className="text-[11px] text-muted-foreground">({g.review_count} reviews)</span>
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-red-400">No Google Business profile found.</p>
+                          )}
+                          {g.snippet && <p className="text-[10px] italic text-muted-foreground">"{g.snippet}"</p>}
+                        </div>
+                      );
+                    })()}
+                    {/* AI analysis */}
+                    <div className="p-3 rounded-lg bg-muted/40 border border-border">
+                      <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5">AI ANALYSIS</p>
+                      <p className="text-xs text-foreground/80 leading-relaxed">{doc.internet_summary}</p>
+                      {doc.internet_last_checked && (
+                        <p className="text-[10px] text-muted-foreground mt-2">
+                          Scanned {new Date(doc.internet_last_checked).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

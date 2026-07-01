@@ -150,7 +150,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   // ── 4. AI Web Intelligence ────────────────────────────────────────────────────
   const prompt = `You are an internet intelligence analyst for a medical tourism safety platform.
-Assess the digital credibility and reputation risk of this partner.
+Assess the digital credibility and reputation risk of this partner using live internet search results.
 
 Partner:
 - Name: ${registered_name}${clinic_name ? `\n- Clinic/Business: ${clinic_name}` : ''}
@@ -166,6 +166,7 @@ Assess:
 1. Is the combination of location + specialty + digital presence consistent with a legitimate operator in this region?
 2. What are the key trust signals or red flags given this profile?
 3. Does anything about their contact details, location, or online presence raise concerns?
+4. Search Google Business / Google Maps for "${clinic_name || registered_name}" in "${city || ''}, ${country || ''}". Report: is there a verified listing? What is the star rating (1–5)? Approximately how many reviews? Provide one short representative review quote if found (or null if not found).
 
 Return JSON only:
 {
@@ -173,13 +174,20 @@ Return JSON only:
   "key_findings": ["finding 1", "finding 2"],
   "red_flags": ["flag 1"],
   "positive_indicators": ["indicator 1"],
-  "narrative": "2-3 sentence plain English risk summary"
+  "narrative": "2-3 sentence plain English risk summary",
+  "google": {
+    "status": "verified" | "unverified" | "not_found",
+    "rating": null or number between 1 and 5,
+    "review_count": null or integer,
+    "snippet": null or short direct quote from a real review
+  }
 }`;
 
   let ai: any = null;
   try {
     ai = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt,
+      add_context_from_internet: true,
       response_json_schema: {
         type: 'object',
         properties: {
@@ -188,15 +196,27 @@ Return JSON only:
           red_flags:            { type: 'array', items: { type: 'string' } },
           positive_indicators:  { type: 'array', items: { type: 'string' } },
           narrative:            { type: 'string' },
+          google: {
+            type: 'object',
+            properties: {
+              status:       { type: 'string' },
+              rating:       { type: 'number' },
+              review_count: { type: 'number' },
+              snippet:      { type: 'string' },
+            },
+          },
         },
       },
     });
 
     signals.ai_credibility = ai.credibility;
+    signals.google = ai.google ?? null;
     if (ai.credibility === 'low')    riskScore += 30;
     else if (ai.credibility === 'medium') riskScore += 10;
     else if (ai.credibility === 'high')   riskScore -= 15;
     if ((ai.red_flags?.length ?? 0) > 0) riskScore += ai.red_flags.length * 8;
+    if (ai.google?.status === 'verified') riskScore -= 8;
+    else if (ai.google?.status === 'not_found') riskScore += 10;
   } catch (_) {
     signals.ai_check = 'failed';
   }
