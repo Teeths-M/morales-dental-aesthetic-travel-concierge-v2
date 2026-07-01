@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 
@@ -8,14 +8,14 @@ const CARD  = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
 const QUICK_PROCEDURES = [
-  { emoji: 'ðŸ¦·', name: 'Dental Implants',    procedure_enum: 'dental_implants',  save: 'Save up to $12K', color: '#22c55e' },
-  { emoji: 'âœ¨', name: 'Porcelain Veneers',   procedure_enum: 'porcelain_veneers', save: 'Save up to $8K',  color: GOLD },
-  { emoji: 'ðŸ‘ƒ', name: 'Rhinoplasty',         procedure_enum: 'rhinoplasty',       save: 'Save up to $6K',  color: '#a855f7' },
-  { emoji: 'ðŸ’«', name: 'All-on-4 Implants',   procedure_enum: 'all_on_4',          save: 'Save up to $20K', color: '#60a5fa' },
-  { emoji: 'ðŸŽ¯', name: 'Liposuction',         procedure_enum: 'liposuction',       save: 'Save up to $8K',  color: '#f97316' },
-  { emoji: 'ðŸŒŸ', name: 'Tummy Tuck',          procedure_enum: 'tummy_tuck',        save: 'Save up to $10K', color: '#ec4899' },
-  { emoji: 'ðŸ˜Š', name: 'Smile Makeover',      procedure_enum: 'smile_makeover',    save: 'Save up to $18K', color: GOLD },
-  { emoji: 'ðŸ”', name: 'Other / Not sure yet', procedure_enum: 'other',            save: "We will help you choose", color: 'rgba(255,255,255,0.5)' },
+  { emoji: '🦷', name: 'Dental Implants',    procedure_enum: 'dental_implants',  save: 'Save up to $12K', color: '#22c55e' },
+  { emoji: '✨', name: 'Porcelain Veneers',   procedure_enum: 'porcelain_veneers', save: 'Save up to $8K',  color: GOLD },
+  { emoji: '👃', name: 'Rhinoplasty',         procedure_enum: 'rhinoplasty',       save: 'Save up to $6K',  color: '#a855f7' },
+  { emoji: '💫', name: 'All-on-4 Implants',   procedure_enum: 'all_on_4',          save: 'Save up to $20K', color: '#60a5fa' },
+  { emoji: '🎯', name: 'Liposuction',         procedure_enum: 'liposuction',       save: 'Save up to $8K',  color: '#f97316' },
+  { emoji: '🌟', name: 'Tummy Tuck',          procedure_enum: 'tummy_tuck',        save: 'Save up to $10K', color: '#ec4899' },
+  { emoji: '😊', name: 'Smile Makeover',      procedure_enum: 'smile_makeover',    save: 'Save up to $18K', color: GOLD },
+  { emoji: '🔍', name: 'Other / Not sure yet', procedure_enum: 'other',            save: 'We will help you choose', color: 'rgba(255,255,255,0.5)' },
 ];
 
 export default function ProcedureSelectionGate({ children }) {
@@ -48,7 +48,7 @@ export default function ProcedureSelectionGate({ children }) {
               {/* Header */}
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06))', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 26 }}>
-                  ðŸ¥
+                  🏥
                 </div>
                 <h2 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
                   What would you like to explore?
@@ -80,7 +80,7 @@ export default function ProcedureSelectionGate({ children }) {
 
               {/* Trust footnote */}
               <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: 0 }}>
-                ðŸ”’ No commitment required Â· Change anytime Â· Free consultation
+                🔒 No commitment required · Change anytime · Free consultation
               </p>
             </motion.div>
           </motion.div>

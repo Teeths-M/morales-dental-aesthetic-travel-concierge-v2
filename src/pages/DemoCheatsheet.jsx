@@ -35,8 +35,8 @@ const DEEP_LINKS = [
   { label: 'Email system — 5 templates',      url: `${BASE}/demo/emails`,                         tag: '📧 Email' },
   { label: 'Pattern Intelligence demo',       url: `${BASE}/demo/medguard`,                       tag: '🧠 AI' },
   { label: 'EVN-iQ400 · Danger Zone Demo',   url: `${BASE}/demo/evn`,                            tag: '🌍 Moat' },
-  { label: 'Situation Room · Global Tactical',url: `${BASE}/admin/situation-room`,               tag: '🗺️ Wow factor' },
-  { label: 'Mission Control · Operations',    url: `${BASE}/admin/mission-control`,              tag: '⚡ Command center' },
+  { label: 'Situation Room · Global Tactical',url: `${BASE}/demo/situation-room`,                tag: '🗺️ Wow factor' },
+  { label: 'Mission Control · Operations',    url: `${BASE}/demo/mission-control`,               tag: '⚡ Command center' },
   { label: 'Full platform overview',          url: `${BASE}/demo`,                                tag: '🏥 Overview' },
 ];
 
@@ -53,7 +53,7 @@ const PITCH_ORDER = [
   { step: 1, emoji: '🛡️', title: 'MedGuard CRITICAL',             url: '/demo?tab=medguard&start=critical',  desc: 'Judges see security dispatch before you say a word. Hook landed.' },
   { step: 2, emoji: '🚨', title: 'Run the Kidnapping Scenario',     url: '/demo?tab=emergency',                desc: 'Full automated rescue chain. No other platform does this.' },
   { step: 3, emoji: '🌍', title: 'EVN-iQ400 Danger Zone',          url: '/demo/evn',                          desc: 'Select AIRPLANE mode first, press Play. Patient walks into gang zone — HIGH RISK alert fires. Works with zero internet.' },
-  { step: 4, emoji: '🗺️', title: 'Open the Situation Room',        url: '/admin/situation-room',              desc: 'Global tactical display. Radar sweep, live patient pins on world map. Nobody has seen anything like this.' },
+  { step: 4, emoji: '🗺️', title: 'Open the Situation Room',        url: '/demo/situation-room',               desc: 'Global tactical display. Radar sweep, live patient pins on world map. Nobody has seen anything like this.' },
   { step: 5, emoji: '📡', title: 'Show the Family Tracker',         url: '/demo/recovery',                    desc: 'Press → to advance Maria home. Viral marketing angle explained.' },
   { step: 6, emoji: '📧', title: 'Send a live email',               url: '/demo/emails',                      desc: 'Tap "Send to My Inbox" — golden email lands in real inbox live.' },
 ];

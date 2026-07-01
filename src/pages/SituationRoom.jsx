@@ -405,7 +405,7 @@ export default function SituationRoom() {
                 {activeCases.length > 6 && (
                   <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '4px 0 0' }}>
                     +{activeCases.length - 6} more →{' '}
-                    <Link to="/admin/mission-control" style={{ color: GOLD }}>Mission Control</Link>
+                    <Link to="/demo/mission-control" style={{ color: GOLD }}>Mission Control</Link>
                   </p>
                 )}
               </div>
@@ -445,7 +445,7 @@ export default function SituationRoom() {
 
           {/* Bottom actions */}
           <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
-            <Link to="/admin/mission-control"
+            <Link to="/demo/mission-control"
               style={{ flex: 1, textAlign: 'center', padding: '8px', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 10, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.05em' }}>
               MISSION CONTROL →
             </Link>

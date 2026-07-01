@@ -698,6 +698,8 @@ const TABS = [
   { id: 'family',   label: '👩🏽 Mother\'s Eye',     link: '/demo/family' },
   { id: 'arrival',  label: '🏥 Arrival Intel',      link: '/demo/arrival' },
   { id: 'intelligence', label: '🔍 Doctor Intel',   link: '/demo/intelligence' },
+  { id: 'situation-room', label: '🗺️ Situation Room', link: '/demo/situation-room' },
+  { id: 'mission-control', label: '⚡ Mission Control', link: '/demo/mission-control' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'safe-t', 'medguard', 'emergency', 'nightlife']);
@@ -849,7 +851,7 @@ export default function DemoShowcase() {
 
           {/* Action CTAs */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <Link to="/consultation" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: GOLD, color: DARK }}>
+            <Link to="/booking" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: GOLD, color: DARK }}>
               Start Journey <ArrowRight style={{ width: 14, height: 14 }} />
             </Link>
             <Link to="/login" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: '#0C1A1D', color: '#94a3b8', border: '1px solid #2A3F4A' }}>
@@ -910,18 +912,18 @@ export default function DemoShowcase() {
           {/* Admin Intelligence Suite */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              to="/admin/situation-room"
+              to="/demo/situation-room"
               className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm justify-center"
               style={{ background: 'linear-gradient(135deg, #0A1520, #0C1A2A)', border: `1px solid ${GOLD}50`, color: GOLD, boxShadow: `0 4px 20px rgba(212,175,55,0.2)` }}
             >
-              🌍 Situation Room — Global Tactical Display
+              🗺️ Situation Room — Global Tactical Display
             </Link>
             <Link
-              to="/admin/mission-control"
+              to="/demo/mission-control"
               className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm justify-center"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}
             >
-              🛡️ Mission Control — Operations Board
+              ⚡ Mission Control — Operations Board
             </Link>
           </div>
         </section>
