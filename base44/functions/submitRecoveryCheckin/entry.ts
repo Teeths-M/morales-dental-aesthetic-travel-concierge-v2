@@ -71,6 +71,25 @@ Deno.serve(async (req) => {
           }).catch(e => console.error('[submitRecoveryCheckin] family alert failed:', contact.email, e))
         );
         await Promise.allSettled(familyAlerts);
+
+        // Wire into the autonomous escalation machine so the patient is NEVER left waiting
+        // on a sleeping human. runSilentSafetyEscalation picks this up on its next scheduled
+        // run and fires: SMS T+15m → voice call T+30m → guardian GPS T+60m →
+        // security dispatch T+120m → police checklist T+3h — with no human intervention.
+        await base44.asServiceRole.entities.SoloCheckIn.create({
+          case_id: session.case_id,
+          user_email: session.patient_email,
+          user_name: session.patient_name,
+          user_phone: session.patient_phone || null,
+          scheduled_time: now,
+          sent_time: now,
+          status: 'pending',
+          context_type: null,
+          check_in_round: 'recovery_emergency',
+          missed_round_count: 0,
+          notes: `Auto-escalation: recovery check-in reported pain ${numericPain}/10. Case ${session.case_id}.`,
+          created_at: now,
+        }).catch(e => console.error('[submitRecoveryCheckin] escalation wire failed:', e));
       }
 
       // Admin notification — urgency level differs by severity
