@@ -10,6 +10,7 @@ import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import EmergencyScenarioDemo from '@/pages/EmergencyScenarioDemo';
 import NightlifeRobberyDemo from '@/pages/NightlifeRobberyDemo';
 import { BRAND } from '@/lib/brandTokens';
+import ProcedureStackingBlocker from '@/components/safety/ProcedureStackingBlocker';
 
 const GOLD  = BRAND.gold;
 const DARK  = BRAND.dark;
@@ -511,9 +512,176 @@ function MedGuardDemo({ initialScene = 0 }) {
   );
 }
 
+/* ── Safe-T4life™ Interactive Block Demo ─────────────────────────────────── */
+const DEMO_VIOLATION = {
+  pairLabel: 'Tummy Tuck + Brazilian Butt Lift',
+  reason: 'Tummy Tuck requires strict supine recovery. BBL requires the patient to avoid sitting or lying supine for 8 weeks to protect the transferred fat graft. These positions are mutually exclusive — this combination presents significant recovery conflicts that require review by a licensed physician before proceeding.',
+  code: 'POSITIONING_CONFLICT',
+  recommended: 'Tummy Tuck',
+  recommendedReason: 'A Tummy Tuck alone delivers a powerful transformation. Your BBL can be planned as a dedicated second trip — and the results of each will be far more beautiful for it.',
+};
+
+const DEMO_PROCS = [
+  { name: 'Tummy Tuck',          conflict: true  },
+  { name: 'Brazilian Butt Lift', conflict: true  },
+  { name: 'Rhinoplasty',         conflict: false },
+  { name: 'Breast Augmentation', conflict: false },
+];
+
+function SafeTBlockDemo() {
+  const [selected, setSelected] = useState(() => ['Tummy Tuck', 'Brazilian Butt Lift']);
+  const [showBlock, setShowBlock] = useState(false);
+  const [nudge,     setNudge]     = useState(null);
+
+  const hasDangerCombo = selected.includes('Tummy Tuck') && selected.includes('Brazilian Butt Lift');
+
+  function toggle(name) {
+    setSelected(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
+    setNudge(null);
+  }
+
+  function tryBook() {
+    if (hasDangerCombo) { setShowBlock(true); return; }
+    setNudge('Select both Tummy Tuck + Brazilian Butt Lift to see the Safe-T block in action.');
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
+
+      {/* Header */}
+      <div className="text-center">
+        <div
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
+          style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)' }}
+        >
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#dc2626' }} />
+          <span className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>
+            Safe-T4life™ · Interactive Demo
+          </span>
+        </div>
+        <h2 className="text-3xl font-bold leading-tight mb-3" style={{ color: '#f8fafc', fontFamily: 'Georgia, serif' }}>
+          The industry says <span style={{ color: '#ef4444' }}>yes.</span><br />
+          <span style={{ color: GOLD }}>M knows when to say no.</span>
+        </h2>
+        <p className="text-sm max-w-md mx-auto" style={{ color: '#64748b' }}>
+          Select your procedures below and press <strong style={{ color: '#fff' }}>Proceed to Booking.</strong> Watch what M does next.
+        </p>
+      </div>
+
+      {/* Procedure picker */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="rounded-2xl overflow-hidden"
+        style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}
+      >
+        <div className="px-5 pt-5 pb-3">
+          <p className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: GOLD }}>
+            Choose your procedures
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {DEMO_PROCS.map(({ name, conflict }) => {
+              const on = selected.includes(name);
+              const danger = on && conflict && hasDangerCombo;
+              return (
+                <motion.button
+                  key={name}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => toggle(name)}
+                  className="py-3 px-4 rounded-xl text-sm font-semibold text-left transition-all"
+                  style={{
+                    background: danger ? 'rgba(239,68,68,0.1)' : on ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.03)',
+                    border:     danger ? '1px solid rgba(239,68,68,0.5)' : on ? `1px solid ${GOLD}60` : '1px solid #2A3F4A',
+                    color:      danger ? '#fca5a5' : on ? GOLD : '#64748b',
+                  }}
+                >
+                  <span className="mr-2">{on ? '✓' : '+'}</span>{name}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Conflict warning */}
+        <AnimatePresence>
+          {hasDangerCombo && (
+            <motion.div
+              key="warn"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mx-5 mb-3 rounded-xl px-3 py-2 flex items-center gap-2"
+              style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.2)' }}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+              <p className="text-xs" style={{ color: '#fca5a5' }}>
+                Safe-T4life™ has detected a potential conflict in your selection.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* CTA */}
+        <div className="px-5 pb-5">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={tryBook}
+            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all"
+            style={{
+              background: hasDangerCombo
+                ? 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)'
+                : `linear-gradient(135deg, ${GOLD}, #E8C85C)`,
+              color: '#fff',
+              border: hasDangerCombo ? '1px solid #dc2626' : 'none',
+              boxShadow: hasDangerCombo
+                ? '0 4px 20px rgba(220,38,38,0.35)'
+                : `0 4px 20px rgba(212,175,55,0.35)`,
+            }}
+          >
+            {hasDangerCombo ? '⚠️  Proceed to Booking' : 'Proceed to Booking →'}
+          </motion.button>
+          {nudge && (
+            <p className="text-center text-xs mt-2" style={{ color: '#475569' }}>{nudge}</p>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Real-world context */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="rounded-2xl p-5"
+        style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)' }}
+      >
+        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#ef4444' }}>
+          Based on real events — 2024
+        </p>
+        <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
+          A woman died in Costa Rica after a clinic combined a tummy tuck, liposuction, and fat transfer in a single session.
+          No booking platform stopped her. <span style={{ color: '#fff', fontWeight: 600 }}>Morales would have — before she ever got on the plane.</span>
+        </p>
+      </motion.div>
+
+      {/* The full block overlay */}
+      {showBlock && (
+        <ProcedureStackingBlocker
+          violations={[DEMO_VIOLATION]}
+          patientEmail={null}
+          patientName="Demo Patient"
+          consultationId={null}
+          onBack={() => setShowBlock(false)}
+        />
+      )}
+    </div>
+  );
+}
+
 /* ── Main showcase page ──────────────────────────────────────────────────── */
 const TABS = [
   { id: 'overview',   label: '🏥 Platform Overview' },
+  { id: 'safe-t',     label: '🛑 Safe-T™ Block' },
   { id: 'medguard',   label: '🛡️ MedGuard™ Live' },
   { id: 'emergency',  label: '🚨 Kidnapping Scenario' },
   { id: 'nightlife',  label: '🔒 Vault Lockdown' },
@@ -532,7 +700,7 @@ const TABS = [
   { id: 'intelligence', label: '🔍 Doctor Intel',   link: '/demo/intelligence' },
 ];
 
-const IN_PAGE_TAB_IDS = new Set(['overview', 'medguard', 'emergency', 'nightlife']);
+const IN_PAGE_TAB_IDS = new Set(['overview', 'safe-t', 'medguard', 'emergency', 'nightlife']);
 
 export default function DemoShowcase() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -626,6 +794,9 @@ export default function DemoShowcase() {
       {/* ── NIGHTLIFE TAB ── */}
       {activeTab === 'nightlife' && <NightlifeRobberyDemo minimal />}
 
+      {/* ── SAFE-T BLOCK TAB ── */}
+      {activeTab === 'safe-t' && <SafeTBlockDemo />}
+
       {/* ── OVERVIEW TAB ── */}
       {activeTab === 'overview' && <div className="max-w-5xl mx-auto px-4 py-16 space-y-24">
 
@@ -715,6 +886,13 @@ export default function DemoShowcase() {
           {/* Scenario demos */}
           <p className="text-center text-xs font-bold mb-3" style={{ color: '#64748b', letterSpacing: '0.08em' }}>SCENARIO DEMOS</p>
           <div className="grid grid-cols-1 gap-3">
+            <button
+              onClick={() => switchTab('safe-t')}
+              className="flex items-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm justify-center"
+              style={{ background: 'linear-gradient(135deg, rgba(127,29,29,0.5), rgba(153,27,27,0.4))', border: '2px solid rgba(220,38,38,0.6)', color: '#fca5a5' }}
+            >
+              <Shield style={{ width: 14, height: 14 }} /> Safe-T4life™ — M Says No
+            </button>
             <Link to="/demo/emergency" className="flex items-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm justify-center" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }}>
               <AlertTriangle style={{ width: 14, height: 14 }} /> Kidnapping — Auto Rescue
             </Link>

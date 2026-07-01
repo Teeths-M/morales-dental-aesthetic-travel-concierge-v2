@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Shield, ArrowLeft, CheckCircle2, Loader2, Clock } from 'lucide-react';
+import { AlertTriangle, Shield, ArrowLeft, CheckCircle2, Loader2, Clock, Heart, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const CODE_LABELS = {
@@ -191,6 +191,49 @@ export default function ProcedureStackingBlocker({
               </p>
             </div>
           </div>
+
+          {/* ── M RECOMMENDATIONS ── */}
+          {violations.some(v => v.recommended) && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="mx-5 mb-4 rounded-2xl overflow-hidden"
+              style={{ border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.05)' }}
+            >
+              {/* Header */}
+              <div
+                className="px-4 py-3 flex items-center gap-2"
+                style={{ borderBottom: '1px solid rgba(212,175,55,0.15)', background: 'rgba(212,175,55,0.08)' }}
+              >
+                <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                <p className="text-xs font-bold tracking-wide uppercase" style={{ color: '#D4AF37' }}>
+                  What M recommends instead
+                </p>
+              </div>
+
+              {/* Per-violation recommendation */}
+              <div className="p-4 space-y-3">
+                {violations.filter(v => v.recommended).map((v, i) => (
+                  <div key={i} className="space-y-1">
+                    <p className="text-sm font-semibold text-white">{v.recommended}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>{v.recommendedReason}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Emotional protection message */}
+              <div
+                className="px-4 py-3 flex items-start gap-3"
+                style={{ borderTop: '1px solid rgba(212,175,55,0.15)', background: 'rgba(212,175,55,0.06)' }}
+              >
+                <Heart className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#D4AF37' }} />
+                <p className="text-xs leading-relaxed" style={{ color: '#D4AF37' }}>
+                  M is not here to take your dream away. We are here to make sure you are alive to enjoy it.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           {/* ── ACTIONS ── */}
           <div

@@ -26,6 +26,7 @@ const GOLD = '#D4AF37';
 const BASE = window.location.origin;
 
 const DEEP_LINKS = [
+  { label: 'Safe-T4life™ — M says NO (opener)', url: `${BASE}/demo?tab=safe-t`,                  tag: '💀 Drop the mic' },
   { label: 'Cold open — CRITICAL scenario',   url: `${BASE}/demo?tab=medguard&start=critical`,    tag: '🔥 Max impact' },
   { label: 'Full MedGuard auto-advance',      url: `${BASE}/demo?tab=medguard`,                   tag: '🛡️ MedGuard' },
   { label: 'Kidnapping rescue demo',          url: `${BASE}/demo?tab=emergency`,                  tag: '🚨 Emergency' },
@@ -48,7 +49,8 @@ const SHORTCUTS = [
 ];
 
 const PITCH_ORDER = [
-  { step: 1, emoji: '🛡️', title: 'Open with MedGuard CRITICAL',    url: '/demo?tab=medguard&start=critical',  desc: 'Judges see security dispatch before you say a word. Hook landed.' },
+  { step: 0, emoji: '🛑', title: 'OPENER — Safe-T4life™ Block',    url: '/demo?tab=safe-t',                   desc: 'Say: "A woman died in Costa Rica after a clinic said yes to this combination. M says no." — Hit Proceed to Booking. The block fires. Drop the mic.' },
+  { step: 1, emoji: '🛡️', title: 'MedGuard CRITICAL',             url: '/demo?tab=medguard&start=critical',  desc: 'Judges see security dispatch before you say a word. Hook landed.' },
   { step: 2, emoji: '🚨', title: 'Run the Kidnapping Scenario',     url: '/demo?tab=emergency',                desc: 'Full automated rescue chain. No other platform does this.' },
   { step: 3, emoji: '🌍', title: 'EVN-iQ400 Danger Zone',          url: '/demo/evn',                          desc: 'Select AIRPLANE mode first, press Play. Patient walks into gang zone — HIGH RISK alert fires. Works with zero internet.' },
   { step: 4, emoji: '🗺️', title: 'Open the Situation Room',        url: '/admin/situation-room',              desc: 'Global tactical display. Radar sweep, live patient pins on world map. Nobody has seen anything like this.' },
@@ -122,7 +124,7 @@ export default function DemoCheatsheet() {
         </div>
 
         {/* ── Recommended walk-through ── */}
-        <Section icon={PlayCircle} iconColor="#22c55e" title="Recommended Judge Walk-Through (4 moves)">
+        <Section icon={PlayCircle} iconColor="#22c55e" title="Recommended Judge Walk-Through (7 moves — steps 0–6)">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {PITCH_ORDER.map(({ step, emoji, title, url, desc }) => (
               <div key={step} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 14, background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
