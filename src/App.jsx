@@ -80,7 +80,7 @@ const AuthenticatedApp = () => {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
       // Only redirect to login for truly protected paths — token/public routes handle their own auth
-      const isProtectedPath = ['/dashboard', '/safe-t', '/booking', '/passport-vault', '/insurance', '/travel-services', '/trip-overview', '/walkie-talkie', '/baggage-tracker', '/nightlife-safety', '/wilderness-safety', '/medical-intake', '/my-reviews'].some(p => currentPath.startsWith(p));
+      const isProtectedPath = ['/dashboard', '/safe-t', '/passport-vault', '/insurance', '/travel-services', '/trip-overview', '/walkie-talkie', '/baggage-tracker', '/nightlife-safety', '/wilderness-safety', '/medical-intake', '/my-reviews'].some(p => currentPath.startsWith(p));
       if (isProtectedPath) {
         navigateToLogin();
         return null;
