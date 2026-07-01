@@ -1,60 +1,62 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
-import { Shield, CheckCircle, AlertTriangle, Loader2, RefreshCw, Globe } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { Shield, RefreshCw, Globe, Fingerprint, Network, ScanFace } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import IntelligenceScanCard from '@/components/admin/IntelligenceScanCard';
 
 const SCAN_STEPS = [
-  { key: 'domain', label: 'Domain Intelligence',   desc: 'Checking domain age & registration history' },
-  { key: 'social', label: 'Social Media Presence', desc: 'Verifying profiles across platforms' },
-  { key: 'phone',  label: 'Phone Analysis',        desc: 'Analyzing number origin and carrier signals' },
-  { key: 'ai',     label: 'AI Web Intelligence',   desc: 'Deep internet reputation analysis' },
+  { key: 'domain',   label: 'Domain Intelligence',     desc: 'Checking domain age & registration history' },
+  { key: 'social',   label: 'Social Media Presence',   desc: 'Verifying profiles across all platforms' },
+  { key: 'phone',    label: 'Phone Analysis',           desc: 'Analyzing number origin and carrier signals' },
+  { key: 'network',  label: 'Fraud Network Detection',  desc: 'Cross-referencing against known fraud clusters' },
+  { key: 'device',   label: 'Device Fingerprinting',   desc: 'Analyzing device signature and IP intelligence' },
+  { key: 'liveness', label: 'Liveness Verification',   desc: 'Biometric binding and identity proofing' },
+  { key: 'xai',      label: 'XAI Confidence Score',    desc: 'Explainable AI composite risk assessment' },
 ];
-
-const RISK_CONFIG = {
-  low:    { label: 'LOW RISK',    sub: 'Verified digital presence',         color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' },
-  medium: { label: 'MEDIUM RISK', sub: 'Partial presence — admin review',   color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
-  high:   { label: 'HIGH RISK',   sub: 'Flagged — held for admin review',   color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)' },
-};
 
 const DOCTORS = [
   {
-    id: 'sofia',
-    full_name: 'Dr. Sofia Ramirez',
-    clinic_name: 'Clínica Dental Riviera',
-    clinic_city: 'Cancún', clinic_country: 'Mexico',
-    specialty: 'Cosmetic Dentistry & Implants',
+    id: 'sofia', full_name: 'Dr. Sofia Ramirez', clinic_name: 'Clínica Dental Riviera',
+    clinic_city: 'Cancún', clinic_country: 'Mexico', specialty: 'Cosmetic Dentistry & Implants',
     initials: 'SR', avatarColor: '#10b981', delay: 0,
     result: {
       risk_level: 'low', risk_score: 18,
-      summary: 'Dr. Sofia Ramirez presents a strong and verifiable digital footprint. The clinic domain registered in 2016 demonstrates an 8-year operational history — highly consistent with a claimed established practice. Active presence across Facebook, Instagram, and TikTok with consistent patient engagement confirms authentic practice activity. The phone number resolves to a registered Mexican landline associated with the clinic address in Cancún. Cross-referencing public web sources returned multiple independent patient testimonials on Google Maps and Yelp, plus two local media features. This profile is consistent with a well-established, reputable dental practice and is cleared for activation.',
+      summary: 'Dr. Sofia Ramirez presents a strong and verifiable digital footprint. The clinic domain registered in 2016 demonstrates an 8-year operational history — highly consistent with a claimed established practice. Active presence across Facebook, Instagram, and TikTok with consistent patient engagement confirms authentic practice activity. The phone number resolves to a registered Mexican landline associated with the clinic address in Cancún. Cross-referencing public web sources returned multiple independent patient testimonials on Google Maps and Yelp, plus two local media features.',
       ai_positive_indicators: [
         'Domain age 8+ years confirms long-standing established practice (registered 2016)',
         'All 3 social platforms verified live with active monthly patient engagement',
         'Phone resolves to verified clinic landline — not a mobile or VoIP number',
         'Multiple independent patient reviews found across Google Maps and Yelp',
-        'Local media coverage detected on 2 Cancún tourism and health publications',
       ],
       ai_red_flags: [],
       signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'active' }, { platform: 'TikTok', status: 'active' }] },
-      google: {
-        status: 'verified',
-        rating: 4.9,
-        review_count: 127,
-        snippet: '"Best dental work of my life. Flew in from Texas and would do it again without hesitation." — Sarah M., Houston TX',
+      google: { status: 'verified', rating: 4.9, review_count: 127, snippet: '"Best dental work of my life. Flew in from Texas and would do it again without hesitation." — Sarah M., Houston TX' },
+    },
+    fraud_result: {
+      fraud_risk_score: 8, xai_confidence: 92,
+      xai_summary: 'High confidence (92/100) this application is legitimate. Unique device from residential San Diego ISP — consistent with a US-based coordinator managing a Mexican clinic. Zero shared infrastructure across any database record. Biometric liveness confirmed in 3.2 seconds.',
+      xai_flags: [],
+      xai_positives: [
+        'Device fingerprint unique — no cross-application reuse detected',
+        'Phone number unique across all platform records',
+        'IP resolves to residential Comcast ISP, San Diego CA',
+        'Biometric liveness confirmed — applicant physically present',
+      ],
+      signals: {
+        network:  { shared_phone: 0, shared_address: 0, shared_device: 0 },
+        ip:       { label: 'residential', country: 'US', city: 'San Diego, CA' },
+        identity: { liveness_status: 'passed', detail: 'Blink + left/right head turn detected in 3.2s' },
+        device:   { type: 'MacBook Pro M2', browser: 'Safari 17', timezone: 'America/Los_Angeles', reuse_count: 0, fp_label: 'Unique' },
       },
     },
   },
   {
-    id: 'marcus',
-    full_name: 'Dr. Marcus Chen',
-    clinic_name: 'Centro Médico Internacional',
-    clinic_city: 'Bogotá', clinic_country: 'Colombia',
-    specialty: 'Oral & Maxillofacial Surgery',
+    id: 'marcus', full_name: 'Dr. Marcus Chen', clinic_name: 'Centro Médico Internacional',
+    clinic_city: 'Bogotá', clinic_country: 'Colombia', specialty: 'Oral & Maxillofacial Surgery',
     initials: 'MC', avatarColor: '#f59e0b', delay: 900,
     result: {
       risk_level: 'medium', risk_score: 41,
-      summary: 'Dr. Marcus Chen has a partial digital footprint that warrants admin review before activation. The clinic domain was registered 2 years ago — relatively recent for a claimed 10-year practice history. Facebook presence is confirmed active and well-maintained; however, Instagram could not be verified and no TikTok was provided. The phone number resolves as a mobile device rather than a dedicated clinic line — common in the region but a marginal risk signal. Web searches returned fewer than 5 independent third-party mentions of the clinic. The profile is not inherently suspicious, but the gap between claimed experience and verifiable digital history depth merits a manual credential review before activation.',
+      summary: 'Dr. Marcus Chen has a partial digital footprint that warrants admin review. The clinic domain was registered 2 years ago — relatively recent for a claimed 10-year practice history. Facebook presence is confirmed active; however, Instagram could not be verified and no TikTok was provided. The phone resolves as a mobile device rather than a clinic line. Fewer than 5 independent third-party mentions of the clinic were found.',
       ai_positive_indicators: [
         'Facebook page verified active with regular posts and patient interaction',
         'Phone carrier confirmed as a registered Colombian mobile network (Claro CO)',
@@ -62,282 +64,70 @@ const DOCTORS = [
       ai_red_flags: [
         'Domain age 2 years is inconsistent with claimed 10+ years of practice experience',
         'Fewer than 5 independent web mentions of the clinic detected across all sources',
-        'Instagram handle not found or account inactive — platform presence unconfirmed',
+        'Instagram handle not found or account inactive',
       ],
       signals: { social_checks: [{ platform: 'Facebook', status: 'active' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_provided' }] },
-      google: {
-        status: 'unverified',
-        rating: 3.6,
-        review_count: 9,
-        snippet: '"Good results but the clinic is hard to find and phone rarely answered." — Carlos R., Bogotá',
+      google: { status: 'unverified', rating: 3.6, review_count: 9, snippet: '"Good results but the clinic is hard to find and phone rarely answered." — Carlos R., Bogotá' },
+    },
+    fraud_result: {
+      fraud_risk_score: 38, xai_confidence: 62,
+      xai_summary: 'Moderate confidence (62/100). 3 signals warrant admin review. Device timezone (America/New_York) conflicts with claimed Bogotá practice — possible for a US-trained physician abroad, but requires confirmation. Signup routed through Cloudflare datacenter proxy. Address prefix matches 1 prior submission.',
+      xai_flags: [
+        'Device timezone (America/New_York) inconsistent with Bogotá practice location claim',
+        'Signup IP resolved to Cloudflare datacenter proxy — unusual for individual practitioner',
+        'Clinic address prefix matches 1 prior application submitted 3 months ago',
+      ],
+      xai_positives: [
+        'Device fingerprint unique — no cross-application reuse detected',
+        'Phone number unique across all platform records',
+      ],
+      signals: {
+        network:  { shared_phone: 0, shared_address: 1, shared_device: 0 },
+        ip:       { label: 'datacenter', country: 'CO', city: 'Bogotá' },
+        identity: { liveness_status: 'step_up_required', detail: 'Document notarization triggered — step-up verification in progress' },
+        device:   { type: 'Windows 11 PC', browser: 'Chrome 124', timezone: 'America/New_York', reuse_count: 0, fp_label: 'Timezone mismatch flagged' },
       },
     },
   },
   {
-    id: 'emmanuel',
-    full_name: 'Dr. Emmanuel Okafor',
-    clinic_name: 'Lagos Smile Center',
-    clinic_city: 'Lagos', clinic_country: 'Nigeria',
-    specialty: 'General Dentistry',
+    id: 'emmanuel', full_name: 'Dr. Emmanuel Okafor', clinic_name: 'Lagos Smile Center',
+    clinic_city: 'Lagos', clinic_country: 'Nigeria', specialty: 'General Dentistry',
     initials: 'EO', avatarColor: '#ef4444', delay: 1800,
     result: {
       risk_level: 'high', risk_score: 78,
-      summary: "Dr. Emmanuel Okafor's digital profile presents significant verification concerns across every signal layer. No registered domain was found for the clinic name 'Lagos Smile Center' — the complete absence of any web presence for a claimed established practice is a high-risk indicator. All three social media platforms (Facebook, Instagram, TikTok) returned zero results for the provided handles. Critically, the provided phone number resolves to a VoIP service rather than a geographic carrier — a pattern strongly associated with synthetic or temporary identities used in medical credential fraud. AI web intelligence found zero independent corroboration of this clinic or practitioner across any public web source. This application has been placed on hold and flagged for mandatory admin review before any further processing.",
+      summary: "Dr. Emmanuel Okafor's digital profile presents significant verification concerns across every signal layer. No registered domain was found for 'Lagos Smile Center'. All three social media platforms returned zero results. The provided phone resolves to a VoIP service — a pattern strongly associated with synthetic identities used in medical credential fraud. AI web intelligence found zero independent corroboration of this clinic or practitioner.",
       ai_positive_indicators: [],
       ai_red_flags: [
         'No domain registration found for claimed clinic name — zero web presence',
         'All 3 social media handles returned zero results on every platform',
         'Phone number resolves to VoIP service — strongly associated with fraud patterns',
         'Zero independent web mentions of clinic or practitioner across all sources',
-        'AI credibility score: 0/10 — no corroborating sources detected anywhere',
       ],
       signals: { social_checks: [{ platform: 'Facebook', status: 'not_found' }, { platform: 'Instagram', status: 'not_found' }, { platform: 'TikTok', status: 'not_found' }] },
-      google: {
-        status: 'not_found',
-        rating: null,
-        review_count: 0,
-        snippet: null,
+      google: { status: 'not_found', rating: null, review_count: 0, snippet: null },
+    },
+    fraud_result: {
+      fraud_risk_score: 94, xai_confidence: 6,
+      xai_summary: 'Low confidence (6/100). 7 high-risk signals detected. FRAUD FACTORY: device fingerprint b3f71a matches 3 suspended applications. Phone on 4 accounts in 180 days. Address on 6 rejections. Tor exit node with impossible travel. Headless browser. Liveness bypass attempted. DO NOT ACTIVATE.',
+      xai_flags: [
+        'Device fingerprint linked to 3 previously suspended applications — fraud factory confirmed',
+        'Phone number associated with 4 other accounts in 180 days — confirmed fraud cluster',
+        'Clinic address matches 6 prior rejected applications — known fraud cluster address',
+        'Signup IP is a Tor exit node — full identity obfuscation attempt',
+        'Impossible travel: device active in Accra, then London, then Lagos within 90 minutes',
+        'Headless Chrome browser signature detected — automated signup bot',
+        'Biometric liveness failed — static image submitted, deepfake suspected',
+      ],
+      xai_positives: [],
+      signals: {
+        network:  { shared_phone: 4, shared_address: 6, shared_device: 3 },
+        ip:       { label: 'vpn_or_tor', country: '??', city: 'Unknown (Tor exit node)' },
+        identity: { liveness_status: 'failed', detail: 'Static image detected — liveness bypass attempted' },
+        device:   { type: 'Unknown / Headless', browser: 'Headless Chrome (bot)', timezone: 'UTC+0 (no local offset)', reuse_count: 3, fp_label: 'FRAUD FACTORY' },
       },
     },
   },
 ];
-
-function ScanCard({ doctor, runKey }) {
-  const [scanning,  setScanning]  = useState(false);
-  const [scanStep,  setScanStep]  = useState(-1);
-  const [result,    setResult]    = useState(null);
-  const [expanded,  setExpanded]  = useState(false);
-  const fired = useRef(false);
-
-  // Reset on replay
-  useEffect(() => {
-    fired.current = false;
-    setScanning(false);
-    setScanStep(-1);
-    setResult(null);
-    setExpanded(false);
-  }, [runKey]);
-
-  // Auto-start scan (staggered by delay)
-  useEffect(() => {
-    if (fired.current) return;
-    fired.current = true;
-    const outer = setTimeout(async () => {
-      setScanning(true);
-      for (let i = 0; i < SCAN_STEPS.length; i++) {
-        setScanStep(i);
-        await new Promise(r => setTimeout(r, 900));
-      }
-      setScanning(false);
-      setScanStep(-1);
-      setResult(doctor.result);
-    }, doctor.delay);
-    return () => clearTimeout(outer);
-  }, [runKey]);
-
-  const cfg = result ? RISK_CONFIG[result.risk_level] : null;
-
-  return (
-    <div className="rounded-2xl border border-border flex flex-col" style={{ background: '#0C1A1D' }}>
-      {/* Doctor header */}
-      <div className="p-5 border-b border-border flex items-center gap-3">
-        <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm"
-          style={{ background: doctor.avatarColor + '22', border: `1.5px solid ${doctor.avatarColor}44`, color: doctor.avatarColor }}
-        >
-          {doctor.initials}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold" style={{ color: '#f1f5f9' }}>{doctor.full_name}</p>
-          <p className="text-xs" style={{ color: '#94a3b8' }}>{doctor.specialty}</p>
-          <p className="text-xs" style={{ color: '#64748b' }}>{doctor.clinic_name} · {doctor.clinic_city}, {doctor.clinic_country}</p>
-        </div>
-        {result && (
-          <Badge className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5" style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-            {cfg.label}
-          </Badge>
-        )}
-      </div>
-
-      {/* Scan body */}
-      <div className="p-5 flex-1 space-y-4">
-
-        {/* Pre-scan state */}
-        {!scanning && !result && (
-          <div className="flex items-center justify-center gap-2.5 py-8">
-            <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#D4AF37' }} />
-            <p className="text-sm" style={{ color: '#94a3b8' }}>Initializing scan…</p>
-          </div>
-        )}
-
-        {/* Animated scan steps */}
-        {scanning && (
-          <div className="space-y-2">
-            {SCAN_STEPS.map((step, i) => {
-              const done   = i < scanStep;
-              const active = i === scanStep;
-              return (
-                <div
-                  key={step.key}
-                  className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300"
-                  style={{
-                    background: active ? 'rgba(212,175,55,0.07)' : done ? 'rgba(16,185,129,0.05)' : 'transparent',
-                    border: active ? '1px solid rgba(212,175,55,0.2)' : done ? '1px solid rgba(16,185,129,0.15)' : '1px solid transparent',
-                  }}
-                >
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: done ? 'rgba(16,185,129,0.15)' : active ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.04)' }}
-                  >
-                    {done   ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    : active ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: '#D4AF37' }} />
-                    :          <div className="w-1.5 h-1.5 rounded-full bg-white/20" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold" style={{ color: done ? '#34d399' : active ? '#f1f5f9' : 'rgba(255,255,255,0.25)' }}>
-                      {step.label}
-                    </p>
-                    <p className="text-[11px]" style={{ color: active ? '#94a3b8' : done ? '#34d399' : 'rgba(255,255,255,0.15)' }}>
-                      {active ? step.desc : done ? 'Complete' : 'Waiting…'}
-                    </p>
-                  </div>
-                  {active && <div className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ background: '#D4AF37' }} />}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Result */}
-        {result && cfg && (
-          <div className="space-y-3">
-            {/* Risk score */}
-            <div className="p-4 rounded-xl text-center" style={{ background: cfg.bg, border: `1.5px solid ${cfg.border}` }}>
-              <p className="text-xl font-bold mb-0.5" style={{ color: cfg.color }}>{cfg.label}</p>
-              <p className="text-xs mb-2.5" style={{ color: cfg.color + '80' }}>{cfg.sub}</p>
-              <div className="flex items-center justify-center gap-2">
-                <div className="h-1.5 w-20 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                  <div className="h-full rounded-full transition-all" style={{ width: `${result.risk_score}%`, background: cfg.color }} />
-                </div>
-                <span className="text-xs font-bold" style={{ color: cfg.color }}>{result.risk_score}/100</span>
-              </div>
-            </div>
-
-            {/* Social presence */}
-            <div className="grid grid-cols-3 gap-1.5">
-              {result.signals.social_checks.map(s => (
-                <div
-                  key={s.platform}
-                  className="p-2 rounded-lg text-center"
-                  style={{
-                    background: s.status === 'active' ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.03)',
-                    border: s.status === 'active' ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <p className="text-[9px] font-semibold" style={{ color: '#94a3b8' }}>{s.platform}</p>
-                  <p className="text-[10px] font-bold mt-0.5" style={{ color: s.status === 'active' ? '#10b981' : s.status === 'not_provided' ? '#6b7280' : '#ef4444' }}>
-                    {s.status === 'active' ? 'LIVE' : s.status === 'not_provided' ? 'N/A' : 'NOT FOUND'}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Google section */}
-            {result.google && (() => {
-              const g = result.google;
-              const gColor = g.status === 'verified' ? '#10b981' : g.status === 'unverified' ? '#f59e0b' : '#ef4444';
-              const gLabel = g.status === 'verified' ? 'VERIFIED LISTING' : g.status === 'unverified' ? 'UNVERIFIED LISTING' : 'NO LISTING FOUND';
-              const stars = g.rating ? Math.round(g.rating) : 0;
-              return (
-                <div className="p-3 rounded-xl space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: '#fff' }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: '#4285F4', lineHeight: 1 }}>G</span>
-                      </div>
-                      <span className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>GOOGLE</span>
-                    </div>
-                    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded" style={{ color: gColor, background: gColor + '18', border: `1px solid ${gColor}30` }}>{gLabel}</span>
-                  </div>
-                  {g.rating ? (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-0.5">
-                          {[1,2,3,4,5].map(n => (
-                            <span key={n} style={{ color: n <= stars ? '#f59e0b' : '#334155', fontSize: 12 }}>★</span>
-                          ))}
-                        </div>
-                        <span className="text-xs font-bold" style={{ color: '#f1f5f9' }}>{g.rating}</span>
-                        <span className="text-[11px]" style={{ color: '#64748b' }}>({g.review_count} reviews)</span>
-                      </div>
-                      {g.snippet && (
-                        <p className="text-[10px] italic leading-relaxed" style={{ color: '#94a3b8' }}>{g.snippet}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-[11px]" style={{ color: '#ef4444' }}>No Google Business profile found for this clinic name or address.</p>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* AI Analysis expandable */}
-            <button
-              onClick={() => setExpanded(e => !e)}
-              className="w-full text-left p-3 rounded-xl transition-colors hover:opacity-80"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-bold tracking-widest text-[10px]" style={{ color: '#64748b' }}>AI ANALYSIS</span>
-                <span className="text-[10px] underline underline-offset-2" style={{ color: '#D4AF37' }}>{expanded ? 'Hide' : 'Read full report'}</span>
-              </div>
-              {expanded && (
-                <p className="mt-2 leading-relaxed text-[11px]" style={{ color: '#cbd5e1' }}>{result.summary}</p>
-              )}
-            </button>
-
-            {/* Positive signals */}
-            {result.ai_positive_indicators.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[9px] font-bold tracking-widest text-emerald-400">POSITIVE SIGNALS</p>
-                {result.ai_positive_indicators.map((item, i) => (
-                  <div key={i} className="flex items-start gap-1.5">
-                    <CheckCircle className="w-3 h-3 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px]" style={{ color: '#cbd5e1' }}>{item}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Red flags */}
-            {result.ai_red_flags.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[9px] font-bold tracking-widest text-red-400">FLAGS DETECTED</p>
-                {result.ai_red_flags.map((item, i) => (
-                  <div key={i} className="flex items-start gap-1.5">
-                    <AlertTriangle className="w-3 h-3 text-red-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px]" style={{ color: '#cbd5e1' }}>{item}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Final verdict */}
-            <div className="p-3 rounded-xl text-center" style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-              <p className="text-[11px] font-semibold" style={{ color: cfg.color }}>
-                {result.risk_level === 'low'
-                  ? '✓ Cleared for Immediate Activation'
-                  : result.risk_level === 'medium'
-                  ? '⚠ Admin Review Required Before Activation'
-                  : '✗ Application Held — Mandatory Admin Review'}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function IntelligenceScanDemo() {
   const [runKey,  setRunKey]  = useState(0);
@@ -345,8 +135,8 @@ export default function IntelligenceScanDemo() {
 
   useEffect(() => {
     setAllDone(false);
-    // Last scan starts at 1800ms, 4 steps × 900ms = 3600ms, plus 400ms buffer
-    const t = setTimeout(() => setAllDone(true), 1800 + SCAN_STEPS.length * 900 + 400);
+    // Last doctor starts at 1800ms, 7 steps × 700ms = 4900ms, +600ms buffer
+    const t = setTimeout(() => setAllDone(true), 1800 + SCAN_STEPS.length * 700 + 600);
     return () => clearTimeout(t);
   }, [runKey]);
 
@@ -358,42 +148,36 @@ export default function IntelligenceScanDemo() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="flex items-center gap-3 mb-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}
-                >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
                   <Globe className="w-5 h-5" style={{ color: '#D4AF37' }} />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>SAFE-T 4LIFE™ · LIVE SYSTEM DEMO</p>
-                  <h1 className="text-xl font-semibold" style={{ color: '#f1f5f9' }}>Internet Intelligence Engine</h1>
+                  <h1 className="text-xl font-semibold" style={{ color: '#f1f5f9' }}>Defense-in-Depth Intelligence Engine</h1>
                 </div>
               </div>
               <p className="text-sm max-w-xl leading-relaxed" style={{ color: '#94a3b8' }}>
-                Every doctor application triggers an automatic 4-stage scan the moment they submit.
-                No admin clicks required. Watch 3 real applications being processed in real time.
+                Every doctor application triggers a 7-layer scan combining Internet Intelligence,
+                Fraud Network Detection, Device Fingerprinting, and Biometric Liveness — automatically,
+                the moment they submit. No admin clicks required.
               </p>
             </div>
-            <Button
-              onClick={() => setRunKey(k => k + 1)}
-              variant="outline"
-              size="sm"
-              className="gap-2 flex-shrink-0"
-              disabled={!allDone}
-              style={{ color: '#f1f5f9', borderColor: '#2A3F4A' }}
-            >
+            <Button onClick={() => setRunKey(k => k + 1)} variant="outline" size="sm"
+              className="gap-2 flex-shrink-0" disabled={!allDone}
+              style={{ color: '#f1f5f9', borderColor: '#2A3F4A' }}>
               <RefreshCw className="w-3.5 h-3.5" />
               Replay Demo
             </Button>
           </div>
 
-          {/* Live stats */}
+          {/* Stats */}
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Applications Processed', value: '3',  color: '#f1f5f9' },
-              { label: 'Approved — Low Risk',     value: '1',  color: '#10b981' },
-              { label: 'Under Review',             value: '1',  color: '#f59e0b' },
-              { label: 'Flagged — High Risk',      value: '1',  color: '#ef4444' },
+              { label: 'Applications Processed', value: '3', color: '#f1f5f9' },
+              { label: 'Approved — Low Risk',     value: '1', color: '#10b981' },
+              { label: 'Under Review',             value: '1', color: '#f59e0b' },
+              { label: 'Fraud Network Flagged',   value: '1', color: '#ef4444' },
             ].map(s => (
               <div key={s.label} className="p-3.5 rounded-xl" style={{ background: '#060B16', border: '1px solid #2A3F4A' }}>
                 <p className="text-[10px] font-medium leading-tight" style={{ color: '#64748b' }}>{s.label}</p>
@@ -401,32 +185,52 @@ export default function IntelligenceScanDemo() {
               </div>
             ))}
           </div>
+
+          {/* 4-pillar legend */}
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { Icon: Globe,        label: 'Internet Intelligence', desc: 'Domain · Social · Phone · Google' },
+              { Icon: Network,      label: 'Fraud Network',         desc: 'Cross-DB phone · address · device hash' },
+              { Icon: Fingerprint,  label: 'Device & IP',           desc: 'Browser fingerprint · IP geofencing' },
+              { Icon: ScanFace,     label: 'Liveness + XAI',        desc: 'Biometrics · Explainable confidence score' },
+            ].map(p => (
+              <div key={p.label} className="flex items-start gap-2 p-3 rounded-xl"
+                style={{ background: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.1)' }}>
+                <p.Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#D4AF37' }} />
+                <div>
+                  <p className="text-[10px] font-bold" style={{ color: '#f1f5f9' }}>{p.label}</p>
+                  <p className="text-[9px]" style={{ color: '#64748b' }}>{p.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Scan cards grid */}
+      {/* Scan cards */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
           {DOCTORS.map(doc => (
-            <ScanCard key={doc.id + runKey} doctor={doc} runKey={runKey} />
+            <IntelligenceScanCard key={doc.id + runKey} doctor={doc} scanSteps={SCAN_STEPS} runKey={runKey} />
           ))}
         </div>
 
-        {/* How it works callout */}
-        <div
-          className="mt-8 p-6 rounded-2xl"
-          style={{ background: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.15)' }}
-        >
+        {/* Architecture callout */}
+        <div className="mt-8 p-6 rounded-2xl" style={{ background: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.15)' }}>
           <div className="flex items-start gap-3">
             <Shield className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#D4AF37' }} />
             <div>
-              <p className="text-sm font-semibold mb-1" style={{ color: '#f1f5f9' }}>How this works in production</p>
+              <p className="text-sm font-semibold mb-1" style={{ color: '#f1f5f9' }}>Defense-in-Depth architecture — how it works</p>
               <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
-                The moment a doctor submits their signup form, the scan fires automatically in the background —
-                checking domain age via RDAP, verifying social handles live, detecting VoIP phone numbers,
-                and running an AI web credibility pass. Results appear instantly in the Partner Verification Hub
-                with risk level, AI verdict, and full reasoning. HIGH risk applications are held automatically.
-                LOW risk doctors are cleared for immediate activation with zero admin delay.
+                Seven automated layers fire the moment a doctor submits. Layers 1–3 check domain age via RDAP,
+                verify social handles with live HTTP probes, and detect VoIP phone numbers.
+                Layer 4 cross-references every submitted phone number, clinic address, and device fingerprint
+                against all prior applications — detecting fraud factories in real time by spotting shared infrastructure.
+                Layer 5 analyzes IP intelligence: VPN and Tor masking, datacenter proxies, and impossible travel patterns
+                across device sessions. Layer 6 requires a random live biometric gesture to confirm physical presence
+                and prevent static-image or deepfake bypass. Layer 7 synthesizes every signal into an Explainable AI
+                confidence score — with a plain-English verdict and per-signal reasoning so your admin reviewer knows
+                exactly why a profile was flagged, not just that it was.
               </p>
             </div>
           </div>
