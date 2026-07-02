@@ -212,9 +212,9 @@ export default function IntelligenceScanDemo() {
                 </div>
               </div>
               <p className="text-sm max-w-xl leading-relaxed" style={{ color: '#94a3b8' }}>
-                Every doctor application triggers a 7-layer scan combining Internet Intelligence,
-                Fraud Network Detection, Device Fingerprinting, and Biometric Liveness — automatically,
-                the moment they submit. No admin clicks required.
+                Every doctor application triggers a 7-layer automated scan: Internet Intelligence,
+                Fraud Network Detection, Device &amp; IP Analysis, and Explainable AI confidence scoring.
+                6 of 7 layers are live in production today. Biometric liveness is on the roadmap.
               </p>
             </div>
             <Button onClick={() => setRunKey(k => k + 1)} variant="outline" size="sm"
@@ -258,6 +258,36 @@ export default function IntelligenceScanDemo() {
               </div>
             ))}
           </div>
+
+          {/* Transparency: live vs roadmap */}
+          <div className="mt-4 px-3.5 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-[9px] font-bold tracking-widest mb-2.5" style={{ color: '#64748b' }}>
+              LIVE STATUS · 6 OF 7 LAYERS ACTIVE IN PRODUCTION TODAY
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: 'Domain Intel',   live: true  },
+                { label: 'Social Media',   live: true  },
+                { label: 'Phone Analysis', live: true  },
+                { label: 'Fraud Network',  live: true  },
+                { label: 'Device & IP',    live: true  },
+                { label: 'Liveness',       live: false },
+                { label: 'XAI Score',      live: true  },
+              ].map(l => (
+                <span
+                  key={l.label}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                  style={l.live
+                    ? { background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: '#34d399' }
+                    : { background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',  color: '#f59e0b' }
+                  }
+                >
+                  <span style={{ fontSize: 7 }}>{l.live ? '●' : '○'}</span>
+                  {l.label}{!l.live && ' · ROADMAP'}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -280,12 +310,22 @@ export default function IntelligenceScanDemo() {
                 verify social handles with live HTTP probes, and detect VoIP phone numbers.
                 Layer 4 cross-references every submitted phone number, clinic address, and device fingerprint
                 against all prior applications — detecting fraud factories in real time by spotting shared infrastructure.
-                Layer 5 analyzes IP intelligence: VPN and Tor masking, datacenter proxies, and impossible travel patterns
-                across device sessions. Layer 6 requires a random live biometric gesture to confirm physical presence
-                and prevent static-image or deepfake bypass. Layer 7 synthesizes every signal into an Explainable AI
-                confidence score — with a plain-English verdict and per-signal reasoning so your admin reviewer knows
-                exactly why a profile was flagged, not just that it was.
+                Layer 5 analyzes IP intelligence with a live geolocation call: datacenter vs. residential ISP,
+                country mismatch against the registered address, and headless-browser signature detection.
+                Layer 7 synthesizes every signal into an Explainable AI confidence score — with a plain-English
+                verdict and per-signal reasoning so your admin reviewer knows exactly why a profile was flagged.
               </p>
+              <div className="mt-3 p-3 rounded-xl" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: '#f59e0b' }}>
+                  ○ Layer 6 — Biometric Liveness · Roadmap
+                </p>
+                <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
+                  Live biometric verification (blink + head-turn to prevent deepfake bypass) requires a paid
+                  webcam SDK — FaceIO, Smile Identity, or Jumio. This is the one layer shown in the demo
+                  that is not yet active in production. Everything else — IP intelligence, headless-browser
+                  detection, fraud-network cross-reference, and XAI scoring — runs live on every signup today.
+                </p>
+              </div>
             </div>
           </div>
         </div>
