@@ -29,8 +29,8 @@ export default function AdminAuditChain() {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-semibold">Audit Chain Integrity</h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <h1 className="text-2xl font-display font-semibold text-white">Audit Chain Integrity</h1>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
               Verifies that no audit log entries have been tampered with or deleted.
             </p>
           </div>

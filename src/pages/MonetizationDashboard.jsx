@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { DollarSign, TrendingUp, Users, Award, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const TIER_COLORS = {
   starter: 'bg-gray-100 text-gray-700',
@@ -34,7 +35,7 @@ export default function MonetizationDashboard() {
   const loadPlans = async () => {
     setLoading(true);
     const data = await base44.entities.MonetizationPlan.list('-created_date', 100);
-    setPlans(data);
+    setPlans(data || []);
     setLoading(false);
   };
 
@@ -58,6 +59,7 @@ export default function MonetizationDashboard() {
   });
 
   return (
+    <AdminLayout>
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
@@ -219,5 +221,6 @@ export default function MonetizationDashboard() {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 }

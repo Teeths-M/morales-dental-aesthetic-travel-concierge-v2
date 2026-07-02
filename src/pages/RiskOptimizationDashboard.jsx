@@ -5,6 +5,7 @@ import { Brain, ShieldCheck, AlertTriangle, CheckCircle2, Clock, RefreshCw } fro
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const OUTCOME_COLORS = {
   success: '#10b981',
@@ -24,7 +25,7 @@ export default function RiskOptimizationDashboard() {
 
   const loadData = async () => {
     setLoading(true);
-    const all = await base44.entities.OutcomeRecord.list('-ingested_at', 200);
+    const all = await base44.entities.OutcomeRecord.list('-ingested_at', 200) || [];
     setRecords(all);
     setPending(all.filter(r => r.human_review_required && !r.human_reviewed_at));
     setLoading(false);
@@ -61,6 +62,7 @@ export default function RiskOptimizationDashboard() {
     : 0;
 
   return (
+    <AdminLayout>
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
@@ -198,5 +200,6 @@ export default function RiskOptimizationDashboard() {
         )}
       </div>
     </div>
+    </AdminLayout>
   );
 }

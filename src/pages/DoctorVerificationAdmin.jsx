@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow, differenceInHours } from 'date-fns';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function DoctorVerificationAdmin() {
   const [queue, setQueue] = useState([]);
@@ -16,7 +17,7 @@ export default function DoctorVerificationAdmin() {
   const fetchQueue = async () => {
     setLoading(true);
     const items = await base44.entities.ManualVerificationQueue.filter({ status: 'pending' }, '-submitted_at');
-    setQueue(items);
+    setQueue(items || []);
     setLoading(false);
   };
 
@@ -72,6 +73,7 @@ export default function DoctorVerificationAdmin() {
   };
 
   return (
+    <AdminLayout>
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="max-w-5xl mx-auto">
 
@@ -242,5 +244,6 @@ export default function DoctorVerificationAdmin() {
         )}
       </div>
     </div>
+    </AdminLayout>
   );
 }
