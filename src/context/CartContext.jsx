@@ -1,5 +1,6 @@
 ﻿// @ts-nocheck — pre-existing type gaps in utility
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { analyseCompatibility } from '@/lib/procedureCompatibility';
 
 const CartContext = createContext();
 const STORAGE_KEY = 'morales_consultation_cart';
@@ -24,6 +25,17 @@ export const CartProvider = ({ children }) => {
     try { return localStorage.getItem(CITY_KEY) || ''; } catch { return ''; }
   });
 
+  // ── Safety Watcher: reactive risk profile ────────────────────────────────────
+  // Re-evaluated on every cart change. `locked` is true when the combined risk
+  // profile reaches RED (Golden M certification threshold exceeded).
+  const [safetyStatus, setSafetyStatus] = useState(() => analyseCompatibility([]));
+
+  useEffect(() => {
+    setSafetyStatus(analyseCompatibility(items));
+  }, [items]);
+
+  const locked = safetyStatus.level === 'RED';
+
   const setProcedureCountry = (country) => {
     setProcedureCountryState(country);
     try { localStorage.setItem(COUNTRY_KEY, country); } catch {}
@@ -41,6 +53,9 @@ export const CartProvider = ({ children }) => {
   }, [items]);
 
   const addItem = (procedure) => {
+    // Cart is locked when risk profile is RED — additions are blocked.
+    // The SafetyWatcher component handles the redirect to consultation.
+    if (locked) return;
     setItems(prev => {
       const existing = prev.find(item => item.name === procedure.name);
       if (existing) {
@@ -66,7 +81,7 @@ export const CartProvider = ({ children }) => {
   const getTotalCount = () => items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry, procedureCity, setProcedureCity }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry, procedureCity, setProcedureCity, safetyStatus, locked }}>
       {children}
     </CartContext.Provider>
   );

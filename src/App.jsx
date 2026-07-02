@@ -14,6 +14,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { PUBLIC_BYPASS_PATHS } from '@/lib/constants';
+import SafetyWatcher from '@/components/safety/SafetyWatcher';
 
 // Route modules — each owns its section of the route tree
 import { publicRoutes }  from './routes/publicRoutes';
@@ -91,6 +92,7 @@ const AuthenticatedApp = () => {
   return (
     <>
       <ScrollToTop />
+      <SafetyWatcher />
       {/* Suspense boundary catches all lazy page chunks inside route modules */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
