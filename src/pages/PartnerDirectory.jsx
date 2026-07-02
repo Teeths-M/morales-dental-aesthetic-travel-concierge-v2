@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Search, MapPin, Shield, Stethoscope, ChevronRight, CheckCircle, Award } from 'lucide-react';
+import { Search, MapPin, Shield, Stethoscope, ChevronRight, CheckCircle, Award, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DoctorCard from '@/components/directory/DoctorCard';
 import SecurityAgencyCard from '@/components/directory/SecurityAgencyCard';
@@ -12,6 +12,23 @@ const TABS = [
   { id: 'security', label: 'Security Agencies', icon: Shield },
 ];
 
+function fuzzyScore(query, target) {
+  if (!query || !target) return 0;
+  const q = query.toLowerCase();
+  const t = target.toLowerCase();
+  if (t.includes(q)) return 100;
+  let matched = 0, ti = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    while (ti < t.length && t[ti] !== q[qi]) ti++;
+    if (ti < t.length) { matched++; ti++; }
+  }
+  return Math.round((matched / q.length) * 85);
+}
+
+function fuzzyMatches(query, target) {
+  return fuzzyScore(query, target) >= 55;
+}
+
 export default function PartnerDirectory() {
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -19,6 +36,8 @@ export default function PartnerDirectory() {
   const [doctors, setDoctors] = useState([]);
   const [agencies, setAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -34,29 +53,60 @@ export default function PartnerDirectory() {
     fetchData();
   }, []);
 
-  // Collect unique countries across both lists
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const allCountries = [...new Set([
     ...doctors.map(d => d.clinic_country).filter(Boolean),
     ...agencies.map(a => a.country).filter(Boolean),
   ])].sort();
 
-  const matchesSearch = (text) =>
-    !search || (text || '').toLowerCase().includes(search.toLowerCase());
+  const suggestionPool = useMemo(() => {
+    const names = doctors.map(d => d.full_name).filter(Boolean).map(label => ({ label, type: 'Doctor' }));
+    const specs = [...new Set(doctors.map(d => d.specialty).filter(Boolean))].map(label => ({ label, type: 'Specialty' }));
+    const agNames = agencies.map(a => a.agency_name).filter(Boolean).map(label => ({ label, type: 'Agency' }));
+    const services = [...new Set(agencies.flatMap(a => a.services_offered || []).filter(Boolean))].map(label => ({ label, type: 'Service' }));
+    return [...names, ...specs, ...agNames, ...services];
+  }, [doctors, agencies]);
+
+  const suggestions = useMemo(() => {
+    const q = search.trim();
+    if (q.length < 2) return [];
+    return suggestionPool
+      .map(s => ({ ...s, score: fuzzyScore(q, s.label) }))
+      .filter(s => s.score >= 55)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 7);
+  }, [search, suggestionPool]);
+
+  const q = search.toLowerCase().trim();
+  const matchDoc = (d) => !q || fuzzyMatches(q, d.full_name) || fuzzyMatches(q, d.specialty) || fuzzyMatches(q, d.clinic_name);
+  const matchAgency = (a) => !q || fuzzyMatches(q, a.agency_name) || (a.services_offered || []).some(s => fuzzyMatches(q, s));
 
   const filteredDoctors = doctors.filter(d =>
-    (!countryFilter || d.clinic_country === countryFilter) &&
-    (matchesSearch(d.full_name) || matchesSearch(d.specialty) || matchesSearch(d.clinic_name))
+    (!countryFilter || d.clinic_country === countryFilter) && matchDoc(d)
   );
 
   const filteredAgencies = agencies.filter(a =>
-    (!countryFilter || a.country === countryFilter) &&
-    (matchesSearch(a.agency_name) || (a.services_offered || []).some(s => matchesSearch(s)))
+    (!countryFilter || a.country === countryFilter) && matchAgency(a)
   );
 
   const showDoctors = activeTab === 'all' || activeTab === 'doctors';
   const showAgencies = activeTab === 'all' || activeTab === 'security';
 
   const totalVerified = doctors.filter(d => d.license_verified).length + agencies.length;
+
+  const TYPE_COLORS = {
+    Doctor:   { bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.3)',  color: '#34d399' },
+    Specialty:{ bg: 'rgba(99,179,255,0.1)', border: 'rgba(99,179,255,0.25)', color: '#93c5fd' },
+    Agency:   { bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.25)', color: '#94a3b8' },
+    Service:  { bg: 'rgba(212,175,55,0.1)',  border: 'rgba(212,175,55,0.3)',  color: '#D4AF37' },
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background">
@@ -92,18 +142,60 @@ export default function PartnerDirectory() {
             </div>
           </motion.div>
 
-          {/* Search + Country Filter */}
+          {/* Smart search + country filter */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
-            <div className="relative flex-1">
+            <div ref={searchRef} className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search by name, specialty, or service…"
+                placeholder="Type a name, specialty, or service…"
                 value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onChange={e => { setSearch(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
+                className="w-full pl-10 pr-8 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                style={{ borderColor: showSuggestions && suggestions.length > 0 ? 'rgba(212,175,55,0.5)' : undefined }}
               />
+              {search && (
+                <button onClick={() => { setSearch(''); setShowSuggestions(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Autocomplete dropdown */}
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.13 }}
+                    className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden bg-white border border-border shadow-xl"
+                  >
+                    {suggestions.map((s, i) => {
+                      const tc = TYPE_COLORS[s.type] || TYPE_COLORS.Service;
+                      return (
+                        <button
+                          key={i}
+                          onMouseDown={() => { setSearch(s.label); setShowSuggestions(false); }}
+                          className="w-full px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors text-left"
+                          style={{ borderBottom: i < suggestions.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}
+                        >
+                          <span className="text-sm text-foreground font-medium">{s.label}</span>
+                          <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+                            style={{ background: tc.bg, border: `1px solid ${tc.border}`, color: tc.color }}>
+                            {s.type}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <div className="px-3.5 py-2 border-t border-border/30 bg-slate-50/50">
+                      <p className="text-[10px] text-muted-foreground">M finds results even with typos — just keep typing.</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+
             <select
               value={countryFilter}
               onChange={e => setCountryFilter(e.target.value)}

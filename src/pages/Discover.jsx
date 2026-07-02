@@ -4,6 +4,20 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+function _fuzzyScore(query, target) {
+  if (!query || !target) return 0;
+  const q = query.toLowerCase();
+  const t = target.toLowerCase();
+  if (t.includes(q)) return 100;
+  let matched = 0, ti = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    while (ti < t.length && t[ti] !== q[qi]) ti++;
+    if (ti < t.length) { matched++; ti++; }
+  }
+  return Math.round((matched / q.length) * 85);
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,7 +67,9 @@ export default function Discover() {
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
   const [searchText, setSearchText] = useState(() => searchParams.get("procedure") || "");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const filters = useMemo(() => ({
     procedure: searchParams.get("procedure") || "",
@@ -68,6 +84,15 @@ export default function Discover() {
 
   // Keep local text in sync when external actions clear the filter (e.g. "Clear all")
   useEffect(() => { setSearchText(filters.procedure); }, [filters.procedure]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(e.target)) setShowSuggestions(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Raw data: fetched ONCE and cached for 10 minutes.
   // Specialty rows are indexed by doctorId so filtering is O(1) per doctor.
@@ -88,7 +113,19 @@ export default function Discover() {
     staleTime: 10 * 60 * 1000,
   });
 
+  // Autocomplete suggestions from the known PROCEDURES list
+  const procedureSuggestions = useMemo(() => {
+    const q = searchText.trim();
+    if (q.length < 2) return [];
+    return PROCEDURES
+      .map(p => ({ ...p, score: Math.max(_fuzzyScore(q, p.name), _fuzzyScore(q, p.id)) }))
+      .filter(p => p.score >= 55)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+  }, [searchText]);
+
   // Filtering is pure in-memory computation — filter changes never trigger network requests.
+  // Uses fuzzy matching so typos still surface results.
   const filteredDoctors = useMemo(() => {
     if (!rawData) return [];
     const { doctors, specialtyByDoctor } = rawData;
@@ -99,7 +136,7 @@ export default function Discover() {
       if (filters.rating && doctor.rating != null && doctor.rating < filters.rating) return false;
       if (keyword) {
         const specs = specialtyByDoctor.get(doctor.id) || [];
-        if (!specs.some(spec => spec.procedure_name?.toLowerCase().includes(keyword))) return false;
+        if (!specs.some(spec => _fuzzyScore(keyword, spec.procedure_name) >= 55)) return false;
       }
       return true;
     });
@@ -122,8 +159,16 @@ export default function Discover() {
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchText(val);
+    setShowSuggestions(true);
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => updateFilter("procedure", val), 400);
+  };
+
+  const applySuggestion = (proc) => {
+    setSearchText(proc.name);
+    setShowSuggestions(false);
+    clearTimeout(debounceRef.current);
+    updateFilter("procedure", proc.name);
   };
 
   const clearAllFilters = () => {
@@ -160,15 +205,47 @@ export default function Discover() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {/* Search Bar */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+            {/* Smart Search Bar with autocomplete */}
+            <div ref={searchInputRef} className="flex-1 relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 z-10 pointer-events-none" />
               <Input
-                placeholder="Search procedures, doctors, or locations..."
+                placeholder="Type a procedure, doctor, or location…"
                 className="pl-11 bg-[#0C1A1D] border-[#2A3F4A] text-white placeholder:text-white/40 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/20"
                 value={searchText}
                 onChange={handleSearchChange}
+                onFocus={() => setShowSuggestions(true)}
               />
+              {/* Autocomplete dropdown */}
+              <AnimatePresence>
+                {showSuggestions && procedureSuggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.13 }}
+                    className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-xl overflow-hidden border border-[#2A3F4A] shadow-2xl"
+                    style={{ background: '#0C1A1D' }}
+                  >
+                    {procedureSuggestions.map((p, i) => (
+                      <button
+                        key={p.id}
+                        onMouseDown={() => applySuggestion(p)}
+                        className="w-full px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-white/[0.05] transition-colors text-left"
+                        style={{ borderBottom: i < procedureSuggestions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+                      >
+                        <span className="text-sm text-white font-medium">{p.name}</span>
+                        <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
+                          style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#D4AF37' }}>
+                          {p.category}
+                        </span>
+                      </button>
+                    ))}
+                    <div className="px-4 py-2 border-t border-white/[0.05]" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      <p className="text-[10px] text-white/25">M finds results even with typos — just keep typing.</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Desktop Filters */}

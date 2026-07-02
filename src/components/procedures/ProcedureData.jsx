@@ -255,13 +255,31 @@ export const allProcedures = procedureCategories.flatMap(cat =>
   cat.procedures.map(p => ({ ...p, category: cat.label, categoryId: cat.id, categoryColor: cat.color }))
 );
 
+function _fuzzyScore(query, target) {
+  if (!target) return 0;
+  const q = query.toLowerCase();
+  const t = target.toLowerCase();
+  if (t.includes(q)) return 100;
+  let matched = 0, ti = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    while (ti < t.length && t[ti] !== q[qi]) ti++;
+    if (ti < t.length) { matched++; ti++; }
+  }
+  return Math.round((matched / q.length) * 85);
+}
+
 export function searchProcedures(query) {
   if (!query || query.trim().length < 2) return [];
   const q = query.toLowerCase();
-  return allProcedures.filter(p =>
-    p.title.toLowerCase().includes(q) ||
-    p.keywords.some(k => k.includes(q) || q.includes(k))
-  ).slice(0, 8);
+  return allProcedures
+    .map(p => {
+      const titleScore = _fuzzyScore(q, p.title);
+      const kwScore = (p.keywords || []).reduce((best, k) => Math.max(best, _fuzzyScore(q, k)), 0);
+      return { ...p, _score: Math.max(titleScore, kwScore) };
+    })
+    .filter(p => p._score >= 55)
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 8);
 }
 
 export function extractProceduresFromText(text) {
