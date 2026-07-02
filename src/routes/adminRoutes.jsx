@@ -6,7 +6,6 @@
 import React, { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { ADMIN_ROLES } from '@/lib/roles';
 
@@ -43,8 +42,7 @@ const AdminMissionControl       = lazy(() => import('@/pages/AdminMissionControl
 const SituationRoom             = lazy(() => import('@/pages/SituationRoom'));
 
 export const adminRoutes = (
-  <Route key="admin-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-    <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
+  <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
       <Route path="/admin"                           element={<ErrorBoundary><SimpleAdminDashboard /></ErrorBoundary>} />
       <Route path="/admin/partners"                  element={<ErrorBoundary><AdminPartners /></ErrorBoundary>} />
       <Route path="/admin/imports"                   element={<ErrorBoundary><AdminImports /></ErrorBoundary>} />
@@ -78,6 +76,5 @@ export const adminRoutes = (
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
       <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />
-    </Route>
   </Route>
 );

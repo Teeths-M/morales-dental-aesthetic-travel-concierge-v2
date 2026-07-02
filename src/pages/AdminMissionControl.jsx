@@ -12,6 +12,24 @@ import { COUNTRY_ISO, getRiskLevel } from '@/hooks/useEnvironmentalIntelligence'
 
 const GOLD = '#D4AF37';
 
+const DEMO_CASES = [
+  { id: 'demo_1', client_name: 'Maria C.',  procedure_country: 'Venezuela', trip_phase: 'arrived',        current_step: 5, client_phone: '+1-555-0101' },
+  { id: 'demo_2', client_name: 'James T.',  procedure_country: 'Thailand',  trip_phase: 'recovery',       current_step: 6, client_phone: '+1-555-0102' },
+  { id: 'demo_3', client_name: 'Luisa R.',  procedure_country: 'Colombia',  trip_phase: 'transit_out',    current_step: 3, client_phone: '+1-555-0103' },
+  { id: 'demo_4', client_name: 'Carlos M.', procedure_country: 'Mexico',    trip_phase: 'transit_return', current_step: 7, client_phone: '+1-555-0104' },
+  { id: 'demo_5', client_name: 'Priya S.',  procedure_country: 'Turkey',    trip_phase: 'recovery',       current_step: 6, client_phone: '+1-555-0105' },
+  { id: 'demo_6', client_name: 'Ahmed K.',  procedure_country: 'UAE',       trip_phase: 'pre_departure',  current_step: 1, client_phone: '+1-555-0106' },
+];
+
+const DEMO_MEDGUARD = {
+  demo_1: 44,
+  demo_2: 18,
+  demo_3: 67,
+  demo_4: 22,
+  demo_5: 38,
+  demo_6: 15,
+};
+
 const RISK_CONFIG = {
   SAFE:     { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  label: 'Safe',     icon: Shield },
   WATCH:    { color: '#d97706', bg: 'rgba(217,119,6,0.12)',  label: 'Watch',    icon: Shield },
@@ -187,10 +205,13 @@ export default function AdminMissionControl() {
     medguardScores[c.id] = Math.min(score, 100);
   });
 
-  const safeCount     = Object.values(medguardScores).filter(s => s < 31).length;
-  const watchCount    = Object.values(medguardScores).filter(s => s >= 31 && s < 61).length;
-  const alertCount    = Object.values(medguardScores).filter(s => s >= 61 && s < 81).length;
-  const criticalCount = Object.values(medguardScores).filter(s => s >= 81).length;
+  const displayCases  = activeCases.length > 0 ? activeCases : DEMO_CASES;
+  const displayScores = activeCases.length > 0 ? medguardScores : DEMO_MEDGUARD;
+
+  const safeCount     = Object.values(displayScores).filter(s => s < 31).length;
+  const watchCount    = Object.values(displayScores).filter(s => s >= 31 && s < 61).length;
+  const alertCount    = Object.values(displayScores).filter(s => s >= 61 && s < 81).length;
+  const criticalCount = Object.values(displayScores).filter(s => s >= 81).length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -209,8 +230,8 @@ export default function AdminMissionControl() {
     { icon: '📩', text: 'Quote reminder sent (Stage 1) — Prestige Travel Agency.', time: '2h ago', color: '#94a3b8' },
   ];
 
-  const inTransit = activeCases.filter((c) => ACTIVE_TRAVEL_PHASES.has(c.trip_phase));
-  const countries  = [...new Set(activeCases.map((c) => c.procedure_country).filter(Boolean))];
+  const inTransit = displayCases.filter((c) => ACTIVE_TRAVEL_PHASES.has(c.trip_phase));
+  const countries  = [...new Set(displayCases.map((c) => c.procedure_country).filter(Boolean))];
 
   // ── EVN-iQ400 batch fetch — country advisory scores for all active destinations ──
   const [evnScores, setEvnScores] = useState({}); // iso2 → { score, riskScore, source }
@@ -273,7 +294,7 @@ export default function AdminMissionControl() {
         {/* ── Global stats strip ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { icon: '🌍', label: 'Active Patients',   value: activeCases.length,  color: GOLD },
+            { icon: '🌍', label: 'Active Patients',   value: displayCases.length,  color: GOLD },
             { icon: '✈️', label: 'In Transit',         value: inTransit.length,    color: '#60a5fa' },
             { icon: '🌐', label: 'Countries',          value: countries.length,    color: '#a855f7' },
             { icon: '🟢', label: 'Safe',               value: safeCount,           color: '#22c55e' },
@@ -343,21 +364,15 @@ export default function AdminMissionControl() {
                   <div key={i} className="rounded-2xl h-44 animate-pulse" style={{ background: '#0C1A1D' }} />
                 ))}
               </div>
-            ) : activeCases.length === 0 ? (
-              <div className="rounded-2xl p-12 text-center" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
-                <Globe className="w-12 h-12 mx-auto mb-4" style={{ color: '#334155' }} />
-                <p className="text-sm text-white/50">No active journeys right now.</p>
-                <p className="text-xs mt-1" style={{ color: '#334155' }}>Patients will appear here once their journey begins.</p>
-              </div>
             ) : (
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {/* Sort: Critical first, then Alert, then Watch, then Safe */}
-                {[...activeCases].sort((a, b) => (medguardScores[b.id] || 0) - (medguardScores[a.id] || 0))
+                {[...displayCases].sort((a, b) => (displayScores[b.id] || 0) - (displayScores[a.id] || 0))
                   .map((c) => {
                     const iso2    = COUNTRY_ISO[c.procedure_country];
                     const evnData = iso2 ? evnScores[iso2] : null;
                     return (
-                      <PatientCard key={c.id} c={c} medguardScore={medguardScores[c.id] || 12}
+                      <PatientCard key={c.id} c={c} medguardScore={displayScores[c.id] || 12}
                         evnScore={evnData?.riskScore ?? null} onContact={() => {}} />
                     );
                   })}

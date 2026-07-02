@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Users, Menu, X, LayoutDashboard, ShieldAlert, Activity,
+  Users, Menu, X, LayoutDashboard, Activity,
   DollarSign, User, Shield, FileText, CreditCard, AlertTriangle,
-  LogOut, ChevronLeft,
+  LogOut, ChevronLeft, Globe, ShieldAlert,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import SystemPauseToggle, { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 
-// Essential-only navigation — 10 items, 4 sections.
-// Advanced tools (imports, IQ-200, portal viewer, etc.) still exist at their
-// URLs but are not surfaced here to keep the daily workflow clear.
+const GOLD   = '#D4AF37';
+const BG     = '#060B16';
+const CARD   = '#0C1A1D';
+const BORDER = '#2A3F4A';
+
 const NAV_SECTIONS = [
   {
     label: null,
     items: [
-      { path: '/admin',                 label: 'Patient Journey',  icon: LayoutDashboard },
-      { path: '/admin/mission-control', label: 'Mission Control',  icon: Activity },
-      { path: '/admin/situation-room',  label: '🌍 Situation Room', icon: Activity },
+      { path: '/admin',                 label: 'Dashboard',       icon: LayoutDashboard },
+      { path: '/admin/mission-control', label: 'Mission Control', icon: Activity },
+      { path: '/admin/situation-room',  label: 'Situation Room',  icon: Globe },
     ],
   },
   {
@@ -51,38 +53,55 @@ function NavItem({ item, isActive, onClick }) {
     <Link
       to={item.path}
       onClick={onClick}
-      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
-        isActive
-          ? 'bg-blue-600 text-white shadow-sm'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-      }`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '9px 12px', borderRadius: 10,
+        fontSize: 13, fontWeight: isActive ? 600 : 500,
+        color: isActive ? GOLD : 'rgba(255,255,255,0.55)',
+        background: isActive ? `${GOLD}15` : 'transparent',
+        border: `1px solid ${isActive ? GOLD + '30' : 'transparent'}`,
+        textDecoration: 'none', transition: 'all 0.15s',
+        marginBottom: 2,
+      }}
     >
-      <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-      <span className="truncate">{item.label}</span>
+      <Icon style={{ width: 15, height: 15, flexShrink: 0, color: isActive ? GOLD : 'rgba(255,255,255,0.3)' }} />
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
     </Link>
   );
 }
 
-function SidebarContent({ location, onClose }) {
+function SidebarContent({ location, onClose = null }) {
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-100 flex-shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
-          <Users className="w-4.5 h-4.5 text-white" />
-        </div>
-        <div>
-          <p className="font-semibold text-slate-900 text-sm leading-tight">Admin Portal</p>
-          <p className="text-[11px] text-slate-400 leading-tight mt-0.5">Management Console</p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: BG }}>
+
+      {/* Logo */}
+      <div style={{ padding: '20px 16px 16px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: GOLD, color: BG,
+            fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 900,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 0 20px ${GOLD}40`,
+          }}>M</div>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Admin Portal</p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.3, marginTop: 2 }}>Morales Concierge</p>
+          </div>
         </div>
       </div>
 
-      {/* Scrollable nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+      {/* Nav */}
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 10px' }}>
         {NAV_SECTIONS.map((section, sIdx) => (
-          <div key={sIdx} className={sIdx > 0 ? 'pt-4' : ''}>
+          <div key={sIdx} style={{ marginTop: sIdx > 0 ? 20 : 0 }}>
             {section.label && (
-              <p className="px-3 mb-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400 select-none">
+              <p style={{
+                padding: '0 12px', marginBottom: 6,
+                fontSize: 9, fontWeight: 700,
+                letterSpacing: '0.18em', textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.2)',
+              }}>
                 {section.label}
               </p>
             )}
@@ -98,24 +117,37 @@ function SidebarContent({ location, onClose }) {
         ))}
       </nav>
 
-      {/* Footer — always visible at the bottom */}
-      <div className="border-t border-slate-100 px-3 py-3 flex-shrink-0 space-y-1">
-        {/* ⏸ System Pause — saves integration credits during development */}
+      {/* Footer */}
+      <div style={{ borderTop: `1px solid ${BORDER}`, padding: '12px 10px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <SystemPauseToggle compact />
 
         <Link
           to="/"
           onClick={onClose}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 12px', borderRadius: 10,
+            fontSize: 13, fontWeight: 500,
+            color: 'rgba(255,255,255,0.4)', textDecoration: 'none',
+            transition: 'color 0.15s',
+          }}
         >
-          <ChevronLeft className="w-4 h-4 flex-shrink-0 text-slate-400" />
+          <ChevronLeft style={{ width: 15, height: 15 }} />
           Back to Website
         </Link>
+
         <button
           onClick={() => base44.auth.logout()}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium text-red-500 hover:bg-red-50 transition-all"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 12px', borderRadius: 10, width: '100%',
+            fontSize: 13, fontWeight: 500,
+            color: '#f87171', background: 'transparent', border: 'none',
+            cursor: 'pointer', textAlign: 'left',
+            transition: 'background 0.15s',
+          }}
         >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <LogOut style={{ width: 15, height: 15 }} />
           Logout
         </button>
       </div>
@@ -129,45 +161,61 @@ export default function AdminLayout({ children }) {
   const close = () => setSidebarOpen(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Red banner when system is paused — fixed position, sits above everything */}
+    <div style={{ minHeight: '100vh', background: BG }}>
       <SystemPauseBanner />
-      <div className="flex">
-        {/* Desktop sidebar — fixed, full-height, flex column so footer pins to bottom */}
-        <aside className="hidden lg:flex flex-col w-64 h-screen bg-white border-r border-slate-200 fixed left-0 top-0 z-20">
+      <div style={{ display: 'flex' }}>
+
+        {/* Desktop sidebar */}
+        <aside style={{
+          display: 'none', flexDirection: 'column',
+          width: 224, height: '100vh',
+          background: BG, borderRight: `1px solid ${BORDER}`,
+          position: 'fixed', left: 0, top: 0, zIndex: 20,
+        }} className="lg:flex">
           <SidebarContent location={location} onClose={close} />
         </aside>
 
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 flex">
-            <div className="w-64 bg-white shadow-xl flex flex-col relative">
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }} className="lg:hidden">
+            <div style={{ width: 224, background: BG, boxShadow: '4px 0 24px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
               <button
                 onClick={close}
-                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-100 z-10"
-                aria-label="Close menu"
+                style={{
+                  position: 'absolute', top: 14, right: 14,
+                  padding: 6, borderRadius: 8, border: 'none',
+                  background: 'rgba(255,255,255,0.08)', cursor: 'pointer', zIndex: 10,
+                }}
               >
-                <X className="w-4 h-4 text-slate-500" />
+                <X style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.6)' }} />
               </button>
               <SidebarContent location={location} onClose={close} />
             </div>
-            <div className="flex-1 bg-black/40" onClick={close} />
+            <div style={{ flex: 1, background: 'rgba(0,0,0,0.6)' }} onClick={close} />
           </div>
         )}
 
         {/* Main content */}
-        <main className="flex-1 lg:ml-64 min-w-0">
+        <main style={{ flex: 1, minWidth: 0, marginLeft: 0 }} className="lg:ml-56">
           {/* Mobile top bar */}
-          <div className="lg:hidden bg-white/90 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center gap-3">
+          <div
+            style={{
+              background: 'rgba(6,11,22,0.95)', backdropFilter: 'blur(12px)',
+              borderBottom: `1px solid ${BORDER}`,
+              position: 'sticky', top: 0, zIndex: 10,
+              padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+            }}
+            className="lg:hidden"
+          >
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-slate-100"
-              aria-label="Open menu"
+              style={{ padding: 8, borderRadius: 8, border: `1px solid ${BORDER}`, background: CARD, cursor: 'pointer' }}
             >
-              <Menu className="w-5 h-5 text-slate-600" />
+              <Menu style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.7)' }} />
             </button>
-            <span className="text-sm font-semibold text-slate-700">Admin</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Admin</span>
           </div>
+
           {children}
         </main>
       </div>
