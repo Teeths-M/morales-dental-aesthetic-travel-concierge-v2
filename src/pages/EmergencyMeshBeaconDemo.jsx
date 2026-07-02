@@ -225,104 +225,97 @@ function MeshRelayScene({ onNext }) {
   );
 }
 
-// ── Scene 4: Situation Room — Venezuela map ───────────────────────────────────
+// ── Scene 4: Situation Room — Global map ─────────────────────────────────────
+const WORLD_CONTINENTS = [
+  "M60,55 L35,68 L40,82 L60,92 L72,110 L82,128 L90,148 L108,162 L130,168 L152,162 L168,152 L185,142 L200,128 L210,112 L212,95 L200,75 L185,58 L165,45 L140,38 L115,38 L90,42 L70,48 Z",
+  "M217,12 L202,18 L197,30 L207,43 L224,47 L242,42 L252,30 L246,17 L232,11 Z",
+  "M130,168 L115,180 L106,202 L102,228 L106,256 L118,288 L132,322 L146,342 L158,336 L170,316 L178,292 L182,264 L180,238 L178,214 L172,195 L162,180 L148,170 Z",
+  "M352,32 L340,46 L342,62 L354,74 L370,80 L390,77 L408,68 L422,56 L418,40 L406,30 L386,25 L368,26 Z",
+  "M356,86 L340,104 L336,128 L338,155 L342,182 L348,210 L354,238 L362,266 L374,284 L390,292 L408,289 L422,278 L432,258 L438,230 L440,202 L440,174 L436,148 L428,122 L418,98 L404,86 L386,82 L368,83 Z",
+  "M420,32 L428,20 L468,16 L514,18 L558,22 L600,26 L640,30 L678,36 L712,43 L742,52 L756,66 L748,84 L726,100 L702,110 L678,114 L655,122 L634,132 L614,142 L593,152 L567,158 L542,161 L516,158 L491,149 L472,138 L456,126 L440,111 L428,93 L420,70 Z",
+  "M491,149 L501,164 L512,184 L518,202 L509,213 L496,216 L484,208 L478,192 L476,173 Z",
+  "M593,152 L602,165 L606,180 L602,196 L594,204 L585,198 L581,184 L584,168 Z",
+  "M636,238 L638,255 L646,274 L658,288 L676,295 L694,291 L708,278 L716,260 L714,243 L704,231 L687,225 L667,225 L650,231 Z",
+];
+const WORLD_LABELS = [
+  [148,100,'N. AMERICA'],[155,265,'S. AMERICA'],
+  [385,52,'EUROPE'],[393,190,'AFRICA'],
+  [584,76,'ASIA'],[680,262,'AUSTRALIA'],
+];
+const CLIENT_DOTS = [
+  [207,145,'safe','Cancún'],[400,81,'safe','London'],
+  [623,161,'safe','Bangkok'],[523,137,'safe','Dubai'],
+  [464,103,'safe','Istanbul'],[736,262,'safe','Sydney'],
+  [408,176,'watch','Lagos'],[236,180,'watch','Bogotá'],
+];
+
 function SituationRoomScene({ onNext }) {
   useEffect(() => { const t = setTimeout(onNext, 6500); return () => clearTimeout(t); }, [onNext]);
-
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <motion.div animate={{ opacity: [1, 0.25, 1] }} transition={{ duration: 0.7, repeat: Infinity }}
-          style={{ width: 8, height: 8, borderRadius: '50%', background: RED, boxShadow: `0 0 10px ${RED}` }} />
-        <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', color: '#fff' }}>SITUATION ROOM</span>
-        <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
-          style={{ fontSize: 9, fontWeight: 700, color: RED, letterSpacing: '0.1em', marginLeft: 4 }}>
-          ● EARTHQUAKE · BEACON ACTIVE · CARACAS
-        </motion.span>
-        <span style={{ marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em' }}>LAYER 4 · ADMIN SEES THIS</span>
+      <div style={{ padding:'8px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+        <motion.div animate={{ opacity:[1,0.25,1] }} transition={{ duration:0.7, repeat:Infinity }}
+          style={{ width:7, height:7, borderRadius:'50%', background:RED, boxShadow:`0 0 8px ${RED}` }} />
+        <span style={{ fontSize:11, fontWeight:800, letterSpacing:'0.12em', color:'#fff' }}>SITUATION ROOM</span>
+        <motion.span animate={{ opacity:[1,0.5,1] }} transition={{ duration:1.2, repeat:Infinity }}
+          style={{ fontSize:9, fontWeight:700, color:RED, letterSpacing:'0.1em' }}>● EQ 6.8 · BEACON ACTIVE · CARACAS</motion.span>
+        <span style={{ marginLeft:'auto', fontSize:9, color:'rgba(255,255,255,0.25)', letterSpacing:'0.08em' }}>LAYER 4 · GLOBAL MONITOR · 195 COUNTRIES</span>
       </div>
-
-      {/* Map */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#030a12' }}>
-        {/* SVG map — northern South America */}
-        <svg viewBox="0 0 300 200" width="100%" height="100%"
-          style={{ position: 'absolute', inset: 0 }} preserveAspectRatio="xMidYMid meet">
-          <rect width={300} height={200} fill="#030a12" />
-
-          {/* Caribbean Sea */}
-          <text x="105" y="20" textAnchor="middle" fill="rgba(96,165,250,0.18)"
-            fontSize="6" letterSpacing="2" fontWeight="600">C A R I B B E A N   S E A</text>
-
-          {/* Colombia */}
-          <path d="M20,72 L22,54 L32,44 L46,40 L58,42 L65,52 L65,57 L75,65 L70,82 L58,95 L40,100 L24,92 L16,80 Z"
-            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.6" />
-          <text x="40" y="74" textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize="5">COLOMBIA</text>
-
-          {/* Brazil */}
-          <path d="M58,95 L70,82 L75,65 L90,73 L108,75 L126,70 L138,62 L148,74 L160,92 L158,118 L142,148 L115,165 L82,162 L60,148 L45,125 L52,105 Z"
-            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.6" />
-          <text x="105" y="128" textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize="5">BRAZIL</text>
-
-          {/* Guyana */}
-          <path d="M138,62 L142,50 L150,46 L158,52 L162,66 L157,80 L148,82 L138,72 Z"
-            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.6" />
-          <text x="150" y="68" textAnchor="middle" fill="rgba(255,255,255,0.16)" fontSize="4">GUYANA</text>
-
-          {/* Venezuela — highlighted red */}
-          <path d="M65,57 L72,44 L82,36 L96,33 L110,35 L124,39 L135,42 L142,50 L138,62 L126,70 L108,75 L90,73 L75,65 Z"
-            fill="rgba(239,68,68,0.13)" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
-          <text x="104" y="59" textAnchor="middle" fill="rgba(255,255,255,0.6)"
-            fontSize="6" fontWeight="bold" letterSpacing="0.5">VENEZUELA</text>
-
-          {/* Trinidad */}
-          <circle cx="162" cy="48" r="3" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
-
-          {/* Caracas label */}
-          <text x="100" y="29" textAnchor="middle" fill="rgba(255,100,100,0.6)"
-            fontSize="4.5" letterSpacing="0.5" fontWeight="600">CARACAS</text>
-
-          {/* Beacon rings */}
-          {[1, 2, 3].map(i => (
-            <motion.circle key={i} cx={100} cy={35} r={5}
-              fill="none" stroke={RED} strokeWidth={1}
-              animate={{ r: [5, 20], opacity: [0.95, 0] }}
-              transition={{ duration: 2.2, delay: i * 0.7, repeat: Infinity }}
-            />
+      <div style={{ flex:1, position:'relative', overflow:'hidden', background:'#020810' }}>
+        <svg viewBox="0 0 800 380" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style={{ position:'absolute', inset:0 }}>
+          {[133,267,400,533,667].map(x => <line key={x} x1={x} y1={0} x2={x} y2={380} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />)}
+          {[63,127,190,253,317].map(y => <line key={y} x1={0} y1={y} x2={800} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />)}
+          {WORLD_CONTINENTS.map((d,i) => <path key={i} d={d} fill="rgba(255,255,255,0.055)" stroke="rgba(255,255,255,0.14)" strokeWidth={0.7} />)}
+          {WORLD_LABELS.map(([x,y,l]) => <text key={l} x={x} y={y} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="5.5" fontWeight="600" letterSpacing="0.8">{l}</text>)}
+          <path d="M130,168 L115,180 L106,202 L102,228 L106,256 L118,288 L132,322 L146,342 L158,336 L170,316 L178,292 L182,264 L180,238 L178,214 L172,195 L162,180 L148,170 Z"
+            fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.3)" strokeWidth={0.8} />
+          {CLIENT_DOTS.map(([x,y,s,city],i) => (
+            <g key={city}>
+              <motion.circle cx={x} cy={y} r={3} fill={s==='safe'?GREEN:GOLD}
+                animate={{ opacity:[1,0.45,1] }} transition={{ duration:2.2, repeat:Infinity, delay:i*0.35 }}
+                style={{ filter:`drop-shadow(0 0 4px ${s==='safe'?GREEN:GOLD})` }} />
+              <text x={x+5} y={y+2} fill="rgba(255,255,255,0.3)" fontSize="4">{city}</text>
+            </g>
           ))}
-          <circle cx={100} cy={35} r={4.5} fill={RED}
-            style={{ filter: `drop-shadow(0 0 8px ${RED})` }} />
-
-          {/* Miami HQ */}
-          <circle cx={22} cy={14} r={3.5} fill={GOLD}
-            style={{ filter: `drop-shadow(0 0 5px ${GOLD})` }} />
-          <text x="30" y="16.5" fill={GOLD} fontSize="4.5" fontWeight="bold">HQ · Miami, FL</text>
-
-          {/* Animated dash line: Miami → Caracas */}
-          <motion.line x1={22} y1={14} x2={100} y2={35}
-            stroke={RED} strokeWidth={1} strokeDasharray="4 4" opacity={0.4}
-            animate={{ strokeDashoffset: [0, -8] }}
-            transition={{ duration: 0.5, repeat: Infinity, ease: 'linear' }}
-          />
+          {[0.7,1.5,2.3].map((d,i) => (
+            <motion.circle key={i} cx={251} cy={168} r={5} fill="none" stroke={RED} strokeWidth={1}
+              animate={{ r:[5,26], opacity:[0.9,0] }} transition={{ duration:2, delay:d, repeat:Infinity }} />
+          ))}
+          <circle cx={251} cy={168} r={5.5} fill={RED} style={{ filter:`drop-shadow(0 0 12px ${RED})` }} />
+          <text x={259} y={165} fill="rgba(255,100,100,0.85)" fontSize="4.5" fontWeight="700">CARACAS 🚨</text>
+          <circle cx={222} cy={136} r={4} fill={GOLD} style={{ filter:`drop-shadow(0 0 6px ${GOLD})` }} />
+          <text x={230} y={133} fill={GOLD} fontSize="4.5" fontWeight="700">HQ · Miami</text>
+          <motion.line x1={222} y1={136} x2={251} y2={168} stroke={RED} strokeWidth={1} strokeDasharray="4 4" opacity={0.45}
+            animate={{ strokeDashoffset:[0,-8] }} transition={{ duration:0.5, repeat:Infinity, ease:'linear' }} />
         </svg>
-
-        {/* Info card */}
-        <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}
-          style={{ position: 'absolute', right: 12, top: 10, background: 'rgba(3,10,18,0.97)', border: `1px solid ${RED}45`, borderRadius: 12, padding: '12px 14px', minWidth: 200 }}>
-          <div style={{ fontSize: 8, fontWeight: 800, color: RED, letterSpacing: '0.15em', marginBottom: 7 }}>🚨 BEACON ACTIVE · EQ 6.8</div>
-          <div style={{ fontSize: 11, color: '#fff', fontWeight: 700, marginBottom: 3 }}>Elena G. · Case #4821</div>
-          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', marginBottom: 2 }}>10.4815° N, 66.9037° W</div>
-          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>Caracas, Venezuela · Trapped · Auto-Activated</div>
-          <div style={{ display: 'flex', gap: 5 }}>
-            <div style={{ padding: '3px 7px', borderRadius: 5, background: `${RED}22`, fontSize: 7.5, fontWeight: 800, color: RED }}>BEACON</div>
-            <div style={{ padding: '3px 7px', borderRadius: 5, background: 'rgba(249,115,22,0.12)', fontSize: 7.5, fontWeight: 800, color: '#f97316' }}>OFFLINE</div>
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.5 }}
+          style={{ position:'absolute', top:8, right:8, display:'flex', gap:6 }}>
+          {[['247','CLIENTS'],['195','COUNTRIES'],['9','ALERTS']].map(([v,l]) => (
+            <div key={l} style={{ padding:'6px 10px', borderRadius:8, background:'rgba(3,10,18,0.95)', border:'1px solid rgba(255,255,255,0.1)', textAlign:'center' }}>
+              <div style={{ fontSize:13, fontWeight:900, color:GOLD, lineHeight:1 }}>{v}</div>
+              <div style={{ fontSize:7, color:'rgba(255,255,255,0.35)', letterSpacing:'0.08em', marginTop:2 }}>{l}</div>
+            </div>
+          ))}
+        </motion.div>
+        <motion.div initial={{ opacity:0, x:14 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.8 }}
+          style={{ position:'absolute', bottom:32, right:8, background:'rgba(3,10,18,0.97)', border:`1px solid ${RED}45`, borderRadius:12, padding:'10px 14px', minWidth:195 }}>
+          <div style={{ fontSize:8, fontWeight:800, color:RED, letterSpacing:'0.15em', marginBottom:6 }}>🚨 BEACON ACTIVE · EQ 6.8</div>
+          <div style={{ fontSize:11, color:'#fff', fontWeight:700, marginBottom:2 }}>Elena G. · Case #4821</div>
+          <div style={{ fontSize:8.5, color:'rgba(255,255,255,0.45)', fontFamily:'monospace', marginBottom:2 }}>10.4815° N, 66.9037° W</div>
+          <div style={{ fontSize:8.5, color:'rgba(255,255,255,0.35)', marginBottom:8 }}>Caracas, Venezuela · Auto-Activated</div>
+          <div style={{ display:'flex', gap:5 }}>
+            <div style={{ padding:'3px 7px', borderRadius:5, background:`${RED}22`, fontSize:7.5, fontWeight:800, color:RED }}>BEACON</div>
+            <div style={{ padding:'3px 7px', borderRadius:5, background:'rgba(249,115,22,0.12)', fontSize:7.5, fontWeight:800, color:'#f97316' }}>OFFLINE</div>
           </div>
         </motion.div>
-
-        {/* Bottom banner */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.6 }}
-          style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', padding: '8px 20px', borderRadius: 24, background: 'rgba(239,68,68,0.1)', border: `1px solid ${RED}35`, whiteSpace: 'nowrap' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>Auto-Activated · Concierge Notified · Dispatch In Progress</span>
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.2 }}
+          style={{ position:'absolute', bottom:8, left:8, display:'flex', gap:12, alignItems:'center' }}>
+          {[[GREEN,'SAFE'],['#D4AF37','MONITORING'],[RED,'EMERGENCY']].map(([c,l]) => (
+            <div key={l} style={{ display:'flex', alignItems:'center', gap:5 }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:c, boxShadow:`0 0 6px ${c}` }} />
+              <span style={{ fontSize:8, color:'rgba(255,255,255,0.35)', fontWeight:600 }}>{l}</span>
+            </div>
+          ))}
         </motion.div>
       </div>
     </div>
