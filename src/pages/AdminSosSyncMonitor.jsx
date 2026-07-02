@@ -1,8 +1,10 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const STATUS_META = {
   triggered:    { label: 'Dispatched Live',  color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
@@ -56,18 +58,19 @@ export default function AdminSosSyncMonitor() {
   const liveEvents   = events.filter(e => !isCachedSync(e));
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <AdminLayout>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 20px' }} className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">SOS Sync Monitor</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-semibold text-white">SOS Sync Monitor</h1>
+          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Tracks offline-cached SOS events that synced once connectivity was restored.
           </p>
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 12, border: '1px solid #2A3F4A', color: 'rgba(255,255,255,0.7)', background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -76,24 +79,24 @@ export default function AdminSosSyncMonitor() {
 
       {/* Last refresh */}
       {lastRefresh && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
           Last updated {formatDistanceToNow(lastRefresh, { addSuffix: true })} · Auto-refreshes every 15s
         </p>
       )}
 
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 text-center">
-          <p className="text-2xl font-black text-slate-800">{events.length}</p>
-          <p className="text-xs text-slate-500 mt-1">Total SOS Events</p>
+        <div style={{ background: '#0C1A1D', border: '1px solid #2A3F4A', borderRadius: 16, padding: 16, textAlign: 'center' }}>
+          <p style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0 }}>{events.length}</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>Total SOS Events</p>
         </div>
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
-          <p className="text-2xl font-black text-amber-700">{syncedEvents.length}</p>
-          <p className="text-xs text-amber-600 mt-1">Synced from Offline Cache</p>
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 16, padding: 16, textAlign: 'center' }}>
+          <p style={{ fontSize: 28, fontWeight: 900, color: '#f59e0b', margin: 0 }}>{syncedEvents.length}</p>
+          <p style={{ fontSize: 11, color: 'rgba(245,158,11,0.7)', marginTop: 4 }}>Synced from Offline Cache</p>
         </div>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
-          <p className="text-2xl font-black text-emerald-700">{liveEvents.length}</p>
-          <p className="text-xs text-emerald-600 mt-1">Dispatched Live</p>
+        <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 16, padding: 16, textAlign: 'center' }}>
+          <p style={{ fontSize: 28, fontWeight: 900, color: '#22c55e', margin: 0 }}>{liveEvents.length}</p>
+          <p style={{ fontSize: 11, color: 'rgba(34,197,94,0.7)', marginTop: 4 }}>Dispatched Live</p>
         </div>
       </div>
 
@@ -101,8 +104,8 @@ export default function AdminSosSyncMonitor() {
       {syncedEvents.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <WifiOff className="w-4 h-4 text-amber-600" />
-            <h2 className="text-sm font-semibold text-amber-700 uppercase tracking-wider">Synced from Offline Cache</h2>
+            <WifiOff className="w-4 h-4 text-amber-500" />
+            <h2 style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Synced from Offline Cache</h2>
           </div>
           {syncedEvents.map(ev => (
             <SosEventRow key={ev.id} ev={ev} isSynced={true} />
@@ -113,20 +116,21 @@ export default function AdminSosSyncMonitor() {
       {/* Live events */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Live Dispatches</h2>
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <h2 style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Live Dispatches</h2>
         </div>
         {loading && liveEvents.length === 0 ? (
           <div className="flex justify-center py-12">
-            <div className="w-7 h-7 border-2 border-t-transparent border-slate-300 rounded-full animate-spin" />
+            <div style={{ width: 28, height: 28, border: '2px solid #D4AF37', borderTopColor: 'transparent', borderRadius: '50%' }} className="animate-spin" />
           </div>
         ) : liveEvents.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-sm">No live SOS events recorded.</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>No live SOS events recorded.</div>
         ) : liveEvents.map(ev => (
           <SosEventRow key={ev.id} ev={ev} isSynced={false} />
         ))}
       </div>
     </div>
+    </AdminLayout>
   );
 }
 

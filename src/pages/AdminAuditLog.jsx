@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Shield, ShieldAlert, RefreshCw, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -72,9 +73,9 @@ export default function AdminAuditLog() {
     setHealthResult(null);
     try {
       const res = await base44.functions.invoke('verifyAuditChain', {});
-      const data = res.data;
+      const data = res?.data;
       setHealthResult(data);
-      if (data.status === 'OK') {
+      if (data?.status === 'OK') {
         setChainStatus('ok');
         setTamperedIds(new Set());
       } else {
@@ -120,21 +121,24 @@ export default function AdminAuditLog() {
   const resetPage = () => setPage(1);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminLayout>
+    <div style={{ padding: '24px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto' }} className="space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-display font-semibold text-foreground">Audit Log Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">Forensic event trail with hash-chain integrity verification</p>
+            <h1 className="text-2xl font-display font-semibold text-white">Audit Log Dashboard</h1>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Forensic event trail with hash-chain integrity verification</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={loadEntries} disabled={loading}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Button variant="outline" size="sm" onClick={loadEntries} disabled={loading}
+              style={{ borderColor: '#2A3F4A', color: 'rgba(255,255,255,0.7)', background: 'transparent' }}>
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button size="sm" onClick={runHealthCheck} disabled={checking}>
+            <Button size="sm" onClick={runHealthCheck} disabled={checking}
+              style={{ background: '#D4AF37', color: '#060B16', fontWeight: 700 }}>
               <Shield className="w-4 h-4 mr-2" />
               {checking ? 'Checking…' : 'Health Check'}
             </Button>
@@ -143,20 +147,21 @@ export default function AdminAuditLog() {
 
         {/* Chain Integrity Banner */}
         {chainStatus && (
-          <div className={`flex items-center gap-3 rounded-lg px-5 py-4 border ${
-            chainStatus === 'ok'
-              ? 'bg-green-50 border-green-200 text-green-800'
-              : 'bg-red-50 border-red-300 text-red-800'
-          }`}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            borderRadius: 10, padding: '14px 20px',
+            background: chainStatus === 'ok' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.1)',
+            border: `1px solid ${chainStatus === 'ok' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.35)'}`,
+          }}>
             {chainStatus === 'ok'
-              ? <Shield className="w-5 h-5 text-green-600 flex-shrink-0" />
-              : <ShieldAlert className="w-5 h-5 text-red-600 flex-shrink-0" />}
+              ? <Shield style={{ width: 20, height: 20, color: '#22c55e', flexShrink: 0 }} />
+              : <ShieldAlert style={{ width: 20, height: 20, color: '#ef4444', flexShrink: 0 }} />}
             <div>
-              <p className="font-semibold text-sm">
+              <p style={{ fontWeight: 700, fontSize: 14, margin: 0, color: chainStatus === 'ok' ? '#22c55e' : '#f87171' }}>
                 {chainStatus === 'ok' ? '✅ All logs verified — chain intact' : '⚠️ CHAIN BREACH DETECTED'}
               </p>
               {healthResult && (
-                <p className="text-xs mt-0.5 opacity-80">
+                <p style={{ fontSize: 11, marginTop: 2, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
                   {healthResult.entries_checked} entries checked · {healthResult.tampered_count} tampered · verified {format(new Date(healthResult.verified_at), 'PPp')}
                 </p>
               )}
@@ -166,13 +171,13 @@ export default function AdminAuditLog() {
 
         {/* Health Check Result Detail */}
         {healthResult && healthResult.tampered_entries?.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-red-700 mb-2">Tampered Entries Detail</p>
-            <ul className="space-y-1">
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#f87171', marginBottom: 8 }}>Tampered Entries Detail</p>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
               {healthResult.tampered_entries.map((t, i) => (
-                <li key={i} className="text-xs text-red-600 font-mono">
+                <li key={i} style={{ fontSize: 11, color: '#fca5a5', fontFamily: 'monospace', marginBottom: 4 }}>
                   [{t.index}] {t.id} · {t.event_type} · {t.timestamp}<br/>
-                  <span className="text-red-500">{t.issue}</span>
+                  <span style={{ color: '#f87171' }}>{t.issue}</span>
                 </li>
               ))}
             </ul>
@@ -180,88 +185,89 @@ export default function AdminAuditLog() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-end">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'rgba(255,255,255,0.3)' }} />
             <Input
               placeholder="Search event, email, entity…"
               value={search}
               onChange={e => { setSearch(e.target.value); resetPage(); }}
               className="pl-9"
+              style={{ background: '#0C1A1D', borderColor: '#2A3F4A', color: '#fff' }}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">From</label>
-            <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); resetPage(); }} className="w-36" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>From</label>
+            <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); resetPage(); }} className="w-36"
+              style={{ background: '#0C1A1D', borderColor: '#2A3F4A', color: '#fff' }} />
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">To</label>
-            <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); resetPage(); }} className="w-36" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>To</label>
+            <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); resetPage(); }} className="w-36"
+              style={{ background: '#0C1A1D', borderColor: '#2A3F4A', color: '#fff' }} />
           </div>
           {(dateFrom || dateTo || search) && (
-            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); setSearch(''); resetPage(); }}>
+            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); setSearch(''); resetPage(); }}
+              style={{ color: 'rgba(255,255,255,0.5)' }}>
               Clear
             </Button>
           )}
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <div style={{ borderRadius: 12, border: '1px solid #2A3F4A', overflow: 'hidden', background: '#0C1A1D' }}>
           {loading ? (
-            <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">Loading audit log…</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 192, color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Loading audit log…</div>
           ) : paginated.length === 0 ? (
-            <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">No entries found.</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 192, color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>No entries found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr className="border-b border-border bg-muted/40 text-muted-foreground text-xs uppercase tracking-wide">
-                    <th className="text-left px-4 py-3 font-medium">Timestamp</th>
-                    <th className="text-left px-4 py-3 font-medium">Actor</th>
-                    <th className="text-left px-4 py-3 font-medium">Event</th>
-                    <th className="text-left px-4 py-3 font-medium">Entity</th>
-                    <th className="text-left px-4 py-3 font-medium">Details</th>
-                    <th className="text-left px-4 py-3 font-medium">Integrity</th>
+                  <tr style={{ borderBottom: '1px solid #2A3F4A', background: 'rgba(255,255,255,0.03)' }}>
+                    {['Timestamp','Actor','Event','Entity','Details','Integrity'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>{h}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
-                  {paginated.map(entry => {
+                <tbody>
+                  {paginated.map((entry, i) => {
                     const isTampered = tamperedIds.has(entry.id);
                     return (
-                      <tr key={entry.id} className={`hover:bg-muted/30 transition-colors ${isTampered ? 'bg-red-50' : ''}`}>
-                        <td className="px-4 py-3 text-xs font-mono text-muted-foreground whitespace-nowrap">
+                      <tr key={entry.id} style={{ borderBottom: '1px solid #1a2d35', background: isTampered ? 'rgba(239,68,68,0.08)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                        <td style={{ padding: '10px 16px', fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>
                           {entry.timestamp ? format(new Date(entry.timestamp), 'MMM d, yyyy HH:mm:ss') : '—'}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="text-xs font-medium text-foreground">{entry.actor_name || entry.actor_id || '—'}</div>
-                          <div className="text-xs text-muted-foreground">{entry.actor_email || ''}</div>
+                        <td style={{ padding: '10px 16px' }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{entry.actor_name || entry.actor_id || '—'}</div>
+                          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{entry.actor_email || ''}</div>
                           {entry.actor_role && (
-                            <span className="inline-block mt-0.5 text-xs bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded">
+                            <span style={{ display: 'inline-block', marginTop: 2, fontSize: 10, background: 'rgba(212,175,55,0.12)', color: '#D4AF37', padding: '1px 6px', borderRadius: 4 }}>
                               {entry.actor_role}
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded font-mono">
+                        <td style={{ padding: '10px 16px' }}>
+                          <span style={{ display: 'inline-block', fontSize: 11, background: 'rgba(212,175,55,0.08)', color: '#D4AF37', padding: '2px 8px', borderRadius: 5, fontFamily: 'monospace' }}>
                             {entry.event_type || '—'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                        <td style={{ padding: '10px 16px', fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
                           <div>{entry.resource_type || '—'}</div>
-                          {entry.resource_id && <div className="font-mono text-xs opacity-60 truncate max-w-[120px]">{entry.resource_id}</div>}
+                          {entry.resource_id && <div style={{ fontFamily: 'monospace', fontSize: 10, opacity: 0.55, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.resource_id}</div>}
                         </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground max-w-[220px]">
+                        <td style={{ padding: '10px 16px', fontSize: 11, color: 'rgba(255,255,255,0.4)', maxWidth: 220 }}>
                           {entry.details
-                            ? <span className="truncate block" title={JSON.stringify(entry.details)}>
+                            ? <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={JSON.stringify(entry.details)}>
                                 {typeof entry.details === 'object' ? JSON.stringify(entry.details).slice(0, 80) + (JSON.stringify(entry.details).length > 80 ? '…' : '') : entry.details}
                               </span>
                             : '—'}
                         </td>
-                        <td className="px-4 py-3">
+                        <td style={{ padding: '10px 16px' }}>
                           {isTampered ? (
-                            <Badge variant="destructive" className="text-xs whitespace-nowrap">⚠ TAMPER DETECTED</Badge>
+                            <Badge variant="destructive" className="text-xs whitespace-nowrap">⚠ TAMPER</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-xs text-green-700 border-green-300 bg-green-50">✓ OK</Badge>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#22c55e', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', padding: '2px 8px', borderRadius: 6 }}>✓ OK</span>
                           )}
                         </td>
                       </tr>
@@ -275,13 +281,15 @@ export default function AdminAuditLog() {
 
         {/* Pagination */}
         {!loading && filtered.length > 0 && (
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
             <span>{filtered.length} entries · page {page} of {totalPages}</span>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                style={{ borderColor: '#2A3F4A', color: 'rgba(255,255,255,0.6)', background: 'transparent' }}>
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                style={{ borderColor: '#2A3F4A', color: 'rgba(255,255,255,0.6)', background: 'transparent' }}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -289,5 +297,6 @@ export default function AdminAuditLog() {
         )}
       </div>
     </div>
+    </AdminLayout>
   );
 }

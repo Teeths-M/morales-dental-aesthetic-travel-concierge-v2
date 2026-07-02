@@ -196,24 +196,30 @@ export default function AdminLayout({ children }) {
         )}
 
         {/* Main content — marginLeft must come from class, not inline style */}
-        <main style={{ flex: 1, minWidth: 0 }} className="lg:ml-56">
+        <main style={{ flex: 1, minWidth: 0, background: '#091522' }} className="lg:ml-56">
           {/* Mobile top bar */}
           <div
             style={{
-              background: 'rgba(6,11,22,0.95)', backdropFilter: 'blur(12px)',
+              background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(12px)',
               borderBottom: `1px solid ${BORDER}`,
               position: 'sticky', top: 0, zIndex: 10,
-              padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10,
             }}
             className="lg:hidden"
           >
             <button
               onClick={() => setSidebarOpen(true)}
-              style={{ padding: 8, borderRadius: 8, border: `1px solid ${BORDER}`, background: CARD, cursor: 'pointer' }}
+              style={{ padding: 8, borderRadius: 8, border: `1px solid ${BORDER}`, background: CARD, cursor: 'pointer', flexShrink: 0 }}
             >
               <Menu style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.7)' }} />
             </button>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Admin</span>
+            <Link
+              to="/admin"
+              style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', textDecoration: 'none', flexShrink: 0 }}
+            >
+              ← Dashboard
+            </Link>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', flex: 1, textAlign: 'center' }}>Admin</span>
           </div>
 
           {children}

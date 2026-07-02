@@ -212,7 +212,8 @@ export default function SituationRoom() {
 
       {/* ── Top command bar ── */}
       <div style={{ flexShrink: 0, padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(4,8,15,0.98)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', gap: 20, zIndex: 1001 }}>
-        <Link to="/demo" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none', fontSize: 11 }}>← Demo</Link>
+        <Link to="/admin" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none', fontSize: 11 }}>← Admin</Link>
+        <Link to="/demo" style={{ color: 'rgba(255,255,255,0.2)', textDecoration: 'none', fontSize: 11 }}>Demo</Link>
         <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
