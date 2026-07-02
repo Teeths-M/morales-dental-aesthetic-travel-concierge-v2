@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 
 /**
@@ -8,30 +7,43 @@ import { useCart } from '@/context/CartContext';
  *
  * Monitors the cart's combined risk profile on every change. When the
  * Safety Watcher detects a transition from a Safe/Review state to a
- * High Risk (RED) state, it immediately locks the cart and redirects
- * the client to professional consultation — enforcing the Golden M
- * certification safety threshold before any procedure can be finalised.
+ * High Risk (RED) state, it triggers the REMEDIATION_REQUIRED pivot —
+ * opening the SafetyPivotOverlay with automated substitution analysis
+ * rather than issuing a hard stop.
  *
- * Mount once inside <Router> + <CartProvider> (see App.jsx).
- * Renders nothing — pure side-effects only.
+ * Also detects cold-start RED (cart was RED on page load from localStorage)
+ * and opens the pivot immediately so the client always sees their options.
+ *
+ * Mount once inside <Router> + <CartProvider> (see App.jsx). Renders nothing.
  */
 export default function SafetyWatcher() {
-  const { safetyStatus } = useCart();
-  const navigate = useNavigate();
-  const prevLevelRef = useRef(safetyStatus?.level ?? 'GREEN');
+  const { safetyStatus, openPivot } = useCart();
+  // null = not yet initialized (cold-start check pending)
+  const prevLevelRef = useRef(null);
 
   useEffect(() => {
-    const prev = prevLevelRef.current;
     const curr = safetyStatus?.level ?? 'GREEN';
+
+    if (prevLevelRef.current === null) {
+      // Cold-start: if the cart was already RED from localStorage, open pivot now.
+      prevLevelRef.current = curr;
+      if (curr === 'RED') {
+        openPivot(safetyStatus?.violations ?? []);
+      }
+      return;
+    }
+
+    const prev = prevLevelRef.current;
     prevLevelRef.current = curr;
 
+    // Transition from any Safe/Review state → High Risk: trigger REMEDIATION_REQUIRED
     if (prev !== 'RED' && curr === 'RED') {
-      // Safe → High Risk transition detected.
-      // Cart is already locked (addItem is gated in CartContext).
-      // Redirect to professional consultation.
-      navigate('/consultation', { state: { safetyLock: true, fromLevel: prev } });
+      openPivot(safetyStatus?.violations ?? []);
     }
-  }, [safetyStatus?.level, navigate]);
+  // openPivot is stable (defined outside render in CartContext); safetyStatus
+  // is the reactive signal — intentional narrow dep array.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safetyStatus?.level]);
 
   return null;
 }

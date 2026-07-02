@@ -1,6 +1,6 @@
 ﻿// @ts-nocheck — pre-existing type gaps in utility
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { analyseCompatibility } from '@/lib/procedureCompatibility';
+import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
 
 const CartContext = createContext();
 const STORAGE_KEY = 'morales_consultation_cart';
@@ -28,13 +28,39 @@ export const CartProvider = ({ children }) => {
   // ── Safety Watcher: reactive risk profile ────────────────────────────────────
   // Re-evaluated on every cart change. `locked` is true when the combined risk
   // profile reaches RED (Golden M certification threshold exceeded).
-  const [safetyStatus, setSafetyStatus] = useState(() => analyseCompatibility([]));
+  const [safetyStatus, setSafetyStatus] = useState(() => ({ ...analyseCompatibility([]), violations: [] }));
 
   useEffect(() => {
-    setSafetyStatus(analyseCompatibility(items));
+    const analysis   = analyseCompatibility(items);
+    const { violations } = getViolations(items);
+    setSafetyStatus({ ...analysis, violations });
   }, [items]);
 
   const locked = safetyStatus.level === 'RED';
+
+  // ── Pivot state — open when Safety Watcher detects a Safe→RED transition ──
+  const [pivotViolations, setPivotViolations] = useState([]);
+
+  const openPivot = (vs) => setPivotViolations(vs && vs.length > 0 ? vs : safetyStatus.violations);
+  const closePivot = () => setPivotViolations([]);
+
+  // Accept the recommendation: remove the conflicting procedure(s) from the cart.
+  // Each violation's pairLabel encodes "ProcA + ProcB"; `recommended` names which
+  // to KEEP, so we derive which to remove.
+  const acceptRecommendation = () => {
+    const toRemove = pivotViolations
+      .filter(v => v.recommended && v.pairLabel)
+      .map(v => {
+        const [a, b] = v.pairLabel.split(' + ');
+        return a === v.recommended ? b : a;
+      })
+      .filter(Boolean);
+
+    if (toRemove.length > 0) {
+      setItems(prev => prev.filter(item => !toRemove.includes(item.name || item.title)));
+    }
+    setPivotViolations([]);
+  };
 
   const setProcedureCountry = (country) => {
     setProcedureCountryState(country);
@@ -81,7 +107,7 @@ export const CartProvider = ({ children }) => {
   const getTotalCount = () => items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry, procedureCity, setProcedureCity, safetyStatus, locked }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, getTotalCount, procedureCountry, setProcedureCountry, procedureCity, setProcedureCity, safetyStatus, locked, pivotViolations, openPivot, closePivot, acceptRecommendation }}>
       {children}
     </CartContext.Provider>
   );
