@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, RotateCcw, Loader2 } from 'lucide-react';
+import { X, Send, RotateCcw } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -94,8 +94,10 @@ export default function MoralesAssistPanel({ isOpen, onClose }) {
         timeout,
       ]);
 
-      const reply        = res?.data?.reply ?? "I'm with you. Could you share a bit more detail?";
-      const needsHandoff = !!res?.data?.needs_handoff;
+      // InvokeLLM may return payload at res.data (Base44 SDK wraps body in .data)
+      const payload      = res?.data ?? res ?? {};
+      const reply        = payload.reply ?? (payload.error ? "I'm here with you — let me try a different way to assist. What's on your mind?" : "I'm here with you. What would you like help with today?");
+      const needsHandoff = !!payload.needs_handoff;
 
       setMessages(prev => [...prev, { role: 'assistant', content: reply, handoff: needsHandoff }]);
       if (needsHandoff) setHandedOff(true);
@@ -234,12 +236,18 @@ export default function MoralesAssistPanel({ isOpen, onClose }) {
               {loading && (
                 <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                   <div style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
                     borderRadius: '18px 18px 18px 4px',
                     background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
                   }}>
-                    <Loader2 style={{ width: 14, height: 14, color: GOLD, animation: 'spin 1s linear infinite' }} />
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)' }}>With you in a moment…</span>
+                    {[0, 1, 2].map(i => (
+                      <motion.span
+                        key={i}
+                        style={{ width: 7, height: 7, borderRadius: '50%', background: GOLD, display: 'block', opacity: 0.35 }}
+                        animate={{ opacity: [0.35, 1, 0.35], y: [0, -4, 0] }}
+                        transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
+                      />
+                    ))}
                   </div>
                 </div>
               )}

@@ -14,6 +14,15 @@ You speak like a senior concierge at a five-star property — measured, warm, pr
 - You are not a chatbot. You are an experienced professional who happens to know everything about this platform.
 - Never say "ticket", "escalation", "support case", "case number". Use "personal follow-up", "our specialist", "care team member".
 
+## Critical Behavior Rules
+- ALWAYS acknowledge the specific thing the client said. Never give a generic opening.
+- If they mention waiting, acknowledge the wait first: "Waiting without an update is frustrating — I understand."
+- If they mention a concern about a doctor or confirmation, address that specific concern immediately.
+- NEVER open with "Could you share a bit more detail?" as your first response — always engage with what the client has given you.
+- If you need more information, offer a specific direction: "I can check your booking status directly — could you confirm your doctor's name or your procedure date?"
+- Keep responses concise — 2 to 4 sentences. Don't pad.
+- Match the emotional register: if the client sounds worried, be reassuring first, informational second.
+
 ## What You Can Help With
 - Journey status, checkpoint tracking, next steps in the 9-handshake system
 - Pre-procedure preparation: medications, fasting, what to bring, what to expect
@@ -94,29 +103,41 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const llmResult = await base44.asServiceRole.integrations.Core.InvokeLLM({
     model:  'gpt_5_mini',
     prompt,
+    response_json_schema: {
+      type: 'object',
+      properties: {
+        reply:         { type: 'string' },
+        needs_handoff: { type: 'boolean' },
+      },
+      required: ['reply', 'needs_handoff'],
+    },
   });
 
-  // Parse JSON from LLM response (handle raw string or object)
+  // InvokeLLM with response_json_schema returns a parsed object directly.
+  // Guard against string fallback in case the platform returns raw text.
   let reply        = '';
   let needsHandoff = false;
 
   try {
-    const raw = typeof llmResult === 'string' ? llmResult : JSON.stringify(llmResult);
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      reply        = String(parsed.reply ?? '');
-      needsHandoff = !!parsed.needs_handoff;
+    if (llmResult && typeof llmResult === 'object') {
+      reply        = String((llmResult as Record<string, unknown>).reply ?? '');
+      needsHandoff = !!(llmResult as Record<string, unknown>).needs_handoff;
     } else {
-      reply = raw.trim();
+      const raw   = String(llmResult ?? '');
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        reply        = String(parsed.reply ?? '');
+        needsHandoff = !!parsed.needs_handoff;
+      } else {
+        reply = raw.trim();
+      }
     }
   } catch {
-    reply = typeof llmResult === 'string'
-      ? llmResult.trim()
-      : "I'm here to help. Could you share a bit more detail?";
+    reply = '';
   }
 
-  if (!reply) reply = "I'm here to help. Could you share a bit more detail?";
+  if (!reply) reply = "I'm here whenever you're ready. Please let me know how I can help.";
 
   // If handoff needed: capture full context and notify the care team
   if (needsHandoff) {

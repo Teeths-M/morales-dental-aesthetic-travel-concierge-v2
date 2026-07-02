@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import MoralesAssistPanel from './MoralesAssistPanel';
@@ -28,17 +28,25 @@ const PILL_BASE = {
 export default function FloatingSOSButton() {
   const { t }          = useTranslation();
   const [panelOpen, setPanelOpen] = useState(false);
+  // Delay initial entry so pills don't flash on first render
+  const [visible, setVisible]     = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 1200); return () => clearTimeout(t); }, []);
+
+  const pillsVisible = visible && !panelOpen;
 
   return (
     <>
+      <AnimatePresence>
+        {pillsVisible && (
       <motion.div
+        key="floating-pills"
         initial={{ opacity: 0, y: 20, scale: 0.92 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 1.2, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        exit={{ opacity: 0, y: 14, scale: 0.94, transition: { duration: 0.22 } }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position:      'fixed',
           bottom:        'calc(max(16px, env(safe-area-inset-bottom, 16px)) + var(--sticky-cta-height, 0px))',
-          transition:    'bottom 0.35s cubic-bezier(0.4,0,0.2,1)',
           right:         '16px',
           zIndex:        9999,
           display:       'flex',
@@ -105,6 +113,8 @@ export default function FloatingSOSButton() {
           </motion.div>
         </Link>
       </motion.div>
+        )}
+      </AnimatePresence>
 
       <MoralesAssistPanel isOpen={panelOpen} onClose={() => setPanelOpen(false)} />
     </>
