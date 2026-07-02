@@ -700,6 +700,7 @@ const TABS = [
   { id: 'intelligence', label: '🔍 Doctor Intel',   link: '/demo/intelligence' },
   { id: 'situation-room', label: '🗺️ Situation Room', link: '/demo/situation-room' },
   { id: 'mission-control', label: '⚡ Mission Control', link: '/demo/mission-control' },
+  { id: 'mesh-beacon', label: '📡 Mesh Beacon', link: '/demo/mesh-beacon' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'safe-t', 'medguard', 'emergency', 'nightlife']);
@@ -863,6 +864,7 @@ export default function DemoShowcase() {
           <p className="text-center text-xs font-bold mb-3" style={{ color: GOLD, letterSpacing: '0.1em' }}>CR ALIENWARE DEMOS</p>
           <div className="grid grid-cols-2 gap-3 mb-6">
             {[
+              { to: '/demo/mesh-beacon', label: '📡 Mesh Beacon',       color: '#ef4444', border: '2px solid rgba(239,68,68,0.65)' },
               { to: '/demo/james',    label: '🎤 James Voice',        color: GOLD,     border: `2px solid ${GOLD}60` },
               { to: '/demo/silent',   label: '🔇 Silent Mode',        color: '#ef4444', border: '2px solid rgba(239,68,68,0.5)' },
               { to: '/demo/tap',      label: '👆 Tap Protocol',       color: GOLD,     border: `2px solid ${GOLD}70` },

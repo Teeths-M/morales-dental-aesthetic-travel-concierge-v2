@@ -73,6 +73,7 @@ const DEMO_EVN = {
 
 // Simulated live feed (production: reads from AuditLog)
 const FEED_ITEMS = [
+  { icon: '📡', text: 'MESH BEACON ACTIVATED — Elena G. · Taipei · GPS 25.0517°N 121.5645°E · Mesh relay: 2 nodes · Fire dept + Police auto-dispatched', color: '#ef4444', time: '0:00', tag: 'Beacon · CR-55' },
   { icon: '🚨', text: 'COUNTRY SAFETY ALERT — Carlos M. · Turkey zone risk 78/100 · Doctor & Clinic VERIFIED SAFE ✅ · Morales Concierge Team activated', color: '#ef4444', time: '0:02', tag: 'Country Advisory · Turkey' },
   { icon: '✅', text: 'Sophie R. — Clinic Arrival confirmed at Bangkok Aesthetic Clinic',           color: '#22c55e', time: '0:12',  tag: 'HS5 · Thailand'  },
   { icon: '🛡️', text: 'Anika P. — MedGuard™ SAFE · score 14/100 · all 6 signals nominal',         color: '#22c55e', time: '1:47',  tag: 'Recovery · India' },
