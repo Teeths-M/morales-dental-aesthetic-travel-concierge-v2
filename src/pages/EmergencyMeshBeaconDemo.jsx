@@ -387,11 +387,53 @@ function DispatchScene() {
   );
 }
 
+// ── Judge Q&A overlay ─────────────────────────────────────────────────────────
+const QA = [
+  { q: 'How does it know an earthquake happened?', a: 'The phone\'s accelerometer detects violent shaking — same technology Google uses for Android Earthquake Alerts. No internet needed. Fires in milliseconds.' },
+  { q: 'Does it pull live disaster data from the internet?', a: 'Yes — production integrates USGS Earthquake Feed (updates every 60s), GDACS (UN global disasters), and NOAA tsunami warnings. When a 6.0+ hits a client\'s country, the system cross-references who is there and alerts them.' },
+  { q: 'What if the phone is destroyed or she\'s unconscious?', a: 'The beacon fires before destruction. If no beacon fires, the concierge layer sweeps all clients in the affected region proactively — they don\'t wait for a ping.' },
+  { q: 'GPS doesn\'t work underground — how do you find her?', a: 'Last cached GPS coordinates transmit — typically accurate within 10–50 meters. Cell tower triangulation as fallback. Rescue teams use the last known point, same as real SAR operations.' },
+  { q: 'How is this different from Life360 or Find My Friends?', a: 'Those tools show family where you are. Morales coordinates the rescue — dispatches local emergency services in their language, activates the US Embassy, contacts the concierge, logs an audit chain.' },
+  { q: 'Has this worked in a real emergency?', a: 'This is a buildathon. Every component — accelerometer detection, BLE mesh relay, USGS feeds, Embassy protocols — is proven in production elsewhere. Morales integrates them for medical travelers specifically.' },
+];
+
+function JudgePanel({ onClose }) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+      onClick={onClose}>
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
+        onClick={e => e.stopPropagation()}
+        style={{ background: '#0a1520', border: '1px solid rgba(212,175,55,0.3)', borderRadius: 20, padding: '28px 28px 24px', maxWidth: 620, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+          <div>
+            <p style={{ fontSize: 9, fontWeight: 800, color: GOLD, letterSpacing: '0.2em', margin: '0 0 4px' }}>JUDGE Q&A REFERENCE</p>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#fff', margin: 0 }}>Hard Questions — Real Answers</h2>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700, padding: '6px 12px', cursor: 'pointer' }}>✕ CLOSE</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {QA.map(({ q, a }, i) => (
+            <div key={i} style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p style={{ fontSize: 12, fontWeight: 800, color: GOLD, margin: '0 0 6px' }}>Q: {q}</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>{a}</p>
+            </div>
+          ))}
+        </div>
+        <p style={{ marginTop: 20, fontSize: 10, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
+          Tap outside or ✕ to return to demo
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 const SCENE_LABELS = ['INTRO', 'AUTO-DETECT', 'BROADCAST', 'MESH RELAY', 'SIT. ROOM', 'DISPATCH'];
 
 export default function EmergencyMeshBeaconDemo() {
   const [scene, setScene] = useState(0);
+  const [showQA, setShowQA] = useState(false);
 
   const next = useCallback(() => setScene(s => Math.min(s + 1, 5)), []);
 
@@ -406,13 +448,19 @@ export default function EmergencyMeshBeaconDemo() {
 
   return (
     <div style={{ height: '100vh', background: BG, color: '#fff', fontFamily: FONT, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <AnimatePresence>{showQA && <JudgePanel onClose={() => setShowQA(false)} />}</AnimatePresence>
+
       {/* Nav */}
       <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
         <Link to="/demo" style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textDecoration: 'none', fontWeight: 600 }}>← Demo</Link>
         <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.08)' }} />
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', color: RED }}>EMERGENCY MESH BEACON</span>
         <span style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>CR-55</span>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => setShowQA(true)}
+            style={{ padding: '5px 12px', borderRadius: 8, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 9, fontWeight: 800, cursor: 'pointer', letterSpacing: '0.1em' }}>
+            JUDGE Q&A
+          </button>
           {SCENE_LABELS.map((label, i) => (
             <button key={i} onClick={() => setScene(i)} title={label}
               style={{ width: i === scene ? 22 : 7, height: 7, borderRadius: 4, background: i === scene ? RED : i < scene ? `${RED}45` : 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', transition: 'all 0.3s' }}
