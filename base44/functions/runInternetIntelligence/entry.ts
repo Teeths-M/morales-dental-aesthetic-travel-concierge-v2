@@ -57,7 +57,7 @@ const COUNTRY_CODES: Record<string, string[]> = {
   'UAE':                     ['+971'],
 };
 
-Deno.serve(createHandler(async ({ base44, body }) => {
+Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {
     partner_id,
     partner_type = 'doctor',
@@ -74,6 +74,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   if (!partner_id || !registered_name) {
     return err('partner_id and registered_name are required');
+  }
+
+  // ── 0. Authorization ──────────────────────────────────────────────────────────
+  // Admins can scan any partner. Doctors (calling at signup) can only scan themselves.
+  const isAdminCaller = user?.role === 'admin' || user?.role === 'platform_admin';
+  if (!isAdminCaller) {
+    if (partner_type !== 'doctor') return err('Unauthorized', 403);
+    const own = await base44.asServiceRole.entities.Doctor
+      .get(partner_id).catch(() => null as any);
+    if (!own || own.email !== user?.email) {
+      return err('Unauthorized — doctors may only trigger their own scan', 403);
+    }
   }
 
   const signals: Record<string, unknown> = {};
@@ -179,6 +191,25 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   } else {
     signals.phone_provided = false;
     riskScore += 10;
+  }
+
+  // ── 3b. Fraud network — cross-partner phone check ─────────────────────────────
+  // If the same phone number exists on any other partner application, flag it.
+  if (phone) {
+    try {
+      const allEntities = ['Doctor', 'TravelAgency', 'TaxiService', 'SecurityAgency'];
+      let sharedCount = 0;
+      await Promise.allSettled(allEntities.map(async (ent) => {
+        const hits = await (base44.asServiceRole.entities as any)[ent]
+          .filter({ phone }, '-created_date', 10).catch(() => []);
+        sharedCount += (hits as any[]).filter((r: any) => r.id !== partner_id).length;
+      }));
+      if (sharedCount > 0) {
+        signals.phone_shared_partners = sharedCount;
+        signals.phone_flag = 'shared_across_partners';
+        riskScore += Math.min(sharedCount * 20, 40);
+      }
+    } catch (_) { /* non-fatal */ }
   }
 
   // ── 4. AI Web Intelligence ────────────────────────────────────────────────────
