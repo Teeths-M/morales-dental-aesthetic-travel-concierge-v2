@@ -124,10 +124,14 @@ export default function Providers() {
 
   const suggestions = useMemo(() => {
     const q = searchQuery.trim();
-    if (q.length < 2) return [];
+    if (q.length < 1) return [];
+    // Single-char: only prefix matches (score ≥ 80) so "M" shows Mexico/Malaysia
+    // not every entry containing the letter.
+    // Two+ chars: full fuzzy at threshold 45.
+    const threshold = q.length === 1 ? 80 : 45;
     return suggestionPool
       .map(s => ({ ...s, score: fuzzyScore(q, s.label) }))
-      .filter(s => s.score >= 55)
+      .filter(s => s.score >= threshold)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8);
   }, [searchQuery, suggestionPool]);
