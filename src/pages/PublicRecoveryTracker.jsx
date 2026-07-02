@@ -259,7 +259,7 @@ export default function PublicRecoveryTracker() {
         <div className="text-center pb-6">
           <div className="flex items-center justify-center gap-1.5 mb-2">
             <Shield className="w-3.5 h-3.5" style={{ color: GOLD }} />
-            <span className="text-xs font-semibold" style={{ color: GOLD }}>Protected by Morales Safe-T4life™</span>
+            <span className="text-xs font-semibold" style={{ color: GOLD }}>Protected by Morales</span>
           </div>
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Medical & privacy information is never shared on this page.<br/>

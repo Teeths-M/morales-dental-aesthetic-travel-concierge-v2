@@ -43,7 +43,7 @@ export default function SectionClinicalBoundary({ form, update, showValidation =
             <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
               <li>Coordination with verified, licensed medical providers</li>
               <li>Travel, accommodation, and logistics planning</li>
-              <li>Safety screening support via SAFE-T4LIFE™ protocol</li>
+              <li>Safety screening support from our medical review team</li>
               <li>Companion and recovery coordination services</li>
               <li>Communication support between you and your provider</li>
             </ul>

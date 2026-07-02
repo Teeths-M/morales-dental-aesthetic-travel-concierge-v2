@@ -45,7 +45,7 @@ const LoginRequired = ({ onLogin }) => (
       </Button>
 
       <p style={{ marginTop: 24, fontSize: 11, color: 'rgba(255,255,255,0.18)', lineHeight: 1.6 }}>
-        Protected by SAFE-T4LIFE™ · End-to-end encrypted
+        Protected by Morales · End-to-end encrypted
       </p>
     </div>
   </div>

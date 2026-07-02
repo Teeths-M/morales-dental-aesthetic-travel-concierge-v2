@@ -103,7 +103,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <Plane className="w-4 h-4" style={{ color: '#C5A059' }} />
         </div>
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>SAFE-T4LIFE™ Engine</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#C5A059' }}>Medical Travel Review</p>
           <h4 className="text-sm font-semibold text-white">Recommended Medical Travel Timeline</h4>
         </div>
         {/* Trip duration badge + stepper */}
@@ -179,7 +179,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
           <div className="flex gap-3">
             <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C5A059' }} />
             <div>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#C5A059' }}>✨ SAFE-T4LIFE™ Minimum Window</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#C5A059' }}>✨ Recommended Minimum Window</p>
               <p className="text-xs leading-relaxed text-white/70">
                 Arrive on the nearest flight day before your procedure, then fly home on the next available flight day. Use + to extend your stay if you'd like more recovery time.
               </p>

@@ -9,7 +9,7 @@ function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', cur
 
 const PIPELINE_STAGES = [
   { key: 'Submitted',             label: 'Submitted',            icon: '📋', desc: 'Your consultation has been received.' },
-  { key: 'Safe-T-Reviewed',       label: 'Safety Screening',     icon: '🛡️', desc: 'Our SAFE-T4LIFE™ AI reviewed your health profile.' },
+  { key: 'Safe-T-Reviewed',       label: 'Safety Screening',     icon: '🛡️', desc: 'Our safety team reviewed your health profile.' },
   { key: 'Doctor-Pending',        label: 'Doctor Review',        icon: '🩺', desc: 'Your assigned doctor is reviewing your case.' },
   { key: 'Vendor-Pending',        label: 'Logistics Coordination', icon: '🌍', desc: 'We\'re coordinating your travel and transfer.' },
   { key: 'Admin-Review',          label: 'Admin Verification',   icon: '🔍', desc: 'Your full package is being verified by our team.' },

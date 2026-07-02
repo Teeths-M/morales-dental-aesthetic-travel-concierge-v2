@@ -16,7 +16,7 @@ const QUICK_PROMPTS = [
 
 const WELCOME_MSG = {
   role: 'assistant',
-  content: "Hello. I'm your **Safe-T4life AI Assistant** — your all-knowing companion for this medical journey.\n\nI can help you with:\n• Journey safety & checkpoint tracking\n• Medical preparation & recovery\n• Travel logistics & emergencies\n• Passport vault, guardian setup, and offline safety\n\nWhat do you need right now?",
+  content: "Hello. I'm your **Morales Assistant** — your all-knowing companion for this medical journey.\n\nI can help you with:\n• Journey safety & checkpoint tracking\n• Medical preparation & recovery\n• Travel logistics & emergencies\n• Passport vault, guardian setup, and offline safety\n\nWhat do you need right now?",
 };
 
 function parseMarkdown(text) {
@@ -146,7 +146,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
                 </div>
                 <div>
                   <p style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 600, lineHeight: 1.2, margin: 0 }}>
-                    Safe-T4life Assistant
+                    Morales Assistant
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                     <span style={{
@@ -270,7 +270,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
                       style={{ width: '14px', height: '14px', color: '#34d399', animation: 'spin 1s linear infinite' }}
                     />
                     <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
-                      Safe-T4life is thinking…
+                      Morales is thinking…
                     </span>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function SafeTAssistantPanel({ isOpen, onClose }) {
                 textAlign: 'center', marginTop: '8px',
                 fontSize: '10px', color: 'rgba(255,255,255,0.18)',
               }}>
-                Safe-T4life AI · For immediate danger, use Secure Line ↘
+                Morales AI · For immediate danger, use Secure Line ↘
               </p>
             </div>
           </motion.div>

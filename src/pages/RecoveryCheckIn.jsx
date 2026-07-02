@@ -172,7 +172,7 @@ export default function RecoveryCheckIn() {
                   <p style={{ margin: 0, fontSize: 13, color: '#fca5a5' }}>Your doctor has been notified and will follow up with you directly.</p>
                 </div>
               ) : null}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety · Safe-T4life™ Care</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety</p>
             </div>
           </Step>
         )}
@@ -197,7 +197,7 @@ function Page({ children }) {
       </div>
       <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
         <Heart style={{ width: 12, height: 12, color: GOLD }} />
-        <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>Safe-T4life™ — Care that follows you home</p>
+        <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>Care that follows you home</p>
       </div>
     </div>
   );

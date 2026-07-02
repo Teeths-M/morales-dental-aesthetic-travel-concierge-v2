@@ -64,7 +64,7 @@ export default function CompatibilityFirewall({ items, compact = false }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded border ${colors.label}`}>
-                SAFE-T4LIFE™ {copy.label}
+                Safety Review · {copy.label}
               </span>
             </div>
             <p className={`text-[11px] leading-snug font-medium ${colors.headline}`}>{copy.headline}</p>
@@ -96,7 +96,7 @@ export default function CompatibilityFirewall({ items, compact = false }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${colors.label}`}>
-              SAFE-T4LIFE™
+              Safety Review
             </span>
             <span className={`text-[10px] font-semibold ${colors.headline}`}>{copy.label}</span>
           </div>

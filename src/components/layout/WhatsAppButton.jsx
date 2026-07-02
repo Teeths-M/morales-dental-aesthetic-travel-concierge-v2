@@ -124,7 +124,7 @@ export default function WhatsAppButton() {
                   <Bot style={{ width: 18, height: 18, color: '#34d399', flexShrink: 0 }} />
                   <div>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#34d399', lineHeight: 1.2 }}>AI Assistant</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>Safe-T4life · always on</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3, marginTop: 2 }}>Morales Safety · always on</p>
                   </div>
                 </button>
 

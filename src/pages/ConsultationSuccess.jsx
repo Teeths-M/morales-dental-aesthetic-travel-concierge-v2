@@ -79,7 +79,7 @@ export default function ConsultationSuccess() {
             <p style={{ margin: '0 0 8px', fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
               {enabled
                 ? `Guardian Mode is now protecting your journey, ${patientName.split(' ')[0] || 'you'}. Daily check-ins and safety monitoring will activate when your journey begins.`
-                : 'Our SAFE-T4LIFE™ system is reviewing your medical profile. You will receive an email with next steps shortly.'}
+                : 'Our safety team is reviewing your medical profile. You will receive an email with next steps shortly.'}
             </p>
 
             {enabled && (

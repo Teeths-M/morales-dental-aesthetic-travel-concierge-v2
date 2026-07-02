@@ -480,7 +480,7 @@ export default function Hero() {
         {/* Top center label — desktop only */}
         <motion.div className="text-center mb-4 hidden lg:block"
           initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <p className="text-sm font-semibold tracking-[0.28em]" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
+          <p className="text-sm font-semibold tracking-[0.28em]" style={{ color: GOLD }}>MORALES</p>
           <p className="text-[10px] text-slate-400 tracking-[0.2em] mt-1">SAFETY INTELLIGENCE ENGINE</p>
         </motion.div>
 

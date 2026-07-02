@@ -7,7 +7,7 @@ import { ROUTES } from '@/lib/constants';
 const trustItems = [
   { icon: Shield,      label: 'EVN-iQ400™ · 195 Countries' },
   { icon: Award,       label: 'MedGuard™ · Behavioural AI' },
-  { icon: Heart,       label: 'Safe-T4life™ · 5-Tier Escalation' },
+  { icon: Heart,       label: '5-Tier Safety Escalation' },
   { icon: Headphones,  label: '24/7 Concierge · Always On' },
   { icon: CheckCircle, label: 'Satellite SOS · Zero Signal Ready' },
 ];

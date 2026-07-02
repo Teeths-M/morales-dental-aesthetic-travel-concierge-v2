@@ -396,7 +396,7 @@ export default function ConsultationForm() {
 
                 {/* Trust badges */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER}` }}>
-                  {[['🔒','HIPAA Compliant'],['🛡️','SAFE-T4LIFE™ Encrypted'],['⭐','98% Satisfaction'],['💳','$49 Credited to Package']].map(([icon, text]) => (
+                  {[['🔒','HIPAA Compliant'],['🛡️','End-to-End Encrypted'],['⭐','98% Satisfaction'],['💳','$49 Credited to Package']].map(([icon, text]) => (
                     <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
                       <span style={{ fontSize: 13 }}>{icon}</span>{text}
                     </div>

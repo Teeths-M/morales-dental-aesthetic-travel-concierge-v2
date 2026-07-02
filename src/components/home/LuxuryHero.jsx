@@ -30,7 +30,7 @@ const CONTENT = {
 const TRUST_BADGES = [
   { icon: BadgeCheck, label: 'ISO 21101 Certified' },
   { icon: BadgeCheck, label: '100+ Verified Surgeons' },
-  { icon: Heart,      label: 'Safe-T4life™ Protected' },
+  { icon: Heart,      label: 'Safety Verified' },
 ];
 
 /* ── Feature cards below hero ─────────────────────────────────────────────── */

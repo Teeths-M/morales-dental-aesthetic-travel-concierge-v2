@@ -34,7 +34,7 @@ const scenes = [
   },
   {
     id: 3,
-    tag: 'STEP 2 — SAFE-T4LIFE™',
+    tag: 'STEP 2 — SAFETY REVIEW',
     headline: 'We prioritize safety first.',
     sub: "Our proprietary intelligence engine evaluates every procedure combination for risk — before anything is booked.",
     emotion: '"They protect me."',
@@ -103,7 +103,7 @@ const scenes = [
 const SUBTITLES = [
   "You've been researching. You're ready for something better.",
   "Share your goals in minutes. Your coordinator does the rest.",
-  "SAFE-T4LIFE™ screens every procedure combination for risk before booking.",
+  "We screen every procedure combination for medical risk before anything is booked.",
   "Board-certified specialists. Accredited clinics. Every credential verified.",
   "Flights, hotels, transfers — one seamless itinerary, zero stress.",
   "Personal companion. 24/7 coordination. You are never alone.",
@@ -395,7 +395,7 @@ function FinalVisual() {
         >
           <span className="font-display text-3xl font-semibold" style={{ color: GOLD }}>M</span>
         </div>
-        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase mt-1" style={{ color: GOLD }}>SAFE-T4LIFE™</p>
+        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase mt-1" style={{ color: GOLD }}>MORALES</p>
       </motion.div>
     </div>
   );

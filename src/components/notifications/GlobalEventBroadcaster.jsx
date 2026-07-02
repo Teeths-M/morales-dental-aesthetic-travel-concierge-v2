@@ -238,7 +238,7 @@ export default function GlobalEventBroadcaster({ user }) {
       title:    `Welcome to ${country}`,
       body:     activeTrip?.current_step < 4
         ? 'Your driver and hotel details are ready. Tap to view.'
-        : 'Safe-T4life protection is active. Stay safe.',
+        : 'Morales protection is active. Stay safe.',
       duration: 0, // stays until dismissed
       position: 'top',
       action: activeTrip ? {
