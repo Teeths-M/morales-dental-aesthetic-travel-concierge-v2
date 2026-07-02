@@ -56,7 +56,7 @@ export default function Footer() {
                 { label: 'Find Doctors',  path: '/providers' },
                 { label: 'Procedures',    path: '/procedures' },
                 { label: 'Visa Assist',   path: '/visa-assist' },
-                { label: 'Travel Safety', path: '/safet' },
+                { label: 'Travel Safety', path: '/safe-t' },
               ].map(({ label, path }) => (
                 <Link key={path} to={path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{label}</Link>
               ))}
