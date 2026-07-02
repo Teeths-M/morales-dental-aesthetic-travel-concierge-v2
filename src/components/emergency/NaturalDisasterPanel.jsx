@@ -191,7 +191,7 @@ const DISASTER_GUIDES = {
 async function checkNearbyEarthquake(lat, lng) {
   try {
     const now = new Date();
-    const past24h = new Date(now - 24 * 60 * 60 * 1000).toISOString().split('.')[0];
+    const past24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('.')[0];
     const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${past24h}&minmagnitude=4.5&latitude=${lat}&longitude=${lng}&maxradiuskm=500&limit=1&orderby=magnitude`;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     const data = await res.json();

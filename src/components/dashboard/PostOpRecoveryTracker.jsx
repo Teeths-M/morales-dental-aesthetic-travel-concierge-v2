@@ -106,7 +106,7 @@ export default function PostOpRecoveryTracker({ checkIns = [] }) {
             const next = all4.find(c => c.rec?.status === 'pending');
             if (!next) return null;
             const scheduledAt = next.rec?.scheduled_at;
-            const daysLeft = scheduledAt ? Math.max(0, Math.ceil((new Date(scheduledAt) - Date.now()) / 86_400_000)) : null;
+            const daysLeft = scheduledAt ? Math.max(0, Math.ceil((new Date(scheduledAt).getTime() - Date.now()) / 86_400_000)) : null;
             return (
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Next: <span style={{ color: GOLD, fontWeight: 600 }}>{next.label}</span>

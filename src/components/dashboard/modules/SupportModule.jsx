@@ -50,7 +50,7 @@ export default function SupportModule() {
         {[
           {
             icon: MessageCircle, label: 'Live Chat', sub: 'Available 24/7', color: 'emerald', action: 'Start Chat',
-            onClick: () => document.querySelector('[data-chat-trigger]')?.click(),
+            onClick: () => /** @type {HTMLElement|null} */(document.querySelector('[data-chat-trigger]'))?.click(),
           },
           {
             icon: Phone, label: 'WhatsApp Support', sub: '+1 (800) MRL-CARE', color: 'green', action: 'Open WhatsApp',

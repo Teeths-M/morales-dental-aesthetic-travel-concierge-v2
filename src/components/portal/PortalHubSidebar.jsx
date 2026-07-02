@@ -21,7 +21,7 @@ export const navItems = [
   { id: 'payments', label: 'Payment Tracking', icon: CreditCard },
 ];
 
-function SidebarContent({ activeTab, setActiveTab, onClose }) {
+function SidebarContent({ activeTab, setActiveTab, onClose = null }) {
   const handleLogout = async () => {
     await base44.auth.logout('/');
   };

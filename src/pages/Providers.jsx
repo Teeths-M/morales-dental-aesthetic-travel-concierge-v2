@@ -80,7 +80,7 @@ export default function Providers() {
         <motion.div className="mb-8 space-y-4" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           {/* Search bar */}
           <div style={{ position: 'relative', maxWidth: 520 }}>
-            <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', pointerEvents: 'none' }} />
+            <Search size="16" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', pointerEvents: 'none' }} />
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -94,7 +94,7 @@ export default function Providers() {
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>
-                <X size={15} />
+                <X size="15" />
               </button>
             )}
           </div>
@@ -158,7 +158,7 @@ export default function Providers() {
                   {/* Photo */}
                   <div style={{ height: 180, background: 'linear-gradient(135deg, #0C1A1D, #1a2f38)', position: 'relative', flexShrink: 0 }}>
                     {doctor.photo_url?.trim() ? (
-                      <img src={doctor.photo_url} alt={doctor.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                      <img src={doctor.photo_url} alt={doctor.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { /** @type {HTMLImageElement} */(e.target).style.display = 'none'; }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56, fontWeight: 700, color: GOLD, opacity: 0.6 }}>
                         {doctor.full_name?.charAt(0) || 'D'}

@@ -7,7 +7,7 @@ export default function CrisisCountdownTimer({ deadline, onExpired }) {
     if (!deadline) return;
 
     const compute = () => {
-      const remaining = Math.max(0, new Date(deadline) - new Date());
+      const remaining = Math.max(0, new Date(deadline).getTime() - Date.now());
       setTimeLeft(remaining);
       if (remaining === 0 && onExpired) onExpired();
     };

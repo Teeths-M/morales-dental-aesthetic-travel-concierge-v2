@@ -53,7 +53,7 @@ export default function RecoveryModePanel({ caseId }) {
 
   const playGentleChime = () => {
     try {
-      if (!audioCtx.current) audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+      if (!audioCtx.current) audioCtx.current = new (window.AudioContext || /** @type {any} */(window).webkitAudioContext)();
       const ctx = audioCtx.current;
       // Gentle sine wave — 440Hz, low gain, slow fade
       const osc = ctx.createOscillator();

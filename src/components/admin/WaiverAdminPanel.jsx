@@ -34,8 +34,8 @@ export default function WaiverAdminPanel({ caseRecord }) {
     },
     onSuccess: () => {
       toast.success('Waiver reissued. Patient will need to re-sign.');
-      queryClient.invalidateQueries(['waivers', caseRecord.id]);
-      queryClient.invalidateQueries(['admin_all_cases']);
+      queryClient.invalidateQueries({ queryKey: ['waivers', caseRecord.id] });
+      queryClient.invalidateQueries({ queryKey: ['admin_all_cases'] });
     },
     onError: () => toast.error('Failed to reissue waiver.'),
   });

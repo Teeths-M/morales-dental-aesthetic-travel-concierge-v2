@@ -39,7 +39,7 @@ function ProfileAvatar({ photo, onUpload }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result;
+      const dataUrl = /** @type {string} */(reader.result);
       try { localStorage.setItem(PHOTO_KEY, dataUrl); } catch (_) {}
       onUpload(dataUrl);
     };
@@ -110,7 +110,7 @@ function ProfileAvatar({ photo, onUpload }) {
 }
 
 // ── Sidebar content ───────────────────────────────────────────────────────────
-function SidebarContent({ location, onClose }) {
+function SidebarContent({ location, onClose = null }) {
   const { user } = useAuth();
   const [photo, setPhoto] = useState(() => {
     try { return localStorage.getItem(PHOTO_KEY) || null; } catch { return null; }

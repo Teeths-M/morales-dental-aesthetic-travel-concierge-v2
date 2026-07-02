@@ -51,7 +51,7 @@ export default function DefaultDoctorConfigPanel() {
       return base44.entities.DefaultDoctorConfig.create(payload);
     },
     onSuccess: () => {
-      qc.invalidateQueries(['defaultDoctorConfig']);
+      qc.invalidateQueries({ queryKey: ['defaultDoctorConfig'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },

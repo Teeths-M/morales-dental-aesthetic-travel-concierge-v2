@@ -28,7 +28,7 @@ export default function ActivityNudgeBanner({ sessions = [], onRefresh }) {
   const upcoming = sessions.filter(s => {
     if (!s.scheduled_start_at || s.status !== 'registered') return false;
     const start = new Date(s.scheduled_start_at);
-    const diff = start - now;
+    const diff = start.getTime() - now.getTime();
     return diff > 0 && diff <= 2 * oneHour && !dismissed[s.id];
   });
 
@@ -68,7 +68,7 @@ export default function ActivityNudgeBanner({ sessions = [], onRefresh }) {
         const checklist = getChecklist(key);
         const isOpen = expanded === session.id;
         const start = new Date(session.scheduled_start_at);
-        const minsUntil = Math.round((start - now) / 60000);
+        const minsUntil = Math.round((start.getTime() - now.getTime()) / 60000);
 
         return (
           <motion.div

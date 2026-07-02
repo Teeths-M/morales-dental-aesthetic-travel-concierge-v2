@@ -46,7 +46,7 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
   const hs1Time = trip?.handshake_timestamps?.['1'];
   let durationLabel = null;
   if (hs1Time && hs9Time) {
-    const ms = new Date(hs9Time) - new Date(hs1Time);
+    const ms = new Date(hs9Time).getTime() - new Date(hs1Time).getTime();
     const hours = Math.floor(ms / 3_600_000);
     const days  = Math.floor(hours / 24);
     durationLabel = days > 0 ? `${days} day${days !== 1 ? 's' : ''}` : `${hours}h`;

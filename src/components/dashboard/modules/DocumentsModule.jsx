@@ -51,7 +51,7 @@ export default function DocumentsModule() {
   const [uploaded,  setUploaded]  = useState([]);
   const [dragging,  setDragging]  = useState(false);
   const [uploadMsg, setUploadMsg] = useState(null); // { type: 'success'|'error', text }
-  const fileRef = useRef();
+  const fileRef = /** @type {import('react').RefObject<HTMLInputElement>} */ (useRef());
 
   const handleFile = async (file) => {
     if (!file) return;

@@ -36,7 +36,7 @@ export default function GuardianLinkManager({ caseId, patientEmail }) {
         case_id: caseId,
         guardian_name: form.guardian_name,
         guardian_email: form.guardian_email,
-        expires_hours: parseInt(form.expires_hours),
+        expires_hours: form.expires_hours,
         data_scope: ['case_status', 'journey_stage', 'location']
       });
       if (res?.guardian_url || res?.data?.guardian_url) {

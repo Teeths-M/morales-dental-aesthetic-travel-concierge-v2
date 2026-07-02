@@ -172,7 +172,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
 
         {/* Legal Confirmation */}
         <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
-          <Checkbox checked={confirmed} onCheckedChange={setConfirmed} className="mt-1" />
+          <Checkbox checked={confirmed} onCheckedChange={/** @type {any} */(setConfirmed)} className="mt-1" />
           <label className="text-sm text-foreground cursor-pointer">
             {language === 'es'
               ? 'Confirmo que puedo proporcionar legalmente servicios de viaje en las regiones seleccionadas.'

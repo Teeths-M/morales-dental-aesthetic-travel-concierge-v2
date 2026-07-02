@@ -19,7 +19,7 @@ export default function DoctorProfilesManager() {
   const [activeDoctorForProcedures, setActiveDoctorForProcedures] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: doctors = [], isLoading } = useQuery({
+  const { data: _rawDoctors = [], isLoading } = useQuery({
     queryKey: ['admin_all_doctors'],
     queryFn: async () => {
       const doctorsList = await base44.entities.Doctor.list();
@@ -33,6 +33,7 @@ export default function DoctorProfilesManager() {
       return doctorsWithCount;
     },
   });
+  const doctors = /** @type {any[]} */ (_rawDoctors);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Doctor.update(id, data),

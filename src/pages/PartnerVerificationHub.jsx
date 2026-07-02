@@ -83,7 +83,7 @@ export default function PartnerVerificationHub() {
       return base44.functions.invoke('manualReviewVerification', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['partner-verifications']);
+      queryClient.invalidateQueries({ queryKey: ['partner-verifications'] });
       setReviewDialogOpen(false);
       setReviewNotes('');
     }

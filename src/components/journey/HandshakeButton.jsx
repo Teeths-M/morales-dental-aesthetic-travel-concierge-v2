@@ -115,6 +115,7 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
           gpsLat:          gps?.lat    ?? null,
           gpsLng:          gps?.lng    ?? null,
           gpsAccuracyM:    gps?.accuracy_m ?? null,
+          method:          'web',
         });
         enqueueHandshake(packet);
         showToast(`Saved! We'll confirm this step when you reconnect. ${NEXT_STEP_HINTS[nextStep] || ''}`, 'queued');

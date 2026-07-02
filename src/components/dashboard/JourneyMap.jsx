@@ -23,7 +23,7 @@ import L from 'leaflet';
 const GOLD = '#D4AF37';
 
 // Fix Vite/Webpack stripping Leaflet's default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
+delete (/** @type {any} */(L.Icon.Default.prototype))._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -135,7 +135,7 @@ export default function JourneyMap({ hotelCoords, hotelName, hotelAddress, clini
       {/* ── Map or placeholder ── */}
       {hasAny ? (
         <MapContainer
-          center={center}
+          center={/** @type {any} */(center)}
           zoom={14}
           style={{ height: 290, width: '100%' }}
           zoomControl={false}

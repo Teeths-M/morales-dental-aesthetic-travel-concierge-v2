@@ -87,7 +87,7 @@ export default function BroadcastPortalLinksPanel() {
         <Checkbox
           id="dry_run"
           checked={dryRun}
-          onCheckedChange={setDryRun}
+          onCheckedChange={/** @type {any} */(setDryRun)}
         />
         <label htmlFor="dry_run" className="text-sm cursor-pointer">
           <span className="font-semibold text-amber-800">Dry Run (Preview Only)</span>

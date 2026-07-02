@@ -54,7 +54,7 @@ const RISK_CONFIG = {
   },
 };
 
-export default function SafeTScan({ form, items, onResult, onScanComplete }) {
+export default function SafeTScan({ form, items, onResult = null, onScanComplete }) {
   const [status, setStatus] = useState('idle'); // idle | scanning | done
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(false);

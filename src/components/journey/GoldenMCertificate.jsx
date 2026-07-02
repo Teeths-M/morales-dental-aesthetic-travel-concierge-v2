@@ -25,7 +25,7 @@ function generateCertNumber() {
   return `MRC-${year}-${rand}`;
 }
 
-export default function GoldenMCertificate({ patientName, procedure, destination, completedDate, duration, certNumber, onClose }) {
+export default function GoldenMCertificate({ patientName, procedure, destination, completedDate, duration, certNumber = null, onClose }) {
   const num = certNumber || generateCertNumber();
   const dateLabel = completedDate
     ? new Date(completedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })

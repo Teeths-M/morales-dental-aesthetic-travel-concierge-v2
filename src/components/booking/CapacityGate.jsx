@@ -10,7 +10,7 @@ function formatMonth(ym) {
   return new Date(Number(y), Number(m) - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
 }
 
-export default function CapacityGate({ form, onProceed, onMonthChange }) {
+export default function CapacityGate({ form, onProceed = null, onMonthChange = null }) {
   const [status, setStatus] = useState(null); // null | loading | open | full
   const [capData, setCapData] = useState(null);
   const [joining, setJoining] = useState(false);

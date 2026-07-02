@@ -393,7 +393,7 @@ export default function AdminConfigApprovals() {
         {showRequestModal && (
           <RequestChangeModal
             onClose={() => setShowRequestModal(false)}
-            onSuccess={() => queryClient.invalidateQueries(['system_config_changes'])}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['system_config_changes'] })}
           />
         )}
       </AnimatePresence>

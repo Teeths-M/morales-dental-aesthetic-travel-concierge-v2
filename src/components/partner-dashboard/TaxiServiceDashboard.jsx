@@ -53,7 +53,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
     try {
       await base44.entities.TaxiService.update(taxi.id, { is_available: !isOnline });
       setIsOnline(v => !v);
-      queryClient.invalidateQueries(['taxi-cases', taxi.id]);
+      queryClient.invalidateQueries({ queryKey: ['taxi-cases', taxi.id] });
     } catch (_) { toast.error('Could not update availability'); }
     finally { setToggling(false); }
   };

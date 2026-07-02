@@ -123,7 +123,7 @@ export default function DoctorPortfolio({ doctorId, portfolio = [] }) {
                     src={item.url}
                     alt={item.title}
                     className="w-full h-full object-cover"
-                    onError={e => { e.target.onerror = null; e.target.src = '/placeholder-image.png'; }}
+                    onError={e => { const t = /** @type {HTMLImageElement} */(e.target); t.onerror = null; t.src = '/placeholder-image.png'; }}
                   />
                 ) : (
                   <>

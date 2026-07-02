@@ -145,7 +145,7 @@ function MedCard({ caseRec, user }) {
   );
 }
 
-function Field({ label, value, highlight, danger, color }) {
+function Field({ label, value, highlight = false, danger = false, color = null }) {
   return (
     <div style={{ background: danger ? '#fff1f2' : '#f8fafc', border: `1px solid ${danger ? '#fecdd3' : '#e2e8f0'}`, borderRadius: 10, padding: '10px 14px' }}>
       <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>

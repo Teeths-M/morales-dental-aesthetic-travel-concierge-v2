@@ -22,7 +22,7 @@ const GOLD = '#D4AF37';
 const HQ   = [25.77, -80.19]; // Miami, FL — Morales HQ
 
 // World bounds — prevents Leaflet from wrapping / tiling the map twice
-const WORLD_BOUNDS = [[-85, -180], [85, 180]];
+const WORLD_BOUNDS = /** @type {any} */([[-85, -180], [85, 180]]);
 
 const DESTINATIONS = [
   { iso: 'MX', name: 'Mexico',       lat: 23.6,   lng: -102.5 },
@@ -336,7 +336,7 @@ export default function SituationRoom() {
 
               {/* HQ pulsing marker — Miami */}
               <CircleMarker
-                center={HQ}
+                center={/** @type {any} */(HQ)}
                 radius={10}
                 pathOptions={{ fillColor: GOLD, color: '#fff', weight: 2.5, fillOpacity: 1 }}
               >
@@ -354,7 +354,7 @@ export default function SituationRoom() {
                 return (
                   <Polyline
                     key={`line-${dest.iso}`}
-                    positions={[HQ, [dest.lat, dest.lng]]}
+                    positions={/** @type {any} */([HQ, [dest.lat, dest.lng]])}
                     pathOptions={{
                       color:     isHR ? '#ef4444' : GOLD,
                       weight:    isHR ? 2 : 1.5,

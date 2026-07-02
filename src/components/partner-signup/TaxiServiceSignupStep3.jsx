@@ -201,7 +201,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
         {/* Legal Confirmations */}
         <div className="space-y-3 border-t border-border pt-6">
           <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
-            <Checkbox checked={licenseConfirmed} onCheckedChange={setLicenseConfirmed} className="mt-1" />
+            <Checkbox checked={licenseConfirmed} onCheckedChange={/** @type {any} */(setLicenseConfirmed)} className="mt-1" />
             <label className="text-sm text-foreground cursor-pointer">
               {language === 'es'
                 ? 'Tengo una licencia de conducir válida.'
@@ -212,7 +212,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
           </div>
 
           <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
-            <Checkbox checked={insuranceConfirmed} onCheckedChange={setInsuranceConfirmed} className="mt-1" />
+            <Checkbox checked={insuranceConfirmed} onCheckedChange={/** @type {any} */(setInsuranceConfirmed)} className="mt-1" />
             <label className="text-sm text-foreground cursor-pointer">
               {language === 'es'
                 ? 'Tengo seguro válido para transportar pacientes.'

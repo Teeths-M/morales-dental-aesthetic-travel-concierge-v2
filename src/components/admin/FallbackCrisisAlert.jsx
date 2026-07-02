@@ -21,7 +21,7 @@ function getInFluxCases(cases) {
       if (
         c.doctor_confirmation_status === 'PENDING' &&
         c.doctor_notified_at &&
-        (now - new Date(c.doctor_notified_at)) > CONFIRMATION_WINDOW_MS
+        (now.getTime() - new Date(c.doctor_notified_at).getTime()) > CONFIRMATION_WINDOW_MS
       ) return true;
 
       return false;

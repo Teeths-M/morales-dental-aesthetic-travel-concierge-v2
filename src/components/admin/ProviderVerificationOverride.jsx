@@ -61,11 +61,11 @@ export default function ProviderVerificationOverride() {
   });
 
   // Combine all providers
-  const allProviders = [
+  const allProviders = /** @type {any[]} */ ([
     ...doctors.map(d => ({ ...d, provider_type: 'doctor' })),
     ...travelAgencies.map(t => ({ ...t, provider_type: 'travel_agency' })),
     ...taxiServices.map(t => ({ ...t, provider_type: 'taxi_service' }))
-  ];
+  ]);
 
   // Filter to only those needing verification review
   const providersNeedingReview = allProviders.filter(p => 
@@ -119,8 +119,8 @@ export default function ProviderVerificationOverride() {
     },
     onSuccess: () => {
       toast.success('Override applied successfully');
-      queryClient.invalidateQueries(['verifications']);
-      queryClient.invalidateQueries(['doctors', 'travelAgencies', 'taxiServices']);
+      queryClient.invalidateQueries({ queryKey: ['verifications'] });
+      queryClient.invalidateQueries({ queryKey: ['doctors', 'travelAgencies', 'taxiServices'] });
       setIsDialogOpen(false);
       setOverrideReason('');
       setSelectedProvider(null);
@@ -197,7 +197,7 @@ export default function ProviderVerificationOverride() {
                   size="sm"
                   onClick={() => {
                     setSelectedProvider(provider);
-                    queryClient.invalidateQueries(['verifications']);
+                    queryClient.invalidateQueries({ queryKey: ['verifications'] });
                   }}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />

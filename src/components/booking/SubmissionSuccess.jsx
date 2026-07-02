@@ -225,7 +225,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <h3 className="font-semibold text-white text-sm">What Happens Next</h3>
           </div>
-          <div style={{ divideColor: 'rgba(255,255,255,0.06)' }}>
+          <div>
             {NEXT_STEPS.map((s, i) => (
               <div key={i} className="flex items-start gap-3 px-5 py-4" style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: s.done ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)' }}>

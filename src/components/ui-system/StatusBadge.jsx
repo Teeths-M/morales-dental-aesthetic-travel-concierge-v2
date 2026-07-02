@@ -82,7 +82,7 @@ const SIZE_STYLES = {
 
 const LIVE_STATUSES = new Set(['active', 'in_progress', 'processing', 'session_created']);
 
-export default function StatusBadge({ status = '', label, size = 'md', dot = true, className = '' }) {
+export default function StatusBadge({ status = '', label = undefined, size = 'md', dot = true, className = '' }) {
   const key = status.toLowerCase().replace(/-/g, '_');
   const config = STATUS_MAP[key] || { color: 'gray', label: status || '—' };
   const styles = COLOR_STYLES[config.color];

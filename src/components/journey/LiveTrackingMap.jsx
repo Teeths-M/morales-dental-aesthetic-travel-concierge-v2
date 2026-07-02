@@ -167,7 +167,7 @@ export default function LiveTrackingMap() {
     return () => clearInterval(t);
   }, [isLive]);
 
-  const secAgo = Math.floor((new Date() - lastUpdate) / 1000);
+  const secAgo = Math.floor((Date.now() - lastUpdate.getTime()) / 1000);
 
   return (
     <div className="space-y-4">

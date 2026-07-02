@@ -215,7 +215,7 @@ function Step({ children }) {
   );
 }
 
-function Label({ children, style }) {
+function Label({ children, style = null }) {
   return <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 600, color: '#fff', fontFamily: 'Georgia, serif', ...style }}>{children}</h3>;
 }
 

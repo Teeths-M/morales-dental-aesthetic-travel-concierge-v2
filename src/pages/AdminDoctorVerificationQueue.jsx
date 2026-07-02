@@ -173,7 +173,7 @@ export default function AdminDoctorVerificationQueue() {
       await base44.functions.invoke('runDoctorVerification', {
         action: 'admin_verify', verification_record_id: selected.id, notes,
       });
-      setSelected(null); qc.invalidateQueries(['doctor-verifications']);
+      setSelected(null); qc.invalidateQueries({ queryKey: ['doctor-verifications'] });
     } catch (e) { setError(e?.message || 'Action failed'); }
     setActionLoading(false);
   };
@@ -187,7 +187,7 @@ export default function AdminDoctorVerificationQueue() {
         action: 'admin_deny', verification_record_id: selected.id,
         notes, denial_reason: denialReason,
       });
-      setSelected(null); qc.invalidateQueries(['doctor-verifications']);
+      setSelected(null); qc.invalidateQueries({ queryKey: ['doctor-verifications'] });
     } catch (e) { setError(e?.message || 'Action failed'); }
     setActionLoading(false);
   };
@@ -204,7 +204,7 @@ export default function AdminDoctorVerificationQueue() {
         override_reason: overrideReason.trim() || undefined,
       });
       if (res.data?.success) {
-        setSelected(null); qc.invalidateQueries(['doctor-verifications']);
+        setSelected(null); qc.invalidateQueries({ queryKey: ['doctor-verifications'] });
       } else {
         setError(res.data?.error || 'Activation failed — ensure all three checks are passed.');
       }

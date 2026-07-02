@@ -11,7 +11,7 @@ const GREEN = '#22c55e';
 const BG    = '#04080F';
 const FONT  = '"SF Pro Display", system-ui, sans-serif';
 
-function Scene({ layer, title, sub, children }) {
+function Scene({ layer = null, title = null, sub = null, children }) {
   return (
     <div
       style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 32px' }}
@@ -274,7 +274,7 @@ function SituationRoomScene({ onNext }) {
             <Polyline positions={[[25.77,-80.19],[10.48,-66.9]]}
               pathOptions={{ color:RED, weight:1.5, opacity:0.55, dashArray:'5 5' }} />
             {MESH_CLIENTS.map(([lat,lng,s,city]) => (
-              <CircleMarker key={city} center={[lat,lng]} radius={5}
+              <CircleMarker key={city} center={/** @type {any} */([lat,lng])} radius={5}
                 pathOptions={{ fillColor:s==='safe'?GREEN:GOLD, color:'#04080F', weight:1.5, fillOpacity:0.9 }} />
             ))}
             <Marker position={[10.48,-66.9]} icon={BEACON_ICON} />

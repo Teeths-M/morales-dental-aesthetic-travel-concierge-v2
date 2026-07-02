@@ -20,7 +20,7 @@ const CATEGORIES = [
   { id: 'Orthopedics', label: 'Orthopedics', emoji: '🦴' },
 ];
 
-function PricingForm({ doctor, procedures, allowedProcedureNames = [], initial, onSave, onCancel }) {
+function PricingForm({ doctor, procedures, allowedProcedureNames = [], initial = null, onSave, onCancel }) {
   const [form, setForm] = useState(initial || { procedure_id: '', doctor_price_usd: '', specialty_expertise_level: 'intermediate' });
   const [category, setCategory] = useState('Dental');
 
@@ -118,10 +118,11 @@ export default function PricingCatalogManager() {
   const [editingId, setEditingId] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
-  const { data: doctors = [] } = useQuery({
+  const { data: _rawDoctors = [] } = useQuery({
     queryKey: ['doctors_for_pricing'],
     queryFn: () => base44.entities.Doctor.list('-created_date', 100),
   });
+  const doctors = /** @type {any[]} */ (_rawDoctors);
 
   const { data: doctorPrices = [], isLoading } = useQuery({
     queryKey: ['doctor_prices'],

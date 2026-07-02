@@ -24,7 +24,7 @@ const STATUS_BADGE = {
   failed:  { label: 'Failed',   color: '#ef4444', bg: 'rgba(239,68,68,0.15)'  },
 };
 
-function ChannelRow({ id, status, action, extra }) {
+function ChannelRow({ id, status, action = null, extra = null }) {
   const cfg = CHANNEL_CONFIG[id];
   const Icon = cfg.icon;
   const badge = STATUS_BADGE[status] || STATUS_BADGE.idle;

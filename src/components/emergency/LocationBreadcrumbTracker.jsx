@@ -41,7 +41,7 @@ export default function LocationBreadcrumbTracker({ caseId }) {
     setLoading(true);
     const res = await base44.functions.invoke('logLocationBreadcrumb', { action: 'list', case_id: caseId });
     if (mountedRef.current && res.data?.crumbs) {
-      setCrumbs(res.data.crumbs.sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at)));
+      setCrumbs(res.data.crumbs.sort((a, b) => new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()));
     }
     if (mountedRef.current) setLoading(false);
   }, [caseId]);

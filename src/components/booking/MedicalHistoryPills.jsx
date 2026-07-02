@@ -92,12 +92,24 @@ function Pill({ item, isSelected, onToggle, accent = '#22c55e' }) {
   );
 }
 
+/**
+ * @param {{
+ *   selected?: string[],
+ *   onChange: function,
+ *   options?: Array<{label: string, icon?: string, desc?: string, common?: boolean}>,
+ *   title?: string,
+ *   hint?: string,
+ *   exclusive?: string[],
+ *   multiSelect?: boolean,
+ *   accent?: string
+ * }} props
+ */
 export default function MedicalHistoryPills({
   selected = [],
   onChange,
   options = DEFAULT_CONDITIONS,
-  title,
-  hint,
+  title = null,
+  hint = null,
   exclusive = ['None'],
   multiSelect = true,
   accent = '#22c55e',

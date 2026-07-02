@@ -107,7 +107,7 @@ export default function CompanionHandshakePanel({ caseId }) {
       await base44.functions.invoke('createHandshake', { action: 'complete', handshake_id: handshakeId, notes });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['companion_handshakes', caseId]);
+      queryClient.invalidateQueries({ queryKey: ['companion_handshakes', caseId] });
     },
   });
 

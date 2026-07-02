@@ -44,7 +44,7 @@ const destTips = [
 // Demo case ID — in production this comes from the user's active case
 const DEMO_CASE_ID = 'demo_case';
 
-export default function JourneyModule() {
+export default function JourneyModule({ userRole = null }) {
   const [activePhase, setActivePhase] = useState('Pre-Travel');
   const [activeTab, setActiveTab] = useState('journey');
 

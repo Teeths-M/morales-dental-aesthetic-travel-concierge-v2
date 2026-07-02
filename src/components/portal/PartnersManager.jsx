@@ -173,13 +173,13 @@ export default function PartnersManager() {
         source: 'TaxiService'
       }));
       
-      return [...partnerList, ...travelPartners, ...taxiPartners].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      return [...partnerList, ...travelPartners, ...taxiPartners].sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
     },
   });
 
   const createMutation = useMutation({
     mutationFn: data => base44.entities.Partner.create(data),
-    onSuccess: () => { qc.invalidateQueries(['partners']); setAdding(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['partners'] }); setAdding(false); },
   });
 
   const updateMutation = useMutation({
@@ -188,7 +188,7 @@ export default function PartnersManager() {
       if (source === 'TaxiService') return base44.entities.TaxiService.update(id, { status: data.is_active ? 'active' : 'pending_verification' });
       return base44.entities.Partner.update(id, data);
     },
-    onSuccess: () => { qc.invalidateQueries(['partners']); setEditingId(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['partners'] }); setEditingId(null); },
   });
 
   const deleteMutation = useMutation({
@@ -197,7 +197,7 @@ export default function PartnersManager() {
       if (source === 'TaxiService') return base44.entities.TaxiService.delete(id);
       return base44.entities.Partner.delete(id);
     },
-    onSuccess: () => qc.invalidateQueries(['partners']),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['partners'] }),
   });
 
   const grouped = PARTNER_TYPES.reduce((acc, t) => {

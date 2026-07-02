@@ -254,7 +254,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
         <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
           <Checkbox
             checked={confirmed}
-            onCheckedChange={setConfirmed}
+            onCheckedChange={/** @type {any} */(setConfirmed)}
             className="mt-1"
           />
           <label className="text-sm text-foreground cursor-pointer">

@@ -125,7 +125,7 @@ export default function MessagesModule() {
         const fileData = await file.arrayBuffer();
         const uint8Array = new Uint8Array(fileData);
         const blob = new Blob([uint8Array], { type: file.type });
-        const uploaded = await base44.integrations.Core.UploadFile({ file: blob });
+        const uploaded = await base44.integrations.Core.UploadFile({ file: /** @type {any} */(blob) });
         uploadedUrls.push(uploaded.file_url);
       }
       setAttachments(prev => [...prev, ...uploadedUrls.map(url => ({ url, name: files.find(f => true)?.name || 'File' }))]);

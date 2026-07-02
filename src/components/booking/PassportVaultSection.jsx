@@ -21,7 +21,7 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
     if (!form.passport_expiry_date) return null;
     const expiry = new Date(form.passport_expiry_date);
     const referenceDate = form.preferred_date ? new Date(form.preferred_date) : new Date();
-    const diffDays = Math.ceil((expiry - referenceDate) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((expiry.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
     return diffDays < 180 ? diffDays : null;
   }, [form.passport_expiry_date, form.preferred_date]);
 

@@ -410,7 +410,7 @@ export default function CompanionDashboard() {
       await base44.entities.Companion.update(companion.id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['companion']);
+      queryClient.invalidateQueries({ queryKey: ['companion'] });
       setIsEditing(false);
       toast.success('Profile updated successfully');
     },

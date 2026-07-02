@@ -54,7 +54,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
             };
           });
         setDoctorPrices(enriched);
-        if (enriched.length > 0) setSelected(enriched[0].id);
+        if (enriched.length > 0) setSelected((/** @type {any} */(enriched[0])).id);
       } catch (err) {
         console.error('Error loading doctors:', err);
       } finally {
@@ -173,7 +173,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
             onChange={(e) => setPatientNote(e.target.value)}
             placeholder="Add any notes or special requests..."
             className="w-full p-2.5 text-sm border border-border rounded-lg bg-card placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-            rows="3"
+            rows={3}
           />
           </div>
 

@@ -118,7 +118,7 @@ export default function DoctorVerificationPanel({ user }) {
       {/* Expiry warning at 30 days */}
       {record?.expires_at && record.verification_status === 'verified' && (
         (() => {
-          const daysLeft = Math.ceil((new Date(record.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
+          const daysLeft = Math.ceil((new Date(record.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
           return daysLeft <= 30 ? (
             <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-600" />

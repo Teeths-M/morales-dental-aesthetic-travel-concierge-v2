@@ -56,7 +56,7 @@ export default function VoiceMode({ onProceduresDetected, onClose }) {
   };
 
   const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || /** @type {any} */(window).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       // Fallback: show manual text input
       setPhase('manual');
@@ -97,7 +97,7 @@ export default function VoiceMode({ onProceduresDetected, onClose }) {
     let results = [];
     try {
       const res = await base44.integrations.Core.InvokeLLM({
-        model: AIGovernance.Performance.customerPath.model,
+        model: /** @type {any} */(AIGovernance.Performance.customerPath.model),
         prompt: `${AIGovernance.SystemPrompt.base}
 ${AIGovernance.SystemPrompt.voiceExtraction}
 
@@ -118,7 +118,7 @@ Examples:
         },
       });
       
-      const aiNames = res?.procedures || [];
+      const aiNames = (/** @type {any} */(res))?.procedures || [];
       // Match AI names against our database
       const localMatches = extractProceduresFromText(text);
       const aiMatches = extractProceduresFromText(aiNames.join(' '));

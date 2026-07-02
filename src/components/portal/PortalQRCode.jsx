@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
+const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 import { QrCode, X } from 'lucide-react';
 
 const GOLD  = '#D4AF37';

@@ -16,13 +16,13 @@
 import React from 'react';
 import { Inbox } from 'lucide-react';
 
-export default function EmptyState({ 
-  icon, 
-  title = 'No data yet', 
-  message, 
-  action, 
+export default function EmptyState({
+  icon = null,
+  title = 'No data yet',
+  message,
+  action = null,
   dark = true,
-  className = '' 
+  className = ''
 }) {
   const Icon = icon || Inbox;
 

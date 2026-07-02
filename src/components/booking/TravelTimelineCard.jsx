@@ -88,7 +88,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
   const departureDate = snapToFlightDay(earliestDeparture, 'forward');
 
   const msPerDay = 1000 * 60 * 60 * 24;
-  const totalDays = Math.round((departureDate - arrivalDate) / msPerDay) + 1;
+  const totalDays = Math.round((departureDate.getTime() - arrivalDate.getTime()) / msPerDay) + 1;
   const totalNights = totalDays - 1;
   const isExtended = extraDays > 0;
 
@@ -191,7 +191,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
   );
 }
 
-function TimelineRow({ icon, label, value, sub, accent, highlight }) {
+function TimelineRow({ icon, label, value, sub, accent = false, highlight = false }) {
   return (
     <div className="flex items-center gap-3">
       <div

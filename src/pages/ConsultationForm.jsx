@@ -19,7 +19,9 @@ const CARD_BG = '#0C1A1D';
 const BORDER = '#2A3F4A';
 const STEPS = ['Your Details', 'Your Procedure', 'Health Profile', 'Safety & Submit'];
 
+/** @type {import('react').CSSProperties} */
 const inp = { width: '100%', height: 44, padding: '0 14px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' };
+/** @type {import('react').CSSProperties} */
 const sel = { ...inp, background: CARD_BG, cursor: 'pointer' };
 const lbl = { fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 6 };
 const secH = { display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10, marginBottom: 4, borderBottom: `1px solid ${BORDER}`, fontSize: 15, fontWeight: 700, color: '#fff' };
@@ -34,12 +36,12 @@ function CheckboxGroup({ label, options, selected, onChange, noneOption = 'None 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 6 }}>
         {options.map(opt => { const on = selected.includes(opt); return (
           <button key={opt} type="button" onClick={() => toggle(opt)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 12, textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s', background: on ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.03)', border: `1px solid ${on ? 'rgba(212,175,55,0.5)' : 'rgba(255,255,255,0.1)'}`, color: on ? GOLD : 'rgba(255,255,255,0.65)' }}>
-            {on ? <CheckSquare size={13} color={GOLD} /> : <Square size={13} color="rgba(255,255,255,0.3)" />}{opt}
+            {on ? <CheckSquare size="13" color={GOLD} /> : <Square size="13" color="rgba(255,255,255,0.3)" />}{opt}
           </button>
         );})}
         {(() => { const on = selected.includes(noneOption); return (
           <button type="button" onClick={toggleNone} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, fontSize: 12, textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s', background: on ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${on ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`, color: on ? '#22c55e' : 'rgba(255,255,255,0.65)', gridColumn: '1 / -1' }}>
-            {on ? <CheckSquare size={13} color="#22c55e" /> : <Square size={13} color="rgba(255,255,255,0.3)" />}{noneOption}
+            {on ? <CheckSquare size="13" color="#22c55e" /> : <Square size="13" color="rgba(255,255,255,0.3)" />}{noneOption}
           </button>
         );})()}
       </div>
@@ -415,7 +417,7 @@ export default function ConsultationForm() {
                 )}
 
                 <button type="submit" disabled={loading} style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', cursor: loading ? 'default' : 'pointer', background: loading ? 'rgba(212,175,55,0.4)' : `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`, color: '#060B16', fontSize: 15, fontWeight: 700, boxShadow: '0 4px 28px rgba(212,175,55,0.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  {loading && <Loader2 size={16} className="animate-spin" />}
+                  {loading && <Loader2 size="16" className="animate-spin" />}
                   {loading ? 'Submitting…' : '✨ Submit My Consultation Request'}
                 </button>
               </div>

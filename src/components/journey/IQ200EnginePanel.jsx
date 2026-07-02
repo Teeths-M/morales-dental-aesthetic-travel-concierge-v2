@@ -21,7 +21,7 @@ const ROLE_COLORS = {
   all:           'bg-yellow-100 text-yellow-700',
 };
 
-export default function IQ200EnginePanel({ caseId, userRole }) {
+export default function IQ200EnginePanel({ caseId, userRole = null }) {
   const [activeTab, setActiveTab] = useState('handshakes');
   const [statuses, setStatuses] = useState([]);
   const [completed, setCompleted] = useState(0);

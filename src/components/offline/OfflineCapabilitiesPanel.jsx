@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink, Layers } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
+const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
 // IndexedDB helper for offline document caching
 const OFFLINE_CACHE_KEY = 'morales_offline_vault';
@@ -13,7 +14,7 @@ function pruneOfflineVault() {
     const keys = Object.keys(localStorage).filter(k => k.startsWith('morales_vault_doc_'));
     const entries = keys.map(k => {
       try { return { key: k, ...JSON.parse(localStorage.getItem(k)) }; } catch { return null; }
-    }).filter(Boolean).sort((a, b) => new Date(a.accessed_at || a.cached_at) - new Date(b.accessed_at || b.cached_at));
+    }).filter(Boolean).sort((a, b) => new Date(a.accessed_at || a.cached_at).getTime() - new Date(b.accessed_at || b.cached_at).getTime());
     let total = entries.reduce((sum, e) => sum + (e.size_bytes || 0), 0);
     for (const entry of entries) {
       if (total <= MAX_VAULT_BYTES) break;

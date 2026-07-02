@@ -174,16 +174,16 @@ export default function PublicRecoveryTracker() {
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
                   <button onClick={() => openNav(googleUrl)} style={{ padding: '8px 6px', borderRadius: 8, background: '#4285F4', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                    <ExternalLink size={12} />Google Maps
+                    <ExternalLink size="12" />Google Maps
                   </button>
                   <button onClick={() => openNav(wazeUrl)} style={{ padding: '8px 6px', borderRadius: 8, background: '#33CCFF', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                    <Navigation size={12} />Waze
+                    <Navigation size="12" />Waze
                   </button>
                   <button onClick={() => openNav(`https://wa.me/?text=${shareMsg}`)} style={{ padding: '8px 6px', borderRadius: 8, background: '#25D366', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                    <MessageCircle size={12} />WhatsApp
+                    <MessageCircle size="12" />WhatsApp
                   </button>
                   <button onClick={() => openNav(`sms:?body=${shareMsg}`)} style={{ padding: '8px 6px', borderRadius: 8, background: '#1e3040', border: '1px solid #2A3F4A', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                    <MessageSquare size={12} />SMS
+                    <MessageSquare size="12" />SMS
                   </button>
                 </div>
               );
