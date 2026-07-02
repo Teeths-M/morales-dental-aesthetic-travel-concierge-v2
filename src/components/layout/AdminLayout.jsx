@@ -165,13 +165,13 @@ export default function AdminLayout({ children }) {
       <SystemPauseBanner />
       <div style={{ display: 'flex' }}>
 
-        {/* Desktop sidebar */}
+        {/* Desktop sidebar — hidden/lg:flex via class; inline style cannot hold display:none or lg:flex loses */}
         <aside style={{
-          display: 'none', flexDirection: 'column',
+          flexDirection: 'column',
           width: 224, height: '100vh',
           background: BG, borderRight: `1px solid ${BORDER}`,
           position: 'fixed', left: 0, top: 0, zIndex: 20,
-        }} className="lg:flex">
+        }} className="hidden lg:flex">
           <SidebarContent location={location} onClose={close} />
         </aside>
 
@@ -195,8 +195,8 @@ export default function AdminLayout({ children }) {
           </div>
         )}
 
-        {/* Main content */}
-        <main style={{ flex: 1, minWidth: 0, marginLeft: 0 }} className="lg:ml-56">
+        {/* Main content — marginLeft must come from class, not inline style */}
+        <main style={{ flex: 1, minWidth: 0 }} className="lg:ml-56">
           {/* Mobile top bar */}
           <div
             style={{

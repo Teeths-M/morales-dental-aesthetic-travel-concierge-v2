@@ -136,14 +136,14 @@ export default function SimpleAdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold font-display">Patient Journey Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Monitor active medical travel cases</p>
+            <h1 className="text-3xl font-semibold font-display text-white">Patient Journey Dashboard</h1>
+            <p className="mt-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Monitor active medical travel cases</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" disabled={allCases.length === 0}>
+            <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5 hidden sm:flex" style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff', background: 'transparent' }} disabled={allCases.length === 0}>
               <Download className="w-4 h-4" /> <span className="hidden md:inline">Export CSV</span>
             </Button>
-            <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1.5">
+            <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1.5" style={{ borderColor: 'rgba(255,255,255,0.2)', color: '#fff', background: 'transparent' }}>
               <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Refresh</span>
             </Button>
           </div>
