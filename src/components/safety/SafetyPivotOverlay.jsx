@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, CheckCircle2, Loader2, Sparkles, Heart, UserCheck } from 'lucide-react';
+import { Shield, Loader2, Sparkles, Heart, UserCheck, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
@@ -37,17 +37,12 @@ const STEP = { IDLE: 'idle', REQUESTING: 'requesting', DISPATCHED: 'dispatched' 
  * overlays (ProcedureStackingBlocker, MoralesAssistPanel, etc.).
  */
 export default function SafetyPivotOverlay() {
-  const { pivotViolations, closePivot, acceptRecommendation } = useCart();
+  const { pivotViolations, closePivot } = useCart();
   const { user } = useAuth();
   const [step, setStep] = useState(STEP.IDLE);
 
   const isOpen = pivotViolations.length > 0;
   const hasRecommendations = pivotViolations.some(v => v.recommended);
-
-  const handleAccept = () => {
-    acceptRecommendation();
-    setStep(STEP.IDLE);
-  };
 
   const handleMothersTouch = async () => {
     setStep(STEP.REQUESTING);
@@ -261,52 +256,52 @@ export default function SafetyPivotOverlay() {
 
                   {/* ACTIONS */}
                   <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-                    {hasRecommendations && (
-                      <motion.button
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        onClick={handleAccept}
-                        whileTap={{ scale: 0.97 }}
-                        style={{
-                          width: '100%', padding: '14px 20px', borderRadius: 14,
-                          background: 'rgba(212,175,55,0.14)',
-                          border: `1px solid rgba(212,175,55,0.38)`,
-                          color: GOLD, fontWeight: 700, fontSize: 13.5,
-                          cursor: 'pointer', display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', gap: 8,
-                        }}
-                      >
-                        <CheckCircle2 style={{ width: 16, height: 16 }} />
-                        Accept Recommendation &amp; Update Cart
-                      </motion.button>
-                    )}
-
+                    {/* Primary: Mother's Touch — specialist review */}
                     <motion.button
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: hasRecommendations ? 0.48 : 0.4 }}
+                      transition={{ delay: 0.4 }}
                       onClick={handleMothersTouch}
                       disabled={step === STEP.REQUESTING}
                       whileTap={{ scale: 0.97 }}
                       style={{
-                        width: '100%', padding: '13px 20px', borderRadius: 14,
-                        background: 'transparent',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: 'rgba(255,255,255,0.58)', fontWeight: 600, fontSize: 13,
+                        width: '100%', padding: '14px 20px', borderRadius: 14,
+                        background: 'rgba(212,175,55,0.12)',
+                        border: `1px solid rgba(212,175,55,0.35)`,
+                        color: GOLD, fontWeight: 700, fontSize: 13.5,
                         cursor: step === STEP.REQUESTING ? 'not-allowed' : 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                         opacity: step === STEP.REQUESTING ? 0.6 : 1,
                       }}
                     >
                       {step === STEP.REQUESTING
-                        ? <><Loader2 style={{ width: 15, height: 15, animation: 'spin 1s linear infinite' }} /> Dispatching specialist…</>
-                        : <><UserCheck style={{ width: 15, height: 15 }} /> Request Mother's Touch Manual Review</>
+                        ? <><Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> Dispatching specialist…</>
+                        : <><UserCheck style={{ width: 16, height: 16 }} /> Request Mother's Touch Manual Review</>
                       }
                     </motion.button>
 
-                    <p style={{ textAlign: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
-                      Your cart is protected until this conflict is resolved.
+                    {/* Secondary: go back and modify selection manually */}
+                    <motion.button
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.48 }}
+                      onClick={closePivot}
+                      whileTap={{ scale: 0.97 }}
+                      style={{
+                        width: '100%', padding: '13px 20px', borderRadius: 14,
+                        background: 'transparent',
+                        border: '1px solid rgba(255,255,255,0.09)',
+                        color: 'rgba(255,255,255,0.5)', fontWeight: 600, fontSize: 13,
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      }}
+                    >
+                      <ArrowLeft style={{ width: 15, height: 15 }} />
+                      Go Back &amp; Modify My Procedure Selection
+                    </motion.button>
+
+                    <p style={{ textAlign: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.18)', marginTop: 2 }}>
+                      This combination cannot be booked on the M platform. Life over money — always.
                     </p>
                   </div>
                 </>
