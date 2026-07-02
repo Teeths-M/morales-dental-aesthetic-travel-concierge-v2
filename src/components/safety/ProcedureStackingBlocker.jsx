@@ -101,7 +101,7 @@ export default function ProcedureStackingBlocker({
           </motion.div>
           <div>
             <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-red-400 mb-0.5">
-              Safe-T4life™ · Critical Safety Block
+              Medical Safety Review · Critical Block
             </p>
             <h2 className="text-white font-bold text-lg leading-tight">
               Procedure Combination Blocked
