@@ -7,11 +7,12 @@
  *
  * Route: /admin/situation-room  (also public at /demo/situation-room)
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, Marker } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { base44 } from '@/api/base44Client';
 import { COUNTRY_ISO, getRiskLevel } from '@/hooks/useEnvironmentalIntelligence';
@@ -66,12 +67,13 @@ const DEMO_EVN = {
   MX: { riskScore: 42, name: 'Mexico'   },
   CO: { riskScore: 38, name: 'Colombia' },
   TH: { riskScore: 18, name: 'Thailand' },
-  TR: { riskScore: 55, name: 'Turkey'   },
+  TR: { riskScore: 78, name: 'Turkey'   }, // HIGH RISK — triggers radar + alert
   IN: { riskScore: 28, name: 'India'    },
 };
 
 // Simulated live feed (production: reads from AuditLog)
 const FEED_ITEMS = [
+  { icon: '🚨', text: 'CRITICAL — Carlos M. · Turkey EVN-iQ400 THREAT LEVEL RED · Score 78/100 · Morales Response Protocol ACTIVATED', color: '#ef4444', time: '0:02',  tag: 'HIGH RISK · Turkey' },
   { icon: '✅', text: 'Sophie R. — Clinic Arrival confirmed at Bangkok Aesthetic Clinic',           color: '#22c55e', time: '0:12',  tag: 'HS5 · Thailand'  },
   { icon: '🛡️', text: 'Anika P. — MedGuard™ SAFE · score 14/100 · all 6 signals nominal',         color: '#22c55e', time: '1:47',  tag: 'Recovery · India' },
   { icon: '🌍', text: 'EVN-iQ400 — No new advisories across all 5 active destinations',             color: GOLD,      time: '3:22',  tag: 'System-wide'     },
@@ -91,6 +93,40 @@ export default function SituationRoom() {
   const [evnData, setEvnData] = useState({});
   const [time, setTime]       = useState(new Date());
   const feedRef               = useRef(null);
+
+  // Inject CSS for radar pulse animation (scoped to unique class names)
+  useEffect(() => {
+    const el = document.createElement('style');
+    el.id    = 'morales-radar-css';
+    el.textContent = `
+      .mrls-hr-wrap{position:relative;width:70px;height:70px;display:flex;align-items:center;justify-content:center}
+      .mrls-hr-ring{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid #ef4444;animation:mrlsRadar 2.2s ease-out infinite}
+      .mrls-hr-ring:nth-child(1){animation-delay:0s}
+      .mrls-hr-ring:nth-child(2){animation-delay:0.73s}
+      .mrls-hr-ring:nth-child(3){animation-delay:1.46s}
+      .mrls-hr-dot{width:14px;height:14px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444,0 0 20px rgba(239,68,68,0.6),0 0 40px rgba(239,68,68,0.3)}
+      @keyframes mrlsRadar{
+        0%  {width:14px;height:14px;transform:translate(-50%,-50%);opacity:0.95;border-width:2px}
+        100%{width:72px;height:72px;transform:translate(-50%,-50%);opacity:0;border-width:1px}
+      }
+    `;
+    if (!document.getElementById('morales-radar-css')) document.head.appendChild(el);
+    return () => { const s = document.getElementById('morales-radar-css'); if (s) s.remove(); };
+  }, []);
+
+  // DivIcon for high-risk destinations — pulsing radar rings
+  const highRiskIcon = useMemo(() => L.divIcon({
+    className: '',
+    html: `<div class="mrls-hr-wrap">
+      <div class="mrls-hr-ring"></div>
+      <div class="mrls-hr-ring"></div>
+      <div class="mrls-hr-ring"></div>
+      <div class="mrls-hr-dot"></div>
+    </div>`,
+    iconSize:   [70, 70],
+    iconAnchor: [35, 35],
+    popupAnchor:[0, -35],
+  }), []);
 
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 1000);
@@ -163,6 +199,13 @@ export default function SituationRoom() {
   const highRisk  = Object.values(displayEvn).filter(d => d.riskScore >= 72).length;
   const watchDest = Object.values(displayEvn).filter(d => d.riskScore >= 52 && d.riskScore < 72).length;
 
+  // Find the highest-risk active patient for the alert banner
+  const alertCase = displayCases.find(c => {
+    const iso = COUNTRY_ISO[c.procedure_country];
+    return iso && (displayEvn[iso]?.riskScore ?? 0) >= 72;
+  });
+  const alertEvn = alertCase ? displayEvn[COUNTRY_ISO[alertCase.procedure_country]] : null;
+
   return (
     <div style={{ height: '100vh', background: '#04080F', color: '#fff', fontFamily: '"SF Pro Display", system-ui, sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -192,12 +235,20 @@ export default function SituationRoom() {
             { v: totalActive, l: 'ACTIVE JOURNEYS', c: GOLD      },
             { v: inTransit,   l: 'IN TRANSIT',       c: '#60a5fa' },
             { v: countries,   l: 'COUNTRIES',        c: '#a855f7' },
-            { v: highRisk,    l: 'HIGH RISK',         c: '#ef4444' },
+            { v: highRisk,    l: 'HIGH RISK',         c: '#ef4444', pulse: highRisk > 0 },
             { v: watchDest,   l: 'ON WATCH',          c: '#f59e0b' },
-          ].map(({ v, l, c }) => (
+          ].map(({ v, l, c, pulse }) => (
             <div key={l} style={{ textAlign: 'center' }}>
-              <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: c, letterSpacing: '-0.02em' }}>{v}</p>
-              <p style={{ margin: 0, fontSize: 7, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.25)', fontWeight: 700 }}>{l}</p>
+              {pulse ? (
+                <motion.p
+                  animate={{ opacity: [1, 0.35, 1], textShadow: [`0 0 8px ${c}`, `0 0 0px ${c}`, `0 0 8px ${c}`] }}
+                  transition={{ duration: 1.2, repeat: Infinity }}
+                  style={{ margin: 0, fontSize: 20, fontWeight: 900, color: c, letterSpacing: '-0.02em' }}
+                >{v}</motion.p>
+              ) : (
+                <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: c, letterSpacing: '-0.02em' }}>{v}</p>
+              )}
+              <p style={{ margin: 0, fontSize: 7, letterSpacing: '0.12em', color: pulse ? c : 'rgba(255,255,255,0.25)', fontWeight: 700 }}>{l}</p>
             </div>
           ))}
           <div style={{ textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 20 }}>
@@ -231,6 +282,31 @@ export default function SituationRoom() {
               );
             })}
           </div>
+
+          {/* Flashing ALERT banner — only when high-risk patient detected */}
+          {alertCase && alertEvn && (
+            <motion.div
+              animate={{ opacity: [1, 0.55, 1], backgroundColor: ['rgba(239,68,68,0.18)', 'rgba(239,68,68,0.08)', 'rgba(239,68,68,0.18)'] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+              style={{ flexShrink: 0, padding: '7px 20px', borderBottom: '1px solid rgba(239,68,68,0.5)', display: 'flex', alignItems: 'center', gap: 12 }}
+            >
+              <motion.span
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 0.9, repeat: Infinity }}
+                style={{ fontSize: 14 }}>🚨</motion.span>
+              <span style={{ fontSize: 9, fontWeight: 900, color: '#ef4444', letterSpacing: '0.15em' }}>THREAT ACTIVE</span>
+              <div style={{ width: 1, height: 14, background: 'rgba(239,68,68,0.4)' }} />
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>
+                {alertCase.client_name} · {alertCase.procedure_country} · Score {alertEvn.riskScore}/100
+              </span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
+                {alertCase.procedure || 'Procedure'} · {alertCase.doctor || 'Doctor'}
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 800, color: '#ef4444', letterSpacing: '0.08em' }}>
+                RESPONSE PROTOCOL ACTIVE
+              </span>
+            </motion.div>
+          )}
 
           {/* Leaflet map — fills remaining space */}
           <div style={{ flex: 1, minHeight: 0 }}>
@@ -269,20 +345,57 @@ export default function SituationRoom() {
                 </Popup>
               </CircleMarker>
 
-              {/* Dashed gold lines: HQ → active destinations */}
-              {DESTINATIONS.filter(d => activeISOs.has(d.iso)).map(dest => (
-                <Polyline
-                  key={`line-${dest.iso}`}
-                  positions={[HQ, [dest.lat, dest.lng]]}
-                  pathOptions={{ color: GOLD, weight: 1.5, opacity: 0.5, dashArray: '6 5' }}
-                />
-              ))}
+              {/* Connection lines: HQ → active destinations (red for high-risk) */}
+              {DESTINATIONS.filter(d => activeISOs.has(d.iso)).map(dest => {
+                const isHR = (displayEvn[dest.iso]?.riskScore ?? 0) >= 72;
+                return (
+                  <Polyline
+                    key={`line-${dest.iso}`}
+                    positions={[HQ, [dest.lat, dest.lng]]}
+                    pathOptions={{
+                      color:     isHR ? '#ef4444' : GOLD,
+                      weight:    isHR ? 2 : 1.5,
+                      opacity:   isHR ? 0.75 : 0.5,
+                      dashArray: isHR ? '4 4' : '6 5',
+                    }}
+                  />
+                );
+              })}
 
-              {/* Destination markers — all 20 visible, active ones highlighted */}
+              {/* Destination markers — radar icon for high risk, circle for all others */}
               {DESTINATIONS.map(dest => {
                 const count  = patientsByISO[dest.iso]?.length || 0;
                 const evn    = displayEvn[dest.iso];
                 const lvl    = evn ? getRiskLevel(evn.riskScore) : null;
+                const isHR   = count > 0 && (evn?.riskScore ?? 0) >= 72;
+
+                const popup = (
+                  <Popup>
+                    <div style={{ fontSize: 12, minWidth: 170 }}>
+                      <strong>{dest.name}</strong>
+                      {isHR && <div style={{ color: '#ef4444', fontWeight: 700, marginTop: 4 }}>🚨 HIGH RISK DESTINATION</div>}
+                      {count > 0 ? (
+                        <div style={{ color: isHR ? '#ef4444' : '#1a8f3a', marginTop: 4 }}>
+                          {count} active patient{count > 1 ? 's' : ''}{isDemo ? ' (demo)' : ''}
+                        </div>
+                      ) : (
+                        <div style={{ color: '#888', marginTop: 4 }}>Monitored destination</div>
+                      )}
+                      {evn && <div style={{ marginTop: 4 }}>{lvl.emoji} Risk score: <strong>{evn.riskScore}/100</strong></div>}
+                    </div>
+                  </Popup>
+                );
+
+                // High-risk active patient → animated radar Marker
+                if (isHR) {
+                  return (
+                    <Marker key={dest.iso} position={[dest.lat, dest.lng]} icon={highRiskIcon}>
+                      {popup}
+                    </Marker>
+                  );
+                }
+
+                // Normal active or monitored → CircleMarker
                 const color  = count > 0 ? (lvl?.color || GOLD) : '#0ea5e9';
                 const radius = count > 0 ? Math.min(8 + count * 3, 16) : 5;
                 const opac   = count > 0 ? 0.9 : 0.55;
@@ -293,24 +406,7 @@ export default function SituationRoom() {
                     radius={radius}
                     pathOptions={{ fillColor: color, color: count > 0 ? '#04080F' : 'rgba(0,0,0,0.4)', weight: 1.5, fillOpacity: opac }}
                   >
-                    <Popup>
-                      <div style={{ fontSize: 12, minWidth: 160 }}>
-                        <strong>{dest.name}</strong>
-                        {count > 0 ? (
-                          <div style={{ color: '#1a8f3a', marginTop: 4 }}>
-                            {count} active patient{count > 1 ? 's' : ''}
-                            {isDemo && ' (demo)'}
-                          </div>
-                        ) : (
-                          <div style={{ color: '#888', marginTop: 4 }}>Monitored destination</div>
-                        )}
-                        {evn && (
-                          <div style={{ marginTop: 4 }}>
-                            {lvl.emoji} Risk score: <strong>{evn.riskScore}/100</strong>
-                          </div>
-                        )}
-                      </div>
-                    </Popup>
+                    {popup}
                   </CircleMarker>
                 );
               })}
