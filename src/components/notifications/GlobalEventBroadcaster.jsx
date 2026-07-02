@@ -213,13 +213,18 @@ export default function GlobalEventBroadcaster({ user }) {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     const name = user.full_name?.split(' ')[0] || '';
+    const body = hour < 12
+      ? 'Everything is prepared for today. You are in trusted hands.'
+      : hour < 17
+      ? 'Your care team is standing by — ready for anything you need.'
+      : 'Safe travels tonight. We are with you every step of the way.';
 
     showNotification({
       type:     'info',
       icon:     hour < 12 ? '🌅' : hour < 17 ? '☀️' : '🌙',
       title:    `${greeting}${name ? `, ${name}` : ''}.`,
-      body:     'Your Morales concierge is ready.',
-      duration: 4000,
+      body,
+      duration: 5500,
       position: 'top',
     });
   }, [user?.id]);

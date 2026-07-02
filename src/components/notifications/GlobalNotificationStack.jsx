@@ -33,33 +33,34 @@ function NotificationCard({ n, onDismiss }) {
       style={{
         borderRadius: 20,
         overflow: 'hidden',
-        background: 'rgba(28, 28, 32, 0.88)',
+        background: 'rgba(22, 24, 28, 0.92)',
         backdropFilter: 'blur(40px)',
         WebkitBackdropFilter: 'blur(40px)',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset',
-        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 12px 48px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset, 0 0 32px rgba(212,175,55,0.06)',
+        border: '1px solid rgba(212,175,55,0.14)',
       }}
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        {/* App icon — white square with Morales M, like iOS app icon */}
+        {/* App icon — gold M mark matching admin portal brand */}
         <div style={{
           width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-          background: '#fff',
+          background: '#D4AF37',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-          overflow: 'hidden',
-        }}>
-          <img src="/morales-m-mark.png" alt="M" style={{ width: 34, height: 34, objectFit: 'contain' }} />
-        </div>
+          boxShadow: '0 0 18px rgba(212,175,55,0.35), 0 2px 8px rgba(0,0,0,0.3)',
+          fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 900,
+          color: '#060B16',
+          letterSpacing: '-0.5px',
+          userSelect: 'none',
+        }}>M</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* App name + timestamp row */}
           <div className="flex items-center justify-between gap-2 mb-0.5">
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.02em' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#D4AF37', letterSpacing: '0.08em' }}>
               MORALES
             </span>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>now</span>
+            <span style={{ fontSize: 11, color: 'rgba(212,175,55,0.45)', flexShrink: 0 }}>now</span>
           </div>
           <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: 1 }}
             className="truncate">{n.title}</p>
@@ -90,8 +91,8 @@ function NotificationCard({ n, onDismiss }) {
           transition={{ duration: n.duration / 1000, ease: 'linear' }}
           style={{
             height: 2,
-            background: accent,
-            opacity: 0.5,
+            background: `linear-gradient(90deg, ${accent}, ${accent}88)`,
+            opacity: 0.75,
             transformOrigin: 'left',
           }}
         />
