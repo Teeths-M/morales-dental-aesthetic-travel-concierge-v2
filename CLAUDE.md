@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## The M Principle — Non-Negotiable
+
+> "We built this to save lives, not to make profit."
+
+**RED is a hard block. Always.** No bypass button, no workaround, no exception for any business reason.
+If a procedure combination is clinically dangerous, M will not facilitate it — full stop.
+The client can book elsewhere. M will not be the platform that put their life at risk.
+This principle must never be softened, worked around, or compromised in any feature, edge case, or demo.
+
 ## Commands
 
 ```bash
