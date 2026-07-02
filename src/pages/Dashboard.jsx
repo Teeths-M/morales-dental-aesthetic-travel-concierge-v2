@@ -35,6 +35,7 @@ import JourneyMap from '@/components/dashboard/JourneyMap';
 import DestinationSafetyIndex from '@/components/dashboard/DestinationSafetyIndex';
 import EVNiQ400Card from '@/components/dashboard/EVNiQ400Card';
 import PreDepartureBriefing from '@/components/dashboard/PreDepartureBriefing';
+import WeatherAlertBanner from '@/components/dashboard/WeatherAlertBanner';
 import PatientJourneyCredit from '@/components/dashboard/PatientJourneyCredit';
 import { useSafetyScore } from '@/hooks/useSafetyScore';
 import { useBehavioralTracking } from '@/hooks/useBehavioralTracking';
@@ -445,6 +446,15 @@ function DashboardHome({ user, consultations, language }) {
           isLoading={safetyScore.isLoading}
           isActiveTravel={safetyScore.isActiveTravel}
           phase={tripPhaseForScore}
+        />
+      )}
+
+      {/* CR 25 — Weather-to-Health Alert: auto-monitors destination conditions */}
+      {latestConsultation?.procedure_country && latestConsultation?.status !== 'Completed' && (
+        <WeatherAlertBanner
+          caseId={latestConsultation.id}
+          country={latestConsultation.procedure_country}
+          procedureType={latestConsultation.primary_procedure || latestConsultation.procedure_interest}
         />
       )}
 
