@@ -2,8 +2,8 @@
  * Situation Room — Global Intelligence Display
  *
  * Real-time tactical overview of every active patient journey worldwide.
- * EVN-iQ400 threat levels per destination, MedGuard scores, handshake
- * progress — rendered on a dark tactical world map.
+ * Falls back to demo seed data when no real cases exist so the map
+ * always looks alive during investor / judge demos.
  *
  * Route: /admin/situation-room  (also public at /demo/situation-room)
  */
@@ -19,6 +19,9 @@ import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
 const GOLD = '#D4AF37';
 const HQ   = [25.77, -80.19]; // Miami, FL — Morales HQ
+
+// World bounds — prevents Leaflet from wrapping / tiling the map twice
+const WORLD_BOUNDS = [[-85, -180], [85, 180]];
 
 const DESTINATIONS = [
   { iso: 'MX', name: 'Mexico',       lat: 23.6,   lng: -102.5 },
@@ -42,6 +45,23 @@ const DESTINATIONS = [
   { iso: 'AR', name: 'Argentina',    lat: -34.0,  lng: -64.0  },
   { iso: 'PE', name: 'Peru',         lat: -9.2,   lng: -75.0  },
 ];
+
+// Seed data — shown only when no real cases exist (judges / demo mode)
+const DEMO_CASES = [
+  { id: 'demo-1', client_name: 'María G.',   procedure_country: 'Mexico',       current_step: 4, trip_phase: 'Travel-Coordination',    status: 'Travel-Coordination',    _demo: true },
+  { id: 'demo-2', client_name: 'James T.',   procedure_country: 'Colombia',     current_step: 2, trip_phase: 'Ready-For-Travel',       status: 'Ready-For-Travel',       _demo: true },
+  { id: 'demo-3', client_name: 'Sophie R.',  procedure_country: 'Thailand',     current_step: 6, trip_phase: 'Procedure-In-Progress',  status: 'Procedure-In-Progress',  _demo: true },
+  { id: 'demo-4', client_name: 'Carlos M.',  procedure_country: 'Turkey',       current_step: 3, trip_phase: 'Ready-For-Travel',       status: 'Ready-For-Travel',       _demo: true },
+  { id: 'demo-5', client_name: 'Anika P.',   procedure_country: 'India',        current_step: 7, trip_phase: 'Recovery',               status: 'Recovery',               _demo: true },
+];
+
+const DEMO_EVN = {
+  MX: { riskScore: 42, name: 'Mexico'   },
+  CO: { riskScore: 38, name: 'Colombia' },
+  TH: { riskScore: 18, name: 'Thailand' },
+  TR: { riskScore: 55, name: 'Turkey'   },
+  IN: { riskScore: 28, name: 'India'    },
+};
 
 // Simulated live feed (production: reads from AuditLog)
 const FEED_ITEMS = [
@@ -91,9 +111,14 @@ export default function SituationRoom() {
     refetchInterval: 300_000,
   });
 
+  // Fall back to demo seed when no real patients exist
+  const isDemo       = activeCases.length === 0;
+  const displayCases = isDemo ? DEMO_CASES : activeCases;
+  const displayEvn   = isDemo ? DEMO_EVN   : evnData;
+
   // Group patients by destination ISO
   const patientsByISO = {};
-  activeCases.forEach(c => {
+  displayCases.forEach(c => {
     const iso = COUNTRY_ISO[c.procedure_country];
     if (iso) {
       if (!patientsByISO[iso]) patientsByISO[iso] = [];
@@ -102,12 +127,13 @@ export default function SituationRoom() {
   });
 
   const activeISOs  = new Set(Object.keys(patientsByISO));
-  const totalActive = activeCases.length;
-  const inTransit   = activeCases.filter(c => ACTIVE_TRAVEL_PHASES.has(c.trip_phase)).length;
+  const totalActive = displayCases.length;
+  const inTransit   = displayCases.filter(c => ACTIVE_TRAVEL_PHASES.has(c.trip_phase)).length;
   const countries   = activeISOs.size;
 
-  // Fetch EVN-iQ400 risk data for active destinations
+  // Fetch live EVN-iQ400 risk data for real active destinations
   useEffect(() => {
+    if (isDemo) return;
     const isos = [...activeISOs];
     if (!isos.length) return;
     (async () => {
@@ -123,12 +149,12 @@ export default function SituationRoom() {
           out[iso2] = { riskScore, score, name: entry.name };
         });
         setEvnData(out);
-      } catch { /* silent — dots still render without EVN data */ }
+      } catch { /* silent */ }
     })();
-  }, [activeCases.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeCases.length, isDemo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const highRisk  = Object.values(evnData).filter(d => d.riskScore >= 72).length;
-  const watchDest = Object.values(evnData).filter(d => d.riskScore >= 52 && d.riskScore < 72).length;
+  const highRisk  = Object.values(displayEvn).filter(d => d.riskScore >= 72).length;
+  const watchDest = Object.values(displayEvn).filter(d => d.riskScore >= 52 && d.riskScore < 72).length;
 
   return (
     <div style={{ height: '100vh', background: '#04080F', color: '#fff', fontFamily: '"SF Pro Display", system-ui, sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -146,6 +172,13 @@ export default function SituationRoom() {
             <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>MORALES GLOBAL INTELLIGENCE · LIVE</p>
           </div>
         </div>
+
+        {/* Demo mode badge */}
+        {isDemo && (
+          <div style={{ padding: '3px 10px', borderRadius: 20, background: 'rgba(212,175,55,0.15)', border: `1px solid ${GOLD}50`, fontSize: 9, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>
+            DEMO MODE
+          </div>
+        )}
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 20 }}>
           {[
@@ -174,13 +207,13 @@ export default function SituationRoom() {
       {/* ── Main content ── */}
       <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 320px' }}>
 
-        {/* ── LEFT: Leaflet World Map ── */}
+        {/* ── LEFT: World Map ── */}
         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
 
           {/* EVN-iQ400 risk strip */}
           <div style={{ flexShrink: 0, padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
             <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: GOLD, flexShrink: 0 }}>EVN-iQ400</span>
-            {Object.entries(evnData).sort((a, b) => b[1].riskScore - a[1].riskScore).map(([iso, d]) => {
+            {Object.entries(displayEvn).sort((a, b) => b[1].riskScore - a[1].riskScore).map(([iso, d]) => {
               const lvl = getRiskLevel(d.riskScore);
               return (
                 <div key={iso} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 8, background: lvl.bg, border: `1px solid ${lvl.border}`, flexShrink: 0 }}>
@@ -190,33 +223,32 @@ export default function SituationRoom() {
                 </div>
               );
             })}
-            {Object.keys(evnData).length === 0 && (
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
-                {activeCases.length === 0 ? 'Dot markers show once patients are booked' : 'Loading advisory data...'}
-              </span>
-            )}
           </div>
 
-          {/* Map — fills remaining vertical space */}
+          {/* Leaflet map — fills remaining space */}
           <div style={{ flex: 1, minHeight: 0 }}>
             <MapContainer
               center={[20, 10]}
               zoom={2}
-              style={{ width: '100%', height: '100%' }}
-              zoomControl={false}
-              attributionControl={true}
               minZoom={1}
               maxZoom={7}
+              maxBounds={WORLD_BOUNDS}
+              maxBoundsViscosity={1.0}
+              worldCopyJump={false}
+              zoomControl={false}
+              attributionControl={true}
+              style={{ width: '100%', height: '100%' }}
             >
-              {/* CartoDB Dark Matter — tactical dark look */}
+              {/* Dark no-label tiles — cleaner tactical look */}
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
                 attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                 subdomains="abcd"
+                noWrap={true}
                 maxZoom={19}
               />
 
-              {/* HQ marker — Miami */}
+              {/* HQ pulsing marker — Miami */}
               <CircleMarker
                 center={HQ}
                 radius={10}
@@ -224,52 +256,51 @@ export default function SituationRoom() {
               >
                 <Popup>
                   <div style={{ fontSize: 12, minWidth: 140 }}>
-                    <strong style={{ color: GOLD }}>Morales HQ</strong><br />
+                    <strong style={{ color: '#b8860b' }}>Morales HQ</strong><br />
                     <span style={{ color: '#555' }}>Miami, Florida</span>
                   </div>
                 </Popup>
               </CircleMarker>
 
-              {/* Dashed lines: HQ → active destinations */}
+              {/* Dashed gold lines: HQ → active destinations */}
               {DESTINATIONS.filter(d => activeISOs.has(d.iso)).map(dest => (
                 <Polyline
                   key={`line-${dest.iso}`}
                   positions={[HQ, [dest.lat, dest.lng]]}
-                  pathOptions={{ color: GOLD, weight: 1.2, opacity: 0.45, dashArray: '6 5' }}
+                  pathOptions={{ color: GOLD, weight: 1.5, opacity: 0.5, dashArray: '6 5' }}
                 />
               ))}
 
-              {/* Destination markers */}
+              {/* Destination markers — all 20 visible, active ones highlighted */}
               {DESTINATIONS.map(dest => {
                 const count  = patientsByISO[dest.iso]?.length || 0;
-                const evn    = evnData[dest.iso];
+                const evn    = displayEvn[dest.iso];
                 const lvl    = evn ? getRiskLevel(evn.riskScore) : null;
-                const color  = lvl?.color || (count > 0 ? GOLD : 'rgba(200,200,200,0.35)');
-                const radius = count > 0 ? Math.min(10 + count * 2, 18) : 4;
-                const opac   = count > 0 ? 0.85 : 0.4;
-                // Show all known destinations — dim when inactive
+                const color  = count > 0 ? (lvl?.color || GOLD) : '#0ea5e9';
+                const radius = count > 0 ? Math.min(8 + count * 3, 16) : 5;
+                const opac   = count > 0 ? 0.9 : 0.55;
                 return (
                   <CircleMarker
                     key={dest.iso}
                     center={[dest.lat, dest.lng]}
                     radius={radius}
-                    pathOptions={{ fillColor: color, color: '#04080F', weight: 1.5, fillOpacity: opac }}
+                    pathOptions={{ fillColor: color, color: count > 0 ? '#04080F' : 'rgba(0,0,0,0.4)', weight: 1.5, fillOpacity: opac }}
                   >
                     <Popup>
                       <div style={{ fontSize: 12, minWidth: 160 }}>
                         <strong>{dest.name}</strong>
-                        {count > 0 && (
+                        {count > 0 ? (
                           <div style={{ color: '#1a8f3a', marginTop: 4 }}>
                             {count} active patient{count > 1 ? 's' : ''}
+                            {isDemo && ' (demo)'}
                           </div>
+                        ) : (
+                          <div style={{ color: '#888', marginTop: 4 }}>Monitored destination</div>
                         )}
                         {evn && (
                           <div style={{ marginTop: 4 }}>
                             {lvl.emoji} Risk score: <strong>{evn.riskScore}/100</strong>
                           </div>
-                        )}
-                        {!count && !evn && (
-                          <div style={{ color: '#888', marginTop: 4 }}>No active journeys</div>
                         )}
                       </div>
                     </Popup>
@@ -282,14 +313,14 @@ export default function SituationRoom() {
           {/* Legend */}
           <div style={{ flexShrink: 0, padding: '7px 16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 18, background: '#04080F' }}>
             {[
-              ['#22c55e', 'Low Risk'],
+              [GOLD,      'Active patient'],
+              ['#22c55e', 'Low risk'],
               ['#f59e0b', 'Watch'],
-              ['#ef4444', 'High Risk'],
-              [GOLD,      'HQ / Active patient'],
-              ['rgba(200,200,200,0.35)', 'No active journey'],
+              ['#ef4444', 'High risk'],
+              ['#0ea5e9', 'Monitored'],
             ].map(([c, l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: c, border: '1px solid rgba(255,255,255,0.15)' }} />
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: c }} />
                 <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{l}</span>
               </div>
             ))}
@@ -300,46 +331,44 @@ export default function SituationRoom() {
         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Active journeys */}
-          <div style={{ flexShrink: 0, padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', overflowY: 'auto', maxHeight: '40%' }}>
-            <p style={{ margin: '0 0 8px', fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>
-              ACTIVE JOURNEYS · {totalActive}
-            </p>
-            {activeCases.length === 0 ? (
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', margin: '8px 0', lineHeight: 1.6 }}>
-                No active journeys yet.<br />
-                <Link to="/booking" style={{ color: GOLD }}>Book a case</Link> to see patients appear on the map.
+          <div style={{ flexShrink: 0, padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', overflowY: 'auto', maxHeight: '42%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <p style={{ margin: 0, fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>
+                ACTIVE JOURNEYS · {totalActive}
               </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {activeCases.slice(0, 6).map(c => {
-                  const iso = COUNTRY_ISO[c.procedure_country];
-                  const evn = iso ? evnData[iso] : null;
-                  const lvl = evn ? getRiskLevel(evn.riskScore) : null;
-                  const hs  = c.current_step ?? 0;
-                  return (
-                    <div key={c.id} style={{ padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: `1px solid ${lvl ? lvl.border : 'rgba(255,255,255,0.06)'}` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{c.client_name || 'Patient'}</span>
-                        {lvl && <span style={{ fontSize: 9, fontWeight: 800, color: lvl.color }}>{lvl.emoji} {lvl.label}</span>}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{c.procedure_country || '—'}</span>
-                        <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                          <div style={{ width: `${(hs / 9) * 100}%`, height: '100%', background: GOLD, borderRadius: 2 }} />
-                        </div>
-                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>HS{hs}/9</span>
-                      </div>
+              {isDemo && (
+                <span style={{ fontSize: 8, color: GOLD, fontWeight: 700, letterSpacing: '0.08em' }}>DEMO DATA</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {displayCases.slice(0, 6).map(c => {
+                const iso = COUNTRY_ISO[c.procedure_country];
+                const evn = iso ? displayEvn[iso] : null;
+                const lvl = evn ? getRiskLevel(evn.riskScore) : null;
+                const hs  = c.current_step ?? 0;
+                return (
+                  <div key={c.id} style={{ padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: `1px solid ${lvl ? lvl.border : 'rgba(255,255,255,0.06)'}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{c.client_name || 'Patient'}</span>
+                      {lvl && <span style={{ fontSize: 9, fontWeight: 800, color: lvl.color }}>{lvl.emoji} {lvl.label}</span>}
                     </div>
-                  );
-                })}
-                {activeCases.length > 6 && (
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '4px 0 0' }}>
-                    +{activeCases.length - 6} more →{' '}
-                    <Link to="/demo/mission-control" style={{ color: GOLD }}>Mission Control</Link>
-                  </p>
-                )}
-              </div>
-            )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{c.procedure_country || '—'}</span>
+                      <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                        <div style={{ width: `${(hs / 9) * 100}%`, height: '100%', background: GOLD, borderRadius: 2 }} />
+                      </div>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>HS{hs}/9</span>
+                    </div>
+                  </div>
+                );
+              })}
+              {displayCases.length > 6 && (
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '4px 0 0' }}>
+                  +{displayCases.length - 6} more →{' '}
+                  <Link to="/demo/mission-control" style={{ color: GOLD }}>Mission Control</Link>
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Live intelligence feed */}
@@ -359,7 +388,7 @@ export default function SituationRoom() {
                   <motion.div key={i}
                     initial={{ opacity: 0, x: 8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ delay: i * 0.04 }}
                     style={{ padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'flex-start', gap: 8 }}
                   >
                     <span style={{ fontSize: 12, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
