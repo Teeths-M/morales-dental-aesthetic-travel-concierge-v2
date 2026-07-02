@@ -142,6 +142,11 @@ export default function PartnerIntelligencePanel() {
                     <span className="text-xs font-semibold text-muted-foreground w-12 text-right">
                       {partner.internet_risk_score ?? '—'}/100
                     </span>
+                    {(() => {
+                      const xai = partner.internet_signals?.xai_confidence ?? Math.max(5, 100 - (partner.internet_risk_score ?? 50));
+                      const c = xai >= 80 ? '#10b981' : xai >= 40 ? '#f59e0b' : '#ef4444';
+                      return <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: c }}>XAI {xai}%</span>;
+                    })()}
                     <button
                       onClick={() => setExpanded(open ? null : partner.id)}
                       className="text-xs text-primary underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap"
@@ -161,6 +166,41 @@ export default function PartnerIntelligencePanel() {
 
                   {open && partner.internet_summary && (
                     <div className="mt-3 space-y-2">
+                      {/* XAI Confidence Score */}
+                      {(() => {
+                        const xai = partner.internet_signals?.xai_confidence ?? Math.max(5, 100 - (partner.internet_risk_score ?? 50));
+                        const flags = partner.internet_signals?.xai_flags || [];
+                        const positives = partner.internet_signals?.xai_positives || [];
+                        const c = xai >= 80 ? '#10b981' : xai >= 40 ? '#f59e0b' : '#ef4444';
+                        return (
+                          <div className="p-3 rounded-lg border border-border bg-muted/20">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-[10px] font-bold tracking-widest text-muted-foreground">XAI CONFIDENCE SCORE</p>
+                              <span className="text-sm font-bold" style={{ color: c }}>{xai}/100</span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-border/40 mb-2.5">
+                              <div className="h-full rounded-full" style={{ width: `${xai}%`, background: c }} />
+                            </div>
+                            {flags.length > 0 && (
+                              <div className="mb-2">
+                                {flags.slice(0, 4).map((f, i) => (
+                                  <div key={i} className="flex items-start gap-1.5 mb-1">
+                                    <span className="text-red-400 flex-shrink-0 text-[10px] mt-0.5">▲</span>
+                                    <p className="text-[10px] text-red-300">{f}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {positives.slice(0, 3).map((p, i) => (
+                              <div key={i} className="flex items-start gap-1.5 mb-1">
+                                <span className="text-emerald-400 flex-shrink-0 text-[10px] mt-0.5">✓</span>
+                                <p className="text-[10px] text-emerald-300">{p}</p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+
                       {/* Google listing */}
                       {partner.internet_signals?.google && (() => {
                         const g = partner.internet_signals.google;
@@ -212,6 +252,46 @@ export default function PartnerIntelligencePanel() {
                               {partner.internet_signals.domain_age_months ? ` · Domain age ${partner.internet_signals.domain_age_months}mo` : ''}
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* IP Intelligence */}
+                      {partner.internet_signals?.ip_label && (
+                        <div className="p-3 rounded-lg border border-border bg-muted/20">
+                          <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2">IP INTELLIGENCE</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(() => {
+                              const lbl = partner.internet_signals.ip_label;
+                              const c = lbl === 'residential' ? '#10b981' : lbl === 'datacenter' ? '#f59e0b' : '#ef4444';
+                              return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" style={{ color: c, background: c + '18' }}>{lbl.replace('_', ' ')}</span>;
+                            })()}
+                            {partner.internet_signals.ip_city && <span className="text-[11px] text-muted-foreground">{partner.internet_signals.ip_city}</span>}
+                            {partner.internet_signals.ip_country && <span className="text-[11px] text-muted-foreground">· {partner.internet_signals.ip_country}</span>}
+                          </div>
+                          {partner.internet_signals.ip_isp && <p className="text-[10px] text-muted-foreground mt-1">{partner.internet_signals.ip_isp}</p>}
+                          {partner.internet_signals.ip_country_mismatch && (
+                            <p className="text-[10px] text-amber-400 mt-1">IP location does not match registered country</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Device Analysis */}
+                      {(partner.internet_signals?.ua_browser || partner.internet_signals?.ua_flag) && (
+                        <div className="p-3 rounded-lg border border-border bg-muted/20">
+                          <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2">DEVICE ANALYSIS</p>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            {partner.internet_signals.ua_flag === 'headless_browser' ? (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-red-300" style={{ background: 'rgba(239,68,68,0.15)' }}>HEADLESS BROWSER DETECTED</span>
+                            ) : (
+                              <>
+                                {partner.internet_signals.ua_browser && <span className="text-[11px] text-muted-foreground">{partner.internet_signals.ua_browser}</span>}
+                                {partner.internet_signals.ua_os && <span className="text-[11px] text-muted-foreground">· {partner.internet_signals.ua_os}</span>}
+                              </>
+                            )}
+                            {partner.internet_signals.device_timezone && (
+                              <span className="text-[10px] text-muted-foreground">· {partner.internet_signals.device_timezone}</span>
+                            )}
+                          </div>
                         </div>
                       )}
 

@@ -68,6 +68,7 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
         facebook_handle:  null,
         instagram_handle: null,
         tiktok_handle:    null,
+        device_timezone:  Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       setResult(res.data);
     } catch (_) {

@@ -57,7 +57,23 @@ const COUNTRY_CODES: Record<string, string[]> = {
   'UAE':                     ['+971'],
 };
 
-Deno.serve(createHandler(async ({ base44, user, body }) => {
+const COUNTRY_ISO: Record<string, string> = {
+  'Trinidad and Tobago': 'TT', 'Jamaica': 'JM', 'Barbados': 'BB', 'Bahamas': 'BS',
+  'Saint Lucia': 'LC', 'Grenada': 'GD', 'Antigua and Barbuda': 'AG', 'Dominican Republic': 'DO',
+  'Mexico': 'MX', 'Colombia': 'CO', 'Costa Rica': 'CR', 'Panama': 'PA',
+  'United States': 'US', 'Canada': 'CA', 'United Kingdom': 'GB', 'Spain': 'ES',
+  'Portugal': 'PT', 'Brazil': 'BR', 'India': 'IN', 'Thailand': 'TH',
+  'Turkey': 'TR', 'Nigeria': 'NG', 'Ghana': 'GH', 'Kenya': 'KE',
+  'South Africa': 'ZA', 'Philippines': 'PH', 'Guatemala': 'GT', 'Honduras': 'HN',
+  'El Salvador': 'SV', 'Peru': 'PE', 'Argentina': 'AR', 'Chile': 'CL',
+  'Ecuador': 'EC', 'Venezuela': 'VE', 'Germany': 'DE', 'France': 'FR',
+  'Italy': 'IT', 'Australia': 'AU', 'UAE': 'AE',
+};
+
+const DATACENTER_KW = ['amazon', 'google', 'microsoft', 'digitalocean', 'vultr',
+  'linode', 'ovh', 'hetzner', 'cloudflare', 'datacenter', 'colocation', 'hosting'];
+
+Deno.serve(createHandler(async ({ req, base44, user, body }) => {
   const {
     partner_id,
     partner_type = 'doctor',
@@ -70,6 +86,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     facebook_handle,
     instagram_handle,
     tiktok_handle,
+    device_timezone,
   } = await body<Record<string, string>>();
 
   if (!partner_id || !registered_name) {
@@ -212,7 +229,51 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     } catch (_) { /* non-fatal */ }
   }
 
-  // ── 4. AI Web Intelligence ────────────────────────────────────────────────────
+  // ── 4. IP Intelligence ───────────────────────────────────────────────────────
+  const signingIp = (req.headers.get('CF-Connecting-IP')
+    || req.headers.get('X-Forwarded-For')?.split(',')[0]?.trim()
+    || '').trim();
+
+  if (signingIp && signingIp !== '127.0.0.1' && signingIp !== '::1') {
+    try {
+      const ipResp = await fetch(
+        `https://ipapi.co/${signingIp}/json/`,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      if (ipResp.ok) {
+        const ipd: any = await ipResp.json();
+        if (!ipd.error) {
+          const orgLower = (ipd.org || '').toLowerCase();
+          const isDatacenter = DATACENTER_KW.some(k => orgLower.includes(k));
+          signals.ip_label   = isDatacenter ? 'datacenter' : 'residential';
+          signals.ip_country = ipd.country_name || null;
+          signals.ip_country_code = ipd.country_code || null;
+          signals.ip_city    = ipd.city || null;
+          signals.ip_isp     = ipd.org  || null;
+          if (isDatacenter) { riskScore += 15; signals.ip_flag = 'datacenter'; }
+          else              { riskScore -= 5; }
+          const expectedISO = country ? COUNTRY_ISO[country] : null;
+          if (expectedISO && ipd.country_code && expectedISO !== ipd.country_code) {
+            signals.ip_country_mismatch = true;
+            signals.ip_flag = (signals.ip_flag ? signals.ip_flag + ' ' : '') + 'country_mismatch';
+            riskScore += 15;
+          }
+        }
+      }
+    } catch (_) { signals.ip_check = 'timeout'; }
+  }
+
+  // ── 5. Device Analysis ───────────────────────────────────────────────────────
+  const ua = req.headers.get('user-agent') || '';
+  const isHeadless = /HeadlessChrome|PhantomJS|Selenium|webdriver/i.test(ua);
+  const browserM = ua.match(/(Chrome|Firefox|Safari|Edg|Opera)[\/ ]([\d.]+)/i);
+  const osM      = ua.match(/(Windows NT|Mac OS X|Android|iPhone OS|Linux x86_64)/i);
+  signals.ua_browser = browserM ? browserM[1] : 'Unknown';
+  signals.ua_os      = osM ? osM[1] : 'Unknown';
+  signals.device_timezone = device_timezone || null;
+  if (isHeadless) { signals.ua_flag = 'headless_browser'; riskScore += 35; }
+
+  // ── 6. AI Web Intelligence ────────────────────────────────────────────────────
   const prompt = `You are an internet intelligence analyst for a medical tourism safety platform.
 Assess the digital credibility and reputation risk of this partner using live internet search results.
 
@@ -301,9 +362,38 @@ Return JSON only:
       : `${registered_name} has limited or inconsistent internet presence. Multiple risk indicators detected. Admin review is required before activation.`
   );
 
+  // ── 7. XAI Confidence Score ───────────────────────────────────────────────────
+  const xai_confidence = Math.max(5, 100 - riskScore);
+
+  const xai_flags: string[] = [
+    ...(signals.ua_flag === 'headless_browser' ? ['Headless browser signature — automated signup bot'] : []),
+    ...(signals.ip_flag?.includes('datacenter') ? [`Signup IP routes through a datacenter (${signals.ip_isp || signals.ip_city})`] : []),
+    ...(signals.ip_country_mismatch ? [`IP location (${signals.ip_country}) does not match registered country (${country})`] : []),
+    ...((signals.phone_shared_partners as number) > 0 ? [`Phone number shared with ${signals.phone_shared_partners} other partner application(s)`] : []),
+    ...(signals.phone_flag === 'possible_voip' ? ['Phone number resolves to VoIP — associated with synthetic identities'] : []),
+    ...(signals.phone_flag === 'country_mismatch' ? ['Phone country code does not match registered country'] : []),
+    ...((signals.domain_flag === 'very_new' || signals.domain_flag === 'new') ? [`Domain registered only ${signals.domain_age_months}mo ago — inconsistent with claimed practice history`] : []),
+    ...(ai?.red_flags ?? []),
+  ];
+
+  const xai_positives: string[] = [
+    ...(signals.ip_label === 'residential' ? [`Signup IP is residential (${signals.ip_isp || signals.ip_city || 'clean ISP'})`] : []),
+    ...(signals.domain_flag === 'established' ? [`Website domain established ${signals.domain_age_months}mo ago`] : []),
+    ...(signals.website_live ? ['Website is live and reachable'] : []),
+    ...(((signals.social_checks as any[]) ?? []).filter((s: any) => s.status === 'active').map((s: any) => `${s.platform} profile verified active`)),
+    ...(ai?.positive_indicators ?? []),
+  ];
+
+  signals.xai_confidence = xai_confidence;
+  signals.xai_flags      = xai_flags;
+  signals.xai_positives  = xai_positives;
+
   const result = {
     risk_level,
     risk_score:            riskScore,
+    xai_confidence,
+    xai_flags,
+    xai_positives,
     summary,
     signals,
     ai_findings:           ai?.key_findings           ?? [],
