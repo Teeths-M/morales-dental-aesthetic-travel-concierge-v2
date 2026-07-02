@@ -25,10 +25,15 @@ export default function SafetyWatcher() {
     const curr = safetyStatus?.level ?? 'GREEN';
 
     if (prevLevelRef.current === null) {
-      // Cold-start: if the cart was already RED from localStorage, open pivot now.
+      // Cold-start: only open pivot if the user is already on a booking/procedure
+      // path — not on the home page or marketing pages where no booking is in flight.
       prevLevelRef.current = curr;
       if (curr === 'RED') {
-        openPivot(safetyStatus?.violations ?? []);
+        const path = window.location.pathname;
+        const isBookingPath = ['/booking', '/checkout', '/procedures', '/discover', '/providers', '/deep-perfection'].some(p => path.startsWith(p));
+        if (isBookingPath) {
+          openPivot(safetyStatus?.violations ?? []);
+        }
       }
       return;
     }
