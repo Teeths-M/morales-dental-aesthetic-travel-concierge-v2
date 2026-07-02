@@ -262,9 +262,10 @@ function SituationRoomScene({ onNext }) {
         <div style={{ position:'relative', overflow:'hidden' }}>
           <MapContainer center={[20,10]} zoom={2} minZoom={1} maxZoom={5}
             maxBounds={[[-85,-180],[85,180]]} maxBoundsViscosity={1} worldCopyJump={false}
-            zoomControl={false} attributionControl={false} style={{ width:'100%', height:'100%' }}>
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-              subdomains="abcd" noWrap={true} maxZoom={19} />
+            zoomControl={false} attributionControl={false} zoomAnimation={false}
+            style={{ width:'100%', height:'100%' }}>
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png"
+              subdomains="abcd" noWrap={true} maxZoom={19} bounds={[[-85,-180],[85,180]]} />
             <CircleMarker center={[25.77,-80.19]} radius={7}
               pathOptions={{ fillColor:GOLD, color:'#fff', weight:2, fillOpacity:1 }} />
             <Polyline positions={[[25.77,-80.19],[10.48,-66.9]]}
