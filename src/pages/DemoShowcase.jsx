@@ -701,6 +701,7 @@ const TABS = [
   { id: 'situation-room', label: '🗺️ Situation Room', link: '/demo/situation-room' },
   { id: 'mission-control', label: '⚡ Mission Control', link: '/demo/mission-control' },
   { id: 'mesh-beacon', label: '📡 Mesh Beacon', link: '/demo/mesh-beacon' },
+  { id: 'coverage',    label: '🗺️ M Covers Everything', link: '/demo/coverage' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'safe-t', 'medguard', 'emergency', 'nightlife']);
@@ -848,6 +849,15 @@ export default function DemoShowcase() {
             style={{ background: `linear-gradient(135deg, ${GOLD}, #E8C85C)`, color: DARK, boxShadow: `0 12px 40px rgba(212,175,55,0.45)` }}
           >
             👑 Watch James's Complete Journey
+          </Link>
+
+          {/* Coverage Matrix CTA */}
+          <Link
+            to="/demo/coverage"
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-sm mb-3"
+            style={{ background: 'rgba(212,175,55,0.08)', border: `2px solid ${GOLD}50`, color: GOLD }}
+          >
+            🗺️ "But what if…?" — M Covers Every Scenario
           </Link>
 
           {/* Action CTAs */}

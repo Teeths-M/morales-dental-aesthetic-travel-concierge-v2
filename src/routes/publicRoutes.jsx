@@ -51,6 +51,7 @@ const IntelligenceScanDemo     = lazy(() => import('@/pages/IntelligenceScanDemo
 const SituationRoom            = lazy(() => import('@/pages/SituationRoom'));
 const AdminMissionControl      = lazy(() => import('@/pages/AdminMissionControl'));
 const EmergencyMeshBeaconDemo  = lazy(() => import('@/pages/EmergencyMeshBeaconDemo'));
+const CoverageMatrix           = lazy(() => import('@/pages/CoverageMatrix'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -95,6 +96,7 @@ export const publicRoutes = (
     <Route path="/demo/situation-room"  element={<ErrorBoundary><SituationRoom /></ErrorBoundary>} />
     <Route path="/demo/mission-control" element={<ErrorBoundary><AdminMissionControl /></ErrorBoundary>} />
     <Route path="/demo/mesh-beacon"     element={<ErrorBoundary><EmergencyMeshBeaconDemo /></ErrorBoundary>} />
+    <Route path="/demo/coverage"        element={<ErrorBoundary><CoverageMatrix /></ErrorBoundary>} />
     <Route path="/recovery-check-in/:token"  element={<RecoveryCheckIn />} />
     {/* Public Recovery Tracker — zero-login viral share page */}
     <Route path="/track/:token"        element={<PublicRecoveryTracker />} />
