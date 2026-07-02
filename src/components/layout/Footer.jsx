@@ -5,8 +5,8 @@ import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import { ROUTES } from '@/lib/constants';
 
 const trustItems = [
-  { icon: Shield,      label: 'EVN-iQ400™ · 195 Countries' },
-  { icon: Award,       label: 'MedGuard™ · Behavioural AI' },
+  { icon: Shield,      label: 'Global Intelligence · 195 Countries' },
+  { icon: Award,       label: 'Behavioural Safety AI' },
   { icon: Heart,       label: '5-Tier Safety Escalation' },
   { icon: Headphones,  label: '24/7 Concierge · Always On' },
   { icon: CheckCircle, label: 'Satellite SOS · Zero Signal Ready' },
@@ -89,8 +89,8 @@ export default function Footer() {
         <div className="border-t border-background/10 mt-12 pt-6 mb-4 flex flex-wrap justify-center gap-3">
           {[
             '🌍 195 Countries Covered',
-            '🛡️ EVN-iQ400™ Environmental Intelligence',
-            '🧠 MedGuard™ Behavioural AI',
+            '🛡️ Global Safety Intelligence',
+            '🧠 Behavioural Safety AI',
             '✈️ Satellite SOS — Zero Signal Ready',
             '🏆 The Golden Standard for Medical Travel',
           ].map(b => (

@@ -77,7 +77,7 @@ export default function ProcedureStackingBlocker({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4"
+      className="fixed inset-0 z-[9998] flex flex-col items-center justify-center p-4"
       style={{ background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(12px)' }}
     >
       <motion.div

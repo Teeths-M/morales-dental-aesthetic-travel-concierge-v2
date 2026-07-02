@@ -355,8 +355,8 @@ export default function Login() {
         </p>
 
         {[
-          { emoji: '🌍', name: 'EVN-iQ400™',    desc: 'Environmental Intelligence',  color: '#60a5fa', badge: 'NEW' },
-          { emoji: '🧠', name: 'MedGuard™',      desc: 'Behavioural Safety AI',       color: '#a855f7' },
+          { emoji: '🌍', name: 'Global Intelligence', desc: 'Environmental Scanning',      color: '#60a5fa', badge: 'NEW' },
+          { emoji: '🧠', name: 'Safety AI',          desc: 'Behavioural Pattern Analysis', color: '#a855f7' },
           { emoji: '🛡️', name: 'Safety System', desc: 'Check-In Protocol',           color: '#22c55e' },
           { emoji: '✈️', name: 'iQ200™',        desc: 'Journey Coordination',        color: GOLD },
         ].map(s => (
