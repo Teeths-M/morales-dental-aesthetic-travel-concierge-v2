@@ -18,7 +18,7 @@ const features = [
   {
     icon: Brain,
     title: 'Protection That Sees Ahead',
-    desc: 'We monitor activity, sleep patterns, and check-in rhythm. Risk is detected before you feel it, and help dispatches automatically. Invisible. Always on.',
+    desc: 'We track your check-in rhythm across every stage of your journey. A missed check-in triggers an immediate alert to your Morales coordinator — before you even know something is wrong.',
   },
   {
     icon: WifiOff,

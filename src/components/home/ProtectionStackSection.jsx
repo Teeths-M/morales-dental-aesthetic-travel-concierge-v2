@@ -17,7 +17,7 @@ const OUTCOMES = [
     icon: '📍',
     color: '#22c55e',
     title: 'Every checkpoint confirmed.',
-    desc: 'From airport pickup to clinic arrival, every handshake is tracked in real time. Miss a check-in — and help moves automatically. No button required.',
+    desc: 'From airport pickup to clinic arrival, every handshake is tracked in real time. Miss a check-in — and your Morales coordinator is alerted immediately and reaches out.',
   },
   {
     icon: '👨‍👩‍👧',

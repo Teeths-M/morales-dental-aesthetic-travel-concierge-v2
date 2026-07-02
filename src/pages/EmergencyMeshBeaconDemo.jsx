@@ -32,13 +32,16 @@ function IntroScene({ onNext }) {
         animate={{ scale: [1, 1.08, 1], opacity: [1, 0.65, 1] }}
         transition={{ duration: 2.5, repeat: Infinity }}
         style={{ fontSize: 72, marginBottom: 24 }}>📡</motion.div>
-      <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.25em', color: GOLD, margin: '0 0 14px' }}>CR-55 · MORALES EMERGENCY SYSTEMS</p>
+      <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.25em', color: GOLD, margin: '0 0 14px' }}>CR-55 · MORALES EMERGENCY SYSTEMS · VISION DEMO</p>
       <h1 style={{ fontSize: 40, fontWeight: 900, color: '#fff', margin: '0 0 16px', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
         Emergency<br /><span style={{ color: RED }}>Mesh Beacon</span>
       </h1>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', maxWidth: 360, lineHeight: 1.65, margin: '0 0 44px' }}>
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', maxWidth: 360, lineHeight: 1.65, margin: '0 0 12px' }}>
         When Elena is trapped in Caracas — her phone activates for her.
         No button press. No signal. Morales finds a way.
+      </p>
+      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', maxWidth: 320, lineHeight: 1.6, margin: '0 0 32px', fontStyle: 'italic' }}>
+        This demo illustrates our future emergency detection vision. Device mesh networking requires our native app, currently on the roadmap.
       </p>
       <motion.button
         whileTap={{ scale: 0.96 }}
