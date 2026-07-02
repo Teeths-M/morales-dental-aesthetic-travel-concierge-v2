@@ -46,13 +46,20 @@ const DESTINATIONS = [
   { iso: 'PE', name: 'Peru',         lat: -9.2,   lng: -75.0  },
 ];
 
+// Human-readable journey stage names for each Handshake Step
+const HS_LABELS = {
+  0: 'Pre-Departure', 1: 'Driver Pickup', 2: 'Airport Drop-off',
+  3: 'In-Country',    4: 'Hotel Check-in', 5: 'Clinic Arrival',
+  6: 'Procedure',     7: 'Recovery',       8: 'Travel Home', 9: 'Home Safe',
+};
+
 // Seed data — shown only when no real cases exist (judges / demo mode)
 const DEMO_CASES = [
-  { id: 'demo-1', client_name: 'María G.',   procedure_country: 'Mexico',       current_step: 4, trip_phase: 'Travel-Coordination',    status: 'Travel-Coordination',    _demo: true },
-  { id: 'demo-2', client_name: 'James T.',   procedure_country: 'Colombia',     current_step: 2, trip_phase: 'Ready-For-Travel',       status: 'Ready-For-Travel',       _demo: true },
-  { id: 'demo-3', client_name: 'Sophie R.',  procedure_country: 'Thailand',     current_step: 6, trip_phase: 'Procedure-In-Progress',  status: 'Procedure-In-Progress',  _demo: true },
-  { id: 'demo-4', client_name: 'Carlos M.',  procedure_country: 'Turkey',       current_step: 3, trip_phase: 'Ready-For-Travel',       status: 'Ready-For-Travel',       _demo: true },
-  { id: 'demo-5', client_name: 'Anika P.',   procedure_country: 'India',        current_step: 7, trip_phase: 'Recovery',               status: 'Recovery',               _demo: true },
+  { id: 'demo-1', client_name: 'María G.',  procedure_country: 'Mexico',    current_step: 4, trip_phase: 'Travel-Coordination',   status: 'Travel-Coordination',   flag: '🇲🇽', procedure: 'Dental Implants',   doctor: 'Dr. Hernández', clinic: 'Clínica Morales MX',       _demo: true },
+  { id: 'demo-2', client_name: 'James T.',  procedure_country: 'Colombia',  current_step: 2, trip_phase: 'Ready-For-Travel',      status: 'Ready-For-Travel',      flag: '🇨🇴', procedure: 'All-on-4 Implants',  doctor: 'Dr. Castillo',  clinic: 'Bogotá Dental Center',     _demo: true },
+  { id: 'demo-3', client_name: 'Sophie R.', procedure_country: 'Thailand',  current_step: 6, trip_phase: 'Procedure-In-Progress', status: 'Procedure-In-Progress', flag: '🇹🇭', procedure: 'Rhinoplasty',        doctor: 'Dr. Suwan',     clinic: 'Bangkok Aesthetic Clinic', _demo: true },
+  { id: 'demo-4', client_name: 'Carlos M.', procedure_country: 'Turkey',    current_step: 3, trip_phase: 'Ready-For-Travel',      status: 'Ready-For-Travel',      flag: '🇹🇷', procedure: 'Porcelain Veneers',  doctor: 'Dr. Yilmaz',    clinic: 'Istanbul Smile Studio',    _demo: true },
+  { id: 'demo-5', client_name: 'Anika P.',  procedure_country: 'India',     current_step: 7, trip_phase: 'Recovery',              status: 'Recovery',              flag: '🇮🇳', procedure: 'Tummy Tuck',         doctor: 'Dr. Sharma',    clinic: 'Mumbai MedPlus Centre',    _demo: true },
 ];
 
 const DEMO_EVN = {
@@ -65,18 +72,18 @@ const DEMO_EVN = {
 
 // Simulated live feed (production: reads from AuditLog)
 const FEED_ITEMS = [
-  { icon: '✅', text: 'HS5 Clinic Arrival confirmed — patient at Morales partner clinic',   color: '#22c55e', time: '0:12' },
-  { icon: '🛡️', text: 'MedGuard™ SAFE — score 14/100 — all 6 signals nominal',             color: '#22c55e', time: '1:47' },
-  { icon: '🌍', text: 'EVN-iQ400 — No new advisories for active destinations',              color: GOLD,      time: '3:22' },
-  { icon: '📡', text: 'Safe-T4life check-in received — 4h ahead of deadline',               color: '#22c55e', time: '5:10' },
-  { icon: '⚠️', text: 'EVN-iQ400 WATCH — moderate advisory update for destination',         color: '#f59e0b', time: '8:44' },
-  { icon: '✈️', text: 'HS2 Airport Drop-off confirmed — patient boarded',                   color: '#60a5fa', time: '12:01' },
-  { icon: '💳', text: 'Escrow milestone released — payment to clinic after HS5',            color: GOLD,      time: '15:30' },
-  { icon: '🚗', text: 'HS1 Driver Pickup confirmed — patient en route to airport',          color: '#22c55e', time: '22:15' },
-  { icon: '🏨', text: 'HS4 Hotel Check-in confirmed — patient settled at partner hotel',    color: '#22c55e', time: '28:40' },
-  { icon: '🛡️', text: 'MedGuard™ WATCH — score 38/100 — activity pattern shift detected', color: '#f59e0b', time: '34:50' },
-  { icon: '📩', text: 'Pre-departure AI briefing sent — patient confirmed receipt',          color: '#a855f7', time: '41:20' },
-  { icon: '🌍', text: 'EVN-iQ400 ALERT — advisory issued for transit route',                color: '#f97316', time: '48:00' },
+  { icon: '✅', text: 'Sophie R. — Clinic Arrival confirmed at Bangkok Aesthetic Clinic',           color: '#22c55e', time: '0:12',  tag: 'HS5 · Thailand'  },
+  { icon: '🛡️', text: 'Anika P. — MedGuard™ SAFE · score 14/100 · all 6 signals nominal',         color: '#22c55e', time: '1:47',  tag: 'Recovery · India' },
+  { icon: '🌍', text: 'EVN-iQ400 — No new advisories across all 5 active destinations',             color: GOLD,      time: '3:22',  tag: 'System-wide'     },
+  { icon: '📡', text: 'Anika P. — Safe-T4life check-in received · 4h ahead of deadline',           color: '#22c55e', time: '5:10',  tag: 'HS7 · India'     },
+  { icon: '⚠️', text: 'EVN-iQ400 WATCH — Turkey advisory score updated to 55 · elevated risk',     color: '#f59e0b', time: '8:44',  tag: 'Carlos M.'       },
+  { icon: '✈️', text: 'James T. — Airport Drop-off confirmed · patient boarded flight to Colombia', color: '#60a5fa', time: '12:01', tag: 'HS2 · Colombia'  },
+  { icon: '💳', text: 'María G. — Escrow milestone released after Hotel Check-in confirmed',        color: GOLD,      time: '15:30', tag: 'HS4 · Mexico'    },
+  { icon: '🚗', text: 'Carlos M. — Driver Pickup confirmed · en route to Istanbul airport',         color: '#22c55e', time: '22:15', tag: 'HS1 · Turkey'    },
+  { icon: '🏨', text: 'James T. — Hotel Check-in confirmed at partner hotel in Bogotá',             color: '#22c55e', time: '28:40', tag: 'HS4 · Colombia'  },
+  { icon: '🛡️', text: 'Carlos M. — MedGuard™ WATCH · score 38/100 · activity shift detected',     color: '#f59e0b', time: '34:50', tag: 'HS3 · Turkey'    },
+  { icon: '📩', text: 'María G. — Pre-departure AI briefing sent · confirmed receipt',              color: '#a855f7', time: '41:20', tag: 'Pre-Departure'   },
+  { icon: '🌍', text: 'EVN-iQ400 ALERT — advisory issued for transit route through Colombia',       color: '#f97316', time: '48:00', tag: 'System-wide'     },
 ];
 
 export default function SituationRoom() {
@@ -340,24 +347,36 @@ export default function SituationRoom() {
                 <span style={{ fontSize: 8, color: GOLD, fontWeight: 700, letterSpacing: '0.08em' }}>DEMO DATA</span>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {displayCases.slice(0, 6).map(c => {
-                const iso = COUNTRY_ISO[c.procedure_country];
-                const evn = iso ? displayEvn[iso] : null;
-                const lvl = evn ? getRiskLevel(evn.riskScore) : null;
-                const hs  = c.current_step ?? 0;
+                const iso       = COUNTRY_ISO[c.procedure_country];
+                const evn       = iso ? displayEvn[iso] : null;
+                const lvl       = evn ? getRiskLevel(evn.riskScore) : null;
+                const hs        = c.current_step ?? 0;
+                const stageName = HS_LABELS[hs] || `Step ${hs}`;
+                const barColor  = lvl?.color || GOLD;
                 return (
-                  <div key={c.id} style={{ padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: `1px solid ${lvl ? lvl.border : 'rgba(255,255,255,0.06)'}` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{c.client_name || 'Patient'}</span>
+                  <div key={c.id} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: `1px solid ${lvl ? lvl.border : 'rgba(255,255,255,0.08)'}` }}>
+                    {/* Row 1: name + risk */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{c.client_name || 'Patient'}</span>
                       {lvl && <span style={{ fontSize: 9, fontWeight: 800, color: lvl.color }}>{lvl.emoji} {lvl.label}</span>}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{c.procedure_country || '—'}</span>
-                      <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                        <div style={{ width: `${(hs / 9) * 100}%`, height: '100%', background: GOLD, borderRadius: 2 }} />
+                    {/* Row 2: procedure + doctor */}
+                    <div style={{ fontSize: 9, color: GOLD, marginBottom: 6, opacity: 0.85, display: 'flex', gap: 4, alignItems: 'center' }}>
+                      {c.procedure && <span>{c.procedure}</span>}
+                      {c.procedure && c.doctor && <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>}
+                      {c.doctor && <span style={{ color: 'rgba(255,255,255,0.45)' }}>{c.doctor}</span>}
+                      {!c.procedure && <span style={{ color: 'rgba(255,255,255,0.3)' }}>Procedure not specified</span>}
+                    </div>
+                    {/* Row 3: flag + country + progress bar + stage name */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11 }}>{c.flag || '🌐'}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', minWidth: 52, flexShrink: 0 }}>{c.procedure_country || '—'}</span>
+                      <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                        <div style={{ width: `${(hs / 9) * 100}%`, height: '100%', background: barColor, borderRadius: 2, transition: 'width 0.6s ease' }} />
                       </div>
-                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>HS{hs}/9</span>
+                      <span style={{ fontSize: 9, color: barColor, fontWeight: 700, minWidth: 78, textAlign: 'right', flexShrink: 0 }}>{stageName}</span>
                     </div>
                   </div>
                 );
@@ -393,8 +412,11 @@ export default function SituationRoom() {
                   >
                     <span style={{ fontSize: 12, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{item.text}</p>
-                      <p style={{ margin: 0, fontSize: 8, color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>{item.time} ago</p>
+                      <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.7)', lineHeight: 1.45 }}>{item.text}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                        <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>{item.time} ago</span>
+                        {item.tag && <span style={{ fontSize: 8, color: item.color, fontWeight: 700, opacity: 0.75 }}>{item.tag}</span>}
+                      </div>
                     </div>
                     <div style={{ width: 5, height: 5, borderRadius: '50%', background: item.color, flexShrink: 0, marginTop: 4 }} />
                   </motion.div>
