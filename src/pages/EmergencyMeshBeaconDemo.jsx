@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -34,8 +34,8 @@ function IntroScene({ onNext }) {
         Emergency<br /><span style={{ color: RED }}>Mesh Beacon</span>
       </h1>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', maxWidth: 360, lineHeight: 1.65, margin: '0 0 44px' }}>
-        A distributed rescue network. Works offline. Relays through nearby users.
-        Dispatches help automatically — no human intervention required.
+        When Elena is trapped in Caracas — her phone activates for her.
+        No button press. No signal. Morales finds a way.
       </p>
       <motion.button
         whileTap={{ scale: 0.96 }}
@@ -48,93 +48,68 @@ function IntroScene({ onNext }) {
   );
 }
 
-// ── Scene 1: Long-press SOS trigger ──────────────────────────────────────────
+// ── Scene 1: Earthquake auto-activation ──────────────────────────────────────
 function TriggerScene({ onNext }) {
-  const [holding,   setHolding]   = useState(false);
-  const [progress,  setProgress]  = useState(0);
-  const [activated, setActivated] = useState(false);
-  const timerRef = useRef(null);
-  const startRef = useRef(null);
+  const [phase, setPhase] = useState(0);
 
-  function startHold(e) {
-    e.preventDefault();
-    if (activated) return;
-    startRef.current = Date.now();
-    setHolding(true);
-    timerRef.current = setInterval(() => {
-      const pct = Math.min(((Date.now() - startRef.current) / 3000) * 100, 100);
-      setProgress(pct);
-      if (pct >= 100) {
-        clearInterval(timerRef.current);
-        setActivated(true);
-        setHolding(false);
-        setTimeout(onNext, 1400);
-      }
-    }, 30);
-  }
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 1000);
+    const t2 = setTimeout(() => setPhase(2), 2400);
+    const t3 = setTimeout(() => onNext(), 4200);
+    return () => [t1, t2, t3].forEach(clearTimeout);
+  }, [onNext]);
 
-  function endHold() {
-    if (activated) return;
-    clearInterval(timerRef.current);
-    setHolding(false);
-    setProgress(0);
-  }
-
-  const C = 2 * Math.PI * 66;
+  const STEPS = [
+    { icon: '🌍', label: 'Magnitude 6.8 earthquake hits Caracas', done: phase >= 0 },
+    { icon: '📳', label: 'Phone accelerometer detects the impact', done: phase >= 1 },
+    { icon: '📡', label: 'Beacon auto-fired — Elena never pressed anything', done: phase >= 2, red: true },
+  ];
 
   return (
     <Scene
-      layer="LAYER 1 · USER TRIGGER"
-      title="Long-press SOS"
-      sub="Works in airplane mode · No internet required · 3-second hold"
+      layer="LAYER 1 · AUTO-ACTIVATION"
+      title={phase < 2 ? 'Earthquake Detected' : 'Beacon Auto-Fired'}
+      sub={phase < 1 ? 'Magnitude 6.8 · Caracas, Venezuela · 14:32 local time'
+         : phase < 2 ? 'Morales accelerometer reading seismic impact…'
+         : 'She was unconscious. The phone activated for her.'}
     >
-      <div style={{ position: 'relative', width: 156, height: 156, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }} width={156} height={156}>
-          <circle cx={78} cy={78} r={66} fill="none" stroke="rgba(239,68,68,0.1)" strokeWidth={6} />
-          <circle cx={78} cy={78} r={66} fill="none" stroke={RED} strokeWidth={6} strokeLinecap="round"
-            strokeDasharray={C} strokeDashoffset={C * (1 - progress / 100)}
-            style={{ transition: 'stroke-dashoffset 0.03s linear' }} />
-        </svg>
-        <motion.button
-          onMouseDown={startHold} onMouseUp={endHold} onMouseLeave={endHold}
-          onTouchStart={startHold} onTouchEnd={endHold}
-          animate={activated ? { scale: [1, 1.12, 1] } : {}}
-          style={{
-            width: 108, height: 108, borderRadius: '50%', cursor: 'pointer',
-            border: `3px solid ${activated ? RED : 'rgba(239,68,68,0.55)'}`,
-            background: activated ? RED : `rgba(239,68,68,${holding ? '0.28' : '0.1'})`,
-            color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: '0.04em',
-            boxShadow: (holding || activated) ? `0 0 60px rgba(239,68,68,0.55), 0 0 120px rgba(239,68,68,0.2)` : 'none',
-            transition: 'all 0.15s', userSelect: 'none',
-          }}
-        >
-          {activated ? '✓' : 'SOS'}
-        </motion.button>
-      </div>
+      <svg width="280" height="50" viewBox="0 0 280 50" style={{ margin: '0 0 28px', overflow: 'visible' }}>
+        <motion.path
+          d="M0,25 L30,25 L42,5 L54,45 L64,3 L76,47 L86,10 L98,42 L108,16 L118,38 L128,25 L280,25"
+          fill="none" stroke={RED} strokeWidth={2.5} strokeLinecap="round"
+          initial={{ pathLength: 0, opacity: 0.5 }}
+          animate={{ pathLength: 1, opacity: phase === 0 ? 1 : 0.18 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+        />
+        {phase >= 1 && (
+          <motion.line x1="128" y1="0" x2="128" y2="50"
+            stroke={GOLD} strokeWidth={1.5} strokeDasharray="3 3"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          />
+        )}
+      </svg>
 
-      <motion.p
-        animate={{ color: activated ? GREEN : holding ? RED : 'rgba(255,255,255,0.3)' }}
-        style={{ marginTop: 18, fontSize: 13, fontWeight: 800, letterSpacing: '0.06em' }}
-      >
-        {activated ? '✅ BEACON ACTIVATED' : holding ? 'HOLD…' : 'Hold for 3 seconds'}
-      </motion.p>
-
-      <div style={{ marginTop: 28, display: 'flex', gap: 10 }}>
-        {[['✈️', 'Airplane Mode'], ['📶', 'No Signal'], ['📡', 'Beacon Active']].map(([icon, label], i) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 380 }}>
+        {STEPS.map(({ icon, label, done, red }) => (
           <motion.div key={label}
-            animate={{
-              borderColor: activated && i === 2 ? `${GREEN}60` : 'rgba(255,255,255,0.08)',
-              color:       activated && i === 2 ? GREEN : 'rgba(255,255,255,0.25)',
-            }}
-            style={{ padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', fontSize: 10, fontWeight: 700 }}>
-            {icon} {label}
+            animate={{ opacity: done ? 1 : 0.18 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px', borderRadius: 14,
+              background: done ? (red ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)') : 'transparent',
+              border: `1px solid ${done ? (red ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)') : 'rgba(255,255,255,0.04)'}` }}>
+            <span style={{ fontSize: 22 }}>{icon}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: done ? (red ? RED : '#fff') : 'rgba(255,255,255,0.25)', flex: 1, textAlign: 'left' }}>{label}</span>
+            {done && (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400 }}
+                style={{ fontSize: 14 }}>{red ? '🚨' : '✓'}</motion.span>
+            )}
           </motion.div>
         ))}
       </div>
 
-      <button onClick={onNext} style={{ marginTop: 30, fontSize: 11, color: 'rgba(255,255,255,0.2)', background: 'none', border: 'none', cursor: 'pointer' }}>
-        Skip →
-      </button>
+      <motion.p animate={{ opacity: phase >= 2 ? 1 : 0 }}
+        style={{ marginTop: 20, fontSize: 11, color: 'rgba(255,255,255,0.28)', fontStyle: 'italic' }}>
+        "She never had to press a button."
+      </motion.p>
     </Scene>
   );
 }
@@ -186,10 +161,10 @@ function BroadcastScene({ onNext }) {
 
 // ── Scene 3: Mesh relay ───────────────────────────────────────────────────────
 const RELAY_NODES = [
-  { icon: '🚨', label: 'Elena G.', sub: 'Trapped', color: RED      },
-  { icon: '👤', label: 'Marco T.', sub: 'Relay 1', color: '#60a5fa' },
-  { icon: '👤', label: 'Sofia R.', sub: 'Relay 2', color: '#60a5fa' },
-  { icon: '☁️', label: 'Cloud',   sub: 'Reached', color: GREEN     },
+  { icon: '🆘', label: 'Elena G.',  sub: 'Trapped · Caracas', color: RED       },
+  { icon: '👤', label: 'Juan M.',   sub: 'Surface · Relay 1',  color: '#60a5fa' },
+  { icon: '👤', label: 'Sofia V.',  sub: 'Street · Relay 2',   color: '#60a5fa' },
+  { icon: '☁️', label: 'Cloud',    sub: 'Signal Reached',     color: GREEN      },
 ];
 
 function MeshRelayScene({ onNext }) {
@@ -250,71 +225,104 @@ function MeshRelayScene({ onNext }) {
   );
 }
 
-// ── Scene 4: Situation Room sees it ──────────────────────────────────────────
+// ── Scene 4: Situation Room — Venezuela map ───────────────────────────────────
 function SituationRoomScene({ onNext }) {
-  useEffect(() => { const t = setTimeout(onNext, 5500); return () => clearTimeout(t); }, [onNext]);
+  useEffect(() => { const t = setTimeout(onNext, 6500); return () => clearTimeout(t); }, [onNext]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
       <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <motion.div animate={{ opacity: [1, 0.25, 1] }} transition={{ duration: 0.7, repeat: Infinity }}
           style={{ width: 8, height: 8, borderRadius: '50%', background: RED, boxShadow: `0 0 10px ${RED}` }} />
         <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', color: '#fff' }}>SITUATION ROOM</span>
         <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
           style={{ fontSize: 9, fontWeight: 700, color: RED, letterSpacing: '0.1em', marginLeft: 4 }}>
-          ● 1 BEACON ACTIVE
+          ● EARTHQUAKE · BEACON ACTIVE · CARACAS
         </motion.span>
         <span style={{ marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em' }}>LAYER 4 · ADMIN SEES THIS</span>
       </div>
 
-      <div style={{ flex: 1, position: 'relative', background: '#060e1a', overflow: 'hidden' }}>
-        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.05 }}>
-          {[...Array(10)].map((_, i) => (
-            <React.Fragment key={i}>
-              <line x1={`${i * 11.1}%`} y1="0" x2={`${i * 11.1}%`} y2="100%" stroke="#fff" strokeWidth={0.5} />
-              <line x1="0" y1={`${i * 11.1}%`} x2="100%" y2={`${i * 11.1}%`} stroke="#fff" strokeWidth={0.5} />
-            </React.Fragment>
-          ))}
-        </svg>
+      {/* Map */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#030a12' }}>
+        {/* SVG map — northern South America */}
+        <svg viewBox="0 0 300 200" width="100%" height="100%"
+          style={{ position: 'absolute', inset: 0 }} preserveAspectRatio="xMidYMid meet">
+          <rect width={300} height={200} fill="#030a12" />
 
-        {/* HQ */}
-        <div style={{ position: 'absolute', left: '20%', top: '52%' }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: GOLD, boxShadow: `0 0 14px ${GOLD}` }} />
-          <div style={{ fontSize: 9, color: GOLD, fontWeight: 700, marginTop: 4, whiteSpace: 'nowrap' }}>HQ · Miami</div>
-        </div>
+          {/* Caribbean Sea */}
+          <text x="105" y="20" textAnchor="middle" fill="rgba(96,165,250,0.18)"
+            fontSize="6" letterSpacing="2" fontWeight="600">C A R I B B E A N   S E A</text>
 
-        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} preserveAspectRatio="none">
-          <line x1="20%" y1="52%" x2="68%" y2="33%" stroke={RED} strokeWidth={1.5} strokeDasharray="5 5" opacity={0.5} />
-        </svg>
+          {/* Colombia */}
+          <path d="M20,72 L22,54 L32,44 L46,40 L58,42 L65,52 L65,57 L75,65 L70,82 L58,95 L40,100 L24,92 L16,80 Z"
+            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.6" />
+          <text x="40" y="74" textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize="5">COLOMBIA</text>
 
-        {/* Beacon marker */}
-        <div style={{ position: 'absolute', left: '68%', top: '33%', transform: 'translate(-50%, -50%)' }}>
+          {/* Brazil */}
+          <path d="M58,95 L70,82 L75,65 L90,73 L108,75 L126,70 L138,62 L148,74 L160,92 L158,118 L142,148 L115,165 L82,162 L60,148 L45,125 L52,105 Z"
+            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.6" />
+          <text x="105" y="128" textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize="5">BRAZIL</text>
+
+          {/* Guyana */}
+          <path d="M138,62 L142,50 L150,46 L158,52 L162,66 L157,80 L148,82 L138,72 Z"
+            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.6" />
+          <text x="150" y="68" textAnchor="middle" fill="rgba(255,255,255,0.16)" fontSize="4">GUYANA</text>
+
+          {/* Venezuela — highlighted red */}
+          <path d="M65,57 L72,44 L82,36 L96,33 L110,35 L124,39 L135,42 L142,50 L138,62 L126,70 L108,75 L90,73 L75,65 Z"
+            fill="rgba(239,68,68,0.13)" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
+          <text x="104" y="59" textAnchor="middle" fill="rgba(255,255,255,0.6)"
+            fontSize="6" fontWeight="bold" letterSpacing="0.5">VENEZUELA</text>
+
+          {/* Trinidad */}
+          <circle cx="162" cy="48" r="3" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+
+          {/* Caracas label */}
+          <text x="100" y="29" textAnchor="middle" fill="rgba(255,100,100,0.6)"
+            fontSize="4.5" letterSpacing="0.5" fontWeight="600">CARACAS</text>
+
+          {/* Beacon rings */}
           {[1, 2, 3].map(i => (
-            <motion.div key={i}
-              animate={{ scale: [1, 4.2], opacity: [0.8, 0] }}
-              transition={{ duration: 2.1, delay: i * 0.65, repeat: Infinity }}
-              style={{ position: 'absolute', width: 18, height: 18, borderRadius: '50%', border: `2px solid ${RED}`, top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}
+            <motion.circle key={i} cx={100} cy={35} r={5}
+              fill="none" stroke={RED} strokeWidth={1}
+              animate={{ r: [5, 20], opacity: [0.95, 0] }}
+              transition={{ duration: 2.2, delay: i * 0.7, repeat: Infinity }}
             />
           ))}
-          <div style={{ position: 'relative', width: 18, height: 18, borderRadius: '50%', background: RED, boxShadow: `0 0 22px ${RED}` }} />
-        </div>
+          <circle cx={100} cy={35} r={4.5} fill={RED}
+            style={{ filter: `drop-shadow(0 0 8px ${RED})` }} />
+
+          {/* Miami HQ */}
+          <circle cx={22} cy={14} r={3.5} fill={GOLD}
+            style={{ filter: `drop-shadow(0 0 5px ${GOLD})` }} />
+          <text x="30" y="16.5" fill={GOLD} fontSize="4.5" fontWeight="bold">HQ · Miami, FL</text>
+
+          {/* Animated dash line: Miami → Caracas */}
+          <motion.line x1={22} y1={14} x2={100} y2={35}
+            stroke={RED} strokeWidth={1} strokeDasharray="4 4" opacity={0.4}
+            animate={{ strokeDashoffset: [0, -8] }}
+            transition={{ duration: 0.5, repeat: Infinity, ease: 'linear' }}
+          />
+        </svg>
 
         {/* Info card */}
-        <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}
-          style={{ position: 'absolute', right: 16, top: 14, background: 'rgba(4,8,15,0.95)', border: `1px solid ${RED}40`, borderRadius: 12, padding: '14px 16px', minWidth: 210 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, color: RED, letterSpacing: '0.15em', marginBottom: 8 }}>🚨 BEACON ACTIVE</div>
+        <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}
+          style={{ position: 'absolute', right: 12, top: 10, background: 'rgba(3,10,18,0.97)', border: `1px solid ${RED}45`, borderRadius: 12, padding: '12px 14px', minWidth: 200 }}>
+          <div style={{ fontSize: 8, fontWeight: 800, color: RED, letterSpacing: '0.15em', marginBottom: 7 }}>🚨 BEACON ACTIVE · EQ 6.8</div>
           <div style={{ fontSize: 11, color: '#fff', fontWeight: 700, marginBottom: 3 }}>Elena G. · Case #4821</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', marginBottom: 3 }}>25.0517° N, 121.5645° E</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Taipei · HS5 · Clinic Arrival</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <div style={{ padding: '4px 8px', borderRadius: 6, background: `${RED}20`, fontSize: 8, fontWeight: 700, color: RED }}>BEACON</div>
-            <div style={{ padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.3)' }}>OFFLINE</div>
+          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', marginBottom: 2 }}>10.4815° N, 66.9037° W</div>
+          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>Caracas, Venezuela · Trapped · Auto-Activated</div>
+          <div style={{ display: 'flex', gap: 5 }}>
+            <div style={{ padding: '3px 7px', borderRadius: 5, background: `${RED}22`, fontSize: 7.5, fontWeight: 800, color: RED }}>BEACON</div>
+            <div style={{ padding: '3px 7px', borderRadius: 5, background: 'rgba(249,115,22,0.12)', fontSize: 7.5, fontWeight: 800, color: '#f97316' }}>OFFLINE</div>
           </div>
         </motion.div>
 
+        {/* Bottom banner */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.6 }}
-          style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', padding: '9px 22px', borderRadius: 24, background: `rgba(239,68,68,0.12)`, border: `1px solid ${RED}40`, whiteSpace: 'nowrap' }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: RED }}>Concierge Notified · Dispatch Initiated</span>
+          style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', padding: '8px 20px', borderRadius: 24, background: 'rgba(239,68,68,0.1)', border: `1px solid ${RED}35`, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: RED }}>Auto-Activated · Concierge Notified · Dispatch In Progress</span>
         </motion.div>
       </div>
     </div>
@@ -323,9 +331,9 @@ function SituationRoomScene({ onNext }) {
 
 // ── Scene 5: Automated dispatch ───────────────────────────────────────────────
 const DISPATCH_SERVICES = [
-  { icon: '🚒', label: 'Fire Department', detail: 'GPS coordinates transmitted', color: '#f97316' },
-  { icon: '🚔', label: 'Police',          detail: 'Last known location pinged',  color: '#60a5fa' },
-  { icon: '🏛️', label: 'US Embassy',     detail: 'Emergency protocol active',   color: GOLD     },
+  { icon: '🚒', label: 'Bomberos Venezuela', detail: 'GPS coordinates · Caracas rescue team en route', color: '#f97316' },
+  { icon: '🚔', label: 'GNB Police',         detail: 'Last known location pinged · Patrol dispatched',  color: '#60a5fa' },
+  { icon: '🏛️', label: 'US Embassy Caracas', detail: 'Citizen emergency protocol active',              color: GOLD      },
 ];
 
 function DispatchScene() {
@@ -380,7 +388,7 @@ function DispatchScene() {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-const SCENE_LABELS = ['INTRO', 'TRIGGER', 'BROADCAST', 'MESH RELAY', 'SIT. ROOM', 'DISPATCH'];
+const SCENE_LABELS = ['INTRO', 'AUTO-DETECT', 'BROADCAST', 'MESH RELAY', 'SIT. ROOM', 'DISPATCH'];
 
 export default function EmergencyMeshBeaconDemo() {
   const [scene, setScene] = useState(0);
