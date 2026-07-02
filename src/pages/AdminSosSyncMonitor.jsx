@@ -1,6 +1,5 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
