@@ -118,15 +118,18 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
   const [phone, setPhone] = useState('');
   const [appLanguage, setAppLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [language, setLanguage] = useState('English');
-  const [notifications, setNotifications] = useState({
-    appointments: true, medications: true, travel: true, documents: true, promotions: false,
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const s = localStorage.getItem('morales_notifications');
+      return s ? JSON.parse(s) : { appointments: true, medications: true, travel: true, documents: true, promotions: false };
+    } catch { return { appointments: true, medications: true, travel: true, documents: true, promotions: false }; }
   });
-  const [mfa, setMfa] = useState(false);
-  const [consents, setConsents] = useState({
-    shareData: false,
-    communications: false,
-    terms: false,
-    safeTEducational: false,
+  const [mfa, setMfa] = useState(() => localStorage.getItem('morales_mfa') === 'true');
+  const [consents, setConsents] = useState(() => {
+    try {
+      const s = localStorage.getItem('morales_consents');
+      return s ? JSON.parse(s) : { shareData: false, communications: false, terms: false, safeTEducational: false };
+    } catch { return { shareData: false, communications: false, terms: false, safeTEducational: false }; }
   });
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -159,15 +162,19 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
   }, []);
 
   const toggleNotif = (key) => setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-  const toggleConsent = (key) => setConsents(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleConsent = (key) => setConsents(prev => {
+    const next = { ...prev, [key]: !prev[key] };
+    localStorage.setItem('morales_consents', JSON.stringify(next));
+    return next;
+  });
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.auth.updateMe({
-        full_name: fullName,
-        phone,
-      });
+      await base44.auth.updateMe({ full_name: fullName, phone });
+      localStorage.setItem('morales_notifications', JSON.stringify(notifications));
+      localStorage.setItem('morales_mfa', String(mfa));
+      localStorage.setItem('morales_consents', JSON.stringify(consents));
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
