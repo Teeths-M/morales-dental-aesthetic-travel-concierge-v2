@@ -73,12 +73,12 @@ const DEMO_EVN = {
 
 // Simulated live feed (production: reads from AuditLog)
 const FEED_ITEMS = [
-  { icon: '🚨', text: 'CRITICAL — Carlos M. · Turkey EVN-iQ400 THREAT LEVEL RED · Score 78/100 · Morales Response Protocol ACTIVATED', color: '#ef4444', time: '0:02',  tag: 'HIGH RISK · Turkey' },
+  { icon: '🚨', text: 'COUNTRY SAFETY ALERT — Carlos M. · Turkey zone risk 78/100 · Doctor & Clinic VERIFIED SAFE ✅ · Morales Concierge Team activated', color: '#ef4444', time: '0:02', tag: 'Country Advisory · Turkey' },
   { icon: '✅', text: 'Sophie R. — Clinic Arrival confirmed at Bangkok Aesthetic Clinic',           color: '#22c55e', time: '0:12',  tag: 'HS5 · Thailand'  },
   { icon: '🛡️', text: 'Anika P. — MedGuard™ SAFE · score 14/100 · all 6 signals nominal',         color: '#22c55e', time: '1:47',  tag: 'Recovery · India' },
   { icon: '🌍', text: 'EVN-iQ400 — No new advisories across all 5 active destinations',             color: GOLD,      time: '3:22',  tag: 'System-wide'     },
   { icon: '📡', text: 'Anika P. — Safe-T4life check-in received · 4h ahead of deadline',           color: '#22c55e', time: '5:10',  tag: 'HS7 · India'     },
-  { icon: '⚠️', text: 'EVN-iQ400 WATCH — Turkey advisory score updated to 55 · elevated risk',     color: '#f59e0b', time: '8:44',  tag: 'Carlos M.'       },
+  { icon: '⚠️', text: 'EVN-iQ400 — Turkey country zone score updated to 78 · Doctor & Clinic remain Morales-verified and safe', color: '#f59e0b', time: '8:44', tag: 'Country Risk · Turkey' },
   { icon: '✈️', text: 'James T. — Airport Drop-off confirmed · patient boarded flight to Colombia', color: '#60a5fa', time: '12:01', tag: 'HS2 · Colombia'  },
   { icon: '💳', text: 'María G. — Escrow milestone released after Hotel Check-in confirmed',        color: GOLD,      time: '15:30', tag: 'HS4 · Mexico'    },
   { icon: '🚗', text: 'Carlos M. — Driver Pickup confirmed · en route to Istanbul airport',         color: '#22c55e', time: '22:15', tag: 'HS1 · Turkey'    },
@@ -235,7 +235,7 @@ export default function SituationRoom() {
             { v: totalActive, l: 'ACTIVE JOURNEYS', c: GOLD      },
             { v: inTransit,   l: 'IN TRANSIT',       c: '#60a5fa' },
             { v: countries,   l: 'COUNTRIES',        c: '#a855f7' },
-            { v: highRisk,    l: 'HIGH RISK',         c: '#ef4444', pulse: highRisk > 0 },
+            { v: highRisk,    l: 'ZONE HIGH RISK',     c: '#ef4444', pulse: highRisk > 0 },
             { v: watchDest,   l: 'ON WATCH',          c: '#f59e0b' },
           ].map(({ v, l, c, pulse }) => (
             <div key={l} style={{ textAlign: 'center' }}>
@@ -270,7 +270,7 @@ export default function SituationRoom() {
 
           {/* EVN-iQ400 risk strip */}
           <div style={{ flexShrink: 0, padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
-            <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: GOLD, flexShrink: 0 }}>EVN-iQ400</span>
+            <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: GOLD, flexShrink: 0 }}>EVN-iQ400 · COUNTRY ZONE SAFETY</span>
             {Object.entries(displayEvn).sort((a, b) => b[1].riskScore - a[1].riskScore).map(([iso, d]) => {
               const lvl = getRiskLevel(d.riskScore);
               return (
@@ -294,16 +294,18 @@ export default function SituationRoom() {
                 animate={{ scale: [1, 1.3, 1] }}
                 transition={{ duration: 0.9, repeat: Infinity }}
                 style={{ fontSize: 14 }}>🚨</motion.span>
-              <span style={{ fontSize: 9, fontWeight: 900, color: '#ef4444', letterSpacing: '0.15em' }}>THREAT ACTIVE</span>
+              <span style={{ fontSize: 9, fontWeight: 900, color: '#ef4444', letterSpacing: '0.15em' }}>COUNTRY SAFETY ADVISORY</span>
               <div style={{ width: 1, height: 14, background: 'rgba(239,68,68,0.4)' }} />
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>
-                {alertCase.client_name} · {alertCase.procedure_country} · Score {alertEvn.riskScore}/100
-              </span>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
-                {alertCase.procedure || 'Procedure'} · {alertCase.doctor || 'Doctor'}
-              </span>
+              <div>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>
+                  {alertCase.client_name} is in {alertCase.procedure_country} — Zone Risk {alertEvn.riskScore}/100
+                </span>
+                <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 700, marginLeft: 10 }}>
+                  ✅ Doctor &amp; Clinic: Morales-Verified Safe
+                </span>
+              </div>
               <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 800, color: '#ef4444', letterSpacing: '0.08em' }}>
-                RESPONSE PROTOCOL ACTIVE
+                CONCIERGE TEAM ACTIVE
               </span>
             </motion.div>
           )}
@@ -373,7 +375,8 @@ export default function SituationRoom() {
                   <Popup>
                     <div style={{ fontSize: 12, minWidth: 170 }}>
                       <strong>{dest.name}</strong>
-                      {isHR && <div style={{ color: '#ef4444', fontWeight: 700, marginTop: 4 }}>🚨 HIGH RISK DESTINATION</div>}
+                      {isHR && <div style={{ color: '#ef4444', fontWeight: 700, marginTop: 4 }}>🌍 HIGH COUNTRY ZONE RISK</div>}
+                      {isHR && <div style={{ color: '#22c55e', fontSize: 11, marginTop: 2 }}>✅ Doctor &amp; Clinic: Morales-Verified</div>}
                       {count > 0 ? (
                         <div style={{ color: isHR ? '#ef4444' : '#1a8f3a', marginTop: 4 }}>
                           {count} active patient{count > 1 ? 's' : ''}{isDemo ? ' (demo)' : ''}
@@ -381,7 +384,7 @@ export default function SituationRoom() {
                       ) : (
                         <div style={{ color: '#888', marginTop: 4 }}>Monitored destination</div>
                       )}
-                      {evn && <div style={{ marginTop: 4 }}>{lvl.emoji} Risk score: <strong>{evn.riskScore}/100</strong></div>}
+                      {evn && <div style={{ marginTop: 4 }}>{lvl.emoji} Country zone score: <strong>{evn.riskScore}/100</strong></div>}
                     </div>
                   </Popup>
                 );
