@@ -7,7 +7,7 @@ const GOLD = '#D4AF37';
 const features = [
   {
     icon: Shield,
-    title: '9-Point Safety Spine',
+    title: 'Your Safety Net — Always On',
     desc: 'Every checkpoint digitally confirmed — driver, hotel, clinic, companion, return. One missed check-in triggers automatic escalation: SMS → call → security dispatch → police.',
   },
   {
@@ -17,8 +17,8 @@ const features = [
   },
   {
     icon: Brain,
-    title: 'MedGuard™ Pattern Intelligence',
-    desc: 'Our AI learns your habits — activity, sleep, check-in rhythm. It detects risk before you even feel it, and dispatches help automatically. Invisible. Always on.',
+    title: 'Protection That Sees Ahead',
+    desc: 'We monitor activity, sleep patterns, and check-in rhythm. Risk is detected before you feel it, and help dispatches automatically. Invisible. Always on.',
   },
   {
     icon: WifiOff,

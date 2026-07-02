@@ -36,7 +36,7 @@ const TRUST_BADGES = [
 /* ── Feature cards below hero ─────────────────────────────────────────────── */
 const FEATURES = [
   { icon: Heart,       title: 'Your Family Stays Close',    desc: 'Share a zero-login link and they watch every checkpoint in real time — like a flight tracker, but for your surgery.' },
-  { icon: Shield,      title: '9-Point Safety System',      desc: 'Miss a check-in and we escalate automatically — SMS, voice call, security dispatch, police. You are never alone.' },
+  { icon: Shield,      title: 'Every Checkpoint Confirmed', desc: 'Miss a check-in and we escalate automatically — SMS, voice call, security dispatch, police. You are never alone.' },
   { icon: CheckCircle, title: 'Verified Specialists Only',  desc: 'Every doctor is screened for credentials, procedure history, and patient outcomes. Only the top 1% earn the Morales badge.' },
 ];
 

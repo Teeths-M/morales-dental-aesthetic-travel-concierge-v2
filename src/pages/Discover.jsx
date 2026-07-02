@@ -288,9 +288,9 @@ export default function Discover() {
           </div>
         ) : displayedDoctors.length === 0 ? (
           <div className="text-center py-16">
-            <h3 className="text-xl font-semibold mb-3 text-white" style={{ letterSpacing: '-0.01em' }}>No doctors found</h3>
-            <p className="text-white/40 mb-6 text-[15px]">Try adjusting your filters</p>
-            <Button onClick={clearAllFilters} className="bg-[#D4AF37] hover:bg-[#E8C85C] text-[#0C1A1D] font-semibold">Clear all filters</Button>
+            <h3 className="text-xl font-semibold mb-3 text-white" style={{ letterSpacing: '-0.01em' }}>No match yet</h3>
+            <p className="text-white/40 mb-6 text-[15px]">Try a broader search — or let us connect you with the right specialist directly.</p>
+            <Button onClick={clearAllFilters} className="bg-[#D4AF37] hover:bg-[#E8C85C] text-[#0C1A1D] font-semibold">Clear filters</Button>
           </div>
         ) : (
           <>
