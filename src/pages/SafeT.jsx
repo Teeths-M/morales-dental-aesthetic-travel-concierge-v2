@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import HandshakeButton from '@/components/journey/HandshakeButton';
 import GoldenMCelebration from '@/components/journey/GoldenMCelebration';
+import { IdentityCard, IdentityUpload } from '@/components/ThisIsMe';
 
 const GOLD = '#D4AF37';
 
@@ -62,8 +63,9 @@ const SAFETY_NET = [
 ];
 
 export default function SafeT() {
-  const [user,        setUser]        = useState(null);
-  const [showGoldenM, setShowGoldenM] = useState(false);
+  const [user,                 setUser]                 = useState(null);
+  const [showGoldenM,          setShowGoldenM]          = useState(false);
+  const [uploadingPatientPhoto, setUploadingPatientPhoto] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -103,12 +105,47 @@ export default function SafeT() {
     staleTime: 120_000,
   });
 
+  // Pre-compute next step so partner queries can gate on it
+  const _ns = (activeTrip?.current_step ?? 0) + 1;
+
+  // Partner identity photos — fetched only for the relevant upcoming step
+  const { data: chauffeur } = useQuery({
+    queryKey: ['safet-chauffeur', activeTrip?.chauffeur_id],
+    queryFn:  () => base44.entities.TaxiService.get(activeTrip.chauffeur_id),
+    enabled:   !!activeTrip?.chauffeur_id && (_ns === 1 || _ns === 7),
+    staleTime: 300_000,
+  });
+  const { data: companion } = useQuery({
+    queryKey: ['safet-companion', activeTrip?.companion_id],
+    queryFn:  () => base44.entities.Companion.get(activeTrip.companion_id),
+    enabled:   !!activeTrip?.companion_id && _ns === 6,
+    staleTime: 300_000,
+  });
+  const { data: doctor } = useQuery({
+    queryKey: ['safet-doctor', caseRecord?.doctor_id],
+    queryFn:  () => base44.entities.Doctor.get(caseRecord.doctor_id),
+    enabled:   !!caseRecord?.doctor_id && _ns === 5,
+    staleTime: 300_000,
+  });
+
+  const uploadPatientPhoto = async (file) => {
+    if (!activeTrip?.id) return;
+    setUploadingPatientPhoto(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.TravelRequest.update(activeTrip.id, { patient_identity_photo_url: file_url });
+      queryClient.invalidateQueries({ queryKey: ['safet-active-trip'] });
+    } catch (_) {}
+    setUploadingPatientPhoto(false);
+  };
+
   // Derive safety state — no score, no math, only the outcome
   const storedLevel = caseRecord?.medguard_risk_level;
   const riskLevel   = (storedLevel && PULSE[storedLevel]) ? storedLevel : 'SAFE';
   const pulse       = PULSE[riskLevel];
 
   const currentStep      = activeTrip?.current_step ?? 0;
+  const nextStep         = currentStep + 1;
   const isComplete       = activeTrip?.trip_phase === 'completed';
   const hasActiveJourney = !!activeTrip && !isComplete;
   const progressPct      = Math.round((currentStep / 9) * 100);
@@ -284,6 +321,90 @@ export default function SafeT() {
             </p>
           )}
         </motion.div>
+
+        {/* ══════════════════════════════════════════════════════════════
+            SECTION 2.5 — THIS IS ME™
+            Know who you're meeting — verified photos, protected display
+        ══════════════════════════════════════════════════════════════ */}
+        {hasActiveJourney && (nextStep === 1 || nextStep === 5 || nextStep === 6 || nextStep === 7) && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32, duration: 0.5 }}
+            style={{ background: '#0C1A1D', border: '1px solid #2A3F4A', borderRadius: 24, padding: '28px 24px', marginBottom: 20 }}
+          >
+            <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD }}>
+              This Is Me™
+            </p>
+            <p style={{ margin: '0 0 18px', fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+              {(nextStep === 1 || nextStep === 7)
+                ? 'Confirm your driver and vehicle before you get in the car.'
+                : nextStep === 5
+                ? 'Confirm your doctor and clinic before you walk in.'
+                : 'Confirm your companion before they arrive.'}
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {(nextStep === 1 || nextStep === 7) && (
+                <>
+                  <IdentityCard
+                    name={chauffeur?.driver_name || chauffeur?.service_name || 'Your Driver'}
+                    role="Driver"
+                    photoUrl={chauffeur?.driver_identity_photo_url}
+                    sublabel={chauffeur?.vehicle_model}
+                  />
+                  <IdentityCard
+                    name={chauffeur?.vehicle_plate || 'Your Vehicle'}
+                    role="Vehicle"
+                    photoUrl={chauffeur?.vehicle_photo_url}
+                    sublabel={chauffeur?.vehicle_color}
+                  />
+                </>
+              )}
+              {nextStep === 5 && (
+                <>
+                  <IdentityCard
+                    name={doctor?.full_name || doctor?.name || 'Your Doctor'}
+                    role="Doctor"
+                    photoUrl={doctor?.photo_url || doctor?.identity_photo_url}
+                    sublabel={doctor?.specialty}
+                  />
+                  <IdentityCard
+                    name={doctor?.clinic_name || 'Your Clinic'}
+                    role="Clinic"
+                    photoUrl={doctor?.clinic_exterior_photo_url}
+                    sublabel={doctor?.clinic_country}
+                  />
+                </>
+              )}
+              {nextStep === 6 && (
+                <IdentityCard
+                  name={companion?.full_name || companion?.name || 'Your Companion'}
+                  role="Companion"
+                  photoUrl={companion?.identity_photo_url}
+                  sublabel={null}
+                />
+              )}
+            </div>
+
+            {/* Patient's own photo upload */}
+            <div style={{ marginTop: 20, borderTop: '1px solid rgba(42,63,74,0.5)', paddingTop: 18, display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <IdentityUpload
+                label="My Photo"
+                hint="Shown to your assigned partner only."
+                photoUrl={activeTrip?.patient_identity_photo_url}
+                onUpload={uploadPatientPhoto}
+                uploading={uploadingPatientPhoto}
+                capture="user"
+              />
+              <p style={{ flex: 2, minWidth: 160, margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.75 }}>
+                Your photo is only visible to your assigned{' '}
+                {nextStep === 5 ? 'doctor' : nextStep === 6 ? 'companion' : 'driver'}{' '}
+                during this journey. It cannot be saved or shared. It disappears when your journey is complete.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* ══════════════════════════════════════════════════════════════
             SECTION 3 — THE SAFETY NET

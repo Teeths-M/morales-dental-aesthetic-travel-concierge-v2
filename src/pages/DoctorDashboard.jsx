@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert } from 'lucide-react';
+import { IdentityUpload } from '@/components/ThisIsMe';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
@@ -146,6 +147,18 @@ export default function DoctorDashboard() {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData({ ...formData, photo_url: file_url });
     }
+  };
+
+  const [uploadingClinic, setUploadingClinic] = useState(false);
+  const uploadClinicPhoto = async (file) => {
+    if (!doctor?.id) return;
+    setUploadingClinic(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.Doctor.update(doctor.id, { clinic_exterior_photo_url: file_url });
+      refetch();
+    } catch (_) {}
+    setUploadingClinic(false);
   };
 
   const handleSave = async () => {
@@ -401,6 +414,29 @@ export default function DoctorDashboard() {
                   </button>
                 </div>
               )}
+              {/* ── This Is Me™ — identity photos shown to patients ──── */}
+              <div style={{ marginBottom: 24, background: '#0C1A1D', border: '1px solid rgba(212,175,55,0.25)', borderRadius: 16, padding: '16px 18px' }}>
+                <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#D4AF37' }}>
+                  This Is Me™
+                </p>
+                <p style={{ margin: '0 0 12px', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                  Patients see your profile photo and clinic exterior before their appointment.
+                </p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <IdentityUpload
+                    label="Clinic Exterior"
+                    hint="Outside of your clinic — so patients recognise it."
+                    photoUrl={doctor?.clinic_exterior_photo_url}
+                    onUpload={uploadClinicPhoto}
+                    uploading={uploadingClinic}
+                    capture="environment"
+                  />
+                  <p style={{ flex: 2, margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.3)', lineHeight: 1.7, alignSelf: 'center' }}>
+                    Your profile photo (below) is already shown to patients as your identity card. Upload your clinic exterior here so they can confirm the location before walking in.
+                  </p>
+                </div>
+              </div>
+
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Photo */}
                 <div className="flex-shrink-0">

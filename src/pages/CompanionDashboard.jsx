@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
 import { Heart, ChefHat, Calendar, CheckCircle2, Upload, Receipt } from 'lucide-react';
+import { IdentityUpload } from '@/components/ThisIsMe';
 // useLocalState is an alias for useState — keeps sub-component state reads obvious
 const useLocalState = useState;
 
@@ -383,10 +384,22 @@ function JobOffersPanel({ userId, userEmail }) {
 
 export default function CompanionDashboard() {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState(null);
-  const [fetchError, setFetchError] = useState(null);
+  const [isEditing,       setIsEditing]       = useState(false);
+  const [editedData,      setEditedData]       = useState(null);
+  const [fetchError,      setFetchError]       = useState(null);
+  const [uploadingPhoto,  setUploadingPhoto]   = useState(false);
   const queryClient = useQueryClient();
+
+  const uploadIdentityPhoto = async (file) => {
+    if (!companion?.id) return;
+    setUploadingPhoto(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.Companion.update(companion.id, { identity_photo_url: file_url });
+      queryClient.invalidateQueries({ queryKey: ['companion', user?.email] });
+    } catch (_) {}
+    setUploadingPhoto(false);
+  };
 
   const { data: companion, isLoading } = useQuery({
     queryKey: ['companion', user?.email],
@@ -520,6 +533,29 @@ export default function CompanionDashboard() {
             <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => base44.auth.logout()}>
               <LogOut className="w-4 h-4" />
             </Button>
+          </div>
+        </div>
+
+        {/* ── This Is Me™ — companion identity photo ──────────────── */}
+        <div style={{ background: '#0C1A1D', border: `1px solid ${GOLD}30`, borderRadius: 20, padding: '18px 18px' }}>
+          <p style={{ margin: '0 0 3px', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD }}>
+            This Is Me™
+          </p>
+          <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+            Patients see your photo before you arrive with their meal. Upload once — it applies to every assignment.
+          </p>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <IdentityUpload
+              label="My Photo"
+              hint="Patients see this before you arrive."
+              photoUrl={companion?.identity_photo_url}
+              onUpload={uploadIdentityPhoto}
+              uploading={uploadingPhoto}
+              capture="user"
+            />
+            <p style={{ flex: 2, minWidth: 160, margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.75, alignSelf: 'center' }}>
+              Your photo is only visible to the patient assigned to you during their active journey. It cannot be saved or shared outside the platform.
+            </p>
           </div>
         </div>
 
