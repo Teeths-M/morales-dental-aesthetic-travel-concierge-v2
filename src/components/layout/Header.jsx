@@ -89,7 +89,7 @@ export default function Header() {
         }}
       >
         {/* ── LOGO ── */}
-        <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-3.5 shrink-0 z-50 min-w-0">
+        <Link to="/" className="flex items-center gap-3.5 shrink-0 z-50 min-w-0">
           <div
             style={{
               width: '38px', height: '38px',
