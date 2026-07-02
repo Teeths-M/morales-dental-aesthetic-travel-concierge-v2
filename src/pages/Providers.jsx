@@ -10,24 +10,50 @@ import { Search, X } from 'lucide-react';
 const PROCEDURE_FILTERS = ['All', 'Dental', 'Aesthetic', 'Rhinoplasty', 'Liposuction', 'Veneers', 'Implants'];
 const GOLD = '#D4AF37';
 
-// Fuzzy scoring: 100 = exact substring match, lower = partial character match.
-// Handles typos, missing letters, transpositions so users don't need to spell perfectly.
+// Multi-strategy fuzzy scoring so typos, missing letters, and word-boundary
+// variations all surface results. Returns 0–100.
 function fuzzyScore(query, target) {
   if (!query || !target) return 0;
-  const q = query.toLowerCase();
-  const t = target.toLowerCase();
-  if (t.includes(q)) return 100;
-  let matched = 0;
-  let ti = 0;
+  const q = query.toLowerCase().trim();
+  const t = target.toLowerCase().trim();
+  if (!q || !t) return 0;
+
+  // Exact / substring
+  if (t === q) return 100;
+  if (t.includes(q)) return 95;
+  if (q.includes(t)) return 90;
+
+  // Word-boundary: check individual words in the target (e.g. "Venezuela" inside
+  // "Clinic Venezuela City" gets checked directly against the query)
+  const words = t.split(/[\s,._\-/]+/);
+  for (const w of words) {
+    if (!w) continue;
+    if (w === q) return 88;
+    if (w.startsWith(q) || q.startsWith(w)) return 80;
+  }
+
+  // Character-set overlap (anagram-aware, handles missing/extra letters)
+  const tChars = [...t];
+  let charMatches = 0;
+  for (const c of q) {
+    const idx = tChars.indexOf(c);
+    if (idx !== -1) { charMatches++; tChars.splice(idx, 1); }
+  }
+  const charScore = Math.round((charMatches / Math.max(q.length, t.length)) * 80);
+
+  // Subsequence: all query chars found in order inside target
+  let matched = 0, ti = 0;
   for (let qi = 0; qi < q.length; qi++) {
     while (ti < t.length && t[ti] !== q[qi]) ti++;
     if (ti < t.length) { matched++; ti++; }
   }
-  return Math.round((matched / q.length) * 85);
+  const seqScore = Math.round((matched / q.length) * 80);
+
+  return Math.max(charScore, seqScore);
 }
 
 function fuzzyMatches(query, target) {
-  return fuzzyScore(query, target) >= 55;
+  return fuzzyScore(query, target) >= 45;
 }
 
 const TYPE_COLORS = {
@@ -61,9 +87,11 @@ export default function Providers() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // List all doctors — status filter was silently excluding doctors with
+  // pending/verified status. The "✓ Verified" badge already conveys verification state.
   const { data: doctors = [], isLoading } = useQuery({
-    queryKey: ['doctors'],
-    queryFn: () => base44.entities.Doctor.filter({ status: 'active' }, '-created_date', 100),
+    queryKey: ['doctors-all'],
+    queryFn: () => base44.entities.Doctor.list('-created_date', 200),
     staleTime: 5 * 60 * 1000,
   });
 
