@@ -1,14 +1,40 @@
-import React, { useState, useEffect } from 'react';
+// @ts-nocheck
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, X } from 'lucide-react';
 
 const PROCEDURE_FILTERS = ['All', 'Dental', 'Aesthetic', 'Rhinoplasty', 'Liposuction', 'Veneers', 'Implants'];
-
 const GOLD = '#D4AF37';
+
+// Fuzzy scoring: 100 = exact substring match, lower = partial character match.
+// Handles typos, missing letters, transpositions so users don't need to spell perfectly.
+function fuzzyScore(query, target) {
+  if (!query || !target) return 0;
+  const q = query.toLowerCase();
+  const t = target.toLowerCase();
+  if (t.includes(q)) return 100;
+  let matched = 0;
+  let ti = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    while (ti < t.length && t[ti] !== q[qi]) ti++;
+    if (ti < t.length) { matched++; ti++; }
+  }
+  return Math.round((matched / q.length) * 85);
+}
+
+function fuzzyMatches(query, target) {
+  return fuzzyScore(query, target) >= 55;
+}
+
+const TYPE_COLORS = {
+  Doctor:    { bg: 'rgba(212,175,55,0.1)',  border: 'rgba(212,175,55,0.3)',  color: GOLD },
+  Country:   { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)' },
+  Procedure: { bg: 'rgba(99,179,255,0.08)', border: 'rgba(99,179,255,0.2)',  color: '#93c5fd' },
+};
 
 export default function Providers() {
   const navigate = useNavigate();
@@ -16,13 +42,23 @@ export default function Providers() {
   const [language, setLanguage] = useState('en');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [activeFilter, setActiveFilter] = useState('All');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
     setLanguage(savedLang);
-    const handleLanguageChange = (event) => setLanguage(event.detail.language);
+    const handleLanguageChange = (e) => setLanguage(e.detail.language);
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const { data: doctors = [], isLoading } = useQuery({
@@ -37,20 +73,45 @@ export default function Providers() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const specialtyMap = {};
-  specialties.forEach(spec => {
-    if (!specialtyMap[spec.doctor_id]) specialtyMap[spec.doctor_id] = [];
-    specialtyMap[spec.doctor_id].push(spec);
-  });
+  const specialtyMap = useMemo(() => {
+    const map = {};
+    specialties.forEach(spec => {
+      if (!map[spec.doctor_id]) map[spec.doctor_id] = [];
+      map[spec.doctor_id].push(spec);
+    });
+    return map;
+  }, [specialties]);
+
+  // Suggestion pool: real names, countries, procedures from loaded data
+  const suggestionPool = useMemo(() => {
+    const names = doctors
+      .map(d => d.full_name).filter(Boolean)
+      .map(label => ({ label, type: 'Doctor' }));
+    const countries = [...new Set(doctors.map(d => d.clinic_country).filter(Boolean))]
+      .map(label => ({ label, type: 'Country' }));
+    const procedures = [...new Set(specialties.map(s => s.procedure_name).filter(Boolean))]
+      .map(label => ({ label, type: 'Procedure' }));
+    return [...names, ...countries, ...procedures];
+  }, [doctors, specialties]);
+
+  const suggestions = useMemo(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return [];
+    return suggestionPool
+      .map(s => ({ ...s, score: fuzzyScore(q, s.label) }))
+      .filter(s => s.score >= 55)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }, [searchQuery, suggestionPool]);
 
   const q = searchQuery.toLowerCase().trim();
   const filteredDoctors = doctors.filter(doc => {
     const specs = specialtyMap[doc.id] || [];
     const matchesSearch = !q
-      || doc.full_name?.toLowerCase().includes(q)
-      || doc.clinic_country?.toLowerCase().includes(q)
-      || doc.clinic_name?.toLowerCase().includes(q)
-      || specs.some(s => s.procedure_name?.toLowerCase().includes(q) || s.category?.toLowerCase().includes(q));
+      || fuzzyMatches(q, doc.full_name)
+      || fuzzyMatches(q, doc.clinic_country)
+      || fuzzyMatches(q, doc.clinic_name)
+      || specs.some(s => fuzzyMatches(q, s.procedure_name) || fuzzyMatches(q, s.category));
     const matchesFilter = activeFilter === 'All'
       || specs.some(s =>
         s.procedure_name?.toLowerCase().includes(activeFilter.toLowerCase())
@@ -76,27 +137,84 @@ export default function Providers() {
           </p>
         </motion.div>
 
-        {/* Search + filters */}
+        {/* Smart search + filters */}
         <motion.div className="mb-8 space-y-4" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          {/* Search bar */}
-          <div style={{ position: 'relative', maxWidth: 520 }}>
+
+          {/* Search bar with autocomplete */}
+          <div ref={searchRef} style={{ position: 'relative', maxWidth: 520 }}>
             <Search size="16" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.35)', pointerEvents: 'none' }} />
             <input
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by procedure, doctor name, or country…"
+              onChange={e => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+              onFocus={() => setShowSuggestions(true)}
+              placeholder="Type a name, country, or procedure…"
               style={{
                 width: '100%', height: 48, padding: '0 40px 0 40px', borderRadius: 99,
                 background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#fff', fontSize: 14, outline: 'none',
+                border: showSuggestions && suggestions.length > 0
+                  ? `1px solid rgba(212,175,55,0.4)`
+                  : '1px solid rgba(255,255,255,0.15)',
+                color: '#fff', fontSize: 14, outline: 'none', transition: 'border-color 0.2s',
               }}
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>
+              <button
+                onClick={() => { setSearchQuery(''); setShowSuggestions(false); }}
+                style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}
+              >
                 <X size="15" />
               </button>
             )}
+
+            {/* Autocomplete dropdown */}
+            <AnimatePresence>
+              {showSuggestions && suggestions.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  style={{
+                    position: 'absolute', top: 54, left: 0, right: 0, zIndex: 50,
+                    borderRadius: 16, overflow: 'hidden',
+                    background: '#0C1A1D',
+                    border: '1px solid #2A3F4A',
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+                  }}
+                >
+                  {suggestions.map((s, i) => {
+                    const tc = TYPE_COLORS[s.type] || TYPE_COLORS.Procedure;
+                    return (
+                      <button
+                        key={i}
+                        onMouseDown={() => { setSearchQuery(s.label); setShowSuggestions(false); }}
+                        style={{
+                          width: '100%', padding: '10px 14px', border: 'none', background: 'none',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                          borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                          transition: 'background 0.1s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                      >
+                        <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, textAlign: 'left' }}>{s.label}</span>
+                        <span style={{
+                          fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 99, whiteSpace: 'nowrap',
+                          background: tc.bg, border: `1px solid ${tc.border}`, color: tc.color,
+                        }}>
+                          {s.type}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <div style={{ padding: '7px 14px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)', margin: 0 }}>
+                      Don't see it? Keep typing — M finds it even with typos.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Filter chips */}
@@ -164,7 +282,6 @@ export default function Providers() {
                         {doctor.full_name?.charAt(0) || 'D'}
                       </div>
                     )}
-                    {/* Verified badge */}
                     <div style={{ position: 'absolute', top: 10, right: 10, padding: '3px 9px', borderRadius: 99, background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.4)', fontSize: 10, fontWeight: 700, color: GOLD }}>
                       ✓ Verified
                     </div>
@@ -175,7 +292,6 @@ export default function Providers() {
                     <h3 className="text-base font-bold text-white mb-0.5">{doctor.full_name}</h3>
                     {doctorSpecs[0] && <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>{doctorSpecs[0].category || 'Specialist'}</p>}
 
-                    {/* Stats row */}
                     <div className="flex items-center gap-4 mb-4 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                       {doctor.rating && (
                         <span className="text-xs font-semibold" style={{ color: GOLD }}>⭐ {doctor.rating.toFixed(1)}</span>
@@ -188,7 +304,6 @@ export default function Providers() {
                       )}
                     </div>
 
-                    {/* Procedure chips */}
                     {doctorSpecs.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-4">
                         {doctorSpecs.slice(0, 3).map(spec => (
@@ -204,7 +319,6 @@ export default function Providers() {
                       </div>
                     )}
 
-                    {/* Buttons */}
                     <div className="flex gap-2 mt-auto">
                       <button
                         onClick={() => navigate(`/providers/${doctor.id}`)}
