@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -10,17 +10,14 @@ const FONT  = '"SF Pro Display", system-ui, sans-serif';
 
 function Scene({ layer, title, sub, children }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
+    <div
       style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 32px' }}
     >
       {layer && <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.25)', margin: '0 0 10px' }}>{layer}</p>}
       {title && <h2 style={{ fontSize: 30, fontWeight: 900, color: '#fff', margin: '0 0 8px', letterSpacing: '-0.02em' }}>{title}</h2>}
       {sub   && <p  style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 36px', lineHeight: 1.5 }}>{sub}</p>}
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -258,7 +255,7 @@ function SituationRoomScene({ onNext }) {
   useEffect(() => { const t = setTimeout(onNext, 5500); return () => clearTimeout(t); }, [onNext]);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         <motion.div animate={{ opacity: [1, 0.25, 1] }} transition={{ duration: 0.7, repeat: Infinity }}
           style={{ width: 8, height: 8, borderRadius: '50%', background: RED, boxShadow: `0 0 10px ${RED}` }} />
@@ -320,7 +317,7 @@ function SituationRoomScene({ onNext }) {
           <span style={{ fontSize: 12, fontWeight: 700, color: RED }}>Concierge Notified · Dispatch Initiated</span>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -388,7 +385,7 @@ const SCENE_LABELS = ['INTRO', 'TRIGGER', 'BROADCAST', 'MESH RELAY', 'SIT. ROOM'
 export default function EmergencyMeshBeaconDemo() {
   const [scene, setScene] = useState(0);
 
-  const next = () => setScene(s => Math.min(s + 1, 5));
+  const next = useCallback(() => setScene(s => Math.min(s + 1, 5)), []);
 
   const SCENES = [
     <IntroScene onNext={next} />,
@@ -419,7 +416,14 @@ export default function EmergencyMeshBeaconDemo() {
       {/* Scene */}
       <div style={{ flex: 1, minHeight: 0 }}>
         <AnimatePresence mode="wait">
-          <motion.div key={scene} style={{ height: '100%' }}>
+          <motion.div
+            key={scene}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.22 }}
+            style={{ height: '100%' }}
+          >
             {SCENES[scene]}
           </motion.div>
         </AnimatePresence>
