@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const RED   = '#ef4444';
 const GOLD  = '#D4AF37';
@@ -225,34 +228,27 @@ function MeshRelayScene({ onNext }) {
   );
 }
 
-// ── Scene 4: Situation Room — Global map ─────────────────────────────────────
-const WORLD_CONTINENTS = [
-  "M60,55 L35,68 L40,82 L60,92 L72,110 L82,128 L90,148 L108,162 L130,168 L152,162 L168,152 L185,142 L200,128 L210,112 L212,95 L200,75 L185,58 L165,45 L140,38 L115,38 L90,42 L70,48 Z",
-  "M217,12 L202,18 L197,30 L207,43 L224,47 L242,42 L252,30 L246,17 L232,11 Z",
-  "M130,168 L115,180 L106,202 L102,228 L106,256 L118,288 L132,322 L146,342 L158,336 L170,316 L178,292 L182,264 L180,238 L178,214 L172,195 L162,180 L148,170 Z",
-  "M352,32 L340,46 L342,62 L354,74 L370,80 L390,77 L408,68 L422,56 L418,40 L406,30 L386,25 L368,26 Z",
-  "M356,86 L340,104 L336,128 L338,155 L342,182 L348,210 L354,238 L362,266 L374,284 L390,292 L408,289 L422,278 L432,258 L438,230 L440,202 L440,174 L436,148 L428,122 L418,98 L404,86 L386,82 L368,83 Z",
-  "M420,32 L428,20 L468,16 L514,18 L558,22 L600,26 L640,30 L678,36 L712,43 L742,52 L756,66 L748,84 L726,100 L702,110 L678,114 L655,122 L634,132 L614,142 L593,152 L567,158 L542,161 L516,158 L491,149 L472,138 L456,126 L440,111 L428,93 L420,70 Z",
-  "M491,149 L501,164 L512,184 L518,202 L509,213 L496,216 L484,208 L478,192 L476,173 Z",
-  "M593,152 L602,165 L606,180 L602,196 L594,204 L585,198 L581,184 L584,168 Z",
-  "M636,238 L638,255 L646,274 L658,288 L676,295 L694,291 L708,278 L716,260 L714,243 L704,231 L687,225 L667,225 L650,231 Z",
+// ── Scene 4: Situation Room — Leaflet world map ───────────────────────────────
+const BEACON_ICON = L.divIcon({ className:'', iconSize:[44,44], iconAnchor:[22,22],
+  html:'<div class="bc-wrap"><div class="bc-ring"></div><div class="bc-ring"></div><div class="bc-ring"></div><div class="bc-dot"></div></div>' });
+const MESH_CLIENTS = [
+  [21.2,-86.8,'safe','Cancún'], [51.5,-0.1,'safe','London'],
+  [13.7,100.5,'safe','Bangkok'], [25.2,55.3,'safe','Dubai'],
+  [41.0,28.9,'safe','Istanbul'], [-33.8,151.2,'safe','Sydney'],
+  [6.5,3.4,'watch','Lagos'], [4.7,-74.1,'watch','Bogotá'],
 ];
-const WORLD_LABELS = [
-  [148,100,'N. AMERICA'],[155,265,'S. AMERICA'],
-  [385,52,'EUROPE'],[393,190,'AFRICA'],
-  [584,76,'ASIA'],[680,262,'AUSTRALIA'],
-];
-const CLIENT_DOTS = [
-  [207,145,'safe','Cancún'],[400,81,'safe','London'],
-  [623,161,'safe','Bangkok'],[523,137,'safe','Dubai'],
-  [464,103,'safe','Istanbul'],[736,262,'safe','Sydney'],
-  [408,176,'watch','Lagos'],[236,180,'watch','Bogotá'],
-];
-
 function SituationRoomScene({ onNext }) {
   useEffect(() => { const t = setTimeout(onNext, 6500); return () => clearTimeout(t); }, [onNext]);
+  useEffect(() => {
+    const el = document.createElement('style');
+    el.id = 'bc-css';
+    el.textContent = `.bc-wrap{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center}.bc-ring{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid #ef4444;animation:bcP 2s ease-out infinite}.bc-ring:nth-child(2){animation-delay:.67s}.bc-ring:nth-child(3){animation-delay:1.33s}.bc-dot{width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444,0 0 18px rgba(239,68,68,.6)}@keyframes bcP{0%{width:10px;height:10px;transform:translate(-50%,-50%);opacity:.9}100%{width:44px;height:44px;transform:translate(-50%,-50%);opacity:0}}`;
+    if (!document.getElementById('bc-css')) document.head.appendChild(el);
+    return () => { const s = document.getElementById('bc-css'); if (s) s.remove(); };
+  }, []);
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height:'100%', display:'flex', flexDirection:'column' }}>
       <div style={{ padding:'8px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
         <motion.div animate={{ opacity:[1,0.25,1] }} transition={{ duration:0.7, repeat:Infinity }}
           style={{ width:7, height:7, borderRadius:'50%', background:RED, boxShadow:`0 0 8px ${RED}` }} />
@@ -261,62 +257,78 @@ function SituationRoomScene({ onNext }) {
           style={{ fontSize:9, fontWeight:700, color:RED, letterSpacing:'0.1em' }}>● EQ 6.8 · BEACON ACTIVE · CARACAS</motion.span>
         <span style={{ marginLeft:'auto', fontSize:9, color:'rgba(255,255,255,0.25)', letterSpacing:'0.08em' }}>LAYER 4 · GLOBAL MONITOR · 195 COUNTRIES</span>
       </div>
-      <div style={{ flex:1, position:'relative', overflow:'hidden', background:'#020810' }}>
-        <svg viewBox="0 0 800 380" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style={{ position:'absolute', inset:0 }}>
-          {[133,267,400,533,667].map(x => <line key={x} x1={x} y1={0} x2={x} y2={380} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />)}
-          {[63,127,190,253,317].map(y => <line key={y} x1={0} y1={y} x2={800} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />)}
-          {WORLD_CONTINENTS.map((d,i) => <path key={i} d={d} fill="rgba(255,255,255,0.055)" stroke="rgba(255,255,255,0.14)" strokeWidth={0.7} />)}
-          {WORLD_LABELS.map(([x,y,l]) => <text key={l} x={x} y={y} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="5.5" fontWeight="600" letterSpacing="0.8">{l}</text>)}
-          <path d="M130,168 L115,180 L106,202 L102,228 L106,256 L118,288 L132,322 L146,342 L158,336 L170,316 L178,292 L182,264 L180,238 L178,214 L172,195 L162,180 L148,170 Z"
-            fill="rgba(239,68,68,0.07)" stroke="rgba(239,68,68,0.3)" strokeWidth={0.8} />
-          {CLIENT_DOTS.map(([x,y,s,city],i) => (
-            <g key={city}>
-              <motion.circle cx={x} cy={y} r={3} fill={s==='safe'?GREEN:GOLD}
-                animate={{ opacity:[1,0.45,1] }} transition={{ duration:2.2, repeat:Infinity, delay:i*0.35 }}
-                style={{ filter:`drop-shadow(0 0 4px ${s==='safe'?GREEN:GOLD})` }} />
-              <text x={x+5} y={y+2} fill="rgba(255,255,255,0.3)" fontSize="4">{city}</text>
-            </g>
-          ))}
-          {[0.7,1.5,2.3].map((d,i) => (
-            <motion.circle key={i} cx={251} cy={168} r={5} fill="none" stroke={RED} strokeWidth={1}
-              animate={{ r:[5,26], opacity:[0.9,0] }} transition={{ duration:2, delay:d, repeat:Infinity }} />
-          ))}
-          <circle cx={251} cy={168} r={5.5} fill={RED} style={{ filter:`drop-shadow(0 0 12px ${RED})` }} />
-          <text x={259} y={165} fill="rgba(255,100,100,0.85)" fontSize="4.5" fontWeight="700">CARACAS 🚨</text>
-          <circle cx={222} cy={136} r={4} fill={GOLD} style={{ filter:`drop-shadow(0 0 6px ${GOLD})` }} />
-          <text x={230} y={133} fill={GOLD} fontSize="4.5" fontWeight="700">HQ · Miami</text>
-          <motion.line x1={222} y1={136} x2={251} y2={168} stroke={RED} strokeWidth={1} strokeDasharray="4 4" opacity={0.45}
-            animate={{ strokeDashoffset:[0,-8] }} transition={{ duration:0.5, repeat:Infinity, ease:'linear' }} />
-        </svg>
-        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.5 }}
-          style={{ position:'absolute', top:8, right:8, display:'flex', gap:6 }}>
-          {[['247','CLIENTS'],['195','COUNTRIES'],['9','ALERTS']].map(([v,l]) => (
-            <div key={l} style={{ padding:'6px 10px', borderRadius:8, background:'rgba(3,10,18,0.95)', border:'1px solid rgba(255,255,255,0.1)', textAlign:'center' }}>
-              <div style={{ fontSize:13, fontWeight:900, color:GOLD, lineHeight:1 }}>{v}</div>
-              <div style={{ fontSize:7, color:'rgba(255,255,255,0.35)', letterSpacing:'0.08em', marginTop:2 }}>{l}</div>
+
+      <div style={{ flex:1, minHeight:0, display:'grid', gridTemplateColumns:'1fr 210px' }}>
+        <div style={{ position:'relative', overflow:'hidden' }}>
+          <MapContainer center={[20,10]} zoom={2} minZoom={1} maxZoom={5}
+            maxBounds={[[-85,-180],[85,180]]} maxBoundsViscosity={1} worldCopyJump={false}
+            zoomControl={false} attributionControl={false} style={{ width:'100%', height:'100%' }}>
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+              subdomains="abcd" noWrap={true} maxZoom={19} />
+            <CircleMarker center={[25.77,-80.19]} radius={7}
+              pathOptions={{ fillColor:GOLD, color:'#fff', weight:2, fillOpacity:1 }} />
+            <Polyline positions={[[25.77,-80.19],[10.48,-66.9]]}
+              pathOptions={{ color:RED, weight:1.5, opacity:0.55, dashArray:'5 5' }} />
+            {MESH_CLIENTS.map(([lat,lng,s,city]) => (
+              <CircleMarker key={city} center={[lat,lng]} radius={5}
+                pathOptions={{ fillColor:s==='safe'?GREEN:GOLD, color:'#04080F', weight:1.5, fillOpacity:0.9 }} />
+            ))}
+            <Marker position={[10.48,-66.9]} icon={BEACON_ICON} />
+          </MapContainer>
+
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.5}}
+            style={{ position:'absolute', top:8, right:8, display:'flex', gap:6, zIndex:1000 }}>
+            {[['247','CLIENTS'],['195','COUNTRIES'],['9','ALERTS']].map(([v,l]) => (
+              <div key={l} style={{ padding:'6px 10px', borderRadius:8, background:'rgba(3,10,18,0.95)', border:'1px solid rgba(255,255,255,0.1)', textAlign:'center' }}>
+                <div style={{ fontSize:13, fontWeight:900, color:GOLD, lineHeight:1 }}>{v}</div>
+                <div style={{ fontSize:7, color:'rgba(255,255,255,0.35)', letterSpacing:'0.08em', marginTop:2 }}>{l}</div>
+              </div>
+            ))}
+          </motion.div>
+
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.2}}
+            style={{ position:'absolute', bottom:8, left:8, display:'flex', gap:12, alignItems:'center', zIndex:1000, background:'rgba(3,10,18,0.82)', padding:'5px 10px', borderRadius:8 }}>
+            {[[GREEN,'SAFE'],[GOLD,'MONITORING'],[RED,'EMERGENCY']].map(([c,l]) => (
+              <div key={l} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:c, boxShadow:`0 0 6px ${c}` }} />
+                <span style={{ fontSize:8, color:'rgba(255,255,255,0.35)', fontWeight:600 }}>{l}</span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        <div style={{ borderLeft:'1px solid rgba(255,255,255,0.06)', display:'flex', flexDirection:'column', background:'rgba(2,8,16,0.98)', overflow:'hidden' }}>
+          <motion.div initial={{opacity:0,x:14}} animate={{opacity:1,x:0}} transition={{delay:0.8}}
+            style={{ padding:'12px 14px', borderBottom:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
+            <div style={{ fontSize:8, fontWeight:800, color:RED, letterSpacing:'0.15em', marginBottom:6 }}>🚨 BEACON ACTIVE · EQ 6.8</div>
+            <div style={{ fontSize:12, color:'#fff', fontWeight:700, marginBottom:2 }}>Elena G. · Case #4821</div>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,0.45)', fontFamily:'monospace', marginBottom:2 }}>10.4815° N, 66.9037° W</div>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,0.35)', marginBottom:8 }}>Caracas, Venezuela · Auto-Activated</div>
+            <div style={{ display:'flex', gap:5 }}>
+              <div style={{ padding:'3px 7px', borderRadius:5, background:`${RED}22`, fontSize:7.5, fontWeight:800, color:RED }}>BEACON</div>
+              <div style={{ padding:'3px 7px', borderRadius:5, background:'rgba(249,115,22,0.12)', fontSize:7.5, fontWeight:800, color:'#f97316' }}>OFFLINE</div>
             </div>
-          ))}
-        </motion.div>
-        <motion.div initial={{ opacity:0, x:14 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.8 }}
-          style={{ position:'absolute', bottom:32, right:8, background:'rgba(3,10,18,0.97)', border:`1px solid ${RED}45`, borderRadius:12, padding:'10px 14px', minWidth:195 }}>
-          <div style={{ fontSize:8, fontWeight:800, color:RED, letterSpacing:'0.15em', marginBottom:6 }}>🚨 BEACON ACTIVE · EQ 6.8</div>
-          <div style={{ fontSize:11, color:'#fff', fontWeight:700, marginBottom:2 }}>Elena G. · Case #4821</div>
-          <div style={{ fontSize:8.5, color:'rgba(255,255,255,0.45)', fontFamily:'monospace', marginBottom:2 }}>10.4815° N, 66.9037° W</div>
-          <div style={{ fontSize:8.5, color:'rgba(255,255,255,0.35)', marginBottom:8 }}>Caracas, Venezuela · Auto-Activated</div>
-          <div style={{ display:'flex', gap:5 }}>
-            <div style={{ padding:'3px 7px', borderRadius:5, background:`${RED}22`, fontSize:7.5, fontWeight:800, color:RED }}>BEACON</div>
-            <div style={{ padding:'3px 7px', borderRadius:5, background:'rgba(249,115,22,0.12)', fontSize:7.5, fontWeight:800, color:'#f97316' }}>OFFLINE</div>
+          </motion.div>
+          <div style={{ flex:1, overflowY:'auto', padding:'8px 10px' }}>
+            <p style={{ fontSize:8, fontWeight:800, color:'rgba(255,255,255,0.25)', letterSpacing:'0.15em', margin:'0 0 8px' }}>LIVE FEED</p>
+            {[
+              {icon:'📡',text:'BLE Mesh relay: 2 nodes · Signal reached cloud',color:RED,t:'0:00'},
+              {icon:'🚒',text:'Bomberos Venezuela dispatched — GPS locked',color:'#f97316',t:'0:12'},
+              {icon:'🏛️',text:'US Embassy Caracas — protocol active',color:GOLD,t:'0:28'},
+              {icon:'🛡️',text:'5-tier escalation initialized',color:'#60a5fa',t:'0:41'},
+              {icon:'✅',text:'Concierge Team en route · ETA 12 min',color:GREEN,t:'1:02'},
+            ].map(({icon,text,color,t}) => (
+              <div key={t} style={{ padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,0.04)', display:'flex', gap:7, alignItems:'flex-start' }}>
+                <span style={{ fontSize:11, flexShrink:0 }}>{icon}</span>
+                <div style={{ flex:1 }}>
+                  <p style={{ margin:0, fontSize:9, color:'rgba(255,255,255,0.65)', lineHeight:1.4 }}>{text}</p>
+                  <span style={{ fontSize:7.5, color:'rgba(255,255,255,0.2)' }}>{t} ago</span>
+                </div>
+                <div style={{ width:4, height:4, borderRadius:'50%', background:color, flexShrink:0, marginTop:3 }} />
+              </div>
+            ))}
           </div>
-        </motion.div>
-        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.2 }}
-          style={{ position:'absolute', bottom:8, left:8, display:'flex', gap:12, alignItems:'center' }}>
-          {[[GREEN,'SAFE'],['#D4AF37','MONITORING'],[RED,'EMERGENCY']].map(([c,l]) => (
-            <div key={l} style={{ display:'flex', alignItems:'center', gap:5 }}>
-              <div style={{ width:6, height:6, borderRadius:'50%', background:c, boxShadow:`0 0 6px ${c}` }} />
-              <span style={{ fontSize:8, color:'rgba(255,255,255,0.35)', fontWeight:600 }}>{l}</span>
-            </div>
-          ))}
-        </motion.div>
+        </div>
       </div>
     </div>
   );
