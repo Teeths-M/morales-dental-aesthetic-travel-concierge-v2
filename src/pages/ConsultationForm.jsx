@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckSquare, Square } from 'lucide-react';
@@ -7,6 +7,8 @@ import SectionClinicalBoundary from '@/components/booking/SectionClinicalBoundar
 import SectionAgeCompanion from '@/components/booking/SectionAgeCompanion';
 import SectionLinguisticCultural from '@/components/booking/SectionLinguisticCultural';
 import { procedures } from '@/components/booking/SectionProcedure';
+import ProcedureSelectionGate from '@/components/booking/ProcedureSelectionGate';
+import { useCart } from '@/context/CartContext';
 
 const NATIONALITIES = ['Afghan','Albanian','Algerian','American','Andorran','Angolan','Argentine','Armenian','Australian','Austrian','Azerbaijani','Bahamian','Bahraini','Bangladeshi','Barbadian','Belarusian','Belgian','Belizean','Bolivian','Bosnian','Botswanan','Brazilian','British','Bruneian','Bulgarian','Cambodian','Cameroonian','Canadian','Cape Verdean','Chilean','Chinese','Colombian','Congolese','Costa Rican','Croatian','Cuban','Cypriot','Czech','Danish','Dominican','Dutch','Ecuadorian','Egyptian','Emirati','Estonian','Ethiopian','Fijian','Filipino','Finnish','French','German','Ghanaian','Greek','Guatemalan','Haitian','Honduran','Hungarian','Indian','Indonesian','Iranian','Iraqi','Irish','Israeli','Italian','Jamaican','Japanese','Jordanian','Kazakhstani','Kenyan','Kuwaiti','Latvian','Lebanese','Libyan','Lithuanian','Malaysian','Maldivian','Maltese','Mexican','Moldovan','Moroccan','Namibian','Nepalese','New Zealander','Nicaraguan','Nigerian','Norwegian','Omani','Pakistani','Palestinian','Panamanian','Paraguayan','Peruvian','Polish','Portuguese','Qatari','Romanian','Russian','Rwandan','Saudi','Senegalese','Serbian','Singaporean','Slovak','Slovenian','Somali','South African','South Korean','Spanish','Sri Lankan','Swedish','Swiss','Syrian','Taiwanese','Tanzanian','Thai','Trinidadian','Turkish','Ukrainian','Uruguayan','Venezuelan','Vietnamese','Zambian','Zimbabwean','Other'];
 const DESTINATIONS = ['Venezuela','Mexico','Colombia','Costa Rica','Dominican Republic','Panama','Argentina','Brazil','Thailand','Turkey','India','Spain','Portugal','Hungary','Poland','Other'];
@@ -52,6 +54,7 @@ function CheckboxGroup({ label, options, selected, onChange, noneOption = 'None 
 export default function ConsultationForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { items: cartItems } = useCart();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -84,6 +87,15 @@ export default function ConsultationForm() {
   });
 
   const up = (f, v) => setForm(p => ({ ...p, [f]: v }));
+
+  // If the user arrived without a ?procedure= URL param, pre-fill from their cart
+  useEffect(() => {
+    if (!searchParams.get('procedure') && cartItems.length > 0 && !form.procedure_interest) {
+      const firstName = cartItems[0].name || cartItems[0].title || '';
+      if (firstName) up('procedure_interest', firstName);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems]);
 
   const validateStep = (n) => {
     if (n === 1 && !form.client_name) return 'Full name is required';
@@ -166,6 +178,7 @@ export default function ConsultationForm() {
   const activeErr = error || stepError;
 
   return (
+    <ProcedureSelectionGate>
     <div className="dark" style={{ minHeight: '100vh', background: '#060B16', padding: '32px 16px 64px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '32px 28px' }}>
@@ -445,5 +458,6 @@ export default function ConsultationForm() {
         </div>
       </div>
     </div>
+    </ProcedureSelectionGate>
   );
 }
