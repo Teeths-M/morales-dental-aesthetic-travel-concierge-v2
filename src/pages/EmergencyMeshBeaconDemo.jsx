@@ -353,7 +353,7 @@ function DispatchScene() {
   }, []);
 
   return (
-    <Scene layer="LAYER 5 · AUTOMATED DISPATCH" title="Help Is On The Way" sub="No human intervention required — dispatched automatically">
+    <Scene layer="LAYER 5 · CONCIERGE COORDINATION" title="Morales Takes Over" sub="Your dedicated concierge team contacts each service — voice, digital, or direct. Whatever the country requires.">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 420 }}>
         {DISPATCH_SERVICES.map(({ icon, label, detail, color }, i) => (
           <motion.div key={label}
