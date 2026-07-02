@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Shield, ArrowLeft, CheckCircle2, Loader2, Clock, Heart, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -75,7 +76,7 @@ export default function ProcedureStackingBlocker({
     return () => { cancelled = true; };
   }, []);
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[9998] flex flex-col items-center justify-center p-4"
       style={{ background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(12px)' }}
@@ -259,6 +260,7 @@ export default function ProcedureStackingBlocker({
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
