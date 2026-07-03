@@ -224,7 +224,7 @@ export default function Login() {
 
       <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
         New to Morales?{' '}
-        <Link to="/register" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
+        <Link to="/signup" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
       </p>
 
       {/* Judges panel */}
