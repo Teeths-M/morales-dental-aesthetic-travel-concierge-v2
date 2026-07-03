@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, AlertTriangle, Heart, CheckCircle2, Brain, Shield } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Heart, CheckCircle2, Brain, Shield, RotateCcw } from 'lucide-react';
 
 const GOLD   = '#D4AF37';
 const DARK   = '#060B16';
@@ -78,13 +78,29 @@ export default function SiobhanDemo() {
     setPhase('resolved');
   }
 
+  function reset() {
+    setPhase('form');
+    setChecked(new Set());
+    setChosen(null);
+    triggered.current = false;
+  }
+
   return (
     <div className="min-h-screen py-8 px-4" style={{ background: DARK, fontFamily: "'SF Pro Display', system-ui, sans-serif" }}>
       <div className="max-w-xl mx-auto space-y-5">
 
-        <Link to="/demo" className="inline-flex items-center gap-2 text-xs font-semibold" style={{ color: '#64748b' }}>
-          <ArrowLeft className="w-3.5 h-3.5" /> Demo Hub
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/demo" className="inline-flex items-center gap-2 text-xs font-semibold" style={{ color: '#64748b' }}>
+            <ArrowLeft className="w-3.5 h-3.5" /> Demo Hub
+          </Link>
+          <button
+            onClick={reset}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+            style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)', color: GOLD }}
+          >
+            <RotateCcw className="w-3 h-3" /> Restart
+          </button>
+        </div>
 
         {/* Title */}
         <div>
