@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, RotateCcw, Zap, Heart, AlertTriangle, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, RotateCcw, Zap, Heart, AlertTriangle } from 'lucide-react';
 
 const GOLD   = '#D4AF37';
 const DARK   = '#060B16';
