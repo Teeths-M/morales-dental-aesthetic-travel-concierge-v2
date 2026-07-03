@@ -303,10 +303,16 @@ export default function MedGuardDemo() {
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
 
         {/* Back button */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 16 }}>
           <Link to="/demo" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>
             <ArrowLeft style={{ width: 14, height: 14 }} /> Back to Demo
           </Link>
+        </div>
+
+        {/* Production badge */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)', marginBottom: 24 }}>
+          <span style={{ fontSize: 13 }}>✅</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e' }}>Production system — not a demo mock</span>
         </div>
 
         {/* Header */}

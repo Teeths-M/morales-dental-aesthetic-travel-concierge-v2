@@ -216,6 +216,11 @@ export default function WeatherHealthDemo() {
       </div>
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '28px 20px' }}>
+        {/* Production badge */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)', marginBottom: 20 }}>
+          <span style={{ fontSize: 13 }}>✅</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e' }}>Production system — not a demo mock</span>
+        </div>
 
         {/* Intro */}
         <div style={{ padding: '16px 20px', borderRadius: 14, background: `${GOLD}08`, border: `1px solid ${GOLD}25`, marginBottom: 20, textAlign: 'center' }}>
