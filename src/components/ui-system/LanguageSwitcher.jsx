@@ -16,7 +16,6 @@ export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [open, setOpen]   = useState(false);
   const ref               = useRef(null);
-  const closeTimer        = useRef(null);
   const current           = SUPPORTED_LANGUAGES.find(l => l.code === i18n.language) || SUPPORTED_LANGUAGES[0];
 
   useEffect(() => {
@@ -39,12 +38,7 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <div
-      ref={ref}
-      style={{ position: 'relative' }}
-      onMouseEnter={() => { clearTimeout(closeTimer.current); setOpen(true); }}
-      onMouseLeave={() => { closeTimer.current = setTimeout(() => setOpen(false), 150); }}
-    >
+    <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(v => !v)}
         aria-label={`Language: ${current.label}`}
