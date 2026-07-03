@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
   Shield, AlertTriangle, CheckCircle,
-  ChevronRight, Loader2,
+  ChevronRight, Loader2, Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -37,6 +37,48 @@ const SCAN_STEPS = [
   { key: 'phone',  label: 'Phone Analysis',        desc: 'Analyzing number origin and carrier signals' },
   { key: 'ai',     label: 'AI Web Intelligence',   desc: 'Deep internet reputation analysis' },
 ];
+
+function AgentLog({ entries }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full text-left p-3 rounded-xl hover:opacity-80 transition-opacity"
+        style={{ background: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.2)' }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="w-3.5 h-3.5" style={{ color: '#D4AF37' }} />
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#D4AF37' }}>AGENT DECISION LOG</span>
+            <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,175,55,0.12)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}>
+              {entries.length} steps
+            </span>
+          </div>
+          <span className="text-[9px]" style={{ color: '#475569' }}>{open ? '▲ hide' : '▼ show how the agent decided'}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="mt-1.5 p-3 rounded-xl space-y-1.5"
+          style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(42,63,74,0.7)', fontFamily: "'SF Mono','Cascadia Code','Consolas',monospace" }}>
+          {entries.map((entry, i) => {
+            const isCritical = entry.startsWith('CRITICAL:');
+            const isEscalated = /escalat/i.test(entry) && !isCritical;
+            const color = isCritical ? '#fca5a5' : isEscalated ? '#fcd34d' : '#475569';
+            return (
+              <div key={i} className="flex gap-2 items-start">
+                <span style={{ color: '#2A3F4A', fontSize: 9, marginTop: 1, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <p style={{ color, fontSize: 11, lineHeight: 1.55 }}>{entry}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip }) {
   const [scanning,  setScanning]  = useState(false);
@@ -206,6 +248,11 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
             <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#64748b' }}>AI ANALYSIS</p>
             <p className="text-sm leading-relaxed" style={{ color: '#cbd5e1' }}>{result.summary}</p>
           </div>
+
+          {/* Agent Decision Log */}
+          {result.agent_reasoning?.length > 0 && (
+            <AgentLog entries={result.agent_reasoning} />
+          )}
 
           {/* Positive signals */}
           {result.ai_positive_indicators?.length > 0 && (

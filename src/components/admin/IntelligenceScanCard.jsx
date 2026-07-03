@@ -28,6 +28,7 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
   const [scanStep, setScanStep] = useState(-1);
   const [result,   setResult]   = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [logOpen,  setLogOpen]  = useState(false);
   const fired = useRef(false);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
     setScanStep(-1);
     setResult(null);
     setExpanded(false);
+    setLogOpen(false);
   }, [runKey]);
 
   useEffect(() => {
@@ -343,6 +345,46 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
               </div>
               <p className="text-[11px] leading-relaxed" style={{ color: '#94a3b8' }}>{fd.xai_summary}</p>
             </div>
+
+            {/* Agent Decision Log */}
+            {result.internet.agent_reasoning?.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setLogOpen(o => !o)}
+                  className="w-full text-left p-3 rounded-xl transition-colors hover:opacity-80"
+                  style={{ background: 'rgba(212,175,55,0.04)', border: '1px solid rgba(212,175,55,0.2)' }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-3 h-3" style={{ color: '#D4AF37' }} />
+                      <span className="text-[9px] font-bold tracking-widest" style={{ color: '#D4AF37' }}>AGENT DECISION LOG</span>
+                      <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,175,55,0.12)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}>
+                        {result.internet.agent_reasoning.length} steps
+                      </span>
+                    </div>
+                    <span className="text-[9px]" style={{ color: '#475569' }}>{logOpen ? '▲ hide' : '▼ show'}</span>
+                  </div>
+                </button>
+                {logOpen && (
+                  <div className="mt-1.5 p-3 rounded-xl space-y-1.5"
+                    style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(42,63,74,0.8)', fontFamily: "'SF Mono','Cascadia Code','Consolas',monospace" }}>
+                    {result.internet.agent_reasoning.map((entry, i) => {
+                      const isCritical = entry.startsWith('CRITICAL:');
+                      const isEscalated = /escalat/i.test(entry) && !isCritical;
+                      const color = isCritical ? '#fca5a5' : isEscalated ? '#fcd34d' : '#475569';
+                      return (
+                        <div key={i} className="flex gap-2 items-start">
+                          <span style={{ color: '#2A3F4A', fontSize: 9, marginTop: 1, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
+                          <p style={{ color, fontSize: 10, lineHeight: 1.55 }}>{entry}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Internet Intelligence report */}
             <button onClick={() => setExpanded(e => !e)} className="w-full text-left p-3 rounded-xl transition-colors hover:opacity-80"
