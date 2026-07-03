@@ -15,6 +15,7 @@ import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
+import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
@@ -45,6 +46,8 @@ export default function AppLayout() {
 
   return (
     <BiometricGate>
+      <CursorSpotlight />
+
       {/* System Pause banner — only visible on actual admin pages, never on demo pages */}
       {isActualAdmin && <SystemPauseBanner />}
 

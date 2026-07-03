@@ -27,6 +27,10 @@ export default function Header() {
     ? user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : (user?.email?.[0]?.toUpperCase() || 'M');
 
+  const firstName = user?.full_name?.split(' ')[0] || null;
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
   useEffect(() => { setIsMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
@@ -92,6 +96,7 @@ export default function Header() {
         {/* ── LOGO ── */}
         <Link to="/" className="flex items-center gap-3.5 shrink-0 z-50 min-w-0">
           <div
+            className="m-breathe"
             style={{
               width: '38px', height: '38px',
               background: '#D4AF37',
@@ -101,7 +106,6 @@ export default function Header() {
               fontWeight: 900,
               borderRadius: '9px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(212,175,55,0.45), 0 2px 10px rgba(212,175,55,0.25)',
               lineHeight: 1,
               letterSpacing: '-0.02em',
               flexShrink: 0,
@@ -237,6 +241,12 @@ export default function Header() {
         <div className="hidden lg:flex items-center gap-3">
           {user ? (
             /* Avatar dropdown */
+            <>
+            {firstName && (
+              <span className="hidden xl:block text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
+                {timeGreeting}, {firstName}
+              </span>
+            )}
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => { setIsUserMenuOpen(p => !p); closeAll(); setIsUserMenuOpen(p => !p); }}
@@ -285,6 +295,7 @@ export default function Header() {
                 </div>
               )}
             </div>
+            </>
           ) : (
             <div className="flex items-center gap-3">
               <Link
@@ -297,11 +308,10 @@ export default function Header() {
               </Link>
               <Link
                 to="/booking"
-                className="inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className="m-cta-breathe inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 style={{
                   background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
                   color: '#060B16',
-                  boxShadow: '0 4px 20px rgba(212,175,55,0.28)',
                 }}
               >
                 Book Now
