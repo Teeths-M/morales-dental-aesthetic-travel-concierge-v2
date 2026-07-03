@@ -702,7 +702,8 @@ const TABS = [
   { id: 'mission-control', label: '⚡ Mission Control', link: '/demo/mission-control' },
   { id: 'mesh-beacon', label: '📡 Mesh Beacon', link: '/demo/mesh-beacon' },
   { id: 'coverage',    label: '🗺️ M Covers Everything', link: '/demo/coverage' },
-  { id: 'siobhan',    label: '🩺 Siobhan — Drop Mic',  link: '/demo/siobhan' },
+  { id: 'siobhan',          label: '🩺 Siobhan — Drop Mic',      link: '/demo/siobhan' },
+  { id: 'recovery-cascade', label: '🏥 Recovery Cascade',         link: '/demo/recovery-cascade' },
 ];
 
 const IN_PAGE_TAB_IDS = new Set(['overview', 'safe-t', 'medguard', 'emergency', 'nightlife']);
