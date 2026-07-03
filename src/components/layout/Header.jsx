@@ -16,7 +16,8 @@ export default function Header() {
   const location    = useLocation();
   const { user }    = useAuth();
   const isAdmin     = user?.role === 'admin' || user?.role === 'platform_admin';
-  const userMenuRef = useRef(null);
+  const userMenuRef       = useRef(null);
+  const portalCloseTimer  = useRef(null);
 
   const DARK_HERO_PATHS = ['/', '/discover', '/procedures', '/how-it-works'];
   const hasHero      = DARK_HERO_PATHS.includes(location.pathname);
@@ -160,7 +161,18 @@ export default function Header() {
           ))}
 
           {/* Portal Hub */}
-          <div className="relative">
+          <div
+            className="relative"
+            onMouseEnter={() => {
+              clearTimeout(portalCloseTimer.current);
+              setIsPortalOpen(true);
+              setIsLangOpen(false);
+              setIsUserMenuOpen(false);
+            }}
+            onMouseLeave={() => {
+              portalCloseTimer.current = setTimeout(() => setIsPortalOpen(false), 150);
+            }}
+          >
             <button
               onClick={() => { setIsPortalOpen(p => !p); setIsLangOpen(false); setIsUserMenuOpen(false); }}
               className="flex items-center gap-1.5 transition-colors duration-200"
