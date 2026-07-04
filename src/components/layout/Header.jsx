@@ -17,8 +17,9 @@ export default function Header() {
   const location    = useLocation();
   const { user }    = useAuth();
   const isAdmin     = user?.role === 'admin' || user?.role === 'platform_admin';
-  const userMenuRef       = useRef(null);
-  const portalCloseTimer  = useRef(null);
+  const userMenuRef        = useRef(null);
+  const portalCloseTimer   = useRef(null);
+  const userMenuCloseTimer = useRef(null);
 
   const DARK_HERO_PATHS = ['/', '/discover', '/procedures', '/how-it-works'];
   const hasHero      = DARK_HERO_PATHS.includes(location.pathname);
@@ -247,7 +248,12 @@ export default function Header() {
             <span className="hidden xl:block text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
                 {timeGreeting}
               </span>
-            <div className="relative" ref={userMenuRef}>
+            <div
+              className="relative"
+              ref={userMenuRef}
+              onMouseEnter={() => clearTimeout(userMenuCloseTimer.current)}
+              onMouseLeave={() => { userMenuCloseTimer.current = setTimeout(() => setIsUserMenuOpen(false), 200); }}
+            >
               <button
                 onClick={() => { setIsUserMenuOpen(p => !p); closeAll(); setIsUserMenuOpen(p => !p); }}
                 className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-200 hover:ring-2 hover:ring-offset-1 hover:ring-[#D4AF37]/50"
