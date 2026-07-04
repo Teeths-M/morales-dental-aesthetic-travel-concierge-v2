@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Globe, MapPin, Users, WifiOff } from 'lucide-react';
+import { Activity, ArrowRight, Globe, MapPin, Users, WifiOff } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
 
 const GOLD = BRAND.gold;
@@ -110,6 +110,46 @@ export default function ProtectionStackSection() {
           ))}
         </div>
 
+        {/* Post-op recovery — full-width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.36, duration: 0.5 }}
+          style={{
+            marginTop: 16,
+            borderRadius: 20,
+            padding: '28px 32px',
+            background: 'linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(255,255,255,0.02) 100%)',
+            border: '1px solid rgba(212,175,55,0.2)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 20,
+          }}
+        >
+          <div style={{
+            width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: `${GOLD}15`, border: `1px solid ${GOLD}35`,
+          }}>
+            <Activity style={{ width: 18, height: 18, color: GOLD }} strokeWidth={1.5} />
+          </div>
+          <div>
+            <h3 style={{
+              fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 8,
+              lineHeight: 1.3, letterSpacing: '-0.01em',
+              fontFamily: '"SF Pro Display", system-ui, sans-serif',
+            }}>
+              Recovery doesn't end at the airport.
+            </h3>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0, maxWidth: 660 }}>
+              When you land home, your Morales coordinator stays with you. Virtual follow-ups, care access,
+              and domestic doctor coordination continue through your full recovery — because the most vulnerable
+              moment is often the one after you board the flight home.
+            </p>
+          </div>
+        </motion.div>
+
         {/* Emotional closing */}
         <div style={{ textAlign: 'center', marginTop: 72, paddingTop: 56, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <p style={{
@@ -150,6 +190,12 @@ export default function ProtectionStackSection() {
             color: 'rgba(255,255,255,0.22)', letterSpacing: '0.04em',
           }}>
             No account needed · 0 patients unreachable · 2,847 journeys completed
+          </p>
+          <p style={{
+            marginTop: 18, fontSize: 12,
+            color: 'rgba(255,255,255,0.2)', fontStyle: 'italic', letterSpacing: '0.02em',
+          }}>
+            Built by Portia Morales, after watching a family member navigate medical travel alone.
           </p>
         </div>
 

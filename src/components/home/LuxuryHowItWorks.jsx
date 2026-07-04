@@ -10,7 +10,7 @@ const steps = [
     number: '01',
     icon: MessageCircle,
     title: 'Tell Us Your Goal',
-    desc: 'One consultation. We match you with a verified doctor, pre-screen your health, and design your full journey — flights, hotel, companion, and safety plan included.',
+    desc: '$49 consultation — fully credited to your package. We match you with a verified doctor, pre-screen your health, and design your full journey: flights, hotel, companion, and safety plan.',
   },
   {
     number: '02',

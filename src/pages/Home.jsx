@@ -14,8 +14,8 @@ export default function Home() {
     <div style={{ background: '#060B16' }}>
       <LuxuryHero />
       <LuxuryStatsBar />
-      <OurExpertsTeaser />
       <LuxuryHowItWorks />
+      <OurExpertsTeaser />
       <LuxuryWhyMorales />
       <ProtectionStackSection />
       <RealMoments />
