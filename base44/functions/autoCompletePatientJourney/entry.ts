@@ -1,5 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+async function aiJourneySummary(cr: Record<string, unknown>): Promise<string | null> {
+  if (!ANTHROPIC_KEY) return null;
+  const procs = Array.isArray(cr.procedures) ? cr.procedures.join(', ') : String(cr.procedures || 'procedure');
+  const dest = String(cr.procedure_country || cr.destination_city || 'destination');
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: HAIKU, max_tokens: 60,
+        messages: [{ role: 'user', content: `Medical travel concierge. Patient completed their journey: ${procs} in ${dest}. Write ONE warm 15-word sentence celebrating their completed journey. No quotes, no quotation marks.` }],
+      }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.content?.[0]?.text?.trim() || null;
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -96,6 +118,7 @@ Deno.serve(async (req) => {
         }
 
         // Update case status to Completed
+        const journeySummary = await aiJourneySummary(caseRecord);
         await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
           status: 'Completed',
           timeline_log: [
@@ -103,7 +126,7 @@ Deno.serve(async (req) => {
             {
               timestamp: now.toISOString(),
               action: 'auto_completed',
-              details: completionReason
+              details: journeySummary ? `${completionReason} — ${journeySummary}` : completionReason,
             }
           ]
         });

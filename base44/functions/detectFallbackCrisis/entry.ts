@@ -1,6 +1,33 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
 const CONFIRMATION_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+async function aiAdditionalRisks(cases: Record<string, unknown>[]): Promise<{ case_id: string; reason: string }[]> {
+  if (!ANTHROPIC_KEY || !cases.length) return [];
+  const summary = cases.slice(0, 20).map(c =>
+    `${String(c.id).slice(-6)}: status=${c.status} priority=${c.case_priority} stale_days=${Math.floor((Date.now() - new Date(String(c.updated_date || c.created_date || 0)).getTime()) / 86400_000)} payment=${c.payment_status} doctor_status=${c.doctor_status}`
+  ).join('\n');
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: HAIKU, max_tokens: 250,
+        messages: [{ role: 'user', content: `Medical travel case risk scanner. Cases (id_suffix: status, priority, stale_days, payment, doctor_status):\n${summary}\n\nIdentify cases stuck or at risk that need attention (e.g. stale >3 days in early status, payment pending long, no doctor assigned). Return JSON array max 5: [{"id_suffix":"...","reason":"1 sentence risk"}]. Empty array [] if none.` }],
+      }),
+    });
+    if (!r.ok) return [];
+    const d = await r.json();
+    const m = (d.content?.[0]?.text || '').trim().match(/\[[\s\S]*\]/);
+    const parsed: { id_suffix: string; reason: string }[] = m ? JSON.parse(m[0]) : [];
+    return parsed.map(p => {
+      const matched = cases.find(c => String(c.id).endsWith(p.id_suffix));
+      return matched ? { case_id: String(matched.id), reason: p.reason } : null;
+    }).filter(Boolean) as { case_id: string; reason: string }[];
+  } catch { return []; }
+}
 
 Deno.serve(async (req) => {
   try {
@@ -95,6 +122,16 @@ Deno.serve(async (req) => {
     // Fire all updates concurrently instead of serially
     if (updatePromises.length > 0) {
       await Promise.allSettled(updatePromises);
+    }
+
+    // AI risk scan — identifies additional at-risk cases beyond the single hardcoded rule
+    const aiRisks = await aiAdditionalRisks(activeCases);
+    for (const risk of aiRisks) {
+      const alreadyFlagged = results.details.some((d: { id: string }) => d.id === risk.case_id);
+      if (!alreadyFlagged) {
+        results.details.push({ id: risk.case_id, name: 'AI-identified', reason: risk.reason });
+        results.flagged++;
+      }
     }
 
     return Response.json({ success: true, ...results });

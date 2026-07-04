@@ -14,38 +14,10 @@
 
 const BRAND = 'Morales Medical Travel Safety';
 
-// ── Language detection by country ─────────────────────────────────────────────
-function detectLanguage(country: string): string {
-  const c = (country || '').toLowerCase();
-  const map: [string[], string][] = [
-    [['mexico','colombia','peru','argentina','chile','ecuador','venezuela','guatemala','honduras','el salvador','costa rica','panama','spain','dominican republic','cuba','puerto rico','bolivia','paraguay','uruguay','nicaragua','equatorial guinea'], 'Spanish'],
-    [['brazil','brasil','portugal','angola','mozambique','cape verde'], 'Portuguese'],
-    [['france','martinique','guadeloupe','haiti','senegal','cameroon','ivory coast','benin','togo','madagascar','reunion','congo'], 'French'],
-    [['germany','austria','liechtenstein'], 'German'],
-    [['italy'], 'Italian'],
-    [['philippines'], 'Filipino (Tagalog)'],
-    [['thailand'], 'Thai'],
-    [['turkey'], 'Turkish'],
-    [['uae','united arab emirates','saudi','jordan','egypt','lebanon','morocco','tunisia','iraq','kuwait','bahrain','oman','qatar','algeria','syria','yemen'], 'Arabic'],
-    [['russia','ukraine','belarus','kazakhstan'], 'Russian'],
-    [['china','taiwan','hong kong'], 'Mandarin Chinese'],
-    [['japan'], 'Japanese'],
-    [['korea'], 'Korean'],
-    [['netherlands','belgium','suriname'], 'Dutch'],
-    [['poland'], 'Polish'],
-    [['romania'], 'Romanian'],
-    [['india'], 'English'],
-  ];
-  for (const [countries, lang] of map) {
-    if (countries.some(k => c.includes(k))) return lang;
-  }
-  return 'English';
-}
-
 // ── Role-specific AI prompt builder ──────────────────────────────────────────
-function buildPrompt(role: string, lang: string, ctx: Record<string, string>): string {
-  const langLine = lang !== 'English'
-    ? `\n\nCRITICAL: Write your ENTIRE response — including the email subject — in ${lang}. Only use English for medical terms that have no ${lang} equivalent.`
+function buildPrompt(role: string, country: string, ctx: Record<string, string>): string {
+  const langLine = country
+    ? `\n\nCRITICAL: Detect the primary official language of "${country}" and write your ENTIRE response — including the email subject — in that language. Only use English for medical terms that have no local equivalent.`
     : '';
   const base = `Patient: ${ctx.patient_name} | Origin: ${ctx.origin} | Procedure: ${ctx.procedure} | Destination: ${ctx.city}, ${ctx.country} | Approx date: ${ctx.date} | Stay: ${ctx.duration}`;
 
@@ -209,33 +181,33 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const prompts: string[] = [];
 
   if (caseRecord.doctor_email) {
-    const lang = detectLanguage(doctor?.clinic_country || country);
-    jobs.push({ role: 'doctor', lang, email: caseRecord.doctor_email, phone: doctor?.phone, eyebrow: 'AI Intelligence Brief · Doctor', ctaUrl: `${appUrl}/portal/doctor` });
-    prompts.push(buildPrompt('doctor', lang, ctx));
+    const partnerCountry = doctor?.clinic_country || country;
+    jobs.push({ role: 'doctor', lang: partnerCountry, email: caseRecord.doctor_email, phone: doctor?.phone, eyebrow: 'AI Intelligence Brief · Doctor', ctaUrl: `${appUrl}/portal/doctor` });
+    prompts.push(buildPrompt('doctor', partnerCountry, ctx));
   }
 
   for (const ag of agencies) {
-    const lang = detectLanguage(ag.country || ag.agency_country || '');
-    jobs.push({ role: 'travel_agency', lang, email: ag.email, eyebrow: 'AI Intelligence Brief · Travel Agency' });
-    prompts.push(buildPrompt('travel_agency', lang, ctx));
+    const partnerCountry = ag.country || ag.agency_country || '';
+    jobs.push({ role: 'travel_agency', lang: partnerCountry, email: ag.email, eyebrow: 'AI Intelligence Brief · Travel Agency' });
+    prompts.push(buildPrompt('travel_agency', partnerCountry, ctx));
   }
 
   for (const tx of taxis) {
-    const lang = detectLanguage(tx.operating_country || country);
-    jobs.push({ role: 'taxi', lang, email: tx.email, phone: tx.phone, eyebrow: 'AI Intelligence Brief · Driver' });
-    prompts.push(buildPrompt('taxi', lang, ctx));
+    const partnerCountry = tx.operating_country || country;
+    jobs.push({ role: 'taxi', lang: partnerCountry, email: tx.email, phone: tx.phone, eyebrow: 'AI Intelligence Brief · Driver' });
+    prompts.push(buildPrompt('taxi', partnerCountry, ctx));
   }
 
   if (companion?.email) {
-    const lang = detectLanguage(companion.country || origin);
-    jobs.push({ role: 'companion', lang, email: companion.email, phone: companion.phone, eyebrow: 'AI Intelligence Brief · Companion' });
-    prompts.push(buildPrompt('companion', lang, ctx));
+    const partnerCountry = companion.country || origin;
+    jobs.push({ role: 'companion', lang: partnerCountry, email: companion.email, phone: companion.phone, eyebrow: 'AI Intelligence Brief · Companion' });
+    prompts.push(buildPrompt('companion', partnerCountry, ctx));
   }
 
   if (security?.email) {
-    const lang = detectLanguage(security.country || country);
-    jobs.push({ role: 'security', lang, email: security.email, eyebrow: 'AI Intelligence Brief · Security' });
-    prompts.push(buildPrompt('security', lang, ctx));
+    const partnerCountry = security.country || country;
+    jobs.push({ role: 'security', lang: partnerCountry, email: security.email, eyebrow: 'AI Intelligence Brief · Security' });
+    prompts.push(buildPrompt('security', partnerCountry, ctx));
   }
 
   // ── Run ALL AI calls in parallel ──────────────────────────────────────────────

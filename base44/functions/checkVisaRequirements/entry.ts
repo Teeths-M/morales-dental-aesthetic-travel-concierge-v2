@@ -1,5 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+// AI visa status for any nationality/destination — falls back to hardcoded inferStatus on error
+async function aiInferStatus(nationality: string, destination: string): Promise<string> {
+  if (!ANTHROPIC_KEY) return inferStatus(nationality, destination);
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: HAIKU, max_tokens: 15,
+        messages: [{ role: 'user', content: `Does a ${nationality} passport holder need a visa to enter ${destination} for medical tourism? Reply with ONE word only: exempt, evisa, on_arrival, or embassy` }],
+      }),
+    });
+    if (!r.ok) return inferStatus(nationality, destination);
+    const d = await r.json();
+    const status = (d.content?.[0]?.text || '').trim().toLowerCase().split(/\s/)[0];
+    return ['exempt', 'evisa', 'on_arrival', 'embassy'].includes(status) ? status : inferStatus(nationality, destination);
+  } catch { return inferStatus(nationality, destination); }
+}
+
 // ── SAFE-T VISA ASSIST™ — Official Source Visa Engine ─────────────────────────
 // Primary source: structured MEDICAL_VISA_DATABASE (hardcoded from official gov sites)
 // Fallback: LLM with internet context for unlisted routes (flagged as unconfirmed)
@@ -368,7 +390,7 @@ Deno.serve(async (req) => {
 
     const destKey = Object.keys(MEDICAL_VISA_DATABASE).find(k => destination_country.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(destination_country.toLowerCase()));
     const dbEntry = destKey ? MEDICAL_VISA_DATABASE[destKey] : null;
-    const status = inferStatus(nationality, destination_country);
+    const status = await aiInferStatus(nationality, destination_country);
 
     // ── If destination is in our database: return full structured response ───
     if (dbEntry) {

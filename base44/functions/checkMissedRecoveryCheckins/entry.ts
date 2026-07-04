@@ -1,5 +1,32 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+async function aiMissedCheckinMessages(session: Record<string, unknown>): Promise<{ doctorMsg: string | null; patientMsg: string | null }> {
+  if (!ANTHROPIC_KEY) return { doctorMsg: null, patientMsg: null };
+  const procedure = String(session.procedure_type || session.treatment_plan || 'their procedure');
+  const daysSince = session.last_log_date
+    ? Math.round((Date.now() - new Date(String(session.last_log_date)).getTime()) / 86400_000)
+    : 1;
+  const consecutive = Number(session.consecutive_anomaly_days || 0) + 1;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: HAIKU, max_tokens: 180,
+        messages: [{ role: 'user', content: `Medical concierge. Patient recovering from ${procedure} missed check-in for ${daysSince} day(s) (${consecutive} consecutive). Write two brief messages. Return JSON: {"doctorMsg":"1-2 sentence clinical note specific to ${procedure} recovery concerns","patientMsg":"1 warm sentence asking patient to check in"}` }],
+      }),
+    });
+    if (!r.ok) return { doctorMsg: null, patientMsg: null };
+    const d = await r.json();
+    const m = (d.content?.[0]?.text || '').trim().match(/\{[\s\S]*\}/);
+    const parsed = m ? JSON.parse(m[0]) : null;
+    return { doctorMsg: parsed?.doctorMsg || null, patientMsg: parsed?.patientMsg || null };
+  } catch { return { doctorMsg: null, patientMsg: null }; }
+}
+
 // ── checkMissedRecoveryCheckins — cron/scheduled function ─────────────────────
 // Runs every hour via Base44 scheduler.
 // Schedule (Base44 cron): 0 * * * *
@@ -98,6 +125,9 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // AI-personalized messages based on procedure type and missed-day count
+      const aiMsgs = await aiMissedCheckinMessages(session);
+
       // Email doctor
       if (docEmail) {
         await base44.asServiceRole.integrations.Core.SendEmail({
@@ -107,7 +137,7 @@ Deno.serve(async (req) => {
           body: `<p>Patient <strong>${pName}</strong> (${pEmail}) has not submitted a recovery check-in today.</p>` +
             `<p>Days since last log: ${daysSinceLastLog} | Consecutive missed/anomaly days: ${newConsecutive}</p>` +
             `<p>Case ID: ${session.case_id || '—'}</p>` +
-            `<p>Please attempt to reach the patient to confirm they are well.</p>`,
+            (aiMsgs.doctorMsg ? `<p><strong>M AI Note:</strong> ${aiMsgs.doctorMsg}</p>` : `<p>Please attempt to reach the patient to confirm they are well.</p>`),
         }).catch(() => {});
       }
 
@@ -124,7 +154,7 @@ Deno.serve(async (req) => {
           from_name: 'Morales Recovery Team',
           to: pEmail,
           subject: 'Recovery Check-In Reminder',
-          body: `<p>Hi ${pName},</p><p>We noticed you haven't submitted your recovery check-in today. Please open the Morales app or reply to this email to let us know how you're feeling.</p><p>You can also SMS us: RECOVERY <pain 1-10> <mobility 1-5> <appetite 1-5> <GOOD|CONCERNING|BAD></p>`,
+          body: `<p>Hi ${pName},</p><p>${aiMsgs.patientMsg || 'We noticed you haven\'t submitted your recovery check-in today. Please open the Morales app or reply to this email to let us know how you\'re feeling.'}</p><p>You can also SMS us: RECOVERY <pain 1-10> <mobility 1-5> <appetite 1-5> <GOOD|CONCERNING|BAD></p>`,
         }).catch(() => {});
       }
 

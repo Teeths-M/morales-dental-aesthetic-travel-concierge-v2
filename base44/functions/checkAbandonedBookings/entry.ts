@@ -11,9 +11,30 @@
  * Stage 3 (≥ 48hr): Release quotas — notify all 4 partners, reset pipeline
  */
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+
+async function aiRecoveryMessage(stage: 1 | 2, firstName: string, procedure: string, destination: string): Promise<{ headline: string; subline: string } | null> {
+  if (!ANTHROPIC_KEY) return null;
+  const tone = stage === 1 ? 'warm and reassuring' : 'firm and urgent — package expires in 24 hours';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: HAIKU, max_tokens: 120,
+        messages: [{ role: 'user', content: `Medical travel concierge. ${firstName} hasn't completed booking for ${procedure || 'their procedure'} in ${destination || 'their destination'}. Write a ${tone} recovery message. Return JSON: {"headline":"1 compelling sentence addressed to ${firstName}","subline":"2 sentences explaining what they stand to lose or miss if they don't complete"}` }],
+      }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const m = (d.content?.[0]?.text || '').trim().match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch { return null; }
+}
 
 async function sendSms(to: string, msg: string) {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID'), auth = Deno.env.get('TWILIO_AUTH_TOKEN'), from = Deno.env.get('TWILIO_PHONE_NUMBER');
@@ -26,23 +47,24 @@ async function sendSms(to: string, msg: string) {
 
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function abandonedEmail({ stage, clientName, packageFull, packageTerms, firstInstall, caseRef, payUrl, last4 }: {
+function abandonedEmail({ stage, clientName, packageFull, packageTerms, firstInstall, caseRef, payUrl, last4, aiHeadline, aiSubline }: {
   stage: 1 | 2; clientName: string; packageFull: number; packageTerms: number;
   firstInstall: number; caseRef: string; payUrl: string; last4?: string;
+  aiHeadline?: string; aiSubline?: string;
 }) {
   const usd = (n: number) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const firstName = clientName.split(' ')[0];
 
   const config = stage === 1 ? {
     eyebrow: 'Your Package Is Waiting',
-    headline: `${firstName}, your Morales package is still available.`,
-    subline: 'We noticed you haven\'t completed your booking yet. Everything is reserved for you — your doctor is confirmed, your travel is ready, and your partners are standing by. All that\'s missing is your payment.',
+    headline: aiHeadline || `${firstName}, your Morales package is still available.`,
+    subline: aiSubline || 'We noticed you haven\'t completed your booking yet. Everything is reserved for you — your doctor is confirmed, your travel is ready, and your partners are standing by. All that\'s missing is your payment.',
     urgency: '',
     ctaLabel: 'Complete My Booking',
   } : {
     eyebrow: 'Final Notice — Package Expires Tomorrow',
-    headline: `${firstName}, your package expires in 24 hours.`,
-    subline: 'We\'ve been holding your confirmed quotes from your doctor, travel agency, and driver. If payment is not received within 24 hours, we will be required to release these reservations back to the pool.',
+    headline: aiHeadline || `${firstName}, your package expires in 24 hours.`,
+    subline: aiSubline || 'We\'ve been holding your confirmed quotes from your doctor, travel agency, and driver. If payment is not received within 24 hours, we will be required to release these reservations back to the pool.',
     urgency: `<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:14px 18px;border-radius:0 12px 12px 0;margin-bottom:24px;">
       <p style="margin:0;font-size:14px;color:#991b1b;font-weight:600;">⚠️ Your reserved spots expire in less than 24 hours.</p>
     </div>`,
@@ -119,11 +141,12 @@ Deno.serve(async (req) => {
 
       // ── Stage 1 — 2-hour warm recovery ───────────────────────────────────
       if (age >= HR_2 && !c.abandoned_1_sent) {
+        const aiMsg1 = await aiRecoveryMessage(1, firstName, (c.procedures as string[] | undefined)?.[0] || '', c.procedure_country || '');
         if (c.client_email) {
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: c.client_email,
             subject: `${firstName}, your Morales package is still waiting for you | ${BRAND}`,
-            body: abandonedEmail({ stage: 1, clientName: c.client_name, packageFull: c.package_price_full, packageTerms: c.package_price_terms, firstInstall: c.package_price_first_installment, caseRef, payUrl, last4: c.stripe_payment_method_last4 }),
+            body: abandonedEmail({ stage: 1, clientName: c.client_name, packageFull: c.package_price_full, packageTerms: c.package_price_terms, firstInstall: c.package_price_first_installment, caseRef, payUrl, last4: c.stripe_payment_method_last4, aiHeadline: aiMsg1?.headline, aiSubline: aiMsg1?.subline }),
           }));
         }
         if (c.client_phone) {
@@ -135,11 +158,12 @@ Deno.serve(async (req) => {
 
       // ── Stage 2 — 24-hour firm reminder ──────────────────────────────────
       else if (age >= HR_24 && !c.abandoned_2_sent) {
+        const aiMsg2 = await aiRecoveryMessage(2, firstName, (c.procedures as string[] | undefined)?.[0] || '', c.procedure_country || '');
         if (c.client_email) {
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: c.client_email,
             subject: `Final notice: Your package expires in 24 hours — ${caseRef} | ${BRAND}`,
-            body: abandonedEmail({ stage: 2, clientName: c.client_name, packageFull: c.package_price_full, packageTerms: c.package_price_terms, firstInstall: c.package_price_first_installment, caseRef, payUrl, last4: c.stripe_payment_method_last4 }),
+            body: abandonedEmail({ stage: 2, clientName: c.client_name, packageFull: c.package_price_full, packageTerms: c.package_price_terms, firstInstall: c.package_price_first_installment, caseRef, payUrl, last4: c.stripe_payment_method_last4, aiHeadline: aiMsg2?.headline, aiSubline: aiMsg2?.subline }),
           }));
         }
         if (c.client_phone) {
