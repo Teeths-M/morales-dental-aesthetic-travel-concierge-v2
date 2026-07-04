@@ -112,7 +112,7 @@ export default function GlobalNotificationStack() {
       {/* Top stack — informational (arrival, driver, greeting) */}
       <div
         className="fixed z-[9985] flex flex-col gap-2 pointer-events-none"
-        style={{ top: 80, left: '50%', transform: 'translateX(-50%)', width: 'min(400px, calc(100vw - 32px))' }}
+        style={{ top: 80, right: 16, width: 'min(380px, calc(100vw - 32px))' }}
       >
         <AnimatePresence mode="sync">
           {top.map(n => (
