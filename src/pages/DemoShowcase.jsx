@@ -656,7 +656,7 @@ function SafeTBlockDemo() {
         style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)' }}
       >
         <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#ef4444' }}>
-          Based on real events — 2024
+          Based on real events — 2026
         </p>
         <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
           A woman died in Costa Rica after a clinic combined a tummy tuck, liposuction, and fat transfer in a single session.
