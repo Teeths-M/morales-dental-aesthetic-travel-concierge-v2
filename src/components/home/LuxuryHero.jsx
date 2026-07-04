@@ -173,6 +173,26 @@ export default function LuxuryHero() {
               </motion.h1>
             </AnimatePresence>
 
+            {/* ── CATEGORY ANCHOR — judges need to know the category ── */}
+            {isMedical && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.06 }}
+                className="mb-5"
+                style={{
+                  fontSize:      '13px',
+                  fontWeight:    500,
+                  color:         'rgba(255,255,255,0.50)',
+                  letterSpacing: '0.01em',
+                  lineHeight:    1.4,
+                  margin:        '0 0 16px',
+                }}
+              >
+                The world's first Medical Travel Safety platform.
+              </motion.p>
+            )}
+
             {/* ── FEAR ACKNOWLEDGMENT — medical mode only ── */}
             {isMedical && (
               <motion.p
@@ -224,7 +244,7 @@ export default function LuxuryHero() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.5, delay: 0.15 }}
                 className="mb-9 max-w-[440px]"
-                style={{ fontSize: '16px', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
+                style={{ fontSize: '17px', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
               >
                 {content.body}
               </motion.p>
@@ -361,7 +381,7 @@ export default function LuxuryHero() {
                 >
                   {title}
                 </p>
-                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
+                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
                   {desc}
                 </p>
               </motion.div>
