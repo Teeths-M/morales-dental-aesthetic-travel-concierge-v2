@@ -4,7 +4,13 @@
  * All paths preserved exactly as in the original App.jsx.
  */
 import React, { lazy, Suspense } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
+
+/* Requires visiting /demo first — blocks direct URL access to admin demo pages */
+function DemoProtected({ children }) {
+  const ok = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('morales_demo_session') === '1';
+  return ok ? children : <Navigate to="/demo" replace />;
+}
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
 
@@ -96,8 +102,8 @@ export const publicRoutes = (
     <Route path="/demo/family"          element={<ErrorBoundary><FamilyEyeDemo /></ErrorBoundary>} />
     <Route path="/demo/arrival"         element={<ErrorBoundary><ArrivalIntelDemo /></ErrorBoundary>} />
     <Route path="/demo/intelligence"    element={<ErrorBoundary><IntelligenceScanDemo /></ErrorBoundary>} />
-    <Route path="/demo/situation-room"  element={<ErrorBoundary><SituationRoom /></ErrorBoundary>} />
-    <Route path="/demo/mission-control" element={<ErrorBoundary><AdminMissionControl /></ErrorBoundary>} />
+    <Route path="/demo/situation-room"  element={<DemoProtected><ErrorBoundary><SituationRoom /></ErrorBoundary></DemoProtected>} />
+    <Route path="/demo/mission-control" element={<DemoProtected><ErrorBoundary><AdminMissionControl /></ErrorBoundary></DemoProtected>} />
     <Route path="/demo/mesh-beacon"     element={<ErrorBoundary><EmergencyMeshBeaconDemo /></ErrorBoundary>} />
     <Route path="/demo/coverage"        element={<ErrorBoundary><CoverageMatrix /></ErrorBoundary>} />
     <Route path="/demo/siobhan"         element={<ErrorBoundary><SiobhanDemo /></ErrorBoundary>} />

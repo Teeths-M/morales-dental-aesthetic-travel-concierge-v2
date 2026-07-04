@@ -725,6 +725,7 @@ export default function DemoShowcase() {
 
   useEffect(() => {
     document.title = 'Morales Medical Travel Safety — Platform Demo';
+    sessionStorage.setItem('morales_demo_session', '1');
     return () => { document.title = 'Morales Medical Travel Safety'; };
   }, []);
 
