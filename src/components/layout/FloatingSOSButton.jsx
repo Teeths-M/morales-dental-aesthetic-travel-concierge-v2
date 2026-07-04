@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, MapPin } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import MoralesAssistPanel from './MoralesAssistPanel';
 
@@ -89,6 +89,29 @@ export default function FloatingSOSButton() {
             Morales Assist
           </span>
         </motion.div>
+
+        {/* ── M Nearby pill (middle) ── */}
+        <Link to="/nearby" aria-label="Find nearby help" style={{ textDecoration: 'none' }}>
+          <motion.div
+            aria-label="Find Nearby — doctors, pharmacy, police and more"
+            style={{ ...PILL_BASE, border: '1px solid rgba(0,229,255,0.28)' }}
+            whileHover={{ scale: 1.04, boxShadow: '0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,229,255,0.35)', transition: { duration: 0.18 } }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <div style={{ position: 'relative', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <motion.span
+                style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,229,255,0.45)' }}
+                animate={{ scale: [1, 1.9, 1], opacity: [0.35, 0, 0.35] }}
+                transition={{ duration: 3.6, repeat: Infinity, ease: 'easeOut', repeatDelay: 1.4 }}
+              />
+              <span style={{ position: 'relative', width: 10, height: 10, borderRadius: '50%', background: '#00E5FF', boxShadow: '0 0 6px rgba(0,229,255,0.65)', display: 'block' }} />
+            </div>
+            <MapPin style={{ width: 16, height: 16, color: '#00E5FF', filter: 'drop-shadow(0 0 4px rgba(0,229,255,0.55))', flexShrink: 0 }} strokeWidth={2} />
+            <span className="hidden sm:inline" style={{ fontSize: '11.5px', fontWeight: 600, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#00E5FF', lineHeight: 1 }}>
+              Find Nearby
+            </span>
+          </motion.div>
+        </Link>
 
         {/* ── SOS pill (bottom) ── */}
         <Link to="/emergency" aria-label="SOS Emergency" style={{ textDecoration: 'none' }}>

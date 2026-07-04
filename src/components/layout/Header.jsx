@@ -375,6 +375,7 @@ export default function Header() {
             ))}
             <Link to="/visa-assist" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">Visa Assist</Link>
             <Link to="/passport-vault" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">My Vault</Link>
+            <Link to="/nearby" onClick={() => setIsMobileOpen(false)} className="font-semibold" style={{ color: '#00E5FF' }}>📍 Find Nearby Help</Link>
             <Link to="/offline-guide" onClick={() => setIsMobileOpen(false)} className="text-red-400 font-semibold">🆘 Offline &amp; SOS Guide</Link>
           </div>
 
