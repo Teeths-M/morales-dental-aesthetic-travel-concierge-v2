@@ -16,6 +16,7 @@ import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboardi
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
 import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
+import ProximityWatcher from './ProximityWatcher';
 
 // Paths where the onboarding wizard should never appear
 const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
@@ -83,6 +84,9 @@ export default function AppLayout() {
             {user && <FloatingSOSButton />}
           </>
         )}
+
+        {/* Proximity nudge — fires when user walks past a saved Nearby POI */}
+        <ProximityWatcher />
 
         {/* Global notification stack — suppressed on demo pages */}
         {!isDemo && <GlobalNotificationStack />}

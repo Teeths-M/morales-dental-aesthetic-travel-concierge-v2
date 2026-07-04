@@ -82,6 +82,11 @@ export default function NearbyHelp() {
     try {
       const data = await overpassSearch(loc.lat, loc.lng, cat.id, km);
       setResults(data);
+      if (data.length > 0) {
+        // Persist POIs so ProximityWatcher can nudge the user as they walk past them
+        const tagged = data.map(r => ({ ...r, category: cat.label, emoji: cat.emoji }));
+        localStorage.setItem('m_nearby_pois', JSON.stringify(tagged));
+      }
       if (data.length === 0) setSearchErr(`No ${cat.label.toLowerCase()} found within ${km} km.`);
     } catch {
       setSearchErr('Search failed. Check your connection and try again.');
