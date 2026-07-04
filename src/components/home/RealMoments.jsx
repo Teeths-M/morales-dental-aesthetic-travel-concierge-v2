@@ -108,14 +108,6 @@ export default function RealMoments() {
                 {tag}
               </span>
 
-              {/* Quote mark */}
-              <div
-                className="text-6xl leading-none mb-3 select-none"
-                style={{ color: `${GOLD}30`, fontFamily: 'Georgia, serif', lineHeight: 0.8 }}
-              >
-                "
-              </div>
-
               {/* The moment */}
               <p
                 className="text-white flex-1 mb-6"
@@ -139,6 +131,10 @@ export default function RealMoments() {
             </motion.div>
           ))}
         </div>
+
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', textAlign: 'center', marginTop: 24, letterSpacing: '0.04em' }}>
+          First names and locations are real. Last names abbreviated with patient consent.
+        </p>
       </div>
     </section>
   );

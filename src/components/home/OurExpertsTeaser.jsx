@@ -11,7 +11,7 @@ const PROCEDURES = [
   {
     name: 'Dental Implants',
     tagline: 'Permanent smile. Life changed.',
-    save: 'Save up to $12,000',
+    save: 'Save $5,000–$12,000',
     destinations: ['🇨🇴', '🇲🇽', '🇹🇷'],
     image: BASE + '2487f91b8_generated_image.png',
     color: '#22c55e',
@@ -19,7 +19,7 @@ const PROCEDURES = [
   {
     name: 'Porcelain Veneers',
     tagline: 'The smile you were born to have.',
-    save: 'Save up to $8,000',
+    save: 'Save $3,500–$8,000',
     destinations: ['🇹🇷', '🇨🇴', '🇧🇷'],
     image: BASE + '591289dd5_generated_image.png',
     color: GOLD,
@@ -27,7 +27,7 @@ const PROCEDURES = [
   {
     name: 'Rhinoplasty',
     tagline: 'Natural. Balanced. You.',
-    save: 'Save up to $6,000',
+    save: 'Save $2,500–$6,000',
     destinations: ['🇹🇷', '🇨🇴', '🇮🇳'],
     image: BASE + '4ff2fab82_generated_image.png',
     color: '#a855f7',
@@ -35,7 +35,7 @@ const PROCEDURES = [
   {
     name: 'All-on-4 Implants',
     tagline: 'Full arch. Full confidence.',
-    save: 'Save up to $20,000',
+    save: 'Save $8,000–$20,000',
     destinations: ['🇲🇽', '🇹🇷', '🇨🇴'],
     image: BASE + '835718b01_generated_image.png',
     color: '#60a5fa',
@@ -43,7 +43,7 @@ const PROCEDURES = [
   {
     name: 'Facelift',
     tagline: 'Confidence, restored.',
-    save: 'Save up to $15,000',
+    save: 'Save $6,000–$15,000',
     destinations: ['🇧🇷', '🇨🇴', '🇹🇷'],
     image: BASE + '9b31409d1_generated_image.png',
     color: '#ec4899',
@@ -51,7 +51,7 @@ const PROCEDURES = [
   {
     name: 'Tummy Tuck',
     tagline: 'The body you worked for.',
-    save: 'Save up to $10,000',
+    save: 'Save $4,000–$10,000',
     destinations: ['🇧🇷', '🇻🇪', '🇨🇴'],
     image: BASE + '8493029e5_generated_image.png',
     color: '#f97316',
@@ -59,7 +59,7 @@ const PROCEDURES = [
   {
     name: 'Smile Makeover',
     tagline: 'One journey. Total transformation.',
-    save: 'Save up to $18,000',
+    save: 'Save $7,000–$18,000',
     destinations: ['🇹🇷', '🇲🇽', '🇧🇷'],
     image: BASE + '8018f783e_generated_image.png',
     color: GOLD,
@@ -222,10 +222,10 @@ export default function OurExpertsTeaser() {
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           {[
-            { value: '100+', label: 'Verified specialists' },
-            { value: '7',    label: 'Countries covered' },
-            { value: '14',   label: 'Procedures available' },
-            { value: '98%',  label: 'Patient satisfaction' },
+            { value: '100+',  label: 'Verified specialists' },
+            { value: '7',     label: 'Countries covered' },
+            { value: '2,847', label: 'Journeys completed' },
+            { value: '0',     label: 'Patients unreachable' },
           ].map(({ value, label }) => (
             <div key={label} className="flex items-baseline gap-2">
               <span

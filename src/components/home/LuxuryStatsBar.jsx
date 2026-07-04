@@ -10,8 +10,8 @@ const GOLD = '#D4AF37';
 
 const STATS = [
   { value: 2847,  suffix: '',   prefix: '',  label: 'Journeys Completed',       sub: 'patients safely home',          color: GOLD },
-  { value: 14.2,  suffix: 'M', prefix: '$',  label: 'Saved vs US Pricing',      sub: 'kept in our patients\' pockets', color: GOLD },
-  { value: 9621,  suffix: '',   prefix: '',  label: 'Checkpoints Confirmed',     sub: 'every handshake tracked',       color: GOLD },
+  { value: 14.2,  suffix: 'M', prefix: '$',  label: 'Saved vs US Pricing',      sub: 'vs. avg US list price per procedure', color: GOLD },
+  { value: 9621,  suffix: '',   prefix: '',  label: 'Checkpoints Confirmed',     sub: 'driver · clinic · surgeon · hotel — every handoff',  color: GOLD },
   { value: 0,     suffix: '',   prefix: '',  label: 'Patients Unreachable',      sub: 'our safety record',             color: GOLD, isZero: true },
 ];
 
