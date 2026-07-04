@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
+import LiveJourneyCard from './LiveJourneyCard';
 import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
 import { BadgeCheck, Shield, CheckCircle, Play, Heart } from 'lucide-react';
@@ -13,7 +14,7 @@ const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd
 /* ── Content by mode ──────────────────────────────────────────────────────── */
 const CONTENT = {
   medical: {
-    headline:    'YOUR JOURNEY.\nPERFECTED.',
+    headline:    'NEVER\nALONE.',
     subheadline: 'Travel abroad for world-class medical care — and come home safely.',
     body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. If something goes wrong, Morales activates your emergency response plan and coordinates the next steps.',
     cta:         { label: 'Start Your Journey', path: '/booking' },
@@ -41,13 +42,26 @@ const FEATURES = [
 ];
 
 
+/* ── Rotating human stories ───────────────────────────────────────────────── */
+const STORIES = [
+  'Rosa flew to Cancún alone. Her daughter watched every step.',
+  'James had 12 hours to save his sight. M had a doctor in 4.',
+  "Elena's family slept peacefully. We didn't.",
+];
+
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 const QUICK_PROCEDURES = ['Dental Implants', 'Veneers', 'Rhinoplasty', 'Liposuction'];
 
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [storyIdx, setStoryIdx] = useState(0);
   const { mode }    = usePlatformMode();
+
+  useEffect(() => {
+    const t = setInterval(() => setStoryIdx(i => (i + 1) % STORIES.length), 4200);
+    return () => clearInterval(t);
+  }, []);
   const isMedical   = mode === 'medical';
   const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
@@ -127,6 +141,29 @@ export default function LuxuryHero() {
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.15em', textTransform: 'uppercase' }}>The Golden Standard for Medical Travel</span>
               </div>
             </motion.div>
+
+            {/* ── STORY TICKER ── */}
+            <div style={{ minHeight: 22, marginBottom: 20 }}>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={storyIdx}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.48, ease: 'easeInOut' }}
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    fontStyle: 'italic',
+                    color: 'rgba(255,255,255,0.36)',
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  ↳ {STORIES[storyIdx]}
+                </motion.p>
+              </AnimatePresence>
+            </div>
 
             {/* ── COMMANDING HEADLINE ── */}
             <AnimatePresence mode="wait">
@@ -363,8 +400,8 @@ export default function LuxuryHero() {
             </motion.div>
           </motion.div>
 
-          {/* Right column — pure visual real estate for the hero image */}
-          <div className="hidden lg:block" />
+          {/* Right column — live patient journey card */}
+          <LiveJourneyCard />
         </div>
       </section>
 
