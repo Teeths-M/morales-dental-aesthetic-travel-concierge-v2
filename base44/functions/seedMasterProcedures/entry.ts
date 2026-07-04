@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const masterProcedures = [
   // Dental - General
@@ -117,6 +117,6 @@ Deno.serve(async (req) => {
       count: created.length 
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

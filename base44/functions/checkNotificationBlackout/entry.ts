@@ -70,6 +70,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     // Never crash notification flows — if guard fails, allow notification through
-    return Response.json({ suppressed: false, error: error.message });
+    return Response.json({ suppressed: false, error: 'An internal error occurred.' });
   }
 });

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // ── generateSafeTProfile ──────────────────────────────────────────────────────
 // Triggered on Consultation create/update events.
@@ -180,6 +180,6 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, message: 'SafeTProfile saved and CaseRecord synced.' });
   } catch (error) {
     console.error('[generateSafeTProfile]', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

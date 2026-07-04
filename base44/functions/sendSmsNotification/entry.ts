@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
     const result = await response.json();
 
     if (!response.ok) {
-      return Response.json({ success: false, error: result.message || 'Twilio error', code: result.code }, { status: 400 });
+      return Response.json({ success: false, error: 'SMS delivery failed', code: result.code }, { status: 400 });
     }
 
     return Response.json({ success: true, message_sid: result.sid, to, type });

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
@@ -224,6 +224,6 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid action. Use: create_session, translate_audio, end_session, get_session' }, { status: 400 });
   } catch (error) {
     console.error('[walkieTalkieTranslate] Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

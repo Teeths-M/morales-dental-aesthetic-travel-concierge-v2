@@ -1,4 +1,4 @@
-/**
+﻿/**
  * mockWipayPayment — DEVELOPMENT/TEST ONLY
  *
  * Gated behind MOCK_PAYMENTS_ENABLED=true env var.
@@ -54,6 +54,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, provider: 'wipay_mock', payment_url: successUrl });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

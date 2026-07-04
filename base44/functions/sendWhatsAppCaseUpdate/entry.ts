@@ -174,6 +174,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('sendWhatsAppCaseUpdate error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

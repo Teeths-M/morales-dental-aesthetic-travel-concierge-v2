@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Commission tiers by partner type
 const COMMISSION_RULES = {
@@ -68,6 +68,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('calculateCommission error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

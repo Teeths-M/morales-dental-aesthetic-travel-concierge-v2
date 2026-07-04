@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 async function decryptAesGcm(encryptedBytes, keyB64, ivB64) {
   const keyBytes = Uint8Array.from(atob(keyB64), c => c.charCodeAt(0));
@@ -147,6 +147,6 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

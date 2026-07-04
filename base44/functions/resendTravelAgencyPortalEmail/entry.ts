@@ -150,6 +150,6 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, sent });
   } catch (error) {
     console.error('resendTravelAgencyPortalEmail error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

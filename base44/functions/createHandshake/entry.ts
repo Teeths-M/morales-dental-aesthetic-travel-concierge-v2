@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Per-checkpoint default expiry (hours) — context-aware, not a single fixed timeout.
 // Driver pickup: 20 min (missed = reroute fast). Flight leg: 5h (you're airborne).
@@ -159,6 +159,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Invalid action. Use: create | complete | list' }, { status: 400 });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

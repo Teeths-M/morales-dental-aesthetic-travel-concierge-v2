@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -177,6 +177,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('resendPaymentEmail error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

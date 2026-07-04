@@ -1,4 +1,4 @@
-/**
+﻿/**
  * mockProcessPayment — DEVELOPMENT/TEST ONLY
  *
  * Gated behind MOCK_PAYMENTS_ENABLED=true env var.
@@ -301,6 +301,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('mockProcessPayment error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });

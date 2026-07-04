@@ -767,6 +767,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ ...results, timestamp: now.toISOString() });
   } catch (err) {
-    return Response.json({ error: err.message || 'Internal error' }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
