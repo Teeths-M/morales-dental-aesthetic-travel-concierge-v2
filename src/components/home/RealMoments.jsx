@@ -20,10 +20,10 @@ const MOMENTS = [
   {
     tag:     'Above and Beyond',
     tagColor: GOLD,
-    moment:  'Daniel woke up from sedation to find his Morales companion had already coordinated his hotel breakfast, ice packs, and a call with his doctor at home.',
-    who:     'Daniel O.',
+    moment:  'James was nervous about the language barrier. His Morales companion had already briefed the clinic team in Turkish, translated every post-op instruction into English, and arranged a FaceTime with his surgeon at home before he left the recovery room.',
+    who:     'James A.',
     where:   'Istanbul, Turkey 🇹🇷',
-    procedure: 'All-on-4 Implants',
+    procedure: 'Smile Makeover',
   },
   {
     tag:     'We Had Your Back',
