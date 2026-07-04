@@ -37,6 +37,16 @@ const SCENES = [
   },
   {
     chapter: '04',
+    title: 'RECOVERY.',
+    patient: 'María, 67',
+    location: 'Home · Miami, FL',
+    time: '9:00 AM · Check-in 3 of 14',
+    status: 'Recovery on track',
+    statusNote: 'Next M check-in in 2 hours',
+    dot: '#22c55e',
+  },
+  {
+    chapter: '05',
     title: 'HOME\nSAFE.',
     patient: 'María, 67',
     location: 'Cancún → Miami · Flight CM-412',
