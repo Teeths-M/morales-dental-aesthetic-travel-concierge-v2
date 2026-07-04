@@ -333,7 +333,7 @@ export default function RecoveryTrackerDemo() {
       </div>
 
       {/* Judge callout at bottom */}
-      <div className="max-w-sm mx-auto px-4 pb-12">
+      <div className="max-w-sm mx-auto px-4 pb-6">
         <div style={{ borderRadius: 16, padding: '16px 20px', background: '#0C1A1D', border: `1px solid ${GOLD}25` }}>
           <p className="text-xs font-semibold mb-2" style={{ color: GOLD }}>The Viral Hook</p>
           <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -347,6 +347,28 @@ export default function RecoveryTrackerDemo() {
           </p>
         </div>
       </div>
+
+      {/* Real-world context */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="max-w-sm mx-auto px-4 pb-12"
+      >
+        <div style={{ borderRadius: 16, padding: '16px 20px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)' }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#ef4444' }}>
+            Based on real events — Oct 2025
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
+            An NYPD detective, 40, died in her hotel room in Cali, Colombia — found unresponsive at 6:30 a.m., one week after a butt lift and liposuction.
+            No platform was watching her recovery.{' '}
+            <span style={{ color: '#fff', fontWeight: 600 }}>Morales would have been — every hour, every checkpoint, every flag.</span>
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            Source: New York Post, Oct. 26, 2025
+          </p>
+        </div>
+      </motion.div>
 
       <style>{`
         @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.15)} 28%{transform:scale(1)} 42%{transform:scale(1.1)} }
