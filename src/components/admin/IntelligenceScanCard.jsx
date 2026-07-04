@@ -54,7 +54,8 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
       setResult({ internet: doctor.result, fraud: doctor.fraud_result });
     }, doctor.delay);
     return () => clearTimeout(t);
-  }, [runKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runKey, scanSteps.length, doctor.delay, doctor.result, doctor.fraud_result]);
 
   const cfg = result ? RISK_CONFIG[result.internet.risk_level] : null;
   const fd  = result?.fraud;
@@ -172,7 +173,7 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
 
             {/* Social presence */}
             <div className="grid grid-cols-5 gap-1.5">
-              {result.internet.signals.social_checks.map(s => (
+              {result.internet?.signals?.social_checks?.map(s => (
                 <div key={s.platform} className="p-2 rounded-lg text-center"
                   style={{ background: s.status === 'active' ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.03)', border: s.status === 'active' ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.06)' }}>
                   <p className="text-[9px] font-semibold" style={{ color: '#94a3b8' }}>{s.platform}</p>
@@ -317,7 +318,7 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
 
             {/* Liveness */}
             {(() => {
-              const lc = livenessConfig(fd.signals.identity.liveness_status);
+              const lc = livenessConfig(fd?.signals?.identity?.liveness_status);
               return (
                 <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: lc.bg, border: `1px solid ${lc.border}` }}>
                   <ScanFace className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: lc.color }} />

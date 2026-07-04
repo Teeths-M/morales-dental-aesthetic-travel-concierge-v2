@@ -13,6 +13,7 @@ import {
   TRAVEL_AGENCY_PORTAL_ROLES,
   TAXI_SERVICE_PORTAL_ROLES,
   COMPANION_PORTAL_ROLES,
+  SECURITY_AGENCY_PORTAL_ROLES,
 } from '@/lib/roles';
 
 const DoctorDashboard        = lazy(() => import('@/pages/DoctorDashboard'));
@@ -73,8 +74,9 @@ export const partnerRoutes = (
         <Route path="/companion-dashboard"         element={<ErrorBoundary><CompanionDashboard /></ErrorBoundary>} />
       </Route>
 
-      {/* Security agency — no strict role guard (matches original) */}
-      <Route path="/security-agency-dashboard"     element={<ErrorBoundary><SecurityAgencyDashboard /></ErrorBoundary>} />
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={SECURITY_AGENCY_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/security-agency-dashboard"   element={<ErrorBoundary><SecurityAgencyDashboard /></ErrorBoundary>} />
+      </Route>
 
       <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={PARTNER_REVIEW_ROLES} /></ErrorBoundary>}>
         <Route path="/partner-portal"              element={<ErrorBoundary><PartnerPortal /></ErrorBoundary>} />

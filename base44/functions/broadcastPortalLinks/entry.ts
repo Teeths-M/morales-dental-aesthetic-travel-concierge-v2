@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
               await base44.asServiceRole.integrations.Core.SendEmail({ to: doctor.email, subject: '🔗 Your Doctor Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'email' });
             }
-          } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'email', error: e.message }); }
+          } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'email', error: 'send_failed' }); }
         }
 
         if (doctor.phone && !dry_run && twilioReady) {
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
             const rJson = await r.json();
             if (r.ok) results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'sms' });
             else results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'sms', error: rJson.message });
-          } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'sms', error: e.message }); }
+          } catch (e) { results.failed.push({ name: doctor.full_name, type: 'doctor', channel: 'sms', error: 'send_failed' }); }
         } else if (doctor.phone && dry_run) {
           results.sent.push({ name: doctor.full_name, type: 'doctor', channel: 'sms (dry_run)', preview: smsMsg });
         }
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
               await base44.asServiceRole.integrations.Core.SendEmail({ to: agency.email, subject: '🔗 Your Travel Agency Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email' });
             }
-          } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email', error: e.message }); }
+          } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'email', error: 'send_failed' }); }
         }
 
         const phone = agency.whatsapp_number || agency.phone;
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
             const rJson = await r.json();
             if (r.ok) results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'sms' });
             else results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'sms', error: rJson.message });
-          } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'sms', error: e.message }); }
+          } catch (e) { results.failed.push({ name: agency.agency_name, type: 'travel_agency', channel: 'sms', error: 'send_failed' }); }
         } else if (phone && dry_run) {
           results.sent.push({ name: agency.agency_name, type: 'travel_agency', channel: 'sms (dry_run)', preview: smsMsg });
         }
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
               await base44.asServiceRole.integrations.Core.SendEmail({ to: driver.email, subject: '🔗 Your Chauffeur Portal Link - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name, type: 'taxi_service', channel: 'email' });
             }
-          } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'email', error: e.message }); }
+          } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'email', error: 'send_failed' }); }
         }
 
         if (driver.phone && !dry_run && twilioReady) {
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
             const rJson = await r.json();
             if (r.ok) results.sent.push({ name, type: 'taxi_service', channel: 'sms' });
             else results.failed.push({ name, type: 'taxi_service', channel: 'sms', error: rJson.message });
-          } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'sms', error: e.message }); }
+          } catch (e) { results.failed.push({ name, type: 'taxi_service', channel: 'sms', error: 'send_failed' }); }
         } else if (driver.phone && dry_run) {
           results.sent.push({ name, type: 'taxi_service', channel: 'sms (dry_run)', preview: smsMsg });
         }
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
               await base44.asServiceRole.integrations.Core.SendEmail({ to: caseRecord.client_email, subject: '💳 Your Treatment Proposal & Payment Portal - Morales D&A', body: emailBody, from_name: 'Morales Medical Travel Safety' });
               results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'email' });
             }
-          } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'email', error: e.message }); }
+          } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'email', error: 'send_failed' }); }
         }
 
         if (caseRecord.client_phone && !dry_run && twilioReady) {
@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
             const rJson = await r.json();
             if (r.ok) results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'sms' });
             else results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'sms', error: rJson.message });
-          } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'sms', error: e.message }); }
+          } catch (e) { results.failed.push({ name: caseRecord.client_name, type: 'patient', channel: 'sms', error: 'send_failed' }); }
         } else if (caseRecord.client_phone && dry_run) {
           results.sent.push({ name: caseRecord.client_name, type: 'patient', channel: 'sms (dry_run)', preview: smsMsg });
         }

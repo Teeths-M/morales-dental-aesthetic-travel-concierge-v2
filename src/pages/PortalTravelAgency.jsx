@@ -117,6 +117,7 @@ export default function PortalTravelAgency() {
 
   const handleSubmit = async () => {
     if (!flightCost || !hotelCost) { setError('Please enter both flight and hotel costs.'); return; }
+    if (isNaN(parseFloat(flightCost) || 0) || isNaN(parseFloat(hotelCost) || 0)) { setError('Flight and hotel costs must be valid numbers.'); return; }
     setError(null);
     setSubmitting(true);
     try {
@@ -126,8 +127,8 @@ export default function PortalTravelAgency() {
       if (isRevision) {
         // Update existing WorkflowEvent record
         await base44.asServiceRole.entities.WorkflowEvent.update(workflowId, {
-          travel_quote_flight_cost: parseFloat(flightCost),
-          travel_quote_hotel_cost: parseFloat(hotelCost),
+          travel_quote_flight_cost: parseFloat(flightCost) || 0,
+          travel_quote_hotel_cost: parseFloat(hotelCost) || 0,
           flight_itinerary_summary: flightItinerary,
           hotel_selection: hotelSelection,
           travel_quote_revised_at: new Date().toISOString(),
@@ -138,15 +139,15 @@ export default function PortalTravelAgency() {
           consultation_id: tokenData.consultation_id,
           patient_name: consultation?.patient_name,
           revision_count: newRevisionCount,
-          flight_cost_usd: parseFloat(flightCost),
-          hotel_cost_usd: parseFloat(hotelCost),
+          flight_cost_usd: parseFloat(flightCost) || 0,
+          hotel_cost_usd: parseFloat(hotelCost) || 0,
         });
         setRevisionCount(newRevisionCount);
       } else {
         const result = await base44.functions.invoke('sendTravelQuoteEmail', {
           consultation_id: tokenData.consultation_id,
-          flight_cost_usd: parseFloat(flightCost),
-          hotel_cost_usd: parseFloat(hotelCost),
+          flight_cost_usd: parseFloat(flightCost) || 0,
+          hotel_cost_usd: parseFloat(hotelCost) || 0,
           flight_itinerary_summary: flightItinerary,
           hotel_selection: hotelSelection,
           taxi_service_id: taxiServiceId,
@@ -156,8 +157,8 @@ export default function PortalTravelAgency() {
       }
 
       setLastSubmitted({
-        flight_cost_usd: parseFloat(flightCost),
-        hotel_cost_usd: parseFloat(hotelCost),
+        flight_cost_usd: parseFloat(flightCost) || 0,
+        hotel_cost_usd: parseFloat(hotelCost) || 0,
         flight_itinerary_summary: flightItinerary,
         hotel_selection: hotelSelection,
       });
@@ -193,7 +194,7 @@ export default function PortalTravelAgency() {
   };
 
   const risk = RISK_COLORS[consultation?.risk_level] || RISK_COLORS.low;
-  const packageTotal = (parseFloat(flightCost) || 0) + (parseFloat(hotelCost) || 0);
+  const packageTotal = (parseFloat(flightCost) || 0 || 0) + (parseFloat(hotelCost) || 0 || 0);
 
   // Calculate travel dates
   const calculateTravelDates = () => {

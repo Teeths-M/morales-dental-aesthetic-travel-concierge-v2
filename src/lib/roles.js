@@ -56,6 +56,9 @@ export const TAXI_SERVICE_PORTAL_ROLES = [ROLES.TAXI_SERVICE, ...ADMIN_ROLES];
 /** Roles that can access the companion portal */
 export const COMPANION_PORTAL_ROLES = [ROLES.COMPANION, ...ADMIN_ROLES];
 
+/** Roles that can access the security agency portal */
+export const SECURITY_AGENCY_PORTAL_ROLES = [ROLES.SECURITY_AGENCY, ...ADMIN_ROLES];
+
 /** Admin-only */
 export const ADMIN_PORTAL_ROLES = ADMIN_ROLES;
 

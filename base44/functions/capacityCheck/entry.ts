@@ -1,6 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
+  try {
   const base44 = createClientFromRequest(req);
 
   const body = await req.json().catch(() => ({}));
@@ -298,4 +299,9 @@ Don't miss this opportunity — slots fill fast!
   }
 
   return Response.json({ error: 'Unknown action' }, { status: 400 });
+
+  } catch (err) {
+    console.error('[capacityCheck]', err);
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
+  }
 });

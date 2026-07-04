@@ -3,6 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user || !['admin', 'platform_admin'].includes(user.role)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Fetch all pending failures older than 10 minutes (give manual retry time first)
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -37,12 +41,13 @@ Deno.serve(async (req) => {
         });
         results.push({ id: failure.id, status: 'retried' });
       } catch (err) {
+        console.error('[retryFailedDispatches] retry failed:', failure.id, err?.message);
         await base44.asServiceRole.entities.DispatchFailureLog.update(failure.id, {
           status: 'retry_failed',
-          retry_error: err.message,
+          retry_error: err?.message,
           retried_at: new Date().toISOString(),
         });
-        results.push({ id: failure.id, status: 'retry_failed', error: err.message });
+        results.push({ id: failure.id, status: 'retry_failed', error: 'retry_failed' });
       }
     }
 

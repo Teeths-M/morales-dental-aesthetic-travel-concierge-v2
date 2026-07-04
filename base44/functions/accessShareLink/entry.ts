@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const { share_token, pin_session_token } = await req.json();
+    const { share_token, pin_session_token } = await req.json().catch(() => ({}));
     if (!share_token) {
       return Response.json({ error: 'share_token required' }, { status: 400 });
     }
