@@ -299,6 +299,23 @@ export default function RecoveryTrackerDemo() {
         </div>
       </div>
 
+      {/* Real-world context — above the phone so it's always seen */}
+      <div className="max-w-sm mx-auto px-4 pt-6 pb-2">
+        <div style={{ borderRadius: 14, padding: '14px 18px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.35)' }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#ef4444' }}>
+            Based on real events — Cali, Colombia, Oct 2025
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
+            Det. Alicia Stone, 40 — NYPD detective, mother of three — was found unresponsive in her hotel room at 6:30 a.m., one week after a butt lift and liposuction in Colombia.
+            She died alone. No one was alerted when she stopped responding.{' '}
+            <span style={{ color: '#f8fafc', fontWeight: 600 }}>
+              Morales checks in every 2 hours during recovery. A missed response triggers an immediate alert to family and the on-call concierge — minutes, not morning.
+            </span>
+          </p>
+          <p className="text-xs mt-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Source: New York Post, Oct. 26, 2025</p>
+        </div>
+      </div>
+
       {/* Phone frame wrapper */}
       <div className="flex flex-col items-center py-8 px-4">
         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 12, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
@@ -347,30 +364,6 @@ export default function RecoveryTrackerDemo() {
           </p>
         </div>
       </div>
-
-      {/* Real-world context */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="max-w-sm mx-auto px-4 pb-12"
-      >
-        <div style={{ borderRadius: 16, padding: '16px 20px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)' }}>
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#ef4444' }}>
-            Based on real events — Cali, Colombia, Oct 2025
-          </p>
-          <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
-            Det. Alicia Stone, 40 — NYPD detective, mother of three — was found unresponsive in her hotel room at 6:30 a.m., one week after a butt lift and liposuction in Cali, Colombia.
-            She died alone. No one was alerted when she stopped responding. No system was watching.{' '}
-            <span style={{ color: '#fff', fontWeight: 600 }}>
-              Morales checks in every 2 hours during recovery. A missed response triggers an immediate alert to family and the on-call concierge — minutes, not morning.
-            </span>
-          </p>
-          <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
-            Source: New York Post, Oct. 26, 2025
-          </p>
-        </div>
-      </motion.div>
 
       <style>{`
         @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.15)} 28%{transform:scale(1)} 42%{transform:scale(1.1)} }
