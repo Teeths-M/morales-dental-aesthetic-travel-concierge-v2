@@ -17,11 +17,13 @@ const TAGS: Record<string, [string, string][]> = {
 };
 
 function buildQuery(lat: number, lng: number, radiusM: number, tags: [string, string][]): string {
+  // Longer Overpass timeout for large search areas
+  const overpassTimeout = radiusM > 50000 ? 45 : radiusM > 20000 ? 30 : 20;
   const pairs = tags.flatMap(([k, v]) => [
     `node(around:${radiusM},${lat},${lng})[${k}=${v}];`,
     `way(around:${radiusM},${lat},${lng})[${k}=${v}];`,
   ]).join('');
-  return `[out:json][timeout:20];(${pairs});out body center;`;
+  return `[out:json][timeout:${overpassTimeout}];(${pairs});out body center;`;
 }
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -47,10 +49,11 @@ Deno.serve(createHandler(async ({ body }) => {
   let lastErr = '';
   for (const mirror of MIRRORS) {
     try {
+      const fetchTimeout = (radius_km ?? 5) > 50 ? 50000 : 25000;
       const res = await fetch(mirror, {
         method: 'POST',
         body: query,
-        signal: AbortSignal.timeout(18000),
+        signal: AbortSignal.timeout(fetchTimeout),
       });
       if (!res.ok) { lastErr = `HTTP ${res.status}`; continue; }
 

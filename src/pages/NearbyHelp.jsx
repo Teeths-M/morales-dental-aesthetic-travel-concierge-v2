@@ -37,7 +37,8 @@ export default function NearbyHelp() {
   const [results, setResults]     = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchErr, setSearchErr] = useState(null);
-  const [radius, setRadius]       = useState(3);
+  const [radius, setRadius]       = useState(5);
+  const [scanLabel, setScanLabel] = useState('');
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -52,28 +53,49 @@ export default function NearbyHelp() {
     );
   }, []);
 
-  const search = useCallback(async (cat, r) => {
+  // Auto-expand ladder — keeps widening until results found or ceiling hit
+  const RADIUS_LADDER = [5, 25, 75, 150];
+
+  const search = useCallback(async (cat) => {
     if (!loc) return;
-    const km = r ?? radius;
     setActive(cat.id);
     setSearching(true);
     setSearchErr(null);
     setResults([]);
-    try {
-      const data = await edgeSearch(loc.lat, loc.lng, cat.id, km, cat.label);
-      setResults(data);
-      if (data.length > 0) {
-        // Persist POIs so ProximityWatcher can nudge the user as they walk past them
-        const tagged = data.map(r => ({ ...r, category: cat.label, emoji: cat.emoji }));
-        localStorage.setItem('m_nearby_pois', JSON.stringify(tagged));
+
+    for (const km of RADIUS_LADDER) {
+      setRadius(km);
+      setScanLabel(`Scanning ${km} km…`);
+      try {
+        const data = await edgeSearch(loc.lat, loc.lng, cat.id, km, cat.label);
+        if (data.length > 0) {
+          setResults(data);
+          // Persist POIs for ProximityWatcher nudges
+          localStorage.setItem('m_nearby_pois', JSON.stringify(
+            data.map(r => ({ ...r, category: cat.label, emoji: cat.emoji }))
+          ));
+          setSearching(false);
+          setScanLabel('');
+          return;
+        }
+        // Nothing at this radius — expand unless it's the last step
+        if (km < RADIUS_LADDER[RADIUS_LADDER.length - 1]) {
+          const next = RADIUS_LADDER[RADIUS_LADDER.indexOf(km) + 1];
+          setScanLabel(`Nothing within ${km} km — expanding to ${next} km…`);
+          await new Promise(r => setTimeout(r, 800)); // brief pause so user sees the message
+        }
+      } catch {
+        setSearchErr('Search failed. Check your connection and try again.');
+        setSearching(false);
+        setScanLabel('');
+        return;
       }
-      if (data.length === 0) setSearchErr(`No ${cat.label.toLowerCase()} found within ${km} km.`);
-    } catch {
-      setSearchErr('Search failed. Check your connection and try again.');
-    } finally {
-      setSearching(false);
     }
-  }, [loc, radius]);
+
+    setSearchErr(`No ${cat.label.toLowerCase()} found within ${RADIUS_LADDER[RADIUS_LADDER.length - 1]} km of your location.`);
+    setSearching(false);
+    setScanLabel('');
+  }, [loc]);
 
   const activeCat = CATEGORIES.find(c => c.id === active);
 
@@ -132,6 +154,7 @@ export default function NearbyHelp() {
               key={cat.id}
               onClick={() => search(cat)}
               disabled={!loc || searching}
+
               className="flex flex-col items-center gap-1.5 py-4 px-2 rounded-2xl transition-all duration-200 active:scale-95"
               style={{
                 background: active === cat.id ? cat.bg : 'rgba(255,255,255,0.03)',
@@ -156,20 +179,20 @@ export default function NearbyHelp() {
           <div className="flex flex-col items-center gap-3 py-12">
             <div className="w-8 h-8 rounded-full border-2 animate-spin"
               style={{ borderColor: 'rgba(0,229,255,0.2)', borderTopColor: '#00E5FF' }} />
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Scanning your area…</p>
+            <p className="text-sm text-center" style={{ color: 'rgba(255,255,255,0.5)' }}>{scanLabel}</p>
           </div>
         )}
 
         {searchErr && !searching && (
           <div className="text-center py-8">
             <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>{searchErr}</p>
-            {activeCat && radius < 10 && (
+            {activeCat && (
               <button
-                onClick={() => { setRadius(10); search(activeCat, 10); }}
+                onClick={() => search(activeCat)}
                 className="text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
                 style={{ background: 'rgba(0,229,255,0.1)', color: '#00E5FF', border: '1px solid rgba(0,229,255,0.2)' }}
               >
-                Expand to 10 km
+                Search again
               </button>
             )}
           </div>
