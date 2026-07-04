@@ -1,15 +1,86 @@
 // @ts-nocheck — pre-existing type gaps; build passes
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TripProgressStepper from '@/components/journey/TripProgressStepper';
 import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { MapContainer, TileLayer, Marker, Circle, Polyline, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, Shield, CheckCircle2, Clock, AlertTriangle,
-  MapPin, Navigation, Copy, ExternalLink, Globe, Radio, Wifi, WifiOff,
+  MapPin, Navigation, Copy, ExternalLink, Globe, Radio, Wifi, WifiOff, Compass,
 } from 'lucide-react';
+
+// ── Bearing + distance helpers ───────────────────────────────────────────────
+function computeBearing(φ1deg, λ1deg, φ2deg, λ2deg) {
+  const toRad = d => d * Math.PI / 180;
+  const φ1 = toRad(φ1deg), φ2 = toRad(φ2deg), Δλ = toRad(λ2deg - λ1deg);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+}
+
+function computeDistanceM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistance(m) {
+  if (m < 1000) return `${Math.round(m)} m`;
+  return `${(m / 1000).toFixed(1)} km`;
+}
+
+function bearingLabel(deg) {
+  const dirs = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+function CompassArrow({ bearing, size = 64 }) {
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      {/* Outer ring */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.04))',
+        border: '1.5px solid rgba(212,175,55,0.35)',
+      }} />
+      {/* Cardinal marks */}
+      {['N','E','S','W'].map((d, i) => {
+        const angle = i * 90;
+        const r = size / 2 - 6;
+        const x = size / 2 + r * Math.sin(angle * Math.PI / 180);
+        const y = size / 2 - r * Math.cos(angle * Math.PI / 180);
+        return (
+          <span key={d} style={{
+            position: 'absolute', fontSize: 7, fontWeight: 700, color: 'rgba(212,175,55,0.5)',
+            left: x, top: y, transform: 'translate(-50%,-50%)',
+          }}>{d}</span>
+        );
+      })}
+      {/* Rotating arrow */}
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transform: `rotate(${bearing}deg)`,
+        transition: 'transform 0.8s cubic-bezier(0.34,1.56,0.64,1)',
+      }}>
+        <svg width={size * 0.45} height={size * 0.45} viewBox="0 0 24 24" fill="none">
+          <path d="M12 2 L17 20 L12 16 L7 20 Z" fill="#22c55e" />
+          <path d="M12 22 L17 4 L12 8 L7 4 Z" fill="rgba(34,197,94,0.2)" />
+        </svg>
+      </div>
+      {/* Center dot */}
+      <div style={{
+        position: 'absolute', left: '50%', top: '50%',
+        transform: 'translate(-50%,-50%)',
+        width: 5, height: 5, borderRadius: '50%', background: '#22c55e',
+      }} />
+    </div>
+  );
+}
 
 // Fix default leaflet marker icons (webpack/vite strips them)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -110,6 +181,20 @@ export default function GuardianView() {
   const [copied, setCopied] = useState(false);
   const [lastPoll, setLastPoll] = useState(null);
   const pollRef = useRef(null);
+  const [guardianPos, setGuardianPos] = useState(null);
+  const [guardianGPSStatus, setGuardianGPSStatus] = useState('idle'); // idle|active|denied
+  const watchIdRef = useRef(null);
+
+  // Bearing + distance from guardian → patient (must be before early returns per hooks rules)
+  const directionToPatient = useMemo(() => {
+    if (!guardianPos || !data) return null;
+    const loc = data?.latest_location;
+    const gps = loc && loc.source === 'gps' && typeof loc.latitude === 'number' && typeof loc.longitude === 'number';
+    if (!gps) return null;
+    const bearing  = computeBearing(guardianPos.lat, guardianPos.lng, loc.latitude, loc.longitude);
+    const distance = computeDistanceM(guardianPos.lat, guardianPos.lng, loc.latitude, loc.longitude);
+    return { bearing, distance, label: bearingLabel(bearing) };
+  }, [guardianPos, data]);
 
   const fetchData = useCallback(async (isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -132,6 +217,23 @@ export default function GuardianView() {
     }
     if (isInitial) setLoading(false);
   }, [token]);
+
+  // Guardian's own GPS — optional, enables compass arrow
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setGuardianGPSStatus('active');
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      pos => {
+        setGuardianPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGuardianGPSStatus('active');
+      },
+      () => setGuardianGPSStatus('denied'),
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+    return () => {
+      if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
+    };
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -491,6 +593,65 @@ export default function GuardianView() {
                   Patient is currently in <span className="text-white">{currentCountry}</span>
                 </div>
               )}
+
+              {/* Direction compass — shows when guardian allows location */}
+              <AnimatePresence>
+                {directionToPatient ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                    className="rounded-2xl overflow-hidden"
+                    style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(212,175,55,0.04))', border: '1px solid rgba(34,197,94,0.2)' }}
+                  >
+                    <div className="px-4 py-3 flex items-center gap-4">
+                      <CompassArrow bearing={directionToPatient.bearing} size={64} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-sm">
+                          {session.patient_name} is <span style={{ color: '#22c55e' }}>{formatDistance(directionToPatient.distance)}</span> away
+                        </p>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                          Head <span className="text-white font-semibold">{directionToPatient.label}</span>
+                          <span className="text-slate-600"> · {Math.round(directionToPatient.bearing)}°</span>
+                        </p>
+                        <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                          Updates automatically every 12 seconds
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1.5 flex-shrink-0">
+                        <button
+                          onClick={() => openMap(mapsDirectionsUrl(loc.latitude, loc.longitude))}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
+                          style={{ background: '#4285F4', color: '#fff', border: 'none' }}
+                        >
+                          <Navigation className="w-3.5 h-3.5" /> Navigate
+                        </button>
+                        <button
+                          onClick={() => openMap(`https://waze.com/ul?ll=${loc.latitude},${loc.longitude}&navigate=yes`)}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
+                          style={{ background: '#33CCFF', color: '#000', border: 'none' }}
+                        >
+                          <Navigation className="w-3.5 h-3.5" /> Waze
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : guardianGPSStatus !== 'denied' && hasGPS ? (
+                  <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="rounded-xl px-4 py-3 flex items-center gap-3"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(42,63,74,0.6)' }}
+                  >
+                    <Compass className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(212,175,55,0.5)' }} />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                        Allow location to get directions
+                      </p>
+                      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                        Shows a compass arrow pointing to {session.patient_name} with live distance
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
 
               {/* Leaflet Map with breadcrumb trail */}
               <div className="rounded-xl overflow-hidden border border-slate-700/50" style={{ height: 260 }}>
