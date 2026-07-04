@@ -144,7 +144,7 @@ export default function LuxuryHero() {
                     lineHeight: 1.5,
                   }}
                 >
-                  ↳ {STORIES[storyIdx]}
+                  {STORIES[storyIdx]}
                 </motion.p>
               </AnimatePresence>
             </div>
@@ -235,59 +235,62 @@ export default function LuxuryHero() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8"
+              className="flex flex-col gap-3 mb-8"
             >
-              {/* Primary: gold pill */}
-              <Link to={content.cta.path}>
-                <motion.button
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="group relative w-full sm:w-auto h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
-                  style={{
-                    background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
-                    color:         '#060B16',
-                    boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  <span className="relative z-10 flex items-center gap-2.5">
-                    {content.cta.label}
-                    <span>→</span>
-                  </span>
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
-                    style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
-                  />
-                </motion.button>
-              </Link>
+              {/* Button row */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {/* Primary: gold pill */}
+                <Link to={content.cta.path}>
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group relative w-full sm:w-auto h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
+                    style={{
+                      background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
+                      color:         '#060B16',
+                      boxShadow:     `0 8px 36px ${BRAND.goldAlpha(0.35)}, 0 0 0 1px ${BRAND.goldAlpha(0.2)} inset`,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    <span className="relative z-10 flex items-center gap-2.5">
+                      {content.cta.label}
+                      <span>→</span>
+                    </span>
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
+                      style={{ background: `linear-gradient(135deg, ${BRAND.goldLight} 0%, ${GOLD} 100%)` }}
+                    />
+                  </motion.button>
+                </Link>
 
-              {/* No-account signal */}
+                {/* Secondary: glass demo pill — visually subordinate */}
+                <Link to="/demo">
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto h-11 px-7 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                    style={{
+                      background:    'rgba(255,255,255,0.05)',
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                      border:        `1px solid rgba(212,175,55,0.30)`,
+                      color:         `${GOLD}cc`,
+                      letterSpacing: '0.02em',
+                      boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Play style={{ width: 12, height: 12, fill: `${GOLD}cc`, flexShrink: 0 }} />
+                    Live Demo
+                  </motion.button>
+                </Link>
+              </div>
+
+              {/* No-account signal — directly below buttons, not between them */}
               {isMedical && (
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', fontWeight: 500, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontWeight: 500, letterSpacing: '0.04em' }}>
                   No account needed to start
                 </span>
               )}
-
-              {/* Secondary: glass demo pill */}
-              <Link to="/demo">
-                <motion.button
-                  whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full sm:w-auto h-14 px-8 rounded-full text-[14px] font-semibold flex items-center justify-center gap-2.5 transition-all duration-200"
-                  style={{
-                    background:    'rgba(255,255,255,0.05)',
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
-                    border:        `1px solid rgba(212,175,55,0.38)`,
-                    color:         GOLD,
-                    letterSpacing: '0.02em',
-                    boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  <Play style={{ width: 14, height: 14, fill: GOLD, flexShrink: 0 }} />
-                  Live Demo
-                </motion.button>
-              </Link>
             </motion.div>
 
 

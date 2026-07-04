@@ -183,7 +183,7 @@ export default function Header() {
               className="flex items-center gap-1.5 transition-colors duration-200"
               style={{ color: '#8A9099', fontSize: '14px' }}
             >
-              Portal Hub
+              Portals
               <svg
                 className={`w-3.5 h-3.5 transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`}
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -244,11 +244,9 @@ export default function Header() {
           {user ? (
             /* Avatar dropdown */
             <>
-            {firstName && (
-              <span className="hidden xl:block text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
-                {timeGreeting}, {firstName}
+            <span className="hidden xl:block text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
+                {timeGreeting}
               </span>
-            )}
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => { setIsUserMenuOpen(p => !p); closeAll(); setIsUserMenuOpen(p => !p); }}

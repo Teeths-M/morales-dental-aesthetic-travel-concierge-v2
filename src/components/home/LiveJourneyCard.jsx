@@ -102,7 +102,7 @@ export default function LiveJourneyCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ width: 28, height: 1, background: `${GOLD}50` }} />
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
-              Chapter {s.chapter} of {SCENES.length}
+              Stage {s.chapter} of {SCENES.length}
             </span>
           </div>
 

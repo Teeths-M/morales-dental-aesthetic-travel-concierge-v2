@@ -75,7 +75,7 @@ export default function AppLayout() {
           <>
             {/* WhatsApp is now inside FloatingSOSButton stack (bottom-right) */}
             <HeartNotificationCenter user={user} />
-            <GuardianTicker />
+            {user && <GuardianTicker />}
             {user && <FloatingCheckInAlert user={user} />}
             {user && <GlobalEventBroadcaster user={user} />}
 

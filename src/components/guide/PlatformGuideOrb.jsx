@@ -121,7 +121,7 @@ export default function PlatformGuideOrb() {
   const quickQuestions = QUICK[role] || QUICK.visitor;
 
   const [tipIdx,     setTipIdx]     = useState(0);
-  const [showBubble, setShowBubble] = useState(true);
+  const [showBubble, setShowBubble] = useState(false);
   const [open,       setOpen]       = useState(false);
   const [messages,   setMessages]   = useState([]);
   const [input,      setInput]      = useState('');
@@ -129,6 +129,12 @@ export default function PlatformGuideOrb() {
   const [dismissed,  setDismissed]  = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const bottomRef = useRef(null);
+
+  // Delay bubble appearance — give visitor time to read the hero first
+  useEffect(() => {
+    const t = setTimeout(() => setShowBubble(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Online/offline detection
   useEffect(() => {
