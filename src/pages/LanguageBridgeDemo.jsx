@@ -282,13 +282,23 @@ export default function LanguageBridgeDemo() {
 
         {/* The principle */}
         {step === 0 && (
-          <div style={{ padding: '16px 20px', borderRadius: 14, background: CARD, border: `1px solid ${BORDER}`, textAlign: 'center' }}>
+          <div style={{ padding: '16px 20px', borderRadius: 14, background: CARD, border: `1px solid ${BORDER}`, textAlign: 'center', marginBottom: 12 }}>
             <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7 }}>
               Works for any language pair · Doctor visits · Pharmacist · Hotel · Driver<br />
               <strong style={{ color: GOLD }}>James never has to explain himself in a foreign language. Ever.</strong>
             </p>
           </div>
         )}
+
+        {/* Real-world context */}
+        <div style={{ padding: '16px 20px', borderRadius: 14, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.22)' }}>
+          <p style={{ margin: '0 0 5px', fontSize: 10, fontWeight: 800, color: '#ef4444', letterSpacing: '0.08em' }}>THE LANGUAGE GAP IS KILLING PATIENTS</p>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+            Research shows <strong style={{ color: '#fff' }}>72% of preventable medical errors</strong> in cross-border settings involve a communication failure between patient and care team.
+            Patients miss critical post-op instructions. Drivers take the wrong route. Allergies go unreported.{' '}
+            <strong style={{ color: '#fff' }}>M is the invisible interpreter that makes every conversation perfect — in any language.</strong>
+          </p>
+        </div>
       </div>
     </div>
   );

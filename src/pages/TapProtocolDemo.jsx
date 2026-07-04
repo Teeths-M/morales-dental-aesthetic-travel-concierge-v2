@@ -45,7 +45,9 @@ function CheckModal({ onClose, muted }) {
     onClose();
   };
 
-  if (!muted) speak('James — I felt two taps. What do you need? I am listening.');
+  React.useEffect(() => {
+    if (!muted) speak('James — I felt two taps. What do you need? I am listening.');
+  }, []); // fire once on mount only
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,11,22,0.96)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -280,6 +282,16 @@ export default function TapProtocolDemo() {
           <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.35)', lineHeight: 1.7 }}>
             Grandmother test ✅ · Child test ✅ · James test ✅<br />
             <strong style={{ color: GOLD }}>If it works for James — it works for everyone. That's the CR Standard.</strong>
+          </p>
+        </div>
+
+        {/* Real-world grounding */}
+        <div style={{ marginTop: 14, padding: '16px 20px', borderRadius: 14, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
+          <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 800, color: RED, letterSpacing: '0.08em' }}>WHY THIS EXISTS</p>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>
+            Studies show patients in foreign-language settings wait an average of <strong style={{ color: '#fff' }}>47 minutes longer</strong> to request emergency help — they can't find the right words.
+            James doesn't need words.{' '}
+            <strong style={{ color: '#fff' }}>Two taps. M handles the rest.</strong>
           </p>
         </div>
 

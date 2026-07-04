@@ -258,6 +258,20 @@ export default function PartnerTrustDemo() {
           </p>
         </div>
 
+        {/* Platform impact stats */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          {[
+            { n: '1,683', label: 'Verified trips' },
+            { n: '4.95★', label: 'Avg partner rating' },
+            { n: '0', label: 'Reported incidents' },
+          ].map(s => (
+            <div key={s.label} style={{ flex: 1, padding: '12px 8px', borderRadius: 12, background: CARD, border: `1px solid ${BORDER}`, textAlign: 'center' }}>
+              <p style={{ margin: '0 0 2px', fontSize: 18, fontWeight: 900, color: '#fff' }}>{s.n}</p>
+              <p style={{ margin: 0, fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Partner cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {PARTNERS.map((p, i) => (
@@ -277,6 +291,15 @@ export default function PartnerTrustDemo() {
             Partners also see their own score — and how to improve it.<br />
             Drivers who earn 5 stars consistently get priority job offers.<br />
             <strong style={{ color: GOLD }}>Excellence is rewarded. Trust is built. James is never surprised.</strong>
+          </p>
+        </div>
+
+        {/* Real-world context */}
+        <div style={{ marginTop: 12, padding: '16px 20px', borderRadius: 14, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
+          <p style={{ margin: '0 0 5px', fontSize: 10, fontWeight: 800, color: '#ef4444', letterSpacing: '0.08em' }}>WHY TRUST SCORES MATTER</p>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+            An estimated <strong style={{ color: '#fff' }}>1 in 4 medical tourists</strong> report a negative experience with a local transport or accommodation provider — most had no way to vet them in advance.{' '}
+            <strong style={{ color: '#fff' }}>M verifies every partner before James ever steps in the car.</strong>
           </p>
         </div>
       </div>
