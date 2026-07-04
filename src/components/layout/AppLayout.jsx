@@ -79,8 +79,8 @@ export default function AppLayout() {
             {user && <FloatingCheckInAlert user={user} />}
             {user && <GlobalEventBroadcaster user={user} />}
 
-            {/* Premium floating SOS — global, always on top */}
-            <FloatingSOSButton />
+            {/* Premium floating SOS — authenticated users only */}
+            {user && <FloatingSOSButton />}
           </>
         )}
 
