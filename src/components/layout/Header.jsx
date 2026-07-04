@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import ModeToggle from '@/components/home/ModeToggle';
+import { useTranslation } from '@/i18n';
 
 export default function Header() {
   const [isPortalOpen,   setIsPortalOpen]   = useState(false);
@@ -14,6 +15,7 @@ export default function Header() {
   const [currentLang,    setCurrentLang]    = useState('EN');
   const [scrolled,       setScrolled]       = useState(false);
 
+  const { t }       = useTranslation();
   const location    = useLocation();
   const { user }    = useAuth();
   const isAdmin     = user?.role === 'admin' || user?.role === 'platform_admin';
@@ -31,7 +33,7 @@ export default function Header() {
 
   const firstName = user?.full_name?.split(' ')[0] || null;
   const hour = new Date().getHours();
-  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const timeGreeting = hour < 12 ? t('dashboard.good_morning') : hour < 17 ? t('dashboard.good_afternoon') : t('dashboard.good_evening');
 
   useEffect(() => { setIsMobileOpen(false); }, [location.pathname]);
 
@@ -56,10 +58,10 @@ export default function Header() {
   }, [isUserMenuOpen]);
 
   const navLinks = [
-    { name: 'Find Doctors',  path: '/providers' },
-    { name: 'Procedures',    path: '/procedures' },
-    { name: 'How It Works',  path: '/how-it-works' },
-    { name: 'Live Demo',     path: '/demo',          gold: true },
+    { name: t('nav.find_doctors'),  path: '/providers' },
+    { name: t('nav.procedures'),    path: '/procedures' },
+    { name: t('nav.how_it_works'),  path: '/how-it-works' },
+    { name: t('nav.live_demo'),     path: '/demo',          gold: true },
   ];
 
   const setLang = lang => {
@@ -184,7 +186,7 @@ export default function Header() {
               className="flex items-center gap-1.5 transition-colors duration-200"
               style={{ color: '#8A9099', fontSize: '14px' }}
             >
-              Portals
+              {t('nav.portals')}
               <svg
                 className={`w-3.5 h-3.5 transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`}
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -310,7 +312,7 @@ export default function Header() {
                 onMouseEnter={e => e.target.style.color = 'rgba(255,255,255,0.85)'}
                 onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
               >
-                Sign In
+                {t('nav.sign_in')}
               </Link>
               <Link
                 to="/booking"
@@ -320,7 +322,7 @@ export default function Header() {
                   color: '#060B16',
                 }}
               >
-                Book Now
+                {t('nav.book_now')}
               </Link>
             </div>
           )}
@@ -428,14 +430,14 @@ export default function Header() {
                   className="w-full text-center py-3.5 rounded-full text-sm font-bold"
                   style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
                 >
-                  Book Now
+                  {t('nav.book_now')}
                 </Link>
                 <Link
                   to="/dashboard" onClick={() => setIsMobileOpen(false)}
                   className="w-full text-center py-3 text-sm font-medium"
                   style={{ color: 'rgba(255,255,255,0.45)' }}
                 >
-                  Sign In
+                  {t('nav.sign_in')}
                 </Link>
               </>
             )}

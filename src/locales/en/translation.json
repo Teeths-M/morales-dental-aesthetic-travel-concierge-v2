@@ -9,7 +9,14 @@
     "emergency": "Emergency",
     "settings": "Settings",
     "my_trip": "My Trip Overview",
-    "back_to_home": "Back to Home"
+    "back_to_home": "Back to Home",
+    "find_doctors": "Find Doctors",
+    "procedures": "Procedures",
+    "how_it_works": "How It Works",
+    "live_demo": "Live Demo",
+    "portals": "Portals",
+    "book_now": "Book Now",
+    "sign_in": "Sign In"
   },
   "sos": {
     "label": "SOS",

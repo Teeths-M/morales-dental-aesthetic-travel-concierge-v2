@@ -9,7 +9,14 @@
     "emergency": "Emergencia",
     "settings": "Configuración",
     "my_trip": "Resumen de Mi Viaje",
-    "back_to_home": "Volver al Inicio"
+    "back_to_home": "Volver al Inicio",
+    "find_doctors": "Buscar Médicos",
+    "procedures": "Procedimientos",
+    "how_it_works": "Cómo Funciona",
+    "live_demo": "Demo en Vivo",
+    "portals": "Portales",
+    "book_now": "Reservar Ahora",
+    "sign_in": "Iniciar Sesión"
   },
   "sos": {
     "label": "SOS",

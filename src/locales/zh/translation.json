@@ -1,5 +1,5 @@
 {
-  "nav": { "dashboard": "仪表板", "medical": "医疗", "travel": "旅行", "safety": "安全", "documents": "文件", "messages": "消息", "emergency": "紧急情况", "settings": "设置", "my_trip": "我的旅行概览", "back_to_home": "返回首页" },
+  "nav": { "dashboard": "仪表板", "medical": "医疗", "travel": "旅行", "safety": "安全", "documents": "文件", "messages": "消息", "emergency": "紧急情况", "settings": "设置", "my_trip": "我的旅行概览", "back_to_home": "返回首页", "find_doctors": "寻找医生", "procedures": "手术项目", "how_it_works": "如何运作", "live_demo": "现场演示", "portals": "门户", "book_now": "立即预订", "sign_in": "登录" },
   "sos": { "label": "SOS", "whatsapp": "WhatsApp", "assistance": "协助", "ai_assistant": "AI 助手", "fastest_response": "最快响应 · 全球", "always_on": "Safe-T4life · 始终在线", "channels": "SOS 频道", "ble_detected": "已检测到蓝牙设备" },
   "dashboard": { "welcome": "欢迎回来", "good_morning": "早上好", "good_afternoon": "下午好", "good_evening": "晚上好", "your_journey": "您的旅程", "days_until": "距手术天数", "case_status": "案例状态", "view_all": "查看所有专家", "quick_actions": "快速操作", "notifications": "通知", "safe_t_status": "SAFE-T 状态", "coordinator": "您的协调员", "message": "消息", "full_assessment": "全面评估" },
   "medguard": { "title": "MedGuard™", "analyzing": "正在分析您的安全档案…", "all_clear": "一切正常", "monitoring": "监测中", "alert": "警报", "critical": "严重", "risk_score": "风险评分", "breakdown": "风险因素详情", "last_updated": "最后更新", "real_time": "MedGuard 正在进行实时分析" },
