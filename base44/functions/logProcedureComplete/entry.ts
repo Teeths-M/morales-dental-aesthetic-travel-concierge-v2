@@ -148,6 +148,17 @@ Deno.serve(async (req) => {
       ).catch(() => {});
     }
 
+    // Auto-send post-op instructions and medication schedule (non-fatal)
+    await Promise.allSettled([
+      base44.functions.invoke('sendPostOpInstructions', {
+        case_id: caseRecord.id,
+        outcome_notes: outcome_notes || null,
+      }),
+      base44.functions.invoke('schedulePostOpMedReminders', {
+        case_id: caseRecord.id,
+      }),
+    ]);
+
     return Response.json({
       success: true,
       new_status: 'RECOVERY_PHASE_7_DAY',

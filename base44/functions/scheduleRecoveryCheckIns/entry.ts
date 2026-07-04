@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     const body = await req.json().catch(() => ({}));
-    const { case_id, procedure_date, recovery_days = 7 } = body;
+    const { case_id, procedure_date, recovery_days = 14 } = body;
 
     if (!case_id) {
       return Response.json({ error: 'case_id is required' }, { status: 400 });
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     // Day 1 post-procedure: 24h check-in (pain/swelling)
     // Day 3 post-procedure: 72h check-in (healing progress)
     // Day 7 post-procedure: 1-week check-in (final recovery)
-    const checkInSchedule = [1, 3, 7].filter(d => d <= recovery_days);
+    const checkInSchedule = [1, 3, 7, 10, 14].filter(d => d <= recovery_days);
 
     for (const dayOffset of checkInSchedule) {
       const scheduledTime = new Date(procedureTime.getTime() + dayOffset * 24 * 60 * 60 * 1000);
