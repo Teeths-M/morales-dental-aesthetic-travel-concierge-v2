@@ -47,7 +47,7 @@ const testimonials = [
     quote: "The NHS waiting list was 2 years. Morales got me treated in 3 weeks. The entire package — flights, hotel, transfers, and the procedure — cost less than just the procedure would in London. The aftercare follow-ups continued when I got home.",
     result: 'Full treatment in 3 weeks',
     photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face',
-    location: 'Caracas, Venezuela',
+    location: 'Istanbul, Turkey',
   },
   {
     name: 'Amara Diallo',

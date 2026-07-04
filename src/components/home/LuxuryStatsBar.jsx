@@ -10,9 +10,9 @@ const GOLD = '#D4AF37';
 
 const STATS = [
   { value: 2847,  suffix: '',   prefix: '',  label: 'Journeys Completed',       sub: 'patients safely home',          color: GOLD },
-  { value: 14.2,  suffix: 'M', prefix: '$',  label: 'Saved vs US Pricing',      sub: 'kept in our patients\' pockets', color: '#22c55e' },
-  { value: 9621,  suffix: '',   prefix: '',  label: 'Checkpoints Confirmed',     sub: 'every handshake tracked',       color: '#60a5fa' },
-  { value: 0,     suffix: '',   prefix: '',  label: 'Patients Unreachable',      sub: 'our safety record',             color: '#a855f7', isZero: true },
+  { value: 14.2,  suffix: 'M', prefix: '$',  label: 'Saved vs US Pricing',      sub: 'kept in our patients\' pockets', color: GOLD },
+  { value: 9621,  suffix: '',   prefix: '',  label: 'Checkpoints Confirmed',     sub: 'every handshake tracked',       color: GOLD },
+  { value: 0,     suffix: '',   prefix: '',  label: 'Patients Unreachable',      sub: 'our safety record',             color: GOLD, isZero: true },
 ];
 
 function useCountUp(target, duration = 2000, started = false) {
@@ -80,15 +80,6 @@ function StatCard({ stat, index, started }) {
         {stat.sub}
       </p>
 
-      {/* Zero badge */}
-      {stat.isZero && (
-        <div
-          className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
-          style={{ background: `${stat.color}18`, color: stat.color, border: `1px solid ${stat.color}40`, letterSpacing: '0.06em' }}
-        >
-          OUR RECORD
-        </div>
-      )}
     </motion.div>
   );
 }

@@ -14,7 +14,7 @@ const MOMENTS = [
     tagColor: '#a855f7',
     moment:  'Maria\'s daughter tracked checkpoint 5 from her couch in Houston — and cried when "Clinic Arrived ✓" appeared on her phone.',
     who:     'Maria C.',
-    where:   'Caracas, Venezuela 🇻🇪',
+    where:   'Margarita Island, Venezuela 🇻🇪',
     procedure: 'Dental Veneers',
   },
   {
@@ -64,11 +64,11 @@ export default function RealMoments() {
           >
             Not reviews. Scenes.<br />
             <span style={{ color: GOLD, fontStyle: 'italic', fontWeight: 400, fontFamily: 'Georgia, serif' }}>
-              This is what Morales actually looks like.
+              This is what Morales looks like.
             </span>
           </h2>
           <p className="text-white/45 max-w-xl mx-auto" style={{ fontSize: 15, lineHeight: 1.7 }}>
-            Every number on this site is real. But sometimes one specific moment says more than any statistic.
+            Sometimes one specific moment says more than any statistic.
           </p>
         </motion.div>
 

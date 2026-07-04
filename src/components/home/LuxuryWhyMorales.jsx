@@ -17,8 +17,8 @@ const features = [
   },
   {
     icon: Eye,
-    title: 'Someone Is Always Watching',
-    desc: 'Every stage of your journey is monitored by a dedicated coordinator. A missed check-in triggers an immediate call — so you never have to wonder if someone is paying attention.',
+    title: 'We Never Look Away',
+    desc: 'Every stage of your journey is monitored by a dedicated coordinator. A missed check-in triggers an immediate call — so you never travel alone, even when you\'re thousands of miles from home.',
   },
   {
     icon: WifiOff,
@@ -48,10 +48,10 @@ export default function LuxuryWhyMorales() {
             </p>
             <h2 className="font-display text-4xl lg:text-5xl text-white leading-[1.05] mb-6" style={{ letterSpacing: '-0.02em' }}>
               More Than Travel.<br />
-              <span style={{ color: GOLD, fontStyle: 'italic' }}>Protection That Never Sleeps.</span>
+              <span style={{ color: GOLD, fontStyle: 'italic' }}>Protection Without Gaps.</span>
             </h2>
             <p className="text-white/60 text-[16px] leading-[1.8] font-light mt-5">
-              No other medical travel platform dispatches security when you miss a check-in, tracks you offline, or gives your family a live window into your journey. Morales does all three.
+              Miss a check-in and we escalate automatically — SMS, voice call, security dispatch if needed. Your family tracks every step in real time. Offline, the protection continues.
             </p>
             <div className="w-10 h-[2px] mt-7" style={{ background: GOLD }} />
           </motion.div>

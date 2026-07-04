@@ -14,7 +14,7 @@ const HERO_IMAGE = 'https://media.base44.com/images/public/6a01c1305c540b75f24dd
 /* ── Content by mode ──────────────────────────────────────────────────────── */
 const CONTENT = {
   medical: {
-    headline:    'NEVER\nALONE.',
+    headline:    'NEVER\nALONE',
     subheadline: 'Travel abroad for world-class medical care — and come home safely.',
     body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. If something goes wrong, Morales activates your emergency response plan and coordinates the next steps.',
     cta:         { label: 'Start Your Journey', path: '/booking' },
@@ -30,7 +30,7 @@ const CONTENT = {
 /* ── Trust badges (ISO, surgeons, concierge) ──────────────────────────────── */
 const TRUST_BADGES = [
   { icon: BadgeCheck, label: 'Clinically Verified Partners' },
-  { icon: BadgeCheck, label: '100+ Verified Surgeons' },
+  { icon: Shield,     label: '100+ Verified Surgeons' },
   { icon: Heart,      label: 'Safety-First Protocol' },
 ];
 
@@ -50,7 +50,7 @@ const STORIES = [
 ];
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
-const QUICK_PROCEDURES = ['Dental Implants', 'Veneers', 'Rhinoplasty', 'Liposuction'];
+const QUICK_PROCEDURES = ['Dental Implants', 'Veneers', 'Rhinoplasty', 'Tummy Tuck'];
 
 export default function LuxuryHero() {
   const [showModal, setShowModal] = useState(false);
@@ -138,7 +138,7 @@ export default function LuxuryHero() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)` }}>
                 <img src="/morales-m-mark.png" alt="M" style={{ width: 14, filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.8))' }} />
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.15em', textTransform: 'uppercase' }}>The Golden Standard for Medical Travel</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>9 Checkpoints per Journey · 0 Patients Unreachable</span>
               </div>
             </motion.div>
 
@@ -268,13 +268,7 @@ export default function LuxuryHero() {
                 >
                   <span className="relative z-10 flex items-center gap-2.5">
                     {content.cta.label}
-                    <motion.span
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                      className="inline-block"
-                    >
-                      →
-                    </motion.span>
+                    <span>→</span>
                   </span>
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"
