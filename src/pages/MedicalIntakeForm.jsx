@@ -271,7 +271,7 @@ function StepLifestyle({ form, update }) {
   );
 }
 
-function StepReview({ form }) {
+function StepReview({ form, aiWarning, aiWarningSeverity }) {
   const summarise = (arr) => Array.isArray(arr) && arr.length ? arr.join(', ') : '—';
   const yesNo = (v) => v === true ? 'Yes' : v === false ? 'No' : '—';
 
@@ -303,6 +303,19 @@ function StepReview({ form }) {
   return (
     <div className="space-y-4">
       <SectionTitle emoji="✅" title="Review Your Intake" subtitle="Confirm everything is accurate before submitting to your care team" />
+      {aiWarning && (
+        <div className={`flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm border ${
+          aiWarningSeverity === 'important' ? 'bg-red-50 border-red-200 text-red-800' :
+          aiWarningSeverity === 'caution' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+          'bg-blue-50 border-blue-200 text-blue-800'
+        }`}>
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold">M AI Clinical Note: </span>
+            {aiWarning}
+          </div>
+        </div>
+      )}
       <div className="bg-slate-50 rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
         {rows.map((row, i) =>
           row === null ? (
@@ -377,6 +390,20 @@ export default function MedicalIntakeForm() {
     emotional_concerns: null, emotional_concern_types: [], emotional_notes: '',
     notes: '',
   });
+  const [aiWarning, setAiWarning] = useState(null);
+  const [aiWarningSeverity, setAiWarningSeverity] = useState(null);
+
+  useEffect(() => {
+    if (step !== 5) return;
+    base44.functions.invoke('analyzeIntakeCombination', {
+      conditions: form.medical_conditions,
+      medications: form.medication_types,
+      allergies: form.allergies,
+    }).then(r => {
+      const data = r?.data ?? r;
+      if (data?.warning) { setAiWarning(data.warning); setAiWarningSeverity(data.severity); }
+    }).catch(() => {});
+  }, [step]);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -449,7 +476,7 @@ export default function MedicalIntakeForm() {
       case 2: return <StepSurgeries form={form} update={update} />;
       case 3: return <StepMedications form={form} update={update} />;
       case 4: return <StepLifestyle form={form} update={update} />;
-      case 5: return <StepReview form={form} />;
+      case 5: return <StepReview form={form} aiWarning={aiWarning} aiWarningSeverity={aiWarningSeverity} />;
       default: return null;
     }
   };

@@ -34,6 +34,7 @@ export default function RecoveryCheckIn() {
   const [submitting, setSubmitting] = useState(false);
   const [error,     setError]     = useState('');
   const [alreadyDone, setAlreadyDone] = useState(false);
+  const [aiMessage, setAiMessage] = useState(null);
 
   function toggleConcern(id) {
     setConcerns(c => c.includes(id) ? c.filter(x => x !== id) : [...c, id]);
@@ -49,6 +50,10 @@ export default function RecoveryCheckIn() {
       const data = res?.data ?? res;
       if (data?.already_submitted) { setAlreadyDone(true); return; }
       setStep(4);
+      // Non-blocking AI interpretation — shows personalized message on done screen
+      base44.functions.invoke('interpretRecoveryCheckIn', { rating, pain_level: pain, concerns, note })
+        .then(r => { const msg = (r?.data ?? r)?.patient_message; if (msg) setAiMessage(msg); })
+        .catch(() => {});
     } catch (e) {
       setError('Could not submit. Please try again or contact your Morales coordinator.');
     } finally {
@@ -172,6 +177,14 @@ export default function RecoveryCheckIn() {
                   <p style={{ margin: 0, fontSize: 13, color: '#fca5a5' }}>Your doctor has been notified and will follow up with you directly.</p>
                 </div>
               ) : null}
+              {aiMessage && (
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                  style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, fontStyle: 'italic', margin: '0 0 16px', padding: '12px 14px', background: 'rgba(212,175,55,0.07)', borderRadius: 10, border: '1px solid rgba(212,175,55,0.2)' }}
+                >
+                  {aiMessage}
+                </motion.p>
+              )}
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Morales Medical Travel Safety</p>
             </div>
           </Step>

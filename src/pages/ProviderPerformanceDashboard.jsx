@@ -1,5 +1,5 @@
 // @ts-nocheck — arithmetic on data fields typed as unknown; pre-existing
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Star, Clock, Users, TrendingUp, Award } from 'lucide-react';
@@ -186,6 +186,20 @@ export default function ProviderPerformanceDashboard() {
 
   const isLoading = loadingCases || loadingRecovery;
 
+  const [aiInsights, setAiInsights] = useState(null);
+  useEffect(() => {
+    if (!allProviders.length) return;
+    base44.functions.invoke('generateAdminInsights', {
+      context: 'provider performance dashboard',
+      metrics: {
+        total_providers: allProviders.length,
+        overall_avg_rating: overallAvgRating,
+        top_rated_providers: topRated,
+        avg_response_hours: overallAvgResponse,
+      },
+    }).then(r => setAiInsights((r?.data ?? r)?.brief || null)).catch(() => {});
+  }, [allProviders.length]);
+
   return (
     <AdminLayout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -193,6 +207,13 @@ export default function ProviderPerformanceDashboard() {
           <h1 className="text-3xl font-semibold font-display">Provider Performance</h1>
           <p className="text-muted-foreground mt-1">Average patient feedback ratings and consultation response times by provider</p>
         </div>
+
+        {aiInsights && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+            <TrendingUp className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div><span className="font-semibold">M AI Insight: </span>{aiInsights}</div>
+          </div>
+        )}
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { base44 } from '@/api/base44Client';
 
 // ── Complete ISO 3166-1 alpha-2 map — all UN member states + territories ────
 export const COUNTRY_ISO = {
@@ -202,9 +203,10 @@ function resolveISO2(countryName) {
   return partial ? partial[1] : null;
 }
 
-export function useEnvironmentalIntelligence({ country, countryCode: providedISO2 }) {
+export function useEnvironmentalIntelligence({ country, countryCode: providedISO2, procedure }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(false);
+  const [aiNote, setAiNote]   = useState(null);
 
   const iso2 = providedISO2 || resolveISO2(country);
 
@@ -270,7 +272,19 @@ export function useEnvironmentalIntelligence({ country, countryCode: providedISO
     })();
   }, [iso2, country]);
 
+  useEffect(() => {
+    if (!data || !country) return;
+    base44.functions.invoke('analyzeDestinationSafety', {
+      country,
+      procedure: procedure || null,
+      risk_score: data.riskScore,
+    }).then(r => {
+      const d = r?.data ?? r;
+      if (d?.note) setAiNote({ note: d.note, time_note: d.time_note });
+    }).catch(() => {});
+  }, [data?.riskScore, procedure]);
+
   const riskLevel = useMemo(() => data ? getRiskLevel(data.riskScore) : null, [data?.riskScore]);
 
-  return { data, loading, riskLevel };
+  return { data, loading, riskLevel, aiNote };
 }

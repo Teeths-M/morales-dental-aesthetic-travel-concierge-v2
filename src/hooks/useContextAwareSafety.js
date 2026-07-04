@@ -10,7 +10,8 @@
  * Single import for Dashboard.jsx and anywhere else that needs
  * the full safety context.
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { useTimeOfDay }         from './useTimeOfDay';
 import { useActivityDetection } from './useActivityDetection';
 import { useGuardianMode }      from './useGuardianMode';
@@ -23,6 +24,8 @@ export function useContextAwareSafety({
   isActiveJourney     = false,
   hasGPSMoved         = true,
   lastGPSUpdateAt     = null,
+  destination         = null,
+  procedure           = null,
 }) {
   // ── Layer 2: Time of Day (zero hardware, zero battery) ──────────────────
   const timeOfDay = useTimeOfDay();
@@ -57,6 +60,23 @@ export function useContextAwareSafety({
   // Combined risk bonus from time + activity
   const totalRiskBonus = timeOfDay.riskBonus + (activity.strikeCount * 5);
 
+  // AI safety recommendation — fires once when active journey starts, debounced 3s
+  const [aiRecommendation, setAiRecommendation] = useState(null);
+  useEffect(() => {
+    if (!isActiveJourney || !destination) return;
+    const t = setTimeout(() => {
+      base44.functions.invoke('analyzeDestinationSafety', {
+        country: destination,
+        procedure: procedure || null,
+        risk_score: totalRiskBonus,
+      }).then(r => {
+        const d = r?.data ?? r;
+        if (d?.note) setAiRecommendation({ note: d.note, time_note: d.time_note });
+      }).catch(() => {});
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [isActiveJourney, destination, procedure]);
+
   return {
     // Layer 1
     sensitivityLevel,
@@ -75,5 +95,8 @@ export function useContextAwareSafety({
     // Combined
     totalRiskBonus,
     isFullGuardianMode: guardian.isGuardianMode,
+
+    // AI
+    aiRecommendation,
   };
 }

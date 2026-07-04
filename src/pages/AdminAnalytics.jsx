@@ -13,6 +13,7 @@ export default function AdminAnalyticsDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [aiInsights, setAiInsights] = useState(null);
 
   const loadAnalytics = async () => {
     setLoading(true);
@@ -30,6 +31,21 @@ export default function AdminAnalyticsDashboard() {
   useEffect(() => {
     loadAnalytics();
   }, []);
+
+  useEffect(() => {
+    if (!analytics?.summary?.total_cases) return;
+    const { summary, doctor_performance = [], pipeline_funnel = [] } = analytics;
+    base44.functions.invoke('generateAdminInsights', {
+      context: 'analytics dashboard',
+      metrics: {
+        total_cases: summary.total_cases,
+        active_cases: summary.active_cases,
+        completion_rate: summary.completion_rate,
+        active_doctors: doctor_performance.length,
+        pipeline_stages: pipeline_funnel.length,
+      },
+    }).then(r => setAiInsights((r?.data ?? r)?.brief || null)).catch(() => {});
+  }, [analytics?.summary?.total_cases]);
 
   // PERFORMANCE: Memoize expensive filtering/sorting operations (before early returns)
   const activePipeline = useMemo(() => 
@@ -85,6 +101,16 @@ export default function AdminAnalyticsDashboard() {
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </Button>
         </div>
+
+        {aiInsights && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800"
+          >
+            <TrendingUp className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div><span className="font-semibold">M AI Insight: </span>{aiInsights}</div>
+          </motion.div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
