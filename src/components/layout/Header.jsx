@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
+import ModeToggle from '@/components/home/ModeToggle';
 
 export default function Header() {
   const [isPortalOpen,   setIsPortalOpen]   = useState(false);
@@ -239,6 +240,7 @@ export default function Header() {
 
         {/* ── DESKTOP: AUTH + LANGUAGE ── */}
         <div className="hidden lg:flex items-center gap-3">
+          <ModeToggle />
           {user ? (
             /* Avatar dropdown */
             <>
@@ -353,6 +355,11 @@ export default function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
+          {/* Mode toggle */}
+          <div className="pb-5 border-b border-white/[0.06]">
+            <ModeToggle />
+          </div>
 
           {/* Primary nav */}
           <div className="flex flex-col gap-4 text-xl font-medium border-b border-white/[0.06] pb-6">

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import HowItWorksModal from './HowItWorksModal';
 import LiveJourneyCard from './LiveJourneyCard';
-import ModeToggle from './ModeToggle';
 import { usePlatformMode } from '@/context/PlatformModeContext';
 import { BadgeCheck, Shield, CheckCircle, Play, Heart } from 'lucide-react';
 import { BRAND } from '@/lib/brandTokens';
@@ -111,16 +110,6 @@ export default function LuxuryHero() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col z-10 lg:pr-20 py-20 lg:py-0"
           >
-            {/* Mode toggle — mobile only, above headline */}
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="mb-10 lg:hidden"
-            >
-              <ModeToggle />
-            </motion.div>
-
             {/* ── LEADERSHIP BADGE ── */}
             <motion.div
               initial={{ opacity: 0, y: -6 }}
@@ -317,15 +306,6 @@ export default function LuxuryHero() {
               ))}
             </motion.div>
 
-            {/* Mode toggle — desktop, below badges */}
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="hidden lg:block"
-            >
-              <ModeToggle />
-            </motion.div>
           </motion.div>
 
           {/* Right column — live patient journey card */}
