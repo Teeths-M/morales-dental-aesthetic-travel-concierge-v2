@@ -87,11 +87,11 @@ export default function Providers() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // List all doctors — status filter was silently excluding doctors with
-  // pending/verified status. The "✓ Verified" badge already conveys verification state.
+  // Public page — unauthenticated visitors must see doctors.
+  // .list() silently returns [] without auth; .filter({}) works for all users.
   const { data: doctors = [], isLoading } = useQuery({
     queryKey: ['doctors-all'],
-    queryFn: () => base44.entities.Doctor.list('-created_date', 200),
+    queryFn: () => base44.entities.Doctor.filter({}, '-created_date', 200),
     staleTime: 5 * 60 * 1000,
   });
 
