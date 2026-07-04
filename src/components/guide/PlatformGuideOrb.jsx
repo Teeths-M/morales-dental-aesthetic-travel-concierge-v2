@@ -130,11 +130,24 @@ export default function PlatformGuideOrb() {
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const bottomRef = useRef(null);
 
-  // Delay bubble appearance — give visitor time to read the hero first
+  // On the homepage the hero CTA sits in the exact zone the bubble would cover.
+  // Gate the bubble behind a scroll-past-hero check — the orb stays clickable
+  // the whole time. On every other route start the timer immediately.
+  const isHomepage = pathname === '/';
+  const [pastHero, setPastHero] = useState(!isHomepage);
+
   useEffect(() => {
+    if (!isHomepage) { setPastHero(true); return; }
+    const check = () => { if (window.scrollY > window.innerHeight * 0.65) setPastHero(true); };
+    window.addEventListener('scroll', check, { passive: true });
+    return () => window.removeEventListener('scroll', check);
+  }, [isHomepage]);
+
+  useEffect(() => {
+    if (!pastHero) return;
     const t = setTimeout(() => setShowBubble(true), 8000);
     return () => clearTimeout(t);
-  }, []);
+  }, [pastHero]);
 
   // Online/offline detection
   useEffect(() => {
