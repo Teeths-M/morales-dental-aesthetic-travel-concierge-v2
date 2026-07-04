@@ -264,6 +264,11 @@ export default function PassportVault() {
                   Documents are encrypted on your device before upload. We cannot read them.
                 </p>
               </div>
+              <div style={{ background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.15)', borderRadius: 10, padding: '10px 14px' }}>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', lineHeight: 1.75, margin: 0 }}>
+                  <strong style={{ color: 'rgba(212,175,55,0.7)', fontWeight: 600 }}>Data notice:</strong> Your document is encrypted on your device (AES-256-GCM) before it leaves your browser — Morales never sees the unencrypted file. Encrypted data is retained for 180 days and automatically deleted thereafter. You may delete your vault at any time from your dashboard. Stored on secure infrastructure in compliance with applicable data protection law. By uploading you confirm you have read our <a href="/privacy" style={{ color: 'rgba(212,175,55,0.8)', textDecoration: 'underline' }}>Privacy Policy</a>.
+                </p>
+              </div>
               <VaultUploader onTokenIssued={() => setHasVault(true)} consultationId={null} />
             </div>
           )}

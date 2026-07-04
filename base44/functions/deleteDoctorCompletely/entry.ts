@@ -40,6 +40,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('Error deleting doctor:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 });
