@@ -28,7 +28,7 @@ const CONTENT = {
 
 /* ── Trust badges (ISO, surgeons, concierge) ──────────────────────────────── */
 const TRUST_BADGES = [
-  { icon: BadgeCheck, label: 'JCI-certified partner clinics' },
+  { icon: BadgeCheck, label: 'Clinics screened to international standards' },
   { icon: Shield,     label: '100+ Verified Surgeons' },
   { icon: Heart,      label: 'Safety-First Protocol' },
 ];
@@ -117,7 +117,10 @@ export default function LuxuryHero() {
               transition={{ duration: 0.5, delay: 0.05 }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20, alignSelf: 'flex-start' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)` }}>
+              <div
+                title="The 9 checkpoints: Home pickup · Airport drop-off · Clinic arrival · Pre-procedure check · During procedure · Post-procedure check · Hotel return · Recovery check-in · Home safe"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)`, cursor: 'help' }}
+              >
                 <img src="/morales-m-mark.png" alt="M" style={{ width: 14, filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.8))' }} />
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>9 Checkpoints per Journey · 0 Patients Unreachable</span>
               </div>
