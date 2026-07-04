@@ -49,9 +49,13 @@ export default function GuardianTicker() {
   const tip = GUARDIAN_TIPS[index];
 
   return (
+    <>
+    <style>{`
+      .guardian-ticker-root { bottom: calc(1rem + var(--sticky-cta-height, 0px)); }
+      @media (max-width: 639px) { .guardian-ticker-root { bottom: calc(120px + var(--sticky-cta-height, 0px)); } }
+    `}</style>
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md pointer-events-none transition-[bottom] duration-300"
-      style={{ bottom: 'calc(1rem + var(--sticky-cta-height, 0px))' }}
+      className="guardian-ticker-root fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md pointer-events-none transition-[bottom] duration-300"
     >
       <AnimatePresence mode="wait">
         {visible && (
@@ -80,5 +84,6 @@ export default function GuardianTicker() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

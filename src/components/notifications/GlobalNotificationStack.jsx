@@ -101,6 +101,11 @@ function NotificationCard({ n, onDismiss }) {
   );
 }
 
+const BOTTOM_STACK_STYLE = `
+  .bottom-notif-stack { bottom: 96px; }
+  @media (max-width: 639px) { .bottom-notif-stack { bottom: 176px; } }
+`;
+
 export default function GlobalNotificationStack() {
   const { stack, dismiss } = useNotification();
 
@@ -109,6 +114,7 @@ export default function GlobalNotificationStack() {
 
   return (
     <>
+      <style>{BOTTOM_STACK_STYLE}</style>
       {/* Top stack — informational (arrival, driver, greeting) */}
       <div
         className="fixed z-[9985] flex flex-col gap-2 pointer-events-none"
@@ -125,8 +131,8 @@ export default function GlobalNotificationStack() {
 
       {/* Bottom stack — action-required (check-in, alerts) */}
       <div
-        className="fixed z-[9985] flex flex-col-reverse gap-2 pointer-events-none"
-        style={{ bottom: 96, left: '50%', transform: 'translateX(-50%)', width: 'min(400px, calc(100vw - 32px))' }}
+        className="fixed z-[9985] flex flex-col-reverse gap-2 pointer-events-none bottom-notif-stack"
+        style={{ left: '50%', transform: 'translateX(-50%)', width: 'min(400px, calc(100vw - 32px))' }}
       >
         <AnimatePresence mode="sync">
           {bottom.map(n => (
