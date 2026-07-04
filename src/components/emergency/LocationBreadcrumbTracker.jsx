@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { MapPin, Trash2, Bookmark, Loader2, Navigation, Wifi, WifiOff, Pause, Play, Globe, AlertTriangle } from 'lucide-react';
+import { MapPin, Trash2, Bookmark, Loader2, Navigation, Wifi, WifiOff, Pause, Play, Globe, AlertTriangle, Radio } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoLocation } from '@/hooks/useAutoLocation';
+import LiveBeaconPanel from '@/components/solo/LiveBeaconPanel';
 
 // Throttle: min minutes between auto-breadcrumbs by source
 const GPS_THROTTLE_MIN = 15;
@@ -24,7 +25,7 @@ function distanceMeters(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function LocationBreadcrumbTracker({ caseId }) {
+export default function LocationBreadcrumbTracker({ caseId, caseStatus, guardianToken }) {
   const [crumbs, setCrumbs] = useState([]);
   const [logging, setLogging] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -217,8 +218,52 @@ export default function LocationBreadcrumbTracker({ caseId }) {
   };
   const status = statusConfig[locationStatus];
 
+  const [mode, setMode] = useState('live'); // 'live' | 'snapshot'
+
   return (
     <div className="space-y-4">
+
+      {/* Mode switcher — live vs snapshot */}
+      <div className="flex items-center rounded-2xl p-1" style={{ background: 'rgba(12,26,29,0.6)', border: '1px solid rgba(42,63,74,0.6)' }}>
+        {[
+          { id: 'live',     label: 'Live Location', icon: <Radio className="w-3.5 h-3.5" /> },
+          { id: 'snapshot', label: 'Location Log',  icon: <MapPin className="w-3.5 h-3.5" /> },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setMode(tab.id)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all"
+            style={mode === tab.id ? {
+              background: tab.id === 'live'
+                ? 'linear-gradient(135deg, rgba(34,197,94,0.25) 0%, rgba(16,185,129,0.15) 100%)'
+                : 'rgba(255,255,255,0.07)',
+              color: tab.id === 'live' ? '#4ade80' : '#fff',
+              border: `1px solid ${tab.id === 'live' ? 'rgba(34,197,94,0.35)' : 'rgba(42,63,74,0.8)'}`,
+            } : {
+              color: 'rgba(255,255,255,0.35)',
+              border: '1px solid transparent',
+            }}
+          >
+            {tab.icon} {tab.label}
+            {tab.id === 'live' && mode === 'live' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Live location panel */}
+      {mode === 'live' && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+          <LiveBeaconPanel
+            caseId={caseId}
+            caseStatus={caseStatus}
+            guardianToken={guardianToken}
+          />
+        </motion.div>
+      )}
+
+      {/* Snapshot log — shown in snapshot mode only */}
+      {mode === 'snapshot' && <>
+
       {/* Stale signal warning — shown when GPS drops and last crumb is >30 min old.
           Emergency contacts are seeing a frozen position; patient needs to know. */}
       {isSignalStale && (
@@ -318,6 +363,8 @@ export default function LocationBreadcrumbTracker({ caseId }) {
           ))}
         </div>
       )}
+
+      </>}
     </div>
   );
 }

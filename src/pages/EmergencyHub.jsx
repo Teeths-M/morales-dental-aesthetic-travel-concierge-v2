@@ -265,11 +265,12 @@ export default function EmergencyHub() {
 
               {activeTab === 'location' && (
                 <div>
-                  <h3 className="text-white font-semibold text-sm mb-1">Mark My Last Location</h3>
-                  <p className="text-slate-400 text-xs mb-4">Auto-purging breadcrumb trail — scrubbed on final check-in unless you save them</p>
-                  <div className="bg-white rounded-xl p-4">
-                    <LocationBreadcrumbTracker caseId={activeCase?.id} />
-                  </div>
+                  <h3 className="text-white font-semibold text-sm mb-1">Location Sharing</h3>
+                  <p className="text-slate-400 text-xs mb-4">Share your live moving location or log position snapshots — your safety team sees everything in real time</p>
+                  <LocationBreadcrumbTracker
+                    caseId={activeCase?.id}
+                    caseStatus={activeCase?.status}
+                  />
                 </div>
               )}
 
