@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, Navigation, AlertCircle } from 'lucide-react';
+import { MapPin, Phone, Navigation, AlertCircle, ExternalLink } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const CATEGORIES = [
-  { id: 'doctors',  label: 'Doctor',   emoji: '🩺', color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)'  },
-  { id: 'clinic',   label: 'Clinic',   emoji: '🏥', color: '#00E5FF', bg: 'rgba(0,229,255,0.12)',  border: 'rgba(0,229,255,0.25)'  },
-  { id: 'hospital', label: 'Hospital', emoji: '🚑', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)'  },
-  { id: 'pharmacy', label: 'Pharmacy', emoji: '💊', color: '#a855f7', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.25)' },
-  { id: 'police',   label: 'Police',   emoji: '🚔', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.25)' },
-  { id: 'embassy',  label: 'Embassy',  emoji: '🏛️',  color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.25)' },
+  { id: 'doctors',  label: 'Doctor',   emoji: '🩺', color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)',  gmaps: 'doctor+near+me'    },
+  { id: 'clinic',   label: 'Clinic',   emoji: '🏥', color: '#00E5FF', bg: 'rgba(0,229,255,0.12)',  border: 'rgba(0,229,255,0.25)',  gmaps: 'clinic+near+me'    },
+  { id: 'hospital', label: 'Hospital', emoji: '🚑', color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  gmaps: 'hospital+near+me'  },
+  { id: 'pharmacy', label: 'Pharmacy', emoji: '💊', color: '#a855f7', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.25)', gmaps: 'pharmacy+near+me'  },
+  { id: 'police',   label: 'Police',   emoji: '🚔', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.25)', gmaps: 'police+station+near+me' },
+  { id: 'embassy',  label: 'Embassy',  emoji: '🏛️',  color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.25)', gmaps: 'embassy+near+me'   },
 ];
 
 
@@ -184,16 +184,47 @@ export default function NearbyHelp() {
         )}
 
         {searchErr && !searching && (
-          <div className="text-center py-8">
-            <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>{searchErr}</p>
+          <div className="text-center py-8 px-2">
+            <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>{searchErr}</p>
             {activeCat && (
-              <button
-                onClick={() => search(activeCat)}
-                className="text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
-                style={{ background: 'rgba(0,229,255,0.1)', color: '#00E5FF', border: '1px solid rgba(0,229,255,0.2)' }}
-              >
-                Search again
-              </button>
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  onClick={() => search(activeCat)}
+                  className="text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+                  style={{ background: 'rgba(0,229,255,0.1)', color: '#00E5FF', border: '1px solid rgba(0,229,255,0.2)' }}
+                >
+                  Search again
+                </button>
+                {loc && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-[0.15em] mt-2"
+                      style={{ color: 'rgba(255,255,255,0.2)' }}>
+                      Try on a map instead
+                    </p>
+                    <div className="flex gap-2 justify-center flex-wrap">
+                      <a
+                        href={`https://www.google.com/maps/search/${activeCat.gmaps}/@${loc.lat},${loc.lng},14z`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                        style={{ background: 'rgba(66,133,244,0.15)', color: '#4285f4', border: '1px solid rgba(66,133,244,0.3)' }}
+                      >
+                        <ExternalLink className="w-3 h-3" /> Google Maps
+                      </a>
+                      <a
+                        href={`https://maps.apple.com/?q=${encodeURIComponent(activeCat.label)}&sll=${loc.lat},${loc.lng}&z=14`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.12)' }}
+                      >
+                        <ExternalLink className="w-3 h-3" /> Apple Maps
+                      </a>
+                    </div>
+                    <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                      Opens at your exact location
+                    </p>
+                  </>
+                )}
+              </div>
             )}
           </div>
         )}

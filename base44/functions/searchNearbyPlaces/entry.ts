@@ -8,12 +8,13 @@ const MIRRORS = [
 ];
 
 const TAGS: Record<string, [string, string][]> = {
-  doctors:  [['amenity', 'doctors'], ['amenity', 'clinic']],
-  clinic:   [['amenity', 'clinic'],  ['amenity', 'doctors'], ['amenity', 'health_centre']],
-  hospital: [['amenity', 'hospital']],
-  pharmacy: [['amenity', 'pharmacy']],
+  doctors:  [['amenity', 'doctors'], ['amenity', 'clinic'], ['healthcare', 'doctor']],
+  clinic:   [['amenity', 'clinic'],  ['amenity', 'doctors'], ['amenity', 'health_centre'], ['healthcare', 'clinic']],
+  hospital: [['amenity', 'hospital'], ['healthcare', 'hospital']],
+  // pharmacy has many OSM tag variants across different countries
+  pharmacy: [['amenity', 'pharmacy'], ['healthcare', 'pharmacy'], ['shop', 'chemist'], ['shop', 'pharmacy'], ['healthcare', 'drug_store']],
   police:   [['amenity', 'police']],
-  embassy:  [['amenity', 'embassy'], ['office', 'diplomatic']],
+  embassy:  [['amenity', 'embassy'], ['office', 'diplomatic'], ['diplomatic', 'embassy']],
 };
 
 function buildQuery(lat: number, lng: number, radiusM: number, tags: [string, string][]): string {
