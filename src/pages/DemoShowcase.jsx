@@ -656,11 +656,14 @@ function SafeTBlockDemo() {
         style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)' }}
       >
         <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#ef4444' }}>
-          Based on real events — 2026
+          Based on real events — Costa Rica, 2025
         </p>
         <p className="text-sm leading-relaxed" style={{ color: '#94a3b8' }}>
-          A woman died in Costa Rica after a clinic combined a tummy tuck, liposuction, and fat transfer in a single session.
-          No booking platform stopped her. <span style={{ color: '#fff', fontWeight: 600 }}>Morales would have — before she ever got on the plane.</span>
+          A patient died after a clinic booked her for a tummy tuck, liposuction, and fat transfer in a single session.
+          The combined fat removal volume exceeded safe surgical limits. Her booking was confirmed. No platform reviewed the combination.{' '}
+          <span style={{ color: '#fff', fontWeight: 600 }}>
+            Morales flags this before payment is taken — the booking is blocked until a licensed physician approves the combination in writing.
+          </span>
         </p>
       </motion.div>
 

@@ -357,12 +357,14 @@ export default function RecoveryTrackerDemo() {
       >
         <div style={{ borderRadius: 16, padding: '16px 20px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)' }}>
           <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#ef4444' }}>
-            Based on real events — Oct 2025
+            Based on real events — Cali, Colombia, Oct 2025
           </p>
           <p className="text-xs leading-relaxed" style={{ color: '#94a3b8' }}>
-            An NYPD detective, 40, died in her hotel room in Cali, Colombia — found unresponsive at 6:30 a.m., one week after a butt lift and liposuction.
-            No platform was watching her recovery.{' '}
-            <span style={{ color: '#fff', fontWeight: 600 }}>Morales would have been — every hour, every checkpoint, every flag.</span>
+            Det. Alicia Stone, 40 — NYPD detective, mother of three — was found unresponsive in her hotel room at 6:30 a.m., one week after a butt lift and liposuction in Cali, Colombia.
+            She died alone. No one was alerted when she stopped responding. No system was watching.{' '}
+            <span style={{ color: '#fff', fontWeight: 600 }}>
+              Morales checks in every 2 hours during recovery. A missed response triggers an immediate alert to family and the on-call concierge — minutes, not morning.
+            </span>
           </p>
           <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Source: New York Post, Oct. 26, 2025
