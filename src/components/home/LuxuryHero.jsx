@@ -41,6 +41,25 @@ const FEATURES = [
 ];
 
 
+/* ── Post-surgery protocol — answers the judge's question directly ─────────── */
+const AFTER_SURGERY_STEPS = [
+  {
+    num: '01',
+    title: 'Recovery monitoring starts the moment surgery ends.',
+    desc: 'Your recovery clock starts immediately. Miss a check-in by 45 minutes and Morales escalates automatically — not 24 hours later. 45 minutes.',
+  },
+  {
+    num: '02',
+    title: 'Your family never loses sight of you.',
+    desc: "A zero-login link. A live map. Every checkpoint confirmed in real time. They sleep peacefully. We don't.",
+  },
+  {
+    num: '03',
+    title: 'Six channels before we give up.',
+    desc: 'SMS. Voice call. Companion check. Security dispatch. Local clinic. Emergency services. In sequence — until someone confirms you are safe.',
+  },
+];
+
 /* ── Rotating human stories ───────────────────────────────────────────────── */
 const STORIES = [
   'Rosa flew to Cancún alone. Her daughter watched every step.',
@@ -386,6 +405,59 @@ export default function LuxuryHero() {
                 </p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AFTER SURGERY — the question every judge and investor asks ── */}
+      <section style={{ background: '#060B16', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-20 lg:py-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
+
+            {/* Left — question + answer */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+                <div style={{ width: 24, height: 1, background: `${GOLD}50` }} />
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
+                  After Surgery
+                </span>
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.8rem)', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 20 }}>
+                "What happens<br />after surgery?"
+              </h2>
+              <p style={{ fontSize: '18px', fontStyle: 'italic', color: `${GOLD}90`, lineHeight: 1.6, fontFamily: 'Georgia, serif', marginBottom: 20 }}>
+                That's where Morales<br />becomes most valuable.
+              </p>
+              <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75, maxWidth: 380 }}>
+                Most platforms track your booking.<br />
+                Morales tracks you — until you are home safe.
+              </p>
+            </motion.div>
+
+            {/* Right — protocol steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingTop: 4 }}>
+              {AFTER_SURGERY_STEPS.map(({ num, title, desc }, i) => (
+                <motion.div
+                  key={num}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ duration: 0.55, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 800, color: `${GOLD}45`, letterSpacing: '0.1em', flexShrink: 0, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>{num}</span>
+                  <div>
+                    <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: 8, lineHeight: 1.3 }}>{title}</p>
+                    <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75 }}>{desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
