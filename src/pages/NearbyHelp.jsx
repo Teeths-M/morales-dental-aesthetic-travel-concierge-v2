@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Navigation, AlertCircle } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 const CATEGORIES = [
   { id: 'doctors',  label: 'Doctor',   emoji: '🩺', color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.25)'  },
@@ -11,88 +12,21 @@ const CATEGORIES = [
   { id: 'embassy',  label: 'Embassy',  emoji: '🏛️',  color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.25)' },
 ];
 
-function haversine(lat1, lng1, lat2, lng2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 function fmtDist(m) {
   return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
 }
 
-// Multiple mirrors — tried in order, first success wins
-const OVERPASS_MIRRORS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.karte.io/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-  'https://overpass.openstreetmap.ru/cgi/interpreter',
-];
-
-// Richer tag sets per category — catches more OSM variations
-const CATEGORY_TAGS = {
-  doctors:  [['amenity', 'doctors'], ['amenity', 'clinic']],
-  clinic:   [['amenity', 'clinic'],  ['amenity', 'doctors'], ['amenity', 'health_centre']],
-  hospital: [['amenity', 'hospital']],
-  pharmacy: [['amenity', 'pharmacy']],
-  police:   [['amenity', 'police']],
-  embassy:  [['amenity', 'embassy'], ['office', 'diplomatic']],
-};
-
-function buildOverpassQuery(lat, lng, radiusM, tags) {
-  const pairs = tags
-    .flatMap(([k, v]) => [
-      `node(around:${radiusM},${lat},${lng})[${k}=${v}];`,
-      `way(around:${radiusM},${lat},${lng})[${k}=${v}];`,
-    ])
-    .join('');
-  return `[out:json][timeout:20];(${pairs});out body center;`;
-}
-
-async function runOverpassQuery(query) {
-  let lastErr;
-  for (const mirror of OVERPASS_MIRRORS) {
-    try {
-      const res = await fetch(mirror, {
-        method: 'POST',
-        body: query,
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
-      return await res.json();
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr || new Error('All location services unavailable');
-}
-
-async function overpassSearch(lat, lng, categoryId, radiusKm) {
-  const tags  = CATEGORY_TAGS[categoryId] || [['amenity', categoryId]];
-  const query = buildOverpassQuery(lat, lng, radiusKm * 1000, tags);
-  const json  = await runOverpassQuery(query);
-  const label = CATEGORIES.find(c => c.id === categoryId)?.label || categoryId;
-
-  return (json.elements || [])
-    .map(el => {
-      const elLat = el.lat ?? el.center?.lat;
-      const elLng = el.lon ?? el.center?.lon;
-      return {
-        id: el.id,
-        name: el.tags?.name || el.tags?.['name:en'] || `Nearby ${label}`,
-        lat: elLat, lng: elLng,
-        phone: el.tags?.phone || el.tags?.['contact:phone'] || el.tags?.['phone:international'] || null,
-        address: [el.tags?.['addr:street'], el.tags?.['addr:housenumber'], el.tags?.['addr:city']].filter(Boolean).join(' ') || null,
-        distance: elLat != null ? haversine(lat, lng, elLat, elLng) : Infinity,
-      };
-    })
-    .filter(el => el.lat != null)
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, 12);
+async function edgeSearch(lat, lng, categoryId, radiusKm, label) {
+  const res  = await base44.functions.invoke('searchNearbyPlaces', {
+    lat, lng, category: categoryId, radius_km: radiusKm,
+  });
+  const data = res?.data ?? res;
+  if (data?.error) throw new Error(data.error);
+  return (data?.results || []).map(r => ({
+    ...r,
+    name: r.name || `Nearby ${label}`,
+  }));
 }
 
 export default function NearbyHelp() {
@@ -126,7 +60,7 @@ export default function NearbyHelp() {
     setSearchErr(null);
     setResults([]);
     try {
-      const data = await overpassSearch(loc.lat, loc.lng, cat.id, km);
+      const data = await edgeSearch(loc.lat, loc.lng, cat.id, km, cat.label);
       setResults(data);
       if (data.length > 0) {
         // Persist POIs so ProximityWatcher can nudge the user as they walk past them
@@ -135,10 +69,7 @@ export default function NearbyHelp() {
       }
       if (data.length === 0) setSearchErr(`No ${cat.label.toLowerCase()} found within ${km} km.`);
     } catch {
-      setSearchErr('Location service unavailable. Trying again…');
-      // Auto-retry once with a different mirror (already handled inside runOverpassQuery)
-      // If we got here, all mirrors failed — show final message after short delay
-      setTimeout(() => setSearchErr('All location services failed. Check your internet connection and try again.'), 1200);
+      setSearchErr('Search failed. Check your connection and try again.');
     } finally {
       setSearching(false);
     }
