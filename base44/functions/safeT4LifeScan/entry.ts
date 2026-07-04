@@ -1,5 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+// Reads free-text intake fields that keyword rules cannot parse — catches nuanced risk signals.
+// CRITICAL tier is always deterministic (M Principle). AI only annotates HIGH/MEDIUM/LOW.
+async function aiRiskNote(cr: Record<string, unknown>, result: { tier: string; flags: string[] }): Promise<string | null> {
+  const freeText = [cr.notes, cr.surgery_description, cr.mental_health_notes, cr.additional_notes, cr.reproductive_notes]
+    .filter(Boolean).join(' | ').slice(0, 600);
+  if (!freeText.trim() || !ANTHROPIC_KEY) return null;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: HAIKU, max_tokens: 80, messages: [{ role: 'user', content: `Clinical risk analyst. Patient intake free-text: "${freeText}"\nCurrent tier: ${result.tier}. Known flags: ${result.flags.slice(0, 4).join('; ')}.\nIn max 35 words, identify any medically significant detail the automated rules may have missed. If nothing additional, reply: none` }] }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const t = (d.content?.[0]?.text || '').trim();
+    return t.toLowerCase().startsWith('none') ? null : t;
+  } catch { return null; }
+}
+
 // ── SAFE-T 4LIFE™ v2 — Automated Risk Scoring Engine ──
 // Tiers: Low | Medium | High | Critical
 // Critical = hard BLOCK + concierge dispatch, zero overrides
@@ -397,6 +419,9 @@ Deno.serve(async (req) => {
     // ── MAIN SCAN — risk score computed entirely server-side ──
     // SECURITY: No risk_score, tier, or flag accepted from request body.
     const result = computeRiskScore(cr);
+    // AI agentic layer: reads free-text notes the keyword rules cannot parse.
+    // CRITICAL tier stays deterministic always — AI never overrides the hard block (M Principle).
+    const aiNote = result.tier !== 'CRITICAL' ? await aiRiskNote(cr, result) : null;
     const now = new Date().toISOString();
     const tl = cr.timeline_log || [];
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
@@ -483,6 +508,7 @@ Deno.serve(async (req) => {
         procedure_count: result.procedure_count,
         message: 'Your profile contains elevated risk factors. A mandatory digital waiver is required before proceeding.',
         waiver_required: true,
+        ai_clinical_note: aiNote,
       });
     }
 
@@ -512,6 +538,7 @@ Deno.serve(async (req) => {
         ? 'A few items in your profile need attention before travel. Your coordinator will review them with you.'
         : 'Your profile looks great. You are cleared to proceed to specialist matching.',
       waiver_required: false,
+      ai_clinical_note: aiNote,
     });
 
   } catch (error) {

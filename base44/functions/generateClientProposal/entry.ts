@@ -1,5 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+async function aiProposalNarrative(params: {
+  name: string; procedures: unknown; destination: string;
+  totalDays: number; finalPrice: number;
+}): Promise<string | null> {
+  if (!ANTHROPIC_KEY) return null;
+  const procs = Array.isArray(params.procedures) ? params.procedures.join(' + ') : String(params.procedures || 'procedure');
+  const prompt = `You are the senior concierge at Morales Medical Travel. Write ONE compelling paragraph (max 55 words) for ${params.name}'s personalized proposal. Package: ${procs} in ${params.destination || 'destination'}, ${params.totalDays}-day stay, all-inclusive at $${Math.round(params.finalPrice).toLocaleString()}. Warm but professional tone. No bullet points.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: HAIKU, max_tokens: 120, messages: [{ role: 'user', content: prompt }] }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.content?.[0]?.text?.trim() || null;
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -40,6 +62,15 @@ Deno.serve(async (req) => {
     const deposit25 = finalPackagePrice * 0.25;
     const deposit50 = finalPackagePrice * 0.50;
 
+    // AI narrative: a personalized compelling paragraph for the proposal page
+    const narrative = await aiProposalNarrative({
+      name: caseRecord.client_name || 'Valued Patient',
+      procedures: caseRecord.procedures,
+      destination: caseRecord.procedure_country || caseRecord.destination_city || '',
+      totalDays: (caseRecord.treatment_duration || 0) + (caseRecord.recovery_days || 0),
+      finalPrice: finalPackagePrice,
+    });
+
     return Response.json({
       case_id: caseId,
       client_name: caseRecord.client_name,
@@ -68,7 +99,8 @@ Deno.serve(async (req) => {
         duration_days: caseRecord.treatment_duration,
         recovery_days: caseRecord.recovery_days,
         total_stay_days: (caseRecord.treatment_duration || 0) + (caseRecord.recovery_days || 0)
-      }
+      },
+      narrative,
     });
 
   } catch (error) {

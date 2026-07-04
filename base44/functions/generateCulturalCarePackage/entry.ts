@@ -2,8 +2,37 @@
  * Stage 7: Cultural Calibration Engine
  * Generates a Post-Operative Cultural Care Package payload based on
  * patient origin country and procedure type, then persists it to CaseRecord.
+ * AI layer: generates individualized care for any nationality (not just Caribbean binary).
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+async function aiCarePackage(caseRecord: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+  if (!ANTHROPIC_KEY) return null;
+  const origin = String(caseRecord.client_country || 'unknown');
+  const procs = Array.isArray(caseRecord.procedures) ? caseRecord.procedures.join(', ') : String(caseRecord.procedures || 'unspecified');
+  const dietary = [caseRecord.dietary_restrictions, caseRecord.allergy_types, caseRecord.allergy_free_text].filter(Boolean).join(', ');
+  const prompt = `You are the cultural care coordinator for Morales Medical Travel concierge.
+Patient origin: ${origin}. Procedures: ${procs}. Dietary/allergies: ${dietary || 'none noted'}. Recovery phase: Post-op days 1–3 (liquid/soft only).
+
+Generate a culturally authentic care package as JSON:
+{"language_primary":"...","language_secondary":"... or null","companion_type":"...","cultural_liaison_required":true/false,"routing_instructions":"2-3 sentences on communication style and cultural considerations","diet_phase1":[{"time":"Morning","item":"...","kcal":0,"notes":"..."},{"time":"Noon","item":"...","kcal":0,"notes":"..."},{"time":"Evening","item":"...","kcal":0,"notes":"..."}],"avoid":["..."],"cultural_notes":"1-2 sentences for care team","logistics_notes":"1 sentence"}
+Use culturally authentic foods from the patient's origin. Respect religious/cultural dietary laws. JSON only.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: HAIKU, max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const text = (d.content?.[0]?.text || '').trim();
+    const m = text.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch { return null; }
+}
 
 // Caribbean origin countries that trigger cultural calibration
 const CARIBBEAN_ORIGINS = [
@@ -122,8 +151,35 @@ Deno.serve(async (req) => {
 
     const originCountry = caseRecord.client_country || '';
     const procedureCategory = getProcedureCategory(caseRecord.procedures);
-    const translationRouting = buildTranslationRouting(originCountry, procedureCategory);
-    const dietOrder = buildDietOrder(originCountry, procedureCategory);
+
+    // AI-first: generates individualized care for any nationality worldwide.
+    // Fallback to static Caribbean-focused logic if ANTHROPIC_API_KEY is not set.
+    const aiPkg = await aiCarePackage(caseRecord);
+
+    let translationRouting, dietOrder, logisticsNotes;
+    if (aiPkg) {
+      translationRouting = {
+        language_primary: aiPkg.language_primary,
+        language_secondary: aiPkg.language_secondary,
+        companion_type: aiPkg.companion_type,
+        cultural_liaison_required: aiPkg.cultural_liaison_required,
+        routing_instructions: aiPkg.routing_instructions,
+      };
+      dietOrder = {
+        phase: 'Phase 1 — Liquid/Soft (Days 1–3 Post-Op)',
+        caloric_target_kcal: (aiPkg.diet_phase1 || []).reduce((s: number, m: Record<string, number>) => s + (m.kcal || 0), 0),
+        meals: aiPkg.diet_phase1,
+        avoid: aiPkg.avoid,
+        cultural_notes: aiPkg.cultural_notes,
+      };
+      logisticsNotes = aiPkg.logistics_notes;
+    } else {
+      translationRouting = buildTranslationRouting(originCountry, procedureCategory);
+      dietOrder = buildDietOrder(originCountry, procedureCategory);
+      logisticsNotes = translationRouting.cultural_liaison_required
+        ? `CULTURAL LIAISON REQUIRED. Assign Caribbean-familiar companion. Brief hotel kitchen on Caribbean diet substitutions at least 24h before discharge.`
+        : `Standard logistics companion. Provide written post-op instructions in patient's language.`;
+    }
 
     const culturalCarePackage = {
       generated_at: new Date().toISOString(),
@@ -131,11 +187,8 @@ Deno.serve(async (req) => {
       procedure_category: procedureCategory,
       translation_routing: translationRouting,
       diet_order: dietOrder,
-      logistics_notes: translationRouting.cultural_liaison_required
-        ? `CULTURAL LIAISON REQUIRED. Assign Caribbean-familiar companion. ` +
-          `Brief hotel kitchen on Caribbean diet substitutions at least 24h before patient discharge from clinic. ` +
-          `Print diet order and translation instructions for both nursing staff and hotel concierge.`
-        : `Standard logistics companion. Provide written post-op instructions in patient's language.`
+      logistics_notes: logisticsNotes,
+      ai_generated: !!aiPkg,
     };
 
     // Persist to CaseRecord

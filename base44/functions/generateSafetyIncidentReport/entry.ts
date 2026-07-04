@@ -1,9 +1,34 @@
 /**
  * generateSafetyIncidentReport
- * Compiles a wilderness/SOS incident timeline report.
+ * Compiles a wilderness/SOS incident timeline report with AI narrative synthesis.
  * Does NOT include sensitive medical/vault data.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+async function aiIncidentNarrative(params: {
+  patientName: string; sosType: string; resolution: string | null;
+  timeline: Array<{ time: string; event: string; details: string }>;
+}): Promise<string | null> {
+  if (!ANTHROPIC_KEY || !params.timeline.length) return null;
+  const events = params.timeline.slice(0, 12).map(e => `[${e.time}] ${e.event}: ${e.details}`).join('\n');
+  const prompt = `Safety incident analyst for medical travel concierge. Incident for patient "${params.patientName}". SOS type: ${params.sosType || 'unknown'}. Resolution: ${params.resolution || 'pending'}.
+Timeline:\n${events}
+
+Write a 3-sentence incident summary: (1) what happened, (2) how the response chain performed, (3) one concrete protocol recommendation. Plain text, no headers.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: HAIKU, max_tokens: 160, messages: [{ role: 'user', content: prompt }] }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.content?.[0]?.text?.trim() || null;
+  } catch { return null; }
+}
 
 Deno.serve(async (req) => {
   try {
@@ -88,7 +113,15 @@ Deno.serve(async (req) => {
     }
 
     // Sort timeline
-    timeline.sort((a, b) => new Date(a.time) - new Date(b.time));
+    timeline.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+    // AI narrative synthesis — what happened, how the response chain performed, one recommendation
+    const narrative_analysis = await aiIncidentNarrative({
+      patientName: sosEvent?.patient_name || patient_email || 'Unknown',
+      sosType: sosEvent?.trigger_type || 'unknown',
+      resolution: sosEvent?.resolution_notes || null,
+      timeline,
+    });
 
     const report = {
       generated_at: now,
@@ -108,6 +141,7 @@ Deno.serve(async (req) => {
       resolution_notes: sosEvent?.resolution_notes || null,
       resolved_at: sosEvent?.resolved_at || null,
       timeline,
+      narrative_analysis,
       note: 'This report does not include sensitive medical, vault, or financial data.',
     };
 

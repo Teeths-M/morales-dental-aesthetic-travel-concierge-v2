@@ -49,6 +49,31 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+// AI layer — reads free-text notes that rule thresholds cannot parse
+async function aiInterpretCheckin(params: {
+  notes: string; firstName: string; procedure: string;
+  recoveryDay: number | null; pain: number; severity: string;
+}): Promise<{ patient_msg: string | null; doctor_note: string | null }> {
+  if (!ANTHROPIC_KEY || !params.notes?.trim()) return { patient_msg: null, doctor_note: null };
+  const prompt = `Medical concierge AI. Patient "${params.firstName}" (${params.procedure || 'procedure'}, recovery day ${params.recoveryDay ?? '?'}) submitted a check-in with pain ${params.pain}/10. Rule engine severity: ${params.severity}.
+Patient's free-text note: "${params.notes.slice(0, 400)}"
+Output JSON only: {"patient_msg":"<one warm 15-word sentence for patient, or null>","doctor_note":"<one 20-word clinical observation from free text for doctor, or null>"}`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: HAIKU, max_tokens: 110, messages: [{ role: 'user', content: prompt }] }),
+    });
+    if (!r.ok) return { patient_msg: null, doctor_note: null };
+    const d = await r.json();
+    const m = (d.content?.[0]?.text || '').match(/\{[\s\S]*?\}/);
+    return m ? JSON.parse(m[0]) : { patient_msg: null, doctor_note: null };
+  } catch { return { patient_msg: null, doctor_note: null }; }
+}
+
 // ── Rule engine ───────────────────────────────────────────────────────────────
 function runRules(current, prevLogs) {
   const { pain_level, mobility, appetite, wound_status } = current;
@@ -171,6 +196,20 @@ Deno.serve(async (req) => {
       ...(severity !== 'none' ? { last_anomaly_at: nowIso } : {}),
     });
 
+    // AI agentic layer — reads free-text notes, personalizes patient and doctor messages
+    const recoveryDay = session.start_date
+      ? Math.floor((Date.now() - new Date(session.start_date).getTime()) / 86400000) + 1 : null;
+    const caseForProc = session.case_id
+      ? await base44.asServiceRole.entities.CaseRecord.get(session.case_id).catch(() => null) : null;
+    const ai = await aiInterpretCheckin({
+      notes: notes || '',
+      firstName: (session.patient_name || user.email).split(' ')[0],
+      procedure: String((caseForProc as Record<string, unknown>)?.procedure_type || (caseForProc as Record<string, unknown>)?.treatment_plan || ''),
+      recoveryDay,
+      pain: pain_level,
+      severity,
+    });
+
     // ── Notifications ─────────────────────────────────────────────────────────
     const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
     const docEmail   = session.doctor_email   || adminEmail;
@@ -198,7 +237,7 @@ Deno.serve(async (req) => {
       const subject = severity === 'escalate'
         ? `🚨 Recovery Alert — ${pName} (ESCALATE)`
         : `⚠️ Recovery Warning — ${pName}`;
-      const docBody = `Recovery anomaly detected for patient: ${pName} (${pEmail})\n\nDate: ${logDate}\nPain: ${pain_level}/10  Mobility: ${mobility ?? '?'}/5  Appetite: ${appetite ?? '?'}/5  Wound: ${wound_status || '?'}\nNotes: ${notes || 'None'}\n\nAnomaly reasons:\n${reasons.map(r => `• ${r}`).join('\n')}\n\nSeverity: ${severity.toUpperCase()}\nConsecutive anomaly days: ${newConsecutive}\n\nCase ID: ${session.case_id}`;
+      const docBody = `Recovery anomaly detected for patient: ${pName} (${pEmail})\n\nDate: ${logDate}\nPain: ${pain_level}/10  Mobility: ${mobility ?? '?'}/5  Appetite: ${appetite ?? '?'}/5  Wound: ${wound_status || '?'}\nNotes: ${notes || 'None'}\n\nAnomaly reasons:\n${reasons.map(r => `• ${r}`).join('\n')}\n\nSeverity: ${severity.toUpperCase()}\nConsecutive anomaly days: ${newConsecutive}\n\nCase ID: ${session.case_id}${ai?.doctor_note ? `\n\nM AI Insight: ${ai.doctor_note}` : ''}`;
 
       // Email doctor
       if (docEmail) {
@@ -222,7 +261,7 @@ Deno.serve(async (req) => {
             from_name: 'Morales Recovery Team',
             to: pEmail,
             subject: '⚠️ Your Recovery Check-In — Action Recommended',
-            body: `<p>Dear ${pName},</p><p>Based on your recovery check-in today, your care team has been notified and will contact you shortly.</p><p>If you are experiencing a medical emergency, please call your local emergency number immediately or use the SOS button in the Morales app.</p><p>— Morales Recovery Team</p>`,
+            body: `<p>Dear ${pName},</p><p>${ai?.patient_msg || 'Your care team has been notified about your recovery check-in and will contact you shortly.'}</p><p>If you are experiencing a medical emergency, please call your local emergency number immediately or use the SOS button in the Morales app.</p><p>— Morales Recovery Team</p>`,
           }).catch(() => {});
         }
         if (pPhone) {

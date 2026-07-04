@@ -1,5 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const HAIKU = 'claude-haiku-4-5-20251001';
+
+// Expands a patient's search term to clinical synonyms so "nose job" finds "rhinoplasty"
+async function expandSynonyms(term: string): Promise<string[]> {
+  if (!ANTHROPIC_KEY) return [term.toLowerCase()];
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: HAIKU, max_tokens: 60, messages: [{ role: 'user', content: `List 3-5 medical/clinical synonyms for "${term}" as a JSON array of lowercase strings. Array only, no other text.` }] }),
+    });
+    if (!r.ok) return [term.toLowerCase()];
+    const d = await r.json();
+    const m = (d.content?.[0]?.text || '').match(/\[[\s\S]*?\]/);
+    if (!m) return [term.toLowerCase()];
+    const synonyms = JSON.parse(m[0]);
+    return [...new Set([term.toLowerCase(), ...synonyms.map((s: unknown) => String(s).toLowerCase())])];
+  } catch { return [term.toLowerCase()]; }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -35,12 +56,15 @@ Deno.serve(async (req) => {
     
     // Get doctor procedures — bounded query with early termination
     const doctorProcedures = await base44.asServiceRole.entities.DoctorSpecialty.list('-created_date', 2000); // Bounded to 2000
-    
-    // Match doctors to procedure
+
+    // AI synonym expansion — "nose job" → ["rhinoplasty","nasal surgery",...] so no patient goes unmatched
+    const searchTerms = await expandSynonyms(procedure_interest);
+
+    // Match doctors to procedure using all synonyms
     const matchedDoctors = allDoctors.filter(doctor => {
       const specialties = doctorProcedures.filter(dp => dp.doctor_id === doctor.id);
-      return specialties.some(sp => 
-        sp.procedure_name?.toLowerCase().includes(procedure_interest.toLowerCase())
+      return specialties.some(sp =>
+        searchTerms.some(term => sp.procedure_name?.toLowerCase().includes(term))
       );
     });
 
