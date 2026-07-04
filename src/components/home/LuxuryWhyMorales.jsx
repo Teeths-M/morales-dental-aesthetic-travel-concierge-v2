@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Shield, Brain, WifiOff } from 'lucide-react';
+import { Users, Shield, Eye, WifiOff } from 'lucide-react';
 
 const GOLD = '#D4AF37';
 
@@ -16,9 +16,9 @@ const features = [
     desc: 'Share a zero-login link before you fly. They see every checkpoint confirmed in real time — like a flight tracker, built entirely for your surgery journey.',
   },
   {
-    icon: Brain,
-    title: 'Protection That Sees Ahead',
-    desc: 'We track your check-in rhythm across every stage of your journey. A missed check-in triggers an immediate alert to your Morales coordinator — before you even know something is wrong.',
+    icon: Eye,
+    title: 'Someone Is Always Watching',
+    desc: 'Every stage of your journey is monitored by a dedicated coordinator. A missed check-in triggers an immediate call — so you never have to wonder if someone is paying attention.',
   },
   {
     icon: WifiOff,

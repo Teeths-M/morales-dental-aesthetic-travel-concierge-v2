@@ -86,7 +86,7 @@ export default function OurExpertsTeaser() {
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
           <div>
             <p className="text-[11px] font-semibold tracking-[0.32em] uppercase mb-4" style={{ color: GOLD }}>
-              Real Transformations. Verified Doctors.
+              Real Procedures. Real Savings.
             </p>
             <h2
               className="text-white leading-tight"
@@ -97,9 +97,9 @@ export default function OurExpertsTeaser() {
                 fontFamily:    '"SF Pro Display", system-ui, sans-serif',
               }}
             >
-              See exactly what's possible —<br />
+              See what's possible —<br />
               <span style={{ color: GOLD, fontStyle: 'italic', fontWeight: 400, fontFamily: 'Georgia, serif' }}>
-                and who'll make it happen.
+                and how much you'll keep.
               </span>
             </h2>
           </div>

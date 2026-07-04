@@ -29,9 +29,9 @@ const CONTENT = {
 
 /* ── Trust badges (ISO, surgeons, concierge) ──────────────────────────────── */
 const TRUST_BADGES = [
-  { icon: BadgeCheck, label: 'ISO 21101 Certified' },
+  { icon: BadgeCheck, label: 'Clinically Verified Partners' },
   { icon: BadgeCheck, label: '100+ Verified Surgeons' },
-  { icon: Heart,      label: 'Safety Verified' },
+  { icon: Heart,      label: 'Safety-First Protocol' },
 ];
 
 /* ── Feature cards below hero ─────────────────────────────────────────────── */
@@ -286,7 +286,7 @@ export default function LuxuryHero() {
               {/* No-account signal */}
               {isMedical && (
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.32)', fontWeight: 500, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  🔓 No account needed to start
+                  No account needed to start
                 </span>
               )}
 
