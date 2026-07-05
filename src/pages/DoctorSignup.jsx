@@ -29,6 +29,7 @@ export default function DoctorSignup() {
     selectedCategories: [],
     procedurePrices: {},
     license_url: '',
+    license_number: '',
     payout_method: '',
     payout_account: ''
   });

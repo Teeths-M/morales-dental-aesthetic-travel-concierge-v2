@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { PLATFORM_PRICING } from '@/lib/constants';
+import { Upload } from 'lucide-react';
 import { ROLES } from '@/lib/roles';
 import { BackButton } from '@/components/nav/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,8 +53,25 @@ export default function LocalDoctorSignup() {
     payout_method: '',
     payout_account: '',
   });
+  const [licenseFile, setLicenseFile] = useState(null);
+  const [licenseUploading, setLicenseUploading] = useState(false);
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+
+  const handleLicenseUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLicenseUploading(true);
+    try {
+      const res = await base44.integrations.Core.UploadFile({ file });
+      set('license_url', res.file_url);
+      setLicenseFile(file.name);
+    } catch (_) {
+      // upload failed silently — user can retry
+    } finally {
+      setLicenseUploading(false);
+    }
+  };
 
   const toggleSpecialty = (s) =>
     setForm(prev => ({
@@ -244,9 +262,22 @@ export default function LocalDoctorSignup() {
                     placeholder="10" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
                 </div>
                 <div>
-                  <Label className="text-gray-300 text-sm">License Document URL <span className="text-gray-500">(optional — upload link)</span></Label>
-                  <Input value={form.license_url} onChange={e => set('license_url', e.target.value)}
-                    placeholder="https://drive.google.com/…" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
+                  <Label className="text-gray-300 text-sm">License Document <span className="text-gray-500">(optional)</span></Label>
+                  <label className="mt-1 block">
+                    <div className="border-2 border-dashed border-[#2A3F4A] rounded-lg p-5 text-center cursor-pointer hover:border-[#D4AF37]/50 transition-colors">
+                      {licenseUploading ? (
+                        <p className="text-sm text-gray-400">Uploading…</p>
+                      ) : licenseFile ? (
+                        <p className="text-sm text-[#D4AF37]">✓ {licenseFile}</p>
+                      ) : (
+                        <div className="space-y-1">
+                          <Upload className="w-5 h-5 mx-auto text-gray-500" />
+                          <p className="text-sm text-gray-400">Upload license (PDF or image)</p>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*,.pdf" onChange={handleLicenseUpload} className="hidden" />
+                    </div>
+                  </label>
                 </div>
                 <Alert className="bg-[#D4AF37]/5 border-[#D4AF37]/20">
                   <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />

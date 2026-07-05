@@ -54,7 +54,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
   };
 
   const handleSubmit = async () => {
-     if (!formData.license_url || !payoutMethod || !formData.payout_account || !confirmed) {
+     if (!formData.license_number || !formData.license_url || !payoutMethod || !formData.payout_account || !confirmed) {
        return;
      }
 
@@ -70,6 +70,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
          professional_background: formData.professional_background,
          years_experience: Number(formData.years_experience) || 0,
          bio: formData.bio,
+         license_number: formData.license_number,
          license_url: formData.license_url,
          payout_method: formData.payout_method,
          payout_account: formData.payout_account,
@@ -163,7 +164,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       }
       };
 
-  const canSubmit = formData.license_url && payoutMethod && formData.payout_account && confirmed;
+  const canSubmit = formData.license_number && formData.license_url && payoutMethod && formData.payout_account && confirmed;
 
   return (
     <div className="space-y-8">
@@ -175,6 +176,19 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       <div className="space-y-6">
         {/* Verification Info */}
         <VerificationInfo language={language} />
+
+        {/* License Number */}
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">🪪 Medical License Number</label>
+          <input
+            type="text"
+            value={formData.license_number || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, license_number: e.target.value }))}
+            placeholder="e.g. CO-123456 or RETHUS-789"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <p className="text-xs text-muted-foreground mt-1">Used for government registry verification during the fraud scan.</p>
+        </div>
 
         {/* License Upload */}
         <div>
