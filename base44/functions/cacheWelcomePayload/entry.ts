@@ -52,7 +52,7 @@ const SEED_GREETINGS = {
   },
   HU: {
     en: {
-      greeting_template: 'Üdvözöljük! Welcome to {{destination_city}}, {{patient_name}}. Budapest's finest medical team is ready for you.',
+      greeting_template: 'Üdvözöljük! Welcome to {{destination_city}}, {{patient_name}}. Budapest\'s finest medical team is ready for you.',
       driver_line: 'Your driver {{driver_name}} awaits you in the arrivals hall. They are holding a sign with the Morales logo.',
       cultural_note: 'Hungary has a proud tradition of medical excellence. Your procedure is in expert hands.',
     },

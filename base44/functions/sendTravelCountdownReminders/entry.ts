@@ -302,7 +302,7 @@ async function buildMilestoneDispatches(base44: any, c: any, daysLeft: number): 
           `${patientName} departs tomorrow — please confirm pickup time with the patient today`,
           `Pickup address: ${c.client_pickup_address || 'confirm via portal'}`,
           'Contact the Morales concierge immediately if any issue arises',
-          'Have the patient's name displayed upon arrival',
+          'Have the patient\'s name displayed upon arrival',
         ]}],
       },
     };
@@ -347,7 +347,7 @@ async function buildMilestoneDispatches(base44: any, c: any, daysLeft: number): 
             'Review the AI recovery meal plan in your companion portal',
             `Patient ${patientName} arrives on ${depShort} — prepare the first recovery meal`,
             'Confirm your contact details are current in the system',
-            'Reach out to the Morales team with any questions about the patient's brief',
+            'Reach out to the Morales team with any questions about the patient\'s brief',
           ]},
           3: { headline: `3 days: ${patientName} needs you — final preparation`, items: [
             `${patientName} arrives in 3 days — please prepare all recovery materials`,
@@ -387,7 +387,7 @@ async function buildMilestoneDispatches(base44: any, c: any, daysLeft: number): 
   // ── 5. Doctor reminder (medical only) ────────────────────────────────────
   if (isMedical && c.doctor_email) {
     const doctorMessages: Record<number, string[]> = {
-      14: [`Patient ${patientName} is scheduled for ${procedures} and departs for ${dest} on ${depDate}`, 'Please review the patient\'s medical history and pre-procedure notes', 'Confirm clinic availability and procedure room booking', 'The patient's full medical brief is available in your dashboard'],
+      14: [`Patient ${patientName} is scheduled for ${procedures} and departs for ${dest} on ${depDate}`, 'Please review the patient\'s medical history and pre-procedure notes', 'Confirm clinic availability and procedure room booking', 'The patient\'s full medical brief is available in your dashboard'],
       7:  [`${patientName} arrives in 7 days for ${procedures}`, 'Please confirm the procedure date and time with the Morales concierge', 'Ensure pre-operative instructions have been communicated to the patient', 'Contact the Morales team if any clinical concern has arisen'],
       3:  [`Final 3-day clinical reminder: ${patientName} arrives ${depShort}`, 'Confirm all pre-operative requirements are in place', 'Clinic team briefed and procedure room confirmed', 'Patient emergency contact available in your dashboard'],
       1:  [`${patientName} arrives TOMORROW for ${procedures}`, 'Final clinical preparation complete', 'Patient has received pre-operative instructions', 'Morales concierge available 24/7 if any clinical update is needed'],
