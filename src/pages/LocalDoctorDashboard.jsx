@@ -4,8 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { CACHE } from '@/lib/constants';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, MapPin, Stethoscope, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
