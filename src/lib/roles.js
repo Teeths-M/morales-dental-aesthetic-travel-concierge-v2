@@ -19,6 +19,7 @@ export const ROLE_PLATFORM_ADMIN = ROLES.PLATFORM_ADMIN;
 export const ROLE_CLIENT         = ROLES.CLIENT;
 export const ROLE_USER           = ROLES.USER;
 export const ROLE_DOCTOR         = ROLES.DOCTOR;
+export const ROLE_LOCAL_DOCTOR   = ROLES.LOCAL_DOCTOR;
 export const ROLE_TRAVEL_AGENCY  = ROLES.TRAVEL_AGENCY;
 export const ROLE_TAXI_SERVICE   = ROLES.TAXI_SERVICE;
 export const ROLE_COMPANION      = ROLES.COMPANION;
@@ -47,6 +48,9 @@ export const CLIENT_PORTAL_ROLES = [...CLIENT_ROLES, ...ADMIN_ROLES];
 /** Roles that can access the doctor portal */
 export const DOCTOR_PORTAL_ROLES = [ROLES.DOCTOR, ...ADMIN_ROLES];
 
+/** Roles that can access the M Local home-country doctor portal */
+export const LOCAL_DOCTOR_PORTAL_ROLES = [ROLES.LOCAL_DOCTOR, ...ADMIN_ROLES];
+
 /** Roles that can access the travel agency portal */
 export const TRAVEL_AGENCY_PORTAL_ROLES = [ROLES.TRAVEL_AGENCY, ...ADMIN_ROLES];
 
@@ -67,6 +71,7 @@ export const ALL_AUTHENTICATED_ROLES = [
   ROLES.CLIENT,
   ROLES.USER,
   ROLES.DOCTOR,
+  ROLES.LOCAL_DOCTOR,
   ROLES.TRAVEL_AGENCY,
   ROLES.TAXI_SERVICE,
   ROLES.COMPANION,

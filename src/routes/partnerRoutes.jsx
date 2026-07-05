@@ -10,6 +10,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
   DOCTOR_PORTAL_ROLES,
+  LOCAL_DOCTOR_PORTAL_ROLES,
   TRAVEL_AGENCY_PORTAL_ROLES,
   TAXI_SERVICE_PORTAL_ROLES,
   COMPANION_PORTAL_ROLES,
@@ -18,6 +19,9 @@ import {
 
 const DoctorDashboard        = lazy(() => import('@/pages/DoctorDashboard'));
 const DoctorCasesDashboard   = lazy(() => import('@/pages/DoctorCasesDashboard'));
+const LocalDoctorSignup      = lazy(() => import('@/pages/LocalDoctorSignup'));
+const LocalDoctorDashboard   = lazy(() => import('@/pages/LocalDoctorDashboard'));
+const PortalLocalDoctor      = lazy(() => import('@/pages/PortalLocalDoctor'));
 const TravelAgencyDashboard  = lazy(() => import('@/pages/TravelAgencyDashboard'));
 const TaxiServiceDashboard   = lazy(() => import('@/pages/TaxiServiceDashboard'));
 const CompanionDashboard     = lazy(() => import('@/pages/CompanionDashboard'));
@@ -42,11 +46,12 @@ const PARTNER_REVIEW_ROLES = [
 export const partnerRoutes = (
   <>
     {/* Token-gated vendor portals — NO AppLayout, NO auth */}
-    <Route key="portal-travel"    path="/portal/travel"          element={<ErrorBoundary><PortalTravelAgency /></ErrorBoundary>} />
-    <Route key="portal-transfer"  path="/portal/transfer"        element={<ErrorBoundary><PortalChauffeur /></ErrorBoundary>} />
-    <Route key="portal-doctor"    path="/portal/doctor/:token"   element={<ErrorBoundary><PortalDoctor /></ErrorBoundary>} />
-    <Route key="portal-proposal"  path="/portal/proposal/:token" element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
-    <Route key="portal-proposal-w" path="/portal/proposal/*"    element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
+    <Route key="portal-travel"    path="/portal/travel"               element={<ErrorBoundary><PortalTravelAgency /></ErrorBoundary>} />
+    <Route key="portal-transfer"  path="/portal/transfer"             element={<ErrorBoundary><PortalChauffeur /></ErrorBoundary>} />
+    <Route key="portal-doctor"    path="/portal/doctor/:token"        element={<ErrorBoundary><PortalDoctor /></ErrorBoundary>} />
+    <Route key="portal-local-dr"  path="/portal/local-doctor/:token"  element={<ErrorBoundary><PortalLocalDoctor /></ErrorBoundary>} />
+    <Route key="portal-proposal"  path="/portal/proposal/:token"      element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
+    <Route key="portal-proposal-w" path="/portal/proposal/*"          element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
 
     {/* Partner signup + dashboards inside AppLayout */}
     <Route key="partner-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
@@ -56,6 +61,11 @@ export const partnerRoutes = (
       <Route path="/companion-signup"             element={<ErrorBoundary><CompanionSignup /></ErrorBoundary>} />
       <Route path="/security-signup"              element={<ErrorBoundary><SecurityAgencySignup /></ErrorBoundary>} />
       <Route path="/doctor-signup"                element={<ErrorBoundary><DoctorSignup /></ErrorBoundary>} />
+      <Route path="/local-doctor-signup"          element={<ErrorBoundary><LocalDoctorSignup /></ErrorBoundary>} />
+
+      <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={LOCAL_DOCTOR_PORTAL_ROLES} /></ErrorBoundary>}>
+        <Route path="/local-doctor-dashboard"     element={<ErrorBoundary><LocalDoctorDashboard /></ErrorBoundary>} />
+      </Route>
 
       <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={DOCTOR_PORTAL_ROLES} /></ErrorBoundary>}>
         <Route path="/doctor-dashboard"            element={<ErrorBoundary><DoctorDashboard /></ErrorBoundary>} />

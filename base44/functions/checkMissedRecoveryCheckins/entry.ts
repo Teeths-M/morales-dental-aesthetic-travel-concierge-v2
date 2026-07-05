@@ -172,6 +172,32 @@ Deno.serve(async (req) => {
         }
       }
 
+      // M Local referral — when escalated and a case_id is available, try to match
+      // a verified home-country doctor and send them a secure referral portal link.
+      if (severity === 'escalate' && session.case_id) {
+        try {
+          const origin = Deno.env.get('SUPABASE_URL') || Deno.env.get('BASE44_URL') || '';
+          const matchResp = await fetch(`${origin}/functions/v1/matchLocalDoctor`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ case_id: session.case_id }),
+          });
+          if (matchResp.ok) {
+            const matchData = await matchResp.json();
+            if (matchData?.data?.matched && matchData.data.doctor?.id) {
+              await fetch(`${origin}/functions/v1/sendLocalDoctorReferral`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  case_id: session.case_id,
+                  local_doctor_id: matchData.data.doctor.id,
+                }),
+              });
+            }
+          }
+        } catch (_) { /* M Local referral is best-effort — never block main cron */ }
+      }
+
       // AuditLog
       await base44.asServiceRole.entities.AuditLog.create({
         event_type: 'recovery_missed_checkin',

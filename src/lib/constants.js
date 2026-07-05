@@ -13,6 +13,7 @@
 export const ROLES = {
   CLIENT: 'client',
   DOCTOR: 'doctor',
+  LOCAL_DOCTOR: 'local_doctor',
   TRAVEL_AGENCY: 'travel_agency',
   TAXI_SERVICE: 'taxi_service',
   COMPANION: 'companion',
@@ -177,6 +178,8 @@ export const ROUTES = {
   
   // Partner Portals
   DOCTOR_DASHBOARD: '/doctor-dashboard',
+  LOCAL_DOCTOR_SIGNUP: '/local-doctor-signup',
+  LOCAL_DOCTOR_DASHBOARD: '/local-doctor-dashboard',
   TRAVEL_AGENCY_DASHBOARD: '/travel-agency-dashboard',
   TAXI_SERVICE_DASHBOARD: '/taxi-service-dashboard',
   COMPANION_DASHBOARD: '/companion-dashboard',
@@ -314,6 +317,11 @@ export const PLATFORM_PRICING = {
 
   // Doctor trust badge — monthly subscription to carry the Morales M
   DOCTOR_BADGE_MONTHLY_USD: 9.99,
+
+  // M Local — home-country doctor network monthly subscription
+  LOCAL_DOCTOR_SUBSCRIPTION_USD: 9.99,
+  // Referral fee paid to M Local doctor per accepted referral case
+  LOCAL_DOCTOR_REFERRAL_FEE_USD: 0,
 
   // Partner network fee — taken from each partner transaction (escort, companion, accommodation, security)
   PARTNER_NETWORK_FEE: 0.05,
