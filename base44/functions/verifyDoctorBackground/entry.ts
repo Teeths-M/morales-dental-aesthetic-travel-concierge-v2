@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // Handles admin decisions on the BACKGROUND CHECK sub-check only.
 // Background approval is one of three required checks; activation only happens
@@ -78,6 +79,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     },
     sensitive: true,
     timestamp: now,
+    prev_hash: await computePrevHash(base44),
   });
 
   const nextStep = action === 'approve' || action === 'manual_override'

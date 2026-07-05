@@ -1,5 +1,6 @@
 // @ts-nocheck — Deno types not in VS Code LSP (pre-existing config gap, not a real error)
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // VPN / Tor / datacenter IP prefix heuristics — expand as threat intelligence updates
 const TOR_VPN_PREFIXES   = ['185.220.', '185.130.', '185.164.', '194.165.', '45.142.', '45.143.', '198.96.', '23.129.'];
@@ -193,6 +194,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       details:     { score, level, flags, signals },
       sensitive:   true,
       timestamp:   new Date().toISOString(),
+      prev_hash:   await computePrevHash(base44),
     });
   }
 
@@ -205,4 +207,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     xai_positives:    positives,
     signals,
   });
-}, { name: 'runFraudIntelligence', requireAuth: true, allowedRoles: ['admin'] }));
+}, { name: 'runFraudIntelligence', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));

@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * approveCompanionExpense
@@ -126,6 +127,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }
 
   // Audit log
+  const companionExpensePrevHash = await computePrevHash(base44);
   tasks.push(base44.asServiceRole.entities.AuditLog.create({
     event_type:   'companion_expense_approved',
     actor_id:     user?.id || 'patient',
@@ -133,6 +135,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     resource_type:'MealDelivery', resource_id: meal_delivery_id, case_id: delivery.case_id,
     sensitive:    false, timestamp: now,
     details: { amount: delivery.receipt_amount_usd, meal_type: delivery.meal_type, method: approval_method },
+    prev_hash: companionExpensePrevHash,
   }));
 
   await Promise.allSettled(tasks);

@@ -42,16 +42,51 @@ Deno.serve(async (req) => {
         proposal_sent_at: caseRecord.proposal_sent_at,
         doctor_selected: caseRecord.doctor_selected,
         clinic_selected: caseRecord.clinic_selected,
-        base_cost: caseRecord.base_cost,
-        markup_percentage: caseRecord.markup_percentage,
         consultation_fee_paid: caseRecord.consultation_fee_paid,
         consultation_fee_amount: caseRecord.consultation_fee_amount,
         // Explicitly excluded: medications, allergies, medical_conditions, anesthesia_history,
         // mental_health_notes, signature_data, doctor_portal_token, admin_notes, timeline_log,
         // safe_t_result, safe_t_flags, risk_score, client_email, client_phone, client_country,
-        // stripe_payment_id, consultation_id, informed_consent_email_html, passport tokens
+        // stripe_payment_id, consultation_id, informed_consent_email_html, passport tokens,
+        // base_cost, markup_percentage (internal commission data — RBAC_AUDIT_PLAN.md P1-F)
       };
       return Response.json({ case: proposalDTO });
+    }
+
+    // GET_MY_CASE: the authenticated patient's own case status, for their dashboard poll.
+    // BUG FIX: this action was called by CaseStatusModule.jsx every 30s but never existed
+    // in this function — every action below requires admin auth, so the poll has always
+    // either 403'd or silently returned nothing for real patients. Must sit before the
+    // admin gate below since a regular client (not an admin) needs to reach it.
+    if (action === 'get_my_case') {
+      const me = await base44.auth.me().catch(() => null);
+      if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+      const cases = await base44.asServiceRole.entities.CaseRecord.filter(
+        { client_email: me.email }, '-created_date', 5
+      );
+
+      // SECURITY: this is the owner's own data, but still exclude internal-only /
+      // admin-facing fields that a patient dashboard has no reason to receive.
+      const safeCases = cases.map((c) => ({
+        id: c.id,
+        consultation_id: c.consultation_id,
+        case_record_id: c.id,
+        status: c.status,
+        workflow_stage: c.workflow_stage,
+        safe_t_result: c.safe_t_result,
+        risk_flags: c.risk_flags,
+        payment_status: c.payment_status,
+        final_package_price: c.final_package_price,
+        amount_paid: c.amount_paid,
+        amount_remaining: c.amount_remaining,
+        consultation_fee_paid: c.consultation_fee_paid,
+        consultation_fee_amount: c.consultation_fee_amount,
+        proposal_token: c.proposal_token,
+        created_date: c.created_date,
+      }));
+
+      return Response.json({ cases: safeCases });
     }
 
     // All other actions require admin authentication
@@ -143,6 +178,7 @@ Deno.serve(async (req) => {
 
       // ── SMART DOCTOR ROUTING: Country + Procedure Load Balancer ──────────────
       // Skip if case is already held for high-risk review
+      let doctorAutoAssigned = false;
       if (!consultation.high_risk_medical_review) {
         const procedureInterest = consultation.procedure_interest || '';
         const destinationCountry = (consultation.destination_country || consultation.procedure_country || '').toLowerCase().trim();
@@ -190,6 +226,7 @@ Deno.serve(async (req) => {
           });
 
           const assignedDoctor = sorted[0];
+          doctorAutoAssigned = true;
 
           await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
             doctor_selected: assignedDoctor.full_name,
@@ -228,6 +265,7 @@ Deno.serve(async (req) => {
           ) || defaultDoctorConfigs[0];
 
           if (defaultDoctor) {
+            doctorAutoAssigned = true;
             await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
               doctor_selected: defaultDoctor.doctor_name,
               doctor_email: defaultDoctor.doctor_email,
@@ -282,24 +320,31 @@ Deno.serve(async (req) => {
       }
 
       // AUTO-GENERATE PROPOSAL TOKEN (clean alphanumeric only - no timestamps or random hashes)
+      // SAFETY FIX: this used to run unconditionally, silently overwriting the
+      // 'Admin-Review' hold set above for high-risk cases back to 'Proposal-Sent' a few
+      // lines later — a flagged high-risk case would incorrectly proceed to "proposal
+      // sent" before any admin ever cleared it. The token itself is harmless to generate
+      // early (useful once the admin does clear it), but the status/proposal_sent_at
+      // fields must never override an active high-risk hold.
       const proposalToken = `prop_${caseRecord.id}`;
       await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
         proposal_token: proposalToken,
-        proposal_sent_at: new Date().toISOString(),
-        status: 'Proposal-Sent'
+        ...(consultation.high_risk_medical_review === true
+          ? {}
+          : { proposal_sent_at: new Date().toISOString(), status: 'Proposal-Sent' }),
       });
 
       const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
       const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
 
-      return Response.json({ 
-        status: 'CREATED', 
+      return Response.json({
+        status: 'CREATED',
         case_id: caseRecord.id,
         proposal_token: proposalToken,
         proposal_url: proposalUrl,
-        doctor_auto_assigned: isDentalProcedure || isVenezuela,
-        message: isDentalProcedure || isVenezuela
-          ? 'Case created, default doctor auto-assigned, SAFE-T review initiated, proposal generated'
+        doctor_auto_assigned: doctorAutoAssigned,
+        message: doctorAutoAssigned
+          ? 'Case created, doctor auto-assigned, SAFE-T review initiated, proposal generated'
           : 'Case created, SAFE-T review initiated, proposal generated'
       });
     }
@@ -333,9 +378,15 @@ Deno.serve(async (req) => {
         profit: caseRecord.base_cost * (markupPct / 100)
       });
 
-      // Send proposal email to client with absolute URL - route to NEW standalone payment page with token
+      // Send proposal email to client with absolute URL.
+      // FIX: this used to point at /pay-now?token=..., which is behind ProtectedRoute —
+      // any client who isn't already logged in on that device hits a login wall, and
+      // ProtectedRoute's login button doesn't actually preserve the return URL (it's
+      // wired as a raw onClick handler, so it receives a click event instead of a URL
+      // string and falls back to /dashboard), permanently losing the token. Point
+      // directly at the genuinely public, no-login /portal/proposal/:token page instead.
       const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-      const paymentUrl = `${appUrl}/pay-now?token=${proposalToken}`;
+      const paymentUrl = `${appUrl}/portal/proposal/${proposalToken}`;
       
       // BUG-R9-01 FIX: use asServiceRole for integrations in admin-scoped actions
       await base44.asServiceRole.integrations.Core.SendEmail({

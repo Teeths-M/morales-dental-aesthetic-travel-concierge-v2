@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -156,6 +157,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }
 
   // Create QuoteRequest records + update CaseRecord
+  const partnerQuotasPrevHash = await computePrevHash(base44);
   dispatches.push(
     base44.asServiceRole.entities.CaseRecord.update(case_id, {
       status: 'Vendor-Pending',
@@ -167,6 +169,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       event_type: 'partner_quotas_requested', actor_id: 'system', actor_role: 'system',
       actor_name: 'Morales Automation', resource_type: 'CaseRecord', resource_id: case_id,
       case_id, details: { sent_to: sent, patient: patientName }, sensitive: false, timestamp: now,
+      prev_hash: partnerQuotasPrevHash,
     })
   );
 

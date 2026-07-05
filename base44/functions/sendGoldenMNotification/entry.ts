@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const GOLD    = '#D4AF37';
@@ -137,10 +138,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }
 
   // Write audit log
+  const goldenMPrevHash = await computePrevHash(base44);
   tasks.push(base44.asServiceRole.entities.AuditLog.create({
     event_type: 'golden_m_notification_sent',
     related_id: trip_id,
     details: { client_name: clientName, duration, procedures },
+    prev_hash: goldenMPrevHash,
   }).catch(() => {}));
 
   await Promise.allSettled(tasks);

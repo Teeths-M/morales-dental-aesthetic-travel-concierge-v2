@@ -95,8 +95,19 @@ Deno.serve(createHandler(async ({ base44, req }) => {
     verification_status: 'sanctions_flagged',
   });
 
-  // Write audit entry.
+  // Write audit entry — computes a real hash-chain link, matching logAuditEvent's pattern.
   try {
+    let prevHash = 'GENESIS';
+    try {
+      const lastEntries = await b44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+      if (lastEntries?.length > 0) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(lastEntries[0])));
+        prevHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (_) {
+      prevHash = 'GENESIS_FALLBACK';
+    }
+
     await b44.asServiceRole.entities.AuditLog.create({
       event_type: 'partner_notified',
       actor_id: 'system',
@@ -113,7 +124,7 @@ Deno.serve(createHandler(async ({ base44, req }) => {
       },
       sensitive: true,
       timestamp: now,
-      prev_hash: 'SANCTIONS_WEBHOOK',
+      prev_hash: prevHash,
     });
   } catch (_) { /* audit write is best-effort */ }
 

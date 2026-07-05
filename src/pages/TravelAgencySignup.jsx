@@ -42,8 +42,10 @@ export default function TravelAgencySignup() {
 
   // Load saved draft — must be its own effect so it runs after the cleanup-returning language effect
   useEffect(() => {
-    const savedDraft = loadSignupDraft('travel_agency');
-    if (savedDraft) setFormData(savedDraft);
+    (async () => {
+      const savedDraft = await loadSignupDraft('travel_agency');
+      if (savedDraft) setFormData(savedDraft);
+    })();
   }, []);
 
   // Auto-save draft

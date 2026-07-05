@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── High-risk checkpoints requiring dual-party confirmation ──────────────────
 // HS4 (hotel_checkin) and HS5 (clinic_arrival) are life-safety inflection points.
@@ -169,6 +170,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     },
     sensitive:  false,
     timestamp:  now,
+    prev_hash:  await computePrevHash(base44),
   });
 
   // ── Dual-signal verification for HIGH-RISK checkpoints (HS4, HS5) ────────────

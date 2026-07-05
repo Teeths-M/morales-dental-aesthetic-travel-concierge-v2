@@ -3,6 +3,15 @@
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // SECURITY: this is a destructive bulk-delete action — must require admin auth.
+    // If a user session is present it must be admin/platform_admin; automation calls
+    // from Base44 entity-delete triggers arrive without a user session.
+    const user = await base44.auth.me().catch(() => null);
+    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
     const { data } = await req.json();
 
     if (!data || !data.doctor_id) {

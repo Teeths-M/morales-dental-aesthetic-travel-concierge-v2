@@ -9,6 +9,7 @@
  * Also sends the Day 3 notification immediately since it's the most time-sensitive.
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 function generateToken(): string {
   const bytes = new Uint8Array(18);
@@ -123,6 +124,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     resource_id: case_id,
     details:     { days_scheduled: created, patient_email: patientEmail, procedure },
     timestamp:   now.toISOString(),
+    prev_hash:   await computePrevHash(base44),
   }).catch(() => {});
 
   return ok({ success: true, scheduled_days: created, already_existed: CHECK_IN_DAYS.filter(d => !created.includes(d)) });

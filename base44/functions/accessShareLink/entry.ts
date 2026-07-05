@@ -36,11 +36,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Share link has expired' }, { status: 410 });
     }
 
-    // Check access count
-    if (shareLink.access_count >= shareLink.max_access_count) {
-      return Response.json({ error: 'Maximum access count reached' }, { status: 410 });
-    }
-
     // SEC-03: Enforce recipient_email restriction — this was previously a no-op stub
     if (shareLink.recipient_email) {
       let requestUser = null;
@@ -48,6 +43,23 @@ Deno.serve(async (req) => {
       if (!requestUser || requestUser.email !== shareLink.recipient_email) {
         return Response.json({ error: 'This share link is restricted to a specific recipient. Please log in with the correct account.' }, { status: 403 });
       }
+    }
+
+    const clientIp = (() => { const f = req.headers.get('x-forwarded-for'); return f ? f.split(',').pop()?.trim() || 'unknown' : req.headers.get('cf-connecting-ip') || 'unknown'; })();
+
+    // ATOMIC conditional increment BEFORE generating the signed URL — closes the race where
+    // two simultaneous requests against a max_access_count=1 link both read access_count=0,
+    // both pass the old plain `if (access_count >= max)` check, both get a signed URL, and
+    // both write access_count=1, granting access twice when only one grant was allowed.
+    // The database evaluates `access_count < max_access_count` and applies $inc atomically
+    // per document — only one of two racing requests can ever win this.
+    const incrementResult = await base44.asServiceRole.entities.SecureShareLink.updateMany(
+      { share_token, is_active: true, access_count: { $lt: shareLink.max_access_count } },
+      { $set: { last_accessed_at: now.toISOString(), last_accessed_ip: clientIp }, $inc: { access_count: 1 } }
+    );
+
+    if (!incrementResult?.updated) {
+      return Response.json({ error: 'Maximum access count reached' }, { status: 410 });
     }
 
     // Get vault — SDK filter() cannot query by built-in `id` field.
@@ -63,14 +75,6 @@ Deno.serve(async (req) => {
     const { signed_url } = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({
       file_uri: vault.encrypted_file_uri,
       expires_in: 60
-    });
-
-    // Update access count
-    await base44.asServiceRole.entities.SecureShareLink.update(shareLink.id, {
-      access_count: (shareLink.access_count || 0) + 1,
-      last_accessed_at: now.toISOString(),
-      // Use the rightmost IP — proxies append, so rightmost = actual client
-      last_accessed_ip: (() => { const f = req.headers.get('x-forwarded-for'); return f ? f.split(',').pop()?.trim() || 'unknown' : req.headers.get('cf-connecting-ip') || 'unknown'; })()
     });
 
     // BUG-01 FIX: 'passport_access_granted' is NOT in the AuditLog entity enum — it caused

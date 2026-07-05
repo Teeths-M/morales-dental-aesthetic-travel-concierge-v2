@@ -12,6 +12,7 @@
  *   - Future cron job (when native app ships)
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const SLEEP_START = 22; // 10 PM
 const SLEEP_END   =  6; // 6 AM
@@ -83,6 +84,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     performed_by: 'system:guardian',
     metadata:     { reason, token, phone_suffix: cons.phone?.slice(-4) || 'xxxx' },
     created_at:   now,
+    prev_hash:    await computePrevHash(base44),
   }).catch(() => {});
 
   return ok({ sent: true, token, reason });

@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * registerSatelliteDevice
@@ -127,6 +128,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }
 
   // Audit log
+  const satelliteDevicePrevHash = await computePrevHash(base44);
   tasks.push(base44.asServiceRole.entities.AuditLog.create({
     event_type:   'satellite_device_registered',
     actor_id:     user?.id || 'admin',
@@ -139,6 +141,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     sensitive:    false,
     timestamp:    now,
     details:      { device_type, rock7_imei, device_phone, device_label, include_in_package },
+    prev_hash:    satelliteDevicePrevHash,
   }).catch(() => {}));
 
   await Promise.allSettled(tasks);

@@ -4,6 +4,7 @@
  * Does NOT include sensitive medical/vault data.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -35,7 +36,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     let user = null;
     try { user = await base44.auth.me(); } catch (_) {}
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Admin access required.' }, { status: 403 });
     }
 
@@ -157,6 +158,7 @@ Deno.serve(async (req) => {
       details: { action: 'incident_report_generated', sos_event_id },
       sensitive: false,
       timestamp: now,
+      prev_hash: await computePrevHash(base44),
     }).catch(() => {});
 
     return Response.json({ report, success: true });

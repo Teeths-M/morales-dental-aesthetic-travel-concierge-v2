@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── recalculateTripTimings ────────────────────────────────────────────────────
 // Triggered by manageTripPause on resume.
@@ -162,6 +163,7 @@ Deno.serve(async (req) => {
       details: { trip_id, duration_minutes, shifted_count: shifted.length, shifted },
       sensitive: false,
       timestamp: nowIso,
+      prev_hash: await computePrevHash(base44),
     }).catch(() => {});
 
     return Response.json({

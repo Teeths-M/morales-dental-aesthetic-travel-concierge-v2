@@ -3,7 +3,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
+
+    // SECURITY: this triggers billed LLM vision analysis and overwrites
+    // PartnerVerification.documents_uploaded — must not be callable anonymously.
+    // Matches the auth level of its only legitimate caller, initiatePartnerVerification.
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { verification_id, documents } = await req.json();
 
     if (!verification_id || !documents || documents.length === 0) {

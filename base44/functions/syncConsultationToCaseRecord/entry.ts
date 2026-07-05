@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // Fields that may be synced from Consultation → CaseRecord.
 // Any field not in this list is silently ignored — never blindly merge arbitrary payload.
@@ -59,6 +60,7 @@ Deno.serve(async (req) => {
         },
         sensitive: false,
         timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44),
       }); } catch (_) { /* audit log is best-effort in automation context */ }
     }
 

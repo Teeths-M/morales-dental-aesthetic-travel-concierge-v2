@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * submitPartnerQuote — Automation Gate
@@ -107,6 +108,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
         companion:fresh.companion_quote_status,
         clinic:   fresh.clinic_quote_status,
       },
+      prev_hash: await computePrevHash(base44),
     });
 
     // Auto-fire: calculatePackagePrice → sendPayNowEmail (async, non-blocking)

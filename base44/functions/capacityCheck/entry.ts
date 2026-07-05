@@ -153,34 +153,35 @@ If you have any questions, contact our concierge team directly.
       }
     }
 
-    // Retry loop to guard against concurrent increments
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const cap = await getCapacity(year_month);
+    // Ensure the capacity record exists and read its limit (capacity_limit rarely
+    // changes and is admin-only, so a small staleness window on it is acceptable —
+    // unlike confirmed_count, which is under real concurrent contention).
+    const cap = await getCapacity(year_month);
 
-      // Capacity guard — reject before incrementing
-      if (cap.confirmed_count >= cap.capacity_limit) {
-        return Response.json({
-          error: 'Month is fully booked',
-          year_month,
-          capacity_limit: cap.capacity_limit,
-          confirmed_count: cap.confirmed_count
-        }, { status: 409 });
-      }
+    // ATOMIC conditional increment: the database evaluates `confirmed_count < capacity_limit`
+    // and applies `$inc` as a single atomic operation per document. Two simultaneous requests
+    // for the last slot can no longer both read the same pre-increment count and both succeed —
+    // only one of them will see updated === 1; the other correctly sees the month as full.
+    // (The previous "read, write, re-read to verify" loop was not a real compare-and-swap:
+    // it only confirmed the final stored value matched what THIS request wrote, not that no
+    // one else had written in between — two racing requests could both write the same
+    // newCount and both believe they succeeded, silently overbooking.)
+    const result = await base44.asServiceRole.entities.MonthlyCapacity.updateMany(
+      { year_month, confirmed_count: { $lt: cap.capacity_limit } },
+      { $inc: { confirmed_count: 1 } }
+    );
 
-      const expectedCount = cap.confirmed_count;
-      const newCount = expectedCount + 1;
-
-      await base44.asServiceRole.entities.MonthlyCapacity.update(cap.id, { confirmed_count: newCount });
-
-      // Optimistic concurrency check: re-read and verify the write took effect
-      const verify = await base44.asServiceRole.entities.MonthlyCapacity.filter({ year_month });
-      if (verify[0]?.confirmed_count === newCount) {
-        return Response.json({ success: true, confirmed_count: newCount });
-      }
-      // Value differs — another writer raced us; retry
+    if (!result?.updated) {
+      return Response.json({
+        error: 'Month is fully booked',
+        year_month,
+        capacity_limit: cap.capacity_limit,
+        confirmed_count: cap.confirmed_count,
+      }, { status: 409 });
     }
 
-    return Response.json({ error: 'Failed to increment capacity after retries — please try again' }, { status: 503 });
+    const updatedCap = await getCapacity(year_month);
+    return Response.json({ success: true, confirmed_count: updatedCap.confirmed_count });
   }
 
   // ── action: cancel_booking (decrement + notify next waiter) ───────────────

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -411,6 +412,7 @@ Deno.serve(async (req) => {
         details: { signed_at: now, ip_address: ip_address || 'unknown', risk_flags: cr.safe_t_flags },
         sensitive: true,
         timestamp: now,
+        prev_hash: await computePrevHash(base44),
       });
 
       return Response.json({ success: true, status: 'WAIVER_SIGNED', safe_t_result: 'PASSED' });
@@ -449,6 +451,7 @@ Deno.serve(async (req) => {
         details: { reason: result.reason, flags: result.flags },
         sensitive: true,
         timestamp: now,
+        prev_hash: await computePrevHash(base44),
       });
 
       try {

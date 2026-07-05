@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * flagProcedureStackingRisk
@@ -40,6 +41,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     },
     sensitive:  true,
     timestamp:  now,
+    prev_hash:  await computePrevHash(base44),
   }).catch(() => {}); // audit failure must not surface to patient
 
   // ── 2. Update consultation draft if we have one ───────────────────────────

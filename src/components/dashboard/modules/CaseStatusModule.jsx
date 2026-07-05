@@ -205,7 +205,7 @@ export default function CaseStatusModule({ userEmail }) {
 
       {/* Proposal CTA */}
       {caseData.status === 'Proposal-Sent' && caseData.proposal_token && (
-        <a href={`/portal/proposal?token=${caseData.proposal_token}`} target="_blank" rel="noopener noreferrer">
+        <a href={`/portal/proposal/${caseData.proposal_token}`} target="_blank" rel="noopener noreferrer">
           <Button className="w-full font-semibold py-3 rounded-xl text-sm" style={{ background: 'linear-gradient(135deg, #C5A059, #a8863c)', color: '#022C22' }}>
             ✨ View & Pay Your Proposal
           </Button>

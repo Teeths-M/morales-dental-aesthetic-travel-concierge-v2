@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHmac } from 'node:crypto';
 
 // ── processTwilioRecovery — Twilio SMS Webhook ────────────────────────────────
 // STUB: Ready for live Twilio credentials. Parses patient SMS recovery check-ins.
@@ -24,17 +25,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 // On parse success: calls checkRecoveryAnomaly internally with submitted_via='sms'.
 // Looks up the patient's active RecoverySession by phone number (from_phone).
 
-// Twilio signature validation — uncomment for production
-// async function validateTwilioSignature(req, rawBody) {
-//   const secret    = Deno.env.get('TWILIO_WEBHOOK_SECRET');
-//   if (!secret) return true;
-//   const signature = req.headers.get('X-Twilio-Signature') || '';
-//   const key = await crypto.subtle.importKey(
-//     'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
-//   );
-//   const raw = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(req.url + rawBody));
-//   return signature === btoa(String.fromCharCode(...new Uint8Array(raw)));
-// }
+// Twilio signature validation — same HMAC-SHA1 scheme used by twilioSmsHandshakeWebhook.
+function validateTwilioSignature(url, params, signature, authToken) {
+  const sortedKeys = Object.keys(params).sort();
+  const str = url + sortedKeys.map((k) => k + params[k]).join('');
+  const expected = createHmac('sha1', authToken).update(str).digest('base64');
+  return expected === signature;
+}
 
 function twiml(message) {
   return new Response(
@@ -68,13 +65,28 @@ function parseRecoverySms(body) {
 Deno.serve(async (req) => {
   try {
     const rawBody   = await req.text();
+    const paramsObj = {};
+    new URLSearchParams(rawBody).forEach((v, k) => { paramsObj[k] = v; });
     const params    = new URLSearchParams(rawBody);
     const fromPhone = params.get('From') || '';
     const body      = (params.get('Body') || '').trim();
     const messageSid = params.get('MessageSid') || '';
 
-    // MOCK: log incoming SMS
-    console.log(`[processTwilioRecovery] MOCK inbound SMS from ${fromPhone}: "${body}"`);
+    // ── Signature validation: reject forged webhooks ─────────────────────────
+    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN') || Deno.env.get('TWILIO_WEBHOOK_SECRET');
+    if (authToken) {
+      const twilioSig = req.headers.get('x-twilio-signature') || '';
+      const appUrl = Deno.env.get('APP_URL') || '';
+      const webhookUrl = `${appUrl}/api/functions/processTwilioRecovery`;
+      if (!twilioSig || !appUrl || !validateTwilioSignature(webhookUrl, paramsObj, twilioSig, authToken)) {
+        console.error('[processTwilioRecovery] rejected: invalid or missing Twilio signature');
+        return twiml('Invalid request.');
+      }
+    } else {
+      console.error('[processTwilioRecovery] TWILIO_AUTH_TOKEN not set — signature validation skipped. Configure this before going live with real Twilio traffic.');
+    }
+
+    console.log(`[processTwilioRecovery] inbound SMS from ${fromPhone}: "${body}"`);
 
     // Only handle RECOVERY commands — pass other messages through
     if (!body.toUpperCase().startsWith('RECOVERY')) {

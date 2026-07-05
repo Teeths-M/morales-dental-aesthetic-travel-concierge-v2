@@ -61,14 +61,16 @@ export default function EmergencyManifest() {
     // --- OFFLINE PATH: verify PIN locally using stored hash ---
     if (isOffline) {
       try {
-        // Try legacy SHA-256 hash first (morales_emergency_pin_hash)
-        const storedLocal = JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null');
-        if (storedLocal?.hash) {
-          const email = storedLocal.email || '';
-          const data = new TextEncoder().encode(pin + ':' + email);
-          const buf = await crypto.subtle.digest('SHA-256', data);
-          const enteredHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-          if (enteredHash === storedLocal.hash) {
+        // SECURITY: try the strong PBKDF2 vault PIN (600k iterations) FIRST.
+        // The legacy SHA-256 hash (morales_emergency_pin_hash, single round, no salt
+        // stretching) is only a fallback for devices that stored a PIN before the
+        // PBKDF2 vault existed — every current setup writes both, so this path is
+        // rarely reached and must never be tried before the strong hash.
+        const pbkdf2Key = Object.keys(localStorage).find(k => k.startsWith('morales_vault_pin_'));
+        if (pbkdf2Key) {
+          const email = pbkdf2Key.replace('morales_vault_pin_', '');
+          const result = await verifyVaultPIN(email, pin);
+          if (result.valid) {
             setManifest(cached || null);
             if (!cached) setError('PIN correct but no cached manifest. Connect once online to prime your offline manifest.');
             setLoading(false);
@@ -76,13 +78,15 @@ export default function EmergencyManifest() {
           }
         }
 
-        // Fallback: try PBKDF2 vault PIN (morales_vault_pin_<email>)
-        // The PIN was set via EmergencyPINSetup — scan for any PBKDF2 key
-        const pbkdf2Key = Object.keys(localStorage).find(k => k.startsWith('morales_vault_pin_'));
-        if (pbkdf2Key) {
-          const email = pbkdf2Key.replace('morales_vault_pin_', '');
-          const result = await verifyVaultPIN(email, pin);
-          if (result.valid) {
+        // Fallback: legacy SHA-256 hash (morales_emergency_pin_hash) — only reached
+        // when no PBKDF2 key exists on this device at all.
+        const storedLocal = !pbkdf2Key ? JSON.parse(localStorage.getItem('morales_emergency_pin_hash') || 'null') : null;
+        if (storedLocal?.hash) {
+          const email = storedLocal.email || '';
+          const data = new TextEncoder().encode(pin + ':' + email);
+          const buf = await crypto.subtle.digest('SHA-256', data);
+          const enteredHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+          if (enteredHash === storedLocal.hash) {
             setManifest(cached || null);
             if (!cached) setError('PIN correct but no cached manifest. Connect once online to prime your offline manifest.');
             setLoading(false);

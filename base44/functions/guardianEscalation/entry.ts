@@ -13,6 +13,7 @@
  * Board constraint: Sleep hours (10 PM – 6 AM) — escalation holds unless critical.
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const SLEEP_START = 22;
 const SLEEP_END   =  6;
@@ -73,6 +74,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       performed_by: 'system:guardian',
       metadata:     { strike, reason, anomaly_score, context_note },
       created_at:   now,
+      prev_hash:    await computePrevHash(base44),
     }).catch(() => {});
 
     return ok({ action: 'soft_ping', strike });
@@ -101,6 +103,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       performed_by: 'system:guardian',
       metadata:     { strike, reason, anomaly_score, context_note },
       created_at:   now,
+      prev_hash:    await computePrevHash(base44),
     }).catch(() => {});
 
     return ok({ action: 'check_in_requested', strike });
@@ -133,6 +136,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       performed_by: 'system:guardian',
       metadata:     { strike, reason, anomaly_score, context_note, requires_human_review: true },
       created_at:   now,
+      prev_hash:    await computePrevHash(base44),
     }).catch(() => {});
 
     // In-app critical notification

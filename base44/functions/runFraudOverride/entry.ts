@@ -1,5 +1,6 @@
 // @ts-nocheck — Deno types not in VS Code LSP (pre-existing config gap, not a real error)
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // Valid override actions
 const VALID_ACTIONS = new Set(['fast_track_clear', 'whitelist', 'escalate']);
@@ -38,7 +39,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     details:       { action, override_state: overrideState, reason: reason.trim() },
     sensitive:     true,
     timestamp:     now,
+    prev_hash:     await computePrevHash(base44),
   });
 
   return ok({ success: true, override: overrideState, cleared_by: adminName, timestamp: now });
-}, { name: 'runFraudOverride', requireAuth: true, allowedRoles: ['admin'] }));
+}, { name: 'runFraudOverride', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));

@@ -399,7 +399,20 @@ export default function Booking() {
   }, [userEmail]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
+      // M PRINCIPLE — server-side re-check. The client-side RED gate (getViolations
+      // above, ProcedureStackingBlocker UI) can be skipped by calling this mutation
+      // directly — this call re-derives the same verdict server-side so the hard
+      // block cannot be bypassed by going around the frontend.
+      if (items.length >= 2) {
+        const safetyCheck = await base44.functions.invoke('validateProcedureSafety', {
+          items: items.map(i => ({ name: i.name, title: i.name })),
+        });
+        if (safetyCheck?.data?.isBlocked) {
+          throw new Error('This procedure combination requires enhanced medical review before booking. Please adjust your selection or contact our care team.');
+        }
+      }
+
       // Map cart items to valid enum values; fall back to 'other'
       const VALID_PROCEDURE_ENUMS = [
         'dental_implants','all_on_4','porcelain_veneers','smile_makeover','bone_regeneration',

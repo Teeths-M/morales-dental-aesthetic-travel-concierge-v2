@@ -12,6 +12,7 @@
  * Reason: if someone used the covert trigger, the situation is already critical.
  */
 import { createHandler, ok } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 async function sendSms(to: string, message: string) {
   const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -76,6 +77,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     },
     sensitive:   true,
     timestamp:   now,
+    prev_hash:   await computePrevHash(base44),
   }).catch(() => {});
 
   // ── 2. Create/update SOS record — skip standard escalation chain,

@@ -98,7 +98,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Log to AuditLog
+    // Log to AuditLog — computes a real hash-chain link, matching logAuditEvent's pattern.
+    let prevHash = 'GENESIS';
+    try {
+      const lastEntries = await base44.asServiceRole.entities.AuditLog.list('-timestamp', 1);
+      if (lastEntries?.length > 0) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(lastEntries[0])));
+        prevHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (_) {
+      prevHash = 'GENESIS_FALLBACK';
+    }
+
     await base44.asServiceRole.entities.AuditLog.create({
       event_type: 'partner_notified',
       actor_id: user.id,
@@ -116,7 +127,7 @@ Deno.serve(async (req) => {
       },
       sensitive: true,
       timestamp: now,
-      prev_hash: 'MANUAL_REVIEW'
+      prev_hash: prevHash
     });
 
     return Response.json({

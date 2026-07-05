@@ -1,4 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHmac } from 'node:crypto';
+
+// Doctor auto-activation clear-scan bands.
+// <= CLEAR_THRESHOLD:            "clear" — auto-activate, no human touch.
+// CLEAR_THRESHOLD < x <= 70:      "neutral" — human review (unchanged behavior).
+// > 70:                          denied (unchanged behavior).
+const CLEAR_THRESHOLD = 20;
+
+// Generates the short-lived proof activateVerifiedDoctor requires for its
+// auto-activation path. Both functions read the same DOCTOR_AUTO_ACTIVATION_SECRET —
+// nobody else can produce a valid proof, and it expires in 60 seconds.
+function generateAutoActivationProof(doctorId: string, timestamp: string): string | null {
+  const secret = Deno.env.get('DOCTOR_AUTO_ACTIVATION_SECRET');
+  if (!secret) return null;
+  return createHmac('sha256', secret).update(`${doctorId}:${timestamp}`).digest('hex');
+}
 
 Deno.serve(async (req) => {
   try {
@@ -113,16 +129,24 @@ Deno.serve(async (req) => {
     const { fraud_score, fraud_indicators } = analysisResult.data;
 
     let newStatus = 'ai_analysis_complete';
-    const autoVerified = false;
-    const verifiedBy = 'ai_auto';
-    const verifiedAt = null;
+    let autoVerified = false;
+    let verifiedBy = 'ai_auto';
+    let verifiedAt: string | null = null;
 
     // Auto-decision based on fraud score.
-    // SECURITY: Doctors are NEVER auto-activated — patient safety requires explicit
-    // human approval via activateVerifiedDoctor. All other partners also require
-    // manual admin review; none are auto-activated.
+    // Doctors: <= CLEAR_THRESHOLD auto-activates with no human touch; between that
+    // and 70 goes to human review ("neutral"); above 70 is denied. All other
+    // partner types still always require manual admin review — none are auto-activated.
     if (partner_type === 'doctor') {
-      newStatus = fraud_score > 70 ? 'denied' : 'manual_review';
+      if (fraud_score > 70) {
+        newStatus = 'denied';
+      } else if (fraud_score <= CLEAR_THRESHOLD) {
+        newStatus = 'auto_verified';
+        autoVerified = true;
+        verifiedAt = now;
+      } else {
+        newStatus = 'manual_review';
+      }
     } else {
       newStatus = 'pending_manual_review';
     }
@@ -139,12 +163,14 @@ Deno.serve(async (req) => {
       updated_at: now,
     });
 
-    // Update partner verification status — no partner type is ever auto-activated.
+    // Update partner verification status.
     const partnerUpdate: Record<string, unknown> = {
       verification_status: newStatus,
       verification_confidence: 100 - fraud_score,
       verification_notes: partner_type === 'doctor'
-        ? `AI pre-screen: ${fraud_indicators.length} indicators detected (score ${fraud_score}/100). Routed to manual review — doctor activation requires admin approval.`
+        ? (newStatus === 'auto_verified'
+            ? `AI pre-screen clear (score ${fraud_score}/100, threshold ${CLEAR_THRESHOLD}). Auto-activating with no manual review.`
+            : `AI pre-screen: ${fraud_indicators.length} indicators detected (score ${fraud_score}/100). Routed to manual review — doctor activation requires admin approval.`)
         : `AI Analysis: ${fraud_indicators.length} indicators detected. Score: ${fraud_score}/100`,
       updated_at: now,
     };
@@ -161,6 +187,47 @@ Deno.serve(async (req) => {
     } else if (partner_type === 'security_agency') {
       await base44.asServiceRole.entities.SecurityAgency.update(partner_id, partnerUpdate);
     }
+
+    // ── AUTO-ACTIVATION: doctor scanned clear — set all 3 sub-checks and
+    // activate via activateVerifiedDoctor's cryptographic auto-activation path,
+    // with no human touch. ──────────────────────────────────────────────────
+    let autoActivationResult: { activated: boolean; reason?: string } = { activated: false };
+    if (partner_type === 'doctor' && newStatus === 'auto_verified') {
+      await base44.asServiceRole.entities.Doctor.update(partner_id, {
+        license_verification_status: 'passed',
+        identity_verification_status: 'passed',
+        background_check_status: 'passed',
+        verification_method: 'ai_auto_clear_scan',
+      });
+
+      const proofTimestamp = String(Date.now());
+      const proof = generateAutoActivationProof(partner_id, proofTimestamp);
+
+      if (!proof) {
+        // Secret not configured — fail closed to manual review rather than silently
+        // skip activation. The doctor's sub-checks are already 'passed' above, so an
+        // admin can activate with one click via activateVerifiedDoctor once configured.
+        console.error('[initiatePartnerVerification] DOCTOR_AUTO_ACTIVATION_SECRET not set — falling back to manual review.');
+        autoActivationResult = { activated: false, reason: 'auto_activation_secret_not_configured' };
+      } else {
+        try {
+          const activationResponse = await base44.functions.invoke('activateVerifiedDoctor', {
+            doctor_id: partner_id,
+            auto_activation_timestamp: proofTimestamp,
+            auto_activation_proof: proof,
+          });
+          autoActivationResult = { activated: !!activationResponse?.data?.success };
+        } catch (activationErr) {
+          console.error('[initiatePartnerVerification] auto-activation call failed:', activationErr);
+          autoActivationResult = { activated: false, reason: 'activation_call_failed' };
+        }
+      }
+    }
+
+    // A doctor only counts as truly activated if activateVerifiedDoctor actually
+    // succeeded — an unconfigured secret or a failed call must fall back to the
+    // normal manual-review experience, never claim activation that didn't happen.
+    const doctorActuallyActivated = newStatus === 'auto_verified' && autoActivationResult.activated;
 
     // Log to AuditLog.
     await base44.functions.invoke('logAuditEvent', {
@@ -179,12 +246,23 @@ Deno.serve(async (req) => {
         auto_verified: autoVerified,
         status: newStatus,
         sanctions_status: 'clear',
+        auto_activated: doctorActuallyActivated,
+        auto_activation_fallback_reason: doctorActuallyActivated ? null : autoActivationResult.reason || null,
       },
       sensitive: true,
     });
 
     // Notify partner.
-    if (newStatus === 'pending_manual_review' || newStatus === 'manual_review') {
+    if (doctorActuallyActivated) {
+      await base44.integrations.Core.SendEmail({
+        to: partnerEmail,
+        subject: '✅ Your Profile is Now Verified — Welcome to the Morales Network',
+        body: `<p>Dear Dr. ${partnerName},</p>
+               <p>Your credentials cleared our automated screening and your profile is now <strong>verified and active</strong> on the Morales Medical Travel Platform.</p>
+               <p>Patients searching for specialists in your field can now find and book with you.</p>`,
+      });
+    } else if (newStatus === 'pending_manual_review' || newStatus === 'manual_review' ||
+               (newStatus === 'auto_verified' && !doctorActuallyActivated)) {
       await base44.integrations.Core.SendEmail({
         to: partnerEmail,
         subject: 'Verification Pending Manual Review',
@@ -204,9 +282,10 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       verification_id: verification.id,
-      status: newStatus,
+      status: doctorActuallyActivated ? 'active' : (newStatus === 'auto_verified' ? 'manual_review' : newStatus),
       fraud_score,
       auto_verified: autoVerified,
+      auto_activated: doctorActuallyActivated,
     });
 
   } catch (error) {

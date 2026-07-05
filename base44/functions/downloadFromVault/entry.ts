@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const vault = vaults[0];
 
     // Authorization: owner or admin only
-    if (vault.user_email !== user.email && user.role !== 'admin') {
+    if (vault.user_email !== user.email && user.role !== 'admin' && user.role !== 'platform_admin') {
       return Response.json({ error: 'Access denied' }, { status: 403 });
     }
 

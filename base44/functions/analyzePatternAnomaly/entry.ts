@@ -12,6 +12,7 @@
  * Expected call frequency: once per anomaly event, not on every signal.
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
   const {
@@ -81,6 +82,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         case_id:     case_id || profile.case_id,
       },
       created_at: now,
+      prev_hash: await computePrevHash(base44),
     }).catch(() => {});
 
     // Email the case guardian if we have one

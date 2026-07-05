@@ -6,8 +6,11 @@ const DEPOSIT_AMOUNT = 60;
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // FIX: same issue as generateStripePaymentLink — this hard-required a login before
+    // ever checking the token below, defeating the token path entirely for anonymous
+    // visitors on the public /portal/proposal/:token page. auth.me() is now optional;
+    // the tokenMatch check further down is what actually authorizes anonymous callers.
+    const user = await base44.auth.me().catch(() => null);
 
     const { case_id, client_name, original_amount, proposal_token } = await req.json();
 
@@ -31,9 +34,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Case not found' }, { status: 404 });
     }
 
-    const isAdmin = ['admin', 'platform_admin', 'coordinator'].includes(user.role);
-    const isOwner = caseRecord.client_email === user.email;
-    const tokenMatch = proposal_token && caseRecord.proposal_token &&
+    const isAdmin = !!user && ['admin', 'platform_admin', 'coordinator'].includes(user.role);
+    const isOwner = !!user && caseRecord.client_email === user.email;
+    const tokenMatch = !!proposal_token && !!caseRecord.proposal_token &&
                        proposal_token === caseRecord.proposal_token;
 
     if (!isAdmin && !isOwner && !tokenMatch) {

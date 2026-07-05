@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 function calcAge(dob) {
   if (!dob) return null;
@@ -65,7 +66,8 @@ Deno.serve(async (req) => {
         actor_id: user.id, actor_role: user.role, actor_name: user.full_name, actor_email: user.email,
         resource_type: 'waiver_request', resource_id: existing[0].id, case_id,
         details: { waiver_type: waiverType }, sensitive: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44)
       });
 
       return Response.json({ success: true, status: 'signed' });
@@ -111,7 +113,8 @@ Deno.serve(async (req) => {
         actor_id: user.id, actor_role: user.role, actor_name: user.full_name, actor_email: user.email,
         resource_type: 'waiver_request', resource_id: waiverId, case_id,
         details: { waiver_type, declined_reason }, sensitive: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44)
       });
 
       // Notify admins
@@ -158,7 +161,8 @@ Deno.serve(async (req) => {
         actor_id: user.id, actor_role: user.role, actor_name: user.full_name, actor_email: user.email,
         resource_type: 'waiver_request', resource_id: existing[0]?.id || '', case_id,
         details: { action: 'admin_reissued_by', admin_id: user.id }, sensitive: false,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44)
       });
 
       return Response.json({ success: true, status: 'admin_reissued' });
@@ -209,7 +213,8 @@ Deno.serve(async (req) => {
           actor_id: 'system', actor_role: 'system', actor_name: 'System', actor_email: '',
           resource_type: 'case_record', resource_id: case_id, case_id,
           details: { reason, age, threshold }, sensitive: false,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          prev_hash: await computePrevHash(base44)
         });
       }
 

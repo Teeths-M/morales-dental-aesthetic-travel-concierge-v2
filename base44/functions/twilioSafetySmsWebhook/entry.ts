@@ -9,6 +9,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHmac } from 'node:crypto';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -22,13 +23,40 @@ function twimlReply(message) {
   );
 }
 
+// M PRINCIPLE — this webhook can mark an active safety escalation "acknowledged"
+// (suppressing rescue dispatch) or trigger a fake SOS. A forged POST here is a
+// life-safety issue, not just a data-integrity one — signature validation is mandatory.
+function validateTwilioSignature(url, params, signature, authToken) {
+  const sortedKeys = Object.keys(params).sort();
+  const str = url + sortedKeys.map((k) => k + params[k]).join('');
+  const expected = createHmac('sha1', authToken).update(str).digest('base64');
+  return expected === signature;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
     // Parse Twilio form-encoded body
     const text = await req.text();
+    const paramsObj = {};
+    new URLSearchParams(text).forEach((v, k) => { paramsObj[k] = v; });
     const params = new URLSearchParams(text);
+
+    // ── Signature validation: reject forged webhooks ─────────────────────────
+    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+    if (authToken) {
+      const twilioSig = req.headers.get('x-twilio-signature') || '';
+      const appUrl = Deno.env.get('APP_URL') || '';
+      const webhookUrl = `${appUrl}/api/functions/twilioSafetySmsWebhook`;
+      if (!twilioSig || !appUrl || !validateTwilioSignature(webhookUrl, paramsObj, twilioSig, authToken)) {
+        console.error('[twilioSafetySmsWebhook] rejected: invalid or missing Twilio signature');
+        return twimlReply('Invalid request.');
+      }
+    } else {
+      console.error('[twilioSafetySmsWebhook] TWILIO_AUTH_TOKEN not set — signature validation skipped. Configure this before launch.');
+    }
+
     const from = params.get('From') || '';
     const body = (params.get('Body') || '').trim().toUpperCase();
     const messageSid = params.get('MessageSid') || '';

@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // Satellite message coordination layer.
 // Logs the message intent and returns a queued confirmation.
@@ -43,6 +44,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     },
     sensitive: true,
     timestamp: new Date().toISOString(),
+    prev_hash: await computePrevHash(base44),
   });
 
   return ok({

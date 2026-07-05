@@ -21,27 +21,6 @@ function withTimeout(promise, ms = 15000) {
   return Promise.race([promise, timeout]);
 }
 
-// Fallback mock data for Dr. Rossanna $60 package
-const MOCK_CASE = {
-  id: 'mock_dr_rossanna_60',
-  client_name: 'Dr. Rossanna Patient',
-  procedures: ['Smile Makeover'],
-  procedure_country: 'Costa Rica',
-  consultation_id: 'mock_consultation',
-  base_cost: 2500,
-  markup_percentage: 0.35,
-  final_package_price: 3375,
-  treatment_cost: 1500,
-  flight_cost: 600,
-  hotel_cost: 400,
-  pickup_cost: 75,
-  dropoff_cost: 75,
-  local_transfer_cost: 150,
-  status: 'Proposal-Sent',
-  consultation_fee_paid: true,
-  consultation_fee_amount: 49
-};
-
 export default function PaymentCheckout() {
   const { case_id } = useParams();
   const [searchParams] = useSearchParams();
@@ -82,9 +61,10 @@ export default function PaymentCheckout() {
         }
       }
       
-      // Fallback to mock data for demo/testing
-      console.log('Using mock case data');
-      return MOCK_CASE;
+      // Token and case_id lookups both failed — return null so the existing
+      // "Payment link not found" error state renders instead of silently
+      // showing a stranger's fake package data.
+      return null;
     },
     retry: 2,
     retryDelay: 1000,

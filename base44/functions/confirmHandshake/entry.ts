@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── confirmHandshake ──────────────────────────────────────────────────────────
 // Single entry-point for all handshake state transitions.
@@ -78,6 +79,7 @@ Deno.serve(async (req) => {
         details: { handshake_type, checkpoint_id: checkpointId, timeout_at: timeoutAt },
         sensitive: false,
         timestamp: now.toISOString(),
+        prev_hash: await computePrevHash(base44),
       });
 
       return Response.json({
@@ -145,6 +147,7 @@ Deno.serve(async (req) => {
         },
         sensitive: false,
         timestamp: now,
+        prev_hash: await computePrevHash(base44),
       });
 
       return Response.json({ success: true, status: 'confirmed', method: 'tap', confirmed_at: now });
@@ -193,6 +196,7 @@ Deno.serve(async (req) => {
         details: { checkpoint_id, from_phone, message_sid },
         sensitive: false,
         timestamp: now,
+        prev_hash: await computePrevHash(base44),
       });
 
       return Response.json({ success: true, status: 'confirmed', method: 'sms', confirmed_at: now });

@@ -54,8 +54,12 @@ Deno.serve(async (req) => {
       });
     }
 
+    // FIX: /pay-now is behind ProtectedRoute — a client not already logged in on that
+    // device hits a login wall that doesn't preserve the token (see iq200Pipeline's
+    // admin_approve_proposal for the full explanation). Point at the genuinely public,
+    // no-login /portal/proposal/:token page instead.
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-    const paymentUrl = `${appUrl}/pay-now?token=${caseRecord.proposal_token || case_id}`;
+    const paymentUrl = `${appUrl}/portal/proposal/${caseRecord.proposal_token || case_id}`;
 
     // Send payment email
     await base44.asServiceRole.integrations.Core.SendEmail({

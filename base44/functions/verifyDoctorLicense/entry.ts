@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── verifyDoctorLicense ───────────────────────────────────────────────────────
 // Handles admin decisions on the LICENSE sub-check only.
@@ -99,6 +100,7 @@ Deno.serve(async (req) => {
       },
       sensitive: true,
       timestamp: now,
+      prev_hash: await computePrevHash(base44),
     });
 
     // Tell the admin what happens next

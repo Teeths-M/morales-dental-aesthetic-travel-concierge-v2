@@ -81,8 +81,25 @@ Deno.serve(async (req) => {
 
       return Response.json({ success: true, salt });
     } else if (action === 'verify') {
+      // SECURITY: only 10,000 possible 4-digit PINs — without throttling, an
+      // authenticated caller could brute-force their own (or a hijacked) session
+      // in a tight loop. Mirrors the 5-attempts/30-min lockout used by verifyEmergencyPIN.
+      const rateLimitKey = `vault_pin_verify_${user.id}_${Math.floor(Date.now() / (30 * 60 * 1000))}`;
+      const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter(
+        { bucket_key: rateLimitKey }, '-created_date', 1
+      ).catch(() => []);
+      const bucket = buckets?.[0];
+      if (bucket && bucket.count >= 5) {
+        return Response.json({ valid: false, error: 'Too many PIN attempts. Please wait 30 minutes before trying again.', locked: true }, { status: 429 });
+      }
+      await base44.asServiceRole.entities.RateLimitBucket.create({
+        bucket_key: rateLimitKey,
+        count: (bucket?.count || 0) + 1,
+        window_start: new Date().toISOString(),
+      }).catch(() => {});
+
       const pins = await base44.asServiceRole.entities.VaultPIN.filter({ user_id: user.id });
-      
+
       if (pins.length === 0) {
         return Response.json({ valid: false, error: 'No PIN set' });
       }
@@ -99,7 +116,7 @@ Deno.serve(async (req) => {
         );
         hashToCompare = btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
       }
-      
+
       const isValid = pins[0].pin_hash === hashToCompare;
       return Response.json({ valid: isValid });
     } else {

@@ -44,8 +44,10 @@ export default function TaxiServiceSignup() {
 
   // Load saved draft — must be its own effect so it runs after the cleanup-returning language effect
   useEffect(() => {
-    const savedDraft = loadSignupDraft('taxi_service');
-    if (savedDraft) setFormData(savedDraft);
+    (async () => {
+      const savedDraft = await loadSignupDraft('taxi_service');
+      if (savedDraft) setFormData(savedDraft);
+    })();
   }, []);
 
   // Auto-save draft

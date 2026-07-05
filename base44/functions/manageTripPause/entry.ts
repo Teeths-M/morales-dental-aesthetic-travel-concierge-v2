@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── manageTripPause ───────────────────────────────────────────────────────────
 // Handles pause and resume of the patient journey.
@@ -58,6 +59,7 @@ Deno.serve(async (req) => {
         details: { trip_id, reason: reason || '', paused_at: nowIso },
         sensitive: false,
         timestamp: nowIso,
+        prev_hash: await computePrevHash(base44),
       }).catch(() => {});
 
       return Response.json({ success: true, action: 'paused', paused_at: nowIso, reason: reason || '' });
@@ -99,6 +101,7 @@ Deno.serve(async (req) => {
         details: { trip_id, duration_minutes: durationMin, paused_at: trip.paused_at, resumed_at: nowIso },
         sensitive: false,
         timestamp: nowIso,
+        prev_hash: await computePrevHash(base44),
       }).catch(() => {});
 
       // Trigger timing recalculation (best-effort — frontend also calls when online)

@@ -16,6 +16,7 @@
  */
 
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 type ProcedureCategory = 'dental' | 'aesthetic' | 'general';
 
@@ -198,6 +199,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     details: { patient_name: patientName, procedure_category: category, medication_count: meds.length },
     sensitive: false,
     timestamp: now,
+    prev_hash: await computePrevHash(base44),
   }).catch(() => {});
 
   return ok({

@@ -14,6 +14,7 @@
  */
 
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -164,6 +165,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     },
     sensitive: false,
     timestamp: now,
+    prev_hash: await computePrevHash(base44),
   }).catch(() => {});
 
   return ok({

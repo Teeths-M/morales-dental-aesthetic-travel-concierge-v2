@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -114,6 +115,7 @@ Deno.serve(async (req) => {
     const destPortalUrl   = `${APP_URL}/portal/transfer?token=${destToken}`;
 
     // Update case record + write audit log
+    const chauffeurAuditPrevHash = await computePrevHash(base44);
     await Promise.allSettled([
       base44.asServiceRole.entities.CaseRecord.update(caseId, {
         origin_driver_id:      originDriver.id,
@@ -137,6 +139,7 @@ Deno.serve(async (req) => {
         },
         sensitive: false,
         timestamp: new Date().toISOString(),
+        prev_hash: chauffeurAuditPrevHash,
       }),
     ]);
 

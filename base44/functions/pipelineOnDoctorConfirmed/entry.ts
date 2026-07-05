@@ -105,8 +105,19 @@ Deno.serve(async (req) => {
     }
     results.patient = { email: patientEmail, sms_sent: !!patientPhone };
 
-    // ── 2. NOTIFY ALL ACTIVE TRAVEL AGENCIES ────────────────────────────────
-    const travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' });
+    // ── 2. NOTIFY TRAVEL AGENCIES SERVING THIS DESTINATION ──────────────────
+    // Scoped to the case's destination country instead of blasting every active
+    // agency globally on every single confirmation — falls back to the full list if
+    // no country-scoped match exists so a case never silently gets zero quotes.
+    // (procedureCountry is also used by the companion-matching section further down.)
+    const procedureCountry = caseData.procedure_country || '';
+    let travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }, '-created_date', 1000);
+    if (procedureCountry) {
+      const scopedAgencies = travelAgencies.filter(a =>
+        a.service_regions?.some((r: string) => r.toLowerCase().includes(procedureCountry.toLowerCase()))
+      );
+      if (scopedAgencies.length > 0) travelAgencies = scopedAgencies;
+    }
 
     for (const agency of travelAgencies) {
       const agencyName = agency.agency_name || agency.contact_person || agency.email;
@@ -142,8 +153,15 @@ Deno.serve(async (req) => {
       results.travel_agencies.push({ name: agencyName, email: agency.email, portal_url: portalUrl });
     }
 
-    // ── 3. NOTIFY ALL ACTIVE CHAUFFEUR / TAXI SERVICES ──────────────────────
-    const chauffeurs = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' });
+    // ── 3. NOTIFY CHAUFFEUR / TAXI SERVICES IN THIS DESTINATION ─────────────
+    // Same destination-country scoping as travel agencies above, with the same
+    // fall-back-to-full-list safety net when no country-scoped match exists.
+    let chauffeurs = procedureCountry
+      ? await base44.asServiceRole.entities.TaxiService.filter({ status: 'active', operating_country: procedureCountry }, '-created_date', 500)
+      : [];
+    if (chauffeurs.length === 0) {
+      chauffeurs = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }, '-created_date', 1000);
+    }
 
     for (const driver of chauffeurs) {
       const driverName = driver.driver_name || driver.company_name || driver.email;
@@ -180,7 +198,6 @@ Deno.serve(async (req) => {
     const companions = await base44.asServiceRole.entities.Companion.filter({
       verification_status: 'verified', is_available: true
     }).catch(() => []);
-    const procedureCountry = caseData.procedure_country || '';
     const companion = companions.find(c => (c.service_regions || []).includes(procedureCountry)) ?? companions[0];
 
     if (companion) {

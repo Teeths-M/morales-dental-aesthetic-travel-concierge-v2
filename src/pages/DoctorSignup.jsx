@@ -47,10 +47,12 @@ export default function DoctorSignup() {
 
   // Load saved draft on mount
   useEffect(() => {
-    const savedDraft = loadSignupDraft('doctor');
-    if (savedDraft) {
-      setFormData(savedDraft);
-    }
+    (async () => {
+      const savedDraft = await loadSignupDraft('doctor');
+      if (savedDraft) {
+        setFormData(savedDraft);
+      }
+    })();
   }, []);
 
   // Auto-save draft on every change

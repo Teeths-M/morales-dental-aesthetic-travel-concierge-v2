@@ -31,6 +31,7 @@ export default function ClientProposalPortal() {
   const [depositChoice, setDepositChoice] = useState(null);
   const [paying, setPaying] = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
+  const [payError, setPayError] = useState(null);
 
   // CLEAN TOKEN: Remove any trailing hashes/timestamps (e.g., prop_123_1234567890_abc → prop_123)
   const cleanToken = token ? token.split('_').slice(0, 2).join('_') : null;
@@ -57,13 +58,22 @@ export default function ClientProposalPortal() {
   const handlePayment = async () => {
     if (!depositChoice) return;
     setPaying(true);
-    const res = await base44.functions.invoke('iq200Pipeline', {
-      action: 'process_payment',
-      payload: { token: cleanToken, deposit_option: depositChoice }
-    });
-    if (res.data?.success) {
-      setPaySuccess(true);
-      await loadCase();
+    setPayError(null);
+    try {
+      // Payment status is EXCLUSIVELY set by stripePaymentWebhook — this call only
+      // creates the Stripe Checkout session and redirects; it never marks the case paid.
+      const res = await base44.functions.invoke('generateStripePaymentLink', {
+        case_id: caseData.id,
+        deposit_option: depositChoice,
+        proposal_token: cleanToken,
+      });
+      if (res.data?.success && res.data?.payment_url) {
+        window.location.href = res.data.payment_url;
+        return;
+      }
+      setPayError(res.data?.error || 'Unable to start payment. Please try again or contact your coordinator.');
+    } catch (e) {
+      setPayError('Payment system temporarily unavailable. Please try again.');
     }
     setPaying(false);
   };

@@ -29,12 +29,13 @@ export default createHandler(async ({ base44, body }) => {
   const mockMode   = !accountSid || !authToken || !fromNumber;
 
   if (!mockMode) {
-    const body = new URLSearchParams({
+    const smsBody = new URLSearchParams({
       From: fromNumber!,
       To:   clean,
       Body: `Your Morales verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
     });
-    const res = await fetch(
+
+    const sendOnce = () => fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
       {
         method: 'POST',
@@ -42,13 +43,43 @@ export default createHandler(async ({ base44, body }) => {
           Authorization: 'Basic ' + btoa(`${accountSid}:${authToken}`),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: body.toString(),
+        body: smsBody.toString(),
+        signal: AbortSignal.timeout(8000),
       }
     );
+
+    let res: Response;
+    try {
+      res = await sendOnce();
+    } catch (e) {
+      console.error('[sendOtp] Twilio request failed:', e);
+      // Treat network failure/timeout as retryable below.
+      res = new Response(null, { status: 503 });
+    }
+
+    // A login burst (many users requesting a code at once) is exactly when Twilio is
+    // most likely to throttle (429) or briefly error (5xx). One short-backoff retry
+    // absorbs transient blips without adding much latency to the common case.
+    if (!res.ok && (res.status === 429 || res.status >= 500)) {
+      await new Promise((r) => setTimeout(r, 750));
+      try {
+        res = await sendOnce();
+      } catch (e) {
+        console.error('[sendOtp] Twilio retry failed:', e);
+        res = new Response(null, { status: 503 });
+      }
+    }
+
     if (!res.ok) {
-      const detail = await res.text();
-      console.error('[sendOtp] Twilio error:', detail);
-      return err('Failed to send verification code. Please try again.');
+      const detail = await res.text().catch(() => '');
+      console.error('[sendOtp] Twilio error:', res.status, detail);
+      // Honest, actionable message distinct from a generic failure — this is the
+      // primary login path, so users need to know retrying shortly is worth it.
+      return err(
+        res.status === 429 || res.status >= 500
+          ? "We're experiencing high demand right now. Please wait a moment and try again."
+          : 'Failed to send verification code. Please check your phone number and try again.'
+      );
     }
     return ok({ sent: true, mock: false });
   }

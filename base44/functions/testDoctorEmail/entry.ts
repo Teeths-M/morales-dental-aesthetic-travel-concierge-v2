@@ -32,6 +32,14 @@ const portalEmail = ({ doctorName, portalLink }) => `<!doctype html>
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // SECURITY: this sends email as the platform to any attacker-supplied address —
+    // must not be an open relay. Admin-only debug utility.
+    const user = await base44.auth.me();
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
     const { doctor_email, doctor_name } = await req.json();
 
     const appUrl = Deno.env.get('APP_URL') || 'https://your-portal-url.com';

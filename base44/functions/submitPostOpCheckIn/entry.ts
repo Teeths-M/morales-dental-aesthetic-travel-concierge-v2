@@ -11,6 +11,7 @@
  * 4. Creates AuditLog entry
  */
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 Deno.serve(createHandler(async ({ base44, body }) => {
   const { token, rating, pain_level, note, concerns } = await body();
@@ -75,6 +76,7 @@ ${note ? `<tr><td>Patient note</td><td>${note}</td></tr>` : ''}
     resource_id: rec.case_id,
     details:     { day: rec.day, rating, pain_level, needs_doctor_followup: needsFollowup, concerns },
     timestamp:   now,
+    prev_hash:   await computePrevHash(base44),
   }).catch(() => {});
 
   return ok({ success: true, day: rec.day, needs_followup: needsFollowup });

@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // Per-checkpoint default expiry (hours) — context-aware, not a single fixed timeout.
 // Driver pickup: 20 min (missed = reroute fast). Flight leg: 5h (you're airborne).
@@ -87,7 +88,8 @@ Deno.serve(async (req) => {
         case_id,
         details: { checkpoint_type, required: required !== false },
         sensitive: false,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44)
       });
 
       return Response.json({ success: true, handshake });
@@ -137,7 +139,8 @@ Deno.serve(async (req) => {
         case_id: handshake.case_id,
         details: { checkpoint_type: handshake.checkpoint_type },
         sensitive: false,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44)
       });
 
       return Response.json({ success: true, handshake: updated });

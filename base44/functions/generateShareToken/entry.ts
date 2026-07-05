@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * generateShareToken
@@ -49,6 +50,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     actor_role: user?.role || 'system', resource_type: 'CaseRecord', resource_id: case_id,
     case_id, sensitive: false, timestamp: new Date().toISOString(),
     details: { expires_days, share_url: shareUrl },
+    prev_hash: await computePrevHash(base44),
   }).catch(() => {});
 
   return ok({ token, share_url: shareUrl, expires_at: new Date(expiry).toISOString() });

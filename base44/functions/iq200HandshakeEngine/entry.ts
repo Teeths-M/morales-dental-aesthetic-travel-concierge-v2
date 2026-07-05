@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // iQ200 Coordination Engine — 8 Touchpoint Handshake Orchestrator
 // Handles: create_touchpoints, confirm_handshake, get_status, check_contingency
@@ -55,6 +56,7 @@ Deno.serve(async (req) => {
         details: { touchpoints_created: created.length, total: TOUCHPOINTS.length },
         sensitive: false,
         timestamp: new Date().toISOString(),
+        prev_hash: await computePrevHash(base44),
       });
 
       return Response.json({ success: true, created: created.length, touchpoints: TOUCHPOINTS });
@@ -140,6 +142,7 @@ Deno.serve(async (req) => {
         },
         sensitive: false,
         timestamp: now,
+        prev_hash: await computePrevHash(base44),
       });
 
       const tp = TOUCHPOINTS.find(t => t.id === touchpoint_id);
@@ -194,6 +197,7 @@ Deno.serve(async (req) => {
             details: { checkpoint_type: hs.checkpoint_type, minutes_overdue: minutesOverdue, auto_rerouting: true },
             sensitive: false,
             timestamp: now.toISOString(),
+            prev_hash: await computePrevHash(base44),
           });
         }
       }

@@ -74,10 +74,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    const [travelAgencies, taxiServices] = await Promise.all([
-      base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }),
-      base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }),
-    ]);
+    // Scope the partner broadcast to the destination country instead of blasting every
+    // active partner globally on every single confirmed case — at high booking volume
+    // this is the difference between notifying a handful of relevant partners and
+    // sequentially emailing/SMS'ing the entire partner network per case. Falls back to
+    // the full unscoped list if the country-scoped query finds nothing, so a case never
+    // silently gets zero quote opportunities (e.g. no country on file, or no partners
+    // yet registered for that specific country).
+    const procedureCountry = consultation?.procedure_country;
+    let travelAgencies = procedureCountry
+      ? await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }, '-created_date', 1000)
+      : [];
+    if (procedureCountry) {
+      const scopedAgencies = travelAgencies.filter(a =>
+        a.service_regions?.some((r: string) => r.toLowerCase().includes(procedureCountry.toLowerCase()))
+      );
+      if (scopedAgencies.length > 0) travelAgencies = scopedAgencies;
+    } else {
+      travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }, '-created_date', 1000);
+    }
+
+    let taxiServices = procedureCountry
+      ? await base44.asServiceRole.entities.TaxiService.filter({ status: 'active', operating_country: procedureCountry }, '-created_date', 500)
+      : [];
+    if (taxiServices.length === 0) {
+      taxiServices = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }, '-created_date', 1000);
+    }
 
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const portalLink = `${appUrl}/admin`;

@@ -34,12 +34,14 @@ async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    // RATE LIMIT: 10 payment link requests per user per hour
-    const allowed = await checkRateLimit(base44, `${user.id}:generateStripePaymentLink`, 3600, 10);
-    if (!allowed) return Response.json({ error: 'Too many payment link requests. Please wait before trying again.' }, { status: 429 });
+    // FIX: this doc comment above has always said "caller must be the case owner,
+    // present a valid proposal_token, OR be admin" — three alternative paths — but the
+    // code required a logged-in session before ever checking the token, so a genuinely
+    // anonymous visitor on the public /portal/proposal/:token page (the whole point of
+    // that page being token-gated, not login-gated) got a hard 401 on the payment step
+    // specifically, even with a perfectly valid token. auth.me() is now optional; the
+    // token path below is what actually lets anonymous-but-token-holding callers through.
+    const user = await base44.auth.me().catch(() => null);
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) return Response.json({ error: 'Payment system not configured' }, { status: 503 });
@@ -58,13 +60,19 @@ Deno.serve(async (req) => {
 
     // Authorization check — return identical 404 for both not-found AND forbidden
     // to prevent case existence enumeration by unauthorized callers.
-    const isAdmin = ['admin', 'platform_admin'].includes(user.role);
-    const isOwner = caseRecord.client_email === user.email;
-    const tokenMatch = proposal_token && caseRecord.proposal_token &&
+    const isAdmin = !!user && ['admin', 'platform_admin'].includes(user.role);
+    const isOwner = !!user && caseRecord.client_email === user.email;
+    const tokenMatch = !!proposal_token && !!caseRecord.proposal_token &&
                        proposal_token === caseRecord.proposal_token;
     if (!isAdmin && !isOwner && !tokenMatch) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
     }
+
+    // RATE LIMIT: 10 payment link requests per hour, keyed by user when logged in,
+    // otherwise by the case itself (an anonymous token-holder has no user.id to key on).
+    const rateLimitKey = user ? `${user.id}:generateStripePaymentLink` : `${case_id}:generateStripePaymentLink`;
+    const allowed = await checkRateLimit(base44, rateLimitKey, 3600, 10);
+    if (!allowed) return Response.json({ error: 'Too many payment link requests. Please wait before trying again.' }, { status: 429 });
 
     // DB idempotency: re-use open session for this case+option
     const existingTxns = await base44.asServiceRole.entities.PaymentTransaction.filter({
@@ -148,7 +156,7 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.PaymentTransaction.create({
       case_id: caseRecord.id,
       client_email: caseRecord.client_email,
-      user_id: user.id,
+      user_id: user?.id || null,
       stripe_session_id: session.id,
       event_type: 'checkout.session.created',
       status: 'session_created',

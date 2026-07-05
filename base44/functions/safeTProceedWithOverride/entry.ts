@@ -51,6 +51,17 @@ Deno.serve(async (req) => {
           error: 'case_record_id does not belong to your consultation. SAFE-T override denied.',
         }, { status: 403 });
       }
+
+      // M PRINCIPLE — CRITICAL/RED is a hard block, always. No bypass, no exception.
+      // safeT4LifeScan sets safe_t_result: 'BLOCKED' for CRITICAL-tier cases and refuses
+      // to let that case re-scan or sign a waiver. This endpoint must honor the same lock —
+      // a liability waiver signature must never be able to override a hard-locked case.
+      if (caseToUpdate.safe_t_result === 'BLOCKED') {
+        return Response.json({
+          error: 'This case has been hard-locked by SAFE-T 4LIFE™ critical risk screening. No signature or waiver can override this. Please contact our medical coordination team.',
+        }, { status: 403 });
+      }
+
       await base44.asServiceRole.entities.CaseRecord.update(case_record_id, {
         signature_data,
         signature_timestamp: signature_timestamp || now,

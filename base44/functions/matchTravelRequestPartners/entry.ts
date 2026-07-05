@@ -32,10 +32,14 @@ Deno.serve(async (req) => {
     const destinationCountry = travelRequest.destination_country;
     const destinationCity = travelRequest.destination_city;
 
-    const travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({ 
+    // NOTE: .filter() defaults to a 50-record limit when none is given. service_regions
+    // holds broad free-text region names that don't map cleanly to a server-side filter,
+    // so matching stays in JS for correctness — but the limit is raised explicitly so
+    // the candidate pool isn't silently truncated to an arbitrary first-50 window.
+    const travelAgencies = await base44.asServiceRole.entities.TravelAgency.filter({
       status: 'active',
       verification_status: 'verified'
-    });
+    }, '-created_date', 1000);
 
     // Filter agencies that serve the destination
     const matchedAgencies = travelAgencies.filter(agency => {
@@ -57,16 +61,27 @@ Deno.serve(async (req) => {
       assignedAgency = travelAgencies[0];
     }
 
-    // Match Taxi Service (Chauffeur) based on destination city
-    const taxiServices = await base44.asServiceRole.entities.TaxiService.filter({ 
+    // Match Taxi Service (Chauffeur) based on destination city.
+    // Try an exact server-side country match first — scopes the fetch to this one
+    // destination instead of every active driver worldwide. Falls back to the original
+    // broader fetch + JS substring match (unchanged) if that finds nothing, so a casing
+    // or partial-match case (e.g. "New York City" containing "New York") is never missed.
+    let matchedTaxis = await base44.asServiceRole.entities.TaxiService.filter({
       status: 'active',
-      verification_status: 'verified'
-    });
+      verification_status: 'verified',
+      operating_country: destinationCountry,
+    }, '-created_date', 500);
 
-    const matchedTaxis = taxiServices.filter(taxi => 
-      taxi.operating_city?.toLowerCase().includes(destinationCity.toLowerCase()) ||
-      taxi.operating_country?.toLowerCase().includes(destinationCountry.toLowerCase())
-    );
+    if (matchedTaxis.length === 0) {
+      const taxiServices = await base44.asServiceRole.entities.TaxiService.filter({
+        status: 'active',
+        verification_status: 'verified'
+      }, '-created_date', 1000);
+      matchedTaxis = taxiServices.filter(taxi =>
+        taxi.operating_city?.toLowerCase().includes(destinationCity.toLowerCase()) ||
+        taxi.operating_country?.toLowerCase().includes(destinationCountry.toLowerCase())
+      );
+    }
 
     matchedTaxis.sort((a, b) => (b.quality_score || 5.0) - (a.quality_score || 5.0));
 

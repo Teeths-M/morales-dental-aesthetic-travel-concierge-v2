@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify ownership
-    if (travelRequest.user_id !== user.id && user.role !== 'admin') {
+    if (travelRequest.user_id !== user.id && user.role !== 'admin' && user.role !== 'platform_admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -26,11 +26,17 @@ Deno.serve(async (req) => {
     const matches = { travel_agency: null, chauffeur: null };
 
     // MATCH TRAVEL AGENCY
-    // Filter by destination country and verified status
+    // Filter by destination country and verified status.
+    // NOTE: .filter() defaults to a 50-record limit when none is given — with only
+    // status+verification_status server-side, agencies serving OTHER regions could
+    // fill that first-50 window and push out real matches for this destination.
+    // service_regions holds broad free-text region names ("Caribbean", "Europe", etc.)
+    // that don't map cleanly to a server-side exact/regex filter, so scope stays in
+    // JS for correctness — but raise the limit so the pool isn't silently truncated.
     const allAgencies = await base44.entities.TravelAgency.filter({
       status: 'active',
       verification_status: 'verified'
-    });
+    }, '-created_date', 1000);
 
     // Find agencies that serve the destination country
     const matchingAgencies = allAgencies.filter(agency => {
@@ -54,17 +60,31 @@ Deno.serve(async (req) => {
 
     // MATCH CHAUFFEUR (TAXI SERVICE)
     if (travelRequest.transfer_required) {
-      const allTaxiServices = await base44.entities.TaxiService.filter({
+      // Try an exact server-side country match first — scopes the fetch to this one
+      // destination instead of every active driver worldwide, which matters at
+      // 200k-concurrent-booking scale. Base44's filter is exact-match with no confirmed
+      // case-insensitive option, and the original code deliberately lowercased before
+      // comparing (implying casing wasn't guaranteed to line up) — so an empty result
+      // here falls back to the original broader fetch + JS case-insensitive match rather
+      // than risk silently missing real matches over a casing mismatch.
+      let matchingTaxis = await base44.entities.TaxiService.filter({
         status: 'active',
         verification_status: 'verified',
-        is_online: true
-      });
+        is_online: true,
+        operating_country: travelRequest.destination_country,
+      }, '-created_date', 500);
 
-      // Find taxi services in the destination city
-      const matchingTaxis = allTaxiServices.filter(taxi => 
-        taxi.operating_city?.toLowerCase() === travelRequest.destination_city.toLowerCase() ||
-        taxi.operating_country?.toLowerCase() === travelRequest.destination_country.toLowerCase()
-      );
+      if (matchingTaxis.length === 0) {
+        const allTaxiServices = await base44.entities.TaxiService.filter({
+          status: 'active',
+          verification_status: 'verified',
+          is_online: true,
+        }, '-created_date', 1000);
+        matchingTaxis = allTaxiServices.filter(taxi =>
+          taxi.operating_city?.toLowerCase() === travelRequest.destination_city.toLowerCase() ||
+          taxi.operating_country?.toLowerCase() === travelRequest.destination_country.toLowerCase()
+        );
+      }
 
       if (matchingTaxis.length > 0) {
         matches.chauffeur = matchingTaxis[0];

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * receiveSatelliteWebhook
@@ -183,6 +184,7 @@ Deno.serve(async (req) => {
       );
 
       // Critical audit log
+      const satelliteSosPrevHash = await computePrevHash(base44);
       tasks.push(base44.asServiceRole.entities.AuditLog.create({
         event_type:   'satellite_sos_received',
         actor_id:     'system',
@@ -194,10 +196,12 @@ Deno.serve(async (req) => {
         sensitive:    true,
         timestamp:    now,
         details:      { imei, momsn, gps_lat: iridium_latitude, gps_lng: iridium_longitude, decoded },
+        prev_hash:    satelliteSosPrevHash,
       }));
     }
 
     // ── Audit log for all satellite messages ──────────────────────────────────
+    const satelliteMsgPrevHash = await computePrevHash(base44);
     tasks.push(base44.asServiceRole.entities.AuditLog.create({
       event_type:   'satellite_message_received',
       actor_id:     device.patient_email || imei,
@@ -212,6 +216,7 @@ Deno.serve(async (req) => {
         gps_lat: iridium_latitude, gps_lng: iridium_longitude,
         is_safe: isSafe, is_sos: isSOS,
       },
+      prev_hash:    satelliteMsgPrevHash,
     }).catch(() => {}));
 
     await Promise.allSettled(tasks);

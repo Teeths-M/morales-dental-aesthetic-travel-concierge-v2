@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
@@ -40,9 +40,11 @@ Deno.serve(async (req) => {
       proposal_sent_at: new Date().toISOString()
     });
 
-    // Send proposal email - route to NEW standalone payment page with token
+    // Send proposal email - route to the genuinely public, no-login proposal page.
+    // FIX: /pay-now is login-gated and doesn't preserve the token across the login
+    // redirect (see iq200Pipeline's admin_approve_proposal for the full explanation).
     const appUrl = 'https://sentinel-dental-care.base44.app';
-    const paymentUrl = `${appUrl}/pay-now?token=${proposalToken}`;
+    const paymentUrl = `${appUrl}/portal/proposal/${proposalToken}`;
     
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: 'theonmorales@gmail.com',

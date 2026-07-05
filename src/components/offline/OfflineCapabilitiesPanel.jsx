@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, MessageSquare, QrCode, Shield, MapPin, Smartphone, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink, Layers } from 'lucide-react';
-import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
-const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
+import { WifiOff, MessageSquare, Shield, MapPin, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink, Layers } from 'lucide-react';
 
 // IndexedDB helper for offline document caching
 const OFFLINE_CACHE_KEY = 'morales_offline_vault';
@@ -22,15 +20,6 @@ function pruneOfflineVault() {
       total -= (entry.size_bytes || 0);
     }
   } catch (_) {}
-}
-
-function generateQRToken(caseId, userId) {
-  const payload = { case_id: caseId, user_id: userId, ts: Date.now(), nonce: Math.random().toString(36).slice(2) };
-  return btoa(JSON.stringify(payload));
-}
-
-function generateEmergencyPin() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 const SMS_COMMANDS = [
@@ -143,11 +132,8 @@ function OfflineDocsTab() {
   );
 }
 
-export default function OfflineCapabilitiesPanel({ caseId, userId }) {
+export default function OfflineCapabilitiesPanel() {
   const [activeTab, setActiveTab] = useState('tiers');
-  const [qrToken, setQrToken] = useState(null);
-  const [emergencyPin, setEmergencyPin] = useState(null);
-  const [pinSaved, setPinSaved] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [copied, setCopied] = useState(null);
   const [syncing, setSyncing] = useState(false);
@@ -173,18 +159,6 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
     };
   }, []);
 
-  const genQR = () => {
-    const token = generateQRToken(caseId || 'demo', userId || 'user');
-    setQrToken(token);
-  };
-
-  const genPin = () => {
-    const pin = generateEmergencyPin();
-    setEmergencyPin(pin);
-    sessionStorage.setItem('morales_emergency_pin', pin);
-    setPinSaved(true);
-  };
-
   const copyToClipboard = (text, key) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(key);
@@ -195,8 +169,6 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
   const TABS = [
     { id: 'tiers', label: 'Capabilities', icon: Layers },
     { id: 'sms', label: 'SMS Shortcodes', icon: MessageSquare },
-    { id: 'qr', label: 'QR Token', icon: QrCode },
-    { id: 'pin', label: 'Emergency PIN', icon: Smartphone },
     { id: 'docs', label: 'Offline Docs', icon: Shield },
   ];
 
@@ -253,7 +225,6 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
                   'Vault documents — cached to device storage (50 MB)',
                   'Handshake tap-to-confirm — queued, syncs when online',
                   'SOS via SMS — Twilio SMS works even without data',
-                  'QR token — generated client-side, valid 4 hours',
                   'Last-known location & breadcrumb history',
                   'Silent Guardian strikes — tracked locally',
                 ].map(f => (
@@ -330,79 +301,6 @@ export default function OfflineCapabilitiesPanel({ caseId, userId }) {
                 <p className="text-[11px] text-slate-600 font-semibold">Coordinator SMS Shortcode</p>
                 <p className="text-xs text-slate-500 mt-0.5">Contact your care coordinator for the country-specific shortcode number. All commands are processed within 60 seconds of SMS delivery.</p>
               </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* QR Token */}
-        {activeTab === 'qr' && (
-          <motion.div key="qr" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
-              <QrCode className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-              <h4 className="font-semibold text-slate-800 text-sm mb-1">Encrypted QR Profile Token</h4>
-              <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-                Generate an encrypted offline QR token. Partner devices scan this to access your case profile and clear payments on reconnect — no internet required during scan.
-              </p>
-              {qrToken ? (
-                <div className="space-y-3">
-                  <div className="bg-white rounded-2xl p-4 mx-auto w-fit shadow-sm border border-slate-100">
-                    <QRCodeSVG value={qrToken} size={160} bgColor="#ffffff" fgColor="#060B16" level="M" />
-                    <p className="text-[9px] text-slate-400 mt-2 font-mono text-center break-all">{qrToken.slice(0, 24)}...</p>
-                  </div>
-                  <div className="flex gap-2 justify-center">
-                    <button onClick={() => copyToClipboard(qrToken, 'qr')}
-                      className="flex items-center gap-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50">
-                      {copied === 'qr' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      Copy Token
-                    </button>
-                    <button onClick={genQR}
-                      className="flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50">
-                      <RefreshCw className="w-3.5 h-3.5" /> Regenerate
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-slate-400">Valid for 4 hours · Payment cleared on partner reconnect</p>
-                </div>
-              ) : (
-                <button onClick={genQR}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm">
-                  Generate QR Token
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Emergency PIN */}
-        {activeTab === 'pin' && (
-          <motion.div key="pin" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
-              <Smartphone className="w-8 h-8 text-violet-600 mx-auto mb-3" />
-              <h4 className="font-semibold text-slate-800 text-sm mb-1">Device-Agnostic Emergency PIN</h4>
-              <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-                Works from any borrowed phone or partner console. Send "PIN [code]" via SMS, or enter at any Morales Medical kiosk to authenticate without your personal device.
-              </p>
-              {emergencyPin ? (
-                <div className="space-y-4">
-                  <div className="bg-violet-50 border border-violet-200 rounded-2xl p-6 mx-auto max-w-xs">
-                    <p className="text-4xl font-black tracking-[0.3em] text-violet-800 font-mono">{emergencyPin}</p>
-                    <p className="text-xs text-violet-600 mt-2">Your Emergency PIN</p>
-                  </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
-                    <p className="font-semibold mb-1">⚠️ Security Notice</p>
-                    <p>Never share this PIN except with a Morales Medical coordinator. This PIN expires in 24 hours or upon first use.</p>
-                  </div>
-                  <button onClick={() => copyToClipboard(emergencyPin, 'pin')}
-                    className="flex items-center gap-2 mx-auto text-xs text-violet-600 border border-violet-200 rounded-lg px-4 py-2 hover:bg-violet-50">
-                    {copied === 'pin' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    Copy PIN
-                  </button>
-                </div>
-              ) : (
-                <button onClick={genPin}
-                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-6 py-3 rounded-xl text-sm">
-                  Generate Emergency PIN
-                </button>
-              )}
             </div>
           </motion.div>
         )}

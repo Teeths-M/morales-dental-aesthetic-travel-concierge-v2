@@ -1,20 +1,40 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Download, Share2 } from 'lucide-react';
+import { QRCodeSVG as _QRCodeSVG } from 'qrcode.react';
+const QRCodeSVG = /** @type {any} */ (_QRCodeSVG);
 
 export default function QRCodeDisplay({ bag, onClose }) {
   const appUrl = window.location.origin;
   const finderUrl = `${appUrl}/luggage/${bag.finder_contact_token}`;
+  const qrContainerRef = useRef(null);
 
-  // Use a free QR generation service (no npm needed)
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(finderUrl)}&bgcolor=ffffff&color=1e293b&margin=10`;
-
+  // Rendered client-side (qrcode.react) — no network call, works offline,
+  // unlike the previous api.qrserver.com <img> which silently broke without a connection.
   const handleDownload = () => {
-    const a = document.createElement('a');
-    a.href = qrSrc;
-    a.download = `morales-luggage-${bag.token_code}.png`;
-    a.target = '_blank';
-    a.click();
+    const svg = qrContainerRef.current?.querySelector('svg');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgUrl = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
+
+    const img = new Image();
+    img.onload = () => {
+      const padding = 20;
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width + padding * 2;
+      canvas.height = img.height + padding * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, padding, padding);
+      URL.revokeObjectURL(svgUrl);
+
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `morales-luggage-${bag.token_code}.png`;
+      a.click();
+    };
+    img.src = svgUrl;
   };
 
   const handleShare = async () => {
@@ -42,8 +62,8 @@ export default function QRCodeDisplay({ bag, onClose }) {
         <p className="text-xs text-gray-400 font-mono mb-6">{bag.token_code}</p>
 
         {/* QR Code */}
-        <div className="bg-gray-50 rounded-2xl p-4 mb-4 inline-block">
-          <img src={qrSrc} alt="Luggage QR Code" className="w-[200px] h-[200px] mx-auto" />
+        <div ref={qrContainerRef} className="bg-gray-50 rounded-2xl p-4 mb-4 inline-block">
+          <QRCodeSVG value={finderUrl} size={200} bgColor="#ffffff" fgColor="#1e293b" level="M" />
         </div>
 
         <p className="text-xs text-gray-500 mb-5 leading-relaxed">

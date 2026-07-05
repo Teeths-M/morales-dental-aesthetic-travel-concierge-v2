@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -214,6 +215,7 @@ Deno.serve(async (req) => {
         },
         sensitive: true,
         timestamp: nowIso,
+        prev_hash: await computePrevHash(base44),
       }).catch(() => {});
 
       results.push({

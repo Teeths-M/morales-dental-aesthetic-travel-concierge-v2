@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     // Also check `vault.user_id` as a secondary fallback for records created before user_email was set.
     const isOwner = (vault.user_email && vault.user_email === user.email) ||
                     (vault.user_id && vault.user_id === user.id);
-    if (!isOwner && user.role !== 'admin') {
+    if (!isOwner && user.role !== 'admin' && user.role !== 'platform_admin') {
       await base44.asServiceRole.entities.PassportAuditLog.create({
         passport_token,
         patient_email: vault.user_email || vault.patient_email,

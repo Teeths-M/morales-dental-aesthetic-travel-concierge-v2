@@ -203,7 +203,7 @@ function resolveISO2(countryName) {
   return partial ? partial[1] : null;
 }
 
-export function useEnvironmentalIntelligence({ country, countryCode: providedISO2, procedure }) {
+export function useEnvironmentalIntelligence({ country, countryCode: providedISO2, procedure = null }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(false);
   const [aiNote, setAiNote]   = useState(null);

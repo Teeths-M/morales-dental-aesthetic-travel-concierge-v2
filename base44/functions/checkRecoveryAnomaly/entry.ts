@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── checkRecoveryAnomaly ──────────────────────────────────────────────────────
 // Creates a RecoveryLog + runs rule-based anomaly detection.
@@ -294,6 +295,7 @@ Deno.serve(async (req) => {
         details: { log_date: logDate, severity, reasons, pain_level, mobility, appetite, wound_status },
         sensitive: true,
         timestamp: nowIso,
+        prev_hash: await computePrevHash(base44),
       }).catch(() => {});
     }
 

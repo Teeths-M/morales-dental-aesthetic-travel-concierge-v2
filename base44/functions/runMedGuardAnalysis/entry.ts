@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 /**
  * MedGuard™ — Behavioral Safety Prediction Engine
@@ -217,12 +218,14 @@ async function analyzeCase(base44: any, caseRecord: any) {
   }
 
   // Store analysis result in AuditLog
+  const medGuardPrevHash = await computePrevHash(base44);
   tasks.push(base44.asServiceRole.entities.AuditLog.create({
     event_type:   'medguard_analysis',
     actor_id:     'system', actor_role: 'system', actor_name: 'MedGuard™ Engine',
     resource_type:'CaseRecord', resource_id: caseId, case_id: caseId,
     sensitive:    false, timestamp: now_iso,
     details:      { score, risk_level: risk.level, breakdown, actions, factors },
+    prev_hash:    medGuardPrevHash,
   }).catch(() => {}));
 
   await Promise.allSettled(tasks);

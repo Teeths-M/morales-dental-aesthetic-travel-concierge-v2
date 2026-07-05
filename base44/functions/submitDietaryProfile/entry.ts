@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -100,7 +101,8 @@ Deno.serve(async (req) => {
         version: profileData.version
       },
       sensitive: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      prev_hash: await computePrevHash(base44)
     });
 
     return Response.json({ success: true, profile });
