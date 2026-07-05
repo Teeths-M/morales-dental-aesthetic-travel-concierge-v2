@@ -25,13 +25,14 @@ export default function DoctorVerificationAdmin() {
 
   const handleApprove = async (item) => {
     const user = await base44.auth.me();
+    const notes = 'Manually approved by advisory team via verification queue';
 
-    await base44.entities.Doctor.update(item.doctor_id, {
-      verification_status: 'verified',
-      verified_at: new Date().toISOString(),
-      verification_method: 'advisory_team',
-      credential_verified_date: new Date().toISOString()
-    });
+    // Run all three sub-checks through their proper functions so the audit trail
+    // is complete and activateVerifiedDoctor can clear its 3-gate requirement.
+    await base44.functions.invoke('verifyDoctorLicense',     { doctorId: item.doctor_id, action: 'approve', notes });
+    await base44.functions.invoke('verifyDoctorIdentity',    { doctorId: item.doctor_id, action: 'approve', notes });
+    await base44.functions.invoke('verifyDoctorBackground',  { doctorId: item.doctor_id, action: 'approve', notes });
+    await base44.functions.invoke('activateVerifiedDoctor',  { doctor_id: item.doctor_id });
 
     await base44.entities.ManualVerificationQueue.update(item.id, {
       status: 'approved',

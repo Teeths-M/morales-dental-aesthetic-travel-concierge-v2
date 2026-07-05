@@ -142,18 +142,25 @@ export default function AdminDoctorVerificationQueue() {
 
   const setSubCheck = async (field, status) => {
     setCheckOverrides(prev => ({ ...prev, [field]: status }));
-    if (selected?.id) {
-      try {
-        await base44.functions.invoke('runDoctorVerification', {
-          action: 'update_check', verification_record_id: selected.id,
-          check_field: field, check_status: status, notes,
-        });
-        if (selected.doctor_id) {
-          const docs = await base44.entities.Doctor.filter({ id: selected.doctor_id });
-          setDoctor(docs[0] || null);
-        }
-      } catch { /* non-fatal — local state still updated */ }
-    }
+    if (!selected?.doctor_id) return;
+    // Map field → the dedicated sub-check function so the Doctor entity is updated
+    // and activateVerifiedDoctor's 3-gate can read the persisted status.
+    const fnMap = {
+      license_verification_status: 'verifyDoctorLicense',
+      identity_verification_status: 'verifyDoctorIdentity',
+      background_check_status:      'verifyDoctorBackground',
+    };
+    const fnName = fnMap[field];
+    if (!fnName) return;
+    const actionMap = { passed: 'approve', failed: 'reject', manual_override: 'manual_override' };
+    const action = actionMap[status] || 'approve';
+    try {
+      await base44.functions.invoke(fnName, {
+        doctorId: selected.doctor_id, action, notes: notes || undefined,
+      });
+      const docs = await base44.entities.Doctor.filter({ id: selected.doctor_id });
+      setDoctor(docs[0] || null);
+    } catch { /* non-fatal — local state still updated */ }
   };
 
   // Merge live doctor fields with any local overrides
