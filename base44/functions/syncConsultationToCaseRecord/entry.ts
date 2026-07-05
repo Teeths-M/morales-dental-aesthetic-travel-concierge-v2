@@ -9,11 +9,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // SECURITY: Require admin auth OR treat as automation (no user).
-    // If a user session is present, it must be admin/platform_admin.
-    // Automation calls from Base44 scheduled/entity triggers arrive without a user session.
+    // SECURITY: Require admin auth unconditionally — same pattern as expirePassportGrants.
+    // A prior version treated "no user session" as automation and let it through
+    // unauthenticated; that's indistinguishable from a genuinely anonymous caller,
+    // and Base44's own scheduled/entity-trigger calls do carry a real admin identity
+    // (confirmed by expirePassportGrants' working requireAdmin gate), so there's no
+    // legitimate case this blocks.
     const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
@@ -46,10 +49,10 @@ Deno.serve(async (req) => {
       // Audit every sync operation (non-fatal if fails in automation context)
       try { await base44.asServiceRole.entities.AuditLog.create({
         event_type: 'case_accessed',
-        actor_id: user?.id || 'system',
-        actor_role: user?.role || 'system',
-        actor_name: user?.full_name || 'Sync Automation',
-        actor_email: user?.email || '',
+        actor_id: user.id,
+        actor_role: user.role,
+        actor_name: user.full_name || '',
+        actor_email: user.email || '',
         resource_type: 'CaseRecord',
         resource_id: data.id,
         case_id: data.id,

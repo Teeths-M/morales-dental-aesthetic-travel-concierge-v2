@@ -1,10 +1,16 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Inline token encoder
-function encodePortalToken({ consultation_id, partner_id, portal_type }) {
+// Inline token encoder — HMAC-signed to match getPortalData's verifyPortalToken.
+// (Previously produced an unsigned btoa(JSON) token with no '.'-suffix signature,
+// which verifyPortalToken rejects outright — this portal link was non-functional.)
+async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
-  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, utf8));
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 async function sendSms(to, message) {
@@ -58,6 +64,18 @@ Deno.serve(async (req) => {
 
     const consultationId = caseData.consultation_id;
     const caseRecordId = caseData.id;
+
+    // SECURITY: This is an entity-trigger endpoint with no user session, so the
+    // request body cannot be trusted at face value — an unauthenticated caller could
+    // otherwise forge a doctor-confirmed payload for any real case_id and cause travel
+    // agencies/chauffeurs to be dispatched quote requests, and the patient to be told
+    // their doctor confirmed, none of which actually happened. Re-verify server-side.
+    if (caseRecordId) {
+      const realCase = await base44.asServiceRole.entities.CaseRecord.get(caseRecordId).catch(() => null);
+      if (!realCase || realCase.doctor_confirmation_status !== 'CONFIRMED') {
+        return Response.json({ skipped: true, reason: 'doctor_confirmation_status not confirmed on server record' });
+      }
+    }
     const patientName = caseData.client_name || 'Valued Patient';
     const patientEmail = caseData.client_email;
     const patientPhone = caseData.client_phone;
@@ -121,7 +139,7 @@ Deno.serve(async (req) => {
 
     for (const agency of travelAgencies) {
       const agencyName = agency.agency_name || agency.contact_person || agency.email;
-      const token = encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
+      const token = await encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
       const portalUrl = `${appUrl}/portal/travel?token=${token}`;
 
       const agencySms = `Hello ${agencyName}, a doctor has confirmed a new patient with Morales. ${patientName} requires a complete travel package. Please open your portal to submit pricing within 48 hours: ${portalUrl} — ${BRAND}`;
@@ -165,7 +183,7 @@ Deno.serve(async (req) => {
 
     for (const driver of chauffeurs) {
       const driverName = driver.driver_name || driver.company_name || driver.email;
-      const token = encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
+      const token = await encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
       const portalUrl = `${appUrl}/portal/transfer?token=${token}`;
 
       const driverSms = `Hello ${driverName}, a new patient has been confirmed with Morales. ${patientName} requires medical transfers in your region. Please open your portal to submit your pricing within 48 hours: ${portalUrl} — ${BRAND}`;

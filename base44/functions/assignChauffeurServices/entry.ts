@@ -4,18 +4,24 @@ import { computePrevHash } from '../_shared/auditHashChain.ts';
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
-// ── Token generation — must match decodePortalToken() in /src/lib/portalToken.js
-// Format: btoa(JSON.stringify({ consultation_id, partner_id, portal_type, expires_at }))
-// Client reads via ?token= query param. Random tokens were previously used (now fixed).
-function makePortalToken(caseId: string, partnerId: string, portalType: string) {
+// ── Token generation — HMAC-signed to match verifyPortalToken() in getPortalData.
+// Client reads via ?token= query param, decodePortalToken() in /src/lib/portalToken.js.
+// FIX: previously produced an unsigned btoa(JSON) token with no signature suffix —
+// getPortalData's verifyPortalToken requires a '.'-separated HMAC-SHA256 signature
+// and rejects anything without one, so every generated portal link was non-functional.
+async function makePortalToken(caseId: string, partnerId: string, portalType: string) {
   const payload = {
     consultation_id: caseId,
     partner_id:      partnerId,
     portal_type:     portalType,
     expires_at:      Date.now() + 7 * 24 * 60 * 60 * 1000,
   };
-  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode(...utf8));
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 const e = (v: unknown) => String(v ?? '')
@@ -109,8 +115,8 @@ Deno.serve(async (req) => {
     // ── Fixed: tokens are btoa-encoded JSON payloads, URL uses ?token= query param ──
     // Previous implementation used random hex strings and /portal/transfer/:token path params —
     // that caused PortalChauffeur to fail because getTokenFromUrl() reads ?token= only.
-    const originToken    = makePortalToken(caseId, originDriver.id, 'transfer');
-    const destToken      = makePortalToken(caseId, destDriver.id,   'transfer');
+    const originToken    = await makePortalToken(caseId, originDriver.id, 'transfer');
+    const destToken      = await makePortalToken(caseId, destDriver.id,   'transfer');
     const originPortalUrl = `${APP_URL}/portal/transfer?token=${originToken}`;
     const destPortalUrl   = `${APP_URL}/portal/transfer?token=${destToken}`;
 

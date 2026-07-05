@@ -46,8 +46,13 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // SECURITY: this is an admin composer tool (see AdminSms.jsx, gated at /admin/sms),
+    // including a free-text "custom" message type and any target phone number. The
+    // route was admin-only but this function only required *some* logged-in user —
+    // any registered patient/partner account could call it directly to send up to
+    // 10 arbitrary SMS/hour to any number via Morales' own Twilio account.
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
     const body = await req.json();

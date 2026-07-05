@@ -1,13 +1,19 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Inline token encoder (no local imports allowed)
-function encodePortalToken({ consultation_id, partner_id, portal_type }) {
+// FIX: the '.'-suffix was previously crypto.getRandomValues() random bytes — it
+// LOOKED like an HMAC signature (matching the payload.sigHex shape getPortalData's
+// verifyPortalToken expects) but was never derived from the payload or any secret,
+// so it always failed real verification while appearing correctly formatted. Now
+// actually HMAC-signed so the token verifies and the portal link works.
+async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
-  const rawBytes = new Uint8Array(32);
-  crypto.getRandomValues(rawBytes);
-  const randomSuffix = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, utf8)) + '.' + randomSuffix;
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 async function sendSms(to, message) {
@@ -61,6 +67,19 @@ Deno.serve(async (req) => {
     const consultationId = feePaidData.consultation_id;
     if (!consultationId) {
       return Response.json({ skipped: true, reason: 'No consultation_id on fee record' });
+    }
+
+    // SECURITY: This is an entity-trigger endpoint with no user session, so the
+    // request body cannot be trusted at face value — an unauthenticated caller
+    // could otherwise forge `{ data: { fee_paid: true, consultation_id }, changed_fields: ['fee_paid'] }`
+    // for any real consultation_id and trigger a fake "payment confirmed" notification
+    // to a real patient/doctor without anyone actually paying. Independently re-verify
+    // against the real ConsultationFee record before sending anything.
+    if (feePaidData.id) {
+      const realFee = await base44.asServiceRole.entities.ConsultationFee.get(feePaidData.id).catch(() => null);
+      if (!realFee || realFee.fee_paid !== true) {
+        return Response.json({ skipped: true, reason: 'fee_paid not confirmed on server record' });
+      }
     }
 
     const consultation = await base44.asServiceRole.entities.Consultation.get(consultationId);

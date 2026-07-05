@@ -97,17 +97,31 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
 
-    const { data: caseData, old_data, changed_fields, event } = body;
+    const { data: bodyCaseData, old_data, changed_fields, event } = body;
 
     // Only process status changes
     if (!changed_fields?.includes('status')) {
       return Response.json({ skipped: true, reason: 'No status change' });
     }
 
-    const newStatus = caseData?.status;
-    const caseId = caseData?.id || event?.entity_id;
-    const patientName = caseData?.client_name || 'Valued Patient';
-    const patientPhone = toE164(caseData?.client_phone);
+    const caseId = bodyCaseData?.id || event?.entity_id;
+    if (!caseId) {
+      return Response.json({ skipped: true, reason: 'No case_id on payload' });
+    }
+
+    // SECURITY: This is an entity-trigger endpoint with no user session, so the
+    // request body cannot be trusted at face value — an unauthenticated caller
+    // could otherwise forge an arbitrary client_name/client_phone/status and use
+    // this endpoint as a free WhatsApp-send relay via Morales' own Twilio account
+    // to any phone number. Re-fetch the real CaseRecord and use its fields only.
+    const caseData = await base44.asServiceRole.entities.CaseRecord.get(caseId).catch(() => null);
+    if (!caseData) {
+      return Response.json({ skipped: true, reason: 'Case not found' });
+    }
+
+    const newStatus = caseData.status;
+    const patientName = caseData.client_name || 'Valued Patient';
+    const patientPhone = toE164(caseData.client_phone);
 
     // Guard: opt-in required
     if (!caseData?.whatsapp_opt_in) {

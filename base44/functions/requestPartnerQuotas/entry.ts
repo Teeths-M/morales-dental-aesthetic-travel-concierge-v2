@@ -7,9 +7,16 @@ const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.
 const e = (v: unknown) => String(v ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function makeToken(caseId: string, partnerId: string, portalType: string) {
+// HMAC-signed to match verifyPortalToken() in getPortalData — was previously
+// unsigned and would fail that verification (portal link non-functional).
+async function makeToken(caseId: string, partnerId: string, portalType: string) {
   const payload = { consultation_id: caseId, partner_id: partnerId, portal_type: portalType, expires_at: Date.now() + 14 * 86_400_000 };
-  return btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))));
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 function quotaEmail({ partnerName, partnerType, patientName, procedures, procedureDate, caseRef, portalUrl, services }: {
@@ -68,7 +75,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const agencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }).catch(() => []);
   const agency = agencies[0];
   if (agency?.email) {
-    const token = makeToken(case_id, agency.id, 'travel');
+    const token = await makeToken(case_id, agency.id, 'travel');
     const url   = `${APP_URL}/portal/travel?token=${token}`;
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: agency.email,
@@ -92,7 +99,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const drivers = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }).catch(() => []);
   const driver  = drivers[0];
   if (driver?.email) {
-    const token = makeToken(case_id, driver.id, 'transfer');
+    const token = await makeToken(case_id, driver.id, 'transfer');
     const url   = `${APP_URL}/portal/transfer?token=${token}`;
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: driver.email,
@@ -116,7 +123,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const companions = await base44.asServiceRole.entities.Companion.filter({ verification_status: 'verified', is_available: true }).catch(() => []);
   const companion  = companions.find((c: any) => (c.service_regions || []).includes(caseRecord.procedure_country)) ?? companions[0];
   if (companion?.email) {
-    const token = makeToken(case_id, companion.id, 'companion');
+    const token = await makeToken(case_id, companion.id, 'companion');
     const url   = `${APP_URL}/companion-dashboard`;
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: companion.email,

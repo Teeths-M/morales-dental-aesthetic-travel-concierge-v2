@@ -18,9 +18,16 @@ const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.
 
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function makeToken(caseId: string, partnerId: string, portalType: string) {
+// HMAC-signed to match verifyPortalToken() in getPortalData — was previously
+// unsigned and would fail that verification (portal link non-functional).
+async function makeToken(caseId: string, partnerId: string, portalType: string) {
   const payload = { consultation_id: caseId, partner_id: partnerId, portal_type: portalType, expires_at: Date.now() + 14 * 86_400_000 };
-  return btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload))));
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 function escalationEmail({ partnerType, patientName, caseRef, reason, portalUrl }: {
@@ -81,7 +88,7 @@ Deno.serve(async (req) => {
         const agencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' }).catch(() => []);
         const backup   = (agencies as any[]).find((a: any) => a.id !== c.travel_vendor_id) ?? (agencies as any[])[1];
         if (backup?.email) {
-          const token  = makeToken(c.id, backup.id, 'travel');
+          const token  = await makeToken(c.id, backup.id, 'travel');
           const url    = `${APP_URL}/portal/travel?token=${token}`;
           const reason = `The previously contacted travel agency did not respond to their quote request within 24 hours for patient ${patientName}.`;
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
@@ -109,7 +116,7 @@ Deno.serve(async (req) => {
         const drivers  = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' }).catch(() => []);
         const backup   = (drivers as any[]).find((d: any) => d.id !== c.origin_driver_id && d.id !== c.destination_driver_id) ?? (drivers as any[])[1];
         if (backup?.email) {
-          const token  = makeToken(c.id, backup.id, 'transfer');
+          const token  = await makeToken(c.id, backup.id, 'transfer');
           const url    = `${APP_URL}/portal/transfer?token=${token}`;
           const reason = `The previously contacted chauffeur service did not respond to their transfer quote request within 24 hours for patient ${patientName}.`;
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({

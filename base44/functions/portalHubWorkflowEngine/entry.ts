@@ -4,9 +4,17 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // SECURITY: this engine drives payment-plan status (including marking a plan
+    // "fully_paid" from a caller-supplied amount with no Stripe verification),
+    // fakes doctor-approval workflow stages, and triggers partner notifications —
+    // for ANY consultation_id, since none of these actions check that the caller
+    // owns or is assigned to the case. Requiring "any logged-in user" was
+    // effectively no access control at all (a patient or partner account could
+    // drive any other patient's workflow). Restrict to admin/platform_admin,
+    // matching executeCaseWorkflow's equivalent gate.
+    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+      return Response.json({ error: 'Unauthorized - Admin access required' }, { status: 403 });
     }
 
     const payload = await req.json();

@@ -123,16 +123,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'consultation_id is required' }, { status: 400 });
     }
 
-    // 1. Fetch the consultation, or use the automation payload when available.
-    let consultation = body.data || null;
-    if (!consultation) {
-      // BUG-R10-01 FIX: filter({ id: consultation_id }) cannot query the built-in `id` field
-      // via the SDK — always returns []. Use .get() for primary-key lookup.
-      try {
-        consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
-      } catch (_) {
-        consultation = null;
-      }
+    // 1. Fetch the real consultation record from the database.
+    // SECURITY — M PRINCIPLE: never evaluate SAFE-T risk against caller-supplied
+    // medical data. This previously trusted `body.data` directly when present,
+    // meaning an unauthenticated caller could forge benign-looking medical fields
+    // for a real consultation_id and have a genuinely risky case wrongly approved —
+    // a direct bypass of the hard safety gate. Always re-fetch the trusted record.
+    // BUG-R10-01 FIX: filter({ id: consultation_id }) cannot query the built-in `id` field
+    // via the SDK — always returns []. Use .get() for primary-key lookup.
+    let consultation = null;
+    try {
+      consultation = await base44.asServiceRole.entities.Consultation.get(consultation_id);
+    } catch (_) {
+      consultation = null;
     }
     if (!consultation) {
       return Response.json({ error: 'Consultation not found' }, { status: 404 });

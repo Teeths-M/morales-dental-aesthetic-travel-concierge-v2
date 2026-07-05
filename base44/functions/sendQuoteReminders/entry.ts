@@ -2,12 +2,18 @@
 
 const BRAND = 'Morales Medical Travel Safety';
 
-function encodePortalToken({ consultation_id, partner_id, portal_type }: {
+// HMAC-signed to match verifyPortalToken() in getPortalData — was previously
+// unsigned and would fail that verification (portal link non-functional).
+async function encodePortalToken({ consultation_id, partner_id, portal_type }: {
   consultation_id: string; partner_id: string; portal_type: string;
 }) {
   const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
-  const utf8 = new TextEncoder().encode(JSON.stringify(payload));
-  return btoa(String.fromCharCode.apply(null, [...utf8]));
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const data = JSON.stringify(payload);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
 }
 
 async function sendSms(to: string, message: string) {
@@ -136,7 +142,7 @@ Deno.serve(async (req) => {
         const agencies = await base44.asServiceRole.entities.TravelAgency.filter({ status: 'active' });
         for (const agency of agencies) {
           const agencyName = agency.agency_name || agency.email;
-          const token      = encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
+          const token      = await encodePortalToken({ consultation_id: consultationId, partner_id: agency.id, portal_type: 'travel' });
           const portalUrl  = `${appUrl}/portal/travel?token=${token}`;
 
           // Blackout guard
@@ -176,7 +182,7 @@ Deno.serve(async (req) => {
         const chauffeurs = await base44.asServiceRole.entities.TaxiService.filter({ status: 'active' });
         for (const driver of chauffeurs) {
           const driverName = driver.driver_name || driver.company_name || driver.email;
-          const token      = encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
+          const token      = await encodePortalToken({ consultation_id: consultationId, partner_id: driver.id, portal_type: 'chauffeur' });
           const portalUrl  = `${appUrl}/portal/transfer?token=${token}`;
 
           const blackout = await base44.functions.invoke('checkNotificationBlackout', {
