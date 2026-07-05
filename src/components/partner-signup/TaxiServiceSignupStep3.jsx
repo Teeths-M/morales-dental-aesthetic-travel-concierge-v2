@@ -93,6 +93,13 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
         linkedEntityId: taxi.id,
         profileData: { ...formData, ...taxiData }
       });
+      try {
+        await base44.functions.invoke('initiatePartnerVerification', {
+          partner_id: taxi.id,
+          partner_type: 'taxi_service',
+          documents: formData.vehicle_photo_url ? [formData.vehicle_photo_url] : [],
+        });
+      } catch (_) { /* non-fatal */ }
       onComplete(taxi);
     } catch (error) {
       console.error('Submit failed:', error);

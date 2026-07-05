@@ -26,6 +26,8 @@ Deno.serve(async (req) => {
       partner = await base44.asServiceRole.entities.TaxiService.get(partner_id);
     } else if (partner_type === 'companion') {
       partner = await base44.asServiceRole.entities.Companion.get(partner_id);
+    } else if (partner_type === 'security_agency') {
+      partner = await base44.asServiceRole.entities.SecurityAgency.get(partner_id);
     }
 
     if (!partner) {
@@ -111,6 +113,8 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.TaxiService.update(partner_id, partnerUpdate);
     } else if (partner_type === 'companion') {
       await base44.asServiceRole.entities.Companion.update(partner_id, partnerUpdate);
+    } else if (partner_type === 'security_agency') {
+      await base44.asServiceRole.entities.SecurityAgency.update(partner_id, partnerUpdate);
     }
 
     // Log to AuditLog

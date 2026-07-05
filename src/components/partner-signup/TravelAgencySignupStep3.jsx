@@ -86,6 +86,13 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
         linkedEntityId: agency.id,
         profileData: { ...formData, ...agencyData }
       });
+      try {
+        await base44.functions.invoke('initiatePartnerVerification', {
+          partner_id: agency.id,
+          partner_type: 'travel_agency',
+          documents: formData.business_license_url ? [formData.business_license_url] : [],
+        });
+      } catch (_) { /* non-fatal */ }
       onComplete(agency);
     } catch (error) {
       console.error('Submit failed:', error);

@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
+    if (!user || !['admin', 'platform_admin'].includes(user.role)) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -18,12 +18,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Decision must be "approve" or "deny"' }, { status: 400 });
     }
 
-    const verifications = await base44.asServiceRole.entities.PartnerVerification.filter({ id: verification_id });
-    if (!verifications.length) {
+    // SDK filter({ id }) always returns [] — use .get() for primary-key lookups
+    const verification = await base44.asServiceRole.entities.PartnerVerification.get(verification_id);
+    if (!verification) {
       return Response.json({ error: 'Verification not found' }, { status: 404 });
     }
-
-    const verification = verifications[0];
     const now = new Date().toISOString();
 
     let newStatus;
@@ -73,6 +72,8 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.TaxiService.update(verification.partner_id, partnerUpdate);
     } else if (verification.partner_type === 'companion') {
       await base44.asServiceRole.entities.Companion.update(verification.partner_id, partnerUpdate);
+    } else if (verification.partner_type === 'security_agency') {
+      await base44.asServiceRole.entities.SecurityAgency.update(verification.partner_id, partnerUpdate);
     }
 
     // Send notification to partner

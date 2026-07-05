@@ -101,13 +101,20 @@ export default function SecurityAgencySignup() {
     setLoading(true);
     setError('');
     try {
-      await base44.entities.SecurityAgency.create({
+      const agency = await base44.entities.SecurityAgency.create({
         ...form,
         years_in_operation: Number(form.years_in_operation) || 0,
         response_time_minutes: Number(form.response_time_minutes) || 0,
         submitted_at: new Date().toISOString(),
         verification_status: 'pending_review',
       });
+      try {
+        await base44.functions.invoke('initiatePartnerVerification', {
+          partner_id: agency.id,
+          partner_type: 'security_agency',
+          documents: [form.license_doc_url, form.insurance_doc_url].filter(Boolean),
+        });
+      } catch (_) { /* non-fatal — admin can trigger manually from PartnerVerificationHub */ }
       setSubmitted(true);
     } catch (err) {
       setError('Submission failed. Please try again.');

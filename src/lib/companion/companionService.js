@@ -31,7 +31,15 @@ export async function createCompanionProfile(formData, accountType) {
     is_agency: accountType === ACCOUNT_TYPES.AGENCY,
   };
 
-  return await base44.entities.Companion.create(companionData);
+  const companion = await base44.entities.Companion.create(companionData);
+  try {
+    await base44.functions.invoke('initiatePartnerVerification', {
+      partner_id: companion.id,
+      partner_type: 'companion',
+      documents: [],
+    });
+  } catch (_) { /* non-fatal */ }
+  return companion;
 }
 
 /**
