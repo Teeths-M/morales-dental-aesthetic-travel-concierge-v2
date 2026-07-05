@@ -14,29 +14,40 @@ export default function TaxiServiceDashboard() {
   const [language,     setLanguage]      = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [loading,      setLoading]       = useState(true);
   const [uploading,    setUploading]     = useState(null); // 'driver' | 'vehicle' | null
+  const [uploadError,  setUploadError]   = useState(null);
+  const [loadError,    setLoadError]     = useState(null);
   const { user: authUser } = useAuth();
 
   const uploadPhoto = async (file, field) => {
     if (!taxi?.id) return;
     setUploading(field);
+    setUploadError(null);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       const key = field === 'driver' ? 'driver_identity_photo_url' : 'vehicle_photo_url';
       await base44.entities.TaxiService.update(taxi.id, { [key]: file_url });
       setTaxi(prev => ({ ...prev, [key]: file_url }));
-    } catch (_) {}
-    setUploading(null);
+    } catch (_) {
+      setUploadError('Photo upload failed. Please try again.');
+    } finally {
+      setUploading(null);
+    }
   };
 
   useEffect(() => {
     const loadTaxi = async () => {
-      const currentUser = authUser?.isPreviewAdmin ? authUser : await base44.auth.me();
-      setUser(currentUser);
-      const taxis = currentUser?.isPreviewAdmin
-        ? await base44.entities.TaxiService.list('-updated_date', 1)
-        : await base44.entities.TaxiService.filter({ email: currentUser.email });
-      setTaxi(taxis[0] || null);
-      setLoading(false);
+      try {
+        const currentUser = authUser?.isPreviewAdmin ? authUser : await base44.auth.me();
+        setUser(currentUser);
+        const taxis = currentUser?.isPreviewAdmin
+          ? await base44.entities.TaxiService.list('-updated_date', 1)
+          : await base44.entities.TaxiService.filter({ email: currentUser.email });
+        setTaxi(taxis[0] || null);
+      } catch (e) {
+        setLoadError('Could not load your profile. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     const handleLanguageChange = (event) => setLanguage(event.detail.language);
@@ -49,6 +60,21 @@ export default function TaxiServiceDashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-border border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background py-12 px-6">
+        <div className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-8 text-center">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold text-foreground mb-2">Could Not Load Profile</h1>
+          <p className="text-muted-foreground mb-6">{loadError}</p>
+          <button onClick={() => window.location.reload()} className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90">
+            Refresh
+          </button>
+        </div>
       </div>
     );
   }
@@ -72,6 +98,12 @@ export default function TaxiServiceDashboard() {
     <div className="min-h-screen py-10 px-4 sm:px-6" style={{ background: '#060B16' }}>
       <div className="max-w-2xl mx-auto">
         <BackButton fallback="/" className="mb-4" />
+        {uploadError && (
+          <div className="mb-4 p-3 rounded-xl flex items-center gap-2 text-sm" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+            <AlertCircle className="w-4 h-4 flex-shrink-0" /> {uploadError}
+            <button onClick={() => setUploadError(null)} className="ml-auto text-xs underline">Dismiss</button>
+          </div>
+        )}
 
         {/* This Is Me™ — driver submits their identity photos once */}
         <div style={{ marginBottom: 20, background: '#0C1A1D', border: '1px solid #2A3F4A', borderRadius: 20, padding: '20px 18px' }}>

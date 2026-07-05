@@ -37,19 +37,15 @@ export default function TaxiServiceSignup() {
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
     setLanguage(savedLang);
-    
-    const handleLanguageChange = (event) => {
-      setLanguage(event.detail.language);
-    };
+    const handleLanguageChange = (event) => setLanguage(event.detail.language);
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
-    // Load saved draft
+  // Load saved draft — must be its own effect so it runs after the cleanup-returning language effect
+  useEffect(() => {
     const savedDraft = loadSignupDraft('taxi_service');
-    if (savedDraft) {
-      // @ts-ignore — pre-existing type mismatch on draft restore
-      setFormData(savedDraft);
-    }
+    if (savedDraft) setFormData(savedDraft);
   }, []);
 
   // Auto-save draft

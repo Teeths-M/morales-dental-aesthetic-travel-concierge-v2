@@ -35,19 +35,15 @@ export default function TravelAgencySignup() {
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
     setLanguage(savedLang);
-    
-    const handleLanguageChange = (event) => {
-      setLanguage(event.detail.language);
-    };
+    const handleLanguageChange = (event) => setLanguage(event.detail.language);
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
+  }, []);
 
-    // Load saved draft
+  // Load saved draft — must be its own effect so it runs after the cleanup-returning language effect
+  useEffect(() => {
     const savedDraft = loadSignupDraft('travel_agency');
-    if (savedDraft) {
-      // @ts-ignore — loadSignupDraft returns sync data; pre-existing type mismatch
-      setFormData(savedDraft);
-    }
+    if (savedDraft) setFormData(savedDraft);
   }, []);
 
   // Auto-save draft

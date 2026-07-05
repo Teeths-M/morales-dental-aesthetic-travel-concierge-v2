@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { PLATFORM_PRICING } from '@/lib/constants';
+import { ROLES } from '@/lib/roles';
+import { BackButton } from '@/components/nav/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,7 +77,7 @@ export default function LocalDoctorSignup() {
       await base44.entities.Doctor.create({
         ...form,
         doctor_type: 'local',
-        role: 'local_doctor',
+        role: ROLES.LOCAL_DOCTOR,
         verification_status: 'pending',
         is_active: false,
         accepting_referrals: false,
@@ -117,6 +119,7 @@ export default function LocalDoctorSignup() {
   return (
     <div className="min-h-screen bg-[#060B16] py-10 px-4">
       <div className="max-w-lg mx-auto">
+        <BackButton fallback="/partner-signup" className="mb-4" />
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5 mb-4">

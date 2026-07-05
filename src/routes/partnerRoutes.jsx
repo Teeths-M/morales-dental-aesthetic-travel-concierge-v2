@@ -9,12 +9,14 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
+  ROLES,
   DOCTOR_PORTAL_ROLES,
   LOCAL_DOCTOR_PORTAL_ROLES,
   TRAVEL_AGENCY_PORTAL_ROLES,
   TAXI_SERVICE_PORTAL_ROLES,
   COMPANION_PORTAL_ROLES,
   SECURITY_AGENCY_PORTAL_ROLES,
+  ADMIN_ROLES,
 } from '@/lib/roles';
 
 const DoctorDashboard        = lazy(() => import('@/pages/DoctorDashboard'));
@@ -40,7 +42,8 @@ const PortalDoctor           = lazy(() => import('@/pages/PortalDoctor'));
 const ClientProposalPortal   = lazy(() => import('@/pages/ClientProposalPortal'));
 
 const PARTNER_REVIEW_ROLES = [
-  'travel_agency', 'taxi_service', 'companion', 'doctor', 'platform_admin', 'admin'
+  ROLES.TRAVEL_AGENCY, ROLES.TAXI_SERVICE, ROLES.COMPANION,
+  ROLES.DOCTOR, ROLES.LOCAL_DOCTOR, ...ADMIN_ROLES,
 ];
 
 export const partnerRoutes = (

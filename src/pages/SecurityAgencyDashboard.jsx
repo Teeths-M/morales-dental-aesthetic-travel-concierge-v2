@@ -134,6 +134,7 @@ export default function SecurityAgencyDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [toggleError, setToggleError] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -154,12 +155,18 @@ export default function SecurityAgencyDashboard() {
   const toggleAvailability = async () => {
     if (!agency || agency.verification_status !== 'verified') return;
     setToggling(true);
-    const updated = await base44.entities.SecurityAgency.update(agency.id, {
-      is_available: !agency.is_available,
-      sos_alerts_enabled: !agency.is_available,
-    });
-    setAgency(updated);
-    setToggling(false);
+    setToggleError(null);
+    try {
+      const updated = await base44.entities.SecurityAgency.update(agency.id, {
+        is_available: !agency.is_available,
+        sos_alerts_enabled: !agency.is_available,
+      });
+      setAgency(updated);
+    } catch (e) {
+      setToggleError('Could not update availability. Please try again.');
+    } finally {
+      setToggling(false);
+    }
   };
 
   if (loading) {
@@ -250,6 +257,13 @@ export default function SecurityAgencyDashboard() {
               {toggling ? 'Updating…' : agency.is_available ? 'Online' : 'Go Online'}
             </button>
           </motion.div>
+        )}
+
+        {toggleError && (
+          <div className="mb-4 p-3 rounded-xl flex items-center gap-2 text-sm bg-red-50 border border-red-200 text-red-700">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" /> {toggleError}
+            <button onClick={() => setToggleError(null)} className="ml-auto text-xs underline">Dismiss</button>
+          </div>
         )}
 
         {/* Pending notice */}

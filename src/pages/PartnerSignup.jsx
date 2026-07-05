@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { motion } from 'framer-motion';
-import { Plane, Car, User, Shield, Stethoscope, Crown, Sparkles, ArrowRight } from 'lucide-react';
+import { Plane, Car, User, Shield, Stethoscope, Crown, Sparkles, ArrowRight, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Each card carries its own badge gradient so badges communicate
@@ -73,6 +73,19 @@ const CARDS = (language, navigate) => [
     title: language === 'es' ? 'Agencia de Seguridad' : language === 'fr' ? 'Agence de Sécurité' : 'Security Agency',
     desc: language === 'es' ? 'Protección VIP y respuesta de emergencia para pacientes de alto perfil.' : language === 'fr' ? 'Protection VIP et réponse d\'urgence pour patients de haut profil.' : 'VIP protection and emergency response for high-profile patients.',
     onClick: () => navigate('/security-signup', { state: { language } }),
+  },
+  {
+    delay: 0.35,
+    bg: 'from-teal-700 via-cyan-700 to-teal-900',
+    btn: 'from-teal-600 to-cyan-700',
+    badgeClass: 'from-teal-500 to-cyan-600',
+    img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop&q=80',
+    alt: 'Local doctor post-operative care',
+    icon: MapPin,
+    badge: 'M LOCAL',
+    title: language === 'es' ? 'Médico Local' : language === 'fr' ? 'Médecin Local' : 'M Local Doctor',
+    desc: language === 'es' ? 'Reciba referencias verificadas de pacientes después de regresar a su país.' : language === 'fr' ? 'Recevez des références vérifiées pour les patients de retour dans leur pays.' : 'Receive verified patient referrals for post-surgical follow-up in their home country.',
+    onClick: () => navigate('/local-doctor-signup', { state: { language } }),
   },
 ];
 
@@ -183,8 +196,8 @@ export default function PartnerSignup() {
           ))}
         </div>
 
-        {/* Bottom row: 2 cards, centered */}
-        <div className="grid sm:grid-cols-2 gap-7 max-w-4xl mx-auto">
+        {/* Bottom row: remaining cards */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {cards.slice(3).map(card => (
             <PartnerCard key={card.title} card={card} language={language} />
           ))}

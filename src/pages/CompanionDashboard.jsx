@@ -103,6 +103,7 @@ function ReceiptUploadPanel({ caseId, assignmentId }) {
   const [desc,     setDesc]     = useLocalState('');
   const [loading,  setLoading]  = useLocalState(false);
   const [uploaded, setUploaded] = useLocalState(false);
+  const [err,      setErr]      = useLocalState(null);
 
   if (!assignmentId) return null;
 
@@ -110,8 +111,8 @@ function ReceiptUploadPanel({ caseId, assignmentId }) {
     const val = parseFloat(amount);
     if (!val || val <= 0 || !desc.trim()) return;
     setLoading(true);
+    setErr(null);
     try {
-      // Add receipt to MothersTouchAssignment
       const assignment = await base44.entities.MothersTouchAssignment.filter({ case_id: caseId });
       if (assignment[0]) {
         const existing = assignment[0].grocery_receipts || [];
@@ -125,7 +126,11 @@ function ReceiptUploadPanel({ caseId, assignmentId }) {
         });
       }
       setUploaded(true);
-    } catch (_) { setLoading(false); }
+    } catch (_) {
+      setErr('Could not submit receipt. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (uploaded) return (
@@ -155,6 +160,9 @@ function ReceiptUploadPanel({ caseId, assignmentId }) {
             className="flex-[2] px-3 py-2 text-xs rounded-lg focus:outline-none"
             style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #2A3F4A', color: '#fff' }} />
         </div>
+        {err && (
+          <p className="text-xs mb-2" style={{ color: '#f87171' }}>{err}</p>
+        )}
         <button onClick={handleUpload} disabled={loading || !amount || !desc}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold disabled:opacity-50"
           style={{ background: GOLD, color: '#060B16' }}>
@@ -171,18 +179,23 @@ function CompanionRateForm({ caseId, patientName }) {
   const [amount, setAmount]   = useLocalState('');
   const [loading, setLoading] = useLocalState(false);
   const [done, setDone]       = useLocalState(false);
+  const [err, setErr]         = useLocalState(null);
   const GOLD = '#D4AF37';
 
   const submit = async () => {
     const val = parseFloat(amount);
     if (!val || val <= 0) return;
     setLoading(true);
+    setErr(null);
     try {
       await base44.functions.invoke('submitPartnerQuote', {
         case_id: caseId, partner_type: 'companion', amount: val,
       });
       setDone(true);
-    } catch (_) { setLoading(false); }
+    } catch (_) {
+      setErr('Could not submit rate. Please try again.');
+      setLoading(false);
+    }
   };
 
   if (done) return (
@@ -213,6 +226,7 @@ function CompanionRateForm({ caseId, patientName }) {
           {loading ? '…' : 'Submit'}
         </button>
       </div>
+      {err && <p className="text-xs mt-2" style={{ color: '#f87171' }}>{err}</p>}
     </div>
   );
 }
