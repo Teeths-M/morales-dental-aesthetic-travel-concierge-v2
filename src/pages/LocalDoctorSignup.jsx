@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ROUTES, PLATFORM_PRICING } from '@/lib/constants';
+import { PLATFORM_PRICING } from '@/lib/constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,9 +54,12 @@ export default function LocalDoctorSignup() {
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const toggleSpecialty = (s) =>
-    set('specialties', form.specialties.includes(s)
-      ? form.specialties.filter(x => x !== s)
-      : [...form.specialties, s]);
+    setForm(prev => ({
+      ...prev,
+      specialties: prev.specialties.includes(s)
+        ? prev.specialties.filter(x => x !== s)
+        : [...prev.specialties, s],
+    }));
 
   const canProceed = () => {
     if (step === 0) return form.full_name && form.email && form.phone && form.home_country && form.city;
@@ -127,18 +130,18 @@ export default function LocalDoctorSignup() {
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center justify-between mb-8 px-2">
+        <div className="flex items-center mb-8 px-2">
           {STEPS.map((label, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
+            <React.Fragment key={i}>
+              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border-2 transition-colors ${
                 i < step ? 'bg-[#D4AF37] border-[#D4AF37] text-black' :
                 i === step ? 'bg-transparent border-[#D4AF37] text-[#D4AF37]' :
                 'bg-transparent border-[#2A3F4A] text-gray-600'
               }`}>{i < step ? '✓' : i + 1}</div>
               {i < STEPS.length - 1 && (
-                <div className={`h-px flex-1 w-8 ${i < step ? 'bg-[#D4AF37]' : 'bg-[#2A3F4A]'}`} />
+                <div className={`flex-1 h-px transition-colors ${i < step ? 'bg-[#D4AF37]' : 'bg-[#2A3F4A]'}`} />
               )}
-            </div>
+            </React.Fragment>
           ))}
         </div>
 
