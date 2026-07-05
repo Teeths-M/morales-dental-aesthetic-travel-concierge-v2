@@ -296,8 +296,27 @@ export const DATE_FORMATS = {
 
 // ── Consultation Fee ─────────────────────────────────────────────────────────
 export const CONSULTATION_FEE = {
-  AMOUNT_USD: 49,
+  AMOUNT_USD: 49,         // refundable deposit — returned to patient on booking confirmation
   CURRENCY: 'USD',
+};
+
+// ── Platform Pricing ─────────────────────────────────────────────────────────
+export const PLATFORM_PRICING = {
+  // ── Medical users (procedure booking) ──
+  // Commission taken from procedure value on confirmed booking
+  COMMISSION_FULL_PAYMENT: 0.20,        // 20% — patient pays procedure cost in full
+  COMMISSION_INSTALLMENT_PLAN: 0.25,    // 25% — patient pays 50% down + remainder before travel date
+
+  // ── Safety-only users (no procedure booking) ──
+  // Platform fee on safety subscription cost
+  SAFETY_TEAM_RATE: 0.20,              // 20% — group / corporate / team plan
+  SAFETY_INDIVIDUAL_RATE: 0.25,        // 25% — individual safety-only subscription
+
+  // Doctor trust badge — monthly subscription to carry the Morales M
+  DOCTOR_BADGE_MONTHLY_USD: 9.99,
+
+  // Partner network fee — taken from each partner transaction (escort, companion, accommodation, security)
+  PARTNER_NETWORK_FEE: 0.05,
 };
 
 // ── Default Values ───────────────────────────────────────────────────────────
@@ -305,7 +324,6 @@ export const DEFAULTS = {
   MARKUP_PERCENTAGE: 35,
   RECOVERY_DAYS: 7,
   CHECKIN_INTERVAL_HOURS: 12,
-  PLATFORM_COMMISSION_RATE: 0.175, // 17.5%
 };
 
 // ── Validation Patterns ──────────────────────────────────────────────────────
@@ -370,6 +388,7 @@ export const CONSTANTS = {
   CURRENCY,
   DATE_FORMATS,
   CONSULTATION_FEE,
+  PLATFORM_PRICING,
   DEFAULTS,
   PATTERNS,
   RATE_LIMITS,
