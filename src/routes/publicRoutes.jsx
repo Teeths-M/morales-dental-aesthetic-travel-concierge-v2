@@ -65,25 +65,25 @@ const NearbyHelp               = lazy(() => import('@/pages/NearbyHelp'));
 
 export const publicRoutes = (
   <Route key="public-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
-    <Route path="/"               element={<Home />} />
-    <Route path="/discover"       element={<Discover />} />
-    <Route path="/providers"      element={<Providers />} />
-    <Route path="/providers/:id"  element={<ProviderDetail />} />
-    <Route path="/how-it-works"   element={<HowItWorksPage />} />
-    <Route path="/partners"       element={<PartnerDirectory />} />
-    <Route path="/about"          element={<About />} />
-    <Route path="/privacy"        element={<PrivacyPolicy />} />
-    <Route path="/terms"          element={<TermsOfService />} />
-    <Route path="/procedures"     element={<Procedures />} />
+    <Route path="/"               element={<ErrorBoundary><Home /></ErrorBoundary>} />
+    <Route path="/discover"       element={<ErrorBoundary><Discover /></ErrorBoundary>} />
+    <Route path="/providers"      element={<ErrorBoundary><Providers /></ErrorBoundary>} />
+    <Route path="/providers/:id"  element={<ErrorBoundary><ProviderDetail /></ErrorBoundary>} />
+    <Route path="/how-it-works"   element={<ErrorBoundary><HowItWorksPage /></ErrorBoundary>} />
+    <Route path="/partners"       element={<ErrorBoundary><PartnerDirectory /></ErrorBoundary>} />
+    <Route path="/about"          element={<ErrorBoundary><About /></ErrorBoundary>} />
+    <Route path="/privacy"        element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
+    <Route path="/terms"          element={<ErrorBoundary><TermsOfService /></ErrorBoundary>} />
+    <Route path="/procedures"     element={<ErrorBoundary><Procedures /></ErrorBoundary>} />
     <Route path="/booking"        element={<ErrorBoundary><Booking /></ErrorBoundary>} />
-    <Route path="/consultation"   element={<ConsultationForm />} />
-    <Route path="/consultation-success" element={<ConsultationSuccess />} />
-    <Route path="/register-role"  element={<RegisterRole />} />
-    <Route path="/deep-perfection" element={<DeepPerfection />} />
-    <Route path="/onboarding"     element={<OnboardingEducation />} />
-    <Route path="/travel-concierge" element={<TravelConcierge />} />
-    <Route path="/emergency"        element={<EmergencyHub />} />
-    <Route path="/offline-guide"    element={<OfflineGuide />} />
+    <Route path="/consultation"   element={<ErrorBoundary><ConsultationForm /></ErrorBoundary>} />
+    <Route path="/consultation-success" element={<ErrorBoundary><ConsultationSuccess /></ErrorBoundary>} />
+    <Route path="/register-role"  element={<ErrorBoundary><RegisterRole /></ErrorBoundary>} />
+    <Route path="/deep-perfection" element={<ErrorBoundary><DeepPerfection /></ErrorBoundary>} />
+    <Route path="/onboarding"     element={<ErrorBoundary><OnboardingEducation /></ErrorBoundary>} />
+    <Route path="/travel-concierge" element={<ErrorBoundary><TravelConcierge /></ErrorBoundary>} />
+    <Route path="/emergency"        element={<ErrorBoundary><EmergencyHub /></ErrorBoundary>} />
+    <Route path="/offline-guide"    element={<ErrorBoundary><OfflineGuide /></ErrorBoundary>} />
     <Route path="/demo"                element={<ErrorBoundary><DemoShowcase /></ErrorBoundary>} />
     <Route path="/demo/emergency"      element={<ErrorBoundary><EmergencyScenarioDemo /></ErrorBoundary>} />
     <Route path="/demo/nightlife"      element={<ErrorBoundary><NightlifeRobberyDemo /></ErrorBoundary>} />
@@ -109,10 +109,10 @@ export const publicRoutes = (
     <Route path="/demo/coverage"        element={<ErrorBoundary><CoverageMatrix /></ErrorBoundary>} />
     <Route path="/demo/siobhan"         element={<ErrorBoundary><SiobhanDemo /></ErrorBoundary>} />
     <Route path="/demo/recovery-cascade" element={<ErrorBoundary><RecoveryCascadeDemo /></ErrorBoundary>} />
-    <Route path="/signup"                element={<SignupLanding />} />
-    <Route path="/nearby"              element={<NearbyHelp />} />
-    <Route path="/recovery-check-in/:token"  element={<RecoveryCheckIn />} />
+    <Route path="/signup"                element={<ErrorBoundary><SignupLanding /></ErrorBoundary>} />
+    <Route path="/nearby"              element={<ErrorBoundary><NearbyHelp /></ErrorBoundary>} />
+    <Route path="/recovery-check-in/:token"  element={<ErrorBoundary><RecoveryCheckIn /></ErrorBoundary>} />
     {/* Public Recovery Tracker — zero-login viral share page */}
-    <Route path="/track/:token"        element={<PublicRecoveryTracker />} />
+    <Route path="/track/:token"        element={<ErrorBoundary><PublicRecoveryTracker /></ErrorBoundary>} />
   </Route>
 );

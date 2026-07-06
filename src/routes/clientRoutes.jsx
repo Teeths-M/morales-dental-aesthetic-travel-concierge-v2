@@ -52,26 +52,26 @@ export const clientRoutes = (
       <Route path="/dashboard/case-status"      element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/support"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/settings"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-      <Route path="/dashboard/adventure"        element={<AdventureSafetyCenter />} />
+      <Route path="/dashboard/adventure"        element={<ErrorBoundary><AdventureSafetyCenter /></ErrorBoundary>} />
       <Route path="/dashboard/solo-checkin"     element={<ErrorBoundary><SoloCheckInSettings /></ErrorBoundary>} />
-      <Route path="/client-signup"              element={<ClientSignup />} />
-      <Route path="/my-reviews"                 element={<PatientReviews />} />
-      <Route path="/insurance"                  element={<InsuranceCoverage />} />
-      <Route path="/travel-services"            element={<TravelServices />} />
-      <Route path="/trip-overview"              element={<TripOverview />} />
-      <Route path="/walkie-talkie"              element={<WalkieTalkie />} />
-      <Route path="/baggage-tracker"            element={<BaggageTrackerPage />} />
-      <Route path="/nightlife-safety"           element={<NightlifeSafetyMode />} />
-      <Route path="/wilderness-safety"           element={<WildernessSafetyMode />} />
-      <Route path="/medical-intake"              element={<MedicalIntakeForm />} />
+      <Route path="/client-signup"              element={<ErrorBoundary><ClientSignup /></ErrorBoundary>} />
+      <Route path="/my-reviews"                 element={<ErrorBoundary><PatientReviews /></ErrorBoundary>} />
+      <Route path="/insurance"                  element={<ErrorBoundary><InsuranceCoverage /></ErrorBoundary>} />
+      <Route path="/travel-services"            element={<ErrorBoundary><TravelServices /></ErrorBoundary>} />
+      <Route path="/trip-overview"              element={<ErrorBoundary><TripOverview /></ErrorBoundary>} />
+      <Route path="/walkie-talkie"              element={<ErrorBoundary><WalkieTalkie /></ErrorBoundary>} />
+      <Route path="/baggage-tracker"            element={<ErrorBoundary><BaggageTrackerPage /></ErrorBoundary>} />
+      <Route path="/nightlife-safety"           element={<ErrorBoundary><NightlifeSafetyMode /></ErrorBoundary>} />
+      <Route path="/wilderness-safety"           element={<ErrorBoundary><WildernessSafetyMode /></ErrorBoundary>} />
+      <Route path="/medical-intake"              element={<ErrorBoundary><MedicalIntakeForm /></ErrorBoundary>} />
       <Route path="/discharge-reader"            element={<ErrorBoundary><DischargePaperReader /></ErrorBoundary>} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>
-      <Route path="/portal-hub/checkout/:case_id" element={<PaymentCheckout />} />
-      <Route path="/estimate/:estimate_id"         element={<EstimateDashboard />} />
-      <Route path="/visa-assist"                   element={<VisaAssist />} />
-      <Route path="/pay-now"                       element={<PaymentCheckout />} />
+      <Route path="/portal-hub/checkout/:case_id" element={<ErrorBoundary><PaymentCheckout /></ErrorBoundary>} />
+      <Route path="/estimate/:estimate_id"         element={<ErrorBoundary><EstimateDashboard /></ErrorBoundary>} />
+      <Route path="/visa-assist"                   element={<ErrorBoundary><VisaAssist /></ErrorBoundary>} />
+      <Route path="/pay-now"                       element={<ErrorBoundary><PaymentCheckout /></ErrorBoundary>} />
       <Route path="/passport-vault"                element={<ErrorBoundary><PassportVault /></ErrorBoundary>} />
     </Route>
   </Route>

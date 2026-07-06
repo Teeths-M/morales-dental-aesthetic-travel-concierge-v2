@@ -5,6 +5,7 @@
  */
 import React, { lazy } from 'react';
 import { Route } from 'react-router-dom';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const SurveyPage         = lazy(() => import('@/pages/SurveyPage'));
 const PostSurgeryFeedback = lazy(() => import('@/pages/PostSurgeryFeedback'));
@@ -21,18 +22,18 @@ const OfflineVaultGuide  = lazy(() => import('@/components/vault/OfflineVaultGui
 
 export const tokenRoutes = (
   <>
-    <Route key="survey"         path="/survey/:token"           element={<SurveyPage />} />
-    <Route key="feedback"       path="/feedback/:token"         element={<PostSurgeryFeedback />} />
-    <Route key="luggage"        path="/luggage/:token"          element={<LuggageFinderPortal />} />
-    <Route key="guardian"       path="/guardian/:token"         element={<GuardianView />} />
-    <Route key="emergency-access" path="/emergency-access"      element={<EmergencyPINAccess />} />
-    <Route key="reset-pin"        path="/reset-pin"             element={<ResetPIN />} />
-    <Route key="checkin"        path="/check-in/:check_in_id"  element={<CheckInConfirm />} />
-    <Route key="vault-share"    path="/vault/share/:share_token" element={<ShareLinkViewer />} />
+    <Route key="survey"         path="/survey/:token"           element={<ErrorBoundary><SurveyPage /></ErrorBoundary>} />
+    <Route key="feedback"       path="/feedback/:token"         element={<ErrorBoundary><PostSurgeryFeedback /></ErrorBoundary>} />
+    <Route key="luggage"        path="/luggage/:token"          element={<ErrorBoundary><LuggageFinderPortal /></ErrorBoundary>} />
+    <Route key="guardian"       path="/guardian/:token"         element={<ErrorBoundary><GuardianView /></ErrorBoundary>} />
+    <Route key="emergency-access" path="/emergency-access"      element={<ErrorBoundary><EmergencyPINAccess /></ErrorBoundary>} />
+    <Route key="reset-pin"        path="/reset-pin"             element={<ErrorBoundary><ResetPIN /></ErrorBoundary>} />
+    <Route key="checkin"        path="/check-in/:check_in_id"  element={<ErrorBoundary><CheckInConfirm /></ErrorBoundary>} />
+    <Route key="vault-share"    path="/vault/share/:share_token" element={<ErrorBoundary><ShareLinkViewer /></ErrorBoundary>} />
     {/* /offline is intentionally kept public so users can access it without login */}
-    <Route key="offline"        path="/offline"                 element={<OfflineMode />} />
-    <Route key="emergency-manifest" path="/emergency-manifest"  element={<EmergencyManifest />} />
-    <Route key="offline-guide"      path="/offline-guide"        element={<OfflineGuide />} />
-    <Route key="offline-vault-guide" path="/offline-vault-guide" element={<OfflineVaultGuide />} />
+    <Route key="offline"        path="/offline"                 element={<ErrorBoundary><OfflineMode /></ErrorBoundary>} />
+    <Route key="emergency-manifest" path="/emergency-manifest"  element={<ErrorBoundary><EmergencyManifest /></ErrorBoundary>} />
+    <Route key="offline-guide"      path="/offline-guide"        element={<ErrorBoundary><OfflineGuide /></ErrorBoundary>} />
+    <Route key="offline-vault-guide" path="/offline-vault-guide" element={<ErrorBoundary><OfflineVaultGuide /></ErrorBoundary>} />
   </>
 );
