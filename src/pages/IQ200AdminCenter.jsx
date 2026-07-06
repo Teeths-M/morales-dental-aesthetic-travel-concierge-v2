@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, AlertTriangle, DollarSign, Send,
   RefreshCw, ChevronDown, ChevronUp, Zap, TrendingUp,
-  XCircle, BarChart2, FileText, Database
+  XCircle, BarChart2, FileText, Database, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -338,6 +338,8 @@ export default function IQ200AdminCenter() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [creatingCase, setCreatingCase] = useState(null);
   const [populatingData, setPopulatingData] = useState(false);
+  const [seedingDemo, setSeedingDemo] = useState(false);
+  const [seedDemoMessage, setSeedDemoMessage] = useState('');
   const { data: cases = [], isLoading, isError: casesError, refetch } = useQuery({
     queryKey: ['iq200_cases'],
     queryFn: () => base44.asServiceRole.entities.CaseRecord.filter({}, '-created_date', 50),
@@ -371,6 +373,22 @@ export default function IQ200AdminCenter() {
       console.error('Failed to populate sample data:', error);
     } finally {
       setPopulatingData(false);
+    }
+  };
+
+  const handleSeedDemoJourney = async () => {
+    setSeedingDemo(true);
+    setSeedDemoMessage('');
+    try {
+      const res = await base44.functions.invoke('seedDemoJourney', {});
+      setSeedDemoMessage(res.data?.message || 'Demo journey ready.');
+      refetch();
+      qc.invalidateQueries({ queryKey: ['iq200_cases'] });
+    } catch (error) {
+      console.error('Failed to seed demo journey:', error);
+      setSeedDemoMessage('Failed to seed demo journey — check console for details.');
+    } finally {
+      setSeedingDemo(false);
     }
   };
 
@@ -411,11 +429,24 @@ export default function IQ200AdminCenter() {
             >
               <Database className="w-4 h-4" /> {populatingData ? 'Populating...' : 'Populate Sample Data'}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSeedDemoJourney}
+              disabled={seedingDemo}
+              className="gap-1.5"
+              title="Creates one realistic mid-journey demo case (Sofia Morales) for judge/investor walkthroughs — safe to click more than once"
+            >
+              <Sparkles className="w-4 h-4" /> {seedingDemo ? 'Seeding...' : 'Seed Demo Journey'}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
               <RefreshCw className="w-4 h-4" /> Refresh
             </Button>
           </div>
         </div>
+        {seedDemoMessage && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-700 text-sm">{seedDemoMessage}</div>
+        )}
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="bg-white border-0 shadow-md rounded-2xl">
