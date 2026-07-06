@@ -9,10 +9,6 @@ html, body {
   touch-action: manipulation;
   overscroll-behavior: none;          /* kills iOS bounce — websites bounce, apps don't */
   -webkit-overflow-scrolling: touch;  /* smooth momentum scroll on iOS */
-  overflow-x: hidden;                 /* safety net — one too-wide element anywhere
-                                          shouldn't be able to horizontally scroll the
-                                          whole page on mobile; intentional scroll
-                                          containers use their own overflow-x-auto */
 }
 
 body {
