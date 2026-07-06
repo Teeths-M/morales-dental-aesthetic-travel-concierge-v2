@@ -103,19 +103,12 @@ export default function Header() {
             className="m-breathe"
             style={{
               width: '38px', height: '38px',
-              background: '#D4AF37',
-              color: '#060B16',
-              fontFamily: 'Georgia, "Times New Roman", serif',
-              fontSize: '20px',
-              fontWeight: 900,
               borderRadius: '9px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              lineHeight: 1,
-              letterSpacing: '-0.02em',
               flexShrink: 0,
             }}
           >
-            M
+            <img src="/morales-m-mark.png" alt="Morales" style={{ width: '30px', height: '30px', objectFit: 'contain' }} />
           </div>
           <div className="flex flex-col gap-[3px] min-w-0 overflow-hidden">
             <span

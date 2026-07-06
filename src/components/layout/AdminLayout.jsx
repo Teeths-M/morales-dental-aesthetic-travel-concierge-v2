@@ -79,11 +79,11 @@ function SidebarContent({ location, onClose = null }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: GOLD, color: BG,
-            fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 900,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: `0 0 20px ${GOLD}40`,
-          }}>M</div>
+          }}>
+            <img src="/morales-m-mark.png" alt="Morales" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+          </div>
           <div>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Admin Portal</p>
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', lineHeight: 1.3, marginTop: 2 }}>Morales Concierge</p>
