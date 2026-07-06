@@ -15,7 +15,7 @@ const slides = [
     headline: 'World-Class Dentistry.\nCaribbean Warmth.',
     body: 'Bogotá and Medellín are home to elite, internationally accredited clinics. Full smile makeovers at 65% less than the US. English-speaking surgeons. Morales partners vetted personally.',
     color: 'from-green-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1573790387438-4da905039392?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-01.jpg',
     imageAlt: 'Cartagena, Colombia — colorful colonial city and medical tourism hub',
   },
   {
@@ -24,7 +24,7 @@ const slides = [
     headline: 'Asia\'s Medical\nTourism Capital.',
     body: 'Bangkok\'s JCI-accredited hospitals treat 2 million international patients yearly. Dental implants from $600 vs $4,000 in the US. Recover in paradise. Fly home transformed.',
     color: 'from-orange-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-02.jpg',
     imageAlt: 'Bangkok, Thailand — Asia\'s medical tourism capital',
   },
   {
@@ -33,7 +33,7 @@ const slides = [
     headline: 'Europe\'s #1 Medical\nTourism Destination.',
     body: 'Istanbul has 32 JCI-certified hospitals — more than any city in Europe. Rhinoplasty, veneers, hair restoration at half the European price. Surgeons trained in London and Paris.',
     color: 'from-red-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-03.jpg',
     imageAlt: 'Istanbul, Turkey — Europe\'s #1 medical tourism destination',
   },
   {
@@ -42,7 +42,7 @@ const slides = [
     headline: 'Caribbean Recovery.\nWorld-Class Aesthetic Surgeons.',
     body: 'Venezuela trains some of Latin America\'s most celebrated aesthetic surgeons. Warm Caribbean climate ideal for post-op recovery. Morales partners are internationally certified and personally screened.',
     color: 'from-yellow-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-04.jpg',
     imageAlt: 'Margarita Island, Venezuela — Caribbean turquoise waters and recovery paradise',
   },
   {
@@ -51,7 +51,7 @@ const slides = [
     headline: 'The Plastic Surgery\nCapital of the World.',
     body: 'Brazil performs more cosmetic procedures per capita than anywhere on earth. Rio and São Paulo surgeons have decade-long international reputations. Recovery on the world\'s most beautiful beaches.',
     color: 'from-emerald-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-05.jpg',
     imageAlt: 'Rio de Janeiro, Brazil — plastic surgery capital of the world',
   },
   {
@@ -60,7 +60,7 @@ const slides = [
     headline: 'One Million Americans\nCross the Border for Dental Care.',
     body: 'Los Algodones alone has 350 dental clinics in 4 city blocks. Savings of $5,000–$20,000 on full-mouth restorations. Morales coordinates everything — you just show up and smile.',
     color: 'from-red-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-06.jpg',
     imageAlt: 'Mexico City — top dental tourism destination',
   },
   {
@@ -69,7 +69,7 @@ const slides = [
     headline: 'Elite Care.\nFraction of the Cost.',
     body: 'Mumbai and Chennai have hospitals that rival the best in the UK and USA at 80% lower cost. Heart surgery, dental implants, knee replacements — all with JCI-accredited surgeons.',
     color: 'from-orange-500/10 to-transparent',
-    image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-07.jpg',
     imageAlt: 'India — world-class hospitals at a fraction of Western prices',
   },
 
@@ -99,7 +99,7 @@ const slides = [
     body: 'Your passport, records, and data are encrypted in your personal Morales Vault. World-class treatments — your information never shared without consent.',
     color: 'from-accent/10 to-transparent',
     visual: 'photo',
-    image: 'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&fit=crop&q=80',
+    image: '/images/brand-slideshow-08.jpg',
   },
   {
     icon: Heart,

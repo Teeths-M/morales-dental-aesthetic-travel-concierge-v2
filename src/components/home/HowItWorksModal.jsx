@@ -763,7 +763,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                     style={{ border: `2px solid ${GOLD}60`, boxShadow: `0 0 14px ${GOLD}30` }}
                   >
                     <img
-                      src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&h=80&fit=crop&crop=face"
+                      src="/images/how-it-works-face.jpg"
                       alt="Care coordinator"
                       className="w-full h-full object-cover"
                     />

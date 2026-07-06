@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const slides = [
   {
-    bg: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1600&q=80',
+    bg: '/images/hero-slideshow-01.jpg',
     eyebrow: 'World-Class Medical Travel',
     headline: 'Luxury Healthcare Travel\nDesigned Around You',
     body: 'Save up to 30–40% compared to pricing in the US, Canada & Trinidad while experiencing coordinated premium support.',
@@ -14,7 +14,7 @@ const slides = [
     ctaTo: '/booking',
   },
   {
-    bg: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=1600&q=80',
+    bg: '/images/hero-slideshow-02.jpg',
     eyebrow: 'SAFE-T 4LIFE™',
     headline: 'More Than Medical Travel\n— Peace of Mind',
     body: 'SAFE-T 4LIFE™ helps support safer, more transparent healthcare coordination throughout your journey.',
@@ -22,7 +22,7 @@ const slides = [
     ctaTo: '/how-it-works',
   },
   {
-    bg: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1600&q=80',
+    bg: '/images/hero-slideshow-03.jpg',
     eyebrow: 'Accessible Care',
     headline: 'Flexible Payment\nOptions Available',
     body: 'Structured healthcare planning designed to make treatment journeys more manageable and accessible.',
@@ -30,7 +30,7 @@ const slides = [
     ctaTo: '/how-it-works',
   },
   {
-    bg: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1600&q=80',
+    bg: '/images/hero-slideshow-04.jpg',
     eyebrow: 'End-to-End Coordination',
     headline: 'From Consultation to Recovery\n— We Coordinate Every Step',
     body: 'Flights, accommodations, transportation, provider coordination, and recovery support — all in one guided experience.',
