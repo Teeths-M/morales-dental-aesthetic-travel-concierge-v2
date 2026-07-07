@@ -528,7 +528,7 @@ export default function Hero() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild className="rounded-full px-6 h-12 font-semibold text-sm"
                 style={{ background: GOLD, color: '#0a0f1e' }}>
-                <Link to="/booking">
+                <Link to="/intake">
                   {language === 'es' ? 'Comienza Tu Viaje →' : language === 'fr' ? 'Commencez Votre Voyage →' : 'Begin Your Journey →'}
                 </Link>
               </Button>

@@ -300,7 +300,7 @@ export default function OverviewTab() {
               and organize your healthcare journey step-by-step — from your first consultation to your full recovery.
             </p>
             <div className="flex flex-wrap gap-3 mt-4">
-              <Link to="/booking">
+              <Link to="/intake">
                 <Button size="sm" className="bg-white text-emerald-800 hover:bg-white/90 font-semibold">
                   Begin Your Journey <ArrowRight className="w-3.5 h-3.5 ml-1" />
                 </Button>

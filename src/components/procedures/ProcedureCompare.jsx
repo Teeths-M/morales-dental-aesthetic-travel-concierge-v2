@@ -191,7 +191,7 @@ export default function ProcedureCompare({ allProcedures }) {
             {[0, 1].map(slot => (
               <div key={slot} className="px-4 py-3 border-l border-slate-100">
                 <button
-                  onClick={() => navigate('/booking')}
+                  onClick={() => navigate('/intake')}
                   className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-700 to-blue-800 text-white text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
                 >
                   Book {selected[slot]?.title?.split(' ').slice(0, 2).join(' ')} <ArrowRight className="w-3 h-3" />

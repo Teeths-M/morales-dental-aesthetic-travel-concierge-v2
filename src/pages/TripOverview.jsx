@@ -148,7 +148,7 @@ export default function TripOverview() {
             <Plane className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h2 className="font-display text-2xl text-slate-800 mb-2">No Trips Yet</h2>
             <p className="text-slate-500 mb-6">You haven't booked any travel services yet.</p>
-            <Link to="/travel-concierge">
+            <Link to="/travel-intake">
               <Button className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-6">
                 Book Your First Trip
               </Button>

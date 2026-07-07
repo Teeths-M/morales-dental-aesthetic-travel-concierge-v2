@@ -314,7 +314,7 @@ export default function BrandSlideshow() {
 
             {/* CTA */}
             <div className="mt-8 flex flex-wrap gap-3 items-center">
-              <Link to="/booking">
+              <Link to="/intake">
                 <Button className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-6 shadow-md">
                   Begin Your Journey
                 </Button>

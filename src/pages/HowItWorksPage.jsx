@@ -90,7 +90,7 @@ export default function HowItWorksPage() {
           <p className="text-white/55 text-[15px] mb-8 max-w-sm mx-auto leading-relaxed" style={{ fontWeight: 300 }}>
             {language === 'es' ? 'Una consulta. Siete pasos. Resultados para toda la vida.' : language === 'fr' ? 'Une consultation. Sept étapes. Des résultats pour la vie.' : 'One consultation. Seven steps. A lifetime of results.'}
           </p>
-          <Link to="/booking">
+          <Link to="/intake">
             <Button size="lg" className="bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] font-semibold px-10 hover:opacity-90 h-12 rounded-xl text-[15px]">
               {language === 'es' ? 'Inicia Tu Viaje' : language === 'fr' ? 'Commencez Votre Voyage' : 'Start Your Journey'} <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

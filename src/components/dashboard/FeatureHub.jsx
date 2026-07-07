@@ -16,7 +16,7 @@ const FEATURE_CATEGORIES = [
     icon: Stethoscope,
     theme: 'medical',
     features: [
-      { label: 'Book Consultation', path: '/booking', icon: Calendar, desc: 'Start your medical journey' },
+      { label: 'Book Consultation', path: '/intake', icon: Calendar, desc: 'Start your medical journey' },
       { label: 'Our Doctors', path: '/providers', icon: Users, desc: 'Verified specialists' },
       { label: 'My Consultations', path: '/dashboard/consultations', icon: FileText, desc: 'View all requests' },
       { label: 'Medical Profile', path: '/dashboard/profile', icon: FileText, desc: 'Health information' },
@@ -28,7 +28,7 @@ const FEATURE_CATEGORIES = [
     icon: Plane,
     theme: 'travel',
     features: [
-      { label: 'Travel Booking', path: '/travel-concierge', icon: Plane, desc: 'Flights, hotels, transfers' },
+      { label: 'Travel Booking', path: '/travel-intake', icon: Plane, desc: 'Flights, hotels, transfers' },
       { label: 'Trip Overview', path: '/trip-overview', icon: MapPin, desc: 'View itinerary & partners' },
       { label: 'Visa Assistance', path: '/visa-assist', icon: MapPin, desc: 'Requirements & guides' },
       { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, desc: 'Trip details' },
@@ -259,9 +259,9 @@ export default function FeatureHub() {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: 'Book Consultation', path: '/booking', icon: Calendar, theme: 'medical' },
+            { label: 'Book Consultation', path: '/intake', icon: Calendar, theme: 'medical' },
             { label: 'Passport Vault', path: '/passport-vault', icon: FileText, theme: 'vault' },
-            { label: 'Travel Booking', path: '/travel-concierge', icon: Plane, theme: 'travel' },
+            { label: 'Travel Booking', path: '/travel-intake', icon: Plane, theme: 'travel' },
             { label: 'SAFE-T Assessment', path: '/safe-t', icon: Shield, theme: 'safety' },
           ].map((item, idx) => {
             const ItemIcon = item.icon;

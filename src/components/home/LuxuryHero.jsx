@@ -16,13 +16,13 @@ const CONTENT = {
     headline:    'NEVER\nALONE',
     subheadline: 'Travel abroad for world-class medical care — and come home safely.',
     body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. If something goes wrong, Morales activates your emergency response plan and coordinates the next steps.',
-    cta:         { label: 'Start Your Journey', path: '/booking' },
+    cta:         { label: 'Start Your Journey', path: '/intake' },
   },
   nonmedical: {
     headline:    'THE WORLD,\nEFFORTLESSLY YOURS.',
     subheadline: '24/7 protection — even at 35,000 feet.',
     body:        'Wherever you land, Morales is already there. Verified transfers, vetted hotels, personal companions, and a safety net that follows you across every border and time zone.',
-    cta:         { label: 'Plan My Journey', path: '/travel-concierge' },
+    cta:         { label: 'Plan My Journey', path: '/travel-intake' },
   },
 };
 

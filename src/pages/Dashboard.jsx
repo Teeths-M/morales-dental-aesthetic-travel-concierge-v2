@@ -880,7 +880,7 @@ export default function Dashboard() {
     if (p === '/dashboard') return <FeatureHub />;
     if (loadingConsultations) return <LoadingState rows={4} dark={false} label="Loading your dashboard" className="mt-4" />;
     if (errorConsultations) return <ErrorState dark={false} title="Couldn't load your journey" message="We had trouble fetching your data. Please try again." onRetry={refetchConsultations} className="mt-8" />;
-    if (consultations.length === 0) return <EmptyState dark={false} title="No active journey yet" message="Start a consultation to begin your medical travel journey." action={<a href="/booking" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">Start a Consultation</a>} className="mt-8" />;
+    if (consultations.length === 0) return <EmptyState dark={false} title="No active journey yet" message="Start a consultation to begin your medical travel journey." action={<a href="/intake" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">Start a Consultation</a>} className="mt-8" />;
     return <DashboardHome user={user} consultations={consultations} language={language} />;
   };
 

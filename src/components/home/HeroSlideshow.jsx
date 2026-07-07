@@ -11,7 +11,7 @@ const slides = [
     headline: 'Luxury Healthcare Travel\nDesigned Around You',
     body: 'Save up to 30–40% compared to pricing in the US, Canada & Trinidad while experiencing coordinated premium support.',
     cta: 'Start Your Consultation',
-    ctaTo: '/booking',
+    ctaTo: '/intake',
   },
   {
     bg: '/images/hero-slideshow-02.jpg',
@@ -35,7 +35,7 @@ const slides = [
     headline: 'From Consultation to Recovery\n— We Coordinate Every Step',
     body: 'Flights, accommodations, transportation, provider coordination, and recovery support — all in one guided experience.',
     cta: 'Plan Your Journey',
-    ctaTo: '/booking',
+    ctaTo: '/intake',
   },
 ];
 

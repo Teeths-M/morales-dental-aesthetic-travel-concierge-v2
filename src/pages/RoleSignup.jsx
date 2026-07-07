@@ -11,7 +11,7 @@ const roles = [
     title: 'Client',
     description: 'Start a consultation and manage your medical travel journey.',
     icon: User,
-    path: '/booking',
+    path: '/intake',
   },
   {
     key: 'doctor',

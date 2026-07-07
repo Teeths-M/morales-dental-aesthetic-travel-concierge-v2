@@ -48,7 +48,7 @@ export default function MobileQuoteCard({ items }) {
   }, [pricingEngine, items]);
 
   return (
-    <Link to="/booking">
+    <Link to="/intake">
       <motion.div
         className="bg-gradient-to-r from-emerald-700 to-blue-800 rounded-2xl px-5 py-4 shadow-2xl"
         whileHover={{ scale: 1.02 }}
