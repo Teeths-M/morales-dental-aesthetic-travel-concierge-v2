@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 // Inline token encoder (no local imports allowed)
 // FIX: the '.'-suffix was previously crypto.getRandomValues() random bytes — it
@@ -33,25 +34,6 @@ async function sendSms(to, message) {
 }
 
 const BRAND = 'Morales Medical Travel Safety';
-
-const emailLayout = ({ eyebrow, title, intro, rows = [], ctaText, ctaUrl }) => `<!doctype html>
-<html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#29483d;padding:28px 32px;color:#fff;">
-  <div style="font-family:Georgia,serif;font-size:26px;">${BRAND}</div>
-  <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${eyebrow}</div>
-</td></tr>
-<tr><td style="padding:32px;">
-  <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:28px;font-weight:400;color:#13221d;">${title}</h1>
-  <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${intro}</p>
-  ${rows.length ? `<table width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.map(([l,v]) => `<tr><td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${l}</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${v||'—'}</td></tr>`).join('')}</table>` : ''}
-  ${ctaText && ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;margin-top:6px;background:#29483d;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:15px;font-weight:700;">${ctaText} →</a>` : ''}
-  <p style="margin:28px 0 0;font-size:13px;color:#64746d;">Questions? Reply to this email or contact our concierge team.</p>
-  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
-</td></tr>
-</table></td></tr></table>
-</body></html>`;
 
 Deno.serve(async (req) => {
   try {
@@ -98,7 +80,8 @@ Deno.serve(async (req) => {
 
     const patientSms = `Hi ${patientName}! ✅ Your consultation fee is confirmed. Our team is reviewing your case and will assign you a doctor shortly. Track your journey: ${dashboardUrl} — Morales Medical Travel Safety`;
 
-    const patientEmailHtml = emailLayout({
+    const patientEmailHtml = renderEmail({
+      appUrl,
       eyebrow: 'Consultation Fee Confirmed',
       title: `You're officially in the queue, ${patientName}!`,
       intro: 'Your consultation fee payment has been received. Our clinical concierge team is now reviewing your medical profile and will assign a specialist shortly. You will receive updates at each stage of your journey.',
@@ -149,7 +132,8 @@ Deno.serve(async (req) => {
 
       const doctorSms = `Hello Dr. ${doctorName}, a new patient (${patientName}) has paid their consultation fee and awaits your review. Open your portal to confirm or decline: ${doctorPortalUrl} — Morales Medical Travel Safety`;
 
-      const doctorEmailHtml = emailLayout({
+      const doctorEmailHtml = renderEmail({
+        appUrl,
         eyebrow: 'New Patient — Action Required',
         title: `Case review needed: ${patientName}`,
         intro: `Dr. ${doctorName}, a patient has paid their consultation fee and is awaiting your confirmation. Please review their medical profile and submit your availability and procedure quote via your secure portal.`,

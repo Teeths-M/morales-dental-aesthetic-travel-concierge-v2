@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
     const destTotal = (Number(updateData.leg_3_cost_usd) || 0) + (Number(updateData.leg_4_cost_usd) || 0) + (Number(updateData.leg_5_cost_usd) || 0) + (Number(updateData.leg_6_cost_usd) || 0);
     const transferTotal = driver_type === 'origin' ? originTotal : destTotal;
 
-    const appUrl = Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com';
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
     const adminUrl = `${appUrl}/portal-hub/admin`;
 
     // BUG-R13-05 FIX: User.list() without a limit loads every user on every chauffeur quote.
@@ -64,46 +65,37 @@ Deno.serve(async (req) => {
     const adminEmail = Deno.env.get('ADMIN_EMAIL');
     const adminUsers = adminEmail ? [{ email: adminEmail }] : [];
 
-    const legDetails = driver_type === 'origin'
-      ? `<tr><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 1 (Home → Airport)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_1_cost_usd).toFixed(2)}</td></tr>
-         <tr style="background:#f9fafb;"><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 2 (Airport → Home)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_2_cost_usd).toFixed(2)}</td></tr>`
-      : `<tr><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 3 (Airport → Hotel)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_3_cost_usd).toFixed(2)}</td></tr>
-         <tr style="background:#f9fafb;"><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 4 (Hotel → Clinic)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_4_cost_usd).toFixed(2)}</td></tr>
-         <tr><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 5 (Clinic → Hotel)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_5_cost_usd).toFixed(2)}</td></tr>
-         <tr style="background:#f9fafb;"><td style="padding:8px 16px;font-size:13px;color:#888;">Leg 6 (Hotel → Airport)</td><td style="padding:8px 16px;font-size:14px;font-weight:600;">$${Number(updateData.leg_6_cost_usd).toFixed(2)}</td></tr>`;
+    const legRows: Array<[string, string]> = driver_type === 'origin'
+      ? [
+          ['Leg 1 (Home → Airport)', `$${Number(updateData.leg_1_cost_usd).toFixed(2)}`],
+          ['Leg 2 (Airport → Home)', `$${Number(updateData.leg_2_cost_usd).toFixed(2)}`],
+        ]
+      : [
+          ['Leg 3 (Airport → Hotel)', `$${Number(updateData.leg_3_cost_usd).toFixed(2)}`],
+          ['Leg 4 (Hotel → Clinic)', `$${Number(updateData.leg_4_cost_usd).toFixed(2)}`],
+          ['Leg 5 (Clinic → Hotel)', `$${Number(updateData.leg_5_cost_usd).toFixed(2)}`],
+          ['Leg 6 (Hotel → Airport)', `$${Number(updateData.leg_6_cost_usd).toFixed(2)}`],
+        ];
 
     for (const admin of adminUsers) {
       if (!admin.email) continue;
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: admin.email,
         subject: `⚡ Admin Review Required — Transfer Quote for ${consultation.patient_name}`,
-        body: `
-<!doctype html>
-<html>
-<body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-  <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
-    <tr><td align="center">
-      <table width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border:1px solid #dde5df;border-radius:16px;overflow:hidden;">
-        <tr><td style="background:#0F3A20;padding:24px 32px;">
-          <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Medical Travel Safety</div>
-          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C5A059;margin-top:6px;">ADMIN REVIEW REQUIRED</div>
-        </td></tr>
-        <tr><td style="padding:28px 32px;">
-          <h2 style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#0F3A20;">Transfer Quote Submitted — Markup Approval Needed</h2>
-          <p style="color:#555;font-size:14px;margin:0 0 20px;">A chauffeur has submitted transfer pricing. Case status is now <strong>Admin-Review</strong>.</p>
-          <table width="100%" style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:20px;">
-            <tr style="background:#f9fafb;"><td style="padding:12px 16px;font-size:13px;color:#888;">Patient</td><td style="padding:12px 16px;font-size:14px;font-weight:600;color:#111;">${consultation.patient_name}</td></tr>
-            <tr><td style="padding:12px 16px;font-size:13px;color:#888;">Driver Type</td><td style="padding:12px 16px;font-size:14px;color:#111;text-transform:capitalize;">${driver_type}</td></tr>
-            ${legDetails}
-            <tr style="background:#0F3A20;"><td style="padding:12px 16px;font-size:13px;color:#C5A059;font-weight:700;">Transfer Total</td><td style="padding:12px 16px;font-size:16px;font-weight:700;color:#C5A059;">$${transferTotal.toFixed(2)}</td></tr>
-          </table>
-          <a href="${adminUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">Open Admin Dashboard →</a>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`,
+        body: renderEmail({
+          appUrl,
+          eyebrow: 'Admin Review Required',
+          title: 'Transfer Quote Submitted — Markup Approval Needed',
+          intro: 'A chauffeur has submitted transfer pricing. Case status is now Admin-Review.',
+          rows: [
+            ['Patient', consultation.patient_name],
+            ['Driver Type', driver_type],
+            ...legRows,
+            ['Transfer Total', `$${transferTotal.toFixed(2)}`],
+          ],
+          ctaText: 'Open Admin Dashboard',
+          ctaUrl: adminUrl,
+        }),
       }).catch(err => console.log(`Admin email skipped for ${admin.email}: ${err.message}`));
     }
 

@@ -1,4 +1,17 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
+
+// HMAC-signed to match verifyPortalToken() in getPortalData — previously an
+// unsigned plain btoa(JSON) token with no signature suffix, which fails that
+// verification and makes the chauffeur portal link silently non-functional.
+async function encodePortalToken(payload: Record<string, unknown>) {
+  const data = JSON.stringify(payload);
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -122,54 +135,9 @@ Deno.serve(async (req) => {
       const hotelEmails = getPartnerEmails('hotel');
       
       const BRAND = 'Morales Medical Travel Safety';
-      const TEAM = 'Morales Concierge Team';
-      
-      const escapeHtml = (value) => String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-      
+
       const formatProcedure = (value) => String(value || 'Procedure').replace(/_/g, ' ');
-      
-      const row = (label, value) => `
-        <tr>
-          <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
-          <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(value || 'Not provided')}</td>
-        </tr>`;
-      
-      const emailLayout = ({ eyebrow, title, intro, rows = [], note, ctaText, ctaUrl, footer = 'Please reply to this email if you need assistance.' }) => `<!doctype html>
-<html>
-  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-            <tr>
-              <td style="background:#29483d;padding:28px 32px;color:#ffffff;">
-                <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
-                <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${escapeHtml(eyebrow)}</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:32px;">
-                <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">${escapeHtml(title)}</h1>
-                <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${escapeHtml(intro)}</p>
-                ${rows.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.join('')}</table>` : ''}
-                ${note ? `<div style="margin:22px 0;padding:16px 18px;background:#f8f4ee;border-left:4px solid #b68a52;border-radius:12px;color:#40514a;font-size:14px;line-height:1.6;">${escapeHtml(note)}</div>` : ''}
-                ${ctaText && ctaUrl ? `<a href="${escapeHtml(ctaUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:700;">${escapeHtml(ctaText)}</a>` : ''}
-                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">${escapeHtml(footer)}</p>
-                <p style="margin:18px 0 0;font-size:14px;color:#13221d;font-weight:700;">${TEAM}</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-      
+
       const sendToPartners = async (emails, subject, body) => {
         for (const email of emails) {
           try {
@@ -183,16 +151,17 @@ Deno.serve(async (req) => {
       // ── FAULT-TOLERANT DISPATCH: Promise.allSettled — no cascade failures ──
       const vendorDispatches = [];
 
-      const travelBody = emailLayout({
+      const travelBody = renderEmail({
+        appUrl,
         eyebrow: 'Travel request',
         title: 'Patient travel arrangement needed',
         intro: 'A patient has been approved by our medical team and now requires travel planning support.',
         rows: [
-          row('Patient', consultation.patient_name),
-          row('Procedure', formatProcedure(consultation.procedure_interest)),
-          row('Nationality', consultation.nationality || 'Not specified'),
-          row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          ['Patient', consultation.patient_name],
+          ['Procedure', formatProcedure(consultation.procedure_interest)],
+          ['Nationality', consultation.nationality || 'Not specified'],
+          ['Preferred date', consultation.preferred_date || 'Flexible'],
+          ['Companion', consultation.has_companion ? 'Yes' : 'No'],
         ],
         ctaText: 'Review in portal',
         ctaUrl: portalUrl,
@@ -203,15 +172,16 @@ Deno.serve(async (req) => {
         vendorDispatches.push({ label: `Travel Agency Email — ${email}`, provider_type: 'travel_agency', provider_name: email, provider_email: email, dispatch_type: 'email', fn: () => base44.asServiceRole.integrations.Core.SendEmail({ from_name: BRAND, to: email, subject: `Travel request — ${consultation.patient_name} | ${BRAND}`, body: travelBody }) });
       }
 
-      const hotelBody = emailLayout({
+      const hotelBody = renderEmail({
+        appUrl,
         eyebrow: 'Accommodation request',
         title: 'Recovery lodging arrangement needed',
         intro: 'A patient has been approved by our medical team and now requires suitable recovery accommodation.',
         rows: [
-          row('Patient', consultation.patient_name),
-          row('Procedure', formatProcedure(consultation.procedure_interest)),
-          row('Preferred date', consultation.preferred_date || 'Flexible'),
-          row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+          ['Patient', consultation.patient_name],
+          ['Procedure', formatProcedure(consultation.procedure_interest)],
+          ['Preferred date', consultation.preferred_date || 'Flexible'],
+          ['Companion', consultation.has_companion ? 'Yes' : 'No'],
         ],
         ctaText: 'Review in portal',
         ctaUrl: portalUrl,
@@ -224,17 +194,18 @@ Deno.serve(async (req) => {
 
       for (const cab of taxiServices) {
         const driverName = cab.driver_name || cab.company_name || 'Partner';
-        const token = btoa(JSON.stringify({ consultation_id, partner_id: cab.id, portal_type: 'transfer', expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
+        const token = await encodePortalToken({ consultation_id, partner_id: cab.id, portal_type: 'transfer', expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 });
         const portalLink = `${appUrl}/portal/transfer?token=${token}`;
-        const cabBody = emailLayout({
+        const cabBody = renderEmail({
+          appUrl,
           eyebrow: 'Transfer request',
           title: 'Patient transfer quote needed',
           intro: `Hello ${driverName}, a patient has been approved and will need reliable local transportation support.`,
           rows: [
-            row('Patient', consultation.patient_name),
-            row('Requested service', 'Airport, clinic, and hotel transfers'),
-            row('Preferred date', consultation.preferred_date || 'Flexible'),
-            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
+            ['Patient', consultation.patient_name],
+            ['Requested service', 'Airport, clinic, and hotel transfers'],
+            ['Preferred date', consultation.preferred_date || 'Flexible'],
+            ['Companion', consultation.has_companion ? 'Yes' : 'No'],
           ],
           ctaText: 'Open Chauffeur Portal & Submit Pricing →',
           ctaUrl: portalLink,

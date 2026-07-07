@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -45,67 +46,40 @@ Deno.serve(async (req) => {
     // redirect (see iq200Pipeline's admin_approve_proposal for the full explanation).
     const appUrl = 'https://sentinel-dental-care.base44.app';
     const paymentUrl = `${appUrl}/portal/proposal/${proposalToken}`;
-    
+
+    const testPackageItems = [
+      ['🦷', 'Medical procedure with board-certified specialist in Venezuela'],
+      ['✈️', 'Hand-selected round-trip flights with premium comfort seating'],
+      ['🏨', 'Luxury hotel accommodations near your treatment facility'],
+      ['🚘', 'Private airport transfers and clinic transportation throughout your stay'],
+    ];
+    const testHeroHtml = `
+      <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:28px 24px;margin:8px 0 28px;text-align:center;">
+        <p style="margin:0;font-size:12px;color:rgba(238,242,247,0.5);text-transform:uppercase;letter-spacing:1.5px;">Total Package Investment</p>
+        <p style="margin:8px 0 0;font-size:38px;font-weight:700;color:#D4AF37;line-height:1.2;">$6,750.00</p>
+      </div>
+      <p style="margin:0 0 14px;font-size:12px;font-weight:700;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;">What's Included</p>
+      <div style="margin-bottom:8px;">
+        ${testPackageItems.map(([icon, text]) => `
+          <div style="display:flex;align-items:flex-start;padding:12px 0;border-bottom:1px solid #2A3F4A;font-size:14px;color:rgba(238,242,247,0.8);line-height:1.6;">
+            <span style="font-size:20px;margin-right:12px;flex-shrink:0;">${icon}</span>
+            <span>${text}</span>
+          </div>`).join('')}
+      </div>`;
+
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: 'theonmorales@gmail.com',
       subject: `Your IQ200 Medical Travel Package Proposal`,
-      body: `
-        <!doctype html>
-        <html>
-        <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-          <table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
-            <tr><td align="center">
-              <table width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border:1px solid #dde5df;border-radius:16px;overflow:hidden;">
-                <tr><td style="background:#0F3A20;padding:24px 32px;">
-                  <div style="font-family:Georgia,serif;font-size:22px;color:#fff;">Morales Medical Travel Safety</div>
-                  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C5A059;margin-top:6px;">MEDICAL TRAVEL PACKAGE</div>
-                </td></tr>
-                <tr><td style="padding:28px 32px;">
-                  <h2 style="margin:0 0 12px;font-family:Georgia,serif;font-size:24px;color:#0F3A20;">Your Personalized Medical Travel Package</h2>
-                  <p style="color:#555;font-size:14px;margin:0 0 20px;">Dear Test Patient,</p>
-                  
-                  <p style="color:#555;font-size:14px;margin:0 0 20px;">Your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.</p>
-                  
-                  <table width="100%" style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:24px;">
-                    <tr style="background:linear-gradient(135deg, rgba(15,58,32,0.08), rgba(197,160,89,0.08));">
-                      <td style="padding:24px;text-align:center;">
-                        <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Total Package Investment</div>
-                        <div style="font-size:36px;font-weight:700;color:#0F3A20;">$6,750.00</div>
-                      </td>
-                    </tr>
-                  </table>
-                  
-                  <p style="color:#0F3A20;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:24px 0 12px;">What's Included</p>
-                  <table width="100%" cellspacing="0" cellpadding="0">
-                    <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><span style="font-size:16px;margin-right:10px;">🦷</span><span style="font-size:13px;color:#374151;">Medical procedure with board-certified specialist in Venezuela</span></td></tr>
-                    <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><span style="font-size:16px;margin-right:10px;">✈️</span><span style="font-size:13px;color:#374151;">Hand-selected round-trip flights with premium comfort seating</span></td></tr>
-                    <tr><td style="padding:10px 0;border-bottom:1px solid #e5e7eb;"><span style="font-size:16px;margin-right:10px;">🏨</span><span style="font-size:13px;color:#374151;">Luxury hotel accommodations near your treatment facility</span></td></tr>
-                    <tr><td style="padding:10px 0;"><span style="font-size:16px;margin-right:10px;">🚘</span><span style="font-size:13px;color:#374151;">Private airport transfers and clinic transportation throughout your stay</span></td></tr>
-                  </table>
-                  
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
-                    <tr>
-                      <td align="center">
-                        <a href="${paymentUrl}" style="display:inline-block;background:#0F3A20;color:#fff;text-decoration:none;padding:16px 48px;border-radius:999px;font-size:14px;font-weight:700;letter-spacing:0.5px;border:2px solid #0F3A20;transition:all 0.3s ease;">
-                          Review & Accept Proposal
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-
-                  <p style="font-size:12px;color:#6B7280;text-align:center;font-style:italic;margin:16px 0;">Please review and confirm your package within 7 days to secure your dates.</p>
-                  
-                  <div style="border-top:1px solid #e5e7eb;padding-top:16px;margin-top:24px;">
-                    <p style="font-size:12px;color:#6B7280;margin:0 0 8px;"><strong style="color:#1F2937;">Next Steps:</strong> Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.</p>
-                    <p style="font-size:12px;color:#6B7280;margin:0;">Questions? Contact us at <strong style="color:#0F3A20;">concierge@morales-dental.com</strong></p>
-                  </div>
-                </td></tr>
-              </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-      `
+      body: renderEmail({
+        appUrl,
+        eyebrow: 'Your Proposal',
+        title: 'Your Personalized Medical Travel Package',
+        intro: 'Dear Test Patient, your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.',
+        bodyHtml: testHeroHtml,
+        note: 'Please review and confirm your package within 7 days to secure your dates. Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.',
+        ctaText: 'Review & Accept Proposal',
+        ctaUrl: paymentUrl,
+      }),
     });
 
     return Response.json({ 

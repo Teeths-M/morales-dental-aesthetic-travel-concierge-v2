@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -389,107 +390,39 @@ Deno.serve(async (req) => {
       const paymentUrl = `${appUrl}/portal/proposal/${proposalToken}`;
       
       // BUG-R9-01 FIX: use asServiceRole for integrations in admin-scoped actions
+      const proposalPackageItems = [
+        ['🦷', `Medical procedure with board-certified specialist in ${caseRecord.procedure_country}`],
+        ['✈️', 'Hand-selected round-trip flights with premium comfort seating'],
+        ['🏨', 'Luxury hotel accommodations near your treatment facility'],
+        ['🚘', 'Private airport transfers and clinic transportation throughout your stay'],
+      ];
+      const proposalHeroHtml = `
+        <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:28px 24px;margin:8px 0 28px;text-align:center;">
+          <p style="margin:0;font-size:12px;color:rgba(238,242,247,0.5);text-transform:uppercase;letter-spacing:1.5px;">Total Package Investment</p>
+          <p style="margin:8px 0 0;font-size:38px;font-weight:700;color:#D4AF37;line-height:1.2;">$${caseRecord.final_package_price.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+        </div>
+        <p style="margin:0 0 14px;font-size:12px;font-weight:700;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;">What's Included</p>
+        <div style="margin-bottom:8px;">
+          ${proposalPackageItems.map(([icon, text]) => `
+            <div style="display:flex;align-items:flex-start;padding:12px 0;border-bottom:1px solid #2A3F4A;font-size:14px;color:rgba(238,242,247,0.8);line-height:1.6;">
+              <span style="font-size:20px;margin-right:12px;flex-shrink:0;">${icon}</span>
+              <span>${text}</span>
+            </div>`).join('')}
+        </div>`;
+
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Personalized Medical Travel Package — MORALES Concierge`,
-        body: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body { margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-              .wrapper { background: #F9F9F9; padding: 32px 16px; }
-              .container { max-width: 580px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-              .header { background: #0F3A20; padding: 40px 32px; text-align: center; border-bottom: 3px solid #C5A059; }
-              .brand { font-size: 18px; font-weight: 600; color: #FFFFFF; letter-spacing: 1px; margin: 0; }
-              .subtext { font-size: 12px; color: #C5A059; letter-spacing: 2px; text-transform: uppercase; margin: 6px 0 0; }
-              .content { padding: 40px 32px; }
-              .greeting { font-size: 16px; color: #1F2937; margin: 0 0 24px; line-height: 1.6; }
-              .hero-card { background: linear-gradient(135deg, rgba(15,58,32,0.08), rgba(197,160,89,0.08)); border: 1px solid rgba(197,160,89,0.3); border-radius: 8px; padding: 28px 24px; margin: 24px 0; text-align: center; }
-              .price { font-size: 42px; font-weight: 700; color: #0F3A20; margin: 0; line-height: 1.2; }
-              .price-label { font-size: 13px; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 0; }
-              .section-title { font-size: 14px; font-weight: 600; color: #0F3A20; text-transform: uppercase; letter-spacing: 1px; margin: 32px 0 16px; }
-              .package-item { display: flex; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #E5E7EB; font-size: 14px; color: #374151; line-height: 1.6; }
-              .package-item:last-child { border-bottom: none; }
-              .package-icon { font-size: 20px; margin-right: 12px; flex-shrink: 0; }
-              .cta-container { text-align: center; margin: 32px 0; }
-              .cta-button { display: inline-block; background: #0F3A20; color: #FFFFFF; text-decoration: none; padding: 16px 48px; border-radius: 999px; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; transition: all 0.3s ease; border: 2px solid #0F3A20; }
-              .cta-button:hover { background: transparent; color: #0F3A20; }
-              .footer { padding: 24px 32px; background: #F9F9F9; border-top: 1px solid #E5E7EB; font-size: 12px; color: #6B7280; line-height: 1.6; }
-              .footer-text { margin: 0 0 8px; }
-              @media (max-width: 600px) {
-                .wrapper { padding: 16px 8px; }
-                .container { border-radius: 8px; }
-                .header { padding: 28px 20px; }
-                .content { padding: 24px 20px; }
-                .hero-card { padding: 20px 16px; }
-                .price { font-size: 36px; }
-                .cta-button { padding: 14px 32px; font-size: 13px; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="wrapper">
-              <div class="container">
-                <!-- Header -->
-                <div class="header">
-                  <p class="brand">MORALES</p>
-                  <p class="subtext">Medical Travel Safety</p>
-                </div>
-
-                <!-- Content -->
-                <div class="content">
-                  <p class="greeting">Dear ${caseRecord.client_name},</p>
-                  <p style="font-size: 15px; color: #4B5563; margin: 0 0 24px; line-height: 1.6;">Your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.</p>
-
-                  <!-- Hero Card -->
-                  <div class="hero-card">
-                    <p class="price-label">Total Package Investment</p>
-                    <p class="price">$${caseRecord.final_package_price.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
-                  </div>
-
-                  <!-- Package Details -->
-                  <p class="section-title">What's Included</p>
-                  <div style="margin-bottom: 24px;">
-                    <div class="package-item">
-                      <span class="package-icon">🦷</span>
-                      <span>Medical procedure with board-certified specialist in ${caseRecord.procedure_country}</span>
-                    </div>
-                    <div class="package-item">
-                      <span class="package-icon">✈️</span>
-                      <span>Hand-selected round-trip flights with premium comfort seating</span>
-                    </div>
-                    <div class="package-item">
-                      <span class="package-icon">🏨</span>
-                      <span>Luxury hotel accommodations near your treatment facility</span>
-                    </div>
-                    <div class="package-item">
-                      <span class="package-icon">🚘</span>
-                      <span>Private airport transfers and clinic transportation throughout your stay</span>
-                    </div>
-                  </div>
-
-                  <!-- CTA -->
-                  <div class="cta-container">
-                    <a href="${paymentUrl}" class="cta-button">Review & Accept Proposal</a>
-                  </div>
-
-                  <p style="font-size: 13px; color: #6B7280; text-align: center; margin: 20px 0; font-style: italic;">Please review and confirm your package within 7 days to secure your dates.</p>
-                </div>
-
-                <!-- Footer -->
-                <div class="footer">
-                  <p class="footer-text"><strong style="color: #1F2937;">Next Steps:</strong> Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.</p>
-                  <p class="footer-text">Questions? Contact us at <strong style="color: #0F3A20;">concierge@morales-dental.com</strong></p>
-                  <p class="footer-text" style="margin-top: 16px; border-top: 1px solid #E5E7EB; padding-top: 16px;">Best regards,<br><strong>MORALES Medical Travel Concierge Team</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        body: renderEmail({
+          appUrl,
+          eyebrow: 'Your Proposal',
+          title: `Your journey is ready, ${caseRecord.client_name}`,
+          intro: 'Your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.',
+          bodyHtml: proposalHeroHtml,
+          note: 'Please review and confirm your package within 7 days to secure your dates. Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.',
+          ctaText: 'Review & Accept Proposal',
+          ctaUrl: paymentUrl,
+        }),
       });
 
       return Response.json({ 
@@ -539,84 +472,68 @@ Deno.serve(async (req) => {
       const emailPromises = [];
 
       // 1. PATIENT - Luxury itinerary welcome package
-      const patientEmailBody = `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="margin:0; padding:0; background: linear-gradient(135deg, #f5f7f4 0%, #e8eceb 100%); font-family: 'Segoe UI', -apple-system, sans-serif;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td align="center" style="padding: 48px 20px;">
-              <table width="100%" style="max-width: 640px; background: #ffffff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden;">
-                <tr><td style="background: linear-gradient(135deg, #0F3A20 0%, #1a5c3a 100%); padding: 48px 40px; text-align: center;">
-                  <div style="font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: 2px;">MORALES</div>
-                  <div style="font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #C5A059; font-weight: 600; margin-top: 8px;">Medical Travel Safety</div>
-                </td></tr>
-                <tr><td style="padding: 48px 40px;">
-                  <p style="font-size: 16px; color: #374151; margin: 0 0 24px;">Dear ${caseRecord.client_name},</p>
-                  <p style="font-size: 18px; font-weight: 600; color: #0F3A20; margin: 0 0 32px;">Your payment has been successfully processed. Your luxury medical travel experience is now secured.</p>
-                  
-                  <div style="padding: 24px; background: linear-gradient(135deg, rgba(15,58,32,0.05), rgba(197,160,89,0.05)); border-left: 4px solid #0F3A20; border-radius: 8px; margin: 32px 0;">
-                    <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; font-weight: 700;">Your Procedure</div>
-                    <div style="font-size: 20px; font-weight: 700; color: #0F3A20; margin: 8px 0;">${(caseRecord.procedures || ['Your Procedure']).join(' + ')}</div>
-                    <div style="font-size: 14px; color: #4B5563;">${caseRecord.procedure_country}</div>
-                  </div>
+      const itineraryItems = [
+        ['✈️', 'Premium Flights', caseRecord.flight_details || 'Round-trip international flights'],
+        ['🏨', 'Luxury Accommodation', `${caseRecord.hotel_name || 'Premium hotel'} - ${caseRecord.hotel_address || 'Near treatment facility'}`],
+        ['🚗', 'Private Transfers', 'Airport transfers and clinic transportation'],
+      ];
+      const patientBodyHtml = `
+        <div style="padding:20px 22px;background:rgba(212,175,55,0.08);border-left:3px solid #D4AF37;border-radius:8px;margin:8px 0 28px;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(238,242,247,0.5);font-weight:700;">Your Procedure</div>
+          <div style="font-size:19px;font-weight:700;color:#D4AF37;margin:8px 0 4px;">${(caseRecord.procedures || ['Your Procedure']).join(' + ')}</div>
+          <div style="font-size:14px;color:rgba(238,242,247,0.7);">${caseRecord.procedure_country}</div>
+        </div>
+        <p style="margin:0 0 14px;font-size:12px;font-weight:700;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;">Your Complete Itinerary</p>
+        <div style="margin-bottom:24px;">
+          ${itineraryItems.map(([icon, label, detail]) => `
+            <div style="padding:16px 18px;background:rgba(255,255,255,0.03);border:1px solid #2A3F4A;border-radius:8px;margin-bottom:10px;">
+              <div style="font-weight:700;color:#EEF2F7;font-size:14px;">${icon} ${label}</div>
+              <div style="font-size:13px;color:rgba(238,242,247,0.55);margin-top:4px;">${detail}</div>
+            </div>`).join('')}
+        </div>
+        <div style="padding:26px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:12px;text-align:center;">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(238,242,247,0.5);font-weight:700;">Total Investment</div>
+          <div style="font-size:32px;font-weight:900;color:#D4AF37;margin:10px 0;">$${caseRecord.final_package_price?.toLocaleString() || '0'}</div>
+          <div style="display:inline-block;padding:7px 16px;background:#1a5c3a;color:#EEF2F7;border-radius:20px;font-size:12px;font-weight:700;">✓ PAID IN FULL</div>
+          ${caseRecord.consultation_fee_paid ? `<p style="margin-top:12px;font-size:12px;color:#D4AF37;font-weight:600;">Your $${caseRecord.consultation_fee_amount || 49}.00 consultation fee has been credited</p>` : ''}
+        </div>`;
 
-                  <div style="margin: 32px 0;">
-                    <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; font-weight: 700; margin-bottom: 16px;">Your Complete Itinerary</div>
-                    <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px;">
-                      <div style="font-weight: 700; color: #0F3A20; font-size: 14px;">✈️ Premium Flights</div>
-                      <div style="font-size: 13px; color: #6B7280;">${caseRecord.flight_details || 'Round-trip international flights'}</div>
-                    </div>
-                    <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px;">
-                      <div style="font-weight: 700; color: #0F3A20; font-size: 14px;">🏨 Luxury Accommodation</div>
-                      <div style="font-size: 13px; color: #6B7280;">${caseRecord.hotel_name || 'Premium hotel'} - ${caseRecord.hotel_address || 'Near treatment facility'}</div>
-                    </div>
-                    <div style="padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-                      <div style="font-weight: 700; color: #0F3A20; font-size: 14px;">🚗 Private Transfers</div>
-                      <div style="font-size: 13px; color: #6B7280;">Airport transfers and clinic transportation</div>
-                    </div>
-                  </div>
-
-                  <div style="padding: 28px; background: #f0f9ff; border: 2px solid #0F3A20; border-radius: 12px; text-align: center; margin: 32px 0;">
-                    <div style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #6B7280; font-weight: 700;">Total Investment</div>
-                    <div style="font-size: 36px; font-weight: 900; color: #0F3A20; margin: 12px 0;">$${caseRecord.final_package_price?.toLocaleString() || '0'}</div>
-                    <div style="display: inline-block; padding: 8px 16px; background: #10b981; color: #ffffff; border-radius: 20px; font-size: 12px; font-weight: 700;">✓ PAID IN FULL</div>
-                    ${caseRecord.consultation_fee_paid ? `<p style="margin-top: 12px; font-size: 12px; color: #0F3A20; font-weight: 600;">Your $${caseRecord.consultation_fee_amount || 49}.00 consultation fee has been credited</p>` : ''}
-                  </div>
-
-                  <p style="font-size: 14px; color: #374151; margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center;">
-                    Dedicated to your beautiful smile and wellness journey,<br/>
-                    <strong style="color: #0F3A20;">The IQ200 Medical Travel Team</strong>
-                  </p>
-                </td></tr>
-              </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-      `;
       // BUG-R9-01 FIX: asServiceRole for all email dispatches in process_payment (admin-triggered)
       emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,
-        body: patientEmailBody
+        body: renderEmail({
+          appUrl,
+          eyebrow: 'Payment Confirmed',
+          title: `Your journey is secured, ${caseRecord.client_name}`,
+          intro: 'Your payment has been successfully processed. Your luxury medical travel experience is now secured.',
+          bodyHtml: patientBodyHtml,
+          footer: 'Dedicated to your beautiful smile and wellness journey — The Morales Medical Travel Team',
+        }),
       }));
 
       // 2. TRAVEL AGENCY / ADMIN - Master portal notification
       const travelAgency = caseRecord.travel_vendor_id ? await base44.asServiceRole.entities.TravelAgency.get(caseRecord.travel_vendor_id) : null;
       const adminPortalUrl = `${appUrl}/admin/portal-viewer?case_id=${caseRecord.id}`;
-      const adminEmailBody = `
-        <h2>Master Portal Notification - Case #${caseRecord.id}</h2>
-        <p>Dear Admin,</p>
-        <p>Payment confirmed for <strong>${caseRecord.client_name}</strong>.</p>
-        <p><strong>Total Package:</strong> $${caseRecord.final_package_price?.toLocaleString()}</p>
-        <p><strong>Deposit:</strong> ${deposit_option} | <strong>Status:</strong> ${caseRecord.payment_status}</p>
-        <h3>Workflow Logs:</h3>
-        <ul>${(caseRecord.timeline_log || []).map(log => `<li>${log.timestamp}: ${log.action} - ${log.details}</li>`).join('')}</ul>
-        <p><strong>Travel Agency:</strong> ${travelAgency ? travelAgency.agency_name : 'Not assigned'}</p>
-        <p><strong>Doctor:</strong> ${caseRecord.doctor_selected || 'Not assigned'}</p>
-        <a href="${adminPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">View Case</a>
-      `;
+      const adminLogsHtml = (caseRecord.timeline_log || []).length
+        ? `<div style="margin:22px 0;font-size:13px;color:rgba(238,242,247,0.6);line-height:1.8;">${(caseRecord.timeline_log || []).map(log => `${log.timestamp}: ${log.action} — ${log.details}`).join('<br/>')}</div>`
+        : '';
+      const adminEmailBody = renderEmail({
+        appUrl,
+        eyebrow: 'Master Portal Notification',
+        title: `Payment confirmed — Case #${caseRecord.id}`,
+        intro: `Payment confirmed for ${caseRecord.client_name}.`,
+        rows: [
+          ['Total Package', `$${caseRecord.final_package_price?.toLocaleString()}`],
+          ['Deposit', deposit_option],
+          ['Status', caseRecord.payment_status],
+          ['Travel Agency', travelAgency ? travelAgency.agency_name : 'Not assigned'],
+          ['Doctor', caseRecord.doctor_selected || 'Not assigned'],
+        ],
+        bodyHtml: adminLogsHtml,
+        ctaText: 'View Case',
+        ctaUrl: adminPortalUrl,
+      });
       const adminEmail = Deno.env.get('ADMIN_EMAIL');
       if (adminEmail) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
@@ -632,14 +549,18 @@ Deno.serve(async (req) => {
       const doctorPortalUrl = `${appUrl}/portal/doctor/${caseRecord.doctor_portal_token || caseRecord.proposal_token}`;
       const doctorName = caseRecord.doctor_selected || 'Doctor';
       const procedureList = (caseRecord.procedures || ['Procedure']).join(', ');
-      const doctorEmailBody = `
-        <h2>Case Confirmation</h2>
-        <p>Dear ${doctorName},</p>
-        <p>New <strong>${procedureList}</strong> procedure confirmed for <strong>${caseRecord.client_name}</strong>.</p>
-        <p><strong>Treatment Cost:</strong> $${caseRecord.treatment_cost}</p>
-        <a href="${doctorPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Doctor Portal</a>
-        <p>Please confirm procedure date.</p>
-      `;
+      const doctorEmailBody = renderEmail({
+        appUrl,
+        eyebrow: 'Case Confirmation',
+        title: `New case confirmed: ${caseRecord.client_name}`,
+        intro: `Dear ${doctorName}, a new ${procedureList} procedure has been confirmed for ${caseRecord.client_name}. Please confirm the procedure date via your portal.`,
+        rows: [
+          ['Procedure', procedureList],
+          ['Treatment Cost', `$${caseRecord.treatment_cost}`],
+        ],
+        ctaText: 'Access Doctor Portal',
+        ctaUrl: doctorPortalUrl,
+      });
       if (caseRecord.doctor_email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.doctor_email,
@@ -651,14 +572,18 @@ Deno.serve(async (req) => {
       // 4. DRIVER - ORIGIN - Local pickup ticket
       const originDriver = caseRecord.origin_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.origin_driver_id) : null;
       const originDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
-      const originDriverEmailBody = `
-        <h2>Local Pickup Ticket</h2>
-        <p>Dear ${originDriver ? originDriver.company_name || originDriver.driver_name : 'Origin Driver'},</p>
-        <p>Pickup confirmed for <strong>${caseRecord.client_name}</strong>.</p>
-        <p><strong>Pickup:</strong> ${caseRecord.client_pickup_address || 'Client Home'}</p>
-        <p><strong>Destination:</strong> Local Airport</p>
-        <a href="${originDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
-      `;
+      const originDriverEmailBody = renderEmail({
+        appUrl,
+        eyebrow: 'Local Pickup Ticket',
+        title: `Pickup confirmed: ${caseRecord.client_name}`,
+        intro: `Dear ${originDriver ? originDriver.company_name || originDriver.driver_name : 'Origin Driver'}, a pickup has been confirmed for ${caseRecord.client_name}.`,
+        rows: [
+          ['Pickup', caseRecord.client_pickup_address || 'Client Home'],
+          ['Destination', 'Local Airport'],
+        ],
+        ctaText: 'Access Portal',
+        ctaUrl: originDriverPortalUrl,
+      });
       if (originDriver?.email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: originDriver.email,
@@ -670,13 +595,17 @@ Deno.serve(async (req) => {
       // 5. DRIVER - DESTINATION - Airport arrival ticket
       const destDriver = caseRecord.destination_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.destination_driver_id) : null;
       const destDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
-      const destDriverEmailBody = `
-        <h2>International Arrival Transfer</h2>
-        <p>Dear ${destDriver ? destDriver.company_name || destDriver.driver_name : 'Destination Driver'},</p>
-        <p>Arrival transfer confirmed for <strong>${caseRecord.client_name}</strong>.</p>
-        <p><strong>Destination:</strong> ${caseRecord.hotel_name || 'Hotel'} - ${caseRecord.hotel_address || 'TBD'}</p>
-        <a href="${destDriverPortalUrl}" style="display: inline-block; padding: 12px 24px; background: #0F3A20; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Access Portal</a>
-      `;
+      const destDriverEmailBody = renderEmail({
+        appUrl,
+        eyebrow: 'International Arrival Transfer',
+        title: `Arrival transfer confirmed: ${caseRecord.client_name}`,
+        intro: `Dear ${destDriver ? destDriver.company_name || destDriver.driver_name : 'Destination Driver'}, an arrival transfer has been confirmed for ${caseRecord.client_name}.`,
+        rows: [
+          ['Destination', `${caseRecord.hotel_name || 'Hotel'} - ${caseRecord.hotel_address || 'TBD'}`],
+        ],
+        ctaText: 'Access Portal',
+        ctaUrl: destDriverPortalUrl,
+      });
       if (destDriver?.email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: destDriver.email,

@@ -1,6 +1,19 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
+
+// HMAC-signed to match verifyPortalToken() in getPortalData — previously an
+// unsigned plain btoa(JSON) token with no signature suffix, which fails that
+// verification and makes the resent chauffeur portal link silently non-functional.
+async function encodePortalToken(payload: Record<string, unknown>) {
+  const data = JSON.stringify(payload);
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
+}
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -14,44 +27,6 @@ async function sendSms(to: string, body: string): Promise<void> {
     body: form.toString(),
   }).catch(e => console.warn('[resendChauffeurPortalEmail] SMS failed:', e.message));
 }
-
-const escapeHtml = (value) => String(value ?? '')
-  .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
-
-const row = (label, value) => `
-  <tr>
-    <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
-    <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(value || 'Not provided')}</td>
-  </tr>`;
-
-const emailLayout = ({ eyebrow, title, intro, rows = [], ctaText, ctaUrl, footer }) => `<!doctype html>
-<html>
-  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
-      <tr><td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#29483d;padding:28px 32px;color:#ffffff;">
-              <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
-              <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${escapeHtml(eyebrow)}</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px;">
-              <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">${escapeHtml(title)}</h1>
-              <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${escapeHtml(intro)}</p>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.join('')}</table>
-              ${ctaText && ctaUrl ? `<a href="${escapeHtml(ctaUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:700;">${escapeHtml(ctaText)}</a>` : ''}
-              <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">${escapeHtml(footer)}</p>
-              <p style="margin:18px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
-            </td>
-          </tr>
-        </table>
-      </td></tr>
-    </table>
-  </body>
-</html>`;
 
 Deno.serve(async (req) => {
   try {
@@ -86,12 +61,12 @@ Deno.serve(async (req) => {
     const sent = [];
     for (const cab of taxiServices) {
       const driverName = cab.driver_name || cab.company_name || 'Partner';
-      const token = btoa(JSON.stringify({
+      const token = await encodePortalToken({
         consultation_id,
         partner_id: cab.id,
         portal_type: 'transfer',
         expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      }));
+      });
       const portalLink = `${appUrl}/portal/transfer?token=${token}`;
 
       // Blackout guard
@@ -113,16 +88,17 @@ Deno.serve(async (req) => {
         from_name: BRAND,
         to: cab.email,
         subject: `Transfer request — ${consultation.patient_name} | ${BRAND}`,
-        body: emailLayout({
+        body: renderEmail({
+          appUrl,
           eyebrow: 'Transfer request',
           title: 'Patient transfer quote needed',
           intro: `Hello ${driverName}, this confirmed patient will need reliable local transportation support.`,
           rows: [
-            row('Patient', consultation.patient_name),
-            row('Requested service', 'Airport, clinic, and hotel transfers'),
-            row('Preferred date', consultation.preferred_date || 'Flexible'),
-            row('Companion', consultation.has_companion ? 'Yes' : 'No'),
-            row('Special instructions', consultation.transfer_notes || 'None'),
+            ['Patient', consultation.patient_name],
+            ['Requested service', 'Airport, clinic, and hotel transfers'],
+            ['Preferred date', consultation.preferred_date || 'Flexible'],
+            ['Companion', consultation.has_companion ? 'Yes' : 'No'],
+            ['Special instructions', consultation.transfer_notes || 'None'],
           ],
           ctaText: 'Open Chauffeur Portal & Submit Pricing →',
           ctaUrl: portalLink,

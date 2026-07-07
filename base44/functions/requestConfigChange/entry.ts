@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 /**
  * requestConfigChange — creates a pending SystemConfigChange and notifies all admins.
@@ -78,42 +79,21 @@ Deno.serve(async (req) => {
         from_name: 'MORALES Security — Config Approval Required',
         to: admin.email,
         subject: `⚠️ Admin Action Required: Config Change Request — ${config_label || config_key}`,
-        body: `
-          <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
-            <div style="background: #0F3A20; padding: 28px 32px; border-radius: 12px 12px 0 0;">
-              <h2 style="color: #fff; margin: 0; font-size: 18px;">System Config Change Request</h2>
-              <p style="color: #C5A059; margin: 6px 0 0; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Multi-Admin Approval Required</p>
-            </div>
-            <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 28px 32px; border-radius: 0 0 12px 12px;">
-              <p style="color: #374151; font-size: 14px;">Hello ${admin.full_name || admin.email},</p>
-              <p style="color: #374151; font-size: 14px;">Admin <strong>${user.full_name || user.email}</strong> has requested a system configuration change that requires <strong>two admin approvals within 72 hours</strong>.</p>
-              <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-                <tr style="background: #f9fafb;">
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151; width: 35%;">Config Key</td>
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; color: #111827;">${config_label || config_key}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Requested By</td>
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; color: #111827;">${user.full_name || user.email}</td>
-                </tr>
-                <tr style="background: #f9fafb;">
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Reason</td>
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; color: #111827;">${change_reason || 'No reason provided'}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Expires</td>
-                  <td style="padding: 10px 14px; border: 1px solid #e5e7eb; color: #dc2626;">Within 72 hours — ${new Date(expiresAt).toLocaleString()}</td>
-                </tr>
-              </table>
-              <div style="text-align: center; margin: 28px 0 8px;">
-                <a href="${approvalUrl}" style="background: #0F3A20; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">
-                  Review & Approve Change →
-                </a>
-              </div>
-              <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 16px;">Two separate admin approvals are required. The requester cannot approve their own request.</p>
-            </div>
-          </div>
-        `
+        body: renderEmail({
+          appUrl,
+          eyebrow: 'Multi-Admin Approval Required',
+          title: 'System Config Change Request',
+          intro: `Hello ${admin.full_name || admin.email}, admin ${user.full_name || user.email} has requested a system configuration change that requires two admin approvals within 72 hours.`,
+          rows: [
+            ['Config Key', config_label || config_key],
+            ['Requested By', user.full_name || user.email],
+            ['Reason', change_reason || 'No reason provided'],
+            ['Expires', `Within 72 hours — ${new Date(expiresAt).toLocaleString()}`],
+          ],
+          note: 'Two separate admin approvals are required. The requester cannot approve their own request.',
+          ctaText: 'Review & Approve Change',
+          ctaUrl: approvalUrl,
+        }),
       }).catch(e => ({ error: e.message }))
     );
 

@@ -1,53 +1,9 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
-const TEAM = 'Morales Concierge Team';
-
-const escapeHtml = (value) => String(value ?? '')
-  .replaceAll('&', '&amp;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;')
-  .replaceAll("'", '&#39;');
 
 const formatMoney = (value) => value ? `$${Number(value).toLocaleString('en-US')}` : 'To be confirmed';
-
-const row = (label, value) => `
-  <tr>
-    <td style="padding:10px 0;color:#64746d;font-size:13px;width:38%;">${escapeHtml(label)}</td>
-    <td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${escapeHtml(value || 'Not provided')}</td>
-  </tr>`;
-
-const emailLayout = ({ eyebrow, title, intro, rows = [], note, ctaText, ctaUrl, footer = 'Please reply to this email if you need assistance.' }) => `<!doctype html>
-<html>
-  <body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;color:#13221d;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-            <tr>
-              <td style="background:#29483d;padding:28px 32px;color:#ffffff;">
-                <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:-0.3px;">${BRAND}</div>
-                <div style="margin-top:8px;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">${escapeHtml(eyebrow)}</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:32px;">
-                <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:30px;line-height:1.15;color:#13221d;font-weight:400;">${escapeHtml(title)}</h1>
-                <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#40514a;">${escapeHtml(intro)}</p>
-                ${rows.length ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin:22px 0;">${rows.join('')}</table>` : ''}
-                ${note ? `<div style="margin:22px 0;padding:16px 18px;background:#f8f4ee;border-left:4px solid #b68a52;border-radius:12px;color:#40514a;font-size:14px;line-height:1.6;">${escapeHtml(note)}</div>` : ''}
-                ${ctaText && ctaUrl ? `<a href="${escapeHtml(ctaUrl)}" style="display:inline-block;margin-top:6px;background:#29483d;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:700;">${escapeHtml(ctaText)}</a>` : ''}
-                <p style="margin:28px 0 0;font-size:14px;line-height:1.6;color:#64746d;">${escapeHtml(footer)}</p>
-                <p style="margin:18px 0 0;font-size:14px;color:#13221d;font-weight:700;">${TEAM}</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
 
 Deno.serve(async (req) => {
   try {
@@ -112,16 +68,17 @@ Deno.serve(async (req) => {
           from_name: BRAND,
           to: doctor_email,
           subject: `Procedure confirmed for ${workflow.patient_name} | ${BRAND}`,
-          body: emailLayout({
+          body: renderEmail({
+            appUrl,
             eyebrow: 'Doctor confirmation',
             title: `Confirmed case: ${workflow.patient_name}`,
             intro: `Hello ${doctor_name || 'Doctor'}, this case has been assigned to you and is now moving into travel coordination.`,
             rows: [
-              row('Patient', workflow.patient_name),
-              row('Quoted price', formatMoney(quoted_price)),
-              row('Requested date', consultation?.preferred_date ? new Date(consultation.preferred_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified'),
-              row('Duration of stay', consultation?.duration_of_stay || 'Not specified'),
-              row('Portal', 'Doctor case management'),
+              ['Patient', workflow.patient_name],
+              ['Quoted price', formatMoney(quoted_price)],
+              ['Requested date', consultation?.preferred_date ? new Date(consultation.preferred_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified'],
+              ['Duration of stay', consultation?.duration_of_stay || 'Not specified'],
+              ['Portal', 'Doctor case management'],
             ],
             note: notes || '',
             ctaText: 'Open portal',
@@ -146,14 +103,15 @@ Deno.serve(async (req) => {
             from_name: BRAND,
             to: agency.email,
             subject: `Travel coordination needed for ${workflow.patient_name} | ${BRAND}`,
-            body: emailLayout({
+            body: renderEmail({
+              appUrl,
               eyebrow: 'Travel request',
               title: 'Flight and itinerary quote needed',
               intro: `Hello ${name}, a doctor has confirmed this patient and travel planning can begin.`,
               rows: [
-                row('Patient', workflow.patient_name),
-                row('Doctor quote', formatMoney(quoted_price)),
-                row('Requested service', 'Flights and travel itinerary'),
+                ['Patient', workflow.patient_name],
+                ['Doctor quote', formatMoney(quoted_price)],
+                ['Requested service', 'Flights and travel itinerary'],
               ],
               note: notes || '',
               footer: 'Please reply with availability, routing options, and pricing.',
@@ -171,14 +129,15 @@ Deno.serve(async (req) => {
             from_name: BRAND,
             to: agency.email,
             subject: `Recovery lodging needed for ${workflow.patient_name} | ${BRAND}`,
-            body: emailLayout({
+            body: renderEmail({
+              appUrl,
               eyebrow: 'Accommodation request',
               title: 'Recovery hotel quote needed',
               intro: `Hello ${name}, this confirmed patient requires recovery-focused accommodation options.`,
               rows: [
-                row('Patient', workflow.patient_name),
-                row('Requested service', 'Recovery lodging'),
-                row('Status', 'Doctor confirmed'),
+                ['Patient', workflow.patient_name],
+                ['Requested service', 'Recovery lodging'],
+                ['Status', 'Doctor confirmed'],
               ],
               note: notes || '',
               footer: 'Please reply with room availability, recovery suitability, and pricing.',
@@ -198,14 +157,15 @@ Deno.serve(async (req) => {
           from_name: BRAND,
           to: taxi.email,
           subject: `Transfer coordination needed for ${workflow.patient_name} | ${BRAND}`,
-          body: emailLayout({
+          body: renderEmail({
+            appUrl,
             eyebrow: 'Transfer request',
             title: 'Patient transfer quote needed',
             intro: `Hello ${name}, this confirmed patient will need reliable local transportation support.`,
             rows: [
-              row('Patient', workflow.patient_name),
-              row('Requested service', 'Airport, clinic, and hotel transfers'),
-              row('Status', 'Doctor confirmed'),
+              ['Patient', workflow.patient_name],
+              ['Requested service', 'Airport, clinic, and hotel transfers'],
+              ['Status', 'Doctor confirmed'],
             ],
             note: notes || '',
             footer: 'Please reply with availability, vehicle details, and pricing.',
@@ -222,13 +182,14 @@ Deno.serve(async (req) => {
         from_name: BRAND,
         to: workflow.patient_email,
         subject: `Your doctor has confirmed | ${BRAND}`,
-        body: emailLayout({
+        body: renderEmail({
+          appUrl,
           eyebrow: 'Care journey update',
           title: 'Your doctor has confirmed',
           intro: `Dear ${workflow.patient_name}, your doctor has confirmed your procedure. Our concierge team is now coordinating the next steps around travel, lodging, and local transfers.`,
           rows: [
-            row('Current stage', 'Travel coordination'),
-            row('Next update', 'Full package summary within 24–48 hours'),
+            ['Current stage', 'Travel coordination'],
+            ['Next update', 'Full package summary within 24–48 hours'],
           ],
           footer: 'Your concierge team will keep you updated as each part of your care journey is confirmed.',
         }),
