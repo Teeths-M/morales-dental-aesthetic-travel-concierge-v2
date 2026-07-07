@@ -5,7 +5,7 @@ import { useIntakeSession } from '@/hooks/useIntakeSession';
 import { useDestinationCountries } from '@/hooks/useDestinationCountries';
 import { useIntakeBackgroundSearch } from '@/hooks/useIntakeBackgroundSearch';
 import { useCart } from '@/context/CartContext';
-import { UNSPECIFIED, INPUT_TYPES } from '@/lib/intakeFlow/questionGraph';
+import { UNSPECIFIED, INPUT_TYPES, QUESTION_GRAPH } from '@/lib/intakeFlow/questionGraph';
 import { getAnsweredQuestionCount, getTotalQuestionCount } from '@/lib/intakeFlow/flowEngine';
 import { toSafetyEngineName } from '@/lib/intakeFlow/procedureSafetyNameMap';
 import { buildConsultationPayload } from '@/lib/intakeFlow/fieldMap';
@@ -53,8 +53,8 @@ export default function ConciergeIntake() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  const answeredCount = getAnsweredQuestionCount(answers);
-  const totalCount = getTotalQuestionCount();
+  const answeredCount = getAnsweredQuestionCount(answers, QUESTION_GRAPH);
+  const totalCount = getTotalQuestionCount(QUESTION_GRAPH);
   const checklistItems = buildChecklistItems({ answers, answeredCount, totalCount, doctorSearch, costEstimate, partnerPreview });
 
   // The moment procedures are answered, every one of them joins the same

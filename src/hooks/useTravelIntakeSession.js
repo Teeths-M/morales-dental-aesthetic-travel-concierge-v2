@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { getNextStep, isConfidenceAcceptable, shouldEscalateToHuman } from '@/lib/intakeFlow/flowEngine';
-import { QUESTION_GRAPH } from '@/lib/intakeFlow/questionGraph';
+import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
 
-const GUEST_DRAFT_KEY = 'morales_intake_guest_draft';
+const GUEST_DRAFT_KEY = 'morales_travel_intake_guest_draft';
 
 function reducer(state, action) {
   switch (action.type) {
@@ -37,13 +37,13 @@ function reducer(state, action) {
 }
 
 /**
- * Owns ConversationSession state: loads-or-creates the backend session for an
- * authenticated user, falls back to a local-only guest draft (pre-auth-gate
- * answers only — never persisted server-side, mirroring how ConsultationDraft
- * itself is guest-inaccessible in Booking.jsx), debounce-autosaves, and
- * resumes a returning user without ever re-asking a known field.
+ * Travel-only sibling of useIntakeSession.js — same ConversationSession
+ * pattern, same intakeConversationTurn/flagIntakeHandoff edge functions
+ * (both fully generic), but flow_type: 'travel_intake' so the two never
+ * cross-resume each other, and "never ask twice" pulls from the user's most
+ * recent TravelRequest instead of a Consultation.
  */
-export function useIntakeSession() {
+export function useTravelIntakeSession() {
   const [{ answers, turnHistory, lowConfidenceStreak }, dispatch] = useReducer(reducer, {
     answers: {},
     turnHistory: [],
@@ -56,7 +56,6 @@ export function useIntakeSession() {
   const sessionIdRef = useRef(null);
   const saveTimerRef = useRef(null);
 
-  // ── Load auth state, prior session, and any known Consultation data ──────
   useEffect(() => {
     (async () => {
       let user = null;
@@ -72,7 +71,6 @@ export function useIntakeSession() {
 
         let hydrated = {};
 
-        // Restore guest answers collected before sign-in (pre-auth-gate steps).
         try {
           const guestDraft = localStorage.getItem(GUEST_DRAFT_KEY);
           if (guestDraft) {
@@ -81,9 +79,8 @@ export function useIntakeSession() {
           }
         } catch (_) {}
 
-        // Resume an existing in-progress ConversationSession.
         try {
-          const existing = await base44.entities.ConversationSession.filter({ user_email: user.email, flow_type: 'medical_intake' });
+          const existing = await base44.entities.ConversationSession.filter({ user_email: user.email, flow_type: 'travel_intake' });
           const session = existing.find((s) => s.status === 'in_progress') || null;
           if (session) {
             sessionIdRef.current = session.id;
@@ -103,46 +100,39 @@ export function useIntakeSession() {
           dispatch({ type: 'HYDRATE', payload: { answers: hydrated, turnHistory: [] } });
         }
 
-        // Never ask twice, even across a brand-new session: pull the most
-        // recent Consultation for this email and treat its fields as known.
+        // Never ask twice: reuse the origin city from the user's most recent
+        // travel request, if any (destination changes trip to trip; origin
+        // usually doesn't).
         try {
-          const priorConsultations = await base44.entities.Consultation.filter(
-            { email: user.email },
+          const priorRequests = await base44.entities.TravelRequest.filter(
+            { user_email: user.email },
             '-created_date',
             1
           );
-          const prior = priorConsultations?.[0];
-          if (prior) {
+          const prior = priorRequests?.[0];
+          if (prior?.origin_city) {
             dispatch({
               type: 'HYDRATE',
               payload: {
                 answers: {
-                  patient_name: prior.patient_name,
-                  email: prior.email,
-                  phone: prior.phone,
-                  age: prior.age,
-                  gender: prior.gender,
-                  nationality: prior.nationality,
-                  client_country: prior.client_country,
-                  ...hydrated, // anything the user already answered this session wins
+                  origin_city: prior.origin_city,
+                  origin_country: prior.origin_country,
+                  ...hydrated,
                 },
               },
             });
           }
         } catch (_) {}
 
-        // Also record the role/stage the same way Booking.jsx does, so
-        // cross-feature onboarding tracking sees this flow starting.
         try {
           const { saveUserOnboardingProfile } = await import('@/lib/onboardingProfile');
           await saveUserOnboardingProfile({
             role: 'client',
             status: 'started',
-            profileData: { selected_role: 'client', started_from: 'intake' },
+            profileData: { selected_role: 'client', started_from: 'travel_intake' },
           });
         } catch (_) {}
       } else {
-        // Guest — local-only state, pre-auth-gate steps only.
         try {
           const guestDraft = localStorage.getItem(GUEST_DRAFT_KEY);
           dispatch({
@@ -156,12 +146,10 @@ export function useIntakeSession() {
     })();
   }, []);
 
-  // ── Debounced persistence ─────────────────────────────────────────────────
   useEffect(() => {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      // Guest: local-only, matches ConsultationDraft's own guest-inaccessible pattern.
       try {
         localStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify(answers));
       } catch (_) {}
@@ -174,7 +162,7 @@ export function useIntakeSession() {
         user_email: currentUser.email,
         user_name: currentUser.full_name || '',
         role: 'client',
-        flow_type: 'medical_intake',
+        flow_type: 'travel_intake',
         status: 'in_progress',
         answers,
         turn_history: turnHistory,
@@ -185,8 +173,8 @@ export function useIntakeSession() {
         if (sessionIdRef.current && sessionIdRef.current !== 'pending') {
           await base44.entities.ConversationSession.update(sessionIdRef.current, payload);
         } else if (!sessionIdRef.current) {
-          sessionIdRef.current = 'pending'; // idempotency guard against double-create
-          const existing = await base44.entities.ConversationSession.filter({ user_email: currentUser.email, flow_type: 'medical_intake' });
+          sessionIdRef.current = 'pending';
+          const existing = await base44.entities.ConversationSession.filter({ user_email: currentUser.email, flow_type: 'travel_intake' });
           const inProgress = existing.find((s) => s.status === 'in_progress');
           if (inProgress) {
             sessionIdRef.current = inProgress.id;
@@ -200,7 +188,7 @@ export function useIntakeSession() {
           }
         }
       } catch (_) {
-        sessionIdRef.current = null; // allow retry on next change
+        sessionIdRef.current = null;
       }
     }, 1000);
 
@@ -217,13 +205,6 @@ export function useIntakeSession() {
     []
   );
 
-  /**
-   * Free-text answers route through the LLM (parsing + narration only — see
-   * intakeConversationTurn). If confidence is too low, the turn is NOT
-   * committed and the caller should re-prompt for clarification instead of
-   * advancing. If the call fails outright (network, LLM outage), falls back
-   * to committing the raw text verbatim so the conversation never blocks.
-   */
   const submitFreeTextAnswer = useCallback(
     async ({ stepId, question, deterministicReason, targetFields, rawText }) => {
       let turn = null;
@@ -251,7 +232,6 @@ export function useIntakeSession() {
       }
 
       if (!turn) {
-        // Network/LLM failure — commit the raw answer verbatim rather than blocking.
         const extracted = {};
         (targetFields || []).forEach((f) => { extracted[f] = rawText; });
         turn = { extracted, confidence: 100, clarificationNeeded: false, narration: '', acknowledgement: '' };
@@ -280,7 +260,7 @@ export function useIntakeSession() {
             turn_history: turnHistory,
             answers,
           })
-          .catch(() => {}); // handoff failure must not block the UI's own escalation message
+          .catch(() => {});
       }
 
       return {
@@ -293,7 +273,7 @@ export function useIntakeSession() {
     [answers, lowConfidenceStreak, currentUser, turnHistory]
   );
 
-  const nextStepResult = getNextStep(answers, { isAuthenticated }, QUESTION_GRAPH);
+  const nextStepResult = getNextStep(answers, { isAuthenticated }, TRAVEL_QUESTION_GRAPH);
 
   return {
     answers,

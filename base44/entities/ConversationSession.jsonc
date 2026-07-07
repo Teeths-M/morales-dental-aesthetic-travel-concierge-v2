@@ -21,6 +21,15 @@
       "default": "client",
       "description": "Which persona's conversational flow this session belongs to — Phase 1 only ever writes 'client'"
     },
+    "flow_type": {
+      "type": "string",
+      "enum": [
+        "medical_intake",
+        "travel_intake"
+      ],
+      "default": "medical_intake",
+      "description": "Which conversation this is — a user can have one in-progress session per flow_type at once. Distinguishes the medical-patient intake from the travel-only booking intake, since both use role 'client'."
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -106,6 +115,10 @@
     },
     "case_record_id": {
       "type": "string"
+    },
+    "travel_request_id": {
+      "type": "string",
+      "description": "Populated once a travel_intake conversation hands off into TravelRequest.create()"
     },
     "started_at": {
       "type": "string",

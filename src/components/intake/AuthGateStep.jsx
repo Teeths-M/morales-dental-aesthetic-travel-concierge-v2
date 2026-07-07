@@ -7,17 +7,24 @@ const GOLD = '#D4AF37';
 const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
-const GUEST_DRAFT_KEY = 'morales_intake_guest_draft';
+const DEFAULT_GUEST_DRAFT_KEY = 'morales_intake_guest_draft';
 
 /**
- * Shown the moment the conversation reaches medical history. Everything
- * asked before this point (procedure, destination) stays in a local guest
- * draft; nothing medical is ever sent anywhere before an account exists.
+ * Shown the moment a conversation reaches the point where answers need to
+ * be saved to a real account. Everything asked before this point stays in a
+ * local guest draft. `reason`/`redirectPath`/`guestDraftKey` let other flows
+ * (e.g. the travel-only intake) reuse this without medical-specific copy or
+ * colliding with the medical flow's own guest draft.
  */
-export default function AuthGateStep({ answers }) {
+export default function AuthGateStep({
+  answers,
+  reason = "From here we'll be discussing your medical history, so I want your answers protected behind your own account first. Nothing you've shared so far will be lost.",
+  redirectPath = ROUTES.CONCIERGE_INTAKE,
+  guestDraftKey = DEFAULT_GUEST_DRAFT_KEY,
+}) {
   const preserveDraft = () => {
     try {
-      localStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify(answers));
+      localStorage.setItem(guestDraftKey, JSON.stringify(answers));
     } catch (_) {}
   };
 
@@ -54,16 +61,14 @@ export default function AuthGateStep({ answers }) {
         Let's create your secure account
       </h2>
       <p style={{ margin: '0 0 24px', fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>
-        From here we'll be discussing your medical history, so I want your
-        answers protected behind your own account first. Nothing you've
-        shared so far will be lost.
+        {reason}
       </p>
 
       <button
         type="button"
         onClick={() => {
           preserveDraft();
-          base44.auth.loginWithProvider('google', ROUTES.CONCIERGE_INTAKE);
+          base44.auth.loginWithProvider('google', redirectPath);
         }}
         style={{
           width: '100%',
@@ -84,7 +89,7 @@ export default function AuthGateStep({ answers }) {
         type="button"
         onClick={() => {
           preserveDraft();
-          window.location.href = `/login?redirect=${ROUTES.CONCIERGE_INTAKE}`;
+          window.location.href = `/login?redirect=${redirectPath}`;
         }}
         style={{
           width: '100%',

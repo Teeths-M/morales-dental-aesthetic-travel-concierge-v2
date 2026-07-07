@@ -6,30 +6,13 @@ const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
 /**
- * The closing beat — not a form-submission dead end. Every item here reflects
- * something genuinely computed during the conversation (safetyStatus from the
- * same procedureCompatibility engine that gates safety, doctorSearch/
- * partnerPreview from the M3 background searches) — never a fabricated
- * checkmark. Where we don't have real backing data (e.g. no companion/
- * guardian assignment happens in this flow), the item is left out rather
- * than claimed. Payment isn't live in this phase, so that's said plainly.
+ * The closing beat — not a form-submission dead end. Purely presentational:
+ * each flow (medical intake, travel intake) builds its own `items` list from
+ * whatever it genuinely computed during the conversation — never a
+ * fabricated checkmark. Where a flow doesn't have real backing data for
+ * something, it should leave that item out rather than claim it.
  */
-export default function JourneyBeginsStep({ patientFirstName, safetyStatus, doctorSearch, partnerPreview }) {
-  const doctorCount = doctorSearch?.data?.matched_doctors?.length ?? 0;
-  const recoveryDays = safetyStatus?.totalRecoveryDays ?? 0;
-  const partnerCount = (partnerPreview?.data?.travel_agency_count ?? 0) + (partnerPreview?.data?.taxi_service_count ?? 0);
-
-  const items = [
-    { label: 'Safety Profile Created', state: 'done' },
-    doctorCount > 0
-      ? { label: `${doctorCount} Verified Doctor${doctorCount === 1 ? '' : 's'} Found`, state: 'done' }
-      : { label: 'Expanding Our Network for Your Procedure', state: 'done' },
-    recoveryDays > 0 && { label: `Recovery Timeline Built (~${recoveryDays} days)`, state: 'done' },
-    partnerCount > 0 && { label: `${partnerCount} Travel & Transfer Partners Ready`, state: 'done' },
-    { label: 'Secure Deposit — Coming Soon', state: 'pending' },
-    { label: 'Payment Integration Ready', state: 'pending' },
-  ].filter(Boolean);
-
+export default function JourneyBeginsStep({ firstName = '', title = '', intro = '', items = [] }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -46,11 +29,10 @@ export default function JourneyBeginsStep({ patientFirstName, safetyStatus, doct
         Welcome to Morales
       </p>
       <h2 style={{ margin: '0 0 14px', fontSize: 24, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>
-        {patientFirstName ? `${patientFirstName}, your journey has begun.` : 'Your journey has begun.'}
+        {title || (firstName ? `${firstName}, your journey has begun.` : 'Your journey has begun.')}
       </h2>
       <p style={{ margin: '0 0 28px', fontSize: 14, lineHeight: 1.65, color: 'rgba(255,255,255,0.6)' }}>
-        From this moment forward, you're never alone. A specialist is already being matched to
-        your case, and your coordinator will reach out personally — you won't need to repeat anything.
+        {intro}
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'left' }}>

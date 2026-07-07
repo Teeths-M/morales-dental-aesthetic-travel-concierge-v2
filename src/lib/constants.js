@@ -172,6 +172,7 @@ export const ROUTES = {
   SAFE_T: '/safe-t',
   BOOKING: '/booking',
   CONCIERGE_INTAKE: '/intake',
+  TRAVEL_INTAKE: '/travel-intake',
   PASSPORT_VAULT: '/passport-vault',
   EMERGENCY: '/emergency',
   TRAVEL_SERVICES: '/travel-services',

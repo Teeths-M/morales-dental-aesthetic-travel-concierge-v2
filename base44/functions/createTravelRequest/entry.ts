@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
 // Sanitize text fields — strip HTML tags to prevent stored XSS
 function sanitizeText(input: unknown, maxLen = 2000): string {
@@ -114,15 +115,41 @@ Deno.serve(async (req) => {
       amount_remaining: total_package_price - deposit_amount
     });
 
-    // Send notification to admin/travel agency
-    await base44.functions.invoke('sendTravelQuoteEmail', {
-      travel_request_id: travelRequest.id,
-      recipient_email: user.email,
-      total_package_price,
-      deposit_amount
-    });
+    // Client confirmation — real quote, not a placeholder. BUG FIX: this
+    // previously called 'sendTravelQuoteEmail' with {travel_request_id,
+    // recipient_email, ...}, but that function actually expects
+    // {consultation_id, taxi_service_id, ...} (a different, medical-flow
+    // notification) and would reject every call with a 400 for a missing
+    // consultation_id — silently dropping this confirmation every time.
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: user.email,
+      subject: `Your Travel Package Quote — ${request_token}`,
+      body: renderEmail({
+        appUrl,
+        eyebrow: 'Travel Package Quote',
+        title: `${user.full_name || 'Traveler'}, your quote is ready`,
+        intro: `From ${origin_city} to ${destination_city}, departing ${departure_date}. We're now matching you with a verified travel partner.`,
+        rows: [
+          ['Reference', request_token],
+          ['Travelers', String(travelers_count)],
+          ['Total Package', `$${total_package_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+          ['Deposit Due', `$${deposit_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+        ],
+        ctaText: 'View My Travel Request',
+        ctaUrl: `${appUrl}/travel-services`,
+      }),
+    }).catch((e) => console.warn('[createTravelRequest] confirmation email failed (non-blocking):', e.message));
 
-    return Response.json({ 
+    // BUG FIX: matchTravelRequestPartners existed and correctly assigns +
+    // notifies a real TravelAgency/TaxiService, but nothing anywhere in the
+    // app ever called it — every TravelRequest sat unassigned indefinitely.
+    // Non-blocking: partner assignment failing must not fail the booking.
+    await base44.functions.invoke('matchTravelRequestPartners', {
+      travelRequestId: travelRequest.id,
+    }).catch((e) => console.warn('[createTravelRequest] partner matching failed (non-blocking):', e.message));
+
+    return Response.json({
       success: true, 
       request_token,
       travel_request_id: travelRequest.id,

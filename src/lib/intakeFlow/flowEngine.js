@@ -1,11 +1,16 @@
 /**
  * flowEngine — pure functions that decide question order, skip logic, and
- * confidence thresholds for the conversational intake. Zero network calls,
- * zero safety decisions. Safety gating always lives in
- * `src/lib/procedureCompatibility.js` / `validateProcedureSafety` — this
- * engine never touches that logic, only reads whether it's time to run it.
+ * confidence thresholds for any conversational intake built on this pattern.
+ * Zero network calls, zero safety decisions. Safety gating (where the flow
+ * has any — the medical intake does, via procedureCompatibility.js /
+ * validateProcedureSafety; the travel-only intake has none) always lives
+ * outside this file.
+ *
+ * Graph-agnostic by design: every function takes the question graph as an
+ * explicit argument rather than importing one fixed graph, so the same
+ * engine drives both `src/lib/intakeFlow/questionGraph.js` (Medical Patient)
+ * and `src/lib/travelIntakeFlow/questionGraph.js` (travel-only booking).
  */
-import { QUESTION_GRAPH } from './questionGraph';
 
 const LOW_CONFIDENCE_ESCALATION_THRESHOLD = 3;
 const MIN_ACCEPTABLE_CONFIDENCE = 55;
@@ -25,20 +30,22 @@ function isStepAlreadyAnswered(step, answers) {
 }
 
 /**
- * Walks the question graph in order and returns the next step to show, or
- * `null` if the conversation is complete. Skips steps whose fields are
- * already known, whose `skipIf(answers)` returns true, or that require auth
- * when the caller isn't authenticated yet (returned instead as the auth-gate
- * marker so the UI can render the sign-in prompt at exactly the right beat).
+ * Walks the given question graph in order and returns the next step to
+ * show, or `{ type: 'complete' }` once every step is answered. Skips steps
+ * whose fields are already known, whose `skipIf(answers)` returns true, or
+ * that require auth when the caller isn't authenticated yet (returned
+ * instead as the auth-gate marker so the UI can render the sign-in prompt
+ * at exactly the right beat).
  *
  * @param {object} answers
  * @param {{ isAuthenticated: boolean }} sessionState
+ * @param {Array<object>} questionGraph
  * @returns {{ type: 'question', step: object } | { type: 'auth_gate', step: object } | { type: 'complete' }}
  */
-export function getNextStep(answers, sessionState) {
+export function getNextStep(answers, sessionState, questionGraph) {
   const isAuthenticated = !!sessionState?.isAuthenticated;
 
-  for (const step of QUESTION_GRAPH) {
+  for (const step of questionGraph) {
     if (isStepAlreadyAnswered(step, answers)) continue;
     if (typeof step.skipIf === 'function' && step.skipIf(answers)) continue;
 
@@ -68,13 +75,13 @@ export function shouldEscalateToHuman(lowConfidenceStreak) {
 }
 
 /** Total question-type steps (excludes the review step) — for progress display. */
-export function getTotalQuestionCount() {
-  return QUESTION_GRAPH.filter((s) => s.targetFields.length > 0).length;
+export function getTotalQuestionCount(questionGraph) {
+  return questionGraph.filter((s) => s.targetFields.length > 0).length;
 }
 
 /** How many question-type steps are already answered — for progress display. */
-export function getAnsweredQuestionCount(answers) {
-  return QUESTION_GRAPH.filter(
+export function getAnsweredQuestionCount(answers, questionGraph) {
+  return questionGraph.filter(
     (s) => s.targetFields.length > 0 && isStepAlreadyAnswered(s, answers)
   ).length;
 }

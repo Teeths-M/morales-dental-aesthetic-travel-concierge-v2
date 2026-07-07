@@ -39,12 +39,26 @@ function formatValue(value) {
  */
 export default function ReviewStep({ answers, onSubmit, submitting, submitted, submitError, safetyStatus, doctorSearch, partnerPreview }) {
   if (submitted) {
+    const doctorCount = doctorSearch?.data?.matched_doctors?.length ?? 0;
+    const recoveryDays = safetyStatus?.totalRecoveryDays ?? 0;
+    const partnerCount = (partnerPreview?.data?.travel_agency_count ?? 0) + (partnerPreview?.data?.taxi_service_count ?? 0);
+
+    const items = [
+      { label: 'Safety Profile Created', state: 'done' },
+      doctorCount > 0
+        ? { label: `${doctorCount} Verified Doctor${doctorCount === 1 ? '' : 's'} Found`, state: 'done' }
+        : { label: 'Expanding Our Network for Your Procedure', state: 'done' },
+      recoveryDays > 0 && { label: `Recovery Timeline Built (~${recoveryDays} days)`, state: 'done' },
+      partnerCount > 0 && { label: `${partnerCount} Travel & Transfer Partners Ready`, state: 'done' },
+      { label: 'Secure Deposit — Coming Soon', state: 'pending' },
+      { label: 'Payment Integration Ready', state: 'pending' },
+    ].filter(Boolean);
+
     return (
       <JourneyBeginsStep
-        patientFirstName={answers.patient_name?.split(' ')[0]}
-        safetyStatus={safetyStatus}
-        doctorSearch={doctorSearch}
-        partnerPreview={partnerPreview}
+        firstName={answers.patient_name?.split(' ')[0]}
+        intro="From this moment forward, you're never alone. A specialist is already being matched to your case, and your coordinator will reach out personally — you won't need to repeat anything."
+        items={items}
       />
     );
   }
