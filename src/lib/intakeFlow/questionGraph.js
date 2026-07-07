@@ -10,6 +10,8 @@
  * payload needs no translation.
  */
 
+import { NATIONALITIES } from '@/lib/nationalities';
+
 // Sentinel for "no preference" answers (e.g. destination country). Deliberately
 // non-empty — flowEngine treats an empty string as "not yet answered," which
 // would make a genuine "recommend one for me" answer loop forever.
@@ -25,7 +27,16 @@ export const INPUT_TYPES = {
   DATE: 'date',
   REVIEW: 'review',
   DOCTOR_PICK: 'doctor_pick',
+  CONDITIONS_PICK: 'conditions_pick',
+  ALLERGIES_PICK: 'allergies_pick',
 };
+
+export const GENDER_OPTIONS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'non_binary', label: 'Non-binary' },
+  { value: 'prefer_not', label: 'Prefer not to say' },
+];
 
 export const PROCEDURE_OPTIONS = [
   { value: 'dental_implants', label: 'Dental Implants' },
@@ -51,6 +62,7 @@ export const PROCEDURE_OPTIONS = [
  * @property {string} [optionsSource] - key into a dynamicOptions map for choices fetched live (e.g. destination countries)
  * @property {string} [recommendationUnit] - noun shown alongside a dynamic option's real count, e.g. "verified doctors"
  * @property {boolean} [allowUnspecified] - shows an "I'm not sure — recommend one for me" fallback below a free-text (TEXT/EMAIL/PHONE) input, committing the UNSPECIFIED sentinel instead of trapping the user into a dead-end LLM parse loop
+ * @property {boolean} [searchFirst] - for a SELECT step: renders an always-visible fuzzy-searchable flat list instead of the ranked-recommendation-cards layout — for large enumerable option sets with no real ranking signal (e.g. nationality), where featuring a "top 5" would be dishonest
  * @property {(answers: object) => boolean} [skipIf] - true means skip this step
  * @property {boolean} [requiresAuth] - gates this step behind sign-in (medical history onward)
  */
@@ -121,7 +133,8 @@ export const QUESTION_GRAPH = [
     targetFields: ['gender'],
     question: 'How do you identify?',
     deterministicReason: 'a detail your doctor uses to plan your procedure correctly',
-    inputType: INPUT_TYPES.TEXT,
+    inputType: INPUT_TYPES.SELECT,
+    options: GENDER_OPTIONS,
     requiresAuth: true,
   },
   {
@@ -129,23 +142,25 @@ export const QUESTION_GRAPH = [
     targetFields: ['nationality', 'client_country'],
     question: "What's your home country?",
     deterministicReason: 'so we can check visa and travel requirements ahead of time',
-    inputType: INPUT_TYPES.TEXT,
+    inputType: INPUT_TYPES.SELECT,
+    options: NATIONALITIES.map((n) => ({ value: n, label: n })),
+    searchFirst: true,
     requiresAuth: true,
   },
   {
     id: 'medical_conditions_other',
-    targetFields: ['medical_conditions_other'],
+    targetFields: ['medical_conditions'],
     question: 'Do you have any medical conditions your doctor should know about?',
     deterministicReason: 'so your doctor can prepare the safest possible plan for you',
-    inputType: INPUT_TYPES.TEXT,
+    inputType: INPUT_TYPES.CONDITIONS_PICK,
     requiresAuth: true,
   },
   {
     id: 'allergy_details',
-    targetFields: ['allergy_details'],
+    targetFields: ['allergies'],
     question: 'Any allergies — medications, foods, or otherwise?',
     deterministicReason: 'so nothing is prescribed or served that could harm you',
-    inputType: INPUT_TYPES.TEXT,
+    inputType: INPUT_TYPES.ALLERGIES_PICK,
     requiresAuth: true,
   },
   {

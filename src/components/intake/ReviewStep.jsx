@@ -15,8 +15,8 @@ const REVIEW_FIELDS = [
   ['destination_country', 'Destination'],
   ['age', 'Age'],
   ['nationality', 'Home country'],
-  ['medical_conditions_other', 'Medical conditions'],
-  ['allergy_details', 'Allergies'],
+  ['medical_conditions', 'Medical conditions'],
+  ['allergies', 'Allergies'],
   ['has_companion', 'Travelling with someone'],
   ['preferred_date', 'Preferred travel date'],
   ['duration_of_stay', 'Length of stay'],
@@ -24,6 +24,7 @@ const REVIEW_FIELDS = [
 
 function formatValue(value) {
   if (value === undefined || value === null || value === '') return '—';
+  if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
   if (value === UNSPECIFIED) return 'Recommend one for me';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   return String(value);

@@ -4,6 +4,9 @@ import { INPUT_TYPES, UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import HumanHandoffCard from './HumanHandoffCard';
 import MultiProcedureStep from './MultiProcedureStep';
 import DoctorPickStep from './DoctorPickStep';
+import ConditionsPickStep from './ConditionsPickStep';
+import AllergiesPickStep from './AllergiesPickStep';
+import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 
 const GOLD = '#D4AF37';
 const CARD = '#0C1A1D';
@@ -35,7 +38,7 @@ const RECOMMENDED_COUNT = 5;
  * recommendation cards, the rest behind "Show More," free-text search behind
  * that (typing is the last resort, never the first interaction).
  */
-export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null }) {
+export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null, searchFirstOptions = [] }) {
   const [value, setValue] = useState('');
   const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -79,6 +82,12 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           />
         );
 
+      case INPUT_TYPES.CONDITIONS_PICK:
+        return <ConditionsPickStep onContinue={({ rawText, extracted }) => commit(rawText, extracted)} />;
+
+      case INPUT_TYPES.ALLERGIES_PICK:
+        return <AllergiesPickStep onContinue={({ rawText, extracted }) => commit(rawText, extracted)} />;
+
       case INPUT_TYPES.SELECT: {
         const isDynamic = !!step.optionsSource;
         const isLoading = isDynamic && dynamicOptionsLoading?.[step.optionsSource];
@@ -88,6 +97,62 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '20px 0' }}>
               Checking our verified destinations...
             </p>
+          );
+        }
+
+        // Search-first flat list (nationality, and any other large enumerable
+        // set with no real ranking signal) — search box always visible, no
+        // ranked cards, no "recommend for me" (there's nothing to recommend
+        // when the answer is just a fact about the user, like their own
+        // nationality). Works for static or dynamic option sources.
+        if (step.searchFirst) {
+          const allOptions = isDynamic ? (dynamicOptions?.[step.optionsSource] || []) : (step.options || []);
+          const filtered = search.trim() ? fuzzyFilterOptions(allOptions, search) : allOptions;
+          const visible = filtered.slice(0, 8);
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Start typing..."
+                style={inputBaseStyle}
+                autoFocus
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 260, overflowY: 'auto' }}>
+                {visible.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => commitValue(opt.label, opt.value)}
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 16px',
+                      borderRadius: 14,
+                      background: 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${BORDER}`,
+                      color: '#fff',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                {visible.length === 0 && (
+                  <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', textAlign: 'center', padding: '8px 0' }}>
+                    No matches — try a different spelling
+                  </p>
+                )}
+              </div>
+              {filtered.length > visible.length && (
+                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: 0 }}>
+                  {filtered.length - visible.length} more — keep typing to narrow it down
+                </p>
+              )}
+            </div>
           );
         }
 
@@ -305,6 +370,12 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
 
       default: {
         const type = step.inputType === INPUT_TYPES.EMAIL ? 'email' : step.inputType === INPUT_TYPES.PHONE ? 'tel' : 'text';
+        // Real curated suggestions (e.g. real cities for the chosen country)
+        // layered on top of free text, never replacing it — prefer picking a
+        // known-good value, but never block on one that isn't in the list.
+        const suggestions = step.searchFirst && searchFirstOptions.length > 0 && value.trim()
+          ? fuzzyFilterOptions(searchFirstOptions, value).slice(0, 5)
+          : [];
 
         const handleSubmit = async (e) => {
           e.preventDefault();
@@ -352,6 +423,30 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
               autoFocus
               disabled={isThinking}
             />
+            {suggestions.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                {suggestions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => commitValue(opt.label, opt.value)}
+                    style={{
+                      textAlign: 'left',
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      background: 'rgba(212,175,55,0.06)',
+                      border: `1px solid ${GOLD}40`,
+                      color: '#fff',
+                      fontSize: 13.5,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
             <SubmitButton disabled={!value.trim() || isThinking} thinking={isThinking} />
             {step.allowUnspecified && (
               <button

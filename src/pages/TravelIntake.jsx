@@ -14,6 +14,7 @@ import TravelReviewStep from '@/components/intake/TravelReviewStep';
 import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
 import NarrationTicker from '@/components/intake/NarrationTicker';
 import NeedHumanButton from '@/components/intake/NeedHumanButton';
+import cityData from '@/lib/cityData.json';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -21,6 +22,21 @@ const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
 const TRAVEL_GUEST_DRAFT_KEY = 'morales_travel_intake_guest_draft';
+
+/**
+ * Real curated cities for the chosen destination country, when we have
+ * them (29 countries covered) — case-insensitive match since
+ * destination_country comes from live admin-entered TaxiService.operating_country
+ * text, not a controlled vocabulary. Uncovered countries return [], and the
+ * step falls back to plain free text (unchanged).
+ */
+function citiesForCountry(countryName) {
+  if (!countryName) return [];
+  const lower = countryName.toLowerCase();
+  const key = Object.keys(cityData).find((k) => k.toLowerCase() === lower);
+  if (!key) return [];
+  return cityData[key].map((city) => ({ value: city, label: city }));
+}
 
 const PHASE_LABELS = ['Getting to know you', 'Planning your journey', 'Almost there', 'Finishing up'];
 
@@ -134,6 +150,7 @@ export default function TravelIntake() {
                 dynamicOptions={{ travelPartnerCountries }}
                 dynamicOptionsLoading={{ travelPartnerCountries: countriesLoading }}
                 onBack={canGoBack ? goBack : null}
+                searchFirstOptions={citiesForCountry(answers.destination_country)}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />
