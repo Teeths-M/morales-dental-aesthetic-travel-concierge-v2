@@ -24,6 +24,7 @@ export const INPUT_TYPES = {
   BOOLEAN: 'boolean',
   DATE: 'date',
   REVIEW: 'review',
+  DOCTOR_PICK: 'doctor_pick',
 };
 
 export const PROCEDURE_OPTIONS = [
@@ -48,6 +49,7 @@ export const PROCEDURE_OPTIONS = [
  * @property {string} inputType
  * @property {Array<{value:string,label:string}>} [options] - static choices, known synchronously
  * @property {string} [optionsSource] - key into a dynamicOptions map for choices fetched live (e.g. destination countries)
+ * @property {string} [recommendationUnit] - noun shown alongside a dynamic option's real count, e.g. "verified doctors"
  * @property {(answers: object) => boolean} [skipIf] - true means skip this step
  * @property {boolean} [requiresAuth] - gates this step behind sign-in (medical history onward)
  */
@@ -92,10 +94,19 @@ export const QUESTION_GRAPH = [
     // Populated live from verified, active doctors (useDestinationCountries) —
     // every option shown is guaranteed to have a real doctor behind it.
     optionsSource: 'destinationCountries',
+    recommendationUnit: 'verified doctors',
   },
 
   // ── Auth gate: everything from here on is medical, so we ask for an
   //    account first — the same point payment already gates behind today.
+  {
+    id: 'doctor_selection',
+    targetFields: ['preferred_doctor_id', 'preferred_doctor_name'],
+    question: 'Based on your procedure and destination, here are your matched doctors.',
+    deterministicReason: 'so you can choose who cares for you, or let your care team recommend the best match',
+    inputType: INPUT_TYPES.DOCTOR_PICK,
+    requiresAuth: true,
+  },
   {
     id: 'age',
     targetFields: ['age'],

@@ -35,12 +35,37 @@ function StatusDot({ state }) {
   );
 }
 
-export default function IntakeProgressChecklist({ items }) {
-  if (!items || items.length === 0) return null;
+/**
+ * `progressLabel`/`progressRatio` render a phase ("Building your Safe-T
+ * Profile...") plus a thin wordless bar instead of an exact "X of Y
+ * questions answered" count — the ratio is still tracked internally, just
+ * not shown as a literal number, which reads like a long form.
+ */
+export default function IntakeProgressChecklist({ items = [], progressLabel = '', progressRatio = 0 }) {
+  const hasItems = items && items.length > 0;
+  if (!hasItems && !progressLabel) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-      {items.map((item) => (
+      {progressLabel && (
+        <div>
+          <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+            {progressLabel}
+          </p>
+          <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, Math.max(4, (progressRatio || 0) * 100))}%`,
+                background: GOLD,
+                borderRadius: 999,
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {hasItems && items.map((item) => (
         <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <StatusDot state={item.state} />
           <span

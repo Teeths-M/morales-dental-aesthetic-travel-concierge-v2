@@ -6,7 +6,7 @@ import { useDestinationCountries } from '@/hooks/useDestinationCountries';
 import { useIntakeBackgroundSearch } from '@/hooks/useIntakeBackgroundSearch';
 import { useCart } from '@/context/CartContext';
 import { UNSPECIFIED, INPUT_TYPES, QUESTION_GRAPH } from '@/lib/intakeFlow/questionGraph';
-import { getAnsweredQuestionCount, getTotalQuestionCount } from '@/lib/intakeFlow/flowEngine';
+import { getAnsweredQuestionCount, getTotalQuestionCount, getProgressLabel } from '@/lib/intakeFlow/flowEngine';
 import { toSafetyEngineName } from '@/lib/intakeFlow/procedureSafetyNameMap';
 import { buildConsultationPayload } from '@/lib/intakeFlow/fieldMap';
 import QuestionCard from '@/components/intake/QuestionCard';
@@ -21,6 +21,8 @@ const GOLD = '#D4AF37';
 const DARK = '#060B16';
 const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
+
+const PHASE_LABELS = ['Getting to know you', 'Building your Safe-T Profile', 'Almost there', 'Finishing up'];
 
 /**
  * ConciergeIntake — the AI-first conversational intake for Medical Patients
@@ -55,7 +57,9 @@ export default function ConciergeIntake() {
 
   const answeredCount = getAnsweredQuestionCount(answers, QUESTION_GRAPH);
   const totalCount = getTotalQuestionCount(QUESTION_GRAPH);
-  const checklistItems = buildChecklistItems({ answers, answeredCount, totalCount, doctorSearch, costEstimate, partnerPreview });
+  const progressLabel = getProgressLabel(answeredCount, totalCount, PHASE_LABELS);
+  const progressRatio = totalCount > 0 ? answeredCount / totalCount : 0;
+  const checklistItems = buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPreview });
 
   // The moment procedures are answered, every one of them joins the same
   // shared cart every other part of the app uses — SafetyWatcher (mounted
@@ -160,7 +164,7 @@ export default function ConciergeIntake() {
           <WelcomeCard onBegin={() => setStarted(true)} resuming={answeredCount > 0} />
         ) : (
           <>
-            <IntakeProgressChecklist items={checklistItems} />
+            <IntakeProgressChecklist items={checklistItems} progressLabel={progressLabel} progressRatio={progressRatio} />
             {nextStepResult.type === 'auth_gate' && <AuthGateStep answers={answers} />}
             {atReviewStep && !safetyReadoutAcknowledged && (
               <SafeTReadout safetyStatus={safetyStatus} onContinue={() => setSafetyReadoutAcknowledged(true)} />
@@ -184,6 +188,8 @@ export default function ConciergeIntake() {
                 onFreeTextAnswer={submitFreeTextAnswer}
                 dynamicOptions={{ destinationCountries }}
                 dynamicOptionsLoading={{ destinationCountries: destinationsLoading }}
+                doctorSearch={doctorSearch}
+                destinationCountry={answers.destination_country}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />
@@ -203,18 +209,26 @@ export default function ConciergeIntake() {
 }
 
 /**
- * Turns question progress + the three background searches into the live
- * checklist — narrating real counts once they're back, never a generic spinner.
+ * Turns the three background searches into the live checklist — narrating
+ * real counts once they're back, never a generic spinner. Question progress
+ * itself is shown separately as a phase label (see PHASE_LABELS/getProgressLabel),
+ * not as a checklist item.
  */
-function buildChecklistItems({ answers, answeredCount, totalCount, doctorSearch, costEstimate, partnerPreview }) {
-  const items = [
-    { label: `${answeredCount} of ${totalCount} questions answered`, state: answeredCount > 0 ? 'done' : 'pending' },
-  ];
+function buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPreview }) {
+  const items = [];
 
   const hasDestination = !!answers.destination_country && answers.destination_country !== UNSPECIFIED;
 
   if (answers.procedure_interest) {
-    if (doctorSearch.status === 'done') {
+    const pickedDoctorName = answers.preferred_doctor_name && answers.preferred_doctor_name !== UNSPECIFIED
+      ? answers.preferred_doctor_name
+      : null;
+
+    if (pickedDoctorName) {
+      // The user already picked during the doctor_selection step — reflect
+      // their own choice back, not the generic top-match narration below.
+      items.push({ label: `Dr. ${pickedDoctorName} selected as your preferred surgeon`, state: 'done' });
+    } else if (doctorSearch.status === 'done') {
       const matched = doctorSearch.data?.matched_doctors ?? [];
       const count = matched.length;
       items.push({

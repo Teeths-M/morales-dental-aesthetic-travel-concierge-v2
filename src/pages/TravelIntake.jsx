@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useTravelIntakeSession } from '@/hooks/useTravelIntakeSession';
 import { useTravelPartnerCountries } from '@/hooks/useTravelPartnerCountries';
 import { INPUT_TYPES } from '@/lib/intakeFlow/questionGraph';
-import { getAnsweredQuestionCount, getTotalQuestionCount } from '@/lib/intakeFlow/flowEngine';
+import { getAnsweredQuestionCount, getTotalQuestionCount, getProgressLabel } from '@/lib/intakeFlow/flowEngine';
 import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
 import { buildTravelRequestPayload } from '@/lib/travelIntakeFlow/fieldMap';
 import { ROUTES } from '@/lib/constants';
@@ -20,6 +20,8 @@ const CARD = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
 const TRAVEL_GUEST_DRAFT_KEY = 'morales_travel_intake_guest_draft';
+
+const PHASE_LABELS = ['Getting to know you', 'Planning your journey', 'Almost there', 'Finishing up'];
 
 /**
  * TravelIntake — conversational booking for travelers who want Morales's
@@ -49,6 +51,8 @@ export default function TravelIntake() {
 
   const answeredCount = getAnsweredQuestionCount(answers, TRAVEL_QUESTION_GRAPH);
   const totalCount = getTotalQuestionCount(TRAVEL_QUESTION_GRAPH);
+  const progressLabel = getProgressLabel(answeredCount, totalCount, PHASE_LABELS);
+  const progressRatio = totalCount > 0 ? answeredCount / totalCount : 0;
 
   const handleFinalSubmit = async () => {
     setSubmitting(true);
@@ -100,9 +104,7 @@ export default function TravelIntake() {
           <WelcomeCard onBegin={() => setStarted(true)} resuming={answeredCount > 0} />
         ) : (
           <>
-            <IntakeProgressChecklist
-              items={[{ label: `${answeredCount} of ${totalCount} questions answered`, state: answeredCount > 0 ? 'done' : 'pending' }]}
-            />
+            <IntakeProgressChecklist progressLabel={progressLabel} progressRatio={progressRatio} />
             {nextStepResult.type === 'auth_gate' && (
               <AuthGateStep
                 answers={answers}

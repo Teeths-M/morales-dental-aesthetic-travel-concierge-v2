@@ -58,6 +58,7 @@ export const TRAVEL_QUESTION_GRAPH = [
     deterministicReason: 'so we can match you with a verified local travel and transfer partner',
     inputType: INPUT_TYPES.SELECT,
     optionsSource: 'travelPartnerCountries',
+    recommendationUnit: 'verified travel partners',
   },
   {
     id: 'destination_city',

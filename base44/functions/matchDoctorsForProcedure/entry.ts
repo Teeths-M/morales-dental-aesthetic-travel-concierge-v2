@@ -132,7 +132,9 @@ SAFE-T 4LIFE™ Team`
         clinic_city: doc.clinic_city,
         rating: doc.rating,
         years_experience: doc.years_experience,
-        photo_url: doc.photo_url
+        photo_url: doc.photo_url,
+        review_count: doc.review_count,
+        successful_procedures_count: doc.successful_procedures_count
       })),
       outreach_sent: false,
       message: `Found ${matchedDoctors.length} specialist(s) for ${procedure_interest}`

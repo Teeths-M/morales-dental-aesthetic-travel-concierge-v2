@@ -27,6 +27,8 @@ export function buildConsultationPayload(answers) {
     procedure_interest: answers.procedure_interest || 'other',
     destination_country: resolved(answers.destination_country),
     procedure_country: resolved(answers.procedure_country) || resolved(answers.destination_country),
+    preferred_doctor_id: resolved(answers.preferred_doctor_id),
+    preferred_doctor_name: resolved(answers.preferred_doctor_name),
     age: answers.age || '',
     gender: answers.gender || '',
     nationality: answers.nationality || '',

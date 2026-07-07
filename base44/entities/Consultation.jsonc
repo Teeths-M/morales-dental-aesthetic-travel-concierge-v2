@@ -48,6 +48,14 @@
         "other"
       ]
     },
+    "preferred_doctor_id": {
+      "type": "string",
+      "description": "Set when the patient picked a specific doctor during intake instead of leaving it to the care team — optional, most consultations still leave this unset"
+    },
+    "preferred_doctor_name": {
+      "type": "string",
+      "description": "Denormalized alongside preferred_doctor_id so the name can be displayed without a join"
+    },
     "preferred_date": {
       "type": "string",
       "format": "date"

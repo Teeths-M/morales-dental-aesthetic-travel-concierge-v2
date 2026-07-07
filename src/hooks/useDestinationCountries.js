@@ -8,6 +8,10 @@ import { base44 } from '@/api/base44Client';
  * uses for "countries we operate in." This is what lets the destination
  * question be a pick-list instead of free text: every option shown is
  * guaranteed to have a real doctor behind it.
+ *
+ * Returns `{value, label, count}[]` sorted by real verified-doctor count
+ * descending — the honest signal a recommendation-first UI ranks by (real
+ * coverage depth, not a fabricated quality claim like "best surgeons").
  */
 export function useDestinationCountries() {
   const [countries, setCountries] = useState([]);
@@ -21,8 +25,15 @@ export function useDestinationCountries() {
           status: 'active',
           verification_status: 'verified',
         });
-        const unique = [...new Set(doctors.map((d) => d.clinic_country).filter(Boolean))].sort();
-        if (!cancelled) setCountries(unique);
+        const counts = new Map();
+        doctors.forEach((d) => {
+          if (!d.clinic_country) return;
+          counts.set(d.clinic_country, (counts.get(d.clinic_country) || 0) + 1);
+        });
+        const ranked = [...counts.entries()]
+          .map(([country, count]) => ({ value: country, label: country, count }))
+          .sort((a, b) => b.count - a.count);
+        if (!cancelled) setCountries(ranked);
       } catch (_) {
         if (!cancelled) setCountries([]);
       } finally {

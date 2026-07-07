@@ -85,3 +85,22 @@ export function getAnsweredQuestionCount(answers, questionGraph) {
     (s) => s.targetFields.length > 0 && isStepAlreadyAnswered(s, answers)
   ).length;
 }
+
+/**
+ * Maps answered/total progress to one of 4 phase bands and returns the
+ * matching label — a "Building your Safe-T Profile"-style phase instead of
+ * an exact "X of 15 questions answered" count, which reads like a long form.
+ * The exact ratio is still tracked internally (needed elsewhere); this is
+ * only what gets shown.
+ *
+ * @param {number} answeredCount
+ * @param {number} totalCount
+ * @param {string[]} phaseLabels - 4 labels for the 0%, ~40%, ~75%, 100% bands
+ */
+export function getProgressLabel(answeredCount, totalCount, phaseLabels) {
+  const ratio = totalCount > 0 ? answeredCount / totalCount : 0;
+  if (ratio >= 1) return phaseLabels[3];
+  if (ratio >= 0.75) return phaseLabels[2];
+  if (ratio >= 0.4) return phaseLabels[1];
+  return phaseLabels[0];
+}

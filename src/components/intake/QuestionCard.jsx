@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { INPUT_TYPES, UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import HumanHandoffCard from './HumanHandoffCard';
 import MultiProcedureStep from './MultiProcedureStep';
+import DoctorPickStep from './DoctorPickStep';
 
 const GOLD = '#D4AF37';
 const CARD = '#0C1A1D';
@@ -20,6 +21,7 @@ const inputBaseStyle = {
 };
 
 const RECOMMEND_FOR_ME = { value: UNSPECIFIED, label: "I'm not sure yet — recommend one for me" };
+const RECOMMENDED_COUNT = 5;
 
 /**
  * Renders exactly one question at a time — never a scrolling transcript.
@@ -28,11 +30,15 @@ const RECOMMEND_FOR_ME = { value: UNSPECIFIED, label: "I'm not sure yet — reco
  *
  * `dynamicOptions` / `dynamicOptionsLoading` back any SELECT step whose
  * choices are fetched live (e.g. destination countries derived from real
- * doctors) rather than known statically at authoring time.
+ * doctors) rather than known statically at authoring time. Dynamic options
+ * arrive pre-ranked by real coverage count — the top N render as AI-led
+ * recommendation cards, the rest behind "Show More," free-text search behind
+ * that (typing is the last resort, never the first interaction).
  */
-export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading }) {
+export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '' }) {
   const [value, setValue] = useState('');
   const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [clarification, setClarification] = useState(null);
   const [escalationNotice, setEscalationNotice] = useState(false);
@@ -64,13 +70,18 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           />
         );
 
+      case INPUT_TYPES.DOCTOR_PICK:
+        return (
+          <DoctorPickStep
+            doctorSearch={doctorSearch}
+            destinationCountry={destinationCountry}
+            onContinue={({ rawText, extracted }) => commit(rawText, extracted)}
+          />
+        );
+
       case INPUT_TYPES.SELECT: {
         const isDynamic = !!step.optionsSource;
         const isLoading = isDynamic && dynamicOptionsLoading?.[step.optionsSource];
-        const liveOptions = isDynamic ? dynamicOptions?.[step.optionsSource] || [] : [];
-        const options = isDynamic
-          ? [...liveOptions.map((c) => ({ value: c, label: c })), RECOMMEND_FOR_ME]
-          : step.options;
 
         if (isLoading) {
           return (
@@ -80,25 +91,14 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           );
         }
 
-        const filtered = isDynamic && search.trim()
-          ? options.filter((opt) => opt.label.toLowerCase().includes(search.trim().toLowerCase()) || opt === RECOMMEND_FOR_ME)
-          : options;
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {isDynamic && (
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search destinations..."
-                style={{ ...inputBaseStyle, marginBottom: 2 }}
-              />
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 260, overflowY: 'auto' }}>
-              {filtered.map((opt) => (
+        // Static SELECT (hotel/transfer/travel-class/etc.) — small closed
+        // choice, always tap-first already, unchanged.
+        if (!isDynamic) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {step.options.map((opt) => (
                 <button
-                  key={opt.value || 'recommend-for-me'}
+                  key={opt.value}
                   type="button"
                   onClick={() => commitValue(opt.label, opt.value)}
                   style={{
@@ -117,6 +117,130 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                 </button>
               ))}
             </div>
+          );
+        }
+
+        // Dynamic SELECT (destination_country) — AI-led recommendations
+        // first, typing last. `dynamicOptions` arrives already ranked by real
+        // coverage count (useDestinationCountries/useTravelPartnerCountries).
+        const ranked = dynamicOptions?.[step.optionsSource] || [];
+        const recommended = ranked.slice(0, RECOMMENDED_COUNT);
+        const rest = ranked.slice(RECOMMENDED_COUNT);
+        const searchResults = search.trim()
+          ? ranked.filter((opt) => opt.label.toLowerCase().includes(search.trim().toLowerCase()))
+          : rest;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {recommended.map((opt, i) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => commitValue(opt.label, opt.value)}
+                style={{
+                  textAlign: 'left',
+                  padding: '13px 16px',
+                  borderRadius: 14,
+                  background: 'rgba(212,175,55,0.06)',
+                  border: `1px solid ${i === 0 ? GOLD + '80' : BORDER}`,
+                  color: '#fff',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                }}
+              >
+                {i === 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: GOLD }}>
+                    Most Coverage
+                  </span>
+                )}
+                <span>{opt.label}</span>
+                {opt.count != null && (
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+                    {opt.count} {step.recommendationUnit || 'options'}
+                  </span>
+                )}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => commitValue(RECOMMEND_FOR_ME.label, RECOMMEND_FOR_ME.value)}
+              style={{
+                textAlign: 'center',
+                padding: '12px 16px',
+                borderRadius: 14,
+                background: 'transparent',
+                border: `1px dashed ${BORDER}`,
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              {RECOMMEND_FOR_ME.label}
+            </button>
+
+            {!showAll && rest.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                style={{
+                  textAlign: 'center',
+                  padding: '10px 16px',
+                  background: 'none',
+                  border: 'none',
+                  color: GOLD,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Show More ({rest.length} more)
+              </button>
+            )}
+
+            {showAll && (
+              <>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search all destinations..."
+                  style={{ ...inputBaseStyle, marginTop: 4 }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
+                  {searchResults.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => commitValue(opt.label, opt.value)}
+                      style={{
+                        textAlign: 'left',
+                        padding: '11px 14px',
+                        borderRadius: 12,
+                        background: 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${BORDER}`,
+                        color: '#fff',
+                        fontSize: 13.5,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      {opt.count != null && (
+                        <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>{opt.count}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         );
       }
