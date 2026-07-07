@@ -13,6 +13,7 @@ import AuthGateStep from '@/components/intake/AuthGateStep';
 import TravelReviewStep from '@/components/intake/TravelReviewStep';
 import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
 import NarrationTicker from '@/components/intake/NarrationTicker';
+import NeedHumanButton from '@/components/intake/NeedHumanButton';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -133,6 +134,7 @@ export default function TravelIntake() {
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />
+            <NeedHumanButton answers={answers} sessionId={sessionId} />
           </>
         )}
       </div>

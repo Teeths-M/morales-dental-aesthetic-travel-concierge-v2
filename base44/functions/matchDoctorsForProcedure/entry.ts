@@ -123,6 +123,28 @@ SAFE-T 4LIFE™ Team`
       });
     }
 
+    // Real next-availability lookup — bounded to the first 10 matches to avoid
+    // an unbounded query fan-out; doctors beyond that (or with no upcoming
+    // record) simply get next_available_date: null, same graceful-absence
+    // pattern as a doctor missing a rating.
+    const today = new Date().toISOString().slice(0, 10);
+    const doctorsToEnrich = matchedDoctors.slice(0, 10);
+    const availabilityByDoctorId: Record<string, string | null> = {};
+    await Promise.all(doctorsToEnrich.map(async (doc) => {
+      try {
+        const slots = await base44.asServiceRole.entities.DoctorAvailability.filter({
+          doctor_id: doc.id,
+          is_available: true,
+        });
+        const upcoming = slots
+          .filter((s: { date?: string }) => s.date && s.date >= today)
+          .sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date));
+        availabilityByDoctorId[doc.id] = upcoming[0]?.date || null;
+      } catch {
+        availabilityByDoctorId[doc.id] = null;
+      }
+    }));
+
     // Return matched doctors
     return Response.json({
       matched_doctors: matchedDoctors.map(doc => ({
@@ -134,7 +156,9 @@ SAFE-T 4LIFE™ Team`
         years_experience: doc.years_experience,
         photo_url: doc.photo_url,
         review_count: doc.review_count,
-        successful_procedures_count: doc.successful_procedures_count
+        successful_procedures_count: doc.successful_procedures_count,
+        language_preference: doc.language_preference,
+        next_available_date: availabilityByDoctorId[doc.id] ?? null
       })),
       outreach_sent: false,
       message: `Found ${matchedDoctors.length} specialist(s) for ${procedure_interest}`

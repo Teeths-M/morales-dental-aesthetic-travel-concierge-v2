@@ -35,7 +35,7 @@ const RECOMMENDED_COUNT = 5;
  * recommendation cards, the rest behind "Show More," free-text search behind
  * that (typing is the last resort, never the first interaction).
  */
-export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '' }) {
+export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null }) {
   const [value, setValue] = useState('');
   const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -161,6 +161,16 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                 {opt.count != null && (
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
                     {opt.count} {step.recommendationUnit || 'options'}
+                  </span>
+                )}
+                {priceEstimates?.[opt.value]?.status === 'loading' && (
+                  <span style={{ fontSize: 12, color: 'rgba(212,175,55,0.55)', fontWeight: 400 }}>
+                    Estimating cost...
+                  </span>
+                )}
+                {priceEstimates?.[opt.value]?.status === 'done' && (
+                  <span style={{ fontSize: 12, color: 'rgba(212,175,55,0.75)', fontWeight: 400 }}>
+                    Estimated from ${priceEstimates[opt.value].low.toLocaleString()}
                   </span>
                 )}
               </button>

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useIntakeSession } from '@/hooks/useIntakeSession';
 import { useDestinationCountries } from '@/hooks/useDestinationCountries';
+import { useDestinationPriceEstimates } from '@/hooks/useDestinationPriceEstimates';
 import { useIntakeBackgroundSearch } from '@/hooks/useIntakeBackgroundSearch';
 import { useCart } from '@/context/CartContext';
 import { UNSPECIFIED, INPUT_TYPES, QUESTION_GRAPH } from '@/lib/intakeFlow/questionGraph';
@@ -14,6 +15,7 @@ import AuthGateStep from '@/components/intake/AuthGateStep';
 import ReviewStep from '@/components/intake/ReviewStep';
 import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
 import NarrationTicker from '@/components/intake/NarrationTicker';
+import NeedHumanButton from '@/components/intake/NeedHumanButton';
 import ProcedureEvaluationStep from '@/components/intake/ProcedureEvaluationStep';
 import SafeTReadout from '@/components/intake/SafeTReadout';
 
@@ -47,6 +49,11 @@ export default function ConciergeIntake() {
     sessionId,
   } = useIntakeSession();
   const { countries: destinationCountries, isLoading: destinationsLoading } = useDestinationCountries();
+  const priceEstimates = useDestinationPriceEstimates({
+    countries: destinationCountries,
+    procedureInterest: answers.procedure_interest,
+    isAuthenticated,
+  });
   const { doctorSearch, costEstimate, partnerPreview } = useIntakeBackgroundSearch({ answers, isAuthenticated });
   const { items: cartItems, addItem, pivotViolations, safetyStatus, clearCart } = useCart();
 
@@ -190,9 +197,11 @@ export default function ConciergeIntake() {
                 dynamicOptionsLoading={{ destinationCountries: destinationsLoading }}
                 doctorSearch={doctorSearch}
                 destinationCountry={answers.destination_country}
+                priceEstimates={priceEstimates}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />
+            <NeedHumanButton answers={answers} sessionId={sessionId} />
           </>
         )}
       </div>

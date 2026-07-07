@@ -7,6 +7,17 @@ const TOP_N = 5;
 
 const NOT_SURE = { id: UNSPECIFIED, name: UNSPECIFIED };
 
+const LANGUAGE_LABELS = { en: 'English', es: 'Spanish', fr: 'French', pt: 'Portuguese', de: 'German', it: 'Italian' };
+
+function formatAvailability(dateStr) {
+  if (!dateStr) return null;
+  try {
+    return new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  } catch (_) {
+    return null;
+  }
+}
+
 function sortByRealSignal(doctors) {
   return [...doctors].sort((a, b) => {
     const ratingDiff = (b.rating || 0) - (a.rating || 0);
@@ -121,6 +132,14 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
               doc.review_count ? `${doc.review_count} reviews` : null,
             ].filter(Boolean).join(' · ')}
           </span>
+          {(doc.language_preference || doc.next_available_date) && (
+            <span style={{ fontSize: 12, color: 'rgba(212,175,55,0.75)', fontWeight: 400 }}>
+              {[
+                doc.language_preference ? `Speaks ${LANGUAGE_LABELS[doc.language_preference] || doc.language_preference}` : null,
+                formatAvailability(doc.next_available_date) ? `Next available ${formatAvailability(doc.next_available_date)}` : null,
+              ].filter(Boolean).join(' · ')}
+            </span>
+          )}
         </button>
       ))}
 
