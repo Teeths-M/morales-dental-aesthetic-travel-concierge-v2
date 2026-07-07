@@ -1,0 +1,153 @@
+{
+  "name": "ConversationSession",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email of the user having this conversation"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "client",
+        "doctor",
+        "travel_agency",
+        "taxi_service"
+      ],
+      "default": "client",
+      "description": "Which persona's conversational flow this session belongs to — Phase 1 only ever writes 'client'"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "awaiting_human",
+        "completed",
+        "abandoned"
+      ],
+      "default": "in_progress"
+    },
+    "current_step_id": {
+      "type": "string",
+      "description": "Last-rendered question-graph node id, for instant resume paint before the client recomputes"
+    },
+    "answers": {
+      "type": "object",
+      "description": "Flat field_id -> extracted value map. Checked before ever asking a question again."
+    },
+    "turn_history": {
+      "type": "array",
+      "description": "Capped log of recent turns — the 'never repeat' guarantee and what a human coordinator sees on handoff",
+      "items": {
+        "type": "object",
+        "properties": {
+          "turn_index": { "type": "number" },
+          "step_id": { "type": "string" },
+          "question_shown": { "type": "string" },
+          "user_raw_text": { "type": "string" },
+          "extracted": { "type": "object" },
+          "confidence": { "type": "number" },
+          "narration_shown": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "selected_procedures": {
+      "type": "array",
+      "description": "Denormalized cache of the cart's procedure names, for server/admin visibility",
+      "items": { "type": "string" }
+    },
+    "safety_evaluation": {
+      "type": "object",
+      "description": "Last computed safety snapshot — audit trail only, never the gating source of truth",
+      "properties": {
+        "level": { "type": "string", "enum": ["GREEN", "YELLOW", "RED"] },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "violations": { "type": "array", "items": { "type": "object" } },
+        "evaluated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "background_results": {
+      "type": "object",
+      "description": "Proactive search results fired as soon as prerequisite fields are known",
+      "properties": {
+        "doctors": { "type": "object" },
+        "cost_estimate": { "type": "object" },
+        "destination_partners": { "type": "object" }
+      }
+    },
+    "checklist_state": {
+      "type": "object",
+      "description": "Map of checklist-item id -> pending | done | error, drives the live progress UI"
+    },
+    "low_confidence_streak": {
+      "type": "number",
+      "default": 0,
+      "description": "Consecutive low-confidence turns — deterministic escalation threshold input"
+    },
+    "handoff_requested": {
+      "type": "boolean",
+      "default": false
+    },
+    "handoff_reason": {
+      "type": "string"
+    },
+    "handoff_requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "consultation_id": {
+      "type": "string",
+      "description": "Populated once the conversation hands off into Consultation.create()"
+    },
+    "case_record_id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_email",
+    "role"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "read": {
+      "$or": [
+        { "data.user_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "data.user_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

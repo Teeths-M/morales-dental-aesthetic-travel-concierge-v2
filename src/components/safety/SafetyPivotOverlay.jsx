@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Loader2, Sparkles, Heart, UserCheck, ArrowLeft } from 'lucide-react';
+import { Shield, Loader2, Sparkles, Heart, UserCheck, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
@@ -37,7 +37,7 @@ const STEP = { IDLE: 'idle', REQUESTING: 'requesting', DISPATCHED: 'dispatched' 
  * overlays (ProcedureStackingBlocker, MoralesAssistPanel, etc.).
  */
 export default function SafetyPivotOverlay() {
-  const { pivotViolations, closePivot } = useCart();
+  const { pivotViolations, closePivot, acceptRecommendation } = useCart();
   const { user } = useAuth();
   const [step, setStep] = useState(STEP.IDLE);
 
@@ -256,7 +256,29 @@ export default function SafetyPivotOverlay() {
 
                   {/* ACTIONS */}
                   <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-                    {/* Primary: Mother's Touch — specialist review */}
+                    {/* Primary, when the engine found one: accept the safe substitution directly */}
+                    {hasRecommendations && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.36 }}
+                        onClick={acceptRecommendation}
+                        whileTap={{ scale: 0.97 }}
+                        style={{
+                          width: '100%', padding: '14px 20px', borderRadius: 14,
+                          background: GOLD,
+                          border: `1px solid ${GOLD}`,
+                          color: '#060B16', fontWeight: 700, fontSize: 13.5,
+                          cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        }}
+                      >
+                        <CheckCircle2 style={{ width: 16, height: 16 }} />
+                        Continue with the Recommended Plan
+                      </motion.button>
+                    )}
+
+                    {/* Secondary: Mother's Touch — specialist review */}
                     <motion.button
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}

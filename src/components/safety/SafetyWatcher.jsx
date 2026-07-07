@@ -30,7 +30,7 @@ export default function SafetyWatcher() {
       prevLevelRef.current = curr;
       if (curr === 'RED') {
         const path = window.location.pathname;
-        const isBookingPath = ['/booking', '/checkout', '/procedures', '/discover', '/providers', '/deep-perfection'].some(p => path.startsWith(p));
+        const isBookingPath = ['/booking', '/intake', '/checkout', '/procedures', '/discover', '/providers', '/deep-perfection'].some(p => path.startsWith(p));
         if (isBookingPath) {
           openPivot(safetyStatus?.violations ?? []);
         }

@@ -1,0 +1,357 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
+import { useIntakeSession } from '@/hooks/useIntakeSession';
+import { useDestinationCountries } from '@/hooks/useDestinationCountries';
+import { useIntakeBackgroundSearch } from '@/hooks/useIntakeBackgroundSearch';
+import { useCart } from '@/context/CartContext';
+import { UNSPECIFIED, INPUT_TYPES } from '@/lib/intakeFlow/questionGraph';
+import { getAnsweredQuestionCount, getTotalQuestionCount } from '@/lib/intakeFlow/flowEngine';
+import { toSafetyEngineName } from '@/lib/intakeFlow/procedureSafetyNameMap';
+import { buildConsultationPayload } from '@/lib/intakeFlow/fieldMap';
+import QuestionCard from '@/components/intake/QuestionCard';
+import AuthGateStep from '@/components/intake/AuthGateStep';
+import ReviewStep from '@/components/intake/ReviewStep';
+import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
+import NarrationTicker from '@/components/intake/NarrationTicker';
+import ProcedureEvaluationStep from '@/components/intake/ProcedureEvaluationStep';
+import SafeTReadout from '@/components/intake/SafeTReadout';
+
+const GOLD = '#D4AF37';
+const DARK = '#060B16';
+const CARD = '#0C1A1D';
+const BORDER = '#2A3F4A';
+
+/**
+ * ConciergeIntake — the AI-first conversational intake for Medical Patients
+ * (Phase 1, complete: LLM parse/narrate, proactive background search,
+ * multi-procedure safety-engine integration, human handoff, real final
+ * submission). One question at a time, never a chat log. /booking (the
+ * 12-step wizard) is untouched and remains the default entry point — this
+ * route becomes the default only after a deliberate, separate cutover
+ * decision. Payment/fee collection is not wired; the closing screen says so
+ * plainly rather than implying it ran.
+ */
+export default function ConciergeIntake() {
+  const [started, setStarted] = useState(false);
+  const {
+    answers,
+    turnHistory,
+    isAuthenticated,
+    isLoading,
+    submitAnswer,
+    submitFreeTextAnswer,
+    nextStepResult,
+    sessionId,
+  } = useIntakeSession();
+  const { countries: destinationCountries, isLoading: destinationsLoading } = useDestinationCountries();
+  const { doctorSearch, costEstimate, partnerPreview } = useIntakeBackgroundSearch({ answers, isAuthenticated });
+  const { items: cartItems, addItem, pivotViolations, safetyStatus, clearCart } = useCart();
+
+  const [safetyReadoutAcknowledged, setSafetyReadoutAcknowledged] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  const answeredCount = getAnsweredQuestionCount(answers);
+  const totalCount = getTotalQuestionCount();
+  const checklistItems = buildChecklistItems({ answers, answeredCount, totalCount, doctorSearch, costEstimate, partnerPreview });
+
+  // The moment procedures are answered, every one of them joins the same
+  // shared cart every other part of the app uses — SafetyWatcher (mounted
+  // globally in App.jsx) reacts automatically to any resulting GREEN→RED
+  // transition with zero new wiring here. This effect only adds each
+  // selected procedure to the cart; it makes no safety decision itself.
+  useEffect(() => {
+    const selected = answers.selected_procedures?.length
+      ? answers.selected_procedures
+      : answers.procedure_interest
+        ? [answers.procedure_interest]
+        : [];
+    selected.forEach((value) => {
+      const safetyName = toSafetyEngineName(value);
+      if (!safetyName) return;
+      if (cartItems.some((i) => i.name === safetyName)) return;
+      addItem({ name: safetyName, title: safetyName });
+    });
+  }, [answers.procedure_interest, answers.selected_procedures, cartItems, addItem]);
+
+  // Shows the "let me evaluate this" narration once per new violation event —
+  // resets the moment pivotViolations goes from empty back to non-empty
+  // (e.g. after the user resolves one conflict and a new one appears).
+  const [narrationDismissed, setNarrationDismissed] = useState(true);
+  const prevViolationCountRef = useRef(0);
+  useEffect(() => {
+    if (pivotViolations.length > 0 && prevViolationCountRef.current === 0) {
+      setNarrationDismissed(false);
+    }
+    prevViolationCountRef.current = pivotViolations.length;
+  }, [pivotViolations]);
+
+  const showEvaluation = pivotViolations.length > 0 && !narrationDismissed;
+
+  // Final hand-off: server-side safety re-check (unbypassable, M Principle) →
+  // real Consultation.create() → onboarding profile completed → existing
+  // iq200Pipeline (auto-triggers safeT4LifeScan, doctor assignment, etc.) →
+  // ConversationSession marked completed. Payment/fee collection is a
+  // deliberate follow-up, not wired in this phase — see plan notes.
+  const handleFinalSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const safetyCheck = await base44.functions.invoke('validateProcedureSafety', {
+        items: cartItems.map((i) => ({ name: i.name, title: i.name })),
+      });
+      const safetyPayload = safetyCheck?.data ?? safetyCheck ?? {};
+      if (safetyPayload.isBlocked) {
+        setSubmitError('A safety review flagged this combination. Please go back and adjust your selection.');
+        setSubmitting(false);
+        return;
+      }
+
+      const consultation = await base44.entities.Consultation.create(buildConsultationPayload(answers));
+
+      const { saveUserOnboardingProfile } = await import('@/lib/onboardingProfile');
+      await saveUserOnboardingProfile({
+        role: 'client',
+        status: 'completed',
+        linkedEntityName: 'Consultation',
+        linkedEntityId: consultation.id,
+        profileData: { started_from: 'intake' },
+      }).catch(() => {});
+
+      await base44.functions.invoke('iq200Pipeline', { action: 'create', consultation_id: consultation.id }).catch(() => {});
+
+      if (sessionId && sessionId !== 'pending') {
+        await base44.entities.ConversationSession.update(sessionId, {
+          status: 'completed',
+          consultation_id: consultation.id,
+          completed_at: new Date().toISOString(),
+        }).catch(() => {});
+      }
+
+      clearCart();
+      setSubmitted(true);
+    } catch (_) {
+      setSubmitError('Something went wrong sending your consultation. Please try again, or contact us directly.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const atReviewStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.REVIEW;
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: DARK,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+        fontFamily: '"SF Pro Display", system-ui, sans-serif',
+      }}
+    >
+      <div style={{ maxWidth: 440, width: '100%' }}>
+        {isLoading ? (
+          <LoadingShell />
+        ) : !started ? (
+          <WelcomeCard onBegin={() => setStarted(true)} resuming={answeredCount > 0} />
+        ) : (
+          <>
+            <IntakeProgressChecklist items={checklistItems} />
+            {nextStepResult.type === 'auth_gate' && <AuthGateStep answers={answers} />}
+            {atReviewStep && !safetyReadoutAcknowledged && (
+              <SafeTReadout safetyStatus={safetyStatus} onContinue={() => setSafetyReadoutAcknowledged(true)} />
+            )}
+            {atReviewStep && safetyReadoutAcknowledged && (
+              <ReviewStep
+                answers={answers}
+                onSubmit={handleFinalSubmit}
+                submitting={submitting}
+                submitted={submitted}
+                submitError={submitError}
+                safetyStatus={safetyStatus}
+                doctorSearch={doctorSearch}
+                partnerPreview={partnerPreview}
+              />
+            )}
+            {nextStepResult.type === 'question' && !atReviewStep && (
+              <QuestionCard
+                step={nextStepResult.step}
+                onAnswer={submitAnswer}
+                onFreeTextAnswer={submitFreeTextAnswer}
+                dynamicOptions={{ destinationCountries }}
+                dynamicOptionsLoading={{ destinationCountries: destinationsLoading }}
+              />
+            )}
+            <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />
+          </>
+        )}
+      </div>
+
+      {showEvaluation && (
+        <ProcedureEvaluationStep
+          procedureCount={cartItems.length}
+          procedureNames={cartItems.map((i) => i.name)}
+          onDone={() => setNarrationDismissed(true)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Turns question progress + the three background searches into the live
+ * checklist — narrating real counts once they're back, never a generic spinner.
+ */
+function buildChecklistItems({ answers, answeredCount, totalCount, doctorSearch, costEstimate, partnerPreview }) {
+  const items = [
+    { label: `${answeredCount} of ${totalCount} questions answered`, state: answeredCount > 0 ? 'done' : 'pending' },
+  ];
+
+  const hasDestination = !!answers.destination_country && answers.destination_country !== UNSPECIFIED;
+
+  if (answers.procedure_interest) {
+    if (doctorSearch.status === 'done') {
+      const matched = doctorSearch.data?.matched_doctors ?? [];
+      const count = matched.length;
+      items.push({
+        label: count > 0 ? `${count} verified surgeon${count === 1 ? '' : 's'} found` : 'Expanding our network for your procedure',
+        state: 'done',
+      });
+      // Explainability — only real, returned fields; never a fabricated stat.
+      const top = matched[0];
+      if (top) {
+        const why = [
+          top.years_experience ? `${top.years_experience}+ years experience` : null,
+          top.rating ? `${top.rating}★ rating` : null,
+          top.clinic_city || top.clinic_country ? `licensed in ${[top.clinic_city, top.clinic_country].filter(Boolean).join(', ')}` : null,
+        ].filter(Boolean).join(' · ');
+        if (why) {
+          items.push({ label: `→ ${top.name || 'Top match'}: ${why}`, state: 'done' });
+        }
+      }
+    } else if (doctorSearch.status === 'loading') {
+      items.push({ label: 'Finding verified surgeons...', state: 'pending' });
+    }
+
+    if (costEstimate.status === 'done') {
+      const low = costEstimate.data?.estimatedTotalLow;
+      const high = costEstimate.data?.estimatedTotalHigh;
+      items.push({
+        label: low != null ? `Estimated investment: $${low.toLocaleString()}–$${high.toLocaleString()}` : 'Cost estimate ready',
+        state: 'done',
+      });
+    } else if (costEstimate.status === 'loading') {
+      items.push({ label: 'Estimating your investment...', state: 'pending' });
+    }
+  }
+
+  if (hasDestination) {
+    if (partnerPreview.status === 'done') {
+      const travel = partnerPreview.data?.travel_agency_count ?? 0;
+      const taxi = partnerPreview.data?.taxi_service_count ?? 0;
+      items.push({ label: `${travel} travel & ${taxi} transfer partners ready`, state: 'done' });
+    } else if (partnerPreview.status === 'loading') {
+      items.push({ label: 'Checking destination partners...', state: 'pending' });
+    }
+  }
+
+  return items;
+}
+
+function LoadingShell() {
+  return (
+    <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+      <img
+        src="/morales-m-mark.png"
+        alt="Morales"
+        style={{ width: 36, height: 36, margin: '0 auto 16px', display: 'block', opacity: 0.6 }}
+      />
+      Preparing your consultation...
+    </div>
+  );
+}
+
+function WelcomeCard({ onBegin, resuming }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        background: CARD,
+        border: `1px solid ${BORDER}`,
+        borderRadius: 24,
+        padding: '40px 32px',
+        textAlign: 'center',
+      }}
+    >
+      <img
+        src="/morales-m-mark.png"
+        alt="Morales"
+        style={{ width: 44, height: 44, margin: '0 auto 20px', display: 'block' }}
+      />
+
+      <p
+        style={{
+          margin: '0 0 14px',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
+          color: GOLD,
+        }}
+      >
+        Your Concierge
+      </p>
+
+      <h1
+        style={{
+          margin: '0 0 14px',
+          fontSize: 26,
+          fontWeight: 600,
+          color: '#fff',
+          letterSpacing: '-0.01em',
+          lineHeight: 1.3,
+        }}
+      >
+        {resuming ? 'Welcome back' : "Let's understand what you need"}
+      </h1>
+
+      <p
+        style={{
+          margin: '0 0 32px',
+          fontSize: 15,
+          lineHeight: 1.65,
+          color: 'rgba(255,255,255,0.6)',
+        }}
+      >
+        {resuming
+          ? "You're right where you left off. Nothing you've already told me needs repeating."
+          : "I'll ask a few questions, one at a time, and start finding your doctors, destinations, and costs as soon as I know enough to look. Nothing you share here is asked twice."}
+      </p>
+
+      <button
+        type="button"
+        onClick={onBegin}
+        style={{
+          width: '100%',
+          padding: '15px 20px',
+          borderRadius: 999,
+          cursor: 'pointer',
+          background: GOLD,
+          border: 'none',
+          color: DARK,
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+        }}
+      >
+        {resuming ? 'Continue' : 'Begin'}
+      </button>
+    </motion.div>
+  );
+}

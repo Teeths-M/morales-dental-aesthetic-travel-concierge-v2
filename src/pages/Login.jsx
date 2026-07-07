@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Phone, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
 
@@ -76,6 +76,8 @@ function OtpInput({ value, onChange, onComplete }) {
 }
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
   const [step,          setStep]          = useState('phone');   // 'phone' | 'otp'
   const [phone,         setPhone]         = useState('');
   const [otp,           setOtp]           = useState('');
@@ -117,7 +119,7 @@ export default function Login() {
       if (res.data?.verified) {
         // OTP confirmed — proceed via Google to create/resume Base44 session
         setDemoCode(null);
-        base44.auth.loginWithProvider('google', '/dashboard');
+        base44.auth.loginWithProvider('google', redirectTo);
       }
     } catch (err) {
       setError(err.message || 'Incorrect code. Please try again.');
@@ -127,7 +129,7 @@ export default function Login() {
 
   const handleGoogle = () => {
     setGoogleLoading(true);
-    base44.auth.loginWithProvider('google', '/dashboard');
+    base44.auth.loginWithProvider('google', redirectTo);
   };
 
   // ── PHONE STEP ──
