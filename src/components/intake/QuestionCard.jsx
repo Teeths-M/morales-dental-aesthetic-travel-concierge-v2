@@ -35,7 +35,7 @@ const RECOMMENDED_COUNT = 5;
  * recommendation cards, the rest behind "Show More," free-text search behind
  * that (typing is the last resort, never the first interaction).
  */
-export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null }) {
+export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null }) {
   const [value, setValue] = useState('');
   const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -353,6 +353,27 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
               disabled={isThinking}
             />
             <SubmitButton disabled={!value.trim() || isThinking} thinking={isThinking} />
+            {step.allowUnspecified && (
+              <button
+                type="button"
+                onClick={() => commitValue(RECOMMEND_FOR_ME.label, UNSPECIFIED)}
+                style={{
+                  marginTop: 10,
+                  width: '100%',
+                  textAlign: 'center',
+                  padding: '12px 16px',
+                  borderRadius: 14,
+                  background: 'transparent',
+                  border: `1px dashed ${BORDER}`,
+                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {RECOMMEND_FOR_ME.label}
+              </button>
+            )}
           </form>
         );
       }
@@ -378,6 +399,27 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           padding: '32px 28px',
         }}
       >
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              marginBottom: 14,
+              padding: 0,
+              background: 'none',
+              border: 'none',
+              color: 'rgba(255,255,255,0.4)',
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            ← Back
+          </button>
+        )}
         <h2
           style={{
             margin: '0 0 8px',

@@ -1,8 +1,8 @@
 // @ts-nocheck — pre-existing type gap: base44 entity .filter()/.create() args, matches Booking.jsx
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getNextStep, isConfidenceAcceptable, shouldEscalateToHuman } from '@/lib/intakeFlow/flowEngine';
-import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
+import { getNextStep, getPreviousStepId, isConfidenceAcceptable, shouldEscalateToHuman } from '@/lib/intakeFlow/flowEngine';
+import { TRAVEL_QUESTION_GRAPH, getTravelStepById } from '@/lib/travelIntakeFlow/questionGraph';
 
 const GUEST_DRAFT_KEY = 'morales_travel_intake_guest_draft';
 
@@ -31,6 +31,16 @@ function reducer(state, action) {
     }
     case 'INCREMENT_LOW_CONFIDENCE':
       return { ...state, lowConfidenceStreak: (state.lowConfidenceStreak || 0) + 1 };
+    case 'GO_BACK': {
+      const { stepId, targetFields } = action.payload;
+      const nextAnswers = { ...state.answers };
+      targetFields.forEach((f) => { delete nextAnswers[f]; });
+      return {
+        ...state,
+        answers: nextAnswers,
+        turnHistory: state.turnHistory.filter((t) => t.step_id !== stepId),
+      };
+    }
     default:
       return state;
   }
@@ -275,6 +285,17 @@ export function useTravelIntakeSession() {
 
   const nextStepResult = getNextStep(answers, { isAuthenticated }, TRAVEL_QUESTION_GRAPH);
 
+  const previousStepId = nextStepResult.type === 'question'
+    ? getPreviousStepId(nextStepResult.step.id, answers, TRAVEL_QUESTION_GRAPH)
+    : null;
+
+  const goBack = useCallback(() => {
+    if (!previousStepId) return;
+    const prevStep = getTravelStepById(previousStepId);
+    if (!prevStep) return;
+    dispatch({ type: 'GO_BACK', payload: { stepId: previousStepId, targetFields: prevStep.targetFields } });
+  }, [previousStepId]);
+
   return {
     answers,
     turnHistory,
@@ -284,6 +305,8 @@ export function useTravelIntakeSession() {
     isLoading,
     submitAnswer,
     submitFreeTextAnswer,
+    goBack,
+    canGoBack: !!previousStepId,
     nextStepResult,
     sessionId: sessionIdRef.current,
   };

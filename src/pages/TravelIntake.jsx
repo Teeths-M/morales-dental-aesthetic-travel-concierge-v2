@@ -40,6 +40,8 @@ export default function TravelIntake() {
     isLoading,
     submitAnswer,
     submitFreeTextAnswer,
+    goBack,
+    canGoBack,
     nextStepResult,
     sessionId,
   } = useTravelIntakeSession();
@@ -131,6 +133,7 @@ export default function TravelIntake() {
                 onFreeTextAnswer={submitFreeTextAnswer}
                 dynamicOptions={{ travelPartnerCountries }}
                 dynamicOptionsLoading={{ travelPartnerCountries: countriesLoading }}
+                onBack={canGoBack ? goBack : null}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />

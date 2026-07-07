@@ -66,6 +66,7 @@ export const TRAVEL_QUESTION_GRAPH = [
     question: 'Which city?',
     deterministicReason: 'so your transfer and hotel arrangements are booked in the right location',
     inputType: INPUT_TYPES.TEXT,
+    allowUnspecified: true,
   },
   {
     id: 'origin_city',

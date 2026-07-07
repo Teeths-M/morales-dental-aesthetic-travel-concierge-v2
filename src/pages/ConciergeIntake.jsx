@@ -45,6 +45,8 @@ export default function ConciergeIntake() {
     isLoading,
     submitAnswer,
     submitFreeTextAnswer,
+    goBack,
+    canGoBack,
     nextStepResult,
     sessionId,
   } = useIntakeSession();
@@ -198,6 +200,7 @@ export default function ConciergeIntake() {
                 doctorSearch={doctorSearch}
                 destinationCountry={answers.destination_country}
                 priceEstimates={priceEstimates}
+                onBack={canGoBack ? goBack : null}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />

@@ -8,6 +8,7 @@ import {
   COMPANION_TYPE_OPTIONS,
   TRAVELERS_COUNT_OPTIONS,
 } from '@/lib/travelIntakeFlow/questionGraph';
+import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import JourneyBeginsStep from './JourneyBeginsStep';
 
 const GOLD = '#D4AF37';
@@ -18,10 +19,15 @@ function labelFor(options, value) {
   return options.find((o) => o.value === String(value))?.label || String(value ?? '—');
 }
 
+/** "I'm not sure — recommend one for me" reads back as a real label, not the raw sentinel. */
+function displayValue(value) {
+  return value === UNSPECIFIED ? 'Recommend one for me' : value;
+}
+
 function buildReviewFields(answers) {
   const fields = [
-    ['destination_country', 'Destination country', answers.destination_country],
-    ['destination_city', 'Destination city', answers.destination_city],
+    ['destination_country', 'Destination country', displayValue(answers.destination_country)],
+    ['destination_city', 'Destination city', displayValue(answers.destination_city)],
     ['origin_city', 'Traveling from', answers.origin_city],
     ['departure_date', 'Departure', answers.departure_date],
     ['return_date', 'Return', answers.return_date],

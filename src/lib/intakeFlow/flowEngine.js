@@ -87,6 +87,25 @@ export function getAnsweredQuestionCount(answers, questionGraph) {
 }
 
 /**
+ * Finds the step immediately before `currentStepId` that the user could
+ * meaningfully go back to — skipping any step whose `skipIf(answers)` is
+ * true, since that step was never actually shown. Returns `null` if there
+ * is no earlier step (already at the first question). Purely a lookup —
+ * callers are responsible for actually clearing that step's answers.
+ */
+export function getPreviousStepId(currentStepId, answers, questionGraph) {
+  const currentIndex = questionGraph.findIndex((s) => s.id === currentStepId);
+  if (currentIndex <= 0) return null;
+
+  for (let i = currentIndex - 1; i >= 0; i--) {
+    const step = questionGraph[i];
+    if (typeof step.skipIf === 'function' && step.skipIf(answers)) continue;
+    return step.id;
+  }
+  return null;
+}
+
+/**
  * Maps answered/total progress to one of 4 phase bands and returns the
  * matching label — a "Building your Safe-T Profile"-style phase instead of
  * an exact "X of 15 questions answered" count, which reads like a long form.

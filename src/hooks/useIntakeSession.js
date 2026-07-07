@@ -1,8 +1,8 @@
 // @ts-nocheck — pre-existing type gap: base44 entity .filter()/.create() args, matches Booking.jsx
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getNextStep, isConfidenceAcceptable, shouldEscalateToHuman } from '@/lib/intakeFlow/flowEngine';
-import { QUESTION_GRAPH } from '@/lib/intakeFlow/questionGraph';
+import { getNextStep, getPreviousStepId, isConfidenceAcceptable, shouldEscalateToHuman } from '@/lib/intakeFlow/flowEngine';
+import { QUESTION_GRAPH, getStepById } from '@/lib/intakeFlow/questionGraph';
 
 const GUEST_DRAFT_KEY = 'morales_intake_guest_draft';
 
@@ -31,6 +31,16 @@ function reducer(state, action) {
     }
     case 'INCREMENT_LOW_CONFIDENCE':
       return { ...state, lowConfidenceStreak: (state.lowConfidenceStreak || 0) + 1 };
+    case 'GO_BACK': {
+      const { stepId, targetFields } = action.payload;
+      const nextAnswers = { ...state.answers };
+      targetFields.forEach((f) => { delete nextAnswers[f]; });
+      return {
+        ...state,
+        answers: nextAnswers,
+        turnHistory: state.turnHistory.filter((t) => t.step_id !== stepId),
+      };
+    }
     default:
       return state;
   }
@@ -295,6 +305,22 @@ export function useIntakeSession() {
 
   const nextStepResult = getNextStep(answers, { isAuthenticated }, QUESTION_GRAPH);
 
+  /**
+   * Lets the user correct an earlier answer instead of getting stuck —
+   * clears the previous step's fields so flowEngine's pure getNextStep()
+   * naturally routes back to it. No-ops if there's no earlier step.
+   */
+  const previousStepId = nextStepResult.type === 'question'
+    ? getPreviousStepId(nextStepResult.step.id, answers, QUESTION_GRAPH)
+    : null;
+
+  const goBack = useCallback(() => {
+    if (!previousStepId) return;
+    const prevStep = getStepById(previousStepId);
+    if (!prevStep) return;
+    dispatch({ type: 'GO_BACK', payload: { stepId: previousStepId, targetFields: prevStep.targetFields } });
+  }, [previousStepId]);
+
   return {
     answers,
     turnHistory,
@@ -304,6 +330,8 @@ export function useIntakeSession() {
     isLoading,
     submitAnswer,
     submitFreeTextAnswer,
+    goBack,
+    canGoBack: !!previousStepId,
     nextStepResult,
     sessionId: sessionIdRef.current,
   };

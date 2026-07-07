@@ -3,6 +3,22 @@
  * payload shape `createTravelRequest` expects. Mirrors
  * src/lib/intakeFlow/fieldMap.js's role for the medical flow.
  */
+import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
+
+/** Resolves the "recommend one for me" sentinel back down to empty. */
+function resolved(value) {
+  return value === UNSPECIFIED ? '' : value || '';
+}
+
+/**
+ * destination_city is a required field on TravelRequest — unlike
+ * destination_country, it can't resolve down to an empty string or the
+ * create call would fail validation. Resolves to an honest placeholder the
+ * coordinator recognizes as "pick this," not a blank/missing value.
+ */
+function resolvedCity(value) {
+  return value === UNSPECIFIED || !value ? 'Recommend for me' : value;
+}
 
 /**
  * @param {object} answers
@@ -15,8 +31,8 @@ export function buildTravelRequestPayload(answers) {
 
   return {
     origin_city: answers.origin_city || '',
-    destination_city: answers.destination_city || '',
-    destination_country: answers.destination_country || '',
+    destination_city: resolvedCity(answers.destination_city),
+    destination_country: resolved(answers.destination_country),
     departure_date: answers.departure_date || '',
     return_date: answers.return_date || '',
     travelers_count: Number.isFinite(travelersCount) ? travelersCount : 1,

@@ -50,6 +50,7 @@ export const PROCEDURE_OPTIONS = [
  * @property {Array<{value:string,label:string}>} [options] - static choices, known synchronously
  * @property {string} [optionsSource] - key into a dynamicOptions map for choices fetched live (e.g. destination countries)
  * @property {string} [recommendationUnit] - noun shown alongside a dynamic option's real count, e.g. "verified doctors"
+ * @property {boolean} [allowUnspecified] - shows an "I'm not sure — recommend one for me" fallback below a free-text (TEXT/EMAIL/PHONE) input, committing the UNSPECIFIED sentinel instead of trapping the user into a dead-end LLM parse loop
  * @property {(answers: object) => boolean} [skipIf] - true means skip this step
  * @property {boolean} [requiresAuth] - gates this step behind sign-in (medical history onward)
  */
