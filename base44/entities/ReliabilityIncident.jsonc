@@ -1,0 +1,122 @@
+{
+  "name": "ReliabilityIncident",
+  "type": "object",
+  "properties": {
+    "incident_code": {
+      "type": "string",
+      "description": "Client- or server-generated human-facing reference ID, e.g. M-2026-QK3F9ZA2. Not sequential — collision-resistant via timestamp+random, chosen so the client can display it instantly without a server round-trip."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "in_progress", "monitoring", "resolved", "closed"],
+      "default": "open"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "frontend",
+        "api",
+        "database",
+        "auth",
+        "payment",
+        "ai_workflow",
+        "file_upload",
+        "timeout",
+        "third_party",
+        "booking",
+        "consultation"
+      ]
+    },
+    "feature": {
+      "type": "string",
+      "description": "Best-effort component/page/function name where the error originated"
+    },
+    "page": {
+      "type": "string",
+      "description": "Route path at the time of the error, if applicable"
+    },
+    "user_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Best-effort resolved identity of the affected user — null for guests or unauthenticated sessions"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "browser": {
+      "type": "string"
+    },
+    "device": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Technical message — admin-only visibility, never sent to the client in a response body"
+    },
+    "stack_trace": {
+      "type": "string"
+    },
+    "api_response": {
+      "type": "string",
+      "description": "JSON-stringified API response body at time of failure, if applicable"
+    },
+    "user_description": {
+      "type": "string",
+      "description": "What the user says they were doing — capped ~2000 chars, enforced server-side"
+    },
+    "sentry_event_id": {
+      "type": "string",
+      "description": "Cross-reference to the matching Sentry event, if Sentry was initialized when this was captured"
+    },
+    "root_cause": {
+      "type": "string",
+      "description": "Filled in later by the team — seeds a future learning-system data model, no UI for this yet"
+    },
+    "resolution": {
+      "type": "string"
+    },
+    "preventive_action": {
+      "type": "string"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "incident_code",
+    "severity",
+    "status",
+    "source"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    }
+  }
+}

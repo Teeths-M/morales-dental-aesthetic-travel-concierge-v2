@@ -14,6 +14,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { reportIncident, generateIncidentCode } from './incidentReporting.ts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,7 +98,29 @@ export function createHandler(fn: HandlerFn, opts: HandlerOptions = {}) {
     } catch (err) {
       const ms = Math.round(performance.now() - start);
       console.error(`[${name}][${requestId}] unhandled error after ${ms}ms:`, err);
-      return respond({ error: 'An internal error occurred.' }, 500, requestId);
+
+      // Reliability & Incident Response (Phase 1/Core) — awaited (not fire-and-forget)
+      // since the isolate may tear down right after this response returns. Bounded
+      // by a timeout race so a hung email send can never delay the error response.
+      // Every step here is independently defensive — must never affect the response.
+      const incidentCode = generateIncidentCode();
+      try {
+        const incidentBase44 = createClientFromRequest(req);
+        await Promise.race([
+          reportIncident({
+            base44: incidentBase44,
+            incidentCode,
+            severity: 'high',
+            source: 'api',
+            feature: name,
+            errorMessage: err instanceof Error ? err.message : String(err),
+            stackTrace: err instanceof Error ? err.stack : undefined,
+          }),
+          new Promise((resolve) => setTimeout(resolve, 2000)),
+        ]);
+      } catch (_) { /* incident reporting must never affect the error response */ }
+
+      return respond({ error: 'An internal error occurred.', incident_code: incidentCode }, 500, requestId);
     }
   };
 }

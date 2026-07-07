@@ -1,5 +1,6 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, MutationCache } from '@tanstack/react-query';
 import { isSystemPaused } from '@/lib/systemPause';
+import { reportIncident } from '@/lib/incidentReporting';
 
 // Read pause state at module load time so the QueryClient starts correctly
 // even after a page reload while paused. This is the only file that needs
@@ -8,6 +9,23 @@ import { isSystemPaused } from '@/lib/systemPause';
 const _startPaused = isSystemPaused();
 
 export const queryClientInstance = new QueryClient({
+  // MutationCache.onError always fires, regardless of whether an individual
+  // useMutation() call defines its own onError — a QueryClient-level
+  // defaultOptions.mutations.onError would instead be silently overridden by
+  // any local handler (most mutations here already have one, e.g. toasts),
+  // which would miss most real failures. Query failures are deliberately not
+  // captured here — background/polling retries would be too noisy.
+  mutationCache: new MutationCache({
+    onError: (error, variables, context, mutation) => {
+      reportIncident({
+        severity: 'medium',
+        source: 'api',
+        feature: mutation?.options?.mutationKey ? String(mutation.options.mutationKey) : undefined,
+        errorMessage: error?.message || String(error),
+        stackTrace: error?.stack,
+      });
+    },
+  }),
   defaultOptions: {
     queries: {
       // Honour the saved pause state on startup — prevents any query from

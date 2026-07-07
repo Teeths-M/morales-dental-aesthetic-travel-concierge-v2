@@ -5,6 +5,7 @@ import App from '@/App.jsx'
 import '@/index.css'
 import { syncPauseFromServer, isSystemPaused, applyPauseIntercept } from '@/lib/systemPause'
 import { queryClientInstance } from '@/lib/query-client'
+import { installGlobalErrorCapture } from '@/lib/globalErrorCapture'
 
 // ── Sentry Error Tracking (Production Only) ──────────────────────────────────
 
@@ -48,6 +49,12 @@ if (import.meta.env.PROD && SENTRY_DSN) {
     Sentry.captureException(event.reason || new Error('Unhandled promise rejection'));
   };
 }
+
+// ── Reliability & Incident Response — Global Capture (Always On) ────────────
+// Unlike the Sentry safety net above (PROD + DSN only), this runs in every
+// environment via addEventListener, which coexists safely with the
+// window.onerror/onunhandledrejection property assignments above.
+installGlobalErrorCapture();
 
 // ── Service Worker Cleanup (Dev Only) ────────────────────────────────────────
 // Must complete BEFORE React mounts — stale SW cache can serve old JS with a
