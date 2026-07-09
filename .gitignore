@@ -5,6 +5,7 @@
 # Logs
 /logs
 *.log
+build_out.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
