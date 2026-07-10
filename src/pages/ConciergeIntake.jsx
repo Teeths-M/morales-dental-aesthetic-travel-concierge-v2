@@ -167,6 +167,11 @@ export default function ConciergeIntake() {
         profileData: { started_from: 'intake' },
       }).catch(() => {});
 
+      // Confirmation email within seconds of submission — what they told us,
+      // a named coordinator, and the 24-hour promise. Non-blocking: a mail
+      // hiccup must never make the submission look failed.
+      base44.functions.invoke('sendConsultationReceivedEmail', { consultation_id: consultation.id }).catch(() => {});
+
       await base44.functions.invoke('iq200Pipeline', { action: 'create', consultation_id: consultation.id }).catch(() => {});
 
       if (sessionId && sessionId !== 'pending') {
