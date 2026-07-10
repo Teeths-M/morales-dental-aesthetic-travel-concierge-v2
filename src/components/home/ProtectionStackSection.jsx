@@ -189,7 +189,7 @@ export default function ProtectionStackSection() {
             marginTop: 16, fontSize: 11,
             color: 'rgba(255,255,255,0.22)', letterSpacing: '0.04em',
           }}>
-            No account needed · 0 patients unreachable · 2,847 journeys completed
+            No account needed · every checkpoint confirmed · nothing moves without your approval
           </p>
           <p style={{
             marginTop: 18, fontSize: 12,

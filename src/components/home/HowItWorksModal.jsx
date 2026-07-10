@@ -91,7 +91,7 @@ const scenes = [
     id: 8,
     tag: 'YOUR JOURNEY BEGINS',
     headline: 'Trusted Care. Comfortable Travel. Peace of Mind.',
-    sub: 'Join 1,200+ patients who transformed their health through Morales — with confidence, safety, and world-class support.',
+    sub: 'Transform your health through Morales — with confidence, safety, and world-class support.',
     emotion: null,
     icon: Shield,
     bg: 'from-[#060B16] to-[#0a0d12]',

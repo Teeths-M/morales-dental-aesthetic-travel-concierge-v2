@@ -8,11 +8,13 @@ import { motion } from 'framer-motion';
 
 const GOLD = '#D4AF37';
 
+// Protocol facts, not usage counts — every claim here is verifiable in the
+// product today. No invented numbers on patient-facing surfaces, ever.
 const STATS = [
-  { value: 2847,  suffix: '',   prefix: '',  label: 'Journeys Completed',       sub: 'patients safely home',          color: GOLD },
-  { value: 14.2,  suffix: 'M', prefix: '$',  label: 'Saved vs US Pricing',      sub: 'vs. avg US list price per procedure', color: GOLD },
-  { value: 9621,  suffix: '',   prefix: '',  label: 'Checkpoints Confirmed',     sub: 'driver · clinic · surgeon · hotel — every handoff',  color: GOLD },
-  { value: 0,     suffix: '',   prefix: '',  label: 'Patients Unreachable',      sub: 'our safety record',             color: GOLD, isZero: true },
+  { display: '100%', label: 'Doctors Credential-Checked', sub: 'licenses, registries, history — verified before they ever see you', color: GOLD },
+  { display: '8',    label: 'Confirmed Checkpoints Per Journey', sub: 'driver · clinic · surgeon · hotel — every handoff verified', color: GOLD },
+  { display: '24/7', label: 'Emergency Escalation', sub: 'missed check-ins escalate automatically — SMS, call, dispatch', color: GOLD },
+  { display: 'ZERO', label: 'Unsafe Plans Ever Approved', sub: 'RED-flagged combinations are blocked — no exceptions, no override', color: GOLD, isZero: true },
 ];
 
 function useCountUp(target, duration = 2000, started = false) {
@@ -41,10 +43,6 @@ function useCountUp(target, duration = 2000, started = false) {
 }
 
 function StatCard({ stat, index, started }) {
-  const count = useCountUp(stat.value, 2000 + index * 200, started);
-  const displayValue = stat.value % 1 !== 0
-    ? count.toFixed(1)
-    : count.toLocaleString();
 
   return (
     <motion.div
@@ -67,7 +65,7 @@ function StatCard({ stat, index, started }) {
           animation:   stat.isZero ? 'zeroPulse 2.5s ease-in-out infinite' : undefined,
         }}
       >
-        {stat.prefix}{displayValue}{stat.suffix}
+        {stat.display}
       </div>
 
       {/* Label */}

@@ -29,7 +29,7 @@ const CONTENT = {
 /* ── Trust badges (ISO, surgeons, concierge) ──────────────────────────────── */
 const TRUST_BADGES = [
   { icon: BadgeCheck, label: 'Clinics screened to international standards' },
-  { icon: Shield,     label: '100+ Verified Surgeons' },
+  { icon: Shield,     label: 'Every Surgeon Verified' },
   { icon: Heart,      label: 'Safety-First Protocol' },
 ];
 

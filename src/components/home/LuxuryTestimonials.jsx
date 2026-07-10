@@ -14,7 +14,7 @@ const testimonials = [
     procedure: 'Smile Makeover — Porcelain Veneers',
     rating: 5,
     quote: 'I was terrified to travel abroad for dental work. Morales held my hand through every step — from the video consultation with my dentist to the hotel pickup. I saved over $14,000 and came back with the smile I always dreamed of.',
-    result: 'Saved $14,200 vs. US pricing',
+    result: 'A fraction of US list pricing',
     location: 'Cartagena, Colombia',
   },
   {

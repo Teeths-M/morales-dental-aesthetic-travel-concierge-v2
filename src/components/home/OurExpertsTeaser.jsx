@@ -222,10 +222,10 @@ export default function OurExpertsTeaser() {
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           {[
-            { value: '100+',  label: 'Verified specialists' },
-            { value: '7',     label: 'Countries covered' },
-            { value: '2,847', label: 'Journeys completed' },
-            { value: '0',     label: 'Patients unreachable' },
+            { value: '100%',  label: 'Credential-checked' },
+            { value: '8',     label: 'Checkpoints per journey' },
+            { value: '24/7',  label: 'Concierge & emergency line' },
+            { value: '0',     label: 'Unsafe plans approved' },
           ].map(({ value, label }) => (
             <div key={label} className="flex items-baseline gap-2">
               <span
