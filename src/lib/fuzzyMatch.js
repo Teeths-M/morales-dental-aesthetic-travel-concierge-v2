@@ -1,10 +1,8 @@
 /**
- * fuzzyMatch — shared fuzzy scorer, extracted from three near-identical
- * private copies (src/pages/Discover.jsx, src/pages/Providers.jsx,
- * src/pages/PartnerDirectory.jsx). Based on Providers.jsx's version, the
- * most complete of the three (exact/substring → word-boundary →
- * character-overlap → subsequence scoring). Those three pages are left on
- * their own private copies for now — only new call sites use this module.
+ * fuzzyMatch — the single shared fuzzy scorer (exact/substring →
+ * word-boundary → character-overlap → subsequence scoring). All fuzzy
+ * search in the app goes through here: intake, Discover, Providers,
+ * PartnerDirectory.
  *
  * Exists so a typo or misspelling still surfaces the right option instead
  * of forcing the user to type it exactly right (per this app's own rule:
@@ -25,7 +23,7 @@ export function fuzzyScore(query, target) {
 
   // Word-boundary: check individual words in the target (e.g. "Venezuela"
   // inside "Clinic Venezuela City" gets checked directly against the query)
-  const words = t.split(/[\s,._-]+/);
+  const words = t.split(/[\s,._\-/]+/);
   for (const w of words) {
     if (!w) continue;
     if (w === q) return 88;

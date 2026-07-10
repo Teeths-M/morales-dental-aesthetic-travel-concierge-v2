@@ -6,55 +6,10 @@ import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, X } from 'lucide-react';
+import { fuzzyScore, fuzzyMatches } from '@/lib/fuzzyMatch';
 
 const PROCEDURE_FILTERS = ['All', 'Dental', 'Aesthetic', 'Rhinoplasty', 'Liposuction', 'Veneers', 'Implants'];
 const GOLD = '#D4AF37';
-
-// Multi-strategy fuzzy scoring so typos, missing letters, and word-boundary
-// variations all surface results. Returns 0–100.
-function fuzzyScore(query, target) {
-  if (!query || !target) return 0;
-  const q = query.toLowerCase().trim();
-  const t = target.toLowerCase().trim();
-  if (!q || !t) return 0;
-
-  // Exact / substring
-  if (t === q) return 100;
-  if (t.includes(q)) return 95;
-  if (q.includes(t)) return 90;
-
-  // Word-boundary: check individual words in the target (e.g. "Venezuela" inside
-  // "Clinic Venezuela City" gets checked directly against the query)
-  const words = t.split(/[\s,._\-/]+/);
-  for (const w of words) {
-    if (!w) continue;
-    if (w === q) return 88;
-    if (w.startsWith(q) || q.startsWith(w)) return 80;
-  }
-
-  // Character-set overlap (anagram-aware, handles missing/extra letters)
-  const tChars = [...t];
-  let charMatches = 0;
-  for (const c of q) {
-    const idx = tChars.indexOf(c);
-    if (idx !== -1) { charMatches++; tChars.splice(idx, 1); }
-  }
-  const charScore = Math.round((charMatches / Math.max(q.length, t.length)) * 80);
-
-  // Subsequence: all query chars found in order inside target
-  let matched = 0, ti = 0;
-  for (let qi = 0; qi < q.length; qi++) {
-    while (ti < t.length && t[ti] !== q[qi]) ti++;
-    if (ti < t.length) { matched++; ti++; }
-  }
-  const seqScore = Math.round((matched / q.length) * 80);
-
-  return Math.max(charScore, seqScore);
-}
-
-function fuzzyMatches(query, target) {
-  return fuzzyScore(query, target) >= 45;
-}
 
 const TYPE_COLORS = {
   Doctor:    { bg: 'rgba(212,175,55,0.1)',  border: 'rgba(212,175,55,0.3)',  color: GOLD },

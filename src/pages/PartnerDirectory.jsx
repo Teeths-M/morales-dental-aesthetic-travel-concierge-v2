@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Search, MapPin, Shield, Stethoscope, ChevronRight, CheckCircle, Award, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { fuzzyScore, fuzzyMatches } from '@/lib/fuzzyMatch';
 import DoctorCard from '@/components/directory/DoctorCard';
 import SecurityAgencyCard from '@/components/directory/SecurityAgencyCard';
 
@@ -11,23 +12,6 @@ const TABS = [
   { id: 'doctors', label: 'Doctors & Clinics', icon: Stethoscope },
   { id: 'security', label: 'Security Agencies', icon: Shield },
 ];
-
-function fuzzyScore(query, target) {
-  if (!query || !target) return 0;
-  const q = query.toLowerCase();
-  const t = target.toLowerCase();
-  if (t.includes(q)) return 100;
-  let matched = 0, ti = 0;
-  for (let qi = 0; qi < q.length; qi++) {
-    while (ti < t.length && t[ti] !== q[qi]) ti++;
-    if (ti < t.length) { matched++; ti++; }
-  }
-  return Math.round((matched / q.length) * 85);
-}
-
-function fuzzyMatches(query, target) {
-  return fuzzyScore(query, target) >= 55;
-}
 
 export default function PartnerDirectory() {
   const [activeTab, setActiveTab] = useState('all');
@@ -85,8 +69,8 @@ export default function PartnerDirectory() {
   }, [search, suggestionPool]);
 
   const q = search.toLowerCase().trim();
-  const matchDoc = (d) => !q || fuzzyMatches(q, d.full_name) || fuzzyMatches(q, d.specialty) || fuzzyMatches(q, d.clinic_name);
-  const matchAgency = (a) => !q || fuzzyMatches(q, a.agency_name) || (a.services_offered || []).some(s => fuzzyMatches(q, s));
+  const matchDoc = (d) => !q || fuzzyMatches(q, d.full_name, 55) || fuzzyMatches(q, d.specialty, 55) || fuzzyMatches(q, d.clinic_name, 55);
+  const matchAgency = (a) => !q || fuzzyMatches(q, a.agency_name, 55) || (a.services_offered || []).some(s => fuzzyMatches(q, s, 55));
 
   const filteredDoctors = doctors.filter(d =>
     (!countryFilter || d.clinic_country === countryFilter) && matchDoc(d)

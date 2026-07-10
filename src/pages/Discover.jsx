@@ -4,20 +4,9 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, X } from "lucide-react";
+import { fuzzyScore } from "@/lib/fuzzyMatch";
 import { motion, AnimatePresence } from "framer-motion";
 
-function _fuzzyScore(query, target) {
-  if (!query || !target) return 0;
-  const q = query.toLowerCase();
-  const t = target.toLowerCase();
-  if (t.includes(q)) return 100;
-  let matched = 0, ti = 0;
-  for (let qi = 0; qi < q.length; qi++) {
-    while (ti < t.length && t[ti] !== q[qi]) ti++;
-    if (ti < t.length) { matched++; ti++; }
-  }
-  return Math.round((matched / q.length) * 85);
-}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -118,7 +107,7 @@ export default function Discover() {
     const q = searchText.trim();
     if (q.length < 2) return [];
     return PROCEDURES
-      .map(p => ({ ...p, score: Math.max(_fuzzyScore(q, p.name), _fuzzyScore(q, p.id)) }))
+      .map(p => ({ ...p, score: Math.max(fuzzyScore(q, p.name), fuzzyScore(q, p.id)) }))
       .filter(p => p.score >= 55)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
@@ -136,7 +125,7 @@ export default function Discover() {
       if (filters.rating && doctor.rating != null && doctor.rating < filters.rating) return false;
       if (keyword) {
         const specs = specialtyByDoctor.get(doctor.id) || [];
-        if (!specs.some(spec => _fuzzyScore(keyword, spec.procedure_name) >= 55)) return false;
+        if (!specs.some(spec => fuzzyScore(keyword, spec.procedure_name) >= 55)) return false;
       }
       return true;
     });
