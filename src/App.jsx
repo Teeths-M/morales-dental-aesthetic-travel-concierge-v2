@@ -1,5 +1,6 @@
 import './i18n'; // Babel Engine — must be first import
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { Suspense, useState, useEffect } from 'react';
@@ -131,6 +132,10 @@ function App() {
               <NotificationProvider>
                 <AuthenticatedApp />
                 <Toaster />
+                {/* 18 components fire toasts via sonner's toast() — without this
+                    mount those calls render nothing (the ui/toaster above only
+                    serves the useToast system) */}
+                <SonnerToaster theme="dark" position="top-right" richColors />
               </NotificationProvider>
             </PlatformModeProvider>
           </QueryClientProvider>
