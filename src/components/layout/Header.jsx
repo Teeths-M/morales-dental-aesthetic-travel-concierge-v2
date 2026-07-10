@@ -59,6 +59,9 @@ export default function Header() {
     { name: t('nav.find_doctors'),  path: '/providers' },
     { name: t('nav.procedures'),    path: '/procedures' },
     { name: t('nav.how_it_works'),  path: '/how-it-works' },
+    // Supply-side door — one quiet link, no dropdown; /signup forks
+    // patient vs provider on a single clear landing.
+    { name: t('nav.for_partners'), path: '/signup' },
     // Demo entry is for judges/internal use — never shown to patients unless
     // explicitly enabled at build time (VITE_SHOW_DEMO_NAV=true).
     ...(import.meta.env.VITE_SHOW_DEMO_NAV === 'true'
@@ -297,6 +300,7 @@ export default function Header() {
             {navLinks.map(link => (
               <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">{link.name}</Link>
             ))}
+            <Link to="/signup" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">{t('nav.for_partners')}</Link>
             <Link to="/visa-assist" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">Visa Assist</Link>
             <Link to="/passport-vault" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">My Vault</Link>
             <Link to="/nearby" onClick={() => setIsMobileOpen(false)} className="font-semibold" style={{ color: '#00E5FF' }}>📍 Find Nearby Help</Link>
