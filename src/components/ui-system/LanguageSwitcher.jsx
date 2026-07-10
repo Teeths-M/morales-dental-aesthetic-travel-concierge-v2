@@ -8,7 +8,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { Globe } from 'lucide-react';
-import { useTranslation, SUPPORTED_LANGUAGES, LANG_KEY } from '@/i18n';
+import { useTranslation, SUPPORTED_LANGUAGES } from '@/i18n';
 
 const GOLD = '#D4AF37';
 
@@ -32,8 +32,9 @@ export default function LanguageSwitcher() {
   }, [open]);
 
   function select(code) {
+    // changeLanguage persists LANG_KEY + appLanguage and fires the
+    // languageChange bridge — no manual writes here.
     i18n.changeLanguage(code);
-    localStorage.setItem(LANG_KEY, code);
     setOpen(false);
   }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { changeLanguage } from '@/i18n';
 import { Bell, Lock, Globe, User, Eye, CheckCircle2, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
@@ -312,9 +313,8 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
             <button
               key={lang}
               onClick={() => {
-                localStorage.setItem('appLanguage', lang);
                 setAppLanguage(lang);
-                window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: lang } }));
+                changeLanguage(lang); // persists + fires the languageChange bridge
               }}
               className={`px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all
                 ${appLanguage === lang ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}

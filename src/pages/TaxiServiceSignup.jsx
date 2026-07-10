@@ -12,7 +12,7 @@ import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from 
 
 export default function TaxiServiceSignup() {
   const location = useLocation();
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [step, setStep] = useState(0);
   const [successTaxi, setSuccessTaxi] = useState(null);
   const [formData, setFormData] = useState({

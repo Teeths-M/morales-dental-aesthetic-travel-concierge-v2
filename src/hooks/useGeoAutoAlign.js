@@ -47,8 +47,7 @@ export function useGeoAutoAlign() {
 
         // Auto-set language only if the user hasn't chosen one yet
         if (!savedLanguage && language) {
-          localStorage.setItem('appLanguage', language);
-          window.dispatchEvent(new CustomEvent('languageChange', { detail: { language } }));
+          changeLanguage(language); // persists + fires the languageChange bridge
         }
 
         // Always fire geoDetected so other components can react to the country

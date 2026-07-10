@@ -452,6 +452,12 @@ export const translations = {
   },
 };
 
+// The global language engine (src/i18n.js) supports more languages than this
+// wizard dictionary. Fall back to English for the ones we don't cover so
+// translations[language] is never undefined (a 'th'/'zh'/'ar'/'tr' selection
+// used to crash the signup wizards).
+for (const code of ['tr', 'th', 'zh', 'ar']) translations[code] = translations.en;
+
 export const countries = {
   en: [
     'United States', 'Canada', 'Mexico', 'United Kingdom', 'Ireland',
@@ -490,6 +496,8 @@ export const countries = {
     'Tailandia', 'Turchia', 'India', 'Corea del Sud', 'Australia',
   ],
 };
+
+for (const code of ['tr', 'th', 'zh', 'ar']) countries[code] = countries.en;
 
 export const procedureCategories = {
   en: [
@@ -553,3 +561,5 @@ export const procedureCategories = {
     { id: 'cosmetic', emoji: '💉', name: 'Cosmetica' },
   ],
 };
+
+for (const code of ['tr', 'th', 'zh', 'ar']) procedureCategories[code] = procedureCategories.en;

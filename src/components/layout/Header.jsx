@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import ModeToggle from '@/components/home/ModeToggle';
-import { useTranslation } from '@/i18n';
+import { useTranslation, changeLanguage } from '@/i18n';
 
 export default function Header() {
   const [isPortalOpen,   setIsPortalOpen]   = useState(false);
@@ -67,8 +67,9 @@ export default function Header() {
   const setLang = lang => {
     setCurrentLang(lang);
     setIsLangOpen(false);
-    window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: lang.toLowerCase() } }));
-    localStorage.setItem('appLanguage', lang.toLowerCase());
+    // Single mutation point — updates the engine, persists, and fires the
+    // languageChange bridge for the signup/booking wizard pages.
+    changeLanguage(lang.toLowerCase());
   };
 
   const handleLogout = async () => {

@@ -13,7 +13,7 @@ import { base44 } from '@/api/base44Client';
 import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
 
 export default function DoctorSignup() {
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [step, setStep] = useState(0);
   const [successDoctor, setSuccessDoctor] = useState(null);
   const [formData, setFormData] = useState({

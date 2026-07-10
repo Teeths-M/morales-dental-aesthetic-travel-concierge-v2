@@ -66,6 +66,12 @@ export function changeLanguage(code) {
   if (!RESOURCES[code]) return;
   currentLang = code;
   try { localStorage.setItem(LANG_KEY, code); } catch {}
+  // Bridge to the legacy wizard dictionary (lib/translations.js): the
+  // signup/booking pages key off 'appLanguage' + this window event. Keeping
+  // the bridge here makes this function the single language mutation point —
+  // callers must not write appLanguage or dispatch languageChange themselves.
+  try { localStorage.setItem('appLanguage', code); } catch {}
+  try { window.dispatchEvent(new CustomEvent('languageChange', { detail: { language: code } })); } catch {}
   applyDir(code);
   listeners.forEach(fn => fn(code));
 }
@@ -84,7 +90,7 @@ export function useTranslation() {
 
   useEffect(() => {
     listeners.add(setLang);
-    return () => listeners.delete(setLang);
+    return () => { listeners.delete(setLang); };
   }, []);
 
   function t(key, params) {
