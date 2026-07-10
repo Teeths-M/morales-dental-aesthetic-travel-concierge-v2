@@ -28,7 +28,7 @@ No test runner is configured. Verify changes by running the dev server and exerc
 
 **What this is:** Medical tourism concierge platform. Clients book dental/aesthetic procedures with verified doctors abroad; the platform coordinates travel logistics, companions, security escorts, and post-operative recovery monitoring.
 
-**Stack:** React 18 + Vite, React Router v6, TanStack React Query v5, Tailwind CSS, Radix UI/shadcn. Backend is Base44 BaaS — the frontend talks to it via `@base44/sdk`; 188 Deno edge functions extend it.
+**Stack:** React 18 + Vite, React Router v6, TanStack React Query v5, Tailwind CSS, Radix UI/shadcn. Backend is Base44 BaaS — the frontend talks to it via `@base44/sdk`; ~270 Deno edge functions extend it.
 
 ### Base44 SDK
 
@@ -67,11 +67,13 @@ In edge functions, use `base44.asServiceRole.entities.*` for admin-level access 
 
 All pages are `React.lazy()` — add new pages with `lazy(() => import(...))` inside the relevant route module.
 
-### Data Fetching — Two Patterns
+### Data Fetching
 
-**Preferred: React Query** (`@tanstack/react-query`). Specific entity hooks are in `src/hooks/queries/` (useCases, usePayments, useVault, useWorkflow). Use `useQuery`/`useMutation` directly for anything not already in those hooks. The `CACHE` constants in `src/lib/constants.js` provide standard `staleTime` values.
+Use React Query (`@tanstack/react-query`) — `useQuery`/`useMutation` directly in pages and components. The `CACHE` constants in `src/lib/constants.js` provide standard `staleTime` values.
 
-**Legacy: `useEntity` / `useEntitySingle`** (`src/hooks/useEntity.js`). These are `useState + useEffect` wrappers with no React Query caching. They exist in older portal pages. **Do not use for new features.** When touching an existing page that uses `useEntity`, leave it unless the migration is in scope.
+The service layer is `src/lib/services/` (vaultService, auditService, vaultSyncService) — the single canonical data-access layer. Audit log writes go through `auditService.log(...)`, never `invoke('logAuditEvent')` directly; actor fields are derived server-side from the session and cannot be passed from the client.
+
+(Historical note: the `hooks/queries/` wrapper hooks, the `useEntity` legacy pattern, and a parallel `src/services/` layer were all removed in the 2026-07 dead-code cleanup — none had remaining consumers.)
 
 ### Edge Functions
 
@@ -118,11 +120,20 @@ These areas require extra care. Changes here have audit and safety implications:
 
 All platform-wide magic strings are in `src/lib/constants.js`: `ROLES`, `CASE_STATUS`, `PAYMENT_STATUS`, `ROUTES`, `CACHE`, `TIME`, `AUDIT_EVENTS`, and more. Import from there — do not define strings inline.
 
-**Date formatting:** Uses `date-fns`, not `moment`. Token differences from moment: `d` (not `D`), `yyyy` (not `YYYY`), `EEE` (not `ddd`). The `moment` package is still in `package.json` but has no remaining usages — it can be removed with `npm uninstall moment`.
+**Date formatting:** Uses `date-fns`, not `moment` (which is no longer installed). Token differences from moment: `d` (not `D`), `yyyy` (not `YYYY`), `EEE` (not `ddd`).
 
 **Design tokens:** Background `#060B16`, card `#0C1A1D`, border `#2A3F4A`, gold accent `#D4AF37`. Font weight baseline is `font-semibold` (not `font-bold`). SF Pro system font stack via CSS `font-family`.
 
 **Component library:** `src/components/ui/` contains shadcn/ui primitives (auto-generated — do not edit). Custom design system extensions are in `src/components/ui-system/`. Layout components are in `src/components/layout/`.
+
+**Fuzzy matching:** All fuzzy search goes through `src/lib/fuzzyMatch.js` (`fuzzyScore`, `fuzzyMatches`, `fuzzyFilterOptions`). Never roll a local scorer — typo tolerance must behave identically everywhere ("Can't spell my name but I can book on M").
+
+## Language / i18n
+
+Two coexisting layers, bridged by design:
+
+- **Engine** (`src/i18n.js`, homegrown — the npm i18next is NOT installed): 10 languages, drives global chrome via `useTranslation()`. `changeLanguage(code)` is the **single mutation point** — it persists `morales_lang` + `appLanguage` and dispatches the `languageChange` window event. Never write those keys or dispatch that event manually.
+- **Wizard dictionary** (`src/lib/translations.js`): 6 languages + English fallback for the rest, consumed by the signup wizards and Booking via the `appLanguage`/`languageChange` bridge. Legacy — fold into the engine's locale files when those flows are next reworked; don't add new consumers.
 
 ## Path Alias
 
