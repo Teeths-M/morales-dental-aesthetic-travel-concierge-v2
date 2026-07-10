@@ -10,13 +10,14 @@ const STATUS = {
   LIVE:  { bg: 'rgba(34,197,94,0.12)',  border: 'rgba(34,197,94,0.4)',   color: '#22c55e', label: '✅ LIVE DEMO' },
   API:   { bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.35)', color: '#60a5fa', label: '📡 REAL API'  },
   BUILT: { bg: 'rgba(212,175,55,0.1)',  border: 'rgba(212,175,55,0.35)', color: GOLD,      label: '🔧 BUILT'    },
+  VISION: { bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.35)', color: '#a78bfa', label: '🔭 VISION DEMO' },
 };
 
 const CATEGORIES = [
   {
     icon: '🌍', label: 'Natural Disasters', color: '#f97316',
     scenarios: [
-      { event: 'Earthquake',          response: 'Accelerometer fires beacon automatically — zero user action. Same tech as Google Android Earthquake Alerts. Fires in milliseconds.',                                        system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'LIVE'  },
+      { event: 'Earthquake',          response: 'Accelerometer fires beacon automatically — zero user action. Same tech as Google Android Earthquake Alerts. Fires in milliseconds.',                                        system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'VISION'  },
       { event: 'Tsunami / Hurricane', response: 'NOAA + GDACS UN disaster feeds (updated every 60s) cross-reference active clients in affected region. Concierge sweeps proactively.',                                    system: 'EVN-iQ400 + Concierge',    demo: '/demo/evn',         status: 'API'   },
       { event: 'Flood / Snowstorm',   response: 'Slow-onset event: Weather Health system flags at-risk clients before conditions deteriorate. Concierge initiates proactive welfare sweep.',                               system: 'Weather to Health',         demo: '/demo/weather',     status: 'LIVE'  },
     ],
@@ -41,9 +42,9 @@ const CATEGORIES = [
   {
     icon: '🧗', label: 'Accidents', color: '#60a5fa',
     scenarios: [
-      { event: 'Fall / hiking injury', response: 'Accelerometer detects the impact pattern automatically. Beacon fires with last cached GPS. BLE mesh relays signal to cloud via nearby devices.',                       system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'LIVE'  },
+      { event: 'Fall / hiking injury', response: 'Accelerometer detects the impact pattern automatically. Beacon fires with last cached GPS. BLE mesh relays signal to cloud via nearby devices.',                       system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'VISION'  },
       { event: 'Child trapped',        response: 'Auto-beacon fires on trauma detection — no child action needed. Secret Tap SOS for conscious child. Family Eye shows parent when the dot stops moving.',               system: 'Family Eye + Tap',         demo: '/demo/family',      status: 'LIVE'  },
-      { event: 'Car accident',         response: 'Accelerometer detects sudden impact. Beacon fires immediately with last GPS. Concierge auto-alerted. Last known coordinates logged for rescue teams.',                 system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'LIVE'  },
+      { event: 'Car accident',         response: 'Accelerometer detects sudden impact. Beacon fires immediately with last GPS. Concierge auto-alerted. Last known coordinates logged for rescue teams.',                 system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'VISION'  },
     ],
   },
   {
@@ -57,8 +58,8 @@ const CATEGORIES = [
   {
     icon: '📡', label: 'Zero Connectivity', color: GOLD,
     scenarios: [
-      { event: 'No cell signal',       response: 'BLE mesh beacon hops device to device — no internet required. Offline check-in queue syncs the moment connection returns. Nothing is lost.',                          system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'LIVE'  },
-      { event: 'Underground / GPS blocked', response: 'Last cached GPS coordinates transmitted — typically accurate within 10–50m. Cell tower triangulation fallback. Same as real SAR rescue operations.',              system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'BUILT' },
+      { event: 'No cell signal',       response: 'BLE mesh beacon hops device to device — no internet required. Offline check-in queue syncs the moment connection returns. Nothing is lost.',                          system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'VISION'  },
+      { event: 'Underground / GPS blocked', response: 'Last cached GPS coordinates transmitted — typically accurate within 10–50m. Cell tower triangulation fallback. Same as real SAR rescue operations.',              system: 'Mesh Beacon',              demo: '/demo/mesh-beacon', status: 'VISION' },
       { event: 'Blind / disabled traveler', response: 'James Voice System — full voice-first flows. Every critical action accessible by voice or audio cue. Zero reading required.',                                    system: 'James Voice',              demo: '/demo/james',       status: 'LIVE'  },
     ],
   },
