@@ -12,6 +12,7 @@
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
+import { getViolations } from '../_shared/procedureCompatibility.ts';
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
@@ -66,6 +67,27 @@ Deno.serve(async (req) => {
                        proposal_token === caseRecord.proposal_token;
     if (!isAdmin && !isOwner && !tokenMatch) {
       return Response.json({ error: 'Case not found' }, { status: 404 });
+    }
+
+    // M PRINCIPLE — RED is a hard block, always. A payment link must never be
+    // created for a clinically blocked procedure combination. Two layers:
+    // the stored SAFE-T verdict, and a live re-derivation from the case's
+    // procedure list (catches verdicts that went stale after a rule update,
+    // and cases created outside the gated booking flows). The booking flows
+    // already refuse blocked combos, so this never fires for legitimate cases.
+    if (caseRecord.safe_t_result === 'BLOCKED') {
+      return Response.json({
+        error: 'This case is blocked pending medical safety review. Payment cannot proceed.',
+      }, { status: 403 });
+    }
+    const procedureItems = (caseRecord.procedures || []).map((name) => ({ name, title: name }));
+    if (procedureItems.length >= 2) {
+      const { isBlocked } = getViolations(procedureItems);
+      if (isBlocked) {
+        return Response.json({
+          error: 'This procedure combination requires medical safety review. Payment cannot proceed.',
+        }, { status: 403 });
+      }
     }
 
     // RATE LIMIT: 10 payment link requests per hour, keyed by user when logged in,
