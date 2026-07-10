@@ -30,5 +30,11 @@
       "description": "True once the code has been successfully used (single-use enforcement)"
     }
   },
-  "required": ["code", "expires_at"]
+  "required": ["code", "expires_at"],
+  "rls": {
+    "read":   { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
 }

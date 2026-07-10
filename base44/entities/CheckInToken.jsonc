@@ -70,5 +70,11 @@
     "check_in_id",
     "token_hash",
     "expires_at"
-  ]
+  ],
+  "rls": {
+    "read":   { "user_condition": { "role": "admin" } },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
 }
