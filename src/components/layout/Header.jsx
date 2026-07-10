@@ -8,7 +8,6 @@ import ModeToggle from '@/components/home/ModeToggle';
 import { useTranslation, changeLanguage } from '@/i18n';
 
 export default function Header() {
-  const [isPortalOpen,   setIsPortalOpen]   = useState(false);
   const [isMobileOpen,   setIsMobileOpen]   = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLangOpen,     setIsLangOpen]     = useState(false);
@@ -20,7 +19,6 @@ export default function Header() {
   const { user }    = useAuth();
   const isAdmin     = user?.role === 'admin' || user?.role === 'platform_admin';
   const userMenuRef        = useRef(null);
-  const portalCloseTimer   = useRef(null);
   const userMenuCloseTimer = useRef(null);
 
   const DARK_HERO_PATHS = ['/', '/discover', '/procedures', '/how-it-works'];
@@ -61,7 +59,11 @@ export default function Header() {
     { name: t('nav.find_doctors'),  path: '/providers' },
     { name: t('nav.procedures'),    path: '/procedures' },
     { name: t('nav.how_it_works'),  path: '/how-it-works' },
-    { name: t('nav.live_demo'),     path: '/demo',          gold: true },
+    // Demo entry is for judges/internal use — never shown to patients unless
+    // explicitly enabled at build time (VITE_SHOW_DEMO_NAV=true).
+    ...(import.meta.env.VITE_SHOW_DEMO_NAV === 'true'
+      ? [{ name: t('nav.live_demo'), path: '/demo', gold: true }]
+      : []),
   ];
 
   const setLang = lang => {
@@ -79,7 +81,6 @@ export default function Header() {
   };
 
   const closeAll = () => {
-    setIsPortalOpen(false);
     setIsLangOpen(false);
     setIsUserMenuOpen(false);
   };
@@ -162,77 +163,6 @@ export default function Header() {
             </Link>
           ))}
 
-          {/* Portal Hub */}
-          <div
-            className="relative"
-            onMouseEnter={() => {
-              clearTimeout(portalCloseTimer.current);
-              setIsPortalOpen(true);
-              setIsLangOpen(false);
-              setIsUserMenuOpen(false);
-            }}
-            onMouseLeave={() => {
-              portalCloseTimer.current = setTimeout(() => setIsPortalOpen(false), 150);
-            }}
-          >
-            <button
-              onClick={() => { setIsPortalOpen(p => !p); setIsLangOpen(false); setIsUserMenuOpen(false); }}
-              className="flex items-center gap-1.5 transition-colors duration-200"
-              style={{ color: '#8A9099', fontSize: '14px' }}
-            >
-              {t('nav.portals')}
-              <svg
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${isPortalOpen ? 'rotate-180' : ''}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {isPortalOpen && (
-              <div
-                className="absolute top-full left-0 mt-3 w-60 rounded-2xl border border-white/[0.07] shadow-2xl p-2 flex flex-col gap-0.5"
-                style={{ background: 'rgba(10,20,25,0.96)', backdropFilter: 'blur(24px)' }}
-              >
-                {[
-                  { to: '/visa-assist',             label: 'Visa Assist',            dot: '#00E5FF' },
-                  { to: '/passport-vault',           label: 'My Vault',               dot: null },
-                ].map(({ to, label, dot }) => (
-                  <Link key={to} to={to} onClick={() => setIsPortalOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm rounded-xl transition-colors hover:bg-white/[0.05]"
-                    style={{ color: 'rgba(255,255,255,0.75)' }}
-                  >
-                    {dot
-                      ? <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dot, boxShadow: `0 0 8px ${dot}99` }} />
-                      : <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                    }
-                    {label}
-                  </Link>
-                ))}
-                <div className="h-px bg-white/[0.07] my-1" />
-                {[
-                  { to: '/doctor-dashboard',         label: 'Doctor Portal' },
-                  { to: '/travel-agency-dashboard',  label: 'Travel Agency Portal' },
-                  { to: '/taxi-service-dashboard',   label: 'Chauffeur Portal' },
-                  { to: '/companion-dashboard',      label: 'Companion Portal' },
-                ].map(({ to, label }) => (
-                  <Link key={to} to={to} onClick={() => setIsPortalOpen(false)}
-                    className="px-4 py-2.5 text-sm rounded-xl transition-colors hover:bg-white/[0.05]"
-                    style={{ color: 'rgba(255,255,255,0.7)' }}
-                  >
-                    {label}
-                  </Link>
-                ))}
-                <div className="h-px bg-white/[0.07] my-1" />
-                <Link to="/partner-signup" onClick={() => setIsPortalOpen(false)}
-                  className="px-4 py-2.5 text-sm rounded-xl font-medium transition-colors hover:bg-[#D4AF37]/[0.06]"
-                  style={{ color: '#D4AF37' }}
-                >
-                  Join as Provider Partner
-                </Link>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* ── DESKTOP: AUTH + LANGUAGE ── */}
@@ -371,34 +301,6 @@ export default function Header() {
             <Link to="/passport-vault" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">My Vault</Link>
             <Link to="/nearby" onClick={() => setIsMobileOpen(false)} className="font-semibold" style={{ color: '#00E5FF' }}>📍 Find Nearby Help</Link>
             <Link to="/offline-guide" onClick={() => setIsMobileOpen(false)} className="text-red-400 font-semibold">🆘 Offline &amp; SOS Guide</Link>
-          </div>
-
-          {/* Portals */}
-          <div className="flex flex-col gap-3">
-            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>Partner Portals</span>
-
-            {/* Join CTA — prominent, gold, for new partners */}
-            <Link
-              to="/register-role"
-              onClick={() => setIsMobileOpen(false)}
-              className="flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold"
-              style={{
-                background: 'linear-gradient(135deg, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.08) 100%)',
-                border: '1px solid rgba(212,175,55,0.45)',
-                color: '#D4AF37',
-              }}
-            >
-              ✦ Join as a Provider Partner
-            </Link>
-
-            {[
-              { to: '/doctor-dashboard',        label: 'Doctor Portal' },
-              { to: '/travel-agency-dashboard', label: 'Travel Agency Portal' },
-              { to: '/taxi-service-dashboard',  label: 'Chauffeur Portal' },
-              { to: '/companion-dashboard',     label: 'Companion Portal' },
-            ].map(({ to, label }) => (
-              <Link key={to} to={to} onClick={() => setIsMobileOpen(false)} className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{label}</Link>
-            ))}
           </div>
 
           {/* Auth */}

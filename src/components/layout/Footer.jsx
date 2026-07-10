@@ -31,7 +31,7 @@ export default function Footer() {
 
       {/* Main Footer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img
@@ -57,6 +57,21 @@ export default function Footer() {
                 { label: 'Procedures',    path: '/procedures' },
                 { label: 'Visa Assist',   path: '/visa-assist' },
                 { label: 'Travel Safety', path: '/safe-t' },
+              ].map(({ label, path }) => (
+                <Link key={path} to={path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{label}</Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-sm mb-4 text-background/90">Portals</h4>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Doctor Portal',        path: '/doctor-dashboard' },
+                { label: 'Travel Agency Portal', path: '/travel-agency-dashboard' },
+                { label: 'Chauffeur Portal',     path: '/taxi-service-dashboard' },
+                { label: 'Companion Portal',     path: '/companion-dashboard' },
+                { label: 'Join as Provider',     path: '/partner-signup' },
               ].map(({ label, path }) => (
                 <Link key={path} to={path} className="block text-sm text-background/50 hover:text-background/80 transition-colors">{label}</Link>
               ))}
