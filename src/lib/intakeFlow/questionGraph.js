@@ -114,20 +114,6 @@ export const QUESTION_GRAPH = [
     skipIf: (a) => !isMinorAge(a.age),
   },
   {
-    id: 'email',
-    targetFields: ['email'],
-    question: 'And the best email to reach you at?',
-    deterministicReason: "so we can send your journey updates and never lose your place",
-    inputType: INPUT_TYPES.EMAIL,
-  },
-  {
-    id: 'phone',
-    targetFields: ['phone'],
-    question: 'A phone number, in case we need to reach you quickly?',
-    deterministicReason: 'so your coordinator can reach you directly if anything needs your attention',
-    inputType: INPUT_TYPES.PHONE,
-  },
-  {
     id: 'procedure_interest',
     targetFields: ['procedure_interest', 'selected_procedures'],
     question: 'What would you like to improve or treat? You can choose more than one.',
@@ -145,6 +131,25 @@ export const QUESTION_GRAPH = [
     // every option shown is guaranteed to have a real doctor behind it.
     optionsSource: 'destinationCountries',
     recommendationUnit: 'verified doctors',
+  },
+
+  // ── Contact details come AFTER procedures + destination on purpose: by now
+  //    the background-search checklist is alive with real value (doctors
+  //    found, cost estimates), so sharing an email is receiving that work —
+  //    not paying a toll to a form (value-before-ask).
+  {
+    id: 'email',
+    targetFields: ['email'],
+    question: "Where should I send what I'm finding for you?",
+    deterministicReason: "so the doctors, prices, and plan I'm putting together reach your inbox — and you never lose your place",
+    inputType: INPUT_TYPES.EMAIL,
+  },
+  {
+    id: 'phone',
+    targetFields: ['phone'],
+    question: 'A phone number, in case we need to reach you quickly?',
+    deterministicReason: 'so your coordinator can reach you directly if anything needs your attention',
+    inputType: INPUT_TYPES.PHONE,
   },
 
   // ── Auth gate: everything from here on is medical, so we ask for an
