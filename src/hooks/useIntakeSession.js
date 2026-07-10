@@ -89,11 +89,15 @@ export function useIntakeSession() {
         let hydrated = {};
 
         // Restore guest answers collected before sign-in (pre-auth-gate steps).
+        // Deliberately NOT removed here: the draft is the only durable copy of
+        // the pre-auth answers until the first ConversationSession save
+        // succeeds (the debounced save below). Deleting on read left a window
+        // — close the tab before that save fires and the answers were gone.
+        // Removal now happens in the save path, after a confirmed write.
         try {
           const guestDraft = localStorage.getItem(GUEST_DRAFT_KEY);
           if (guestDraft) {
             hydrated = { ...hydrated, ...JSON.parse(guestDraft) };
-            localStorage.removeItem(GUEST_DRAFT_KEY);
           }
         } catch (_) {}
 
@@ -198,8 +202,10 @@ export function useIntakeSession() {
         last_updated_at: new Date().toISOString(),
       };
       try {
+        let saved = false;
         if (sessionIdRef.current && sessionIdRef.current !== 'pending') {
           await base44.entities.ConversationSession.update(sessionIdRef.current, payload);
+          saved = true;
         } else if (!sessionIdRef.current) {
           sessionIdRef.current = 'pending'; // idempotency guard against double-create
           const existing = await base44.entities.ConversationSession.filter({ user_email: currentUser.email, flow_type: 'medical_intake' });
@@ -214,6 +220,14 @@ export function useIntakeSession() {
             });
             sessionIdRef.current = created.id;
           }
+          saved = true;
+        }
+        // The answers are now durably on the server — the guest draft has
+        // served its purpose and can be safely retired. Only after a save
+        // that actually happened in THIS callback ('pending' overlap skips
+        // both branches and must not retire the draft).
+        if (saved) {
+          try { localStorage.removeItem(GUEST_DRAFT_KEY); } catch (_) {}
         }
       } catch (_) {
         sessionIdRef.current = null; // allow retry on next change
