@@ -39,6 +39,12 @@ export async function createCompanionProfile(formData, accountType) {
       documents: [],
     });
   } catch (_) { /* non-fatal */ }
+  // Welcome email with dashboard link — non-blocking, a mail hiccup must
+  // never fail the signup itself.
+  base44.functions.invoke('sendPartnerWelcomeEmail', {
+    partner_type: 'companion',
+    partner_id: companion.id,
+  }).catch(() => { /* non-fatal */ });
   return companion;
 }
 

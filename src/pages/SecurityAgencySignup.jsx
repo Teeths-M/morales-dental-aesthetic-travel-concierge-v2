@@ -115,6 +115,12 @@ export default function SecurityAgencySignup() {
           documents: [form.license_doc_url, form.insurance_doc_url].filter(Boolean),
         });
       } catch (_) { /* non-fatal — admin can trigger manually from PartnerVerificationHub */ }
+      // Welcome email with dashboard link — non-blocking, a mail hiccup must
+      // never fail the signup itself.
+      base44.functions.invoke('sendPartnerWelcomeEmail', {
+        partner_type: 'security_agency',
+        partner_id: agency.id,
+      }).catch(() => { /* non-fatal */ });
       setSubmitted(true);
     } catch (err) {
       setError('Submission failed. Please try again.');

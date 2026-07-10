@@ -85,20 +85,61 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         ['Vehicle Types', partner.vehicle_types?.join(', ') || 'Not specified'],
       ];
       ctaText = 'Access Chauffeur Portal →';
+    } else if (partner_type === 'companion') {
+      partner = await base44.asServiceRole.entities.Companion.get(partner_id);
+      if (!partner) {
+        return Response.json({ error: 'Companion not found' }, { status: 404 });
+      }
+      // Companions use the login-gated dashboard, not a token portal.
+      portalType = null;
+      portalPath = `/companion-dashboard`;
+      eyebrow = 'Companion Network';
+      title = 'Welcome to the Morales companion network';
+      intro = `Welcome ${partner.contact_person || partner.full_name || partner.email}! Your companion profile has been created and is entering verification. Once verified, you'll receive assignment requests for patients who need a trusted companion during their journey and recovery.`;
+      rows = [
+        ['Name', partner.full_name],
+        ['Email', partner.email],
+        ['Languages', partner.languages?.join(', ') || 'Not specified'],
+        ['Region', [partner.city, partner.country].filter(Boolean).join(', ') || 'Not specified'],
+      ];
+      ctaText = 'Open Companion Dashboard →';
+    } else if (partner_type === 'security_agency') {
+      partner = await base44.asServiceRole.entities.SecurityAgency.get(partner_id);
+      if (!partner) {
+        return Response.json({ error: 'Security agency not found' }, { status: 404 });
+      }
+      // Security agencies use the login-gated dashboard, not a token portal.
+      portalType = null;
+      portalPath = `/security-agency-dashboard`;
+      eyebrow = 'Security Partner Network';
+      title = 'Welcome to the Morales security network';
+      intro = `Welcome ${partner.contact_person || partner.agency_name || partner.email}! Your agency profile has been created and is entering verification. Once verified, you'll receive escort and dispatch requests for patient journeys in your regions.`;
+      rows = [
+        ['Agency Name', partner.agency_name],
+        ['Contact Person', partner.contact_person],
+        ['Email', partner.email],
+      ];
+      ctaText = 'Open Security Dashboard →';
     } else {
       return Response.json({ error: 'Invalid partner_type' }, { status: 400 });
     }
 
-    // Generate portal token (generic access - not case-specific)
-    const token = await makePortalToken({
-      partner_id: partner_id,
-      portal_type: portalType,
-      partner_email: partner.email,
-      expires_at: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days for initial access
-    });
-
     const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-    const portalLink = `${appUrl}${portalPath}?token=${token}`;
+
+    // Token-portal partners get a signed 30-day link; dashboard partners
+    // (companion, security) get a plain link to their login-gated dashboard.
+    let portalLink;
+    if (portalType) {
+      const token = await makePortalToken({
+        partner_id: partner_id,
+        portal_type: portalType,
+        partner_email: partner.email,
+        expires_at: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days for initial access
+      });
+      portalLink = `${appUrl}${portalPath}?token=${token}`;
+    } else {
+      portalLink = `${appUrl}${portalPath}`;
+    }
 
     // Send welcome email
     await base44.asServiceRole.integrations.Core.SendEmail({
