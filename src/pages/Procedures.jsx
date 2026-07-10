@@ -1,7 +1,7 @@
 // @ts-nocheck — pre-existing prop type gaps in ProcedureSearch and PageHeroBand
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mic, ArrowRight, ChevronRight, Check, Clock, Calendar, AlertCircle } from 'lucide-react';
 import ProcedureModal from '@/components/procedures/ProcedureModal';
 import SelectDoctorModal from '@/components/procedures/SelectDoctorModal';
@@ -153,6 +153,20 @@ export default function Procedures() {
   const parentFilters = getParentFilters(language);
 
   const selectedProcs = items; // cart IS the selected list
+
+  const navigate = useNavigate();
+
+  // "Book a Consultation" from the procedure modal: the picked procedure goes
+  // straight into the shared cart and the user lands in the conversation with
+  // that question already answered (doctor choice happens in-flow).
+  const bookFromModal = (proc) => {
+    const procedureEnumValue = getProcedureEnumValue(proc.title);
+    if (!items.some(i => (i.name || i.title) === proc.title)) {
+      addItem({ name: proc.title, title: proc.title, category: proc.category, procedure_enum: procedureEnumValue });
+    }
+    setSelectedModal(null);
+    navigate('/intake');
+  };
 
   const addProc = (proc) => {
     // Map procedure title to enum value
@@ -352,7 +366,7 @@ export default function Procedures() {
               <p className="text-[15px] text-white/55 mb-6 max-w-md mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
                 {language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.'}
               </p>
-              <Link to="/booking">
+              <Link to="/intake">
                 <Button size="lg" className={`font-semibold px-10 ${items.length > 0 ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] hover:opacity-90' : 'bg-white/[0.06] text-white/30 cursor-not-allowed'}`} disabled={items.length === 0}>
                 {language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation'} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
@@ -426,7 +440,7 @@ export default function Procedures() {
       </AnimatePresence>
 
       {/* Learn More Modal */}
-      <ProcedureModal procedure={selectedModal} onClose={() => setSelectedModal(null)} />
+      <ProcedureModal procedure={selectedModal} onClose={() => setSelectedModal(null)} onBook={bookFromModal} />
 
       {/* Select Doctor Modal */}
       <SelectDoctorModal

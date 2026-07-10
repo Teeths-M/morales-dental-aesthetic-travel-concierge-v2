@@ -13,9 +13,12 @@ const PATHS = [
     icon: Heart,
     label: 'I\'m seeking care',
     sub: 'Patient · Client',
-    description: 'Book procedures with verified doctors abroad. M monitors your safety, coordinates your travel, and is with you every step of the journey.',
-    cta: 'Create patient account',
-    href: '/register',
+    description: "Book procedures with verified doctors abroad. M monitors your safety, coordinates your travel, and is with you every step of the journey. No account needed to start — sign in only when you're ready to submit.",
+    cta: 'Start your journey',
+    // Guest-first: patients begin the concierge conversation immediately; the
+    // account is created at the sign-in gate inside the flow. (The old
+    // /register target was never routed — this card 404'd.)
+    href: '/intake',
     accentColor: GOLD,
     glowColor: 'rgba(212,175,55,0.18)',
     borderHover: `rgba(212,175,55,0.45)`,

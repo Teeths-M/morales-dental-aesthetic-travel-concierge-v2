@@ -31,6 +31,17 @@ export const INPUT_TYPES = {
   ALLERGIES_PICK: 'allergies_pick',
 };
 
+/**
+ * True only when age parses to a real number under 18. Unparseable ages
+ * ("forty-five", blank) return false — an adult with a typo must never be
+ * routed into the guardian flow; the guardian requirement re-derives
+ * server-side from the stored age at review anyway.
+ */
+export function isMinorAge(age) {
+  const n = Number(String(age ?? '').trim());
+  return Number.isFinite(n) && n > 0 && n < 18;
+}
+
 export const GENDER_OPTIONS = [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
@@ -77,6 +88,32 @@ export const QUESTION_GRAPH = [
     inputType: INPUT_TYPES.TEXT,
   },
   {
+    // Asked second, before any verification or medical questions — if a
+    // guardian needs to be involved, that has to be known before anything
+    // else is planned (M Principle: never plan care for a minor alone).
+    id: 'age',
+    targetFields: ['age'],
+    question: 'And how old are you?',
+    deterministicReason: 'so we can shape the journey correctly from the very start — and bring in a parent or guardian if you are under 18',
+    inputType: INPUT_TYPES.TEXT,
+  },
+  {
+    id: 'guardian_name',
+    targetFields: ['guardian_name'],
+    question: "Because you're under 18, a parent or guardian will be part of every step of this journey. What's their full name?",
+    deterministicReason: 'we never plan care for anyone under 18 without a guardian involved — they approve every decision alongside you',
+    inputType: INPUT_TYPES.TEXT,
+    skipIf: (a) => !isMinorAge(a.age),
+  },
+  {
+    id: 'guardian_contact',
+    targetFields: ['guardian_contact'],
+    question: 'And the best phone number or email to reach them?',
+    deterministicReason: 'so your care team can include your guardian directly in every confirmation and consent step',
+    inputType: INPUT_TYPES.TEXT,
+    skipIf: (a) => !isMinorAge(a.age),
+  },
+  {
     id: 'email',
     targetFields: ['email'],
     question: 'And the best email to reach you at?',
@@ -118,14 +155,6 @@ export const QUESTION_GRAPH = [
     question: 'Based on your procedure and destination, here are your matched doctors.',
     deterministicReason: 'so you can choose who cares for you, or let your care team recommend the best match',
     inputType: INPUT_TYPES.DOCTOR_PICK,
-    requiresAuth: true,
-  },
-  {
-    id: 'age',
-    targetFields: ['age'],
-    question: 'What is your age?',
-    deterministicReason: 'so your doctor can plan safely around your age group',
-    inputType: INPUT_TYPES.TEXT,
     requiresAuth: true,
   },
   {

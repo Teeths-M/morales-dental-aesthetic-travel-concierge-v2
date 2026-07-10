@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { Clock, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-export default function ProcedureModal({ procedure, onClose }) {
+export default function ProcedureModal({ procedure, onClose, onBook }) {
   const [doctorPrices, setDoctorPrices] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -149,11 +149,20 @@ export default function ProcedureModal({ procedure, onClose }) {
 
            {/* CTA */}
            <div className="pt-2">
-             <Link to="/booking" onClick={onClose}>
-               <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+             {onBook ? (
+               <Button
+                 onClick={() => onBook(procedure)}
+                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+               >
                  Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
                </Button>
-             </Link>
+             ) : (
+               <Link to="/intake" onClick={onClose}>
+                 <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+                   Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
+                 </Button>
+               </Link>
+             )}
             </div>
         </div>
       </DialogContent>

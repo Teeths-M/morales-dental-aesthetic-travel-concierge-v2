@@ -173,7 +173,7 @@ export default function ProtectionStackSection() {
             We will.
           </p>
           <Link
-            to="/booking"
+            to="/intake"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '16px 40px', borderRadius: 99,

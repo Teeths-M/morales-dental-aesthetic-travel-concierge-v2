@@ -45,6 +45,7 @@ export default function ConciergeIntake() {
     isLoading,
     submitAnswer,
     submitFreeTextAnswer,
+    seedAnswers,
     goBack,
     canGoBack,
     nextStepResult,
@@ -65,17 +66,39 @@ export default function ConciergeIntake() {
   const [submitError, setSubmitError] = useState(null);
 
   const answeredCount = getAnsweredQuestionCount(answers, QUESTION_GRAPH);
-  const totalCount = getTotalQuestionCount(QUESTION_GRAPH);
+  const totalCount = getTotalQuestionCount(QUESTION_GRAPH, answers);
   const progressLabel = getProgressLabel(answeredCount, totalCount, PHASE_LABELS);
   const progressRatio = totalCount > 0 ? answeredCount / totalCount : 0;
   const checklistItems = buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPreview });
+
+  // Procedure-first entry: when the user arrives with procedures already in
+  // the cart (picked on /procedures), the conversation starts from what they
+  // chose instead of re-asking — the procedure question auto-skips because
+  // its target field becomes known. Seeds never overwrite real answers, and
+  // an in-progress session that already answered procedures is left alone.
+  const cartSeededRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || cartSeededRef.current) return;
+    if (cartItems.length === 0) return;
+    if (answers.procedure_interest || answers.selected_procedures?.length) return;
+    cartSeededRef.current = true;
+    seedAnswers({
+      procedure_interest: cartItems[0].procedure_enum || 'other',
+      selected_procedures: [],
+      procedures_from_cart: true,
+    });
+  }, [isLoading, cartItems, answers.procedure_interest, answers.selected_procedures, seedAnswers]);
 
   // The moment procedures are answered, every one of them joins the same
   // shared cart every other part of the app uses — SafetyWatcher (mounted
   // globally in App.jsx) reacts automatically to any resulting GREEN→RED
   // transition with zero new wiring here. This effect only adds each
   // selected procedure to the cart; it makes no safety decision itself.
+  // When the cart itself was the source (procedures_from_cart), it is already
+  // the truth — syncing back would duplicate items under the safety-engine
+  // naming and corrupt the compatibility analysis.
   useEffect(() => {
+    if (answers.procedures_from_cart) return;
     const selected = answers.selected_procedures?.length
       ? answers.selected_procedures
       : answers.procedure_interest
@@ -87,7 +110,7 @@ export default function ConciergeIntake() {
       if (cartItems.some((i) => i.name === safetyName)) return;
       addItem({ name: safetyName, title: safetyName });
     });
-  }, [answers.procedure_interest, answers.selected_procedures, cartItems, addItem]);
+  }, [answers.procedures_from_cart, answers.procedure_interest, answers.selected_procedures, cartItems, addItem]);
 
   // Shows the "let me evaluate this" narration once per new violation event —
   // resets the moment pivotViolations goes from empty back to non-empty
@@ -378,6 +401,14 @@ function WelcomeCard({ onBegin, resuming }) {
       >
         {resuming ? 'Continue' : 'Begin'}
       </button>
+
+      {/* Escape hatch to the classic wizard — same journey, form-style */}
+      <p style={{ margin: '18px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.4)' }}>
+        Prefer a classic form?{' '}
+        <a href="/booking" style={{ color: GOLD, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          Use the detailed form instead
+        </a>
+      </p>
     </motion.div>
   );
 }

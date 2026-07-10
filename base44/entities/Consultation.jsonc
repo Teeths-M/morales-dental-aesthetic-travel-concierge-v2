@@ -141,6 +141,19 @@
     "occupation": {
       "type": "string"
     },
+    "guardian_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the patient is under 18 — no scheduling proceeds without guardian consent (M Principle)"
+    },
+    "guardian_name": {
+      "type": "string",
+      "description": "Parent/guardian full name (under-18 patients)"
+    },
+    "guardian_contact": {
+      "type": "string",
+      "description": "Parent/guardian phone or email (under-18 patients)"
+    },
     "emergency_contact_name": {
       "type": "string"
     },

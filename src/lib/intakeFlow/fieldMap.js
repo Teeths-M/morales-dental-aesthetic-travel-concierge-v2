@@ -8,7 +8,7 @@
  * change here, not at every call site. Used by ConciergeIntake.jsx's final
  * submission handler to build the Consultation.create() payload.
  */
-import { UNSPECIFIED } from './questionGraph';
+import { UNSPECIFIED, isMinorAge } from './questionGraph';
 
 /** Resolves the "recommend one for me" sentinel back down to empty. */
 function resolved(value) {
@@ -44,5 +44,18 @@ export function buildConsultationPayload(answers) {
     clinical_boundary_acknowledged_at: answers.clinical_boundary_acknowledged
       ? new Date().toISOString()
       : undefined,
+    // Under-18: guardian is recorded as the emergency contact, the record is
+    // flagged, and the case goes straight to admin review — no minor's journey
+    // is ever auto-processed (M Principle). Derived from age here, not from a
+    // client-side flag, so it can't be skipped by jumping steps.
+    ...(isMinorAge(answers.age) ? {
+      guardian_required: true,
+      guardian_name: answers.guardian_name || '',
+      guardian_contact: answers.guardian_contact || '',
+      emergency_contact_name: answers.guardian_name || '',
+      emergency_contact_number: answers.guardian_contact || '',
+      status: 'Admin-Review',
+      risk_level: 'high',
+    } : {}),
   };
 }

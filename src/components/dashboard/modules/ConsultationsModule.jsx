@@ -138,7 +138,7 @@ export default function ConsultationsModule({ consultations = [] }) {
           <h2 className="text-lg font-semibold text-slate-800">My Consultations</h2>
           <p className="text-xs text-slate-400 mt-0.5">Your consultation history and treatment recommendations</p>
         </div>
-        <Link to="/booking">
+        <Link to="/intake">
           <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-9">
             + New Consultation
           </Button>
@@ -150,7 +150,7 @@ export default function ConsultationsModule({ consultations = [] }) {
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-10 text-center">
           <ClipboardList className="w-10 h-10 text-slate-200 mx-auto mb-3" />
           <p className="text-sm text-slate-500 mb-3">No consultations yet</p>
-          <Link to="/booking"><Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs">Book Your First Consultation</Button></Link>
+          <Link to="/intake"><Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs">Book Your First Consultation</Button></Link>
         </div>
       ) : (
         <div className="space-y-3">

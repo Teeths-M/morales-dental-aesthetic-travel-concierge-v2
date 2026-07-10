@@ -75,14 +75,20 @@ export function shouldEscalateToHuman(lowConfidenceStreak) {
 }
 
 /** Total question-type steps (excludes the review step) — for progress display. */
-export function getTotalQuestionCount(questionGraph) {
-  return questionGraph.filter((s) => s.targetFields.length > 0).length;
+export function getTotalQuestionCount(questionGraph, answers = {}) {
+  // Conditional steps (skipIf true — e.g. guardian questions for adults)
+  // don't count toward the total, so progress can genuinely reach 100%.
+  return questionGraph.filter(
+    (s) => s.targetFields.length > 0 && !(typeof s.skipIf === 'function' && s.skipIf(answers))
+  ).length;
 }
 
 /** How many question-type steps are already answered — for progress display. */
 export function getAnsweredQuestionCount(answers, questionGraph) {
   return questionGraph.filter(
-    (s) => s.targetFields.length > 0 && isStepAlreadyAnswered(s, answers)
+    (s) => s.targetFields.length > 0
+      && !(typeof s.skipIf === 'function' && s.skipIf(answers))
+      && isStepAlreadyAnswered(s, answers)
   ).length;
 }
 

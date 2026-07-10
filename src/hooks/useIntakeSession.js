@@ -31,6 +31,12 @@ function reducer(state, action) {
     }
     case 'INCREMENT_LOW_CONFIDENCE':
       return { ...state, lowConfidenceStreak: (state.lowConfidenceStreak || 0) + 1 };
+    case 'SEED': {
+      // Pre-fill answers from an external source (e.g. procedures already in
+      // the cart when the user arrives). Existing answers always win — a seed
+      // must never overwrite something the user actually said.
+      return { ...state, answers: { ...action.payload, ...state.answers } };
+    }
     case 'GO_BACK': {
       const { stepId, targetFields } = action.payload;
       const nextAnswers = { ...state.answers };
@@ -321,6 +327,10 @@ export function useIntakeSession() {
     dispatch({ type: 'GO_BACK', payload: { stepId: previousStepId, targetFields: prevStep.targetFields } });
   }, [previousStepId]);
 
+  const seedAnswers = useCallback((partial) => {
+    dispatch({ type: 'SEED', payload: partial });
+  }, []);
+
   return {
     answers,
     turnHistory,
@@ -330,6 +340,7 @@ export function useIntakeSession() {
     isLoading,
     submitAnswer,
     submitFreeTextAnswer,
+    seedAnswers,
     goBack,
     canGoBack: !!previousStepId,
     nextStepResult,
