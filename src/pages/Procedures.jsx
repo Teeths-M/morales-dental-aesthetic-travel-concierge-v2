@@ -117,7 +117,7 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore, languag
             className={`w-full min-h-[44px] rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
               isSelected
                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30'
-                : 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 hover:border-[#D4AF37]/50'
+                : 'bg-white/[0.04] text-white/70 border border-white/[0.14] hover:bg-white/[0.08] hover:text-white hover:border-white/25'
             }`}
           >
             {isSelected
@@ -375,6 +375,15 @@ export default function Procedures() {
                 <p className="text-center text-xs text-amber-600 mt-3 flex items-center justify-center gap-1">
                   <AlertCircle className="w-3 h-3" />
                   Select at least one procedure to continue
+                </p>
+              )}
+              {items.length > 0 && (
+                <p className="text-center text-xs text-white/40 mt-3">
+                  {language === 'es'
+                    ? '¿Combinando procedimientos? Añade más primero — verificaremos que sean seguros juntos.'
+                    : language === 'fr'
+                      ? "Vous combinez des procédures ? Ajoutez-en d'abord — nous vérifierons leur compatibilité."
+                      : "Building a combined plan? Add more first — we'll check they're safe together."}
                 </p>
               )}
             </motion.div>
