@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function generateVaultToken() {
   const rawBytes = new Uint8Array(24);
@@ -12,7 +13,7 @@ async function generateShareToken() {
   return 'SHARE_' + Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -166,4 +167,4 @@ Deno.serve(async (req) => {
     console.error('[uploadToVault]', error);
     return Response.json({ error: 'Upload failed. Please try again.' }, { status: 500 });
   }
-});
+}, { name: 'uploadToVault', requireAuth: false }));

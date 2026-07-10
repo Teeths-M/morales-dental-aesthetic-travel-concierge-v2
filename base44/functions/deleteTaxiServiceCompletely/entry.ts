@@ -1,15 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
-    const body = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body();
     const { service_id } = body;
 
     if (!service_id) {
@@ -35,8 +27,4 @@ Deno.serve(async (req) => {
       success: true, 
       message: `Taxi Service ${service_id} and all related records deleted successfully` 
     });
-  } catch (error) {
-    console.error('Error deleting taxi service:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'deleteTaxiServiceCompletely', allowedRoles: ['admin', 'platform_admin'] }));

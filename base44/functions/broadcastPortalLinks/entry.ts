@@ -1,4 +1,4 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -18,20 +18,12 @@ function buildTwilioSms(to, message, accountSid, authToken, fromNumber) {
   });
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
     const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
 
-    const body = await req.json();
+    const body = await body();
     const { dry_run = false, target_groups = ['doctors', 'travel_agencies', 'taxi_services', 'patients'] } = body;
 
     const twilioReady = accountSid && authToken && fromNumber && accountSid.startsWith('AC');
@@ -248,9 +240,4 @@ Deno.serve(async (req) => {
       },
       details: results,
     });
-  } catch (error) {
-    // BUG-R12-01 FIX: SEC-10
-    console.error('[broadcastPortalLinks]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'broadcastPortalLinks', allowedRoles: ['admin', 'platform_admin'] }));

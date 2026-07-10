@@ -1,3 +1,4 @@
+import { createHandler } from '../_shared/createHandler.ts';
 /**
  * Health Check Endpoint
  * 
@@ -5,7 +6,7 @@
  * Public endpoint - no auth required.
  */
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   if (req.method !== 'GET') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
@@ -19,7 +20,7 @@ Deno.serve(async (req) => {
   };
 
   return Response.json(health);
-});
+}, { name: 'health', requireAuth: false }));
 
 const processStartTime = Date.now();
 

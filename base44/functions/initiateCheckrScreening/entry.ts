@@ -1,15 +1,7 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user || user.role !== 'admin' && user.role !== 'platform_admin') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { provider_id, provider_type, provider_email, provider_name } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { provider_id, provider_type, provider_email, provider_name } = await body();
 
     if (!provider_id || !provider_type || !provider_email) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -37,9 +29,4 @@ Deno.serve(async (req) => {
       candidate_id,
       message: 'Background check initiated successfully'
     });
-
-  } catch (error) {
-    console.error('Checkr initiation error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'initiateCheckrScreening', allowedRoles: ['admin', 'platform_admin'] }));

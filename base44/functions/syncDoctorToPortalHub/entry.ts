@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { event, data } = await req.json();
@@ -41,4 +42,4 @@ Deno.serve(async (req) => {
     console.error('[syncDoctorToPortalHub]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'syncDoctorToPortalHub', requireAuth: false }));

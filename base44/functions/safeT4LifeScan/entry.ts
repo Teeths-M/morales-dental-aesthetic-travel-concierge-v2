@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -343,7 +344,7 @@ function computeRiskScore(caseRecord) {
   return { tier, score, flags, bmi: bmi ? parseFloat(bmi.toFixed(1)) : null, procedure_count: procedureCount };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -548,4 +549,4 @@ Deno.serve(async (req) => {
     console.error('[safeT4LifeScan]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'safeT4LifeScan', requireAuth: false }));

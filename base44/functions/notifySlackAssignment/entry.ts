@@ -1,6 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { doctor_name, doctor_email, patient_name, procedure, country, case_id, pool_size, active_cases } = await req.json();
@@ -66,4 +67,4 @@ Deno.serve(async (req) => {
     console.error('[notifySlackAssignment]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'notifySlackAssignment', requireAuth: false }));

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── checkRecoveryAnomaly ──────────────────────────────────────────────────────
 // Creates a RecoveryLog + runs rule-based anomaly detection.
@@ -114,7 +115,7 @@ function runRules(current, prevLogs) {
   return { severity, reasons };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -313,4 +314,4 @@ Deno.serve(async (req) => {
     console.error('[checkRecoveryAnomaly]', err);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'checkRecoveryAnomaly', requireAuth: false }));

@@ -12,8 +12,9 @@
  *   if (res.data?.suppressed) return; // skip sending
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -72,4 +73,4 @@ Deno.serve(async (req) => {
     // Never crash notification flows — if guard fails, allow notification through
     return Response.json({ suppressed: false, error: 'An internal error occurred.' });
   }
-});
+}, { name: 'checkNotificationBlackout', requireAuth: false }));

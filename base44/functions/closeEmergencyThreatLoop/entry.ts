@@ -15,6 +15,7 @@
  * 8. Email emergency contacts: "{name} is safe"
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -38,7 +39,7 @@ function generateIncidentRef(): string {
   return `INC-${suffix}`;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { pin_session_token, safe_location, notes } = await req.json();
@@ -179,4 +180,4 @@ Deno.serve(async (req) => {
     console.error('[closeEmergencyThreatLoop]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'closeEmergencyThreatLoop', requireAuth: false }));

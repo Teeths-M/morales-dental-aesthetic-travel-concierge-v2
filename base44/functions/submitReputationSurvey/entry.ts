@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const GOOGLE_REVIEW_URL = 'https://g.page/r/morales-medical/review';
 const TRUSTPILOT_URL = 'https://www.trustpilot.com/evaluate/moralesmedical.com';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -56,4 +57,4 @@ Deno.serve(async (req) => {
     console.error('[submitReputationSurvey]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'submitReputationSurvey', requireAuth: false }));

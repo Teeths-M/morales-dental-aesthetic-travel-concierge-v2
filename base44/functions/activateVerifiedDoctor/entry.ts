@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── activateVerifiedDoctor ────────────────────────────────────────────────────
 // THE SINGLE GATED FUNCTION that can set a Doctor to status='active'.
@@ -60,7 +61,7 @@ function verifyAutoActivationProof(doctorId: string, timestamp: string, proof: s
   return timingSafeEqual(expectedBuf, proofBuf);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -198,4 +199,4 @@ Deno.serve(async (req) => {
     console.error('[activateVerifiedDoctor]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'activateVerifiedDoctor', requireAuth: false }));

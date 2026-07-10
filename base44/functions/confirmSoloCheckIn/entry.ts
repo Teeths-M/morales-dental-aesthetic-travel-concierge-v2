@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -16,7 +17,7 @@ async function getLastAuditHash(base44) {
 // Called when user clicks "I'M SAFE" button in their check-in email.
 // POST body: { check_in_id, token }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { check_in_id, token } = await req.json();
@@ -126,4 +127,4 @@ Deno.serve(async (req) => {
     console.error('[confirmSoloCheckIn]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'confirmSoloCheckIn', requireAuth: false }));

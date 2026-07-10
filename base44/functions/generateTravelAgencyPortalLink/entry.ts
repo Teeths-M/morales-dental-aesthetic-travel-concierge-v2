@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7 * 24 * 60 * 60 * 1000 };
@@ -10,16 +10,8 @@ async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
   return btoa(data) + '.' + sigHex;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    const body = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body();
     const { consultation_id, travel_agency_id } = body;
 
     if (!consultation_id || !travel_agency_id) {
@@ -39,8 +31,4 @@ Deno.serve(async (req) => {
       token,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
-  } catch (error) {
-    console.error('[generateTravelAgencyPortalLink]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'generateTravelAgencyPortalLink', allowedRoles: ['admin', 'platform_admin'] }));

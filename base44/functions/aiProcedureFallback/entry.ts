@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     
@@ -203,4 +204,4 @@ Language hint: Detect from query and match procedure names accordingly.`,
       is_fallback: true
     });
   }
-});
+}, { name: 'aiProcedureFallback', requireAuth: false }));

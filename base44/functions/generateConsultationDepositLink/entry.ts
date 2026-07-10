@@ -1,9 +1,10 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const DEPOSIT_AMOUNT = 60;
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     // FIX: same issue as generateStripePaymentLink — this hard-required a login before
@@ -122,4 +123,4 @@ Deno.serve(async (req) => {
     console.error('Consultation deposit link error:', error.message);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'generateConsultationDepositLink', requireAuth: false }));

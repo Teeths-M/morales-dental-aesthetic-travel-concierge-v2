@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Generates a stateless HMAC-SHA256 reset token and emails it to the user.
 // No new entity needed — token is self-contained with email + expiry.
@@ -19,7 +20,7 @@ async function signToken(data: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { user_email, pin_type } = await req.json().catch(() => ({}));
@@ -66,4 +67,4 @@ Deno.serve(async (req) => {
     console.error('[requestPINReset]', err);
     return Response.json({ error: 'Failed to send reset email. Please try again.' }, { status: 500 });
   }
-});
+}, { name: 'requestPINReset', requireAuth: false }));

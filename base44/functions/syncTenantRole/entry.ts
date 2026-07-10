@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const roleByTenantType = {
   doctor: 'doctor',
@@ -22,7 +23,7 @@ const entityByTenantType = {
 // to admin.
 const FORBIDDEN_ROLES = new Set(['admin', 'platform_admin']);
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -106,4 +107,4 @@ Deno.serve(async (req) => {
     console.error('Tenant role sync failed:', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'syncTenantRole', requireAuth: false }));

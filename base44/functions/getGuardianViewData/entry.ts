@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Public-safe guardian data endpoint — no user auth required (link-gated).
 // Always returns HTTP 200 with a `status` field so the frontend can branch
 // without needing to parse axios error objects.
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { token } = await req.json().catch(() => ({}));
@@ -291,4 +292,4 @@ Deno.serve(async (req) => {
   } catch (_) {
     return Response.json({ status: 'error', error: 'Unable to load guardian data. Please try again.' });
   }
-});
+}, { name: 'getGuardianViewData', requireAuth: false }));

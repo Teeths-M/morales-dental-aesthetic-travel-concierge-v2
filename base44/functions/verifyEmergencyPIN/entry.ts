@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Sliding-window rate limiter using RateLimitBucket entity
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
@@ -64,7 +65,7 @@ async function validatePinSession(base44, token) {
   return { valid: true, session };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { action, user_email, pin, new_pin, hint, pin_session_token } = await req.json();
@@ -296,4 +297,4 @@ Deno.serve(async (req) => {
     console.error('[verifyEmergencyPIN]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'verifyEmergencyPIN', requireAuth: false }));

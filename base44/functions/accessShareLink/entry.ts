@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
@@ -13,7 +14,7 @@ async function getLastAuditHash(base44) {
   } catch (_) { return 'GENESIS'; }
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -119,4 +120,4 @@ Deno.serve(async (req) => {
     console.error('[accessShareLink]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'accessShareLink', requireAuth: false }));

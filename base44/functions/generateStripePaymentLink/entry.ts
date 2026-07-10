@@ -13,6 +13,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
 import { getViolations } from '../_shared/procedureCompatibility.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
@@ -32,7 +33,7 @@ async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   return true;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     // FIX: this doc comment above has always said "caller must be the case owner,
@@ -202,4 +203,4 @@ Deno.serve(async (req) => {
     console.error('[generateStripePaymentLink]', error.message);
     return Response.json({ error: 'Payment link generation failed.' }, { status: 500 });
   }
-});
+}, { name: 'generateStripePaymentLink', requireAuth: false }));

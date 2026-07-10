@@ -13,6 +13,7 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@17.0.0';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Commission tiers by partner type (platform take-rate)
 const COMMISSION_RULES = {
@@ -64,7 +65,7 @@ async function checkMilestones(base44, caseId) {
   };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -234,4 +235,4 @@ Deno.serve(async (req) => {
     console.error('[processPartnerPayout]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'processPartnerPayout', requireAuth: false }));

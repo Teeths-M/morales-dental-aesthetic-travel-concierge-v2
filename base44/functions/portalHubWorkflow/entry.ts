@@ -1,5 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { renderEmail } from '../_shared/emailTemplate.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 
@@ -64,7 +65,7 @@ const formatList = (value, fallback = 'None') => {
   return items.length ? items.join(', ') : fallback;
 };
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -303,4 +304,4 @@ Return a JSON with:
     console.error('[portalHubWorkflow]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'portalHubWorkflow', requireAuth: false }));

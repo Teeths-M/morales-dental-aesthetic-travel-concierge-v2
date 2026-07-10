@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { renderEmail } from '../_shared/emailTemplate.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 /**
  * requestConfigChange — creates a pending SystemConfigChange and notifies all admins.
  * Called by admin UI when trying to change DefaultDoctorConfig, ADMIN_EMAIL, or risk_weights.
  */
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -110,4 +111,4 @@ Deno.serve(async (req) => {
     console.error('[requestConfigChange]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'requestConfigChange', requireAuth: false }));

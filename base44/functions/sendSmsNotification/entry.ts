@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Sliding-window rate limiter using RateLimitBucket entity
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
@@ -41,7 +42,7 @@ const SMS_TEMPLATES = {
   custom: (message) => message,
 };
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -162,4 +163,4 @@ Deno.serve(async (req) => {
     console.error('[sendSmsNotification]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'sendSmsNotification', requireAuth: false }));

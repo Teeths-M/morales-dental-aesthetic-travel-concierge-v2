@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { renderEmail } from '../_shared/emailTemplate.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { action, consultation_id, case_id, payload } = await req.json();
@@ -708,4 +709,4 @@ Deno.serve(async (req) => {
     console.error('[iq200Pipeline]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'iq200Pipeline', requireAuth: false }));

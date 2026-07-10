@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { consultation_id, doctor_question } = await req.json();
@@ -57,4 +58,4 @@ Deno.serve(async (req) => {
     console.error('[notifyPatientInfoRequest]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'notifyPatientInfoRequest', requireAuth: false }));

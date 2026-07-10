@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { renderEmail } from '../_shared/emailTemplate.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const { consultation_id, patient_name, revision_count, flight_cost_usd, hotel_cost_usd } = await req.json();
@@ -41,4 +42,4 @@ Deno.serve(async (req) => {
     console.error('[notifyAdminQuoteRevised]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'notifyAdminQuoteRevised', requireAuth: false }));

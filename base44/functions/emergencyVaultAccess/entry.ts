@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
@@ -30,7 +31,7 @@ async function validatePinSession(base44, token) {
   return { valid: true, session };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -98,4 +99,4 @@ Deno.serve(async (req) => {
     console.error('[emergencyVaultAccess]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'emergencyVaultAccess', requireAuth: false }));

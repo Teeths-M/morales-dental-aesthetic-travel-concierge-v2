@@ -1,5 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
@@ -81,7 +82,7 @@ function chauffeurEmail({ driverName, passengerName, serviceType, routes, caseRe
 </table></td></tr></table></body></html>`;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -206,4 +207,4 @@ Deno.serve(async (req) => {
     console.error('[assignChauffeurServices]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'assignChauffeurServices', requireAuth: false }));

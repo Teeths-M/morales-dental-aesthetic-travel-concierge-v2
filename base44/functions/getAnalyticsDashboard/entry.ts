@@ -1,14 +1,6 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     // Fetch with limits to prevent unbounded full-table scans
     const [allCases, allWorkflows, allDoctors] = await Promise.all([
       base44.asServiceRole.entities.CaseRecord.list('-created_date', 500),
@@ -151,7 +143,4 @@ Deno.serve(async (req) => {
       doctor_performance: doctorPerformance,
       generated_at: now.toISOString(),
     });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getAnalyticsDashboard', allowedRoles: ['admin', 'platform_admin'] }));

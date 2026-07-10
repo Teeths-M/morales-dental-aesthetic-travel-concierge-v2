@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Sliding-window rate limiter using RateLimitBucket entity
 // Returns true if request is allowed, false if rate limit exceeded.
@@ -30,7 +31,7 @@ const SOS_ROUTES = {
   silent_sos: { label: 'Silent SOS', priority: 1, silent: true },
 };
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     // SOS requires either a logged-in user OR a valid PIN session token
@@ -313,4 +314,4 @@ Deno.serve(async (req) => {
     console.error('[triggerSOS]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'triggerSOS', requireAuth: false }));

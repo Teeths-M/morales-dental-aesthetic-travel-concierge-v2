@@ -4,6 +4,7 @@
  * transitions the case to RECOVERY_PHASE_7_DAY.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sendSms(to: string, body: string): Promise<void> {
   const sid  = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -18,7 +19,7 @@ async function sendSms(to: string, body: string): Promise<void> {
   }).catch(e => console.warn('[logProcedureComplete] SMS failed:', e.message));
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -174,4 +175,4 @@ Deno.serve(async (req) => {
     console.error('[logProcedureComplete]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'logProcedureComplete', requireAuth: false }));

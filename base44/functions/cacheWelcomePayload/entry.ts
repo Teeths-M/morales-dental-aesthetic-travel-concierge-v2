@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── cacheWelcomePayload ───────────────────────────────────────────────────────
 // Builds a fully-resolved welcome payload from:
@@ -75,7 +76,7 @@ function substituteTemplate(template, vars) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '');
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -171,4 +172,4 @@ Deno.serve(async (req) => {
     console.error('[cacheWelcomePayload]', err);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'cacheWelcomePayload', requireAuth: false }));

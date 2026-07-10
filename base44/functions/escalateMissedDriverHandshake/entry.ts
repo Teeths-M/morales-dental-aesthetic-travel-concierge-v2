@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── escalateMissedDriverHandshake — cron/scheduled function ──────────────────
 // Runs every minute via Base44 scheduler.
@@ -30,7 +31,7 @@ async function sendSms(to: string, message: string) {
   return resp.ok ? { ok: true, sid: result.sid } : { ok: false, error: result.message || 'twilio_error' };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -188,4 +189,4 @@ Deno.serve(async (req) => {
     console.error('[escalateMissedDriverHandshake]', err);
     return Response.json({ error: 'Internal error' }, { status: 500 });
   }
-});
+}, { name: 'escalateMissedDriverHandshake', requireAuth: false }));

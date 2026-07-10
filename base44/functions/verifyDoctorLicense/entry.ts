@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── verifyDoctorLicense ───────────────────────────────────────────────────────
 // Handles admin decisions on the LICENSE sub-check only.
@@ -13,7 +14,7 @@ import { computePrevHash } from '../_shared/auditHashChain.ts';
 //  manual_override → admin overrides with documented reason (requires override_reason)
 //  request_review  → sends doctor back to pending_manual queue
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -122,4 +123,4 @@ Deno.serve(async (req) => {
     console.error('[verifyDoctorLicense]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'verifyDoctorLicense', requireAuth: false }));

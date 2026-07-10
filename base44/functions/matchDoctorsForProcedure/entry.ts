@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -21,7 +22,7 @@ async function expandSynonyms(term: string): Promise<string[]> {
   } catch { return [term.toLowerCase()]; }
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     
@@ -169,4 +170,4 @@ SAFE-T 4LIFE™ Team`
     console.error('[matchDoctorsForProcedure]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'matchDoctorsForProcedure', requireAuth: false }));

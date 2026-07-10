@@ -1,15 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
-    const body = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body();
     const doctor_id = body.doctor_id || body.event?.entity_id || body.data?.id || body.old_data?.id;
     const isDeleteAutomation = body.event?.type === 'delete' && body.event?.entity_name === 'Doctor';
 
@@ -38,8 +30,4 @@ Deno.serve(async (req) => {
       success: true, 
       message: `Doctor ${doctor_id} and related records cleaned up successfully` 
     });
-  } catch (error) {
-    console.error('Error deleting doctor:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'deleteDoctorCompletely', allowedRoles: ['admin', 'platform_admin'] }));

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Verifies the HMAC-signed reset token from the email link.
 // action=verify  → returns { valid, email } (used by ResetPIN page on load)
@@ -95,7 +96,7 @@ function decodeToken(token: string): { email: string; expiresAt: number } | null
   }
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     if (!RESET_SECRET) {
       console.error('[confirmPINReset] PIN_RESET_SECRET env var is not set');
@@ -193,4 +194,4 @@ Deno.serve(async (req) => {
     console.error('[confirmPINReset]', err);
     return Response.json({ error: 'An error occurred. Please try again.' }, { status: 500 });
   }
-});
+}, { name: 'confirmPINReset', requireAuth: false }));

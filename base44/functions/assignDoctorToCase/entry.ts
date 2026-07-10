@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
 const TEAM = 'Morales Concierge Team';
@@ -59,7 +60,7 @@ async function generateSecureToken(prefix, caseId) {
   return `${prefix}_${caseId}_${hex}`;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -249,4 +250,4 @@ Deno.serve(async (req) => {
     console.error('[assignDoctorToCase]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'assignDoctorToCase', requireAuth: false }));

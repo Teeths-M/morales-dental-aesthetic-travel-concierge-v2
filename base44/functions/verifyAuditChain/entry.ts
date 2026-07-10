@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
@@ -6,7 +7,7 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
@@ -105,4 +106,4 @@ Deno.serve(async (req) => {
     console.error('[verifyAuditChain]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'verifyAuditChain', requireAuth: false }));

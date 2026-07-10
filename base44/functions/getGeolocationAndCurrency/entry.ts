@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── SAFE-T GEO ENGINE ───────────────────────────────────────────────────────
 // Primary:   ipapi.co   (free, no key, HTTPS, 30k req/month, good Caribbean accuracy)
@@ -132,7 +133,7 @@ async function fromIpwhoIs(ip) {
   };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const ip = extractClientIp(req);
     const cacheKey = `geo_v3_${ip}`; // v3 — clears stale v1/v2 misidentified entries
@@ -172,4 +173,4 @@ Deno.serve(async (req) => {
   } catch (_) {
     return Response.json({ country: 'Unknown', country_code: 'US', currency: 'USD', source: 'default_fallback' });
   }
-});
+}, { name: 'getGeolocationAndCurrency', requireAuth: false }));

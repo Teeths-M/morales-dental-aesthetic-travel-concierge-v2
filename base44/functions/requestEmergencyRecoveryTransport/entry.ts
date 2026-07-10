@@ -7,6 +7,7 @@
  * Does NOT require patient's physical card or original device.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -48,7 +49,7 @@ async function validatePinSession(base44, token) {
   return { valid: true, session };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
@@ -240,4 +241,4 @@ ${!driverRecord ? `<p style="color:#dc2626;font-weight:bold;margin-top:16px;">âš
     console.error('[requestEmergencyRecoveryTransport]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'requestEmergencyRecoveryTransport', requireAuth: false }));

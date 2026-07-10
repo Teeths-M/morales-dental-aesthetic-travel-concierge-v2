@@ -14,6 +14,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── Configurable thresholds (minutes after missed check-in) ─────────────────
 // context_type on SoloCheckIn overrides these defaults per-checkpoint.
@@ -251,7 +252,7 @@ async function makeVoiceCall(twilioSid, twilioAuth, from, to, twiml) {
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     // Allow both admin-gated manual invocations and scheduled (no user) runs
@@ -769,4 +770,4 @@ Deno.serve(async (req) => {
   } catch (err) {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'runSilentSafetyEscalation', requireAuth: false }));

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ── recalculateTripTimings ────────────────────────────────────────────────────
 // Triggered by manageTripPause on resume.
@@ -36,7 +37,7 @@ async function sendSms(to, body) {
   return resp.ok ? { ok: true, sid: r.sid } : { ok: false, error: r.message };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
@@ -179,4 +180,4 @@ Deno.serve(async (req) => {
     console.error('[recalculateTripTimings]', err);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'recalculateTripTimings', requireAuth: false }));

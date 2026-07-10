@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function verifyPortalToken(token) {
   const [b64, sigHex] = token.split('.');
@@ -14,7 +15,7 @@ async function verifyPortalToken(token) {
   return payload;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
@@ -108,4 +109,4 @@ Deno.serve(async (req) => {
     console.error('[getPortalData]', error);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'getPortalData', requireAuth: false }));

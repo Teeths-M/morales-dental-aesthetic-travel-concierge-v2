@@ -1,7 +1,8 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import webPush from 'npm:web-push@3.6.7';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
     // Allow admin users OR internal service-to-service calls (no auth header = system call)
@@ -55,4 +56,4 @@ Deno.serve(async (req) => {
   } catch (error) {
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'sendPushNotification', requireAuth: false }));

@@ -1,6 +1,7 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
+Deno.serve(createHandler(async ({ req }) => {
   try {
   const base44 = createClientFromRequest(req);
 
@@ -305,4 +306,4 @@ Don't miss this opportunity — slots fill fast!
     console.error('[capacityCheck]', err);
     return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
-});
+}, { name: 'capacityCheck', requireAuth: false }));

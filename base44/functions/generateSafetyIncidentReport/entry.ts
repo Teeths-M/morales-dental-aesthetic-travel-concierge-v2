@@ -3,7 +3,7 @@
  * Compiles a wilderness/SOS incident timeline report with AI narrative synthesis.
  * Does NOT include sensitive medical/vault data.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -31,16 +31,8 @@ Write a 3-sentence incident summary: (1) what happened, (2) how the response cha
   } catch { return null; }
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    let user = null;
-    try { user = await base44.auth.me(); } catch (_) {}
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Admin access required.' }, { status: 403 });
-    }
-
-    const { sos_event_id, case_id, patient_email } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { sos_event_id, case_id, patient_email } = await body();
     if (!sos_event_id && !patient_email) {
       return Response.json({ error: 'sos_event_id or patient_email required.' }, { status: 400 });
     }
@@ -162,9 +154,4 @@ Deno.serve(async (req) => {
     }).catch(() => {});
 
     return Response.json({ report, success: true });
-
-  } catch (error) {
-    console.error('[generateSafetyIncidentReport]', error);
-    return Response.json({ error: 'Internal error generating report.' }, { status: 500 });
-  }
-});
+}, { name: 'generateSafetyIncidentReport', allowedRoles: ['admin', 'platform_admin'] }));
