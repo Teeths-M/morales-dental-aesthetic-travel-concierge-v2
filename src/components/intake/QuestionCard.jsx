@@ -7,6 +7,8 @@ import DoctorPickStep from './DoctorPickStep';
 import ConditionsPickStep from './ConditionsPickStep';
 import AllergiesPickStep from './AllergiesPickStep';
 import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
+import { useTranslation } from '@/i18n';
+import { translateStep } from '@/lib/intakeFlow/translateStep';
 
 const GOLD = '#D4AF37';
 const CARD = '#0C1A1D';
@@ -39,6 +41,10 @@ const RECOMMENDED_COUNT = 5;
  * that (typing is the last resort, never the first interaction).
  */
 export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamicOptions, dynamicOptionsLoading, doctorSearch = null, destinationCountry = '', priceEstimates = null, onBack = null, searchFirstOptions = [] }) {
+  const { t } = useTranslation();
+  // Display-time localization; the graph's English stays canonical for the
+  // LLM context and stored question_shown (backend consistency).
+  const { question: displayQuestion, reason: displayReason } = translateStep(step, t);
   const [value, setValue] = useState('');
   const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
@@ -524,7 +530,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
             lineHeight: 1.4,
           }}
         >
-          {step.question}
+          {displayQuestion}
         </h2>
         <p
           style={{
@@ -534,7 +540,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
             opacity: 0.85,
           }}
         >
-          {step.deterministicReason}
+          {displayReason}
         </p>
         {renderInput()}
       </motion.div>

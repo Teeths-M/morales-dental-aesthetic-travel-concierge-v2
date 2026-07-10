@@ -262,5 +262,81 @@
     "contact_us": "Contact Us",
     "logout": "Logout",
     "language": "Language"
+  },
+  "intake": {
+    "steps": {
+      "patient_name": {
+        "q": "First, what's your name?",
+        "why": "so your care team knows who they're looking after"
+      },
+      "age": {
+        "q": "And how old are you?",
+        "why": "so we can shape the journey correctly from the very start — and bring in a parent or guardian if you are under 18"
+      },
+      "guardian_name": {
+        "q": "Because you're under 18, a parent or guardian will be part of every step of this journey. What's their full name?",
+        "why": "we never plan care for anyone under 18 without a guardian involved — they approve every decision alongside you"
+      },
+      "guardian_contact": {
+        "q": "And the best phone number or email to reach them?",
+        "why": "so your care team can include your guardian directly in every confirmation and consent step"
+      },
+      "procedure_interest": {
+        "q": "What would you like to improve or treat? You can choose more than one.",
+        "why": "so we can begin matching you with the right specialists — and check that everything you choose can be safely combined"
+      },
+      "destination_country": {
+        "q": "Do you have a destination in mind, or would you like a recommendation?",
+        "why": "so we can find doctors licensed in your destination"
+      },
+      "email": {
+        "q": "Where should I send what I'm finding for you?",
+        "why": "so the doctors, prices, and plan I'm putting together reach your inbox — and you never lose your place"
+      },
+      "phone": {
+        "q": "A phone number, in case we need to reach you quickly?",
+        "why": "so your coordinator can reach you directly if anything needs your attention"
+      },
+      "doctor_selection": {
+        "q": "Based on your procedure and destination, here are your matched doctors.",
+        "why": "so you can choose who cares for you, or let your care team recommend the best match"
+      },
+      "gender": {
+        "q": "How do you identify?",
+        "why": "a detail your doctor uses to plan your procedure correctly"
+      },
+      "nationality": {
+        "q": "What's your home country?",
+        "why": "so we can check visa and travel requirements ahead of time"
+      },
+      "medical_conditions_other": {
+        "q": "Do you have any medical conditions your doctor should know about?",
+        "why": "so your doctor can prepare the safest possible plan for you"
+      },
+      "allergy_details": {
+        "q": "Any allergies — medications, foods, or otherwise?",
+        "why": "so nothing is prescribed or served that could harm you"
+      },
+      "has_companion": {
+        "q": "Will someone be travelling with you?",
+        "why": "so we can plan for one traveller or more from the start"
+      },
+      "preferred_date": {
+        "q": "When would you like to travel?",
+        "why": "so we can check your doctor's and destination's availability"
+      },
+      "duration_of_stay": {
+        "q": "How long can you stay for recovery?",
+        "why": "so your recovery plan and accommodation match your schedule"
+      },
+      "clinical_boundary_acknowledged": {
+        "q": "One last thing — please confirm you understand Morales coordinates your care but doesn't diagnose or prescribe. Your doctor makes every clinical decision.",
+        "why": "a clear boundary we hold with every patient, always"
+      },
+      "final_review": {
+        "q": "Here's everything I've gathered — take a look before I send it to your care team.",
+        "why": "so nothing goes to your care team without your review"
+      }
+    }
   }
 }

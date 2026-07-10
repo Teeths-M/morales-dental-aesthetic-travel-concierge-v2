@@ -95,7 +95,14 @@ export function useTranslation() {
 
   function t(key, params) {
     const dict = RESOURCES[lang] || RESOURCES['en'];
-    return resolve(dict, key, params);
+    const value = resolve(dict, key, params);
+    // Missing key in the active language → fall back to English rather than
+    // showing a raw dotted key. Lets locale files be filled progressively
+    // (professionally translated content lands language by language).
+    if (value === key && lang !== 'en') {
+      return resolve(RESOURCES['en'], key, params);
+    }
+    return value;
   }
 
   return {
