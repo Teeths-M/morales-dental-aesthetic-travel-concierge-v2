@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { getChecklist } from '@/lib/activityChecklists';
 import {
   Zap, Waves, Mountain, Wind, Leaf, Plus, Shield, CheckCircle2, Circle,
   Clock, AlertTriangle, Bell, Loader2, ChevronDown, ChevronUp
@@ -53,42 +54,63 @@ export default function ActivitySafetyAdvisor({ caseId }) {
 
   useEffect(() => { loadSessions(); }, [caseId]);
 
+  // Direct entity operations — the same proven pattern AdventureSafetyCenter
+  // uses. (This component previously invoked 'registerActivitySession' /
+  // 'submitActivityHandshake', edge functions that never existed — both
+  // actions silently failed since the day this panel was written.)
   const registerActivity = async () => {
     if (!selectedType || !form.date || !form.time) return;
     setLoading(true);
-    const startAt = new Date(`${form.date}T${form.time}`).toISOString();
-    const endAt = new Date(new Date(startAt).getTime() + form.duration_hours * 60 * 60 * 1000).toISOString();
+    try {
+      const startAt = new Date(`${form.date}T${form.time}`).toISOString();
+      const endAt = new Date(new Date(startAt).getTime() + form.duration_hours * 60 * 60 * 1000).toISOString();
+      const handshakeDue = new Date(new Date(endAt).getTime() + 2 * 60 * 60 * 1000).toISOString();
+      const user = await base44.auth.me();
 
-    const res = await base44.functions.invoke('registerActivitySession', {
-      case_id: caseId,
-      activity_name: selectedType.label,
-      activity_category: selectedType.category,
-      risk_level: selectedType.risk,
-      scheduled_start_at: startAt,
-      scheduled_end_at: endAt,
-      location: form.location,
-      operator_name: form.operator
-    });
+      await base44.entities.ActivitySession.create({
+        case_id: caseId || '',
+        patient_id: user.id,
+        patient_email: user.email,
+        patient_name: user.full_name,
+        activity_name: selectedType.label,
+        activity_category: selectedType.category,
+        risk_level: selectedType.risk,
+        scheduled_start_at: startAt,
+        scheduled_end_at: endAt,
+        handshake_due_at: handshakeDue,
+        handshake_status: 'pending',
+        status: 'registered',
+        location: form.location,
+        operator_name: form.operator,
+        iso_checklist_items: getChecklist(selectedType.id),
+      });
 
-    if (res.data?.session) {
-      toast({ title: `✅ ${selectedType.label} registered`, description: 'Safety checklist sent to your email.' });
+      toast({ title: `✅ ${selectedType.label} registered`, description: 'Safety checklist created. Check in when your activity ends.' });
       setShowForm(false);
       setSelectedType(null);
       setForm({ date: '', time: '', duration_hours: 2, location: '', operator: '' });
       loadSessions();
+    } catch (_) {
+      toast({ title: 'Could not register the activity', description: 'Please try again.', variant: 'destructive' });
     }
     setLoading(false);
   };
 
   const submitHandshake = async (sessionId, safe) => {
     setHandshaking(sessionId);
-    const res = await base44.functions.invoke('submitActivityHandshake', { session_id: sessionId, safe });
-    if (res.data) {
+    try {
+      await base44.entities.ActivitySession.update(sessionId, {
+        handshake_status: 'completed',
+        handshake_completed_at: new Date().toISOString(),
+        status: safe ? 'completed' : 'escalated',
+      });
       toast({
         title: safe ? '✅ Check-in complete — glad you are safe!' : '🚨 Emergency alert sent',
         variant: safe ? 'default' : 'destructive'
       });
       loadSessions();
+    } catch (_) {
+      toast({ title: 'Check-in did not go through', description: 'Please try again — or contact your coordinator directly.', variant: 'destructive' });
     }
     setHandshaking(null);
   };
