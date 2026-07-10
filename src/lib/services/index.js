@@ -1,8 +1,7 @@
 /**
- * lib/services barrel — kept for backwards compatibility.
- * New code should import from '@/services' instead.
+ * Service layer barrel — the single canonical data-access layer.
+ * (The parallel src/services/ layer was never adopted and has been removed.)
  */
 export { vaultService }  from './vaultService';
-export { caseService }   from '@/services/caseService';
 export { auditService }  from './auditService';
 export * from './vaultSyncService';

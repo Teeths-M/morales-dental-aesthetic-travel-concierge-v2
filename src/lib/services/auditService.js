@@ -10,9 +10,12 @@ import { base44 } from '@/api/base44Client';
  * @param {string} params.event_type   - AuditLog.event_type enum value
  * @param {string} params.resource_type
  * @param {string} params.resource_id
+ * @param {string} [params.resource_name]
  * @param {string} [params.case_id]
  * @param {object} [params.details]
- * @param {boolean} [params.sensitive]
+ *
+ * Actor fields are derived server-side from the session and cannot be
+ * passed from here — logAuditEvent ignores them by design.
  */
 export const auditService = {
   log: (params) =>
@@ -20,9 +23,9 @@ export const auditService = {
       event_type:    params.event_type,
       resource_type: params.resource_type,
       resource_id:   params.resource_id,
+      resource_name: params.resource_name || '',
       case_id:       params.case_id,
       details:       params.details || {},
-      sensitive:     params.sensitive ?? false,
     }),
 
   /** Verify the full audit chain integrity */

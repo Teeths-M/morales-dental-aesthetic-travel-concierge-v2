@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { auditService } from '@/lib/services';
 import { getChecklist } from '@/lib/activityChecklists';
 
 // Maps activity name → checklist key
@@ -42,19 +43,14 @@ export default function ActivityNudgeBanner({ sessions = [], onRefresh }) {
       iso_checklist_items: checklist,
       nudge_sent_at: now.toISOString(),
     });
-    // Log acknowledgment
-    const user = await base44.auth.me();
-    await base44.functions.invoke('logAuditEvent', {
+    // Log acknowledgment (actor fields come from the session server-side)
+    await auditService.log({
       event_type: 'handshake_created',
-      actor_id: user.id,
-      actor_role: user.role,
-      actor_name: user.full_name,
       resource_type: 'ActivitySession',
       resource_id: session.id,
       resource_name: session.activity_name,
       case_id: session.case_id,
       details: { action: 'checklist_acknowledged', pre_activity: true },
-      sensitive: false,
     });
     setSaving(false);
     setDismissed(d => ({ ...d, [session.id]: true }));

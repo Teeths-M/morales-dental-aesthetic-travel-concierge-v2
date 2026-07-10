@@ -5,6 +5,7 @@
  */
 import React, { useState, useCallback, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { auditService } from '@/lib/services';
 import {
   Mountain, AlertTriangle, CheckCircle2, MapPin, Navigation,
   RefreshCw, Shield, Radio, Loader2, ChevronDown,
@@ -73,16 +74,14 @@ export default function AdminWildernessRescue() {
     };
     await base44.entities.SOSEvent.update(incident.id, update).catch(() => {});
 
-    // Log handshake for resolution
+    // Log handshake for resolution (actor derived from session server-side)
     if (status === 'resolved') {
-      await base44.functions.invoke('logAuditEvent', {
+      await auditService.log({
         event_type: 'handshake_completed',
-        actor_role: 'admin',
         resource_type: 'SOSEvent',
         resource_id: incident.id,
         case_id: incident.case_id || '',
         details: { action: 'wilderness_rescue_resolved', notes },
-        sensitive: false,
       }).catch(() => {});
     }
 

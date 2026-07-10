@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { auditService } from '@/lib/services';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mountain, Plus, Zap, Waves, Wind, Leaf, CheckCircle2, Circle,
   Clock, AlertTriangle, ChevronDown, ChevronUp, Loader2, Bell, TreePine } from 'lucide-react';
@@ -97,18 +98,14 @@ export default function AdventureSafetyCenter() {
       iso_checklist_items: checklist,
     });
 
-    // Log to AuditLog
-    await base44.functions.invoke('logAuditEvent', {
+    // Log to AuditLog (actor derived from session server-side)
+    await auditService.log({
       event_type: 'handshake_created',
-      actor_id: user.id,
-      actor_role: user.role,
-      actor_name: user.full_name,
       resource_type: 'ActivitySession',
       resource_id: session.id,
       resource_name: selectedType.label,
       case_id: caseId || '',
       details: { action: 'activity_registered', risk_level: selectedType.risk, location: form.location },
-      sensitive: false,
     });
 
     toast({ title: `✅ ${selectedType.label} registered`, description: 'ISO 21101 checklist generated. You\'ll receive a nudge 1hr before.' });
@@ -139,19 +136,15 @@ export default function AdventureSafetyCenter() {
     items[idx] = { ...items[idx], acknowledged: !items[idx].acknowledged };
     await base44.entities.ActivitySession.update(session.id, { iso_checklist_items: items });
 
-    // If all acknowledged, log it
+    // If all acknowledged, log it (actor derived from session server-side)
     if (items.every(i => i.acknowledged)) {
-      await base44.functions.invoke('logAuditEvent', {
+      await auditService.log({
         event_type: 'handshake_completed',
-        actor_id: user.id,
-        actor_role: user.role,
-        actor_name: user.full_name,
         resource_type: 'ActivitySession',
         resource_id: session.id,
         resource_name: session.activity_name,
         case_id: session.case_id,
         details: { action: 'full_checklist_acknowledged' },
-        sensitive: false,
       });
     }
     loadSessions();
