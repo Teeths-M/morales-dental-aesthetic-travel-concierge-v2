@@ -318,6 +318,18 @@
         "q": "Any allergies — medications, foods, or otherwise?",
         "why": "so nothing is prescribed or served that could harm you"
       },
+      "medications": {
+        "q": "Are you taking any medications or supplements right now?",
+        "why": "some medications and supplements change how surgery, anesthesia, and healing go — your doctor needs the full picture"
+      },
+      "anesthesia_history": {
+        "q": "Have you ever had a bad reaction to anesthesia?",
+        "why": "a previous reaction tells your anesthesiologist exactly how to keep you safe this time"
+      },
+      "surgery_history": {
+        "q": "Have you had surgery before?",
+        "why": "past operations affect healing and planning — even ones that went perfectly"
+      },
       "has_companion": {
         "q": "Will someone be travelling with you?",
         "why": "so we can plan for one traveller or more from the start"

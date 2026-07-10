@@ -29,7 +29,41 @@ export const INPUT_TYPES = {
   DOCTOR_PICK: 'doctor_pick',
   CONDITIONS_PICK: 'conditions_pick',
   ALLERGIES_PICK: 'allergies_pick',
+  MEDICAL_PICK: 'medical_pick',
 };
+
+// Pill option sets for the safety-critical medical-history steps — mirror the
+// detailed /booking wizard's sections so both flows capture identical fields.
+export const MEDICATION_OPTIONS = [
+  { label: 'Blood Thinners',      icon: '🩸' },
+  { label: 'Hormones',            icon: '⚗️' },
+  { label: 'Diabetes Medication', icon: '💉' },
+  { label: 'Vitamins',            icon: '🌿' },
+  { label: 'Herbal Supplements',  icon: '🍵' },
+  { label: 'Other',               icon: '📝' },
+  { label: 'None',                icon: '🚫' },
+];
+
+export const ANESTHESIA_COMPLICATION_OPTIONS = [
+  { label: 'Allergic reactions',     icon: '⚠️' },
+  { label: 'Breathing difficulties', icon: '🫁' },
+  { label: 'Nausea / Vomiting',      icon: '🤢' },
+  { label: 'Excessive bleeding',     icon: '🩸' },
+  { label: 'Other',                  icon: '📝' },
+  { label: 'Never had a problem',    icon: '✅' },
+];
+
+export const PRIOR_SURGERY_OPTIONS = [
+  { label: 'Appendectomy',      icon: '🔪' },
+  { label: 'C-Section',         icon: '👶' },
+  { label: 'Gallbladder',       icon: '🫀' },
+  { label: 'Hernia Repair',     icon: '🏥' },
+  { label: 'Joint Replacement', icon: '🦴' },
+  { label: 'Cosmetic Surgery',  icon: '✨' },
+  { label: 'Dental Surgery',    icon: '🦷' },
+  { label: 'Other',             icon: '📝' },
+  { label: 'No prior surgeries', icon: '🚫' },
+];
 
 /**
  * True only when age parses to a real number under 18. Unparseable ages
@@ -70,6 +104,7 @@ export const PROCEDURE_OPTIONS = [
  * @property {string} deterministicReason — pre-authored "why we ask" copy, never generated
  * @property {string} inputType
  * @property {Array<{value:string,label:string}>} [options] - static choices, known synchronously
+ * @property {Object} [medicalPick] - config for a MEDICAL_PICK step (pills + None + optional notes → Consultation medical fields)
  * @property {string} [optionsSource] - key into a dynamicOptions map for choices fetched live (e.g. destination countries)
  * @property {string} [recommendationUnit] - noun shown alongside a dynamic option's real count, e.g. "verified doctors"
  * @property {boolean} [allowUnspecified] - shows an "I'm not sure — recommend one for me" fallback below a free-text (TEXT/EMAIL/PHONE) input, committing the UNSPECIFIED sentinel instead of trapping the user into a dead-end LLM parse loop
@@ -196,6 +231,72 @@ export const QUESTION_GRAPH = [
     deterministicReason: 'so nothing is prescribed or served that could harm you',
     inputType: INPUT_TYPES.ALLERGIES_PICK,
     requiresAuth: true,
+  },
+  {
+    // Current medications — the wizard captures this; the conversation used to
+    // skip it. Blood thinners, hormones, and supplements directly affect
+    // bleeding, anesthesia, and recovery, so a surgeon must know.
+    id: 'medications',
+    // Only the always-written fields gate "answered" — the optional notes are
+    // still saved when provided, but must not be required (empty = never
+    // answered = infinite loop, see isStepAlreadyAnswered).
+    targetFields: ['takes_medications', 'medication_types'],
+    question: 'Are you taking any medications or supplements right now?',
+    deterministicReason: 'some medications and supplements change how surgery, anesthesia, and healing go — your doctor needs the full picture',
+    inputType: INPUT_TYPES.MEDICAL_PICK,
+    requiresAuth: true,
+    medicalPick: {
+      options: MEDICATION_OPTIONS,
+      noneLabel: 'None',
+      flagField: 'takes_medications',
+      arrayField: 'medication_types',
+      notesField: 'medication_notes',
+      notesLabel: 'Please list them — names and doses if you know them.',
+      notesPlaceholder: 'e.g. Aspirin 81mg daily, vitamin D…',
+    },
+  },
+  {
+    // Prior anesthesia reactions — a past bad reaction (e.g. malignant
+    // hyperthermia, airway trouble) can be life-threatening and changes the
+    // anesthetic plan entirely. The conversation never asked before.
+    id: 'anesthesia_history',
+    targetFields: ['anesthesia_complications', 'anesthesia_complication_types'],
+    question: 'Have you ever had a bad reaction to anesthesia?',
+    deterministicReason: 'a previous reaction tells your anesthesiologist exactly how to keep you safe this time',
+    inputType: INPUT_TYPES.MEDICAL_PICK,
+    requiresAuth: true,
+    medicalPick: {
+      options: ANESTHESIA_COMPLICATION_OPTIONS,
+      noneLabel: 'Never had a problem',
+      flagField: 'anesthesia_complications',
+      arrayField: 'anesthesia_complication_types',
+    },
+  },
+  {
+    // Surgical history — scar tissue, healing history, and past complications
+    // shape how this procedure is planned. Captured as the primary procedure
+    // plus a free-text note for timing/complications the doctor reviews.
+    id: 'surgery_history',
+    // Only had_surgery always gets written (previous_procedures is '' when the
+    // answer is "no surgeries", notes are optional) — so gate on it alone.
+    targetFields: ['had_surgery'],
+    question: 'Have you had surgery before?',
+    deterministicReason: 'past operations affect healing and planning — even ones that went perfectly',
+    inputType: INPUT_TYPES.MEDICAL_PICK,
+    requiresAuth: true,
+    medicalPick: {
+      options: PRIOR_SURGERY_OPTIONS,
+      noneLabel: 'No prior surgeries',
+      flagField: 'had_surgery',
+      // No arrayField: the pills are surgery TYPES, not complications. The
+      // first pick is stored as previous_procedures (matching the wizard),
+      // and timing/complications are captured in the free-text note the
+      // reviewing doctor reads.
+      primaryField: 'previous_procedures',
+      notesField: 'previous_procedures_notes',
+      notesLabel: 'Roughly when, and did anything go wrong (bleeding, infection, slow healing)?',
+      notesPlaceholder: 'e.g. Gallbladder 2019, no problems; C-section 2015…',
+    },
   },
   {
     id: 'has_companion',

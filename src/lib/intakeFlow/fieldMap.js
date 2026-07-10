@@ -42,6 +42,16 @@ export function buildConsultationPayload(answers, verification = {}) {
     medical_conditions_other: answers.medical_conditions_other || '',
     allergies: answers.allergies || [],
     allergy_details: answers.allergy_details || '',
+    // Safety-critical medical history — mirrors the /booking wizard's fields so
+    // both flows hand the reviewing doctor the same complete picture.
+    takes_medications: !!answers.takes_medications,
+    medication_types: answers.medication_types || [],
+    medication_notes: answers.medication_notes || '',
+    anesthesia_complications: !!answers.anesthesia_complications,
+    anesthesia_complication_types: answers.anesthesia_complication_types || [],
+    had_surgery: !!answers.had_surgery,
+    previous_procedures: answers.previous_procedures || '',
+    previous_procedures_notes: answers.previous_procedures_notes || '',
     has_companion: !!answers.has_companion,
     preferred_date: answers.preferred_date || '',
     duration_of_stay: answers.duration_of_stay || '',

@@ -6,6 +6,7 @@ import MultiProcedureStep from './MultiProcedureStep';
 import DoctorPickStep from './DoctorPickStep';
 import ConditionsPickStep from './ConditionsPickStep';
 import AllergiesPickStep from './AllergiesPickStep';
+import MedicalPickStep from './MedicalPickStep';
 import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 import { useTranslation } from '@/i18n';
 import { translateStep } from '@/lib/intakeFlow/translateStep';
@@ -93,6 +94,9 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
 
       case INPUT_TYPES.ALLERGIES_PICK:
         return <AllergiesPickStep onContinue={({ rawText, extracted }) => commit(rawText, extracted)} />;
+
+      case INPUT_TYPES.MEDICAL_PICK:
+        return <MedicalPickStep config={step.medicalPick} onContinue={({ rawText, extracted }) => commit(rawText, extracted)} />;
 
       case INPUT_TYPES.SELECT: {
         const isDynamic = !!step.optionsSource;
