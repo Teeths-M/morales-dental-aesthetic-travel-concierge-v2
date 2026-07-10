@@ -64,7 +64,7 @@ export default function TravelReviewStep({ answers, onSubmit, submitting, submit
         state: 'done',
       },
       { label: 'Matching You With a Verified Local Partner', state: 'pending' },
-      { label: 'Secure Deposit — Coming Soon', state: 'pending' },
+      { label: 'Payment requested only after your itinerary is confirmed', state: 'pending' },
     ].filter(Boolean);
 
     return (

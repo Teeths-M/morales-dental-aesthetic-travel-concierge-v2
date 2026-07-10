@@ -51,8 +51,9 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
         : { label: 'Expanding Our Network for Your Procedure', state: 'done' },
       recoveryDays > 0 && { label: `Recovery Timeline Built (~${recoveryDays} days)`, state: 'done' },
       partnerCount > 0 && { label: `${partnerCount} Travel & Transfer Partners Ready`, state: 'done' },
-      { label: 'Secure Deposit — Coming Soon', state: 'pending' },
-      { label: 'Payment Integration Ready', state: 'pending' },
+      // Deliberate care-process framing, never software-status: the deposit
+      // step is a promise about the journey, not an announcement about code.
+      { label: 'Deposit requested only after your doctor confirms your plan', state: 'pending' },
     ].filter(Boolean);
 
     return (
