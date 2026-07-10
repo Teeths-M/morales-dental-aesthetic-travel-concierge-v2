@@ -699,7 +699,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                         className="mt-6 flex gap-3"
                       >
                         <Link
-                          to="/intake"
+                          to="/booking"
                           onClick={handleClose}
                           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-[14px] transition-all duration-200 hover:opacity-90"
                           style={{ background: GOLD, color: '#060B16', boxShadow: `0 0 30px ${GOLD}35` }}
@@ -822,7 +822,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
                 </button>
               ) : (
                 <Link
-                  to="/intake"
+                  to="/booking"
                   onClick={handleClose}
                   className="flex items-center gap-1.5 text-[12px] font-semibold transition-colors"
                   style={{ color: GOLD }}

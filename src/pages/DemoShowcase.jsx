@@ -868,7 +868,7 @@ export default function DemoShowcase() {
 
           {/* Action CTAs */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <Link to="/intake" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: GOLD, color: DARK }}>
+            <Link to="/booking" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: GOLD, color: DARK }}>
               Start Journey <ArrowRight style={{ width: 14, height: 14 }} />
             </Link>
             <Link to="/login" className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm" style={{ background: '#0C1A1D', color: '#94a3b8', border: '1px solid #2A3F4A' }}>

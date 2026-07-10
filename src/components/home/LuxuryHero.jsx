@@ -16,7 +16,7 @@ const CONTENT = {
     headline:    'NEVER\nALONE',
     subheadline: 'Travel abroad for world-class medical care — and come home safely.',
     body:        'Your driver picks you up at home. Your verified doctor is waiting. Your family tracks every checkpoint in real time. If something goes wrong, Morales activates your emergency response plan and coordinates the next steps.',
-    cta:         { label: 'Start Your Journey', path: '/intake' },
+    cta:         { label: 'Start Your Journey', path: '/booking' },
   },
   nonmedical: {
     headline:    'THE WORLD,\nEFFORTLESSLY YOURS.',

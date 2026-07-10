@@ -149,7 +149,7 @@ export default function ProcedureModal({ procedure, onClose }) {
 
            {/* CTA */}
            <div className="pt-2">
-             <Link to="/intake" onClick={onClose}>
+             <Link to="/booking" onClick={onClose}>
                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
                  Book a Consultation <ArrowRight className="w-4 h-4 ml-2" />
                </Button>

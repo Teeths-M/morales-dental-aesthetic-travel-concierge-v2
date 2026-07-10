@@ -309,7 +309,7 @@ export default function Header() {
                 {t('nav.sign_in')}
               </Link>
               <Link
-                to="/intake"
+                to="/booking"
                 className="m-cta-breathe inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 style={{
                   background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
@@ -421,7 +421,7 @@ export default function Header() {
             ) : (
               <>
                 <Link
-                  to="/intake" onClick={() => setIsMobileOpen(false)}
+                  to="/booking" onClick={() => setIsMobileOpen(false)}
                   className="w-full text-center py-3.5 rounded-full text-sm font-bold"
                   style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
                 >

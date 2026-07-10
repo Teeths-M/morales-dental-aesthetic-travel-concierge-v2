@@ -363,7 +363,7 @@ export default function VisaResult({ result, onReset }) {
         >
           <RotateCcw className="w-3.5 h-3.5" /> New Check
         </button>
-        <Link to="/intake">
+        <Link to="/booking">
           <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">
             Book Consultation <ArrowRight className="w-3.5 h-3.5" />
           </button>

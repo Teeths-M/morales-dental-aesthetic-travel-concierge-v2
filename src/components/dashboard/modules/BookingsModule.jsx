@@ -77,7 +77,7 @@ export default function BookingsModule() {
           <h2 className="text-lg font-semibold text-slate-800">My Bookings</h2>
           <p className="text-xs text-slate-400 mt-0.5">Healthcare travel coordination hub</p>
         </div>
-        <Link to="/intake">
+        <Link to="/booking">
           <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-9">
             + Add Booking
           </Button>
@@ -90,7 +90,7 @@ export default function BookingsModule() {
           <Plane className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-600 font-medium mb-1">No bookings yet</p>
           <p className="text-sm text-slate-400 mb-4">Your travel and procedure bookings will appear here once confirmed.</p>
-          <Link to="/intake">
+          <Link to="/booking">
             <Button size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs">
               Start Booking
             </Button>

@@ -1,6 +1,6 @@
 // @ts-nocheck — pre-existing type gaps; build passes
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
@@ -736,6 +736,21 @@ export default function Booking() {
               />
             </div>
           </div>
+
+          {/* Secondary door to the AI concierge — first step only, so the
+              conversational intake stays discoverable without nagging mid-form */}
+          {step === 0 && (
+            <div className="flex items-center gap-2.5 px-6 py-2 border-b border-slate-100 bg-slate-50/60">
+              <span style={{ fontSize: 13 }}>💬</span>
+              <p className="text-xs text-slate-500 m-0">
+                Prefer a conversation?{' '}
+                <Link to="/intake" className="font-semibold underline underline-offset-2" style={{ color: '#92740f' }}>
+                  Try our AI Concierge
+                </Link>{' '}
+                — same journey, guided chat-style.
+              </p>
+            </div>
+          )}
 
           {/* Guest banner — shown only when not authenticated */}
           {!currentUser && (

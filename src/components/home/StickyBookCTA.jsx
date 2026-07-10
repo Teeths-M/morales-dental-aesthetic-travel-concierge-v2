@@ -38,7 +38,7 @@ export default function StickyBookCTA() {
         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0' }}>$49 consultation · Fully credited to your package</p>
       </div>
       <Link
-        to="/intake"
+        to="/booking"
         style={{
           flexShrink: 0,
           padding: '13px 22px', borderRadius: 99, textDecoration: 'none',
