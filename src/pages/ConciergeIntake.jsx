@@ -18,6 +18,7 @@ import NarrationTicker from '@/components/intake/NarrationTicker';
 import NeedHumanButton from '@/components/intake/NeedHumanButton';
 import ProcedureEvaluationStep from '@/components/intake/ProcedureEvaluationStep';
 import SafeTReadout from '@/components/intake/SafeTReadout';
+import ContactVerificationStep from '@/components/intake/ContactVerificationStep';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -64,6 +65,10 @@ export default function ConciergeIntake() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  // Contact verification (OTP at submit — guest-first): null = not yet run,
+  // 'active' = the email/phone code steps are on screen, object = finished
+  // (with per-channel verified flags carried onto the Consultation).
+  const [verification, setVerification] = useState(null);
 
   const answeredCount = getAnsweredQuestionCount(answers, QUESTION_GRAPH);
   const totalCount = getTotalQuestionCount(QUESTION_GRAPH, answers);
@@ -131,7 +136,13 @@ export default function ConciergeIntake() {
   // iq200Pipeline (auto-triggers safeT4LifeScan, doctor assignment, etc.) →
   // ConversationSession marked completed. Payment/fee collection is a
   // deliberate follow-up, not wired in this phase — see plan notes.
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async (verifiedChannels) => {
+    // First press: run contact verification (email OTP → phone OTP) before
+    // anything is created. The verified flags ride along on the second pass.
+    if (!verifiedChannels) {
+      setVerification('active');
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -145,7 +156,7 @@ export default function ConciergeIntake() {
         return;
       }
 
-      const consultation = await base44.entities.Consultation.create(buildConsultationPayload(answers));
+      const consultation = await base44.entities.Consultation.create(buildConsultationPayload(answers, verifiedChannels));
 
       const { saveUserOnboardingProfile } = await import('@/lib/onboardingProfile');
       await saveUserOnboardingProfile({
@@ -201,10 +212,22 @@ export default function ConciergeIntake() {
             {atReviewStep && !safetyReadoutAcknowledged && (
               <SafeTReadout safetyStatus={safetyStatus} onContinue={() => setSafetyReadoutAcknowledged(true)} />
             )}
-            {atReviewStep && safetyReadoutAcknowledged && (
+            {atReviewStep && safetyReadoutAcknowledged && verification === 'active' && !submitted && (
+              <ContactVerificationStep
+                email={answers.email}
+                phone={answers.phone}
+                onComplete={(result) => {
+                  setVerification(result);
+                  handleFinalSubmit(result);
+                }}
+              />
+            )}
+            {atReviewStep && safetyReadoutAcknowledged && verification !== 'active' && (
               <ReviewStep
                 answers={answers}
-                onSubmit={handleFinalSubmit}
+                onSubmit={() => handleFinalSubmit(
+                  verification && typeof verification === 'object' ? verification : null
+                )}
                 submitting={submitting}
                 submitted={submitted}
                 submitError={submitError}

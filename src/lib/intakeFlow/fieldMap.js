@@ -17,10 +17,15 @@ function resolved(value) {
 
 /**
  * @param {object} answers — the ConversationSession's flat field_id -> value map
+ * @param {object} [verification] - per-channel OTP outcome from
+ *   ContactVerificationStep ({ email_verified, phone_verified }); absent or
+ *   false means the coordinator confirms that channel manually.
  * @returns {object} a payload shape-identical to what Booking.jsx produces
  */
-export function buildConsultationPayload(answers) {
+export function buildConsultationPayload(answers, verification = {}) {
   return {
+    email_verified: !!verification.email_verified,
+    phone_verified: !!verification.phone_verified,
     patient_name: answers.patient_name || '',
     email: answers.email || '',
     phone: answers.phone || '',

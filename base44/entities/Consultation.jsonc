@@ -141,6 +141,16 @@
     "occupation": {
       "type": "string"
     },
+    "email_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Email confirmed via OTP at intake submission (false = coordinator verifies manually)"
+    },
+    "phone_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Phone confirmed via OTP at intake submission (false = coordinator verifies manually)"
+    },
     "guardian_required": {
       "type": "boolean",
       "default": false,
