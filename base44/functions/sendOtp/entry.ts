@@ -1,28 +1,82 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { renderEmail } from '../_shared/emailTemplate.ts';
 
-// Generates a 6-digit OTP, stores it with a 10-minute expiry, and sends via Twilio SMS.
-// In mock mode (no TWILIO_ACCOUNT_SID configured), returns the code directly for demo use.
+// Generates a 6-digit OTP, stores it with a 10-minute expiry, and delivers it
+// over the requested channel:
+//   { phone } → Twilio SMS (mock mode returns the code when Twilio isn't configured)
+//   { email } → branded email via the built-in SendEmail integration
+// Public endpoint (login flow), so resends are throttled per identifier:
+// 5 sends per 30-minute window, mirroring the verifyVaultPIN lockout pattern.
 export default createHandler(async ({ base44, body }) => {
-  const { phone } = await body();
-  if (!phone) return err('Phone number is required');
+  const { phone, email } = await body();
+  if (!phone && !email) return err('Phone number or email is required');
+  if (phone && email) return err('Provide either phone or email, not both');
 
-  // Sanitize: digits, +, spaces, hyphens only
-  const clean = String(phone).replace(/[^\d+\s\-()]/g, '').trim();
-  if (clean.length < 7) return err('Invalid phone number');
+  // ── Resolve channel + sanitized identifier ────────────────────────────────
+  let channel: 'phone' | 'email';
+  let identifier: string;
+  if (phone) {
+    channel = 'phone';
+    identifier = String(phone).replace(/[^\d+\s\-()]/g, '').trim();
+    if (identifier.length < 7) return err('Invalid phone number');
+  } else {
+    channel = 'email';
+    identifier = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(identifier)) return err('Invalid email address');
+  }
 
-  // Generate 6-digit OTP
+  // ── Resend throttle: 5 per 30 min per identifier ──────────────────────────
+  const windowKey = `otp_send_${channel}_${identifier}_${Math.floor(Date.now() / (30 * 60 * 1000))}`;
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket.filter(
+    { bucket_key: windowKey }, '-created_date', 1
+  ).catch(() => []);
+  const bucket = buckets?.[0];
+  if (bucket && bucket.count >= 5) {
+    return err('Too many verification codes requested. Please wait a while before trying again.', 429);
+  }
+  await base44.asServiceRole.entities.RateLimitBucket.create({
+    bucket_key: windowKey,
+    count: (bucket?.count || 0) + 1,
+    window_start: new Date().toISOString(),
+  }).catch(() => {});
+
+  // ── Generate + store (overwrite any pending OTP for this identifier) ──────
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
-  // Store OTP — overwrite any existing pending OTP for this phone
-  const existing = await base44.asServiceRole.entities.OtpSession.filter({ phone: clean }).catch(() => []);
+  const filter = channel === 'phone' ? { phone: identifier } : { email: identifier };
+  const existing = await base44.asServiceRole.entities.OtpSession.filter(filter).catch(() => []);
+  const record = { ...filter, channel, code, expires_at: expiresAt, verified: false };
   if (existing[0]) {
-    await base44.asServiceRole.entities.OtpSession.update(existing[0].id, { code, expires_at: expiresAt, verified: false });
+    await base44.asServiceRole.entities.OtpSession.update(existing[0].id, record);
   } else {
-    await base44.asServiceRole.entities.OtpSession.create({ phone: clean, code, expires_at: expiresAt, verified: false });
+    await base44.asServiceRole.entities.OtpSession.create(record);
   }
 
-  // Try real Twilio — fall back to mock mode if not configured
+  // ── Email channel ──────────────────────────────────────────────────────────
+  if (channel === 'email') {
+    const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: identifier,
+        subject: `${code} is your Morales verification code`,
+        body: renderEmail({
+          appUrl,
+          preheader: 'Your verification code — valid for 10 minutes.',
+          eyebrow: 'Email Verification',
+          title: 'Your verification code',
+          intro: 'Enter this code to verify your email address. It is valid for 10 minutes. Never share it with anyone — Morales staff will never ask for it.',
+          bodyHtml: `<p style="font-size:32px;letter-spacing:0.35em;font-weight:600;text-align:center;margin:24px 0;color:#0C1A1D;">${code}</p>`,
+        }),
+      });
+    } catch (e) {
+      console.error('[sendOtp] SendEmail failed:', e);
+      return err('Failed to send the verification email. Please check the address and try again.');
+    }
+    return ok({ sent: true, channel: 'email', mock: false });
+  }
+
+  // ── Phone channel (unchanged behavior) ────────────────────────────────────
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken  = Deno.env.get('TWILIO_AUTH_TOKEN');
   const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER');
@@ -31,7 +85,7 @@ export default createHandler(async ({ base44, body }) => {
   if (!mockMode) {
     const smsBody = new URLSearchParams({
       From: fromNumber!,
-      To:   clean,
+      To:   identifier,
       Body: `Your Morales verification code is: ${code}. Valid for 10 minutes. Do not share this code.`,
     });
 
@@ -81,9 +135,9 @@ export default createHandler(async ({ base44, body }) => {
           : 'Failed to send verification code. Please check your phone number and try again.'
       );
     }
-    return ok({ sent: true, mock: false });
+    return ok({ sent: true, channel: 'phone', mock: false });
   }
 
   // Mock mode — return code so demo/judges can sign in without real SMS
-  return ok({ sent: true, mock: true, demo_code: code });
+  return ok({ sent: true, channel: 'phone', mock: true, demo_code: code });
 }, { name: 'sendOtp', requireAuth: false });

@@ -4,7 +4,17 @@
   "properties": {
     "phone": {
       "type": "string",
-      "description": "Sanitized phone number including country code"
+      "description": "Sanitized phone number including country code (phone-channel sessions only)"
+    },
+    "email": {
+      "type": "string",
+      "description": "Lowercased email address (email-channel sessions only)"
+    },
+    "channel": {
+      "type": "string",
+      "enum": ["phone", "email"],
+      "default": "phone",
+      "description": "Delivery channel this OTP was sent over"
     },
     "code": {
       "type": "string",
@@ -20,5 +30,5 @@
       "description": "True once the code has been successfully used (single-use enforcement)"
     }
   },
-  "required": ["phone", "code", "expires_at"]
+  "required": ["code", "expires_at"]
 }
