@@ -376,6 +376,13 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
 
       default: {
         const type = step.inputType === INPUT_TYPES.EMAIL ? 'email' : step.inputType === INPUT_TYPES.PHONE ? 'tel' : 'text';
+        // Concrete, type-specific placeholder so the field self-explains what
+        // it wants — a warm question ("Where should I send this?") must not
+        // leave the user guessing that an email goes here.
+        const placeholder =
+          step.inputType === INPUT_TYPES.EMAIL ? 'you@email.com'
+          : step.inputType === INPUT_TYPES.PHONE ? '+1 555 000 0000'
+          : 'Type your answer...';
         // Real curated suggestions (e.g. real cities for the chosen country)
         // layered on top of free text, never replacing it — prefer picking a
         // known-good value, but never block on one that isn't in the list.
@@ -424,7 +431,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
               type={type}
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder="Type your answer..."
+              placeholder={placeholder}
               style={inputBaseStyle}
               autoFocus
               disabled={isThinking}
