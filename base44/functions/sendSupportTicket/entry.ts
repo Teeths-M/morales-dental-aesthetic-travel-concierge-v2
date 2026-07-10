@@ -1,12 +1,7 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { message, category, submitted_at } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { message, category, submitted_at } = await body();
     if (!message?.trim()) return Response.json({ error: 'Message is required' }, { status: 400 });
 
     // Send email to admin
@@ -25,7 +20,4 @@ Deno.serve(async (req) => {
     });
 
     return Response.json({ success: true });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'sendSupportTicket' }));

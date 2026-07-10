@@ -1,11 +1,6 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     // SECURITY: Only doctors may access this endpoint
     if (user.role !== 'doctor') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -32,8 +27,4 @@ Deno.serve(async (req) => {
       .map(r => r.value);
 
     return Response.json({ doctor, consultations, workflows });
-  } catch (error) {
-    console.error('[getDoctorCases]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getDoctorCases' }));

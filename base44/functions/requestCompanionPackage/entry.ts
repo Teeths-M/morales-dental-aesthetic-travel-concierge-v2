@@ -13,15 +13,10 @@
  * OFF (action: 'cancel'):
  *   Clears companion_package_requested and status on the case.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body().catch(() => ({}));
     const action: string = body.action || 'request';
 
     // ── Fetch patient's active case ───────────────────────────────────────────
@@ -195,8 +190,4 @@ Deno.serve(async (req) => {
       destination: country,
       job_brief: jobBrief,
     });
-  } catch (error) {
-    console.error('[requestCompanionPackage]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'requestCompanionPackage' }));

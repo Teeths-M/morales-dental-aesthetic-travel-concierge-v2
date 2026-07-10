@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -11,12 +11,7 @@ async function getLastAuditHash(base44) {
   } catch (_) { return 'GENESIS'; }
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
       case_id,
       response_method = 'app',
@@ -24,7 +19,7 @@ Deno.serve(async (req) => {
       accuracy_meters,
       location_source = 'gps',
       country, country_code, city, region, timezone,
-    } = await req.json().catch(() => ({}));
+    } = await body().catch(() => ({}));
 
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 
@@ -122,7 +117,4 @@ Deno.serve(async (req) => {
     });
 
     return Response.json({ success: true, check_in_id: checkIn.id, breadcrumb_id: breadcrumbId });
-  } catch (_) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'acknowledgeSoloCheckIn' }));

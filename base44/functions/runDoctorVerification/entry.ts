@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(text);
@@ -44,13 +44,8 @@ Return JSON only: { "found": boolean, "name_match": boolean, "status": "verified
   }
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { action, doctor_id, country, registration_number, specialty, notes, verification_record_id, denial_reason } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { action, doctor_id, country, registration_number, specialty, notes, verification_record_id, denial_reason } = await body();
 
     const now = new Date().toISOString();
 
@@ -239,9 +234,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (error) {
-    // BUG-R4-10 FIX: SEC-10 — never expose internal error details
-    console.error('[runDoctorVerification]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'runDoctorVerification' }));

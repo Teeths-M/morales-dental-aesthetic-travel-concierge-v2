@@ -1,4 +1,4 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // Per-checkpoint default expiry (hours) — context-aware, not a single fixed timeout.
@@ -37,16 +37,8 @@ async function verifyCaseAccess(base44, case_id, user) {
   return { allowed: true, caseRecord: c };
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body();
     const { action, case_id, checkpoint_type, checkpoint_label, required, expires_hours, handshake_id, notes } = body;
 
     if (action === 'create') {
@@ -161,7 +153,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Invalid action. Use: create | complete | list' }, { status: 400 });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'createHandshake' }));

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 import { renderEmail } from '../_shared/emailTemplate.ts';
 
 // Sanitize text fields — strip HTML tags to prevent stored XSS
@@ -16,12 +16,7 @@ function isValidEmail(email: unknown): boolean {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const { 
       origin_city, origin_country, destination_city, destination_country,
       departure_date, return_date, travelers_count = 1, travel_class = 'economy',
@@ -29,7 +24,7 @@ Deno.serve(async (req) => {
       transfer_required = true, transfer_type = 'standard',
       companion_required = false, companion_type, companion_days = 0,
       special_requests
-    } = await req.json();
+    } = await body();
 
     // Input validation
     const requiredFields: Array<[string, unknown]> = [
@@ -156,9 +151,4 @@ Deno.serve(async (req) => {
       total_package_price,
       deposit_amount
     });
-
-  } catch (error) {
-    console.error('[createTravelRequest] Error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'createTravelRequest' }));

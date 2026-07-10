@@ -1,12 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { destination_country, destination_city, force_refresh } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { destination_country, destination_city, force_refresh } = await body();
     if (!destination_country) return Response.json({ error: 'destination_country required' }, { status: 400 });
 
     // Check for recent cached briefing (< 6 hours old)
@@ -87,7 +82,4 @@ Return as JSON matching this exact schema:
     });
 
     return Response.json({ briefing, cached: false, ai_available: !!aiResult });
-  } catch (_) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getSpaceIntelBriefing' }));

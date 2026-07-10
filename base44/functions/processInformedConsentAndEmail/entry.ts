@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const DISCLOSURE_TEXT = `
 1. Surgical Risk Acknowledgement: I understand that every medical, dental, and surgical procedure carries inherent biological risks and potential complications including, but not limited to, infection, adverse reactions, and unforeseen surgical events.
@@ -116,15 +116,7 @@ function buildEmailHtml({ clientName, clientEmail, procedures, signatureData, si
 </html>`;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
       consultation_id,
       case_record_id,
@@ -137,7 +129,7 @@ Deno.serve(async (req) => {
       accepted_arbitration_clause,
       charge_id,
       amount,
-    } = await req.json();
+    } = await body();
 
     if (!client_email) {
       return Response.json({ error: 'client_email is required' }, { status: 400 });
@@ -197,10 +189,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ success: true, email_sent_to: client_email, archived_at: now });
-
-  } catch (error) {
-    // BUG-R10-07 FIX: SEC-10 — never expose internal error details to callers
-    console.error('[processInformedConsentAndEmail]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'processInformedConsentAndEmail' }));

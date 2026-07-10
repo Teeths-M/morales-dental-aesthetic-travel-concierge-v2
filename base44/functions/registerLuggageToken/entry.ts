@@ -1,12 +1,7 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { case_id, bag_label, bag_number, airline_pnr, airline_code, flight_number, origin_airport, destination_airport } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { case_id, bag_label, bag_number, airline_pnr, airline_code, flight_number, origin_airport, destination_airport } = await body();
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 
     // Generate unique luggage token
@@ -43,8 +38,4 @@ Deno.serve(async (req) => {
     });
 
     return Response.json({ success: true, luggage, qr_url, token_code, finder_contact_token });
-  } catch (error) {
-    console.error('registerLuggageToken error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'registerLuggageToken' }));

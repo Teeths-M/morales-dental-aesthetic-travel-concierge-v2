@@ -1,14 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { file_url } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { file_url } = await body();
     if (!file_url) {
       return Response.json({ error: 'file_url is required' }, { status: 400 });
     }
@@ -62,8 +55,4 @@ Return null for any field you cannot clearly read. Be accurate.`,
       extracted,
       warnings
     });
-
-  } catch (_) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'extractPassportData' }));

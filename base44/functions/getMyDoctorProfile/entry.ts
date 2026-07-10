@@ -1,14 +1,6 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     // Only return the doctor profile that matches the current user's email
     const doctors = await base44.entities.Doctor.filter({ email: user.email });
     
@@ -31,7 +23,4 @@ Deno.serve(async (req) => {
       specialties: specialties || [],
       pricing: pricing || []
     });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getMyDoctorProfile' }));

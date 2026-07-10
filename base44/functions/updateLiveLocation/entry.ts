@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 function validCoord(lat, lng) {
   return typeof lat === 'number' && typeof lng === 'number'
@@ -17,13 +17,8 @@ function distanceM(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body().catch(() => ({}));
     const { case_id, latitude, longitude, accuracy_meters, heading, speed, altitude, source = 'gps' } = body;
 
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
@@ -99,7 +94,4 @@ Deno.serve(async (req) => {
     } catch (_) { /* breadcrumb logging is best-effort */ }
 
     return Response.json({ success: true, updated_at: now.toISOString() });
-  } catch (err) {
-    return Response.json({ error: 'Internal error' }, { status: 500 });
-  }
-});
+}, { name: 'updateLiveLocation' }));

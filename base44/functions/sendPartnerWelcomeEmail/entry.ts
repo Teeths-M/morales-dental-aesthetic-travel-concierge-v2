@@ -1,4 +1,4 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 import { renderEmail } from '../_shared/emailTemplate.ts';
 
 const BRAND = 'Morales Medical Travel Safety';
@@ -15,15 +15,8 @@ async function makePortalToken(payload: Record<string, unknown>) {
   return btoa(data) + '.' + sigHex;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { partner_type, partner_id } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { partner_type, partner_id } = await body();
     if (!partner_type || !partner_id) {
       return Response.json({ error: 'partner_type and partner_id are required' }, { status: 400 });
     }
@@ -130,9 +123,4 @@ Deno.serve(async (req) => {
       partner_email: partner.email,
       partner_name: partner.full_name || partner.agency_name || partner.driver_name || partner.email,
     });
-  } catch (error) {
-    // BUG-R13-02 FIX: SEC-10
-    console.error('[sendPartnerWelcomeEmail]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'sendPartnerWelcomeEmail' }));

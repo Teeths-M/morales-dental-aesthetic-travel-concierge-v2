@@ -1,20 +1,10 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     if (!publicKey) {
       return Response.json({ error: 'VAPID_PUBLIC_KEY not configured' }, { status: 500 });
     }
 
     return Response.json({ publicKey });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'getVapidPublicKey' }));

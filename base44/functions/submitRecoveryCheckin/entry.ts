@@ -1,16 +1,11 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Pain level at which we stop treating this as a routine escalation and trigger
 // the full emergency cascade: family alert + case emergency flag + urgent admin page.
 const SEVERE_PAIN_THRESHOLD = 8;
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { session_id, checkin_index, pain_level, notes, escalate } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { session_id, checkin_index, pain_level, notes, escalate } = await body();
     if (session_id === undefined || checkin_index === undefined) {
       return Response.json({ error: 'session_id and checkin_index required' }, { status: 400 });
     }
@@ -116,8 +111,4 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.RecoverySession.update(session.id, updateData);
 
     return Response.json({ success: true, escalated: !!escalate, all_done: allDone, medical_emergency: isMedicalEmergency });
-  } catch (error) {
-    console.error('[submitRecoveryCheckin]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'submitRecoveryCheckin' }));

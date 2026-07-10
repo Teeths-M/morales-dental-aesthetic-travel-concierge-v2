@@ -1,4 +1,4 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
 const ADDON_CATALOG = {
   'origin_transfer': { label: 'Origin Airport Pickup', category: 'transport', price_usd: 75 },
@@ -19,13 +19,8 @@ const ADDON_CATALOG = {
 
 const PEACE_OF_MIND_PRICE = 100;
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { case_id, selected_addon_ids, peace_of_mind_bundle, transport_scope, notes_map } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { case_id, selected_addon_ids, peace_of_mind_bundle, transport_scope, notes_map } = await body();
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 
     const selectedAddons = (selected_addon_ids || []).map(id => ({
@@ -69,7 +64,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ record, total_usd: totalUsd, addon_count: selectedAddons.length });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'saveTravelAddOns' }));

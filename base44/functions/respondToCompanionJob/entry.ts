@@ -9,15 +9,10 @@
  *
  * action: 'reject' — marks CompanionAssignment as 'declined'.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
-
-    const { assignment_id, action, reject_reason } = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { assignment_id, action, reject_reason } = await body().catch(() => ({}));
 
     if (!assignment_id || !['accept', 'reject'].includes(action)) {
       return Response.json({ error: 'assignment_id and action (accept|reject) required' }, { status: 400 });
@@ -180,8 +175,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (error) {
-    console.error('[respondToCompanionJob]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'respondToCompanionJob' }));

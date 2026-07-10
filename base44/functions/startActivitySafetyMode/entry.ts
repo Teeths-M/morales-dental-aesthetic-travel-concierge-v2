@@ -4,7 +4,7 @@
  * Creates a NightlifeSafetySession, logs starting location, creates guardian link,
  * and schedules a tighter check-in using the existing SoloCheckIn system.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 function generateToken(len = 32) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -13,12 +13,7 @@ function generateToken(len = 32) {
   return Array.from(buf).map(b => chars[b % chars.length]).join('');
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
       case_id,
       activity_type = 'nightlife',
@@ -29,7 +24,7 @@ Deno.serve(async (req) => {
       expected_return_hours = 4,
       checkin_interval_minutes = 60,
       is_demo = false,
-    } = await req.json();
+    } = await body();
 
     const appUrl = Deno.env.get('APP_URL') || 'https://morales.app';
     const now = new Date();
@@ -158,8 +153,4 @@ Deno.serve(async (req) => {
       checkin_interval_minutes,
       case_id: resolvedCaseId,
     });
-  } catch (error) {
-    console.error('[startActivitySafetyMode]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'startActivitySafetyMode' }));

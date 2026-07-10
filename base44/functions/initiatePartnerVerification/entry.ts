@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 import { createHmac } from 'node:crypto';
 
 // Doctor auto-activation clear-scan bands.
@@ -16,13 +16,8 @@ function generateAutoActivationProof(doctorId: string, timestamp: string): strin
   return createHmac('sha256', secret).update(`${doctorId}:${timestamp}`).digest('hex');
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { partner_id, partner_type, documents } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { partner_id, partner_type, documents } = await body();
 
     if (!partner_id || !partner_type) {
       return Response.json({ error: 'partner_id and partner_type required' }, { status: 400 });
@@ -287,10 +282,4 @@ Deno.serve(async (req) => {
       auto_verified: autoVerified,
       auto_activated: doctorActuallyActivated,
     });
-
-  } catch (error) {
-    // BUG-R16-06 FIX: SEC-10 — never leak error.message to client.
-    console.error('[initiatePartnerVerification]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'initiatePartnerVerification' }));

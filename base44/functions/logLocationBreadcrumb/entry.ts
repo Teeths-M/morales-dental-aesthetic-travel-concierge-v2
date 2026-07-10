@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 const VALID_SOURCES = ['gps', 'manual', 'ip_geo', 'checkin_handshake'];
 
@@ -6,13 +6,8 @@ function validCoord(v, min, max) {
   return v == null || (typeof v === 'number' && !isNaN(v) && v >= min && v <= max);
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body().catch(() => ({}));
     const {
       action,
       case_id,
@@ -111,7 +106,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Unknown action. Use: log, save, purge_journey, list' }, { status: 400 });
-  } catch (_) {
-    return Response.json({ error: 'Location service unavailable' }, { status: 500 });
-  }
-});
+}, { name: 'logLocationBreadcrumb' }));

@@ -1,4 +1,4 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.32';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
 async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   const now = new Date();
@@ -18,17 +18,13 @@ async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   return true;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     
     // Verify authenticated
     const isAuthenticated = await base44.auth.isAuthenticated();
     if (!isAuthenticated) return Response.json({ error: 'Authentication required' }, { status: 401 });
 
-    const { action, case_id, source_language, target_language, audio_url, session_token } = await req.json();
+    const { action, case_id, source_language, target_language, audio_url, session_token } = await body();
 
     // CREATE SESSION
     if (action === 'create_session') {
@@ -222,8 +218,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Invalid action. Use: create_session, translate_audio, end_session, get_session' }, { status: 400 });
-  } catch (error) {
-    console.error('[walkieTalkieTranslate] Error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'walkieTalkieTranslate' }));

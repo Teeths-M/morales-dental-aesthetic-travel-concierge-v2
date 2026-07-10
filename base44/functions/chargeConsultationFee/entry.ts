@@ -6,7 +6,7 @@
  * Returns a checkout_url for the client to complete payment on Stripe's hosted page.
  */
 
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 import Stripe from 'npm:stripe@17.0.0';
 
 // Sanitize text fields — strip HTML tags to prevent stored XSS
@@ -42,12 +42,7 @@ async function checkRateLimit(base44, key, windowSeconds, maxRequests) {
   return true;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     // RATE LIMIT: 5 Stripe session attempts per user per hour
     const allowed = await checkRateLimit(base44, `${user.id}:chargeConsultationFee`, 3600, 5);
     if (!allowed) return Response.json({ error: 'Too many payment attempts. Please wait before trying again.' }, { status: 429 });
@@ -79,7 +74,7 @@ Deno.serve(async (req) => {
       }, { status: 503 });
     }
 
-    const { consultation_id, email, procedure, destination } = await req.json();
+    const { consultation_id, email, procedure, destination } = await body();
     if (!email) return Response.json({ error: 'email is required' }, { status: 400 });
     if (!isValidEmail(email)) return Response.json({ error: 'Invalid email address' }, { status: 400 });
     const sanitizedProcedure = sanitizeText(procedure, 200);
@@ -196,9 +191,4 @@ Deno.serve(async (req) => {
       consultation_fee_id: feeRecord.id,
       amount: 49,
     });
-
-  } catch (error) {
-    console.error('[chargeConsultationFee]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'chargeConsultationFee' }));

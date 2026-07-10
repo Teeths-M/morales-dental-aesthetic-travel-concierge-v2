@@ -1,18 +1,13 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
       origin_city, destination_city, departure_date, return_date,
       travelers_count = 1, travel_class = 'economy',
       hotel_star_rating = 4, hotel_room_type = 'deluxe',
       transfer_type = 'standard',
       companion_required = false, companion_type, companion_days = 0
-    } = await req.json();
+    } = await body();
 
     // Calculate days
     const start = new Date(departure_date);
@@ -72,9 +67,4 @@ Deno.serve(async (req) => {
         companion: companion_required ? `${companion_days} days with ${companion_type.replace('_', ' ')}` : 'Not required'
       }
     });
-
-  } catch (error) {
-    console.error('[calculateTravelPackagePrice] Error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'calculateTravelPackagePrice' }));

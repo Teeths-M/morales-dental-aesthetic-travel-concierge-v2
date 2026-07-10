@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 async function generateShareToken() {
   const rawBytes = new Uint8Array(32);
@@ -6,12 +6,7 @@ async function generateShareToken() {
   return 'SHARE_' + Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+Deno.serve(createHandler(async ({ base44, user, body }) => {
     const {
       vault_id,
       passport_token,
@@ -20,7 +15,7 @@ Deno.serve(async (req) => {
       purpose = 'other',
       expires_in_hours = 24,
       max_access_count = 1
-    } = await req.json();
+    } = await body();
 
     if (!vault_id || !passport_token) {
       return Response.json({ error: 'vault_id and passport_token required' }, { status: 400 });
@@ -92,9 +87,4 @@ Deno.serve(async (req) => {
       expires_at,
       max_access_count
     });
-
-  } catch (error) {
-    console.error('[createSecureShareLink]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'createSecureShareLink' }));

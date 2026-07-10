@@ -1,4 +1,4 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+﻿import { createHandler } from '../_shared/createHandler.ts';
 
 function generateToken(length = 32) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -7,13 +7,8 @@ function generateToken(length = 32) {
   return Array.from(buf).map(b => chars[b % chars.length]).join('');
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { case_id, guardian_name, guardian_email, guardian_phone, expires_hours: _expires_hours = 720, data_scope } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { case_id, guardian_name, guardian_email, guardian_phone, expires_hours: _expires_hours = 720, data_scope } = await body();
     // Cap at 720 hours (30 days)
     const expires_hours = Math.min(_expires_hours, 720);
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
@@ -63,7 +58,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ session_id: session.id, guardian_url: guardianUrl, token, expires_at: expiresAt });
-  } catch (error) {
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'generateGuardianLink' }));

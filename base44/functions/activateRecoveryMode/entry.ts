@@ -1,17 +1,12 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // Check-in intervals by surgery complexity (hours)
 const CHECKIN_INTERVALS = { minor: 12, moderate: 8, major: 4 };
 // Recovery monitoring duration by complexity (hours)
 const RECOVERY_DURATION = { minor: 24, moderate: 48, major: 72 };
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { case_id, surgery_type, surgery_complexity = 'moderate', family_contacts = [] } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { case_id, surgery_type, surgery_complexity = 'moderate', family_contacts = [] } = await body();
     if (!case_id) return Response.json({ error: 'case_id required' }, { status: 400 });
 
     const intervalHours = CHECKIN_INTERVALS[surgery_complexity] || 8;
@@ -70,8 +65,4 @@ Deno.serve(async (req) => {
     });
 
     return Response.json({ success: true, session, checkins_scheduled: checkins.length, recovery_ends_at: endAt.toISOString() });
-  } catch (error) {
-    console.error('[activateRecoveryMode]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'activateRecoveryMode' }));

@@ -1,16 +1,11 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
 // ZERO-KNOWLEDGE ARCHITECTURE:
 // The backend does NOT hold encryption keys. It returns the encrypted blob + IV only.
 // Decryption happens entirely in the client browser using the user's locally-stored key.
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { passport_token } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { passport_token } = await body();
     if (!passport_token) return Response.json({ error: 'passport_token required' }, { status: 400 });
 
     const vaults = await base44.asServiceRole.entities.PassportVault.filter({ passport_token });
@@ -68,10 +63,4 @@ Deno.serve(async (req) => {
       file_hash_sha256: vault.file_hash_sha256,
       redacted_for_display: vault.redacted_for_display
     });
-
-  } catch (error) {
-    // BUG-R4-09 FIX: SEC-10 — never expose internal error details
-    console.error('[decryptPassportFile]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'decryptPassportFile' }));

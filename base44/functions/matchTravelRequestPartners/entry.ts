@@ -1,14 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { travelRequestId } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { travelRequestId } = await body();
     if (!travelRequestId) {
       return Response.json({ error: 'TravelRequest ID required' }, { status: 400 });
     }
@@ -148,9 +141,4 @@ Deno.serve(async (req) => {
       } : null,
       message: 'Partners matched and notified successfully'
     });
-
-  } catch (error) {
-    console.error('[matchTravelRequestPartners]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'matchTravelRequestPartners' }));

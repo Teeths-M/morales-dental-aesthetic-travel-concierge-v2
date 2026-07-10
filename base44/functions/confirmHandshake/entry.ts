@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 // ── confirmHandshake ──────────────────────────────────────────────────────────
@@ -23,13 +23,8 @@ function shortId() {
     .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body();
     const { action } = body;
 
     // ── CREATE ──────────────────────────────────────────────────────────────
@@ -221,8 +216,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (err) {
-    console.error('[confirmHandshake]', err);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'confirmHandshake' }));

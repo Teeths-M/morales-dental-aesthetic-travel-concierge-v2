@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 function calcAge(dob) {
@@ -11,16 +11,8 @@ function calcAge(dob) {
   return age;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const body = await body();
     const { action, case_id, waiver_type, signature_data, declined_reason, declined_by, declined_relationship, ip_address, age_threshold } = body;
 
     if (!case_id) {
@@ -222,8 +214,4 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ error: 'Invalid action. Use: sign | refuse | reissue | check_companion_requirement' }, { status: 400 });
-  } catch (error) {
-    console.error('[handleWaiverRequest]', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'handleWaiverRequest' }));

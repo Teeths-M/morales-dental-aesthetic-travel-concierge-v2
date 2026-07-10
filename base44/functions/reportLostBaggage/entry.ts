@@ -1,12 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler } from '../_shared/createHandler.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { luggage_id } = await req.json();
+Deno.serve(createHandler(async ({ base44, user, body }) => {
+    const { luggage_id } = await body();
     if (!luggage_id) return Response.json({ error: 'luggage_id required' }, { status: 400 });
 
     const luggage = await base44.entities.LuggageToken.filter({ id: luggage_id });
@@ -68,8 +63,4 @@ Write a professional 150-word claim body suitable for email submission to the ai
     });
 
     return Response.json({ success: true, claim_reference: claimRef, claim_body: claimSummary, finder_url: finderUrl });
-  } catch (error) {
-    console.error('reportLostBaggage error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
-  }
-});
+}, { name: 'reportLostBaggage' }));
