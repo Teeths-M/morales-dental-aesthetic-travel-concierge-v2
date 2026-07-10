@@ -219,7 +219,6 @@ export default function ConciergeIntake() {
             )}
             {atReviewStep && safetyReadoutAcknowledged && verification === 'active' && !submitted && (
               <ContactVerificationStep
-                email={answers.email}
                 phone={answers.phone}
                 onComplete={(result) => {
                   setVerification(result);

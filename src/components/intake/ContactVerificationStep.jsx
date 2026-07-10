@@ -12,14 +12,16 @@ const RESEND_COOLDOWN_S = 30;
 
 /**
  * ContactVerificationStep — runs at submission time (guest-first: browsing is
- * never gated on this). Two sequential OTP stages, email then phone, each
- * with its own resend + retry, per spec. The Consultation is only created
- * after this completes — but there is deliberately no dead-end: if codes
- * can't be delivered, the user can continue unverified and the record
- * carries email_verified/phone_verified = false for the coordinator to
- * confirm by hand (M Ease: a broken SMS route must never lose a patient).
+ * never gated on this). In-flow verification is PHONE ONLY — the safety-
+ * critical channel coordinators and the emergency chain actually dial.
+ * Email is verified passively via the "Confirm your email" link inside the
+ * confirmation email itself (proof the promised email actually arrived).
+ * The component still supports multiple stages via props. No dead-ends: if
+ * codes can't be delivered, the user can continue unverified and the record
+ * carries the flag = false for the coordinator to confirm by hand
+ * (M Ease: a broken SMS route must never lose a patient).
  */
-export default function ContactVerificationStep({ email, phone, onComplete }) {
+export default function ContactVerificationStep({ email = null, phone = null, onComplete }) {
   // Stages actually needed — an answer the user never gave can't be verified.
   const stages = [email && 'email', phone && 'phone'].filter(Boolean);
   const [stageIdx, setStageIdx] = useState(0);
@@ -140,7 +142,7 @@ export default function ContactVerificationStep({ email, phone, onComplete }) {
       </p>
 
       <h2 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.35 }}>
-        {stage === 'email' ? 'One quick check before we submit' : 'And one for your phone'}
+        {stageIdx === 0 ? 'One quick check before we submit' : 'And one more'}
       </h2>
 
       <p style={{ margin: '0 0 20px', fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>

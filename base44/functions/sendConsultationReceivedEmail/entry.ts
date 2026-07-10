@@ -1,6 +1,18 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { renderEmail } from '../_shared/emailTemplate.ts';
 
+// Signed email-confirmation token (same HMAC pattern as portal tokens).
+// Clicking "Confirm your email" in this message is the passive verification —
+// proof the promised email actually arrived, with zero extra in-flow friction.
+async function signEmailConfirmToken(payload: Record<string, unknown>) {
+  const data = JSON.stringify(payload);
+  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  const sigHex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return btoa(data) + '.' + sigHex;
+}
+
 // Sent within seconds of "Send to My Care Team" — the highest-anxiety moment
 // in the whole journey. The patient has just handed over medical history and
 // closed the tab; this email is what they re-read at 2am. It must contain:
@@ -36,6 +48,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   if (consultation.preferred_date) rows.push(['Preferred timing', consultation.preferred_date]);
   rows.push(['Reference', String(consultation.id).slice(-8).toUpperCase()]);
 
+  const confirmToken = await signEmailConfirmToken({
+    consultation_id: consultation.id,
+    email: consultation.email,
+    exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: consultation.email,
@@ -48,6 +66,8 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         intro: `Your consultation arrived safely and is already in front of ${coordinatorName}, your coordinator. Here is what you told us:`,
         rows,
         note: `You will hear from ${coordinatorName} personally within 24 hours. Nothing moves forward without your approval, and you can reply directly to this email at any time.`,
+        ctaText: 'Confirm your email',
+        ctaUrl: `${appUrl}/confirm-email?token=${encodeURIComponent(confirmToken)}`,
       }),
     });
   } catch (e) {
