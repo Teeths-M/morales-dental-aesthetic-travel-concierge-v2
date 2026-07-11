@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import MedicalHistoryPills from '@/components/booking/MedicalHistoryPills';
-
-const GOLD = '#D4AF37';
-const BORDER = '#2A3F4A';
+import { CALM } from '@/lib/brandTokens';
 
 /**
  * MedicalPickStep — one reusable conversational step for the safety-critical
@@ -60,12 +58,12 @@ export default function MedicalPickStep({ config, onContinue }) {
         onChange={setSelected}
         options={options}
         exclusive={[noneLabel]}
-        accent={GOLD}
+        accent={CALM.action}
       />
 
       {notesField && hasPositive && (
         <div style={{ marginTop: 14 }}>
-          <p style={{ margin: '0 0 8px', fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{notesLabel}</p>
+          <p style={{ margin: '0 0 8px', fontSize: 13, color: CALM.textSoft }}>{notesLabel}</p>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -75,9 +73,9 @@ export default function MedicalPickStep({ config, onContinue }) {
               width: '100%',
               padding: '12px 14px',
               borderRadius: 14,
-              background: 'rgba(255,255,255,0.04)',
-              border: `1px solid ${BORDER}`,
-              color: '#fff',
+              background: CALM.surfaceSoft,
+              border: `1px solid ${CALM.border}`,
+              color: CALM.text,
               fontSize: 14,
               outline: 'none',
               resize: 'vertical',
@@ -98,9 +96,9 @@ export default function MedicalPickStep({ config, onContinue }) {
           padding: '13px 20px',
           borderRadius: 999,
           cursor: canContinue ? 'pointer' : 'default',
-          background: canContinue ? GOLD : 'rgba(212,175,55,0.3)',
+          background: canContinue ? CALM.action : 'rgba(14,138,125,0.35)',
           border: 'none',
-          color: '#060B16',
+          color: '#fff',
           fontSize: 14,
           fontWeight: 700,
         }}

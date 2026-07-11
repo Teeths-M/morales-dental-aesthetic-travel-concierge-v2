@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import HumanHandoffCard from './HumanHandoffCard';
+import { CALM } from '@/lib/brandTokens';
 
-const BORDER = '#2A3F4A';
+const BORDER = CALM.border;
 
 /**
  * Always-available escape hatch — "no hunting" per the M Ease Manifesto.
@@ -54,7 +55,7 @@ export default function NeedHumanButton({ answers, sessionId }) {
         background: 'none',
         border: 'none',
         borderTop: `1px solid ${BORDER}`,
-        color: 'rgba(255,255,255,0.35)',
+        color: CALM.textFaint,
         fontSize: 12.5,
         fontWeight: 500,
         cursor: requesting ? 'default' : 'pointer',

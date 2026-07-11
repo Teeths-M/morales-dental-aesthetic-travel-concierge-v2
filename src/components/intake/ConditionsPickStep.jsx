@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import MedicalHistoryPills, { DEFAULT_CONDITIONS } from '@/components/booking/MedicalHistoryPills';
-
-const GOLD = '#D4AF37';
-const BORDER = '#2A3F4A';
+import { CALM } from '@/lib/brandTokens';
 
 /**
  * Thin adapter — reuses the old wizard's "zero-type" pill picker unmodified
@@ -28,7 +26,7 @@ export default function ConditionsPickStep({ onContinue }) {
 
   return (
     <div>
-      <MedicalHistoryPills selected={selected} onChange={setSelected} options={DEFAULT_CONDITIONS} accent={GOLD} />
+      <MedicalHistoryPills selected={selected} onChange={setSelected} options={DEFAULT_CONDITIONS} accent={CALM.action} />
 
       {hasOther && (
         <input
@@ -41,9 +39,9 @@ export default function ConditionsPickStep({ onContinue }) {
             marginTop: 12,
             padding: '14px 16px',
             borderRadius: 14,
-            background: 'rgba(255,255,255,0.04)',
-            border: `1px solid ${BORDER}`,
-            color: '#fff',
+            background: CALM.surfaceSoft,
+            border: `1px solid ${CALM.border}`,
+            color: CALM.text,
             fontSize: 15,
             outline: 'none',
             boxSizing: 'border-box',
@@ -61,9 +59,9 @@ export default function ConditionsPickStep({ onContinue }) {
           padding: '13px 20px',
           borderRadius: 999,
           cursor: selected.length === 0 ? 'default' : 'pointer',
-          background: selected.length === 0 ? 'rgba(212,175,55,0.3)' : GOLD,
+          background: selected.length === 0 ? 'rgba(14,138,125,0.35)' : CALM.action,
           border: 'none',
-          color: '#060B16',
+          color: '#fff',
           fontSize: 14,
           fontWeight: 700,
         }}

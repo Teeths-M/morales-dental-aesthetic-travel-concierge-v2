@@ -2,10 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { ROUTES } from '@/lib/constants';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+const GOLD = '#D4AF37';        // trust marker (the lock seal)
+const CARD = CALM.surface;
+const BORDER = CALM.border;
 
 const DEFAULT_GUEST_DRAFT_KEY = 'morales_intake_guest_draft';
 
@@ -57,10 +58,10 @@ export default function AuthGateStep({
       >
         🔒
       </div>
-      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600, color: '#fff' }}>
+      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600, color: CALM.text }}>
         Let's create your secure account
       </h2>
-      <p style={{ margin: '0 0 24px', fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>
+      <p style={{ margin: '0 0 24px', fontSize: 14, lineHeight: 1.6, color: CALM.textSoft }}>
         {reason}
       </p>
 
@@ -77,8 +78,8 @@ export default function AuthGateStep({
           cursor: 'pointer',
           marginBottom: 10,
           background: '#fff',
-          border: 'none',
-          color: '#1a1a2e',
+          border: `1px solid ${BORDER}`,
+          color: CALM.text,
           fontSize: 14,
           fontWeight: 700,
         }}
@@ -96,16 +97,16 @@ export default function AuthGateStep({
           padding: '13px 20px',
           borderRadius: 14,
           cursor: 'pointer',
-          background: 'rgba(255,255,255,0.05)',
-          border: `1px solid ${BORDER}`,
-          color: 'rgba(255,255,255,0.75)',
+          background: CALM.action,
+          border: 'none',
+          color: '#fff',
           fontSize: 14,
           fontWeight: 600,
         }}
       >
         Continue with Phone
       </button>
-      <p style={{ marginTop: 18, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+      <p style={{ marginTop: 18, fontSize: 11, color: CALM.textFaint }}>
         <span style={{ color: GOLD }}>●</span> Your account keeps your journey private and lets you pick up exactly where you left off.
       </p>
     </motion.div>

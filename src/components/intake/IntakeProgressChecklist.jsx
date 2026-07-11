@@ -1,6 +1,5 @@
 import React from 'react';
-
-const GOLD = '#D4AF37';
+import { CALM } from '@/lib/brandTokens';
 
 /**
  * Live progress, not a loading spinner. `items` is a list of
@@ -15,7 +14,7 @@ function StatusDot({ state }) {
         className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
         style={{ background: 'rgba(34,197,94,0.15)', border: '2px solid #22c55e' }}
       >
-        <span style={{ color: '#22c55e', fontSize: 11, fontWeight: 700 }}>✓</span>
+        <span style={{ color: '#16a34a', fontSize: 11, fontWeight: 700 }}>✓</span>
       </div>
     );
   if (state === 'error')
@@ -30,7 +29,7 @@ function StatusDot({ state }) {
   return (
     <div
       className="w-6 h-6 rounded-full flex-shrink-0"
-      style={{ background: '#1e2d35', border: '2px solid #2A3F4A' }}
+      style={{ background: CALM.surfaceSoft, border: `2px solid ${CALM.border}` }}
     />
   );
 }
@@ -49,15 +48,15 @@ export default function IntakeProgressChecklist({ items = [], progressLabel = ''
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
       {progressLabel && (
         <div>
-          <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+          <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 600, color: CALM.text }}>
             {progressLabel}
           </p>
-          <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: 3, borderRadius: 999, background: CALM.border, overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
                 width: `${Math.min(100, Math.max(4, (progressRatio || 0) * 100))}%`,
-                background: GOLD,
+                background: CALM.action,
                 borderRadius: 999,
                 transition: 'width 0.4s ease',
               }}
@@ -71,7 +70,7 @@ export default function IntakeProgressChecklist({ items = [], progressLabel = ''
           <span
             style={{
               fontSize: 13,
-              color: item.state === 'done' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
+              color: item.state === 'done' ? CALM.text : CALM.textFaint,
               fontWeight: item.state === 'done' ? 600 : 500,
             }}
           >
@@ -79,8 +78,8 @@ export default function IntakeProgressChecklist({ items = [], progressLabel = ''
           </span>
         </div>
       ))}
-      <div style={{ height: 1, background: '#2A3F4A', margin: '4px 0 2px' }} />
-      <span style={{ fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: GOLD, opacity: 0.7 }}>
+      <div style={{ height: 1, background: CALM.border, margin: '4px 0 2px' }} />
+      <span style={{ fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: CALM.action }}>
         Working alongside you
       </span>
     </div>

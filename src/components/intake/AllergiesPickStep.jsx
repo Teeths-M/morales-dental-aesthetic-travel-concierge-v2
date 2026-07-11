@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import SmartAllergyInput from '@/components/booking/SmartAllergyInput';
-
-const GOLD = '#D4AF37';
+import { CALM } from '@/lib/brandTokens';
 
 /**
  * Thin adapter — reuses the old wizard's "zero-type" allergy picker
@@ -36,9 +35,9 @@ export default function AllergiesPickStep({ onContinue }) {
           padding: '13px 20px',
           borderRadius: 999,
           cursor: selected.length === 0 ? 'default' : 'pointer',
-          background: selected.length === 0 ? 'rgba(212,175,55,0.3)' : GOLD,
+          background: selected.length === 0 ? 'rgba(14,138,125,0.35)' : CALM.action,
           border: 'none',
-          color: '#060B16',
+          color: '#fff',
           fontSize: 14,
           fontWeight: 700,
         }}

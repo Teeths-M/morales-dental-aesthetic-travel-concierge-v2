@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, ChevronRight } from 'lucide-react';
+import { CALM } from '@/lib/brandTokens';
 
 /**
  * SmartAllergyInput — 2046 zero-type allergy selector.
@@ -52,7 +53,7 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
   const [nudge,        setNudge]        = useState(null); // { label, query }
   const [showAll,      setShowAll]      = useState(false);
   const inputRef = useRef(null);
-  const GOLD = '#D4AF37';
+  const TEAL = CALM.action;
 
   const visibleCommon = showAll ? COMMON : COMMON.filter(c => c.common);
 
@@ -109,8 +110,8 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
     <div className="space-y-4">
       {/* Common allergy pills */}
       <div>
-        <p className="text-xs text-white/45 mb-3">
-          Tap all that apply — or tap <strong className="text-white/60">None</strong> if you have no allergies.
+        <p className="text-xs mb-3" style={{ color: CALM.textFaint }}>
+          Tap all that apply — or tap <strong style={{ color: CALM.textSoft }}>None</strong> if you have no allergies.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {visibleCommon.map(item => {
@@ -123,17 +124,17 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
                 whileTap={{ scale: 0.96 }}
                 className="flex items-center gap-2 rounded-2xl px-3.5 py-3 min-h-[48px] text-left transition-all"
                 style={{
-                  background: isSelected ? 'rgba(34,197,94,0.10)' : 'rgba(255,255,255,0.04)',
-                  border: isSelected ? '2px solid #22c55e' : '1px solid rgba(255,255,255,0.10)',
+                  background: isSelected ? CALM.actionSoft : CALM.surfaceSoft,
+                  border: isSelected ? `2px solid ${TEAL}` : `1px solid ${CALM.border}`,
                   outline: 'none',
                 }}
               >
                 <span className="text-base flex-shrink-0">{item.icon}</span>
                 <span className="text-sm font-semibold flex-1"
-                  style={{ color: isSelected ? '#fff' : 'rgba(255,255,255,0.65)' }}>
+                  style={{ color: isSelected ? CALM.text : CALM.textSoft }}>
                   {item.label}
                 </span>
-                {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0 text-emerald-400" strokeWidth={2.5} />}
+                {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: TEAL }} strokeWidth={2.5} />}
               </motion.button>
             );
           })}
@@ -142,7 +143,7 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
         {/* Show more toggle */}
         <button type="button" onClick={() => setShowAll(v => !v)}
           className="mt-2 text-xs font-semibold flex items-center gap-1"
-          style={{ color: GOLD }}>
+          style={{ color: TEAL }}>
           {showAll ? 'Show fewer options' : `Show ${COMMON.length - visibleCommon.length} more allergies`}
           <ChevronRight className="w-3 h-3" style={{ transform: showAll ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
         </button>
@@ -151,7 +152,7 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
       {/* Smart type-ahead — only shown when user starts typing */}
       {!hasNone && (
         <div>
-          <p className="text-xs text-white/45 mb-2">Don't see yours? Type it below:</p>
+          <p className="text-xs mb-2" style={{ color: CALM.textFaint }}>Don't see yours? Type it below:</p>
           <div className="relative">
             <input
               ref={inputRef}
@@ -160,10 +161,11 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(suggestions[0] || query); } }}
               placeholder="e.g. Penicillin, Peanuts…"
-              className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30"
+              className="w-full rounded-xl px-4 py-3 text-sm"
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.12)',
+                background: CALM.surfaceSoft,
+                border: `1px solid ${CALM.border}`,
+                color: CALM.text,
                 outline: 'none',
                 minHeight: 48,
               }}
@@ -177,22 +179,23 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden z-20"
-                  style={{ background: '#0C1A1D', border: '1px solid #2A3F4A', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}
+                  style={{ background: CALM.surface, border: `1px solid ${CALM.border}`, boxShadow: '0 12px 40px rgba(23,48,44,0.12)' }}
                 >
                   {suggestions.map(s => (
                     <button key={s} type="button" onClick={() => addCustom(s)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.05] transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                      style={{ background: 'transparent' }}
                     >
-                      <span className="text-sm font-medium text-white/80">{s}</span>
-                      <span className="ml-auto text-[10px] text-white/30">Tap to add</span>
+                      <span className="text-sm font-medium" style={{ color: CALM.text }}>{s}</span>
+                      <span className="ml-auto text-[10px]" style={{ color: CALM.textFaint }}>Tap to add</span>
                     </button>
                   ))}
                   {query.trim() && !ALL_LABELS.map(l => l.toLowerCase()).includes(query.toLowerCase()) && (
                     <button type="button" onClick={() => addCustom(query)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.05] transition-colors"
-                      style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                      style={{ borderTop: `1px solid ${CALM.border}` }}
                     >
-                      <span className="text-sm font-medium text-white/60">Add "<strong className="text-white/80">{query}</strong>"</span>
+                      <span className="text-sm font-medium" style={{ color: CALM.textSoft }}>Add "<strong style={{ color: CALM.text }}>{query}</strong>"</span>
                     </button>
                   )}
                 </motion.div>
@@ -208,18 +211,19 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
                 className="mt-2 rounded-xl px-4 py-3 flex items-center gap-3"
-                style={{ background: `rgba(212,175,55,0.08)`, border: `1px solid rgba(212,175,55,0.28)` }}
+                style={{ background: CALM.actionSoft, border: `1px solid rgba(14,138,125,0.28)` }}
               >
-                <span className="text-sm text-white/70">
-                  We think you mean <strong className="text-white">&ldquo;{nudge.label}&rdquo;</strong> — is that correct?
+                <span className="text-sm" style={{ color: CALM.textSoft }}>
+                  We think you mean <strong style={{ color: CALM.text }}>&ldquo;{nudge.label}&rdquo;</strong> — is that correct?
                 </span>
                 <button type="button" onClick={acceptNudge}
                   className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full"
-                  style={{ background: GOLD, color: '#060B16' }}>
+                  style={{ background: TEAL, color: '#fff' }}>
                   Confirm
                 </button>
                 <button type="button" onClick={() => setNudge(null)}
-                  className="flex-shrink-0 text-xs text-white/40 hover:text-white/60">
+                  className="flex-shrink-0 text-xs"
+                  style={{ color: CALM.textFaint }}>
                   Keep typing
                 </button>
               </motion.div>
@@ -234,16 +238,16 @@ export default function SmartAllergyInput({ selected = [], onChange }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="rounded-xl px-3.5 py-3"
-          style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.18)' }}
+          style={{ background: CALM.actionSoft, border: `1px solid rgba(14,138,125,0.18)` }}
         >
-          <p className="text-[10px] text-emerald-400/70 font-bold uppercase tracking-wider mb-2">Recorded</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: CALM.action }}>Recorded</p>
           <div className="flex flex-wrap gap-2">
             {selected.map(s => (
-              <span key={s} className="flex items-center gap-1.5 text-xs text-white/75 rounded-full px-3 py-1"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)' }}>
+              <span key={s} className="flex items-center gap-1.5 text-xs rounded-full px-3 py-1"
+                style={{ color: CALM.text, background: CALM.surface, border: `1px solid ${CALM.border}` }}>
                 {s}
                 <button type="button" onClick={() => toggle(s)}
-                  className="text-white/40 hover:text-white/70 transition-colors">
+                  style={{ color: CALM.textFaint }}>
                   <X className="w-3 h-3" />
                 </button>
               </span>
