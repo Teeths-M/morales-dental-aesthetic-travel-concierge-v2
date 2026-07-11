@@ -752,7 +752,7 @@ export default function Booking() {
               <span style={{ fontSize: 13 }}>💬</span>
               <p className="text-xs text-slate-500 m-0">
                 Prefer a conversation?{' '}
-                <Link to="/intake" className="font-semibold underline underline-offset-2" style={{ color: '#92740f' }}>
+                <Link to="/intake" className="font-semibold underline underline-offset-2" style={{ color: '#0E8A7D' }}>
                   Try our AI Concierge
                 </Link>{' '}
                 — same journey, guided chat-style.
@@ -890,7 +890,7 @@ export default function Booking() {
                   setStep(s => s + 1);
                   window.scrollTo(0, 0);
                 }}
-                className={`gap-2 text-sm h-11 px-4 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0 ${!canNext() ? 'opacity-70' : ''}`}
+                className={`gap-2 text-sm h-11 px-4 bg-[#0E8A7D] hover:opacity-90 text-white border-0 ${!canNext() ? 'opacity-70' : ''}`}
               >
                 {translations[language].continueBtn} <ArrowRight className="w-4 h-4" />
               </Button>
@@ -898,7 +898,7 @@ export default function Booking() {
               <Button
                 onClick={() => setShowPreview(true)}
                 disabled={createMutation.isPending || !canNext()}
-                className="gap-2 text-sm h-11 px-4 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white border-0"
+                className="gap-2 text-sm h-11 px-4 bg-[#0E8A7D] hover:opacity-90 text-white border-0"
               >
                 <CheckCircle className="w-4 h-4" /> {translations[language].reviewSubmit}
               </Button>
@@ -916,7 +916,7 @@ export default function Booking() {
           {/* Step Info Card */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-3 sticky top-16">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center flex-shrink-0 text-sm shadow-lg">
+            <div className="w-8 h-8 rounded-lg bg-[#0E8A7D] flex items-center justify-center flex-shrink-0 text-sm shadow-lg">
               {steps[step].emoji}
             </div>
             <div>
@@ -931,7 +931,7 @@ export default function Booking() {
               <p className="text-[9px] font-semibold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-emerald-400 to-blue-400"
+                  className="h-full bg-[#0E8A7D]"
                   initial={{ width: '0%' }}
                   animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -1069,7 +1069,7 @@ export default function Booking() {
             <div className="flex gap-3">
               <Button
                 onClick={handleResumeDraft}
-                className="flex-1 bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white"
+                className="flex-1 bg-[#0E8A7D] hover:opacity-90 text-white"
               >
                 Resume Consultation
               </Button>

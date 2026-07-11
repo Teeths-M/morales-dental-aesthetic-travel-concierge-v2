@@ -61,7 +61,7 @@ export default function PreviewSummary({ isOpen, form, onEdit, onSubmit, isSubmi
     <Dialog open={isOpen}>
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto p-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-800 to-blue-900 px-6 py-5 sticky top-0 z-10">
+        <div className="bg-[#0C7568] px-6 py-5 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
@@ -222,7 +222,7 @@ export default function PreviewSummary({ isOpen, form, onEdit, onSubmit, isSubmi
             ← Edit
           </Button>
           <Button
-            className="bg-gradient-to-r from-emerald-700 to-blue-800 hover:opacity-90 text-white font-semibold text-sm px-6"
+            className="bg-[#0E8A7D] hover:opacity-90 text-white font-semibold text-sm px-6"
             onClick={onSubmit}
             disabled={isSubmitting}
           >
