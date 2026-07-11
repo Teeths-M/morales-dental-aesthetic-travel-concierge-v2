@@ -87,6 +87,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const hsNum = Number(handshake_number);
 
+  // SECURITY: this endpoint moves money and is public (called by completeHandshake
+  // via a scheduled service invoke). Do NOT trust the caller — re-verify the
+  // checkpoint was genuinely confirmed before releasing a cent. completeHandshake
+  // is passed trip_id as `case_id` and sets handshake_status[n] = true only after
+  // an authenticated, in-order confirmation. Without this guard, anyone who knows a
+  // trip id could POST { case_id, handshake_number: 5 } and release the doctor's
+  // full payment before the patient ever arrives at the clinic.
+  const trip = await base44.asServiceRole.entities.TravelRequest.get(case_id).catch(() => null);
+  if (!trip || trip.handshake_status?.[String(hsNum)] !== true) {
+    return err('Checkpoint not confirmed — escrow release refused.', 403);
+  }
+
   // Find EscrowHold records triggered by this handshake
   const holds = await base44.asServiceRole.entities.EscrowHold.filter({
     case_id, release_trigger_hs: hsNum, status: 'held',
