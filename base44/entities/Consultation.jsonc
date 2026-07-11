@@ -456,6 +456,18 @@
       "type": "string",
       "default": "1.0"
     },
+    "data_processing_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Client consented to M sharing limited data with subprocessors to coordinate care"
+    },
+    "data_processing_consent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data_processing_consent_version": {
+      "type": "string"
+    },
     "preferred_language": {
       "type": "string",
       "enum": [

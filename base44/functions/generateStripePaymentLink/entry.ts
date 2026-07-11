@@ -153,7 +153,10 @@ Deno.serve(createHandler(async ({ req }) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: `${caseRecord.client_name} — Medical Travel Package`,
+            // PRIVACY: no patient name in the Stripe product label — Stripe has no
+            // health-data BAA. A non-identifying case reference is enough for the
+            // customer's receipt; their identity is carried only by customer_email.
+            name: `Medical Travel Package — Case ${String(caseRecord.id).slice(-8)}`,
             description: planType === 'full_payment'
               ? 'Full Payment (5% discount applied)'
               : planType === 'deposit_50' ? '50% Deposit' : '25% Deposit',

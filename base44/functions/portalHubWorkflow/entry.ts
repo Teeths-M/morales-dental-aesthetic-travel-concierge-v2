@@ -203,7 +203,7 @@ Return a JSON with:
         }),
       });
     } catch (error) {
-      console.log(`Blocked notification email skipped for ${consultation.email}: ${error.message}`);
+      console.log(`Blocked notification email skipped for consultation ${consultation_id}: ${error.message}`);
     }
 
     await base44.asServiceRole.entities.WorkflowEvent.update(workflow.id, { customer_notified: true, last_update_summary: 'Patient blocked by SAFE-T risk check. Email notification skipped (external user).' });

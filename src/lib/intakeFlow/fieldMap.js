@@ -9,6 +9,7 @@
  * submission handler to build the Consultation.create() payload.
  */
 import { UNSPECIFIED, isMinorAge } from './questionGraph';
+import { DATA_CONSENT_VERSION } from '@/components/consent/DataProcessingConsent';
 
 /** Resolves the "recommend one for me" sentinel back down to empty. */
 function resolved(value) {
@@ -58,6 +59,15 @@ export function buildConsultationPayload(answers, verification = {}) {
     clinical_boundary_acknowledged: !!answers.clinical_boundary_acknowledged,
     clinical_boundary_acknowledged_at: answers.clinical_boundary_acknowledged
       ? new Date().toISOString()
+      : undefined,
+    // Data-processing consent (compliance audit trail) — the client agreed to M
+    // sharing limited information with its subprocessors to coordinate care.
+    data_processing_consent: !!answers.data_processing_consent,
+    data_processing_consent_at: answers.data_processing_consent
+      ? (answers.data_processing_consent_at || new Date().toISOString())
+      : undefined,
+    data_processing_consent_version: answers.data_processing_consent
+      ? DATA_CONSENT_VERSION
       : undefined,
     // Under-18: guardian is recorded as the emergency contact, the record is
     // flagged, and the case goes straight to admin review — no minor's journey

@@ -188,12 +188,12 @@ Deno.serve(async (req) => {
 
         // Voice call attempt via Twilio
         if (!isValidPhone(checkIn.user_phone)) {
-          console.warn(`[escalateSoloCheckIn] Invalid or missing phone for ${checkIn.id}: ${checkIn.user_phone}`);
+          console.warn(`[escalateSoloCheckIn] Invalid or missing phone for check-in ${checkIn.id}`);
         }
         if (isValidPhone(checkIn.user_phone) && stillOverdue) {
           const demoMode = Deno.env.get('DEMO_MODE') === 'true';
           if (demoMode) {
-            console.log(`[DEMO_MODE] Would place Twilio voice call to ${checkIn.user_phone} for check-in ${checkIn.id}`);
+            console.log(`[DEMO_MODE] Would place Twilio voice call for check-in ${checkIn.id}`);
             await base44.asServiceRole.entities.SoloCheckIn.update(checkIn.id, { voice_call_attempted_at: now.toISOString() });
           }
         }

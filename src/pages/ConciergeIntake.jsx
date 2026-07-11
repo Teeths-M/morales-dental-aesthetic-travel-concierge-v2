@@ -19,6 +19,7 @@ import NeedHumanButton from '@/components/intake/NeedHumanButton';
 import ProcedureEvaluationStep from '@/components/intake/ProcedureEvaluationStep';
 import SafeTReadout from '@/components/intake/SafeTReadout';
 import ContactVerificationStep from '@/components/intake/ContactVerificationStep';
+import DataProcessingConsent from '@/components/consent/DataProcessingConsent';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -39,6 +40,15 @@ const PHASE_LABELS = ['Getting to know you', 'Building your Safe-T Profile', 'Al
  */
 export default function ConciergeIntake() {
   const [started, setStarted] = useState(false);
+  // Data-processing consent (compliance): required before any medical/identity
+  // info is shared. Read once from localStorage so a returning client who
+  // already agreed isn't asked again; the affirmative Begin persists it and
+  // records it on the Consultation via the payload.
+  const [consented, setConsented] = useState(() => {
+    try { return localStorage.getItem('morales_data_consent_v1') === 'true'; }
+    catch { return false; }
+  });
+  const alreadyConsented = useRef(consented).current;
   const {
     answers,
     turnHistory,
@@ -191,6 +201,18 @@ export default function ConciergeIntake() {
     }
   };
 
+  // Affirmative consent action — persist it, stamp the moment, and seed it onto
+  // the answers so buildConsultationPayload records it on the Consultation.
+  const handleBegin = () => {
+    const consentAt = new Date().toISOString();
+    try {
+      localStorage.setItem('morales_data_consent_v1', 'true');
+      localStorage.setItem('morales_data_consent_at', consentAt);
+    } catch { /* private mode — consent still rides on the Consultation payload */ }
+    seedAnswers({ data_processing_consent: true, data_processing_consent_at: consentAt });
+    setStarted(true);
+  };
+
   const atReviewStep = nextStepResult.type === 'question' && nextStepResult.step.inputType === INPUT_TYPES.REVIEW;
 
   return (
@@ -209,7 +231,13 @@ export default function ConciergeIntake() {
         {isLoading ? (
           <LoadingShell />
         ) : !started ? (
-          <WelcomeCard onBegin={() => setStarted(true)} resuming={answeredCount > 0} />
+          <WelcomeCard
+            onBegin={handleBegin}
+            resuming={answeredCount > 0}
+            requireConsent={!alreadyConsented}
+            consented={consented}
+            onConsentChange={setConsented}
+          />
         ) : (
           <>
             <IntakeProgressChecklist items={checklistItems} progressLabel={progressLabel} progressRatio={progressRatio} />
@@ -351,7 +379,8 @@ function LoadingShell() {
   );
 }
 
-function WelcomeCard({ onBegin, resuming }) {
+function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentChange }) {
+  const blocked = requireConsent && !consented;
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -410,20 +439,29 @@ function WelcomeCard({ onBegin, resuming }) {
           : "I'll ask a few questions, one at a time, and start finding your doctors, destinations, and costs as soon as I know enough to look. Nothing you share here is asked twice."}
       </p>
 
+      {requireConsent && (
+        <div style={{ marginBottom: 20 }}>
+          <DataProcessingConsent checked={consented} onChange={onConsentChange} theme="dark" />
+        </div>
+      )}
+
       <button
         type="button"
         onClick={onBegin}
+        disabled={blocked}
         style={{
           width: '100%',
           padding: '15px 20px',
           borderRadius: 999,
-          cursor: 'pointer',
+          cursor: blocked ? 'not-allowed' : 'pointer',
           background: GOLD,
           border: 'none',
           color: DARK,
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: '0.02em',
+          opacity: blocked ? 0.5 : 1,
+          transition: 'opacity 0.2s ease',
         }}
       >
         {resuming ? 'Continue' : 'Begin'}

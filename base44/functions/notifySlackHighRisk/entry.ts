@@ -6,10 +6,17 @@ Deno.serve(createHandler(async ({ req }) => {
     const base44 = createClientFromRequest(req);
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
 
-    const { patient_name, flagged_condition, procedure, case_id } = await req.json();
+    // PRIVACY BY DESIGN: Slack is a third-party channel with no health-data (BAA)
+    // agreement, so NO patient PHI is sent here — not the name, not the flagged
+    // condition, not the procedure. We send only a non-identifying case reference
+    // and a login-gated link. The reviewing admin opens the secure portal (which
+    // requires authentication) to see the actual medical detail. Any PHI fields
+    // still present in the request body are intentionally ignored.
+    const { case_id } = await req.json();
 
     const appUrl = (Deno.env.get('APP_URL') || '').replace(/\/$/, '');
     const caseUrl = `${appUrl}/admin/portal-viewer?case_id=${case_id}`;
+    const caseRef = case_id ? String(case_id).slice(-8) : 'N/A';
 
     const message = {
       channel: 'morales-safe-t4life',
@@ -24,22 +31,20 @@ Deno.serve(createHandler(async ({ req }) => {
         {
           type: 'section',
           fields: [
-            { type: 'mrkdwn', text: `*Patient:*\n${patient_name || 'Unknown'}` },
-            { type: 'mrkdwn', text: `*Procedure:*\n${(procedure || 'N/A').replace(/_/g, ' ')}` },
-            { type: 'mrkdwn', text: `*Flagged Condition:*\n${flagged_condition || 'High-risk condition'}` },
-            { type: 'mrkdwn', text: `*Case ID:*\n${case_id ? case_id.slice(-8) : 'N/A'}` }
+            { type: 'mrkdwn', text: `*Case reference:*\n${caseRef}` },
+            { type: 'mrkdwn', text: `*Status:*\nOn hold — doctor assignment blocked` }
           ]
         },
         {
           type: 'section',
-          text: { type: 'mrkdwn', text: 'This case is *on hold* pending Senior Medical Team review. Doctor assignment has been blocked until an admin clears the case.' }
+          text: { type: 'mrkdwn', text: 'A consultation has been flagged for *Senior Medical Team review*. Patient details are protected and are not shown in Slack — open the secure portal to review the case. Doctor assignment stays blocked until an admin clears it.' }
         },
         {
           type: 'actions',
           elements: [
             {
               type: 'button',
-              text: { type: 'plain_text', text: '🔍 Review Case Now', emoji: true },
+              text: { type: 'plain_text', text: '🔍 Review Case in Secure Portal', emoji: true },
               style: 'danger',
               url: caseUrl
             }

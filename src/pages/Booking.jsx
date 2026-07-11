@@ -15,6 +15,7 @@ import PreviewSummary from '@/components/booking/PreviewSummary';
 import ConsultationMedicalCart from '@/components/cart/ConsultationMedicalCart';
 import SubmissionSuccess from '@/components/booking/SubmissionSuccess';
 import ConsultationFeeModal from '@/components/booking/ConsultationFeeModal';
+import DataProcessingConsent, { DATA_CONSENT_VERSION } from '@/components/consent/DataProcessingConsent';
 
 import Section1PersonalInfo from '../components/booking/Section1PersonalInfo';
 import Section2Travel from '../components/booking/Section2Travel';
@@ -243,6 +244,7 @@ export default function Booking() {
     signature_ip_address: '',
     safet_risk_level: null,
     safet_risk_flags: [],
+    data_processing_consent: false,
   });
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -447,6 +449,12 @@ export default function Booking() {
         ...data,
         ...safeTFlags,
         ...(data.high_risk_medical_review ? { status: 'Admin-Review', risk_level: 'high' } : {}),
+        // Data-processing consent audit trail (compliance) — stamp when the client agreed.
+        ...(data.data_processing_consent ? {
+          data_processing_consent: true,
+          data_processing_consent_at: new Date().toISOString(),
+          data_processing_consent_version: DATA_CONSENT_VERSION,
+        } : {}),
         procedure_interest: procedureEnum,
         notes: items.length > 1
           ? (data.notes ? `${data.notes}\n\nAll procedures requested: ${procedureNames}${patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''}` : `All procedures requested: ${procedureNames}${patientNotes ? `\n\nPatient's Notes:\n${patientNotes}` : ''}`)
@@ -540,9 +548,9 @@ export default function Booking() {
       return form.acknowledged_statements.size >= required;
     }
     if (step === 11) {
-      // SAFE-T Scan (was 13)
+      // SAFE-T Scan (was 13) — also the final consent gate before submission
       if (!form.safet_risk_level) return false;
-      return true;
+      return form.data_processing_consent === true;
     }
     return true;
   };
@@ -817,14 +825,23 @@ export default function Booking() {
                 )}
                 {step === 10 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={checkVisaRequirement(form.nationality, form.procedure_country)} />}
                 {step === 11 && (
-                  <SafeTScan
-                    form={form}
-                    items={items}
-                    onResult={(result) => {
-                      update('safet_risk_level', result.risk_level);
-                      update('safet_risk_flags', result.flags || []);
-                    }}
-                  />
+                  <>
+                    <SafeTScan
+                      form={form}
+                      items={items}
+                      onResult={(result) => {
+                        update('safet_risk_level', result.risk_level);
+                        update('safet_risk_flags', result.flags || []);
+                      }}
+                    />
+                    <div className="mt-4">
+                      <DataProcessingConsent
+                        theme="light"
+                        checked={form.data_processing_consent}
+                        onChange={(v) => update('data_processing_consent', v)}
+                      />
+                    </div>
+                  </>
                 )}
               </motion.div>
             </AnimatePresence>

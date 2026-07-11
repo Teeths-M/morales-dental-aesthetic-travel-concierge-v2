@@ -13,7 +13,7 @@ Deno.serve(createHandler(async ({ req }) => {
     // the tokenMatch check further down is what actually authorizes anonymous callers.
     const user = await base44.auth.me().catch(() => null);
 
-    const { case_id, client_name, original_amount, proposal_token } = await req.json();
+    const { case_id, original_amount, proposal_token } = await req.json();
 
     if (!case_id) {
       return Response.json({ error: 'case_id required' }, { status: 400 });
@@ -61,9 +61,12 @@ Deno.serve(createHandler(async ({ req }) => {
     const session = await stripe.checkout.sessions.create({
       payment_intent_data: {
         metadata: {
+          // PRIVACY: patient name intentionally omitted — never written to Stripe
+          // metadata (no health-data BAA). client_email is retained only because the
+          // webhook uses it to reconcile the payment; Stripe already holds it as the
+          // first-class customer_email either way.
           case_id: case_id || '',
           client_email: client_email,
-          client_name: client_name || '',
           deposit_type: 'consultation_deposit_60',
           original_amount_attempted: String(original_amount || 0),
           primary_auth_failed: 'true',
