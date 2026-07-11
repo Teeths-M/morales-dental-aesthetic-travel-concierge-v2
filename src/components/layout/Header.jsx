@@ -6,6 +6,7 @@ import { LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import LanguageSwitcher from '@/components/ui-system/LanguageSwitcher';
 import ModeToggle from '@/components/home/ModeToggle';
 import { useTranslation, changeLanguage } from '@/i18n';
+import { CALM } from '@/lib/brandTokens';
 
 export default function Header() {
   const [isMobileOpen,   setIsMobileOpen]   = useState(false);
@@ -23,6 +24,10 @@ export default function Header() {
 
   const DARK_HERO_PATHS = ['/', '/discover', '/procedures', '/how-it-works'];
   const hasHero      = DARK_HERO_PATHS.includes(location.pathname);
+  const isDemo       = location.pathname.startsWith('/demo');
+  // Product Principle #5: calm/light chrome on patient decision & content
+  // screens; dark dramatic chrome only on the landing hero and demo pages.
+  const calm         = !hasHero && !isDemo;
   const isTransparent = hasHero && !scrolled;
 
   const userInitials = user?.full_name
@@ -96,8 +101,8 @@ export default function Header() {
           minHeight: scrolled ? '56px' : '72px',
           paddingTop:    scrolled ? '10px' : '14px',
           paddingBottom: scrolled ? '10px' : '14px',
-          background:    isTransparent ? 'transparent' : 'rgba(10, 20, 25, 0.92)',
-          borderBottom:  isTransparent ? '1px solid transparent' : '1px solid rgba(255,255,255,0.06)',
+          background:    calm ? 'rgba(255,255,255,0.94)' : isTransparent ? 'transparent' : 'rgba(10, 20, 25, 0.92)',
+          borderBottom:  calm ? `1px solid ${CALM.border}` : isTransparent ? '1px solid transparent' : '1px solid rgba(255,255,255,0.06)',
           backdropFilter:         isTransparent ? 'none' : 'blur(20px)',
           WebkitBackdropFilter:   isTransparent ? 'none' : 'blur(20px)',
         }}
@@ -121,7 +126,7 @@ export default function Header() {
                 fontFamily: 'Georgia, serif',
                 fontSize: '17px',
                 fontWeight: 400,
-                color: '#FFFFFF',
+                color: calm ? CALM.text : '#FFFFFF',
                 letterSpacing: '0.20em',
                 lineHeight: 1,
                 textTransform: 'uppercase',
@@ -155,12 +160,12 @@ export default function Header() {
               key={link.path}
               to={link.path}
               style={{
-                color:      link.gold ? '#D4AF37' : location.pathname === link.path ? '#FFFFFF' : '#8A9099',
+                color:      link.gold ? '#D4AF37' : location.pathname === link.path ? (calm ? CALM.text : '#FFFFFF') : (calm ? CALM.textSoft : '#8A9099'),
                 fontWeight: link.gold || location.pathname === link.path ? 600 : 400,
                 transition: 'color 0.2s',
               }}
-              onMouseEnter={e => { if (!link.gold && location.pathname !== link.path) e.target.style.color = '#FFFFFF'; }}
-              onMouseLeave={e => { if (!link.gold && location.pathname !== link.path) e.target.style.color = '#8A9099'; }}
+              onMouseEnter={e => { if (!link.gold && location.pathname !== link.path) e.target.style.color = calm ? CALM.text : '#FFFFFF'; }}
+              onMouseLeave={e => { if (!link.gold && location.pathname !== link.path) e.target.style.color = calm ? CALM.textSoft : '#8A9099'; }}
             >
               {link.gold ? `▶ ${link.name}` : link.name}
             </Link>
@@ -174,7 +179,7 @@ export default function Header() {
           {user ? (
             /* Avatar dropdown */
             <>
-            <span className="hidden xl:block text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
+            <span className="hidden xl:block text-[12px] font-medium" style={{ color: calm ? CALM.textFaint : 'rgba(255,255,255,0.32)', letterSpacing: '0.01em' }}>
                 {timeGreeting}
               </span>
             <div
@@ -235,9 +240,9 @@ export default function Header() {
             <div className="flex items-center gap-3">
               <Link
                 to="/dashboard"
-                style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 500 }}
-                onMouseEnter={e => e.target.style.color = 'rgba(255,255,255,0.85)'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
+                style={{ color: calm ? CALM.textSoft : 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 500 }}
+                onMouseEnter={e => e.target.style.color = calm ? CALM.text : 'rgba(255,255,255,0.85)'}
+                onMouseLeave={e => e.target.style.color = calm ? CALM.textSoft : 'rgba(255,255,255,0.5)'}
               >
                 {t('nav.sign_in')}
               </Link>
@@ -245,8 +250,8 @@ export default function Header() {
                 to="/intake"
                 className="m-cta-breathe inline-flex items-center px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 style={{
-                  background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
-                  color: '#060B16',
+                  background: calm ? CALM.action : 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
+                  color: calm ? '#fff' : '#060B16',
                 }}
               >
                 {t('nav.book_now')}
@@ -264,6 +269,7 @@ export default function Header() {
         <button
           onClick={() => setIsMobileOpen(p => !p)}
           className="lg:hidden p-2 text-white/80 hover:text-white z-50 relative"
+          style={calm ? { color: CALM.text } : undefined}
           aria-label="Toggle Menu"
         >
           <div className="w-6 h-[18px] flex flex-col justify-between">
