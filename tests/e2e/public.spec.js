@@ -2,9 +2,10 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Public, credit-independent surface — the exact path you'd walk an investor
- * through. No login, no Stripe/Twilio/LLM. Every test screenshots into
- * test-results/ for visual inspection, and asserts on copy we control so the
- * suite doubles as regression protection.
+ * through, plus a smoke sweep of every scenario demo so none of them can
+ * dead-end on stage. No login, no Stripe/Twilio/LLM. Every test screenshots
+ * into test-results/ for visual inspection, and asserts on copy we control so
+ * the suite doubles as regression protection.
  *
  * Run: npm run test:e2e   (headless, against the deployed app)
  */
@@ -28,10 +29,15 @@ test.describe('Investor demo path (public, no login)', () => {
     // Tummy Tuck + BBL are pre-selected, so the conflict warning is already up.
     await expect(page.getByText(/detected a potential conflict/i)).toBeVisible();
     await page.getByRole('button', { name: /Proceed to Booking/i }).click();
-    // The full block overlay renders the clinical reason — best-effort assert,
-    // always screenshot so a human can confirm the block visually.
-    await page.waitForTimeout(800);
+    // The full block overlay renders the clinical reason.
+    await expect(page.getByText(/Procedure Combination Blocked/i)).toBeVisible();
     await page.screenshot({ path: 'test-results/03-safet-block.png', fullPage: true });
+  });
+
+  test('MedGuard live simulation tab renders', async ({ page }) => {
+    await page.goto('/demo?tab=medguard');
+    await expect(page.getByText(/MedGuard/i).first()).toBeVisible();
+    await page.screenshot({ path: 'test-results/08-medguard.png', fullPage: true });
   });
 
   test('privacy policy — lists the real subprocessors', async ({ page }) => {
@@ -58,4 +64,63 @@ test.describe('Investor demo path (public, no login)', () => {
     await page.waitForTimeout(1500);
     await page.screenshot({ path: 'test-results/06-journey.png', fullPage: true });
   });
+});
+
+test.describe('Guest booking entry (public, no login)', () => {
+  test('procedures page loads for a guest', async ({ page }) => {
+    await page.goto('/procedures');
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.locator('body')).toBeVisible();
+    await page.screenshot({ path: 'test-results/07-procedures.png', fullPage: true });
+  });
+
+  test('booking wizard opens for a guest', async ({ page }) => {
+    await page.goto('/booking');
+    await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.locator('body')).toBeVisible();
+    await page.screenshot({ path: 'test-results/07-booking-guest.png', fullPage: true });
+  });
+});
+
+/**
+ * Smoke sweep of every public scenario demo. These run on canned data, so a
+ * failure here means a page crashed or redirected — i.e. it would dead-end if
+ * an investor clicked it. We assert it loaded and stayed public, and screenshot
+ * each for a quick visual pass. (DemoProtected pages — situation-room,
+ * mission-control — are intentionally excluded: they require visiting /demo
+ * first and would redirect in a fresh context.)
+ */
+const PUBLIC_DEMO_ROUTES = [
+  ['emergency', '/demo/emergency'],
+  ['nightlife', '/demo/nightlife'],
+  ['medguard', '/demo/medguard'],
+  ['recovery', '/demo/recovery'],
+  ['evn', '/demo/evn'],
+  ['james', '/demo/james'],
+  ['silent', '/demo/silent'],
+  ['trust', '/demo/trust'],
+  ['tap', '/demo/tap'],
+  ['language', '/demo/language'],
+  ['waiting', '/demo/waiting'],
+  ['weather', '/demo/weather'],
+  ['family', '/demo/family'],
+  ['arrival', '/demo/arrival'],
+  ['intelligence', '/demo/intelligence'],
+  ['mesh-beacon', '/demo/mesh-beacon'],
+  ['coverage', '/demo/coverage'],
+  ['siobhan', '/demo/siobhan'],
+  ['recovery-cascade', '/demo/recovery-cascade'],
+];
+
+test.describe('Scenario demos smoke (all public, canned data)', () => {
+  for (const [name, route] of PUBLIC_DEMO_ROUTES) {
+    test(`demo loads: ${name}`, async ({ page }) => {
+      const resp = await page.goto(route);
+      expect(resp?.status(), 'HTTP status').toBeLessThan(400);
+      await expect(page).not.toHaveURL(/\/login/);
+      await expect(page.locator('body')).toBeVisible();
+      await page.waitForTimeout(600);
+      await page.screenshot({ path: `test-results/demo-${name}.png`, fullPage: true });
+    });
+  }
 });
