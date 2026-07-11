@@ -1,4 +1,5 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 import { flagForReview } from '../_shared/freshness.ts';
 
 /**
@@ -29,7 +30,8 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-Deno.serve(createHandler(async ({ base44 }) => {
+Deno.serve(createHandler(async ({ req, base44 }) => {
+  if (!(await cronAuthorized(req, base44))) return err('Forbidden', 403);
   const sources = await base44.asServiceRole.entities.RegulatorySource.filter({ active: true }, '-last_checked_at', 100).catch(() => []);
   const nowISO = new Date().toISOString();
 
@@ -96,4 +98,4 @@ Deno.serve(createHandler(async ({ base44 }) => {
 
   console.log(`[detectRegulatoryChanges] checked=${checked} changed=${changed} baselined=${baselined} unreachable=${unreachable}`);
   return ok({ success: true, checked, changed, baselined, unreachable });
-}, { name: 'detectRegulatoryChanges', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));
+}, { name: 'detectRegulatoryChanges', requireAuth: false }));

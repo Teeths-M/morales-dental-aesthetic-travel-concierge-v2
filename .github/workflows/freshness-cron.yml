@@ -1,0 +1,77 @@
+name: Data freshness scheduler
+
+# Drives the data-freshness jobs on a schedule so the app self-maintains its
+# clinic / doctor / visa / regulatory data with no human in the routine loop.
+#
+# ONE-TIME SETUP (the only manual step):
+#   1. Pick a long random string as the shared secret.
+#   2. GitHub → repo Settings → Secrets and variables → Actions → New secret:
+#        name: CRON_SECRET   value: <that string>
+#   3. Base44 → project env vars: CRON_SECRET = <the same string>
+#   After that this runs itself; nothing else to touch.
+#
+# Optional overrides (repo Variables, only if the app URL/id ever change):
+#   FUNCTIONS_BASE_URL (default https://sentinel-dental-care.base44.app)
+#   BASE44_APP_ID      (default 6a01c1305c540b75f24dd373)
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily 06:00 UTC — clinic/doctor/regulatory
+    - cron: '0 7 * * 1'   # weekly Monday 07:00 UTC — visa
+  workflow_dispatch:       # manual "Run workflow" button runs everything
+
+concurrency:
+  group: freshness-cron
+  cancel-in-progress: false
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    env:
+      BASE: ${{ vars.FUNCTIONS_BASE_URL || 'https://sentinel-dental-care.base44.app' }}
+      APP: ${{ vars.BASE44_APP_ID || '6a01c1305c540b75f24dd373' }}
+      SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Guard — secret configured
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "::error::CRON_SECRET is not set. Add it in repo Secrets AND in Base44 env (same value). See this workflow's header."
+            exit 1
+          fi
+
+      - name: Run freshness jobs
+        run: |
+          set +e
+          call () {
+            local fn="$1"
+            local code
+            code=$(curl -sS -o /tmp/out.json -w '%{http_code}' -X POST \
+              "$BASE/api/apps/$APP/functions/$fn" \
+              -H 'Content-Type: application/json' \
+              -H "X-Cron-Secret: $SECRET" \
+              -d '{}')
+            echo "=== $fn -> HTTP $code ==="
+            head -c 600 /tmp/out.json; echo
+            if [ "$code" -ge 400 ]; then FAILED="$FAILED $fn"; fi
+          }
+
+          IS_WEEKLY="${{ github.event.schedule == '0 7 * * 1' }}"
+          MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
+
+          if [ "$IS_WEEKLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+            # Weekly slot: visa only.
+            call recheckVisaRequirements
+          else
+            # Daily slot (and manual runs): clinic + doctor + regulatory.
+            call backfillClinicsFromDoctors
+            call verifyClinicStatus
+            call reVerifyDoctorCredentials
+            call detectRegulatoryChanges
+            # On manual runs, also refresh visa so a full pass is one click.
+            if [ "$MANUAL" = "true" ]; then call recheckVisaRequirements; fi
+          fi
+
+          if [ -n "$FAILED" ]; then
+            echo "::warning::Some jobs returned an error:$FAILED (often just exhausted integration credits — check Base44)."
+          fi
+          echo "Done."

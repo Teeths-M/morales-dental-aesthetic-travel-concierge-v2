@@ -1,4 +1,5 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 import { runLookup, resolveCountryISO } from '../_shared/registryLookup.ts';
 import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
 
@@ -36,7 +37,8 @@ function statusIsRevoked(result: any): boolean {
   return bad.includes(s);
 }
 
-Deno.serve(createHandler(async ({ base44 }) => {
+Deno.serve(createHandler(async ({ req, base44 }) => {
+  if (!(await cronAuthorized(req, base44))) return err('Forbidden', 403);
   const nowISO = new Date().toISOString();
   const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
   const useLLM = Deno.env.get('DOCTOR_RECHECK_USE_LLM') !== 'false';
@@ -141,4 +143,4 @@ Deno.serve(createHandler(async ({ base44 }) => {
 
   console.log(`[reVerifyDoctorCredentials] due=${due.length} confirmed=${confirmed} suspended=${suspended} unconfirmed=${unconfirmed} llm=${llmUsed}`);
   return ok({ success: true, checked: due.length, confirmed, suspended, unconfirmed, llm_used: llmUsed });
-}, { name: 'reVerifyDoctorCredentials', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));
+}, { name: 'reVerifyDoctorCredentials', requireAuth: false }));

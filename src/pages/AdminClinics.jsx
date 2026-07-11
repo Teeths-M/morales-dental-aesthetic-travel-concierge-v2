@@ -6,7 +6,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import LastVerified from '@/components/trust/LastVerified';
 import {
-  Building2, Plus, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, X,
+  Building2, Plus, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, X, Download, Bot,
 } from 'lucide-react';
 
 /**
@@ -109,7 +109,16 @@ function ClinicCard({ clinic, onDone }) {
               {[clinic.city, clinic.country].filter(Boolean).join(', ') || '—'}
               {clinic.registration_ref ? ` · ${clinic.registration_ref}` : ''}
             </div>
-            <div className="mt-2"><LastVerified timestamp={clinic.status_verified_at} kind="clinic_status" /></div>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <LastVerified timestamp={clinic.status_verified_at} kind="clinic_status" />
+              {clinic.status_verified_by && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                  {clinic.status_verified_by === 'agent'
+                    ? (<><Bot className="w-3 h-3" /> by agent</>)
+                    : `by ${clinic.status_verified_by}`}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_STYLE[clinic.operating_status] || STATUS_STYLE.unknown}`}>
@@ -138,6 +147,8 @@ function ClinicCard({ clinic, onDone }) {
 export default function AdminClinics() {
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
 
   const { data: clinics = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['clinics'],
@@ -146,6 +157,20 @@ export default function AdminClinics() {
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['clinics'] });
+
+  const importFromDoctors = async () => {
+    setImporting(true); setImportMsg('');
+    try {
+      const res = await base44.functions.invoke('backfillClinicsFromDoctors', {});
+      const d = res?.data ?? res;
+      setImportMsg(d?.error ? d.error : `Imported ${d?.created ?? 0} new clinic${d?.created === 1 ? '' : 's'} from ${d?.scanned_doctors ?? 0} doctors.`);
+      refresh();
+    } catch (e) {
+      setImportMsg(e?.response?.data?.error || 'Import failed — please try again.');
+    } finally {
+      setImporting(false);
+    }
+  };
   const needsAttention = clinics.filter((c) => isStale(c.status_verified_at) || c.operating_status !== 'operating').length;
 
   return (
@@ -166,10 +191,22 @@ export default function AdminClinics() {
             <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`w-4 h-4 mr-1 ${isFetching ? 'animate-spin' : ''}`} /> Refresh
             </Button>
+            <Button size="sm" variant="outline" onClick={importFromDoctors} disabled={importing}>
+              <Download className={`w-4 h-4 mr-1 ${importing ? 'animate-pulse' : ''}`} /> {importing ? 'Importing…' : 'Import from doctors'}
+            </Button>
             <Button size="sm" className="bg-slate-900 hover:bg-slate-800" onClick={() => setAdding(true)}>
               <Plus className="w-4 h-4 mr-1" /> Add clinic
             </Button>
           </div>
+        </div>
+
+        {importMsg && (
+          <div className="mb-4 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">{importMsg}</div>
+        )}
+
+        <div className="mb-5 flex items-start gap-2 text-xs text-slate-500 bg-emerald-50/60 border border-emerald-100 rounded-xl px-4 py-3">
+          <Bot className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <span>An agent re-checks operating status automatically on a daily schedule. You only step in on clinics it couldn’t confirm — those show up here and in the review queue.</span>
         </div>
 
         {needsAttention > 0 && (

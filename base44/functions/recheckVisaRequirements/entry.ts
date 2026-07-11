@@ -1,4 +1,5 @@
-import { createHandler, ok } from '../_shared/createHandler.ts';
+import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 import { fetchVisaRequirement } from '../_shared/visaLookup.ts';
 import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
 
@@ -12,7 +13,8 @@ import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
  */
 const BATCH = 25;
 
-Deno.serve(createHandler(async ({ base44 }) => {
+Deno.serve(createHandler(async ({ req, base44 }) => {
+  if (!(await cronAuthorized(req, base44))) return err('Forbidden', 403);
   const snapshots = await base44.asServiceRole.entities.VisaRequirementSnapshot.filter(
     {}, 'last_confirmed_at', 200,
   ).catch(() => []);
@@ -55,4 +57,4 @@ Deno.serve(createHandler(async ({ base44 }) => {
 
   console.log(`[recheckVisaRequirements] due=${due.length} refreshed=${refreshed} changed=${changed}`);
   return ok({ success: true, checked: due.length, refreshed, changed });
-}, { name: 'recheckVisaRequirements', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));
+}, { name: 'recheckVisaRequirements', requireAuth: false }));
