@@ -11,17 +11,23 @@ import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 import { useTranslation } from '@/i18n';
 import { translateStep } from '@/lib/intakeFlow/translateStep';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+// CALM decision-screen palette (Product Principle #5): light surface, TEAL for
+// the only "proceed" action, GOLD reserved for trust/recommendation markers.
+const GOLD = '#D4AF37';        // trust markers only
+const TEAL = '#0E8A7D';        // the only "proceed" action color
+const CARD = '#FFFFFF';        // calm surface
+const BORDER = '#E2E9E6';
+const TEXT = '#17302C';        // primary text
+const TEXT_SOFT = '#566B66';   // secondary / explanatory
+const TEXT_FAINT = '#8A9B96';  // hints, counts
 
 const inputBaseStyle = {
   width: '100%',
   padding: '14px 16px',
   borderRadius: 14,
-  background: 'rgba(255,255,255,0.04)',
+  background: '#EEF3F1',
   border: `1px solid ${BORDER}`,
-  color: '#fff',
+  color: TEXT,
   fontSize: 15,
   outline: 'none',
 };
@@ -104,7 +110,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
 
         if (isLoading) {
           return (
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '20px 0' }}>
+            <p style={{ fontSize: 13, color: TEXT_FAINT, textAlign: 'center', padding: '20px 0' }}>
               Checking our verified destinations...
             </p>
           );
@@ -140,9 +146,9 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                       textAlign: 'left',
                       padding: '12px 16px',
                       borderRadius: 14,
-                      background: 'rgba(255,255,255,0.04)',
+                      background: '#EEF3F1',
                       border: `1px solid ${BORDER}`,
-                      color: '#fff',
+                      color: TEXT,
                       fontSize: 14,
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -152,13 +158,13 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                   </button>
                 ))}
                 {visible.length === 0 && (
-                  <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', textAlign: 'center', padding: '8px 0' }}>
+                  <p style={{ fontSize: 12.5, color: TEXT_FAINT, textAlign: 'center', padding: '8px 0' }}>
                     No matches — try a different spelling
                   </p>
                 )}
               </div>
               {filtered.length > visible.length && (
-                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: 0 }}>
+                <p style={{ fontSize: 11.5, color: TEXT_FAINT, textAlign: 'center', margin: 0 }}>
                   {filtered.length - visible.length} more — keep typing to narrow it down
                 </p>
               )}
@@ -180,9 +186,9 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                     textAlign: 'left',
                     padding: '13px 16px',
                     borderRadius: 14,
-                    background: 'rgba(255,255,255,0.04)',
+                    background: '#EEF3F1',
                     border: `1px solid ${BORDER}`,
-                    color: '#fff',
+                    color: TEXT,
                     fontSize: 14,
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -218,7 +224,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                   borderRadius: 14,
                   background: 'rgba(212,175,55,0.06)',
                   border: `1px solid ${i === 0 ? GOLD + '80' : BORDER}`,
-                  color: '#fff',
+                  color: TEXT,
                   fontSize: 14,
                   fontWeight: 500,
                   cursor: 'pointer',
@@ -234,7 +240,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                 )}
                 <span>{opt.label}</span>
                 {opt.count != null && (
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+                  <span style={{ fontSize: 12, color: TEXT_SOFT, fontWeight: 400 }}>
                     {opt.count} {step.recommendationUnit || 'options'}
                   </span>
                 )}
@@ -260,7 +266,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                 borderRadius: 14,
                 background: 'transparent',
                 border: `1px dashed ${BORDER}`,
-                color: 'rgba(255,255,255,0.6)',
+                color: TEXT_SOFT,
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -278,7 +284,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                   padding: '10px 16px',
                   background: 'none',
                   border: 'none',
-                  color: GOLD,
+                  color: TEAL,
                   fontSize: 12.5,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -307,9 +313,9 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                         textAlign: 'left',
                         padding: '11px 14px',
                         borderRadius: 12,
-                        background: 'rgba(255,255,255,0.04)',
+                        background: '#EEF3F1',
                         border: `1px solid ${BORDER}`,
-                        color: '#fff',
+                        color: TEXT,
                         fontSize: 13.5,
                         fontWeight: 500,
                         cursor: 'pointer',
@@ -319,7 +325,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                     >
                       <span>{opt.label}</span>
                       {opt.count != null && (
-                        <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>{opt.count}</span>
+                        <span style={{ color: TEXT_FAINT, fontWeight: 400 }}>{opt.count}</span>
                       )}
                     </button>
                   ))}
@@ -345,9 +351,9 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                   flex: 1,
                   padding: '13px 16px',
                   borderRadius: 14,
-                  background: 'rgba(255,255,255,0.04)',
+                  background: '#EEF3F1',
                   border: `1px solid ${BORDER}`,
-                  color: '#fff',
+                  color: TEXT,
                   fontSize: 14,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -427,7 +433,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
         return (
           <form onSubmit={handleSubmit}>
             {clarification && (
-              <p style={{ margin: '0 0 10px', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: TEXT_SOFT, lineHeight: 1.5 }}>
                 {clarification}
               </p>
             )}
@@ -453,7 +459,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                       borderRadius: 12,
                       background: 'rgba(212,175,55,0.06)',
                       border: `1px solid ${GOLD}40`,
-                      color: '#fff',
+                      color: TEXT,
                       fontSize: 13.5,
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -477,7 +483,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
                   borderRadius: 14,
                   background: 'transparent',
                   border: `1px dashed ${BORDER}`,
-                  color: 'rgba(255,255,255,0.6)',
+                  color: TEXT_SOFT,
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
@@ -523,7 +529,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
               padding: 0,
               background: 'none',
               border: 'none',
-              color: 'rgba(255,255,255,0.4)',
+              color: TEXT_FAINT,
               fontSize: 12.5,
               fontWeight: 600,
               cursor: 'pointer',
@@ -537,7 +543,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
             margin: '0 0 8px',
             fontSize: 20,
             fontWeight: 600,
-            color: '#fff',
+            color: TEXT,
             lineHeight: 1.4,
           }}
         >
@@ -547,8 +553,7 @@ export default function QuestionCard({ step, onAnswer, onFreeTextAnswer, dynamic
           style={{
             margin: '0 0 24px',
             fontSize: 13,
-            color: GOLD,
-            opacity: 0.85,
+            color: TEXT_SOFT,
           }}
         >
           {displayReason}
@@ -570,9 +575,9 @@ function SubmitButton({ disabled, thinking = false }) {
         padding: '13px 20px',
         borderRadius: 999,
         cursor: disabled ? 'default' : 'pointer',
-        background: disabled ? 'rgba(212,175,55,0.3)' : '#D4AF37',
+        background: disabled ? 'rgba(14,138,125,0.35)' : TEAL,
         border: 'none',
-        color: '#060B16',
+        color: '#fff',
         fontSize: 14,
         fontWeight: 700,
       }}

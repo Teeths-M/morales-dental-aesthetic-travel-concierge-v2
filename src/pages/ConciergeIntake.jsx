@@ -21,10 +21,15 @@ import SafeTReadout from '@/components/intake/SafeTReadout';
 import ContactVerificationStep from '@/components/intake/ContactVerificationStep';
 import DataProcessingConsent from '@/components/consent/DataProcessingConsent';
 
-const GOLD = '#D4AF37';
-const DARK = '#060B16';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+// CALM decision-screen palette (Product Principle #5): light page + surface,
+// TEAL for the "proceed" action, GOLD reserved for trust markers only.
+const GOLD = '#D4AF37';        // trust markers only
+const TEAL = '#0E8A7D';        // the only "proceed" action color
+const PAGE = '#F1F5F4';        // calm page background
+const CARD = '#FFFFFF';        // surface
+const BORDER = '#E2E9E6';
+const TEXT = '#17302C';
+const TEXT_SOFT = '#566B66';
 
 const PHASE_LABELS = ['Getting to know you', 'Building your Safe-T Profile', 'Almost there', 'Finishing up'];
 
@@ -219,7 +224,7 @@ export default function ConciergeIntake() {
     <div
       style={{
         minHeight: '100vh',
-        background: DARK,
+        background: PAGE,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -368,7 +373,7 @@ function buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPrevi
 
 function LoadingShell() {
   return (
-    <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+    <div style={{ textAlign: 'center', color: TEXT_SOFT, fontSize: 14 }}>
       <img
         src="/morales-m-mark.png"
         alt="Morales"
@@ -407,7 +412,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
           fontWeight: 700,
           letterSpacing: '2px',
           textTransform: 'uppercase',
-          color: GOLD,
+          color: TEAL,
         }}
       >
         Your Concierge
@@ -418,7 +423,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
           margin: '0 0 14px',
           fontSize: 26,
           fontWeight: 600,
-          color: '#fff',
+          color: TEXT,
           letterSpacing: '-0.01em',
           lineHeight: 1.3,
         }}
@@ -431,7 +436,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
           margin: '0 0 32px',
           fontSize: 15,
           lineHeight: 1.65,
-          color: 'rgba(255,255,255,0.6)',
+          color: TEXT_SOFT,
         }}
       >
         {resuming
@@ -441,7 +446,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
 
       {requireConsent && (
         <div style={{ marginBottom: 20 }}>
-          <DataProcessingConsent checked={consented} onChange={onConsentChange} theme="dark" />
+          <DataProcessingConsent checked={consented} onChange={onConsentChange} theme="light" />
         </div>
       )}
 
@@ -454,9 +459,9 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
           padding: '15px 20px',
           borderRadius: 999,
           cursor: blocked ? 'not-allowed' : 'pointer',
-          background: GOLD,
+          background: TEAL,
           border: 'none',
-          color: DARK,
+          color: '#fff',
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: '0.02em',
@@ -468,9 +473,9 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
       </button>
 
       {/* Escape hatch to the classic wizard — same journey, form-style */}
-      <p style={{ margin: '18px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.4)' }}>
+      <p style={{ margin: '18px 0 0', fontSize: 12.5, color: TEXT_SOFT }}>
         Prefer a classic form?{' '}
-        <a href="/booking" style={{ color: GOLD, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+        <a href="/booking" style={{ color: TEAL, textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Use the detailed form instead
         </a>
       </p>

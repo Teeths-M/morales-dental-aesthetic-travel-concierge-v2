@@ -59,3 +59,30 @@ export const BRAND_GRADIENTS = {
   emeraldLuxury: `linear-gradient(135deg, ${BRAND.emerald} 0%, ${BRAND.emeraldDark} 100%)`,
   goldAccent: `linear-gradient(135deg, ${BRAND.gold} 0%, ${BRAND.goldLight} 100%)`,
 };
+
+/**
+ * CALM system — Product Principle #5 ("Consistency builds trust").
+ *
+ * Decision-making screens (intake, safety review, booking, confirmation) use a
+ * calm/light surface so a scared patient can think, with TEAL as the ONLY
+ * "safe to proceed" action color. GOLD is reserved strictly for trust markers
+ * (verified badges, safety checkpoints, the Golden M) — never a plain button.
+ * The dark/dramatic hero palette (BRAND.dark + gold) is reserved for the
+ * landing hero and investor/demo surfaces only.
+ *
+ * See docs/product-principles.md.
+ */
+export const CALM = {
+  page:        '#F1F5F4', // calm page background
+  surface:     '#FFFFFF', // card / decision surface
+  surfaceSoft: '#EEF3F1', // inputs, option chips, subtle fills
+  border:      '#E2E9E6',
+  text:        '#17302C', // primary — deep calm slate, never pure black
+  textSoft:    '#566B66', // secondary / explanatory copy
+  textFaint:   '#8A9B96', // hints, counts, disabled
+  action:      '#0E8A7D', // TEAL — the only "proceed" color
+  actionHover: '#0C7568',
+  actionSoft:  'rgba(14,138,125,0.10)',
+  trust:       '#D4AF37', // GOLD — trust markers ONLY, never a plain button
+  trustSoft:   'rgba(212,175,55,0.08)',
+};

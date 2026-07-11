@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+// CALM decision-screen palette (Product Principle #5): light surface, TEAL for
+// the "proceed" action, GOLD kept only on the SAFE-T seal as a trust marker.
+const GOLD = '#D4AF37';        // trust marker (safety seal)
+const TEAL = '#0E8A7D';        // proceed action
+const CARD = '#FFFFFF';
+const BORDER = '#E2E9E6';
+const TEXT = '#17302C';
+const TEXT_SOFT = '#566B66';
 
 const LEVEL_COPY = {
   GREEN: {
@@ -54,10 +59,10 @@ export default function SafeTReadout({ safetyStatus, onContinue }) {
             transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }}
             style={{
               width: 40, height: 40, margin: '0 auto 20px', borderRadius: '50%',
-              border: '2px solid rgba(212,175,55,0.25)', borderTopColor: GOLD,
+              border: '2px solid rgba(14,138,125,0.2)', borderTopColor: TEAL,
             }}
           />
-          <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,255,255,0.7)' }}>
+          <p style={{ margin: 0, fontSize: 15, color: TEXT_SOFT }}>
             Running your SAFE-T4LIFE™ safety review...
           </p>
         </>
@@ -66,14 +71,14 @@ export default function SafeTReadout({ safetyStatus, onContinue }) {
           <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: GOLD }}>
             SAFE-T4LIFE™
           </p>
-          <h2 style={{ margin: '0 0 10px', fontSize: 19, fontWeight: 600, color: '#fff' }}>{copy.title}</h2>
-          <p style={{ margin: '0 0 26px', fontSize: 13.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.6)' }}>{copy.body}</p>
+          <h2 style={{ margin: '0 0 10px', fontSize: 19, fontWeight: 600, color: TEXT }}>{copy.title}</h2>
+          <p style={{ margin: '0 0 26px', fontSize: 13.5, lineHeight: 1.65, color: TEXT_SOFT }}>{copy.body}</p>
           <button
             type="button"
             onClick={onContinue}
             style={{
               width: '100%', padding: '14px 20px', borderRadius: 999, cursor: 'pointer',
-              background: GOLD, border: 'none', color: '#060B16', fontSize: 14, fontWeight: 700,
+              background: TEAL, border: 'none', color: '#fff', fontSize: 14, fontWeight: 700,
             }}
           >
             Continue
