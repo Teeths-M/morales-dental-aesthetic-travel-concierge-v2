@@ -1,0 +1,64 @@
+{
+  "name": "DoctorCorrectionRequest",
+  "type": "object",
+  "properties": {
+    "doctor_name": {
+      "type": "string"
+    },
+    "clinic_name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string",
+      "description": "The real credentials / correction the submitter provided"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "default": "pending",
+      "description": "pending | reviewed | actioned | dismissed — human admin decides; never auto-applied"
+    },
+    "source_ip": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "doctor_name",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    }
+  }
+}

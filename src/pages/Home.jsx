@@ -1,5 +1,6 @@
 import React from 'react';
 import LuxuryHero from '../components/home/LuxuryHero';
+import CheckYourDoctor from '../components/home/CheckYourDoctor';
 import LuxuryStatsBar from '../components/home/LuxuryStatsBar';
 import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
 import LuxuryWhyMorales from '../components/home/LuxuryWhyMorales';
@@ -12,6 +13,10 @@ export default function Home() {
   return (
     <div style={{ background: '#060B16' }}>
       <LuxuryHero />
+      {/* Public "Check Your Doctor" tool — calm/light module, after the
+          philosophy (hero) and before the stats bar. Wired to publicDoctorCheck
+          (neutral signals) + submitDoctorCorrection (human queue). */}
+      <CheckYourDoctor />
       <LuxuryStatsBar />
       <LuxuryHowItWorks />
       <OurExpertsTeaser />

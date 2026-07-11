@@ -1,33 +1,31 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 import { CALM } from '@/lib/brandTokens';
 
 /**
  * CheckYourDoctor — public, no-login doctor look-up embedded on the landing page.
  *
- * REVIEW BUILD: the check is MOCKED (runMockCheck below) so the tone of the
- * three result states — idle, "found nothing", and "populated" — can be reviewed
- * BEFORE any real data source is wired. Nothing here calls a backend yet.
+ * Wired to publicDoctorCheck (neutral signal-gathering: license registry, web/
+ * social, news/litigation, fraud-network overlap) and submitDoctorCorrection
+ * (human admin queue). Deliberately NOT the internal HIGH-RISK scored engine,
+ * and it never fingerprints the searcher.
  *
- * Tone rules baked into the copy (do not soften into accusation):
+ * Tone rules (do not soften into accusation):
  *  - Absence of a signal is "we couldn't verify", never "fraud"/"fake".
  *  - Presence of a signal is "consistent with", never "verified/safe/guaranteed".
- *  - "not found" renders NEUTRAL grey (—), never a red danger state.
- *  - The internal HIGH-RISK / scored view is for admin network review only and
- *    is deliberately NOT used here.
+ *  - "not found" / "unknown" render NEUTRAL grey, never a red danger state.
+ *  - Result copy is produced server-side; this renders it verbatim.
  */
 
-// ── Copy (kept together so the reviewable tone is easy to see/edit) ──────────
 const COPY = {
   headline: 'Know who is who — before you commit.',
   subhead: 'Before you pay. Before you commit. Check your doctor.',
   button: 'Check Your Doctor',
   microcopy: 'Free. No account needed. Takes 30 seconds.',
-
   checking: 'Checking public records…',
 
-  // Neutral disclosure shown near every result.
   disclosure:
     'These are public verification signals — not proof of wrongdoing, and not a background check. ' +
     'A limited online footprint is not evidence of a problem, and a strong one is not a guarantee of safety. ' +
@@ -42,66 +40,11 @@ const COPY = {
   conversionCta: 'Start your journey',
 };
 
-// Neutral, non-accusatory summaries for the two result outcomes.
-const SUMMARY = {
-  partial:
-    'We couldn’t independently verify this doctor from the public sources we can access. ' +
-    'That doesn’t mean anything is wrong — many good doctors have a small online footprint, and some registries aren’t publicly searchable. ' +
-    'It does mean the picture is incomplete, so confirm their credentials directly before you commit.',
-  found:
-    'We found public records consistent with this doctor. That’s a reassuring sign — but verification signals aren’t proof, ' +
-    'so it’s still worth confirming directly with the provider before you book.',
-};
-
-// ── Mock check (placeholder for the real signal-gathering, pending review) ───
-// Deterministic so both outcomes are reviewable: a couple of demo names return
-// the "populated" state; anything else returns "found nothing".
-const KNOWN_DEMO = ['martinez', 'reyes', 'silva'];
-
-function runMockCheck({ doctorName, clinic, location }) {
-  const isKnown = KNOWN_DEMO.some((n) => doctorName.toLowerCase().includes(n));
-  const country = location || 'the destination';
-
-  if (isKnown) {
-    return {
-      outcome: 'found',
-      doctorName, clinic, location,
-      signals: [
-        { label: 'License registry', status: 'found',
-          finding: `A licence record matching “${doctorName}” was found in ${country}’s public registry.` },
-        { label: 'Web & social presence', status: 'found',
-          finding: `Found a Google Business listing and social profiles consistent with ${clinic}.` },
-        { label: 'News & public records', status: 'clear',
-          finding: 'No litigation, complaint, or adverse-news mentions found.' },
-        { label: 'Our safety network', status: 'clear',
-          finding: 'No matches in Morales’ fraud-signal database.' },
-      ],
-      summary: SUMMARY.found,
-    };
-  }
-
-  return {
-    outcome: 'partial',
-    doctorName, clinic, location,
-    signals: [
-      { label: 'License registry', status: 'not_found',
-        finding: `No public licence record found for “${doctorName}” in ${country}’s registry we can access.` },
-      { label: 'Web & social presence', status: 'not_found',
-        finding: `We couldn’t find an established public profile (Google Business, Instagram, Facebook) matching this name and ${clinic}.` },
-      { label: 'News & public records', status: 'clear',
-        finding: 'No news, litigation, or complaint mentions found — and none confirming their practice either.' },
-      { label: 'Our safety network', status: 'clear',
-        finding: 'No matches in Morales’ fraud-signal database — we have no red flags on record (not the same as verified).' },
-    ],
-    summary: SUMMARY.partial,
-  };
-}
-
 // ── Signal row — neutral iconography only ────────────────────────────────────
 function SignalIcon({ status }) {
   if (status === 'found') return <Dot color={CALM.action} glyph="✓" />;      // consistent-with
   if (status === 'clear') return <Dot color={CALM.textFaint} glyph="✓" />;   // nothing concerning
-  return <Dot color={CALM.textFaint} glyph="–" muted />;                     // not found = neutral grey
+  return <Dot color={CALM.textFaint} glyph="–" muted />;                     // not found / unknown = neutral grey
 }
 
 function Dot({ color, glyph, muted = false }) {
@@ -140,7 +83,7 @@ export default function CheckYourDoctor() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.doctorName.trim() || !form.clinic.trim() || !form.location.trim()) {
       setError('Please add the doctor’s name, their clinic, and a country or city.');
@@ -151,12 +94,22 @@ export default function CheckYourDoctor() {
     setResult(null);
     setShowCorrection(false);
     setCorrectionSent(false);
-    // Simulated look-up window (mock). Real signal-gathering wires in after tone review.
-    setTimeout(() => {
-      setResult(runMockCheck(form));
+    try {
+      const res = await base44.functions.invoke('publicDoctorCheck', {
+        doctor_name: form.doctorName.trim(),
+        clinic: form.clinic.trim(),
+        location: form.location.trim(),
+        license: form.license.trim() || undefined,
+      });
+      const data = res?.data ?? res;
+      if (data?.error) { setError(data.error); setStatus('idle'); return; }
+      setResult(data);
       setStatus('done');
       requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-    }, 1400);
+    } catch (err) {
+      setError(err?.response?.data?.error || 'We couldn’t run the check right now. Please try again in a moment.');
+      setStatus('idle');
+    }
   };
 
   return (
@@ -245,9 +198,8 @@ export default function CheckYourDoctor() {
                     {result.doctorName} · {result.clinic}
                   </h3>
 
-                  {/* Signal rows */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {result.signals.map((s) => (
+                    {(result.signals || []).map((s) => (
                       <div key={s.label} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                         <SignalIcon status={s.status} />
                         <div>
@@ -258,15 +210,12 @@ export default function CheckYourDoctor() {
                     ))}
                   </div>
 
-                  {/* Neutral summary */}
                   <div style={{ marginTop: 18, padding: '14px 16px', borderRadius: 14, background: CALM.surfaceSoft, border: `1px solid ${CALM.border}` }}>
                     <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: CALM.text }}>{result.summary}</p>
                   </div>
 
-                  {/* Disclosure */}
                   <p style={{ margin: '14px 0 0', fontSize: 11.5, lineHeight: 1.6, color: CALM.textFaint }}>{COPY.disclosure}</p>
 
-                  {/* Request a correction */}
                   <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${CALM.border}` }}>
                     {correctionSent ? (
                       <p style={{ margin: 0, fontSize: 13, color: CALM.action, fontWeight: 500 }}>{COPY.correctionThanks}</p>
@@ -279,13 +228,15 @@ export default function CheckYourDoctor() {
                         </button>
                       </p>
                     ) : (
-                      <CorrectionForm onDone={() => { setShowCorrection(false); setCorrectionSent(true); }} />
+                      <CorrectionForm
+                        doctor={{ doctorName: result.doctorName, clinic: result.clinic, location: result.location }}
+                        onDone={() => { setShowCorrection(false); setCorrectionSent(true); }}
+                      />
                     )}
                     {!correctionSent && <p style={{ margin: '6px 0 0', fontSize: 11.5, color: CALM.textFaint }}>{COPY.correctionNote}</p>}
                   </div>
                 </div>
 
-                {/* Soft conversion prompt */}
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
                   <p style={{ margin: '0 0 8px', fontSize: 14, color: CALM.textSoft }}>{COPY.conversionLead}</p>
                   <Link to="/intake" style={{ display: 'inline-block', padding: '11px 22px', borderRadius: 999, background: 'transparent', border: `1.5px solid ${CALM.action}`, color: CALM.action, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
@@ -301,10 +252,32 @@ export default function CheckYourDoctor() {
   );
 }
 
-// Minimal correction form (mock submit → human queue, pending real wiring).
-function CorrectionForm({ onDone }) {
+// Correction form → submitDoctorCorrection (human admin queue; never auto-applied).
+function CorrectionForm({ doctor, onDone }) {
   const [msg, setMsg] = useState('');
   const [contact, setContact] = useState('');
+  const [sending, setSending] = useState(false);
+  const [err, setErr] = useState('');
+
+  const send = async () => {
+    if (!msg.trim() || sending) return;
+    setSending(true);
+    setErr('');
+    try {
+      await base44.functions.invoke('submitDoctorCorrection', {
+        doctor_name: doctor.doctorName,
+        clinic: doctor.clinic,
+        location: doctor.location,
+        message: msg.trim(),
+        contact_email: contact.trim() || undefined,
+      });
+      onDone();
+    } catch (e) {
+      setErr(e?.response?.data?.error || 'We couldn’t send that just now — please try again shortly.');
+      setSending(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <textarea
@@ -313,12 +286,13 @@ function CorrectionForm({ onDone }) {
         style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
       />
       <input style={inputStyle} value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Email so we can follow up (optional)" />
+      {err && <p style={{ margin: 0, fontSize: 12.5, color: '#dc2626' }}>{err}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={onDone} disabled={!msg.trim()}
-          style={{ padding: '10px 18px', borderRadius: 999, border: 'none', background: msg.trim() ? CALM.action : 'rgba(14,138,125,0.35)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: msg.trim() ? 'pointer' : 'default' }}>
-          Send for review
+        <button type="button" onClick={send} disabled={!msg.trim() || sending}
+          style={{ padding: '10px 18px', borderRadius: 999, border: 'none', background: msg.trim() && !sending ? CALM.action : 'rgba(14,138,125,0.35)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: msg.trim() && !sending ? 'pointer' : 'default' }}>
+          {sending ? 'Sending…' : 'Send for review'}
         </button>
-        <button type="button" onClick={onDone}
+        <button type="button" onClick={onDone} disabled={sending}
           style={{ padding: '10px 18px', borderRadius: 999, border: `1px solid ${CALM.border}`, background: 'transparent', color: CALM.textSoft, fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}>
           Cancel
         </button>
