@@ -114,6 +114,25 @@ describe('buildConsultationPayload — minor escalation + medical history', () =
     expect(p.anesthesia_complications).toBe(true);
     expect(p.had_surgery).toBe(true);
   });
+
+  it('records data-processing consent (with timestamp + version) when the client agreed', () => {
+    const p = buildConsultationPayload({
+      age: '30', patient_name: 'A', email: 'a@example.com',
+      data_processing_consent: true,
+      data_processing_consent_at: '2026-07-11T00:00:00.000Z',
+    });
+    expect(p.data_processing_consent).toBe(true);
+    expect(p.data_processing_consent_at).toBe('2026-07-11T00:00:00.000Z');
+    expect(typeof p.data_processing_consent_version).toBe('string');
+    expect(p.data_processing_consent_version.length).toBeGreaterThan(0);
+  });
+
+  it('never fabricates consent that was not given', () => {
+    const p = buildConsultationPayload({ age: '30', patient_name: 'A', email: 'a@example.com' });
+    expect(p.data_processing_consent).toBe(false);
+    expect(p.data_processing_consent_at).toBeUndefined();
+    expect(p.data_processing_consent_version).toBeUndefined();
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
