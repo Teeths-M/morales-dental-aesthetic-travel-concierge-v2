@@ -1,0 +1,73 @@
+{
+  "name": "RegulatorySource",
+  "description": "A regulatory/registry source page we depend on. Change-detection hashes its content daily so an unscheduled change alerts the legal review queue immediately, not at the next monthly cycle.",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "e.g. 'Colombia — Habeas Data / data-protection rules'"
+    },
+    "category": {
+      "type": "string",
+      "description": "e.g. data_protection, medical_advertising, medicine_import, patient_rights"
+    },
+    "country": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string",
+      "description": "Official source page to monitor"
+    },
+    "last_content_hash": {
+      "type": "string",
+      "description": "SHA-256 of the normalized page content at last check"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the monitored content last actually changed"
+    },
+    "check_frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "default": "daily",
+      "description": "Change-detection runs daily; monthly deep-review is a superset of the same check."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "label",
+    "url"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "user_condition": { "role": "admin" }
+    },
+    "update": {
+      "user_condition": { "role": "admin" }
+    },
+    "delete": {
+      "user_condition": { "role": "admin" }
+    }
+  }
+}

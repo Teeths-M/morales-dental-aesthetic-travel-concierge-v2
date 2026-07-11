@@ -1,0 +1,123 @@
+{
+  "name": "DataFreshnessReview",
+  "description": "Human review queue for any flagged change to safety-critical, time-sensitive data (doctor licence, clinic status, visa rule, regulatory rule). Nothing auto-publishes — a person confirms first.",
+  "type": "object",
+  "properties": {
+    "subject_type": {
+      "type": "string",
+      "enum": [
+        "doctor_license",
+        "clinic_status",
+        "visa_rule",
+        "regulatory_rule"
+      ]
+    },
+    "subject_id": {
+      "type": "string",
+      "description": "ID of the flagged record (doctor/clinic/source), if applicable"
+    },
+    "subject_label": {
+      "type": "string",
+      "description": "Human-readable label, e.g. 'Dr. Ana Martinez (CO)' or 'Colombia data-protection registry'"
+    },
+    "change_type": {
+      "type": "string",
+      "enum": [
+        "suspected_revocation",
+        "status_changed",
+        "closed",
+        "source_unavailable",
+        "source_changed",
+        "stale_no_reverification"
+      ]
+    },
+    "detail": {
+      "type": "string"
+    },
+    "detected_via": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "change_detection",
+        "live_check"
+      ]
+    },
+    "previous_value": {
+      "type": "string"
+    },
+    "new_value": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ],
+      "default": "warning"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "reviewing",
+        "actioned",
+        "dismissed"
+      ],
+      "default": "pending"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolution": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "subject_type",
+    "change_type",
+    "detected_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    }
+  }
+}

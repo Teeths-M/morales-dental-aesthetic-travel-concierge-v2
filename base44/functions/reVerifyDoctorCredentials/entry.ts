@@ -1,121 +1,144 @@
-﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createHandler, ok } from '../_shared/createHandler.ts';
+import { runLookup, resolveCountryISO } from '../_shared/registryLookup.ts';
+import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+/**
+ * reVerifyDoctorCredentials — scheduled DAILY re-verification of doctor licences
+ * against the OFFICIAL registries (US NPI, RETHUS, SEP via the shared adapters).
+ *
+ * FAIL-SAFE, NOT FAIL-SILENT — this deliberately replaces the previous version,
+ * which "silently renewed" a doctor's verified timestamp from an LLM guess:
+ *   • A real positive registry hit (found + active + name match) is the ONLY
+ *     thing that refreshes credential_verified_date. We never renew on a guess.
+ *   • A definite bad status (deactivated / suspended / revoked) immediately
+ *     suspends the doctor (suppressing them from new bookings) and flags review.
+ *   • An ambiguous 'not found' / 'service unavailable' does NOT auto-suspend a
+ *     previously-verified doctor (registries flake) — it leaves the record
+ *     UNCONFIRMED (stale) and flags it for a human. It is never renewed.
+ *
+ * Registry adapters are free (NPI) or cheap; the LLM bridge for countries with
+ * no adapter is capped per run to protect integration credits.
+ *
+ * Cron-registered in Base44 (daily), runs under the scheduler's admin identity —
+ * same pattern as expireDoctorVerifications. Also manually triggerable by admin.
+ */
+const BATCH = 40; // doctors re-checked per daily run (oldest-confirmed first)
+const RECHECK_COOLDOWN_MS = 20 * 60 * 60 * 1000; // don't re-hit the same doctor within 20h
+const LLM_FALLBACK_CAP = 8; // max internet-bridge checks per run (credit guard)
 
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+/** Only a DEFINITE negative registry status counts as a revocation. Unknown ≠ revoked. */
+function statusIsRevoked(result: any): boolean {
+  const s = String(result?.status ?? '').trim().toLowerCase();
+  if (!s) return false;
+  const bad = ['inactive', 'deactivated', 'suspended', 'revoked', 'expired', 'cancelado', 'inactivo', 'suspendido', 'n', 'd', 'i'];
+  const good = ['active', 'activo', 'a', 'vigente', 'valid'];
+  if (good.includes(s)) return false;
+  return bad.includes(s);
+}
+
+Deno.serve(createHandler(async ({ base44 }) => {
+  const nowISO = new Date().toISOString();
+  const appUrl = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
+  const useLLM = Deno.env.get('DOCTOR_RECHECK_USE_LLM') !== 'false';
+
+  // Oldest-confirmed verified doctors first, so the cohort rotates over days.
+  const verified = await base44.asServiceRole.entities.Doctor.filter(
+    { verification_status: 'verified' }, 'credential_verified_date', 200,
+  ).catch(() => []);
+
+  const due = verified.filter((d: any) => {
+    const doc = d.data || d;
+    if (isFresh(doc.credential_verified_date, TTL_MS.doctor_license)) return false; // still fresh
+    // Skip anything re-checked within the cooldown even if still unconfirmed.
+    return (Date.now() - (Date.parse(doc.license_last_checked_at || '') || 0)) > RECHECK_COOLDOWN_MS;
+  }).slice(0, BATCH);
+
+  let confirmed = 0, suspended = 0, unconfirmed = 0, llmUsed = 0;
+
+  for (const d of due) {
+    const doc = d.data || d;
+    const id = d.id;
+    const name = doc.full_name || doc.doctor_name || 'Unknown';
+    const license = doc.license_number || '';
+    const iso = resolveCountryISO(doc.country || doc.clinic_country || '');
+
+    // Mark the attempt regardless of outcome (separates "checked" from "confirmed").
+    await base44.asServiceRole.entities.Doctor.update(id, { license_last_checked_at: nowISO }).catch(() => {});
+
+    let result: any = null;
+    if (license && iso) {
+      result = await runLookup(iso, license, name).catch(() => null);
     }
 
-    const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
-    const appUrl = Deno.env.get('APP_URL') || 'https://app.moralesmedical.com';
-
-    // Get all doctors verified via government registry with expired verification
-    const allVerifiedDoctors = await base44.asServiceRole.entities.Doctor.filter({
-      verification_status: 'verified',
-      verification_method: 'government_registry'
-    });
-
-    const expired = allVerifiedDoctors.filter(d => {
-      const doc = d.data || d;
-      return doc.verified_at && doc.verified_at < oneYearAgo;
-    });
-
-    console.log(`Re-verification check: ${expired.length} doctors with expired credentials`);
-
-    let renewed = 0;
-    let suspended = 0;
-    const errors = [];
-
-    const registryMap = {
-      colombia: 'RETHUS Colombia official medical registry',
-      mexico: 'SEP Mexico Cedula Profesional medical registry',
-      thailand: 'Thailand Medical Council official registry'
-    };
-
-    for (const d of expired) {
-      const doc = d.data || d;
-      const doctorId = d.id;
-      const countryLower = (doc.country || '').toLowerCase();
-      const matchedRegistry = Object.keys(registryMap).find(k => countryLower.includes(k));
-
-      if (!matchedRegistry || !doc.license_number) {
-        // Can't auto-verify — queue for manual review, don't auto-suspend
-        continue;
-      }
-
-      let stillValid = false;
-
+    // ── Country with no registry adapter → optional internet bridge (capped) ──
+    if ((!result || result.supported === false) && useLLM && llmUsed < LLM_FALLBACK_CAP && license) {
+      llmUsed++;
       try {
-        const registryName = registryMap[matchedRegistry];
-        const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          model: 'gemini_3_flash',
+        const bridge = await base44.asServiceRole.integrations.Core.InvokeLLM({
           add_context_from_internet: true,
-          prompt: `Check if medical license "${doc.license_number}" is still active and valid in ${registryName}. Return JSON: { "found": boolean, "confidence": number, "details": string }`,
+          prompt: `Is medical licence/registration "${license}" for "${name}" in ${doc.country || 'their country'} currently active and in good standing on the official medical board registry? Only answer from the official registry. Return JSON {found:boolean, active:boolean, confidence:number(0-100), source:string}.`,
           response_json_schema: {
             type: 'object',
-            properties: {
-              found: { type: 'boolean' },
-              confidence: { type: 'number' },
-              details: { type: 'string' }
-            },
-            required: ['found', 'confidence', 'details']
-          }
+            properties: { found: { type: 'boolean' }, active: { type: 'boolean' }, confidence: { type: 'number' }, source: { type: 'string' } },
+            required: ['found', 'active', 'confidence'],
+          },
         });
-        stillValid = result?.found === true && result?.confidence >= 70;
-      } catch (e) {
-        errors.push({ doctorId, error: e.message });
-        // Network/API failure — do NOT suspend, just log
-        continue;
-      }
-
-      const doctorName = doc.full_name || doc.doctor_name || 'Unknown';
-
-      if (stillValid) {
-        // Silent renewal
-        await base44.asServiceRole.entities.Doctor.update(doctorId, {
-          verified_at: new Date().toISOString(),
-          credential_verified_date: new Date().toISOString()
-        });
-        renewed++;
-        console.log(`Silently renewed credentials for: ${doctorName}`);
-      } else {
-        // Suspend doctor
-        await base44.asServiceRole.entities.Doctor.update(doctorId, {
-          verification_status: 'suspended'
-        });
-        suspended++;
-
-        // Notify admin immediately
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: 'admin@moralesmedical.com',
-          subject: `🚨 Doctor Suspended — Credential Renewal Failed: ${doctorName}`,
-          body: `Dr. ${doctorName} (License: ${doc.license_number}, ${doc.country}) was not found in the ${matchedRegistry} registry during annual re-verification.\n\nAccount has been suspended.\n\nReview: ${appUrl}/admin/doctor-verification`
-        });
-
-        // Notify doctor
-        if (doc.email) {
-          await base44.asServiceRole.integrations.Core.SendEmail({
-            to: doc.email,
-            subject: 'Action Required: Annual Credential Renewal — Morales Medical',
-            body: `Dear Dr. ${doctorName},\n\nYour annual credential renewal is required to continue operating on the Morales platform. Your account has been temporarily suspended pending re-verification.\n\nPlease contact us at admin@moralesmedical.com with updated documentation.\n\nBest regards,\nMorales Medical Verification Team`
-          });
+        if (bridge?.found && bridge?.active && (bridge?.confidence ?? 0) >= 75) {
+          result = { supported: true, found: true, status: 'active', confidence: bridge.confidence, registry_name: bridge.source || 'internet bridge', name_match: true };
+        } else if (bridge?.found && bridge?.active === false && (bridge?.confidence ?? 0) >= 75) {
+          result = { supported: true, found: true, status: 'suspended', confidence: bridge.confidence, registry_name: bridge.source || 'internet bridge' };
+        } else {
+          result = { supported: true, found: false, reason: 'not_found', registry_name: bridge?.source || 'internet bridge' };
         }
-      }
+      } catch { result = null; }
     }
 
-    return Response.json({
-      success: true,
-      checked: expired.length,
-      renewed,
-      suspended,
-      skipped_errors: errors.length
-    });
+    // ── Decide ────────────────────────────────────────────────────────────────
+    if (result && result.supported && result.found && !statusIsRevoked(result) && (result.name_match !== false) && (result.confidence ?? 100) >= 70) {
+      // REAL confirmation → refresh the user-facing "last verified" date.
+      await base44.asServiceRole.entities.Doctor.update(id, {
+        credential_verified_date: nowISO,
+        verified_at: nowISO,
+        license_verified: true,
+        verification_notes: `Auto-confirmed ${nowISO} via ${result.registry_name || 'registry'} (${iso || 'bridge'}).`,
+      }).catch(() => {});
+      confirmed++;
+      continue;
+    }
 
-  } catch (error) {
-    console.error('reVerifyDoctorCredentials error:', error);
-    return Response.json({ error: 'An internal error occurred.' }, { status: 500 });
+    if (result && result.supported && result.found && statusIsRevoked(result)) {
+      // DEFINITE bad status → suppress from bookings immediately + human review.
+      await base44.asServiceRole.entities.Doctor.update(id, {
+        verification_status: 'suspended',
+        verification_notes: `Suspended ${nowISO}: registry status '${result.status}' in ${result.registry_name || iso}. Awaiting admin review.`,
+      }).catch(() => {});
+      await flagForReview(base44, {
+        subject_type: 'doctor_license', subject_id: id, subject_label: `${name} (${doc.country || iso || '—'})`,
+        change_type: 'suspected_revocation',
+        detail: `Registry ${result.registry_name || iso} reported status '${result.status}' for licence ${license}. Doctor auto-suspended and suppressed from new bookings pending review.`,
+        detected_via: 'scheduled', previous_value: 'verified', new_value: `registry: ${result.status}`, severity: 'critical',
+      });
+      if (doc.email) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: doc.email,
+          subject: 'Action required: licence re-verification — Morales',
+          body: `Dear Dr. ${name},\n\nOur scheduled re-check could not confirm your licence (${license}) as active in the official registry. Your profile is temporarily suspended from new bookings while our team reviews this. Please reply with current documentation.\n\nMorales Verification Team`,
+        }).catch(() => {});
+      }
+      suspended++;
+      continue;
+    }
+
+    // ── Ambiguous: not found / unavailable → leave UNCONFIRMED, never renew ────
+    unconfirmed++;
+    await flagForReview(base44, {
+      subject_type: 'doctor_license', subject_id: id, subject_label: `${name} (${doc.country || iso || '—'})`,
+      change_type: 'source_unavailable',
+      detail: `Scheduled re-check could not confirm licence ${license || '(none on file)'} in ${iso || 'an available registry'} (${result?.reason || 'no automated source'}). Left unconfirmed — profile shows "re-verifying", not a stale confident date. Manual verification recommended.`,
+      detected_via: 'scheduled', severity: 'warning',
+    });
   }
-});
+
+  console.log(`[reVerifyDoctorCredentials] due=${due.length} confirmed=${confirmed} suspended=${suspended} unconfirmed=${unconfirmed} llm=${llmUsed}`);
+  return ok({ success: true, checked: due.length, confirmed, suspended, unconfirmed, llm_used: llmUsed });
+}, { name: 'reVerifyDoctorCredentials', requireAuth: true, allowedRoles: ['admin', 'platform_admin'] }));

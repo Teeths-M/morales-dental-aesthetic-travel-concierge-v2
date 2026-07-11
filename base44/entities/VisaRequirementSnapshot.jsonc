@@ -1,0 +1,78 @@
+{
+  "name": "VisaRequirementSnapshot",
+  "description": "Cached current entry requirement for a nationality → destination pair, with the source and 'last confirmed' date shown to the user. Re-checked weekly and on selection so it is never served stale.",
+  "type": "object",
+  "properties": {
+    "nationality": {
+      "type": "string",
+      "description": "Passport nationality (country name or ISO code)"
+    },
+    "destination_country": {
+      "type": "string"
+    },
+    "visa_status": {
+      "type": "string",
+      "enum": [
+        "visa_free",
+        "evisa",
+        "on_arrival",
+        "embassy_required",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "summary": {
+      "type": "string",
+      "description": "1-2 plain sentences of the current requirement"
+    },
+    "medical_notes": {
+      "type": "string",
+      "description": "Anything specific to entering with medical purpose"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Official government source used, shown to the user"
+    },
+    "confidence": {
+      "type": "number",
+      "description": "0-100; low confidence renders as 'unknown — coordinator will confirm'"
+    },
+    "last_confirmed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checked_via": {
+      "type": "string",
+      "enum": [
+        "on_selection",
+        "scheduled"
+      ]
+    }
+  },
+  "required": [
+    "nationality",
+    "destination_country"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

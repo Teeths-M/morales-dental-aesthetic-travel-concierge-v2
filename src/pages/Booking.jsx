@@ -31,6 +31,7 @@ import SectionProcedure from '../components/booking/SectionProcedure';
 import ClientAcknowledgement, { getRequiredAckCount } from '../components/booking/ClientAcknowledgement';
 import MedicalRiskDisclosure from '../components/booking/MedicalRiskDisclosure';
 import { checkVisaRequirement } from '@/lib/visaMatrix';
+import VisaRequirementLive from '@/components/trust/VisaRequirementLive';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
 import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
 import ProcedureStackingBlocker from '../components/safety/ProcedureStackingBlocker';
@@ -815,7 +816,18 @@ export default function Booking() {
                   </>
                 )}
                 {step === 6  && <Section9Pregnancy form={form} update={update} language={language} />}
-                {step === 7  && <Section10Documents form={form} update={update} language={language} />}
+                {step === 7  && (
+                  <>
+                    {form.nationality && form.procedure_country && (
+                      <VisaRequirementLive
+                        nationality={form.nationality}
+                        destination={form.procedure_country}
+                        style={{ marginBottom: 16 }}
+                      />
+                    )}
+                    <Section10Documents form={form} update={update} language={language} />
+                  </>
+                )}
                 {step === 8  && <SectionProcedure form={form} update={update} language={language} />}
                 {step === 9 && (
                   <MedicalRiskDisclosure

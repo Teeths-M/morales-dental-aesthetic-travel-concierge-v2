@@ -90,7 +90,12 @@
     "credential_verified_date": {
       "type": "string",
       "format": "date-time",
-      "description": "Date credentials were last verified"
+      "description": "When credentials were last CONFIRMED against the official registry (the 'last verified' shown to users). Only refreshed on a real positive registry hit — never on a guess."
+    },
+    "license_last_checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the scheduled re-check last RAN (whether or not it could confirm). Lets the scheduler avoid re-hitting the same doctor daily; distinct from credential_verified_date."
     },
     "verification_confidence": {
       "type": "number",

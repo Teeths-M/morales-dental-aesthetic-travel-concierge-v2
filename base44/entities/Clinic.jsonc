@@ -1,0 +1,96 @@
+{
+  "name": "Clinic",
+  "description": "A treatment facility. Its operating status carries a 'last verified' timestamp; bookings live-check it and BLOCK if the attestation is stale (fail-safe).",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "registration_ref": {
+      "type": "string",
+      "description": "Clinic operating licence / business registration reference, if known"
+    },
+    "registry_url": {
+      "type": "string",
+      "description": "Official source where operating status can be confirmed, if one exists"
+    },
+    "operating_status": {
+      "type": "string",
+      "enum": [
+        "operating",
+        "closed",
+        "suspended",
+        "unknown"
+      ],
+      "default": "unknown",
+      "description": "Current operating status. Only 'operating' with a fresh timestamp lets a booking proceed."
+    },
+    "status_source": {
+      "type": "string",
+      "enum": [
+        "admin_attested",
+        "partner_attested",
+        "external_registry"
+      ],
+      "description": "How the current operating_status was established"
+    },
+    "status_verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When operating_status was last confirmed. Bookings block if older than the clinic-status TTL."
+    },
+    "status_verified_by": {
+      "type": "string",
+      "description": "Email/name of the admin or partner who confirmed the status"
+    },
+    "status_notes": {
+      "type": "string"
+    },
+    "linked_doctor_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Doctors practising at this clinic"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "country"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "isAuthenticated": true
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
