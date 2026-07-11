@@ -123,8 +123,9 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
             <div className="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-emerald-100 flex items-center justify-center mx-auto mb-3 transition-colors">
               <Upload className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
             </div>
-            <p className="text-sm font-semibold text-slate-700">Upload Your Passport</p>
+            <p className="text-sm font-semibold text-slate-700">Upload Your Passport <span className="font-normal text-slate-400">— optional</span></p>
             <p className="text-xs text-slate-400 mt-1">Photo or PDF · JPEG, PNG, WEBP · Max 10MB</p>
+            <p className="text-xs text-slate-500 mt-1">No rush — you can add this later, once you're ready to travel.</p>
             <p className="text-xs text-emerald-600 mt-2 font-medium">🔒 Document is encrypted, access-controlled, and audited</p>
             <input
               ref={fileRef}

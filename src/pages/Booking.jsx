@@ -489,10 +489,15 @@ export default function Booking() {
 
   const canNext = () => {
     if (step === 0) {
-      // Personal Info + Cultural merged
+      // Personal Info + Cultural merged.
+      // P1 (Simple is harder than complex): passport details are travel logistics,
+      // not needed to START a consultation — they're captured later (Passport Vault
+      // / travel-coordination). Requiring three passport fields up-front was a wall
+      // a scared patient had to climb before seeing any value, so it's no longer
+      // blocking. Emergency contact stays required — that IS safety. The /intake
+      // flow already omits passport entirely; this aligns /booking with it.
       const personalOk = form.patient_name && form.email && form.phone &&
-             form.emergency_contact_name && form.emergency_contact_number &&
-             form.passport_number && form.passport_issue_date && form.passport_expiry_date;
+             form.emergency_contact_name && form.emergency_contact_number;
       const culturalOk = form.has_cultural_preferences !== null &&
              (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);
       return personalOk && culturalOk;
