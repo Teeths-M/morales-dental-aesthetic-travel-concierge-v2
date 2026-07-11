@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { CheckCircle2, Shield, Heart, Clock, ChevronRight, Phone, Mail, MessageCircle, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { CALM } from '@/lib/brandTokens';
 
 const NEXT_STEPS = [
   { step: 1, icon: '🩺', title: 'Doctor Review', desc: 'Your consultation is sent to your assigned healthcare provider for review.', time: '24–48 hours', done: false },
@@ -86,7 +87,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
   }, []);
 
   return (
-    <div className="min-h-[60vh] py-12 px-4" style={{ background: '#060B16' }}>
+    <div className="min-h-[60vh] py-12 px-4" style={{ background: CALM.page }}>
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* ── Premium Golden M hero ── */}
@@ -96,7 +97,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           transition={{ duration: 0.6 }}
           className="rounded-3xl p-8 text-center"
           style={{
-            background: '#0C1A1D',
+            background: CALM.surface,
             border: '1px solid rgba(212,175,55,0.35)',
             boxShadow: '0 0 80px rgba(212,175,55,0.08)',
           }}
@@ -128,7 +129,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
             </div>
           </motion.div>
 
-          <h1 className="text-3xl font-bold mb-2 text-white" style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}>
+          <h1 className="text-3xl font-bold mb-2 text-slate-900" style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.03em' }}>
             Your Journey Has Begun.
           </h1>
           <p className="text-sm leading-relaxed mb-6 max-w-md mx-auto" style={{ color: '#94a3b8' }}>
@@ -142,7 +143,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
               Doctor response: <strong>24–48 hours</strong>
             </div>
             <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium"
-              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', color: '#4ade80' }}>
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', color: '#16a34a' }}>
               <Shield className="w-3.5 h-3.5" />
               SAFE-T 4LIFE™ <strong>Active</strong>
             </div>
@@ -159,13 +160,13 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
         >
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-slate-900" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-emerald-300 text-sm">Your $49 Consultation Fee is Refundable</p>
-              <p className="text-xs text-emerald-400/80 mt-1.5 leading-relaxed">When you book your full procedure package, the $49 consultation fee will be fully credited back to you. No fees are lost — only your commitment secured.</p>
+              <p className="font-semibold text-emerald-700 text-sm">Your $49 Consultation Fee is Refundable</p>
+              <p className="text-xs text-emerald-600/80 mt-1.5 leading-relaxed">When you book your full procedure package, the $49 consultation fee will be fully credited back to you. No fees are lost — only your commitment secured.</p>
             </div>
           </div>
         </motion.div>
@@ -176,20 +177,20 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className="rounded-2xl p-5"
-          style={{ background: '#0C1A1D', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: CALM.surface, border: `1px solid ${CALM.border}` }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-blue-800 flex items-center justify-center flex-shrink-0">
-              <Heart className="w-4 h-4 text-white" />
+              <Heart className="w-4 h-4 text-slate-900" />
             </div>
             <div>
-              <p className="font-semibold text-white text-sm">A message from SAFE-T 4LIFE™</p>
-              <p className="text-xs text-white/40">Your personal healthcare companion</p>
+              <p className="font-semibold text-slate-900 text-sm">A message from SAFE-T 4LIFE™</p>
+              <p className="text-xs text-slate-400">Your personal healthcare companion</p>
             </div>
           </div>
-          <div className="space-y-2 text-sm text-white/60 leading-relaxed">
+          <div className="space-y-2 text-sm text-slate-600 leading-relaxed">
             <p>You are not alone throughout this journey. Our coordination team and SAFE-T 4LIFE™ are here to support you every step of the way — from preparation through your full recovery.</p>
-            <p className="text-white/45">Your healthcare journey is being reviewed and coordinated with care, precision, and the highest standards of patient safety.</p>
+            <p className="text-slate-500">Your healthcare journey is being reviewed and coordinated with care, precision, and the highest standards of patient safety.</p>
           </div>
         </motion.div>
 
@@ -200,15 +201,15 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="rounded-2xl overflow-hidden"
-            style={{ background: '#0C1A1D', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ background: CALM.surface, border: `1px solid ${CALM.border}` }}
           >
             <div className="px-5 py-3.5 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(34,197,94,0.2)', background: 'rgba(34,197,94,0.06)' }}>
-              <Shield className="w-4 h-4 text-emerald-400" />
-              <p className="text-sm font-semibold text-emerald-300">Personalized Preparation from SAFE-T 4LIFE™</p>
+              <Shield className="w-4 h-4 text-emerald-600" />
+              <p className="text-sm font-semibold text-emerald-700">Personalized Preparation from SAFE-T 4LIFE™</p>
             </div>
             <div className="p-5">
               {preparation.split('\n').filter(l => l.trim()).map((line, i) => (
-                <p key={i} className="text-sm text-white/65 leading-relaxed mb-2 last:mb-0">{line}</p>
+                <p key={i} className="text-sm text-slate-600 leading-relaxed mb-2 last:mb-0">{line}</p>
               ))}
             </div>
           </motion.div>
@@ -220,24 +221,24 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
           className="rounded-2xl overflow-hidden"
-          style={{ background: '#0C1A1D', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: CALM.surface, border: `1px solid ${CALM.border}` }}
         >
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <h3 className="font-semibold text-white text-sm">What Happens Next</h3>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(23,48,44,0.08)' }}>
+            <h3 className="font-semibold text-slate-900 text-sm">What Happens Next</h3>
           </div>
           <div>
             {NEXT_STEPS.map((s, i) => (
-              <div key={i} className="flex items-start gap-3 px-5 py-4" style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: s.done ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)' }}>
+              <div key={i} className="flex items-start gap-3 px-5 py-4" style={{ borderTop: i > 0 ? '1px solid rgba(23,48,44,0.06)' : 'none' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0" style={{ background: s.done ? 'rgba(34,197,94,0.12)' : 'rgba(23,48,44,0.06)' }}>
                   {s.done ? '✅' : s.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">{s.title}</p>
-                  <p className="text-xs text-white/45 mt-0.5 leading-relaxed">{s.desc}</p>
+                  <p className="text-sm font-semibold text-slate-900">{s.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{s.desc}</p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Clock className="w-3 h-3 text-white/25" />
-                  <span className="text-xs text-white/35 font-medium">{s.time}</span>
+                  <Clock className="w-3 h-3 text-slate-400" />
+                  <span className="text-xs text-slate-400 font-medium">{s.time}</span>
                 </div>
               </div>
             ))}
@@ -250,36 +251,36 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="rounded-2xl overflow-hidden"
-          style={{ background: '#0C1A1D', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: CALM.surface, border: `1px solid ${CALM.border}` }}
         >
-          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <h3 className="font-semibold text-white text-sm">Your Preparation Checklist</h3>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${doneCount === checklist.length ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/[0.07] text-white/50'}`}>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(23,48,44,0.08)' }}>
+            <h3 className="font-semibold text-slate-900 text-sm">Your Preparation Checklist</h3>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${doneCount === checklist.length ? 'bg-emerald-500/15 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
               {doneCount}/{checklist.length} done
             </span>
           </div>
 
           {highPriority.length > 0 && (
             <div className="px-5 py-3 flex items-start gap-2" style={{ background: 'rgba(245,158,11,0.08)', borderBottom: '1px solid rgba(245,158,11,0.2)' }}>
-              <AlertCircle className="w-3.5 h-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-amber-300"><strong>{highPriority.length} important item{highPriority.length > 1 ? 's' : ''}</strong> require your attention before your procedure.</p>
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-700"><strong>{highPriority.length} important item{highPriority.length > 1 ? 's' : ''}</strong> require your attention before your procedure.</p>
             </div>
           )}
 
           <div className="p-4 space-y-1">
             {checklist.map((item, i) => (
-              <label key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors hover:bg-white/[0.04] group">
+              <label key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors hover:bg-slate-50 group">
                 <div
                   onClick={() => setChecklist(prev => prev.map((c, idx) => idx === i ? { ...c, done: !c.done } : c))}
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                     item.done ? 'bg-emerald-500 border-emerald-500' : item.priority === 'high' ? 'border-amber-500' : 'border-white/25'
                   }`}
                 >
-                  {item.done && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                  {item.done && <CheckCircle2 className="w-3.5 h-3.5 text-slate-900" />}
                 </div>
-                <span className={`text-sm flex-1 ${item.done ? 'line-through text-white/30' : 'text-white/70'}`}>{item.label}</span>
+                <span className={`text-sm flex-1 ${item.done ? 'line-through text-slate-400' : 'text-slate-600'}`}>{item.label}</span>
                 {item.priority === 'high' && !item.done && (
-                  <span className="text-[10px] font-semibold bg-amber-400/10 text-amber-400 border border-amber-400/25 px-2 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0">Priority</span>
+                  <span className="text-[10px] font-semibold bg-amber-400/10 text-amber-600 border border-amber-400/25 px-2 py-0.5 rounded-full uppercase tracking-wide flex-shrink-0">Priority</span>
                 )}
               </label>
             ))}
@@ -292,9 +293,9 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
           className="rounded-2xl p-5"
-          style={{ background: '#0C1A1D', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: CALM.surface, border: `1px solid ${CALM.border}` }}
         >
-          <h3 className="font-semibold text-white text-sm mb-4">Your Coordination Team</h3>
+          <h3 className="font-semibold text-slate-900 text-sm mb-4">Your Coordination Team</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { icon: MessageCircle, label: 'WhatsApp', value: '+1 868-748-1100', href: 'https://wa.me/18687481100', accent: '#25D366', bg: 'rgba(37,211,102,0.08)', border: 'rgba(37,211,102,0.25)' },
@@ -310,7 +311,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: `${accent}99` }}>{label}</p>
-                  <p className="text-xs font-semibold text-white/80">{value}</p>
+                  <p className="text-xs font-semibold text-slate-700">{value}</p>
                 </div>
               </a>
             ))}
@@ -318,10 +319,10 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
         </motion.div>
 
         {/* Disclaimer — dark */}
-        <div className="flex items-start gap-2 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <Shield className="w-3.5 h-3.5 text-white/25 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-white/30 leading-relaxed">
-            <strong className="text-white/45">SAFE-T 4LIFE™</strong> is an educational and coordination support system only and does not replace professional medical advice, diagnosis, or treatment from licensed healthcare professionals. All consultation data is reviewed by our qualified medical team.
+        <div className="flex items-start gap-2 rounded-xl p-3" style={{ background: CALM.surfaceSoft, border: `1px solid ${CALM.border}` }}>
+          <Shield className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-slate-400 leading-relaxed">
+            <strong className="text-slate-500">SAFE-T 4LIFE™</strong> is an educational and coordination support system only and does not replace professional medical advice, diagnosis, or treatment from licensed healthcare professionals. All consultation data is reviewed by our qualified medical team.
           </p>
         </div>
 
@@ -330,7 +331,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
           <button
             onClick={() => window.location.href = '/dashboard'}
             className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-sm font-bold transition-all"
-            style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16', boxShadow: '0 8px 32px rgba(212,175,55,0.35)' }}
+            style={{ background: CALM.action, color: '#fff', boxShadow: '0 8px 32px rgba(14,138,125,0.35)' }}
           >
             View My Journey Dashboard <ChevronRight className="w-4 h-4" />
           </button>
