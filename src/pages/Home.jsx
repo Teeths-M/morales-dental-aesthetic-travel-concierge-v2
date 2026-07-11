@@ -5,7 +5,6 @@ import LuxuryHowItWorks from '../components/home/LuxuryHowItWorks';
 import LuxuryWhyMorales from '../components/home/LuxuryWhyMorales';
 import RealMoments from '../components/home/RealMoments';
 import OurExpertsTeaser from '../components/home/OurExpertsTeaser';
-import LuxuryTestimonials from '../components/home/LuxuryTestimonials';
 import ProtectionStackSection from '../components/home/ProtectionStackSection';
 import StickyBookCTA from '../components/home/StickyBookCTA';
 
@@ -19,7 +18,10 @@ export default function Home() {
       <LuxuryWhyMorales />
       <ProtectionStackSection />
       <RealMoments />
-      <LuxuryTestimonials />
+      {/* Testimonials removed until real patient stories exist (pre-pilot).
+          Fabricated patient reviews have no place on a medical trust product.
+          LuxuryTestimonials.jsx is kept in the codebase to restore with real,
+          consented stories after the pilot. */}
       <StickyBookCTA />
 
       {/* Medical disclaimer */}
