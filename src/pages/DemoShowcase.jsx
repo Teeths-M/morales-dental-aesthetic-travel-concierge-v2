@@ -892,7 +892,9 @@ export default function DemoShowcase() {
               { to: '/demo/family',   label: '👩🏽 Mother\'s Eye',      color: '#f472b6', border: '1px solid rgba(244,114,182,0.4)' },
               { to: '/demo/arrival',       label: '🏥 Arrival Intel',       color: GREEN,     border: `1px solid ${GREEN}40` },
               { to: '/demo/intelligence', label: '🔍 Doctor Intel Scan',   color: '#a78bfa', border: '1px solid rgba(167,139,250,0.4)' },
-              { to: '/discharge-reader',  label: '📄 Discharge AI Reader', color: GOLD,      border: `2px solid ${GOLD}50` },
+              // NOTE: the Discharge AI Reader tile was removed here — it points to an
+              // auth-gated, LLM-backed page, so on the public no-login demo it dead-ends
+              // at the login screen. Show it from inside a logged-in dashboard instead.
             ].map(d => (
               <Link key={d.to} to={d.to}
                 className="flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-xs text-center"
@@ -1047,7 +1049,7 @@ export default function DemoShowcase() {
           <div className="grid sm:grid-cols-2 gap-4">
             {[
               { label: 'Frontend', value: 'React 18 · Vite · TanStack Query v5 · Tailwind · Radix UI' },
-              { label: 'Backend', value: 'Base44 BaaS · 188 Deno Edge Functions · Role-based RBAC' },
+              { label: 'Backend', value: 'Base44 BaaS · 250+ Deno Edge Functions · Role-based RBAC' },
               { label: 'Safety', value: 'PBKDF2-SHA256 vault · SHA-256 audit hash chain · Rate limiting · CSP headers' },
               { label: 'Offline', value: 'localStorage queue · GPS cache · Offline check-in sync · Emergency bypass routes' },
               { label: 'Integrations', value: 'Twilio SMS · Stripe payments · Nominatim geocoding · canvas-confetti' },
