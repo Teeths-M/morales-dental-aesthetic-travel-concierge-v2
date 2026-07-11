@@ -51,7 +51,7 @@ export default function SubmissionSuccess({ form, items }) {
     setLoadingPrep(true);
     try {
       const resp = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are SAFE-T 4LIFE™, a premium healthcare travel companion. Generate a warm, personalized preparation message for a patient preparing for medical travel.
+        prompt: `You are SAFE-T 4LIFE™, a warm, caring healthcare travel companion. Generate a warm, personalized preparation message for a patient preparing for medical travel.
 
 Patient Profile:
 - Name: ${form.patient_name}
@@ -322,7 +322,7 @@ Write 3-4 SHORT, warm, encouraging preparation tips specific to their procedure 
         <div className="flex items-start gap-2 rounded-xl p-3" style={{ background: CALM.surfaceSoft, border: `1px solid ${CALM.border}` }}>
           <Shield className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-slate-400 leading-relaxed">
-            <strong className="text-slate-500">SAFE-T 4LIFE™</strong> is an educational and coordination support system only and does not replace professional medical advice, diagnosis, or treatment from licensed healthcare professionals. All consultation data is reviewed by our qualified medical team.
+            <strong className="text-slate-500">Morales</strong> coordinates your care and watches over your safety — but we're not your doctor. Every plan is reviewed by licensed medical professionals, and the clinical decisions are always theirs. SAFE-T 4LIFE™ supports that care; it never replaces it.
           </p>
         </div>
 

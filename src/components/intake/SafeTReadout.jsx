@@ -13,7 +13,7 @@ const TEXT_SOFT = '#566B66';
 const LEVEL_COPY = {
   GREEN: {
     title: 'Your safety review is clear',
-    body: 'Based on what you\'ve shared, your selected procedure shows no elevated risk factors on file. Your doctor will confirm this personally once assigned.',
+    body: 'Based on what you\'ve shared, we didn\'t find anything that raises a concern for your selected procedure. Your doctor will confirm this personally once assigned.',
   },
   YELLOW: {
     title: 'Your safety review needs a closer look',
