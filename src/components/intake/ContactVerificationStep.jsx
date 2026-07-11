@@ -2,11 +2,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
-const DARK = '#060B16';
+const GOLD = '#D4AF37';        // trust seal
+const TEAL = CALM.action;
+const CARD = CALM.surface;
+const BORDER = CALM.border;
 
 const RESEND_COOLDOWN_S = 30;
 
@@ -136,24 +137,24 @@ export default function ContactVerificationStep({ email = null, phone = null, on
       transition={{ duration: 0.35 }}
       style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 24, padding: '32px 28px', textAlign: 'center' }}
     >
-      <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: GOLD }}>
+      <p style={{ margin: '0 0 12px', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: TEAL }}>
         {stage === 'email' ? 'Verify your email' : 'Verify your phone'}
-        {stages.length > 1 && <span style={{ color: 'rgba(255,255,255,0.35)' }}> · {stageIdx + 1} of {stages.length}</span>}
+        {stages.length > 1 && <span style={{ color: CALM.textFaint }}> · {stageIdx + 1} of {stages.length}</span>}
       </p>
 
-      <h2 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 600, color: '#fff', lineHeight: 1.35 }}>
+      <h2 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 600, color: CALM.text, lineHeight: 1.35 }}>
         {stageIdx === 0 ? 'One quick check before we submit' : 'And one more'}
       </h2>
 
-      <p style={{ margin: '0 0 20px', fontSize: 14, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>
-        We sent a 6-digit code to <strong style={{ color: '#fff' }}>{target}</strong> — this is how your
+      <p style={{ margin: '0 0 20px', fontSize: 14, lineHeight: 1.6, color: CALM.textSoft }}>
+        We sent a 6-digit code to <strong style={{ color: CALM.text }}>{target}</strong> — this is how your
         care team will reach you, so it has to be right.
       </p>
 
       {demoCode && (
-        <div style={{ padding: '12px 16px', borderRadius: 12, background: `${GOLD}12`, border: `1px solid ${GOLD}30`, marginBottom: 18 }}>
-          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>DEMO MODE — NO SMS CREDITS</p>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '0.3em' }}>{demoCode}</p>
+        <div style={{ padding: '12px 16px', borderRadius: 12, background: CALM.surfaceSoft, border: `1px solid ${CALM.border}`, marginBottom: 18 }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 800, color: TEAL, letterSpacing: '0.1em' }}>DEMO MODE — NO SMS CREDITS</p>
+          <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color: CALM.text, letterSpacing: '0.3em' }}>{demoCode}</p>
         </div>
       )}
 
@@ -170,7 +171,7 @@ export default function ContactVerificationStep({ email = null, phone = null, on
         style={{
           width: '100%', padding: '14px 16px', borderRadius: 14, textAlign: 'center',
           fontSize: 24, letterSpacing: '0.45em', fontWeight: 700,
-          background: DARK, border: `1px solid ${error ? 'rgba(248,113,113,0.5)' : BORDER}`, color: '#fff', outline: 'none',
+          background: CALM.surfaceSoft, border: `1px solid ${error ? 'rgba(248,113,113,0.5)' : BORDER}`, color: CALM.text, outline: 'none',
         }}
       />
 
@@ -185,14 +186,14 @@ export default function ContactVerificationStep({ email = null, phone = null, on
         style={{
           width: '100%', marginTop: 16, padding: '14px 20px', borderRadius: 999, border: 'none',
           cursor: checking || code.trim().length < 6 ? 'not-allowed' : 'pointer',
-          background: code.trim().length < 6 ? 'rgba(212,175,55,0.35)' : GOLD,
-          color: DARK, fontSize: 14, fontWeight: 700,
+          background: code.trim().length < 6 ? 'rgba(14,138,125,0.35)' : TEAL,
+          color: '#fff', fontSize: 14, fontWeight: 700,
         }}
       >
         {checking ? 'Checking…' : 'Verify'}
       </button>
       {code.trim().length < 6 && !checking && (
-        <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.35)' }}>
+        <p style={{ margin: '8px 0 0', fontSize: 11.5, color: CALM.textFaint }}>
           Enter all 6 digits to continue
         </p>
       )}
@@ -203,7 +204,7 @@ export default function ContactVerificationStep({ email = null, phone = null, on
         disabled={sending || cooldown > 0}
         style={{
           marginTop: 14, background: 'none', border: 'none', fontSize: 13,
-          color: cooldown > 0 ? 'rgba(255,255,255,0.3)' : GOLD,
+          color: cooldown > 0 ? CALM.textFaint : TEAL,
           cursor: cooldown > 0 ? 'default' : 'pointer', textDecoration: 'underline', textUnderlineOffset: 3,
         }}
       >
@@ -211,12 +212,12 @@ export default function ContactVerificationStep({ email = null, phone = null, on
       </button>
 
       {showEscapeHatch && (
-        <p style={{ margin: '16px 0 0', fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.45)' }}>
+        <p style={{ margin: '16px 0 0', fontSize: 12, lineHeight: 1.6, color: CALM.textFaint }}>
           Having trouble receiving codes?{' '}
           <button
             type="button"
             onClick={skipStage}
-            style={{ background: 'none', border: 'none', padding: 0, color: GOLD, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            style={{ background: 'none', border: 'none', padding: 0, color: TEAL, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
           >
             Continue anyway
           </button>

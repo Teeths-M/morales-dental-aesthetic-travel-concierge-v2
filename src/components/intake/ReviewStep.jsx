@@ -2,10 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
 import JourneyBeginsStep from './JourneyBeginsStep';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+const TEAL = CALM.action;
+const CARD = CALM.surface;
+const BORDER = CALM.border;
 
 const REVIEW_FIELDS = [
   ['patient_name', 'Name'],
@@ -72,10 +73,10 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
       transition={{ duration: 0.25 }}
       style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 24, padding: '32px 28px' }}
     >
-      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600, color: '#fff' }}>
+      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600, color: CALM.text }}>
         This is the journey we've built together
       </h2>
-      <p style={{ margin: '0 0 24px', fontSize: 13, color: GOLD, opacity: 0.85 }}>
+      <p style={{ margin: '0 0 24px', fontSize: 13, color: CALM.textSoft }}>
         Take a look, then I'll bring your care team in
       </p>
 
@@ -91,8 +92,8 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
               fontSize: 13,
             }}
           >
-            <span style={{ color: 'rgba(255,255,255,0.45)' }}>{label}</span>
-            <span style={{ color: '#fff', fontWeight: 600, textAlign: 'right' }}>
+            <span style={{ color: CALM.textFaint }}>{label}</span>
+            <span style={{ color: CALM.text, fontWeight: 600, textAlign: 'right' }}>
               {formatValue(answers[field])}
             </span>
           </div>
@@ -100,7 +101,7 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
       </div>
 
       {submitError && (
-        <p style={{ margin: '16px 0 0', fontSize: 13, color: '#fca5a5', textAlign: 'center' }}>{submitError}</p>
+        <p style={{ margin: '16px 0 0', fontSize: 13, color: '#dc2626', textAlign: 'center' }}>{submitError}</p>
       )}
 
       <button
@@ -113,9 +114,9 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
           padding: '14px 20px',
           borderRadius: 999,
           cursor: submitting ? 'default' : 'pointer',
-          background: submitting ? 'rgba(212,175,55,0.5)' : GOLD,
+          background: submitting ? 'rgba(14,138,125,0.5)' : TEAL,
           border: 'none',
-          color: '#060B16',
+          color: '#fff',
           fontSize: 14,
           fontWeight: 700,
         }}

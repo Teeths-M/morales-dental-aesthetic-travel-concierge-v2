@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+const CARD = CALM.surface;
+const BORDER = CALM.border;
 
 /**
  * Shown after repeated low-confidence turns on the same question — the AI
@@ -30,8 +30,8 @@ export default function HumanHandoffCard() {
           width: 52,
           height: 52,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06))',
-          border: '1px solid rgba(212,175,55,0.3)',
+          background: CALM.actionSoft,
+          border: `1px solid rgba(14,138,125,0.3)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -41,10 +41,10 @@ export default function HumanHandoffCard() {
       >
         💬
       </div>
-      <h2 style={{ margin: '0 0 8px', fontSize: 19, fontWeight: 600, color: '#fff' }}>
+      <h2 style={{ margin: '0 0 8px', fontSize: 19, fontWeight: 600, color: CALM.text }}>
         Let's bring in a person for this one
       </h2>
-      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.6)' }}>
+      <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.65, color: CALM.textSoft }}>
         One of our care coordinators will follow up with you personally, using everything
         you've already shared — you won't need to repeat any of it.
       </p>

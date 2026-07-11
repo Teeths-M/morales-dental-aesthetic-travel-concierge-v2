@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const BORDER = '#2A3F4A';
+const GOLD = '#D4AF37';        // trust / recommendation badges (Top Match, Matched in…)
+const TEAL = CALM.action;      // actions
+const BORDER = CALM.border;
 const TOP_N = 5;
 
 const NOT_SURE = { id: UNSPECIFIED, name: UNSPECIFIED };
@@ -50,7 +52,7 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
   if (doctorSearch?.status === 'loading' || doctorSearch?.status === 'idle') {
     return (
       <div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '20px 0' }}>
+        <p style={{ fontSize: 13, color: CALM.textFaint, textAlign: 'center', padding: '20px 0' }}>
           Finding your matched doctors...
         </p>
         <SkipButton onClick={() => handlePick(NOT_SURE)} />
@@ -63,7 +65,7 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
   if (doctorSearch?.status === 'unavailable' || matched.length === 0) {
     return (
       <div>
-        <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: 16 }}>
+        <p style={{ fontSize: 13.5, color: CALM.textSoft, lineHeight: 1.6, marginBottom: 16 }}>
           {doctorSearch?.data?.message || "We're expanding our network for this procedure — your care team will personally match you with the right specialist."}
         </p>
         <button
@@ -71,7 +73,7 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
           onClick={() => handlePick(NOT_SURE)}
           style={{
             width: '100%', padding: '13px 20px', borderRadius: 999, cursor: 'pointer',
-            background: GOLD, border: 'none', color: '#060B16', fontSize: 14, fontWeight: 700,
+            background: TEAL, border: 'none', color: '#fff', fontSize: 14, fontWeight: 700,
           }}
         >
           Continue
@@ -107,7 +109,7 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
             borderRadius: 14,
             background: 'rgba(212,175,55,0.06)',
             border: `1px solid ${i === 0 ? GOLD + '80' : BORDER}`,
-            color: '#fff',
+            color: CALM.text,
             fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',
@@ -122,10 +124,10 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
             </span>
           )}
           <span style={{ fontWeight: 600 }}>{doc.name}</span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+          <span style={{ fontSize: 12, color: CALM.textSoft, fontWeight: 400 }}>
             {[doc.clinic_city, doc.clinic_country].filter(Boolean).join(', ')}
           </span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>
+          <span style={{ fontSize: 12, color: CALM.textSoft, fontWeight: 400 }}>
             {[
               doc.rating ? `${doc.rating}★` : null,
               doc.years_experience ? `${doc.years_experience}+ years experience` : null,
@@ -151,7 +153,7 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
           onClick={() => setShowAll(true)}
           style={{
             textAlign: 'center', padding: '10px 16px', background: 'none', border: 'none',
-            color: GOLD, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+            color: TEAL, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
           }}
         >
           Show More Doctors ({rest.length} more)
@@ -165,12 +167,12 @@ export default function DoctorPickStep({ doctorSearch, destinationCountry, onCon
           onClick={() => handlePick(doc)}
           style={{
             textAlign: 'left', padding: '11px 14px', borderRadius: 12,
-            background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`,
-            color: '#fff', fontSize: 13.5, fontWeight: 500, cursor: 'pointer',
+            background: CALM.surfaceSoft, border: `1px solid ${BORDER}`,
+            color: CALM.text, fontSize: 13.5, fontWeight: 500, cursor: 'pointer',
           }}
         >
           <div style={{ fontWeight: 600 }}>{doc.name}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ fontSize: 12, color: CALM.textFaint }}>
             {[doc.clinic_city, doc.clinic_country].filter(Boolean).join(', ')}
           </div>
         </button>
@@ -190,7 +192,7 @@ function SkipButton({ onClick }) {
         borderRadius: 14,
         background: 'transparent',
         border: `1px dashed ${BORDER}`,
-        color: 'rgba(255,255,255,0.6)',
+        color: CALM.textSoft,
         fontSize: 13,
         fontWeight: 500,
         cursor: 'pointer',

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const CARD = '#0C1A1D';
-const BORDER = '#2A3F4A';
+const TEAL = CALM.action;
+const CARD = CALM.surface;
+const BORDER = CALM.border;
 
 /**
  * "I've noticed you've selected N procedures... let me evaluate..." — the
@@ -64,18 +65,18 @@ export default function ProcedureEvaluationStep({ procedureCount, procedureNames
             height: 40,
             margin: '0 auto 20px',
             borderRadius: '50%',
-            border: `2px solid rgba(212,175,55,0.25)`,
-            borderTopColor: GOLD,
+            border: `2px solid rgba(14,138,125,0.25)`,
+            borderTopColor: TEAL,
           }}
         />
-        <p style={{ margin: '0 0 10px', fontSize: 16, fontWeight: 600, color: '#fff', lineHeight: 1.5 }}>
+        <p style={{ margin: '0 0 10px', fontSize: 16, fontWeight: 600, color: CALM.text, lineHeight: 1.5 }}>
           {procedureCount > 1
             ? procedureNames.length > 1
               ? `I've noticed you've selected ${procedureNames.join(', ')}.`
               : `I've noticed you've selected ${procedureCount} procedures.`
             : "I'm reviewing this against your other selections."}
         </p>
-        <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: 13.5, color: CALM.textSoft, lineHeight: 1.6 }}>
           Many combinations are safely performed together, but not every one is medically
           appropriate. I'm weighing combined anesthesia time, recovery overlap, and surgical
           stress against your profile — your safety comes first.

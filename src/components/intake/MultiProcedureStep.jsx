@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';
-const BORDER = '#2A3F4A';
+const TEAL = CALM.action;
+const BORDER = CALM.border;
 
 /**
  * Lets a patient select more than one procedure in a single beat — the
@@ -47,9 +48,9 @@ export default function MultiProcedureStep({ options, onContinue }) {
                 gap: 6,
                 padding: '6px 12px',
                 borderRadius: 999,
-                background: 'rgba(212,175,55,0.14)',
-                border: `1px solid ${GOLD}`,
-                color: GOLD,
+                background: CALM.actionSoft,
+                border: `1px solid ${TEAL}`,
+                color: TEAL,
                 fontSize: 12.5,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -73,9 +74,9 @@ export default function MultiProcedureStep({ options, onContinue }) {
                 textAlign: 'left',
                 padding: '13px 16px',
                 borderRadius: 14,
-                background: isSelected ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.04)',
-                border: `1px solid ${isSelected ? GOLD : BORDER}`,
-                color: '#fff',
+                background: isSelected ? CALM.actionSoft : CALM.surfaceSoft,
+                border: `1px solid ${isSelected ? TEAL : BORDER}`,
+                color: CALM.text,
                 fontSize: 14,
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -85,7 +86,7 @@ export default function MultiProcedureStep({ options, onContinue }) {
               }}
             >
               {opt.label}
-              {isSelected && <span style={{ color: GOLD, fontWeight: 700 }}>✓</span>}
+              {isSelected && <span style={{ color: TEAL, fontWeight: 700 }}>✓</span>}
             </button>
           );
         })}
@@ -101,9 +102,9 @@ export default function MultiProcedureStep({ options, onContinue }) {
           padding: '13px 20px',
           borderRadius: 999,
           cursor: selected.length === 0 ? 'default' : 'pointer',
-          background: selected.length === 0 ? 'rgba(212,175,55,0.3)' : GOLD,
+          background: selected.length === 0 ? 'rgba(14,138,125,0.35)' : TEAL,
           border: 'none',
-          color: '#060B16',
+          color: '#fff',
           fontSize: 14,
           fontWeight: 700,
         }}
