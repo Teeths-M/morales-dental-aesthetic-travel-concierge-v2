@@ -58,6 +58,19 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const c = await base44.asServiceRole.entities.CaseRecord.get(case_id).catch(() => null);
   if (!c) return err('Case not found', 404);
 
+  // SECURITY: this public endpoint triggers the full paid-journey cascade —
+  // partner dispatch and "payment received" confirmations. Only
+  // stripePaymentWebhook should reach it, after a signature-verified, genuinely
+  // paid Stripe event. Do NOT trust the caller: re-verify a real completed
+  // payment exists for this case first. Without this, anyone could POST a
+  // case_id and set the whole journey in motion without ever paying.
+  const paidTxns = await base44.asServiceRole.entities.PaymentTransaction.filter({
+    case_id, status: 'succeeded',
+  }).catch(() => []);
+  if (!paidTxns || paidTxns.length === 0) {
+    return err('No completed payment on record for this case — cascade refused.', 403);
+  }
+
   const caseRef      = case_id.slice(-8).toUpperCase();
   const patientName  = c.client_name;
   const procedureDate = c.procedure_date

@@ -140,4 +140,4 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     pending_quotes: pending,
     message: `Quote from ${partner_type} saved. Waiting for: ${pending.join(', ')}.`,
   });
-}, { name: 'submitPartnerQuote', requireAuth: false }));
+}, { name: 'submitPartnerQuote', requireAuth: true }));
