@@ -3,10 +3,19 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Phone, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
 
-const GOLD  = '#D4AF37';
-const DARK  = '#060B16';
+// Login splits: LEFT form uses the CALM decision palette (light + teal), the
+// RIGHT brand panel keeps the dark dramatic showcase (Product Principle #5:
+// dark = hero/showcase only).
+const GOLD  = '#D4AF37';        // trust markers only
+const TEAL  = '#0E8A7D';        // the only "proceed" action color
+const DARK  = '#060B16';        // right brand panel + page container
 const CARD  = '#0C1A1D';
-const BORDER = '#2A3F4A';
+const PAGE  = '#F1F5F4';        // left form surface
+const SURFACE_SOFT = '#EEF3F1';
+const BORDER = '#E2E9E6';       // left form borders (light)
+const TEXT = '#17302C';
+const TEXT_SOFT = '#566B66';
+const TEXT_FAINT = '#8A9B96';
 
 function GoogleIcon() {
   return (
@@ -62,13 +71,13 @@ function OtpInput({ value, onChange, onComplete }) {
           onPaste={i === 0 ? handlePaste : undefined}
           style={{
             width: 48, height: 56, textAlign: 'center', fontSize: 22, fontWeight: 800,
-            borderRadius: 12, border: `2px solid ${d ? GOLD : BORDER}`,
-            background: d ? `${GOLD}12` : 'rgba(255,255,255,0.04)',
-            color: '#fff', outline: 'none', transition: 'border-color 0.15s, background 0.15s',
-            caretColor: GOLD,
+            borderRadius: 12, border: `2px solid ${d ? TEAL : BORDER}`,
+            background: d ? 'rgba(14,138,125,0.10)' : SURFACE_SOFT,
+            color: TEXT, outline: 'none', transition: 'border-color 0.15s, background 0.15s',
+            caretColor: TEAL,
           }}
-          onFocus={e => e.target.style.borderColor = GOLD}
-          onBlur={e => e.target.style.borderColor = digits[i] ? GOLD : BORDER}
+          onFocus={e => e.target.style.borderColor = TEAL}
+          onBlur={e => e.target.style.borderColor = digits[i] ? TEAL : BORDER}
         />
       ))}
     </div>
@@ -140,14 +149,14 @@ export default function Login() {
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
           <div>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>Morales</p>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEXT, letterSpacing: '-0.01em' }}>Morales</p>
             <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>MEDICAL TRAVEL SAFETY</p>
           </div>
         </Link>
       </div>
 
-      <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Welcome</h1>
-      <p style={{ margin: '0 0 32px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
+      <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: TEXT, letterSpacing: '-0.02em' }}>Welcome</h1>
+      <p style={{ margin: '0 0 32px', fontSize: 14, color: TEXT_SOFT }}>
         Enter your phone number to sign in
       </p>
 
@@ -159,11 +168,11 @@ export default function Login() {
 
       <form onSubmit={handleSendCode}>
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6, letterSpacing: '0.04em' }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SOFT, marginBottom: 6, letterSpacing: '0.04em' }}>
             PHONE NUMBER
           </label>
           <div style={{ position: 'relative' }}>
-            <Phone style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: 'rgba(255,255,255,0.3)' }} />
+            <Phone style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: TEXT_FAINT }} />
             <input
               type="tel"
               autoFocus
@@ -173,14 +182,14 @@ export default function Login() {
               required
               style={{
                 width: '100%', padding: '13px 14px 13px 42px', borderRadius: 12, boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`,
-                color: '#fff', fontSize: 15, outline: 'none',
+                background: SURFACE_SOFT, border: `1px solid ${BORDER}`,
+                color: TEXT, fontSize: 15, outline: 'none',
               }}
-              onFocus={e => e.target.style.borderColor = `${GOLD}80`}
+              onFocus={e => e.target.style.borderColor = `${TEAL}80`}
               onBlur={e => e.target.style.borderColor = BORDER}
             />
           </div>
-          <p style={{ margin: '6px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>
+          <p style={{ margin: '6px 0 0', fontSize: 11, color: TEXT_FAINT }}>
             Include country code · SMS or WhatsApp
           </p>
         </div>
@@ -190,9 +199,9 @@ export default function Login() {
           disabled={loading}
           style={{
             width: '100%', padding: '14px 0', borderRadius: 14, cursor: loading ? 'not-allowed' : 'pointer',
-            background: loading ? 'rgba(212,175,55,0.4)' : `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
-            border: 'none', color: DARK, fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
-            boxShadow: loading ? 'none' : `0 8px 24px rgba(212,175,55,0.35)`,
+            background: loading ? 'rgba(14,138,125,0.4)' : TEAL,
+            border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
+            boxShadow: loading ? 'none' : `0 8px 24px rgba(14,138,125,0.35)`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
@@ -205,9 +214,9 @@ export default function Login() {
 
       {/* Divider */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
-        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.08em' }}>OR</span>
-        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+        <div style={{ flex: 1, height: 1, background: BORDER }} />
+        <span style={{ fontSize: 11, color: TEXT_FAINT, letterSpacing: '0.08em' }}>OR</span>
+        <div style={{ flex: 1, height: 1, background: BORDER }} />
       </div>
 
       <button
@@ -216,30 +225,30 @@ export default function Login() {
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           padding: '13px 0', borderRadius: 14, cursor: 'pointer',
-          background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDER}`,
-          color: '#fff', fontSize: 14, fontWeight: 600,
+          background: '#fff', border: `1px solid ${BORDER}`,
+          color: TEXT, fontSize: 14, fontWeight: 600,
         }}
       >
         {googleLoading ? <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} /> : <GoogleIcon />}
         Continue with Google
       </button>
 
-      <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+      <p style={{ margin: '20px 0 0', textAlign: 'center', fontSize: 13, color: TEXT_FAINT }}>
         New to Morales?{' '}
-        <Link to="/signup" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
+        <Link to="/signup" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>Create account</Link>
       </p>
 
       {/* Judges panel */}
       <div style={{ marginTop: 28, padding: '16px 18px', borderRadius: 14, background: `${GOLD}0A`, border: `1px solid ${GOLD}25` }}>
         <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>JUDGES & INVESTORS</p>
-        <p style={{ margin: '0 0 12px', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: TEXT_SOFT, lineHeight: 1.6 }}>
           The full demo is available without login.
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to="/demo/evn" style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: GOLD, fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
+          <Link to="/demo/evn" style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: `${GOLD}15`, border: `1px solid ${GOLD}40`, color: '#9a7d1f', fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
             🌍 EVN-iQ400 Demo
           </Link>
-          <Link to="/demo" style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
+          <Link to="/demo" style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 10, background: SURFACE_SOFT, border: `1px solid ${BORDER}`, color: TEXT_SOFT, fontSize: 11, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.04em' }}>
             🛡️ Full Platform
           </Link>
         </div>
@@ -253,7 +262,7 @@ export default function Login() {
       {/* Back */}
       <button
         onClick={() => { setStep('phone'); setOtp(''); setError(''); setDemoCode(null); }}
-        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, padding: 0, marginBottom: 32 }}
+        style={{ background: 'none', border: 'none', color: TEXT_FAINT, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, padding: 0, marginBottom: 32 }}
       >
         <ChevronLeft style={{ width: 16, height: 16 }} /> Back
       </button>
@@ -263,18 +272,18 @@ export default function Login() {
         <img src="/morales-m-mark.png" alt="Morales" style={{ width: 36, filter: `drop-shadow(0 0 8px ${GOLD})` }} />
       </div>
 
-      <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Check your phone</h1>
-      <p style={{ margin: '0 0 8px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
+      <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 800, color: TEXT, letterSpacing: '-0.02em' }}>Check your phone</h1>
+      <p style={{ margin: '0 0 8px', fontSize: 14, color: TEXT_SOFT }}>
         We sent a 6-digit code to
       </p>
-      <p style={{ margin: '0 0 32px', fontSize: 15, fontWeight: 700, color: '#fff' }}>{phone}</p>
+      <p style={{ margin: '0 0 32px', fontSize: 15, fontWeight: 700, color: TEXT }}>{phone}</p>
 
       {/* Demo mode banner */}
       {demoCode && (
-        <div style={{ padding: '12px 16px', borderRadius: 12, background: `${GOLD}12`, border: `1px solid ${GOLD}30`, marginBottom: 24, textAlign: 'center' }}>
-          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 800, color: GOLD, letterSpacing: '0.1em' }}>DEMO MODE — NO SMS CREDITS</p>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '0.3em' }}>{demoCode}</p>
-          <p style={{ margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>This code will be hidden when Twilio is live</p>
+        <div style={{ padding: '12px 16px', borderRadius: 12, background: SURFACE_SOFT, border: `1px solid ${BORDER}`, marginBottom: 24, textAlign: 'center' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 10, fontWeight: 800, color: TEXT_FAINT, letterSpacing: '0.1em' }}>DEMO MODE — NO SMS CREDITS</p>
+          <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color: TEXT, letterSpacing: '0.3em' }}>{demoCode}</p>
+          <p style={{ margin: '4px 0 0', fontSize: 11, color: TEXT_FAINT }}>This code will be hidden when Twilio is live</p>
         </div>
       )}
 
@@ -288,7 +297,7 @@ export default function Login() {
 
       {loading && (
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
-          <Loader2 style={{ width: 20, height: 20, color: GOLD, animation: 'spin 1s linear infinite' }} />
+          <Loader2 style={{ width: 20, height: 20, color: TEAL, animation: 'spin 1s linear infinite' }} />
         </div>
       )}
 
@@ -297,10 +306,10 @@ export default function Login() {
         disabled={otp.length < 6 || loading}
         style={{
           width: '100%', padding: '14px 0', borderRadius: 14, marginTop: 24, cursor: otp.length < 6 || loading ? 'not-allowed' : 'pointer',
-          background: otp.length < 6 ? 'rgba(212,175,55,0.2)' : `linear-gradient(135deg, ${GOLD} 0%, #E8C85C 100%)`,
-          border: 'none', color: otp.length < 6 ? 'rgba(255,255,255,0.3)' : DARK,
+          background: otp.length < 6 ? 'rgba(14,138,125,0.2)' : TEAL,
+          border: 'none', color: otp.length < 6 ? '#ffffffaa' : '#fff',
           fontSize: 14, fontWeight: 800, letterSpacing: '0.02em',
-          boxShadow: otp.length < 6 ? 'none' : `0 8px 24px rgba(212,175,55,0.35)`,
+          boxShadow: otp.length < 6 ? 'none' : `0 8px 24px rgba(14,138,125,0.35)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}
       >
@@ -310,13 +319,13 @@ export default function Login() {
       {/* Resend */}
       <div style={{ textAlign: 'center', marginTop: 20 }}>
         {countdown > 0 ? (
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-            Resend code in <span style={{ color: GOLD, fontWeight: 700 }}>{countdown}s</span>
+          <p style={{ fontSize: 13, color: TEXT_FAINT, margin: 0 }}>
+            Resend code in <span style={{ color: TEAL, fontWeight: 700 }}>{countdown}s</span>
           </p>
         ) : (
           <button
             onClick={handleSendCode}
-            style={{ background: 'none', border: 'none', color: GOLD, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+            style={{ background: 'none', border: 'none', color: TEAL, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0 }}
           >
             Resend code
           </button>
@@ -329,7 +338,7 @@ export default function Login() {
     <div style={{ minHeight: '100vh', background: DARK, display: 'flex', fontFamily: '"SF Pro Display", system-ui, sans-serif' }}>
 
       {/* ── Left: form ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', background: PAGE }}>
         {step === 'phone' ? phoneScreen : otpScreen}
       </div>
 
