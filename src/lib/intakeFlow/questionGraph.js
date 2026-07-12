@@ -68,7 +68,12 @@ export const PRIOR_SURGERY_OPTIONS = [
 // The under-18 test lives in the shared guardian gate (client + server twins) so
 // /intake, /booking, and the server validator all agree. Re-exported here so the
 // question graph's skipIf hooks keep their existing import.
-export { isMinorAge } from '@/lib/guardianGate';
+// Import (local binding — the skipIf hooks below call isMinorAge in this module)
+// AND re-export it, so fieldMap's `import { isMinorAge } from './questionGraph'`
+// keeps working. A bare `export { x } from 'y'` forwards to importers but does NOT
+// create a local binding, which threw ReferenceError inside the skipIf closures.
+import { isMinorAge } from '@/lib/guardianGate';
+export { isMinorAge };
 
 export const GENDER_OPTIONS = [
   { value: 'male', label: 'Male' },
