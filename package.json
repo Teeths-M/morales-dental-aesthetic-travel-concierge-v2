@@ -15,7 +15,9 @@
     "test:e2e": "playwright test --project=public",
     "test:e2e:auth": "playwright test --project=setup --headed",
     "test:e2e:journey": "playwright test --project=authenticated",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "load:cas": "k6 run tests/load/confirm-booking-cas.js",
+    "load:ratelimit": "k6 run tests/load/public-doctor-check-ratelimit.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.38",
