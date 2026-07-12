@@ -11,6 +11,22 @@ If a procedure combination is clinically dangerous, M will not facilitate it —
 The client can book elsewhere. M will not be the platform that put their life at risk.
 This principle must never be softened, worked around, or compromised in any feature, edge case, or demo.
 
+## Safety-Decision Architecture — Invariants (do not regress)
+
+The AI/narration layer has **no technical capability to approve, reject, or modify a safety decision.** Only deterministic engines write safety outcomes. Established 2026-07 (commit `45647208`); a CI red-team guards it.
+
+- **Deterministic decides, AI narrates.** The patient SAFE-T risk level is computed only by `base44/functions/_shared/safeTEngine.ts` (`computeSafeT` — pure, replayable). `computeSafeTScreening` writes the decision to the append-only, hash-chained `SafeTScreening` entity **first**, then invokes the LLM only to narrate it — the LLM receives just the finalized `risk_level` + flags (never raw patient text) and any risk level it returns is discarded. Never move SAFE-T scoring back into an LLM or into the client.
+- **Fail closed.** Ambiguity, incomplete profile, pregnancy, or detected prompt-injection → `review` (needs human review), **never** `low`. `SafeTScan.jsx`'s error fallback is `review`.
+- **The RED block stays deterministic** (`validateProcedureSafety` → `_shared/procedureCompatibility.ts` `getViolations`, re-checked server-side). `checkMedicalRisk` (admin-review routing) and `runMedGuardAnalysis` (in-travel score) are deterministic too. AI cannot suppress or override any of them.
+- **AI may raise caution, never clear it.** In any hybrid scorer the LLM may only *add* risk. `runInternetIntelligence`'s AI can flag but not lower a score. The clinic agent (`verifyClinicStatus`) may auto-*block* (`closed`) but never auto-writes the permissive `operating` — it routes that to a human (`agent_proposed_operating`).
+- **Sanitize all user text reaching a prompt** via `base44/functions/_shared/sanitizePromptInput.ts`; an injection hit on the safety path forces `review`.
+- **Log decision + narration** to the `SafeTScreening` `prev_hash` chain. Append-only — never update/delete.
+- **Red-team gate.** `tests/redteam/safety-redteam.spec.js` (Playwright `redteam` project) runs deterministically, no network/credits; `.github/workflows/redteam.yml` re-runs it on every change to `base44/functions/**/entry.ts` (catches model-version changes) and weekly. Changing a model ID or the engine must keep it green.
+
+## Data Freshness — fail-safe, not fail-silent
+
+Time-sensitive status (clinic operating, doctor licence, visa, regulatory) is governed by `base44/functions/_shared/freshness.ts` (per-type TTLs + `flagForReview` → the `DataFreshnessReview` human queue). Cached status is never served as confirmed past its TTL — it is re-verified or clearly labelled unconfirmed. Clinic bookings gate on `checkClinicStatus` (blocks unless operating **and** fresh; soft-labels until `CLINIC_GATE_ENFORCE=true`). Scheduled by `.github/workflows/freshness-cron.yml`, guarded by `_shared/cronAuth.ts` (cron secret **or** admin session). Admin surfaces: `/admin/clinics`, `/admin/data-freshness`.
+
 ## Commands
 
 ```bash
@@ -22,7 +38,7 @@ npm run typecheck    # tsc check on src/components + src/pages
 npm run preview      # Serve production build locally
 ```
 
-No test runner is configured. Verify changes by running the dev server and exercising the affected flows.
+No unit-test runner for app code — verify UI changes via `npm run dev` and the affected flows. Playwright drives two suites: `tests/e2e` (against the deployed app; needs a session) and `tests/redteam` (`npx playwright test --project=redteam` — the deterministic safety red-team, no browser/network/credits, must stay green).
 
 ## Architecture Overview
 
