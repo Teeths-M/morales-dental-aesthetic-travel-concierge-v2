@@ -4,10 +4,14 @@ import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
 
 /**
  * Light, searchable combobox with fuzzy autocomplete (per the "fuzzy everything"
- * rule). Type to filter the list or type a value not in it — either way onChange
- * fires. Used for the BYOJ Country / City pickers.
+ * rule). Type to filter the list, or type a value that isn't in it — either way
+ * onChange fires. Shared primitive for Country / City pickers (BYOJ, Check Your
+ * Doctor, …).
+ *
+ * - `boxed` renders its own bordered input container (standalone use).
+ *   Omit it when the caller already provides the field box.
  */
-export default function SearchSelect({ value, onChange, options = [], placeholder, disabled = false }) {
+export default function SearchSelect({ value, onChange, options = [], placeholder, disabled = false, boxed = false }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState(value || '');
   const ref = useRef(null);
@@ -24,9 +28,13 @@ export default function SearchSelect({ value, onChange, options = [], placeholde
 
   const pick = (label) => { setQ(label); onChange(label); setOpen(false); };
 
+  const wrapCls = boxed
+    ? 'flex items-center rounded-xl border border-slate-200 bg-white px-3.5 py-3 focus-within:border-[#0E8A7D]/50 transition-colors'
+    : 'flex items-center';
+
   return (
     <div ref={ref} className="relative">
-      <div className="flex items-center">
+      <div className={wrapCls}>
         <input
           disabled={disabled}
           value={q}

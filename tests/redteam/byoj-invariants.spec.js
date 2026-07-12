@@ -93,7 +93,7 @@ test.describe('R4 manual entry only', () => {
   test('SOURCE: the intake bar has no file upload / OCR parse path', () => {
     const src = read('src/components/byoj/ItineraryIntakeBar.jsx');
     expect(src).not.toMatch(/type="file"/);
-    expect(src).not.toMatch(/ocr|extractText|InvokeLLM/i);
+    expect(src).not.toMatch(/\bocr\b|extractText|InvokeLLM/i); // \bocr\b: the OCR feature, not substrings like "procRef"
     expect(src).toMatch(/Canonical procedure names/); // uses a controlled list, not free text
   });
 

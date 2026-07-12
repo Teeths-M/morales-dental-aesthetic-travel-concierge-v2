@@ -3,6 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { CALM } from '@/lib/brandTokens';
+import cityData from '@/lib/cityData.json';
+import SearchSelect from '@/components/ui-system/SearchSelect';
+
+const COUNTRIES = Object.keys(cityData).sort((a, b) => a.localeCompare(b));
+function citiesFor(country) {
+  if (!country) return [];
+  const key = COUNTRIES.find((k) => k.toLowerCase() === country.toLowerCase());
+  return key ? cityData[key] : [];
+}
 
 /**
  * CheckYourDoctor — public, no-login doctor look-up embedded on the landing page.
@@ -73,7 +82,7 @@ const inputStyle = {
 const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: CALM.textSoft, marginBottom: 6 };
 
 export default function CheckYourDoctor() {
-  const [form, setForm] = useState({ doctorName: '', clinic: '', location: '', license: '', photoName: '' });
+  const [form, setForm] = useState({ doctorName: '', clinic: '', country: '', city: '', license: '', photoName: '' });
   const [status, setStatus] = useState('idle'); // idle | checking | done
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -85,10 +94,11 @@ export default function CheckYourDoctor() {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.doctorName.trim() || !form.clinic.trim() || !form.location.trim()) {
-      setError('Please add the doctor’s name, their clinic, and a country or city.');
+    if (!form.doctorName.trim() || !form.clinic.trim() || !form.country.trim()) {
+      setError('Please add the doctor’s name, their clinic, and a country.');
       return;
     }
+    const location = [form.city.trim(), form.country.trim()].filter(Boolean).join(', ');
     setError('');
     setStatus('checking');
     setResult(null);
@@ -98,7 +108,7 @@ export default function CheckYourDoctor() {
       const res = await base44.functions.invoke('publicDoctorCheck', {
         doctor_name: form.doctorName.trim(),
         clinic: form.clinic.trim(),
-        location: form.location.trim(),
+        location,
         license: form.license.trim() || undefined,
       });
       const data = res?.data ?? res;
@@ -135,9 +145,19 @@ export default function CheckYourDoctor() {
                 <label style={labelStyle}>Clinic or practice name</label>
                 <input style={inputStyle} value={form.clinic} onChange={set('clinic')} placeholder="e.g. Smile Clinic Tijuana" />
               </div>
-              <div>
-                <label style={labelStyle}>Country or city</label>
-                <input style={inputStyle} value={form.location} onChange={set('location')} placeholder="e.g. Tijuana, Mexico" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label style={labelStyle}>Country</label>
+                  <SearchSelect boxed value={form.country} options={COUNTRIES} placeholder="Select or type"
+                    onChange={(v) => setForm((f) => ({ ...f, country: v, city: '' }))} />
+                </div>
+                <div>
+                  <label style={labelStyle}>City <span style={{ fontWeight: 400, color: CALM.textFaint }}>— optional</span></label>
+                  <SearchSelect boxed value={form.city} options={citiesFor(form.country)}
+                    placeholder={form.country ? 'Select or type' : 'Pick a country'}
+                    disabled={!form.country}
+                    onChange={(v) => setForm((f) => ({ ...f, city: v }))} />
+                </div>
               </div>
 
               <details style={{ marginTop: -2 }}>

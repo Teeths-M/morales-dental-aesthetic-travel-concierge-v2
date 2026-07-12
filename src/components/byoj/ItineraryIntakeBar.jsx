@@ -3,7 +3,7 @@ import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDow
 import cityData from '@/lib/cityData.json';
 import { procedureCategories } from '@/components/procedures/ProcedureData';
 import { fuzzyMatches } from '@/lib/fuzzyMatch';
-import SearchSelect from './SearchSelect';
+import SearchSelect from '@/components/ui-system/SearchSelect';
 
 // Canonical procedure names — the FULL platform catalog (every category), grouped,
 // so a patient can pick anything they actually booked and the safety engine can
@@ -38,10 +38,10 @@ function Field({ icon: Icon, label, children }) {
 export default function ItineraryIntakeBar({ form, update, onVerify, loading, needsSignIn }) {
   const [procOpen, setProcOpen] = useState(false);
   const [procSearch, setProcSearch] = useState('');
-  const procRef = useRef(null);
+  const procMenuRef = useRef(null);
   // Close the multi-select on an outside click (it stays open while you pick several).
   useEffect(() => {
-    const h = (e) => { if (procRef.current && !procRef.current.contains(e.target)) setProcOpen(false); };
+    const h = (e) => { if (procMenuRef.current && !procMenuRef.current.contains(e.target)) setProcOpen(false); };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
@@ -101,7 +101,7 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
         </Field>
 
         <Field icon={Sparkles} label="Procedure(s)">
-          <div className="relative" ref={procRef}>
+          <div className="relative" ref={procMenuRef}>
             <button type="button" onClick={() => setProcOpen((o) => !o)}
               className="w-full flex items-center justify-between text-left text-[15px] font-semibold text-slate-900">
               <span className={procs.length ? '' : 'text-slate-400 font-normal'}>
