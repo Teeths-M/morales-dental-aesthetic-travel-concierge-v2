@@ -136,6 +136,22 @@ export default function PlatformGuideOrb() {
   const isHomepage = pathname === '/';
   const [pastHero, setPastHero] = useState(!isHomepage);
 
+  // On narrow phones the full-bleed hero copy fills the bottom-left zone the orb
+  // occupies, so a fixed orb overlaps the body text (worst on short viewports like
+  // the 375×667 iPhone SE). Mirror the bubble's hero-gating: on the mobile homepage
+  // keep the orb out of the hero until the user scrolls past it. Desktop and every
+  // inner route are unaffected; the orb reappears on the first scroll.
+  const [isNarrow, setIsNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 480px)');
+    const onChange = () => setIsNarrow(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  const heroBlocksOrb = isHomepage && isNarrow && !pastHero;
+
   useEffect(() => {
     if (!isHomepage) { setPastHero(true); return; }
     const check = () => { if (window.scrollY > window.innerHeight * 0.65) setPastHero(true); };
@@ -252,7 +268,7 @@ export default function PlatformGuideOrb() {
   return (
     <>
       {/* ── Floating orb + bubble ── */}
-      {!open && (
+      {!open && !heroBlocksOrb && (
         <div style={{ position: 'fixed', bottom: 'calc(max(24px, env(safe-area-inset-bottom, 24px)) + var(--sticky-cta-height, 0px))', transition: 'bottom 0.35s cubic-bezier(0.4,0,0.2,1)', left: 20, zIndex: 9000, display: 'flex', flexDirection: 'column-reverse', alignItems: 'flex-start', gap: 8 }}>
           <button onClick={() => { setOpen(true); setDismissed(true); }} aria-label="Open platform guide"
             style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.18), rgba(10,20,28,0.92))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.12)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s, box-shadow 0.2s', position: 'relative' }}

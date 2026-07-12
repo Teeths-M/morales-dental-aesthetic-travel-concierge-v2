@@ -26,6 +26,9 @@ export default defineConfig({
     { name: 'setup', testMatch: /auth\.setup\.js/ },
     // Post-auth journeys — reuse the session saved by the setup project.
     { name: 'authenticated', testMatch: /journey\.spec\.js/ },
+    // Morales-specific LIVE edge checks (mobile overlap + unauth endpoint probe).
+    // Read-only against the deployed app; no login required.
+    { name: 'morales-live', testMatch: /morales-live\.spec\.js/ },
     // Internal red-team of the safety-decision layer — deterministic, no browser,
     // no network, no credits. Runs in CI whenever the AI functions change.
     { name: 'redteam', testDir: './tests/redteam', testMatch: /.*\.spec\.js/ },
