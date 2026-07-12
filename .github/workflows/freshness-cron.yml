@@ -10,6 +10,9 @@ name: Data freshness scheduler
 #   3. Base44 → project env vars: CRON_SECRET = <the same string>
 #   After that this runs itself; nothing else to touch.
 #
+# Until the GitHub secret is set, scheduled runs SKIP harmlessly (green, with a
+# warning annotation) instead of failing — so a missing secret never shows a red X.
+#
 # Optional overrides (repo Variables, only if the app URL/id ever change):
 #   FUNCTIONS_BASE_URL (default https://sentinel-dental-care.base44.app)
 #   BASE44_APP_ID      (default 6a01c1305c540b75f24dd373)
@@ -33,13 +36,17 @@ jobs:
       SECRET: ${{ secrets.CRON_SECRET }}
     steps:
       - name: Guard — secret configured
+        id: guard
         run: |
           if [ -z "$SECRET" ]; then
-            echo "::error::CRON_SECRET is not set. Add it in repo Secrets AND in Base44 env (same value). See this workflow's header."
-            exit 1
+            echo "::warning::CRON_SECRET is not set as a GitHub repository secret — skipping this run (no failure). Add it under Settings → Secrets and variables → Actions with the SAME value as the Base44 env var. See this workflow's header."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run freshness jobs
+        if: steps.guard.outputs.configured == 'true'
         run: |
           set +e
           call () {
