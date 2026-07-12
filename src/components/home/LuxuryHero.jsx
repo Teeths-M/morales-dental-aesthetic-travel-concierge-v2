@@ -330,6 +330,17 @@ export default function LuxuryHero() {
                   No account needed to start
                 </span>
               )}
+
+              {/* Bring Your Own Journey — soft entry for patients who booked elsewhere */}
+              {isMedical && (
+                <Link
+                  to="/protect"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.01em', textDecoration: 'none' }}
+                >
+                  Already booked elsewhere?
+                  <span style={{ color: GOLD, fontWeight: 600 }}>Bring your journey to Morales →</span>
+                </Link>
+              )}
             </motion.div>
 
 
