@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown } from 'lucide-react';
+import cityData from '@/lib/cityData.json';
+import SearchSelect from './SearchSelect';
 
 // Canonical procedure names — these match the safety engine's RED rules so the
 // combination check is meaningful (never a free-text that can't be scored).
@@ -10,14 +12,31 @@ const PROCEDURES = [
   'Porcelain Veneers', 'Hollywood Smile', 'Gastric Sleeve',
 ];
 
-const fieldCls = 'flex-1 min-w-[150px] rounded-xl border border-[#2A3F4A] bg-[#0C1A1D] px-3.5 py-2.5 focus-within:border-[#D4AF37]/60 transition-colors';
-const lblCls = 'flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-[#7E939C] font-medium';
-const inputCls = 'mt-1 w-full bg-transparent text-[15px] font-semibold text-white placeholder:text-[#54666E] placeholder:font-normal outline-none';
+const COUNTRIES = Object.keys(cityData).sort((a, b) => a.localeCompare(b));
+function citiesFor(country) {
+  if (!country) return [];
+  const key = COUNTRIES.find((k) => k.toLowerCase() === country.toLowerCase());
+  return key ? cityData[key] : [];
+}
+
+const textInput =
+  'w-full bg-transparent outline-none text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal';
+
+function Field({ icon: Icon, label, children }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 focus-within:border-[#0E8A7D]/50 transition-colors">
+      <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
+        <Icon className="w-3 h-3" /> {label}
+      </span>
+      <div className="mt-1">{children}</div>
+    </div>
+  );
+}
 
 /**
- * Flight-search-style itinerary bar for Bring Your Own Journey — a fast horizontal
- * entry, not a 12-step medical form. Manual entry only (document parsing is a
- * later phase).
+ * Clean, white itinerary-intake card for Bring Your Own Journey. Manual entry only
+ * (document parsing is a later phase). Country + City are searchable dropdowns with
+ * fuzzy autocomplete; City auto-populates from the chosen Country.
  */
 export default function ItineraryIntakeBar({ form, update, onVerify, loading, needsSignIn }) {
   const [procOpen, setProcOpen] = useState(false);
@@ -28,71 +47,87 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
     update('procedures', procs.includes(p) ? procs.filter((x) => x !== p) : [...procs, p]);
 
   return (
-    <div className="rounded-2xl border border-[#2A3F4A] bg-gradient-to-b from-[#0C1A1D] to-[#0A1220] p-4 sm:p-5">
-      <div className="flex flex-col lg:flex-row gap-2.5 lg:items-stretch">
-        <div className={fieldCls}>
-          <span className={lblCls}><MapPin className="w-3 h-3" /> Country · City</span>
-          <div className="flex gap-2">
-            <input className={inputCls} placeholder="Country" value={form.destination_country || ''}
-              onChange={(e) => update('destination_country', e.target.value)} />
-            <input className={`${inputCls} max-w-[45%]`} placeholder="City" value={form.destination_city || ''}
-              onChange={(e) => update('destination_city', e.target.value)} />
-          </div>
-        </div>
+    <div className="rounded-2xl bg-white border border-slate-200 shadow-[0_28px_64px_-28px_rgba(0,0,0,0.6)] p-5 sm:p-6">
+      {/* Tabs — manual is live; document upload is a later phase */}
+      <div className="flex items-center gap-6 mb-5 border-b border-slate-100">
+        <span className="text-[14px] font-bold text-[#0E8A7D] border-b-2 border-[#0E8A7D] pb-2 -mb-px">My booked journey</span>
+        <span className="text-[14px] font-semibold text-slate-300 pb-2 inline-flex items-center gap-2 cursor-not-allowed">
+          Upload confirmation
+          <span className="text-[9px] font-bold uppercase tracking-wide text-[#0E8A7D] bg-[#0E8A7D]/10 rounded-full px-2 py-0.5">Soon</span>
+        </span>
+      </div>
 
-        <div className={fieldCls}>
-          <span className={lblCls}><Stethoscope className="w-3 h-3" /> Doctor</span>
-          <input className={inputCls} placeholder="Doctor’s name" value={form.doctor_name || ''}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field icon={MapPin} label="Country">
+          <SearchSelect
+            value={form.destination_country || ''}
+            onChange={(v) => { update('destination_country', v); update('destination_city', ''); }}
+            options={COUNTRIES}
+            placeholder="Select or type a country"
+          />
+        </Field>
+
+        <Field icon={MapPin} label="City">
+          <SearchSelect
+            value={form.destination_city || ''}
+            onChange={(v) => update('destination_city', v)}
+            options={citiesFor(form.destination_country)}
+            placeholder={form.destination_country ? 'Select or type a city' : 'Pick a country first'}
+            disabled={!form.destination_country}
+          />
+        </Field>
+
+        <Field icon={Stethoscope} label="Doctor">
+          <input className={textInput} placeholder="Doctor’s name" value={form.doctor_name || ''}
             onChange={(e) => update('doctor_name', e.target.value)} />
-        </div>
+        </Field>
 
-        <div className={fieldCls}>
-          <span className={lblCls}><Building2 className="w-3 h-3" /> Clinic</span>
-          <input className={inputCls} placeholder="Clinic name" value={form.clinic_name || ''}
+        <Field icon={Building2} label="Clinic">
+          <input className={textInput} placeholder="Clinic name" value={form.clinic_name || ''}
             onChange={(e) => update('clinic_name', e.target.value)} />
-        </div>
+        </Field>
 
-        <div className={`${fieldCls} relative`}>
-          <span className={lblCls}><Sparkles className="w-3 h-3" /> Procedure(s)</span>
-          <button type="button" onClick={() => setProcOpen((o) => !o)}
-            className="mt-1 w-full flex items-center justify-between text-left text-[15px] font-semibold text-white">
-            <span className={procs.length ? '' : 'text-[#54666E] font-normal'}>
-              {procs.length ? `${procs.length} selected` : 'Add procedures'}
-            </span>
-            <ChevronDown className="w-4 h-4 text-[#7E939C] shrink-0" />
-          </button>
-          {procOpen && (
-            <div className="absolute z-20 left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#2A3F4A] bg-[#0C1A1D] p-1.5 shadow-2xl">
-              {PROCEDURES.map((p) => (
-                <button key={p} type="button" onClick={() => toggleProc(p)}
-                  className={`w-full text-left text-[13px] px-3 py-2 rounded-lg transition-colors ${procs.includes(p) ? 'bg-[#D4AF37]/12 text-[#D4AF37]' : 'text-[#B7C6CC] hover:bg-white/5'}`}>
-                  {procs.includes(p) ? '✓ ' : ''}{p}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <Field icon={Sparkles} label="Procedure(s)">
+          <div className="relative">
+            <button type="button" onClick={() => setProcOpen((o) => !o)}
+              className="w-full flex items-center justify-between text-left text-[15px] font-semibold text-slate-900">
+              <span className={procs.length ? '' : 'text-slate-400 font-normal'}>
+                {procs.length ? `${procs.length} selected` : 'Add procedures'}
+              </span>
+              <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+            </button>
+            {procOpen && (
+              <div className="absolute z-40 left-0 right-0 top-full mt-2 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                {PROCEDURES.map((p) => (
+                  <button key={p} type="button" onClick={() => toggleProc(p)}
+                    className={`w-full text-left text-[13px] px-3 py-2 rounded-lg transition-colors ${procs.includes(p) ? 'bg-[#0E8A7D]/10 text-[#0E8A7D] font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}>
+                    {procs.includes(p) ? '✓ ' : ''}{p}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </Field>
 
-        <div className={fieldCls}>
-          <span className={lblCls}><Calendar className="w-3 h-3" /> Surgery date</span>
-          <input type="date" className={`${inputCls} [color-scheme:dark]`} value={form.surgery_date || ''}
+        <Field icon={Calendar} label="Surgery date">
+          <input type="date" className={textInput} value={form.surgery_date || ''}
             onChange={(e) => update('surgery_date', e.target.value)} />
-        </div>
-
-        <button onClick={onVerify} disabled={!canVerify || loading}
-          className={`shrink-0 rounded-xl px-6 py-3 lg:py-0 font-semibold text-[15px] flex items-center justify-center gap-2 transition-all
-            ${canVerify && !loading ? 'bg-gradient-to-br from-[#0E8A7D] to-[#0b6f64] text-white hover:opacity-90' : 'bg-[#14242b] text-[#54666E] cursor-not-allowed'}`}>
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking…</> : needsSignIn ? 'Sign in to verify' : 'Verify my journey'}
-        </button>
+        </Field>
       </div>
 
       {procs.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-3">
           {procs.map((p) => (
-            <span key={p} className="text-[11px] text-[#B7C6CC] bg-white/5 border border-[#2A3F4A] rounded-full px-2.5 py-1">{p}</span>
+            <span key={p} className="text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2.5 py-1">{p}</span>
           ))}
         </div>
       )}
+
+      <button onClick={onVerify} disabled={!canVerify || loading}
+        className={`mt-4 w-full rounded-xl py-3.5 font-semibold text-[15px] flex items-center justify-center gap-2 transition-all
+          ${canVerify && !loading ? 'bg-[#0E8A7D] text-white hover:opacity-90' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
+        {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking…</> : needsSignIn ? 'Sign in to verify' : 'Verify my journey →'}
+      </button>
     </div>
   );
 }
