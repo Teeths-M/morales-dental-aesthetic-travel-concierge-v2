@@ -30,7 +30,7 @@ import Section10Documents from '../components/booking/Section10Documents';
 import SectionProcedure from '../components/booking/SectionProcedure';
 import ClientAcknowledgement, { getRequiredAckCount } from '../components/booking/ClientAcknowledgement';
 import MedicalRiskDisclosure from '../components/booking/MedicalRiskDisclosure';
-import { checkVisaRequirement } from '@/lib/visaMatrix';
+import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import VisaRequirementLive from '@/components/trust/VisaRequirementLive';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
 import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
@@ -250,6 +250,9 @@ export default function Booking() {
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
+  // Visa requirement — live source first, static matrix only as a labeled fallback.
+  const visaInfo = useVisaRequirement(form.nationality, form.procedure_country);
+
   // Bridge procedure destination from cart selection
   useEffect(() => {
     if (procedureCountry && !form.procedure_country) {
@@ -260,11 +263,10 @@ export default function Booking() {
     }
   }, [procedureCountry, procedureCity]);
 
-  // Keep visa_required_status in sync for persistence
+  // Keep visa_required_status in sync for persistence (live-first via the hook)
   useEffect(() => {
-    const status = checkVisaRequirement(form.nationality, form.procedure_country);
-    update('visa_required_status', status);
-  }, [form.nationality, form.procedure_country]);
+    update('visa_required_status', visaInfo.status);
+  }, [visaInfo.status]);
 
   // Auto-derive client_country from nationality
   useEffect(() => {
@@ -549,8 +551,7 @@ export default function Booking() {
     }
     if (step === 10) {
       // Acknowledgement (was 12)
-      const visaStatus = checkVisaRequirement(form.nationality, form.procedure_country);
-      const required = getRequiredAckCount(visaStatus);
+      const required = getRequiredAckCount(visaInfo.status);
       return form.acknowledged_statements.size >= required;
     }
     if (step === 11) {
@@ -840,7 +841,7 @@ export default function Booking() {
                     onArbitrationChange={(val) => update('accepted_arbitration_clause', val)}
                   />
                 )}
-                {step === 10 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={checkVisaRequirement(form.nationality, form.procedure_country)} />}
+                {step === 10 && <ClientAcknowledgement acknowledged={form.acknowledged_statements} onChange={(acked) => update('acknowledged_statements', acked)} language={language} visaStatus={visaInfo.status} />}
                 {step === 11 && (
                   <>
                     <SafeTScan

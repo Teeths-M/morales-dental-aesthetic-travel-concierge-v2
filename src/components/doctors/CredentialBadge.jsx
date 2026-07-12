@@ -1,11 +1,16 @@
 import React from 'react';
 import { ShieldCheck } from 'lucide-react';
 
+// All terminal "verified" states set by activateVerifiedDoctor — each should show
+// the credential badge + last-verified date so freshness is never hidden.
+const VERIFIED_STATES = ['verified', 'manually_approved', 'auto_verified'];
+
 export default function CredentialBadge({ doctor }) {
   if (!doctor) return null;
 
-  if (doctor.verification_status === 'verified') {
+  if (VERIFIED_STATES.includes(doctor.verification_status)) {
     const isGov = doctor.verification_method === 'government_registry';
+    const verifiedDate = doctor.credential_verified_date || doctor.verified_at;
     return (
       <div style={{
         display: 'inline-flex',
@@ -21,9 +26,9 @@ export default function CredentialBadge({ doctor }) {
       }}>
         <ShieldCheck style={{ width: 12, height: 12 }} />
         {isGov ? 'Gov. Registry Verified' : 'Advisory Team Verified'}
-        {doctor.credential_verified_date && (
+        {verifiedDate && (
           <span style={{ opacity: 0.75 }}>
-            · {new Date(doctor.credential_verified_date).toLocaleDateString()}
+            · verified {new Date(verifiedDate).toLocaleDateString()}
           </span>
         )}
       </div>

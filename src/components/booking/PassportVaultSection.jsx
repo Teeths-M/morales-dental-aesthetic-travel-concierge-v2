@@ -3,7 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle, CheckCircle2, Globe, XCircle, ExternalLink, Upload, Loader2, Shield, RefreshCw, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { checkVisaRequirement, getEvisaLink } from '@/lib/visaMatrix';
+import { getEvisaLink } from '@/lib/visaMatrix';
+import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import { base44 } from '@/api/base44Client';
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -25,10 +26,8 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
     return diffDays < 180 ? diffDays : null;
   }, [form.passport_expiry_date, form.preferred_date]);
 
-  // ── Visa Matrix ────────────────────────────────────────────────────────────
-  const visaStatus = useMemo(() => {
-    return checkVisaRequirement(form.nationality, form.procedure_country);
-  }, [form.nationality, form.procedure_country]);
+  // ── Visa requirement (live source, matrix fallback) ────────────────────────
+  const { status: visaStatus } = useVisaRequirement(form.nationality, form.procedure_country);
   const evisaLink = getEvisaLink(form.procedure_country);
 
   const handleFileChange = async (e) => {

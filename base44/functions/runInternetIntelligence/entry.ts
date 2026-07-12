@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 const VOIP_PREFIXES = ['213', '323', '424', '310', '818', '747', '312', '773', '872', '646', '347', '917'];
 
@@ -263,11 +264,18 @@ Deno.serve(createHandler(async ({ req, base44, user, body }) => {
 
   agentLog.push(`Agent synthesis: ${agentLog.filter(l => l.startsWith('CRITICAL')).length} critical signal(s) detected. Pre-synthesis risk score: ${riskScore}/100. Invoking AI narrative layer.`);
 
+  // Sanitized copies for the prompt only — the raw values are used for the
+  // deterministic signal logic (COUNTRY_ISO/COUNTRY_CODES lookups) above.
+  const rnP = sanitizePromptInput(registered_name, 120).text;
+  const cnP = sanitizePromptInput(clinic_name || '', 120).text;
+  const cityP = sanitizePromptInput(city || '', 80).text;
+  const countryP = sanitizePromptInput(country || '', 80).text;
+
   const prompt = `You are an internet intelligence analyst for a medical tourism safety platform.
 
 Partner application:
-- Name: ${registered_name}${clinic_name ? `\n- Clinic: ${clinic_name}` : ''}
-- City: ${city || 'Unknown'}, Country: ${country || 'Unknown'}
+- Name: ${rnP}${cnP ? `\n- Clinic: ${cnP}` : ''}
+- City: ${cityP || 'Unknown'}, Country: ${countryP || 'Unknown'}
 - Phone: ${phone || 'Not provided'}, Website: ${website_url || 'None'}
 - Facebook: ${facebook_handle || 'None'}, Instagram: ${instagram_handle || 'None'}, TikTok: ${tiktok_handle || 'None'}
 

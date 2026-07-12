@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
   try {
@@ -22,10 +23,14 @@ Deno.serve(createHandler(async ({ req }) => {
     } = body;
     
     if (!patient_query) {
-      return Response.json({ 
-        error: 'Missing required field: patient_query' 
+      return Response.json({
+        error: 'Missing required field: patient_query'
       }, { status: 400 });
     }
+
+    // Sanitize the free-text query before it enters the prompt (injection guard).
+    // The raw query is still stored verbatim on ProcedureSearch for the audit trail.
+    const safeQuery = sanitizePromptInput(patient_query, 500).text;
 
     // Fetch all active procedures from MasterProcedure entity
     const procedures = await base44.asServiceRole.entities.MasterProcedure.filter({
@@ -98,7 +103,7 @@ Output ONLY valid JSON in this exact format:
   ]
 }
 
-Patient query: "${patient_query}"
+Patient query: "${safeQuery}"
 Language hint: Detect from query and match procedure names accordingly.`,
       response_json_schema: {
         type: "object",

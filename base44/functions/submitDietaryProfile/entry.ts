@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { reviseAndUpdate } from '../_shared/reviseAndUpdate.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -73,7 +74,13 @@ Deno.serve(async (req) => {
 
     let profile;
     if (existing.length > 0) {
-      profile = await base44.asServiceRole.entities.DietaryProfile.update(existing[0].id, profileData);
+      // Versioned overwrite: snapshot the PRIOR allergy/dietary values before they
+      // are replaced, so a patient edit can never silently drop a medication or
+      // food allergy that was recorded before (no silent data loss on safety data).
+      profile = await reviseAndUpdate(base44, 'DietaryProfile', existing[0].id, profileData, {
+        actor: user.email,
+        reason: 'patient dietary/allergy update',
+      });
     } else {
       profile = await base44.asServiceRole.entities.DietaryProfile.create(profileData);
     }

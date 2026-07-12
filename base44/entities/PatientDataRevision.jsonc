@@ -1,0 +1,50 @@
+{
+  "name": "PatientDataRevision",
+  "description": "Append-only prior-value snapshots captured BEFORE a patient-data record is overwritten, so an edit never silently loses the previous value — it can be reconstructed or rolled back. Written by _shared/reviseAndUpdate.ts.",
+  "type": "object",
+  "properties": {
+    "entity_name": {
+      "type": "string",
+      "description": "The entity that was updated, e.g. 'DietaryProfile'"
+    },
+    "record_id": {
+      "type": "string"
+    },
+    "changed_fields": {
+      "type": "object",
+      "description": "Map of field name → its PRIOR value (the value that was about to be overwritten)"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "entity_name",
+    "record_id",
+    "created_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "user_condition": { "role": "admin" }
+    },
+    "update": {
+      "user_condition": { "role": "platform_admin" }
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}

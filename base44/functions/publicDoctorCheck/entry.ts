@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { runLookup, resolveCountryISO, REGISTRY_ADAPTERS } from '../_shared/registryLookup.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 /**
  * publicDoctorCheck — the PUBLIC, no-login "Check Your Doctor" look-up.
@@ -64,6 +65,13 @@ export default createHandler(async ({ req, base44, body }) => {
   const iso = resolveCountryISO(location);
   const countryLabel = location.trim();
 
+  // Sanitized copies for the LLM prompt only (public, unauthenticated input =
+  // injection surface). The registry lookup + displayed findings keep the real
+  // values — sanitizing is applied strictly to what enters the model prompt.
+  const namePrompt = sanitizePromptInput(name, 120).text;
+  const clinicPrompt = sanitizePromptInput(clinic.trim(), 160).text;
+  const locationPrompt = sanitizePromptInput(countryLabel, 120).text;
+
   // ── Signal 1: License registry ──────────────────────────────────────────────
   let licenseSignal;
   if (license?.trim()) {
@@ -96,9 +104,9 @@ export default createHandler(async ({ req, base44, body }) => {
       add_context_from_internet: true,
       prompt: `You are a neutral public-records assistant helping a patient sanity-check a doctor before booking medical travel. Do NOT judge, score, rank, or accuse. Only report what is publicly findable, factually.
 
-Doctor: ${name}
-Clinic / practice: ${clinic.trim()}
-Location: ${countryLabel}
+Doctor: ${namePrompt}
+Clinic / practice: ${clinicPrompt}
+Location: ${locationPrompt}
 
 Search the public web and report two things:
 1. web_presence: Is there an established public profile (Google Business listing, Facebook, Instagram, TikTok, clinic website) that plausibly matches this doctor + clinic + location? Answer "found" or "not_found". If found, give ONE short neutral detail (e.g. "Google Business listing with reviews", "active clinic Instagram").

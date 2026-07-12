@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 // Immigration/medical-travel compliance checklist for a passport → destination
 // pair. ComplianceChecklistPanel (VisaAssist) has invoked this since it was
@@ -12,7 +13,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     return err('passport_country and destination_country are required');
   }
 
-  const prompt = `You are a medical-travel compliance assistant. A patient holding a ${passport_country} passport is traveling to ${destination_country} for ${medical_purpose || 'a medical procedure'}.
+  // Sanitize free-text before it enters the prompt (injection guard).
+  const pc = sanitizePromptInput(passport_country, 80).text;
+  const dc = sanitizePromptInput(destination_country, 80).text;
+  const mp = sanitizePromptInput(medical_purpose || 'a medical procedure', 200).text;
+
+  const prompt = `You are a medical-travel compliance assistant. A patient holding a ${pc} passport is traveling to ${dc} for ${mp}.
 
 Produce:
 1. "policy": visa_status must be exactly one of: visa_free, evisa, embassy_required, unknown. If you are not certain of the current rule, use "unknown" — never guess. visa_summary is 1-2 plain sentences. evisa_url only if an official government eVisa portal exists and you are confident of its domain, otherwise omit. medical_notes: anything specific to entering with medical purpose (medication import rules, doctor letters), or omit.
