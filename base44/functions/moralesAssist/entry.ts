@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 // ── moralesAssist ─────────────────────────────────────────────────────────────
 // AI concierge for Morales Assist. Resolves support requests through natural
@@ -77,10 +78,12 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   ].filter(Boolean).join(' | ');
 
   // Trim, sanitize, and enforce role alternation (LLM requirement)
+  // Sanitize ALL message content (a client could mislabel injected text as
+  // 'assistant') before any of it reaches the prompt.
   const raw = messages
     .slice(-16)
     .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => ({ role: m.role, content: String(m.content ?? '').slice(0, 1200) }));
+    .map(m => ({ role: m.role, content: sanitizePromptInput(m.content, 1200).text }));
 
   const firstUser = raw.findIndex(m => m.role === 'user');
   if (firstUser === -1) return ok({ reply: "I'm here whenever you're ready.", needs_handoff: false });

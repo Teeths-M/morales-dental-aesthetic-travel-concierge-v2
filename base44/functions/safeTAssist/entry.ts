@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 const SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
 
@@ -53,9 +54,10 @@ Deno.serve(async (req) => {
     }
 
     // Filter and trim conversation — skip leading assistant messages (Anthropic/LLM requirement)
+    // Sanitize all message content before it reaches the prompt (injection guard).
     const allMsgs = messages.slice(-20).map((m) => ({
       role:    m.role === 'user' ? 'user' : 'assistant',
-      content: String(m.content ?? '').slice(0, 1500),
+      content: sanitizePromptInput(m.content, 1500).text,
     }));
     const firstUserIdx = allMsgs.findIndex((m) => m.role === 'user');
     if (firstUserIdx === -1) {

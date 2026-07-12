@@ -1,0 +1,43 @@
+name: Safety red-team
+
+# Adversarial test of the safety-decision layer. Because the SAFE-T decision is
+# deterministic, this runs with no browser, no network, and no integration
+# credits — so it can gate every change.
+#
+# Triggers:
+#   • any change to the AI functions or the safety engine (this is what catches a
+#     MODEL-VERSION change — the model IDs live in those entry.ts files), and
+#   • the safety client + shared guards, and
+#   • weekly, and on demand.
+
+on:
+  push:
+    paths:
+      - 'base44/functions/**/entry.ts'
+      - 'base44/functions/_shared/safeTEngine.ts'
+      - 'base44/functions/_shared/sanitizePromptInput.ts'
+      - 'src/components/booking/SafeTScan.jsx'
+      - 'tests/redteam/**'
+  pull_request:
+    paths:
+      - 'base44/functions/**/entry.ts'
+      - 'base44/functions/_shared/safeTEngine.ts'
+      - 'base44/functions/_shared/sanitizePromptInput.ts'
+      - 'src/components/booking/SafeTScan.jsx'
+      - 'tests/redteam/**'
+  schedule:
+    - cron: '0 8 * * 1'   # weekly Monday 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  redteam:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run safety red-team (deterministic decision + sanitizer)
+        run: npx playwright test --project=redteam --reporter=list

@@ -28,7 +28,8 @@
         "closed",
         "source_unavailable",
         "source_changed",
-        "stale_no_reverification"
+        "stale_no_reverification",
+        "agent_proposed_operating"
       ]
     },
     "detail": {

@@ -133,6 +133,13 @@ function ClinicCard({ clinic, onDone }) {
         </div>
       )}
 
+      {clinic.status_notes && (
+        <div className="mt-2 flex items-start gap-1.5 text-[11px] text-slate-500">
+          <Bot className="w-3 h-3 text-slate-400 flex-shrink-0 mt-0.5" />
+          <span>{clinic.status_notes}</span>
+        </div>
+      )}
+
       <div className="mt-4 border-t border-slate-100 pt-4 flex flex-wrap gap-2">
         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" disabled={!!busy} onClick={() => attest('operating')}>
           <ShieldCheck className="w-4 h-4 mr-1" /> {busy === 'operating' ? 'Confirming…' : 'Confirm operating'}

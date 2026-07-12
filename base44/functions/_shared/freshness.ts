@@ -64,7 +64,8 @@ export type ReviewFlag = {
     | 'closed'
     | 'source_unavailable'
     | 'source_changed'
-    | 'stale_no_reverification';
+    | 'stale_no_reverification'
+    | 'agent_proposed_operating';
   detail: string;
   detected_via: 'scheduled' | 'change_detection' | 'live_check';
   previous_value?: string;

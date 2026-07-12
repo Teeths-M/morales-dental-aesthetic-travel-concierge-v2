@@ -7,16 +7,17 @@ import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
  * verifyClinicStatus — the AGENTIC clinic verifier. Runs on a schedule and keeps
  * clinic operating status fresh WITHOUT a human doing the routine work.
  *
- * FAIL-SAFE:
- *   • Confident 'operating'  → attest (status_source 'agent_verified') + refresh
- *     the timestamp the booking gate reads; resolve open stale flags.
+ * FAIL-SAFE + SAFETY-DECISION HARDENING:
+ *   • Confident 'operating'  → the agent does NOT auto-clear the clinic. It writes
+ *     a 'agent_proposed_operating' review item with its evidence for a human to
+ *     confirm at /admin/clinics. The AI can never write the permissive value that
+ *     lets a booking proceed — only a human (attestClinicStatus) can.
  *   • Confident 'closed'     → set closed (this BLOCKS bookings — the safe side)
- *     and flag a human to confirm.
- *   • Anything unconfirmed   → leave as-is (stays blocked) and flag a human to
- *     attest manually. The agent NEVER asserts 'operating' on a weak signal.
+ *     and flag a human. The AI may move toward MORE caution autonomously.
+ *   • Anything unconfirmed   → leave as-is (stays blocked) and flag a human.
  *
- * So a person is only pulled in on exceptions the agent couldn't resolve.
- * Batch-capped to protect integration credits. requireAuth:false + cron/admin guard.
+ * So the AI only ever proposes clearance or auto-applies a block; a person makes
+ * the permissive call. Batch-capped for credits. requireAuth:false + cron/admin guard.
  */
 const BATCH = 15;
 
@@ -35,32 +36,26 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
   }).slice(0, BATCH);
 
   const nowISO = new Date().toISOString();
-  let confirmed = 0, closed = 0, unresolved = 0;
+  let proposed = 0, closed = 0, unresolved = 0;
 
   for (const clinic of due) {
     const result = await verifyClinicOperating(base44, clinic);
 
     if (result.operating === 'operating') {
+      // HARDENED: the AI does NOT write the permissive 'operating' status. It
+      // records its evidence and asks a human to confirm — only attestClinicStatus
+      // (a person) can clear a clinic for bookings. The AI cannot clear anything.
       await base44.asServiceRole.entities.Clinic.update(clinic.id, {
-        operating_status: 'operating',
-        status_source: 'external_registry',
-        status_verified_at: nowISO,
-        status_verified_by: 'agent',
-        status_notes: `Agent-verified operating (${result.confidence}%)${result.source ? ` — ${result.source}` : ''}.`,
+        status_notes: `Agent evidence: likely operating (${result.confidence}%)${result.source ? ` — ${result.source}` : ''}. Awaiting human confirmation.`,
       }).catch(() => {});
-      // Resolve the stale/unavailable flags this verification answers.
-      const openFlags = await base44.asServiceRole.entities.DataFreshnessReview.filter({
-        subject_type: 'clinic_status', subject_id: clinic.id, status: 'pending',
-      }, '-detected_at', 25).catch(() => []);
-      for (const f of openFlags) {
-        if (f.change_type === 'stale_no_reverification' || f.change_type === 'source_unavailable') {
-          await base44.asServiceRole.entities.DataFreshnessReview.update(f.id, {
-            status: 'actioned', reviewer_name: 'agent', reviewed_at: nowISO,
-            resolution: `Agent re-verified operating (${result.confidence}%).`,
-          }).catch(() => {});
-        }
-      }
-      confirmed++;
+      await flagForReview(base44, {
+        subject_type: 'clinic_status', subject_id: clinic.id,
+        subject_label: `${clinic.name} (${clinic.country || '—'})`,
+        change_type: 'agent_proposed_operating',
+        detail: `Agent found evidence this clinic is operating (${result.confidence}%): ${result.summary}. Confirm at /admin/clinics to allow bookings — the agent cannot clear it on its own.`,
+        detected_via: 'scheduled', new_value: `operating? (${result.confidence}%)`, severity: 'info',
+      });
+      proposed++;
       continue;
     }
 
@@ -95,6 +90,6 @@ Deno.serve(createHandler(async ({ req, base44 }) => {
     });
   }
 
-  console.log(`[verifyClinicStatus] due=${due.length} confirmed=${confirmed} closed=${closed} unresolved=${unresolved}`);
-  return ok({ success: true, checked: due.length, confirmed, closed, unresolved });
+  console.log(`[verifyClinicStatus] due=${due.length} proposed=${proposed} closed=${closed} unresolved=${unresolved}`);
+  return ok({ success: true, checked: due.length, proposed_for_confirmation: proposed, closed, unresolved });
 }, { name: 'verifyClinicStatus', requireAuth: false }));

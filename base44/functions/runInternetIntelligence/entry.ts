@@ -309,12 +309,16 @@ Return JSON only:
     });
     signals.ai_credibility = ai.credibility;
     signals.google = ai.google ?? null;
+    // HARDENED (safety-decision architecture): the AI may only ADD risk — it can
+    // raise caution but can never lower a risk value or make a partner look safer.
+    // Only deterministic signals (residential IP, established domain, live socials)
+    // are allowed to reduce the score. This keeps the AI from clearing anything.
     if (ai.credibility === 'low')    riskScore += 30;
     else if (ai.credibility === 'medium') riskScore += 10;
-    else if (ai.credibility === 'high')   riskScore -= 15;
+    // 'high' credibility no longer subtracts — deterministic checks handle trust.
     if ((ai.red_flags?.length ?? 0) > 0) riskScore += ai.red_flags.length * 8;
-    if (ai.google?.status === 'verified')  riskScore -= 8;
-    else if (ai.google?.status === 'not_found') riskScore += 10;
+    if (ai.google?.status === 'not_found') riskScore += 10;
+    // a 'verified' Google listing no longer subtracts via the AI path.
   } catch (_) { signals.ai_check = 'failed'; }
 
   // ── Finalize ─────────────────────────────────────────────────────────────────

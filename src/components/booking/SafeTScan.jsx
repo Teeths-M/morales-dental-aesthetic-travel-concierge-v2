@@ -62,89 +62,50 @@ export default function SafeTScan({ form, items, onResult = null, onScanComplete
   const runScan = async () => {
     setStatus('scanning');
 
-    const profile = {
-      procedure: items.map(i => i.name).join(', ') || form.procedure_interest || 'Not specified',
+    // The decision is computed server-side by the DETERMINISTIC engine
+    // (computeSafeTScreening). This client only gathers the profile and renders
+    // the finalized result — it can no longer compute or influence the risk level.
+    const payload = {
+      procedure: items.map(i => i.name).join(', ') || form.procedure_interest || '',
       age: form.age,
-      bmi: form.height && form.weight ? (form.weight / ((form.height / 100) ** 2)).toFixed(1) : 'Unknown',
-      medical_conditions: form.medical_conditions?.join(', ') || 'None reported',
-      medications: form.takes_medications ? (form.medication_types?.join(', ') || 'Yes, unspecified') : 'None',
-      allergies: form.allergies?.join(', ') || 'None',
-      anesthesia_complications: form.anesthesia_complications ? 'Yes — ' + (form.anesthesia_complication_types?.join(', ') || 'unspecified') : 'No',
-      had_surgery: form.had_surgery ? 'Yes' : 'No',
-      had_complications: form.had_complications ? 'Yes — ' + (form.surgery_complications?.join(', ') || 'unspecified') : 'No',
-      lifestyle: form.lifestyle_habits?.join(', ') || 'None reported',
-      emotional_concerns: form.emotional_concerns ? form.emotional_concern_types?.join(', ') || 'Yes' : 'None',
-      pregnancy_status: form.pregnancy_status || 'Not specified',
-      has_companion: form.has_companion ? 'Yes' : 'No',
+      bmi: form.height && form.weight ? (form.weight / ((form.height / 100) ** 2)).toFixed(1) : '',
+      medical_conditions: [...(form.medical_conditions || []), form.medical_conditions_other].filter(Boolean),
+      medications: form.takes_medications ? (form.medication_types || []) : [],
+      medication_notes: form.medication_notes || '',
+      allergies: form.allergies || [],
+      anesthesia_complications: !!form.anesthesia_complications,
+      had_surgery: !!form.had_surgery,
+      had_complications: !!form.had_complications,
+      lifestyle: form.lifestyle_habits || [],
+      emotional_concerns: !!form.emotional_concerns,
+      emotional_notes: form.emotional_notes || '',
+      pregnancy_status: form.pregnancy_status || '',
     };
 
     try {
-      const resp = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are SAFE-T 4LIFE™, an AI-assisted healthcare travel safety screening system. You are NOT a doctor and must NEVER diagnose, prescribe, or guarantee safety.
-
-Analyze this patient profile for a medical tourism consultation and produce a safety scan result.
-
-Patient Profile:
-- Procedure: ${profile.procedure}
-- Age: ${profile.age}
-- BMI: ${profile.bmi}
-- Medical Conditions: ${profile.medical_conditions}
-- Medications: ${profile.medications}
-- Allergies: ${profile.allergies}
-- Anesthesia History: ${profile.anesthesia_complications}
-- Prior Surgeries: ${profile.had_surgery} / Complications: ${profile.had_complications}
-- Lifestyle Habits: ${profile.lifestyle}
-- Emotional Concerns: ${profile.emotional_concerns}
-- Pregnancy Status: ${profile.pregnancy_status}
-- Companion Available: ${profile.has_companion}
-
-Return a JSON object with:
-{
-  "risk_level": "low" | "moderate" | "elevated" | "review",
-  "confidence": number (0-100),
-  "summary": "2-3 sentence calm, professional message to the patient",
-  "flags": ["array of specific concern items found — keep each under 12 words"],
-  "recommendations": ["array of 3-5 actionable preparation recommendations for the patient"]
-}
-
-Risk guidance:
-- low: no significant red flags, straightforward profile
-- moderate: 1-2 minor concerns (e.g., mild medications, lifestyle habits)
-- elevated: significant concerns (e.g., heart disease, blood thinners, anesthesia complications, BMI >35)
-- review: multiple complex factors requiring specialist clearance
-
-Be calm, professional, and supportive. Never cause alarm beyond what is clinically warranted.`,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            risk_level: { type: 'string' },
-            confidence: { type: 'number' },
-            summary: { type: 'string' },
-            flags: { type: 'array', items: { type: 'string' } },
-            recommendations: { type: 'array', items: { type: 'string' } },
-          },
-        },
-      });
-
-      const parsed = typeof resp === 'string' ? JSON.parse(resp) : resp;
-      setResult(parsed);
+      const resp = await base44.functions.invoke('computeSafeTScreening', payload);
+      const data = resp?.data ?? resp;
+      if (!data || typeof data.risk_level !== 'string') throw new Error('no decision');
+      setResult(data);
       setStatus('done');
       setExpanded(true);
-      onResult && onResult(parsed);
-      onScanComplete && onScanComplete(parsed);
+      onResult && onResult(data);
+      onScanComplete && onScanComplete(data);
     } catch {
-      const fallback = {
-        risk_level: 'low',
-        confidence: 72,
-        summary: 'Based on your consultation responses, SAFE-T 4LIFE™ has identified no major preparation or compatibility concerns at this stage. You appear suitable to proceed for professional medical review.',
-        flags: [],
-        recommendations: ['Stay hydrated in the days leading up to your procedure', 'Ensure all documents are uploaded', 'Confirm your travel companion arrangements'],
+      // FAIL CLOSED — if the screening can't complete, route to specialist
+      // review. Never default to 'low'/'suitable to proceed'.
+      const failClosed = {
+        risk_level: 'review',
+        confidence: 100,
+        summary: 'We could not complete the automated screening right now, so your profile has been routed to a licensed specialist for review before proceeding. This is a safety standard, not a rejection.',
+        flags: ['Automated screening unavailable — routed to specialist review'],
+        recommendations: ['Ensure all documents are uploaded', 'Your coordinator will follow up to complete the review'],
       };
-      setResult(fallback);
+      setResult(failClosed);
       setStatus('done');
       setExpanded(true);
-      onResult && onResult(fallback);
-      onScanComplete && onScanComplete(fallback);
+      onResult && onResult(failClosed);
+      onScanComplete && onScanComplete(failClosed);
     }
   };
 

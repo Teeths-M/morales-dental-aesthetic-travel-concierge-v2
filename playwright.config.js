@@ -26,5 +26,8 @@ export default defineConfig({
     { name: 'setup', testMatch: /auth\.setup\.js/ },
     // Post-auth journeys — reuse the session saved by the setup project.
     { name: 'authenticated', testMatch: /journey\.spec\.js/ },
+    // Internal red-team of the safety-decision layer — deterministic, no browser,
+    // no network, no credits. Runs in CI whenever the AI functions change.
+    { name: 'redteam', testDir: './tests/redteam', testMatch: /.*\.spec\.js/ },
   ],
 });

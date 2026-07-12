@@ -1,4 +1,5 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
 
 // ── intakeConversationTurn ───────────────────────────────────────────────────
 // Powers ONE turn of the conversational patient intake (/intake, Phase 1).
@@ -83,18 +84,21 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   const firstName = String(known_answers_snapshot?.patient_name ?? '').split(' ')[0] || '';
 
+  // Sanitize the client's free text before it reaches the prompt (injection guard).
+  const safeUserText = sanitizePromptInput(user_raw_text, 1000).text;
+
   const prompt = [
     SYSTEM_PROMPT,
     `\n\nClient name: ${firstName || 'unknown yet'}`,
     `\n\nQuestion asked: ${question_shown}`,
     `\n\nWhy we're asking (use this and only this as the reason): ${deterministic_reason}`,
     `\n\nTarget fields to extract: ${(target_fields || []).join(', ') || '(none — this is a review step)'}`,
-    `\n\nClient's answer: ${String(user_raw_text).slice(0, 1000)}`,
+    `\n\nClient's answer: ${safeUserText}`,
     '\n\nRespond now (JSON only, no prose outside the JSON):',
   ].join('');
 
   const fallback = {
-    extracted: target_fields && target_fields.length === 1 ? { [target_fields[0]]: user_raw_text } : {},
+    extracted: target_fields && target_fields.length === 1 ? { [target_fields[0]]: safeUserText } : {},
     confidence: 100,
     clarification_needed: false,
     narration: '',

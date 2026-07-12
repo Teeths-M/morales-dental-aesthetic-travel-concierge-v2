@@ -1,0 +1,99 @@
+{
+  "name": "SafeTScreening",
+  "description": "Append-only, hash-chained record of every SAFE-T safety decision and the AI narration tied to it. The deterministic decision is written FIRST (phase 'decision'), then the narration (phase 'narration'). prev_hash links each entry to the last so nothing can be silently altered.",
+  "type": "object",
+  "properties": {
+    "phase": {
+      "type": "string",
+      "enum": [
+        "decision",
+        "narration"
+      ],
+      "description": "'decision' = the deterministic engine's output (written before the AI runs). 'narration' = the AI's plain-language rendering of that finalized decision."
+    },
+    "consultation_ref": {
+      "type": "string",
+      "description": "Optional link to the Consultation this screening belongs to"
+    },
+    "decision_ref": {
+      "type": "string",
+      "description": "On a narration entry: the id of the decision entry it narrates"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "moderate",
+        "elevated",
+        "review"
+      ]
+    },
+    "score": {
+      "type": "number"
+    },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "factors": {
+      "type": "object",
+      "description": "The weighted factor breakdown from the deterministic engine"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "fail_closed_reason": {
+      "type": "string",
+      "description": "Set when the engine failed closed to 'review' (incomplete_profile, injection_detected, pregnancy)"
+    },
+    "injection_flagged": {
+      "type": "boolean",
+      "default": false
+    },
+    "narration_text": {
+      "type": "string",
+      "description": "AI-generated summary/recommendations (narration phase only). Never contains a risk decision."
+    },
+    "model_id": {
+      "type": "string",
+      "description": "The LLM model that produced the narration (narration phase only)"
+    },
+    "profile_hash": {
+      "type": "string",
+      "description": "SHA-256 of the sanitized profile the decision was computed from"
+    },
+    "prev_hash": {
+      "type": "string",
+      "description": "SHA-256 of the previous SafeTScreening entry — the tamper-evidence chain link"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "phase",
+    "prev_hash",
+    "created_at"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "platform_admin" } }
+      ]
+    },
+    "create": {
+      "user_condition": { "role": "admin" }
+    },
+    "update": {
+      "user_condition": { "role": "platform_admin" }
+    },
+    "delete": {
+      "user_condition": { "role": "platform_admin" }
+    }
+  }
+}
