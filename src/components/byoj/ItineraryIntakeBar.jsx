@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
-import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown } from 'lucide-react';
+import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown, Search } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
+import { procedureCategories } from '@/components/procedures/ProcedureData';
+import { fuzzyMatches } from '@/lib/fuzzyMatch';
 import SearchSelect from './SearchSelect';
 
-// Canonical procedure names — these match the safety engine's RED rules so the
-// combination check is meaningful (never a free-text that can't be scored).
-const PROCEDURES = [
-  'Rhinoplasty', 'Facelift', 'Liposuction', 'Tummy Tuck', 'Brazilian Butt Lift',
-  'Breast Augmentation', 'Breast Lift', 'Breast Reduction', 'Mommy Makeover',
-  'Full Mouth Implants', 'All-on-4 Implants', 'Single Dental Implant',
-  'Porcelain Veneers', 'Hollywood Smile', 'Gastric Sleeve',
-];
+// Canonical procedure names — the FULL platform catalog (every category), grouped,
+// so a patient can pick anything they actually booked and the safety engine can
+// score the combination. Titles come from the shared ProcedureData source.
 
 const COUNTRIES = Object.keys(cityData).sort((a, b) => a.localeCompare(b));
 function citiesFor(country) {
@@ -40,8 +37,17 @@ function Field({ icon: Icon, label, children }) {
  */
 export default function ItineraryIntakeBar({ form, update, onVerify, loading, needsSignIn }) {
   const [procOpen, setProcOpen] = useState(false);
+  const [procSearch, setProcSearch] = useState('');
   const procs = form.procedures || [];
   const canVerify = form.doctor_name?.trim() && form.clinic_name?.trim() && form.destination_country?.trim();
+
+  const q = procSearch.trim();
+  // Substring match first; fuzzy only as a strict typo-tolerance fallback (a low
+  // threshold matches "hair" to "Tooth Extraction" on a partial-subsequence — noise).
+  const matchTitle = (t) => !q || t.toLowerCase().includes(q.toLowerCase()) || fuzzyMatches(q, t, 72);
+  const groupedProcedures = procedureCategories
+    .map((cat) => [cat.label, cat.procedures.map((p) => p.title).filter(matchTitle)])
+    .filter(([, items]) => items.length > 0);
 
   const toggleProc = (p) =>
     update('procedures', procs.includes(p) ? procs.filter((x) => x !== p) : [...procs, p]);
@@ -97,13 +103,29 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
               <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
             </button>
             {procOpen && (
-              <div className="absolute z-40 left-0 right-0 top-full mt-2 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-                {PROCEDURES.map((p) => (
-                  <button key={p} type="button" onClick={() => toggleProc(p)}
-                    className={`w-full text-left text-[13px] px-3 py-2 rounded-lg transition-colors ${procs.includes(p) ? 'bg-[#0E8A7D]/10 text-[#0E8A7D] font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}>
-                    {procs.includes(p) ? '✓ ' : ''}{p}
-                  </button>
-                ))}
+              <div className="absolute z-40 left-0 right-0 top-full mt-2 rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+                <div className="p-2 border-b border-slate-100 flex items-center gap-2">
+                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <input autoFocus value={procSearch} onChange={(e) => setProcSearch(e.target.value)}
+                    placeholder="Search all procedures…"
+                    className="w-full text-[13px] bg-transparent outline-none text-slate-900 placeholder:text-slate-400" />
+                </div>
+                <div className="max-h-64 overflow-y-auto p-1.5">
+                  {groupedProcedures.map(([label, items]) => (
+                    <div key={label}>
+                      <p className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wide text-slate-400 font-bold">{label}</p>
+                      {items.map((p) => (
+                        <button key={p} type="button" onClick={() => toggleProc(p)}
+                          className={`w-full text-left text-[13px] px-3 py-1.5 rounded-lg transition-colors ${procs.includes(p) ? 'bg-[#0E8A7D]/10 text-[#0E8A7D] font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}>
+                          {procs.includes(p) ? '✓ ' : ''}{p}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                  {groupedProcedures.length === 0 && (
+                    <p className="px-3 py-4 text-[13px] text-slate-400">No procedures match “{procSearch}”.</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
