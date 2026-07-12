@@ -36,6 +36,28 @@
       ],
       "default": "Normal"
     },
+    "origin": {
+      "type": "string",
+      "enum": ["morales", "external"],
+      "default": "morales",
+      "description": "external = Bring Your Own Journey (booked outside Morales; provider not vetted by us). Lets an external journey ride the normal protection pipelines while staying visibly distinct to coordinators."
+    },
+    "protection_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "true for BYOJ cases: Morales provides monitoring/alerting/escalation only, not the booking or care."
+    },
+    "external_journey_id": {
+      "type": "string",
+      "description": "Links a BYOJ CaseRecord back to its ExternalJourney intake + verification snapshot."
+    },
+    "external_doctor_name": { "type": "string", "description": "BYOJ: the doctor the patient booked externally (not a vetted Morales provider)." },
+    "external_clinic_name": { "type": "string", "description": "BYOJ: the clinic the patient booked externally." },
+    "family_visibility_opt_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Patient opted to let family follow the journey via a zero-login guardian link."
+    },
     "consultation_id": {
       "type": "string"
     },

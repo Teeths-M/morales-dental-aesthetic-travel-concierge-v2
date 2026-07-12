@@ -27,6 +27,7 @@ const PartnerDirectory = lazy(() => import('@/pages/PartnerDirectory'));
 const Booking             = lazy(() => import('@/pages/Booking'));
 const ConciergeIntake      = lazy(() => import('@/pages/ConciergeIntake'));
 const TravelIntake          = lazy(() => import('@/pages/TravelIntake'));
+const BringYourOwnJourney   = lazy(() => import('@/pages/BringYourOwnJourney'));
 const Login                = lazy(() => import('@/pages/Login'));
 const ConsultationForm = lazy(() => import('@/pages/ConsultationForm'));
 const ConsultationSuccess = lazy(() => import('@/pages/ConsultationSuccess'));
@@ -81,6 +82,7 @@ export const publicRoutes = (
     <Route path="/booking"        element={<ErrorBoundary><Booking /></ErrorBoundary>} />
     <Route path="/intake"         element={<ErrorBoundary><ConciergeIntake /></ErrorBoundary>} />
     <Route path="/travel-intake"  element={<ErrorBoundary><TravelIntake /></ErrorBoundary>} />
+    <Route path="/protect"        element={<ErrorBoundary><BringYourOwnJourney /></ErrorBoundary>} />
     <Route path="/login"          element={<ErrorBoundary><Login /></ErrorBoundary>} />
     <Route path="/consultation"   element={<ErrorBoundary><ConsultationForm /></ErrorBoundary>} />
     <Route path="/consultation-success" element={<ErrorBoundary><ConsultationSuccess /></ErrorBoundary>} />

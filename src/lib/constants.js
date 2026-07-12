@@ -173,6 +173,7 @@ export const ROUTES = {
   BOOKING: '/booking',
   CONCIERGE_INTAKE: '/intake',
   TRAVEL_INTAKE: '/travel-intake',
+  BRING_YOUR_OWN_JOURNEY: '/protect',
   PASSPORT_VAULT: '/passport-vault',
   EMERGENCY: '/emergency',
   TRAVEL_SERVICES: '/travel-services',
