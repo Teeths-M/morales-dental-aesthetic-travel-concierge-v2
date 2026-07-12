@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, ArrowLeft } from 'lucide-react';
 import ItineraryIntakeBar from '@/components/byoj/ItineraryIntakeBar';
 import VerificationResult from '@/components/byoj/VerificationResult';
 import ProtectionEnroll from '@/components/byoj/ProtectionEnroll';
@@ -61,9 +61,22 @@ export default function BringYourOwnJourney() {
     } finally { setLoading(false); }
   };
 
+  const goBack = () => {
+    if (step === 'result') setStep('intake');
+    else if (step === 'enroll') setStep('result');
+    else navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-[#060B16] text-white px-4 sm:px-6 py-12">
       <div className="max-w-5xl mx-auto">
+
+        {step !== 'done' && (
+          <button onClick={goBack}
+            className="inline-flex items-center gap-1.5 text-[13px] text-[#7E939C] hover:text-white transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        )}
 
         {/* Header */}
         <div className="mb-8">
@@ -92,14 +105,12 @@ export default function BringYourOwnJourney() {
         {step === 'result' && result && (
           <div className="max-w-2xl">
             <VerificationResult result={result} onContinue={() => setStep('enroll')} />
-            <button onClick={() => setStep('intake')} className="text-[13px] text-[#7E939C] mt-4 hover:text-white transition-colors">← Edit my itinerary</button>
           </div>
         )}
 
         {step === 'enroll' && (
           <div className="max-w-2xl">
             <ProtectionEnroll onEnroll={handleEnroll} loading={loading} />
-            <button onClick={() => setStep('result')} className="text-[13px] text-[#7E939C] mt-4 hover:text-white transition-colors">← Back to what we found</button>
           </div>
         )}
 

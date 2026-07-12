@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown, Search } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
 import { procedureCategories } from '@/components/procedures/ProcedureData';
@@ -38,6 +38,13 @@ function Field({ icon: Icon, label, children }) {
 export default function ItineraryIntakeBar({ form, update, onVerify, loading, needsSignIn }) {
   const [procOpen, setProcOpen] = useState(false);
   const [procSearch, setProcSearch] = useState('');
+  const procRef = useRef(null);
+  // Close the multi-select on an outside click (it stays open while you pick several).
+  useEffect(() => {
+    const h = (e) => { if (procRef.current && !procRef.current.contains(e.target)) setProcOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
   const procs = form.procedures || [];
   const canVerify = form.doctor_name?.trim() && form.clinic_name?.trim() && form.destination_country?.trim();
 
@@ -94,7 +101,7 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
         </Field>
 
         <Field icon={Sparkles} label="Procedure(s)">
-          <div className="relative">
+          <div className="relative" ref={procRef}>
             <button type="button" onClick={() => setProcOpen((o) => !o)}
               className="w-full flex items-center justify-between text-left text-[15px] font-semibold text-slate-900">
               <span className={procs.length ? '' : 'text-slate-400 font-normal'}>
@@ -125,6 +132,12 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
                   {groupedProcedures.length === 0 && (
                     <p className="px-3 py-4 text-[13px] text-slate-400">No procedures match “{procSearch}”.</p>
                   )}
+                </div>
+                <div className="p-2 border-t border-slate-100">
+                  <button type="button" onClick={() => setProcOpen(false)}
+                    className="w-full text-[13px] font-semibold text-[#0E8A7D] py-1.5 rounded-lg hover:bg-[#0E8A7D]/8 transition-colors">
+                    Done{procs.length ? ` · ${procs.length} selected` : ''}
+                  </button>
                 </div>
               </div>
             )}
