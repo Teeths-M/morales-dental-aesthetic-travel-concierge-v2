@@ -24,19 +24,15 @@ const BORDER = '#2A3F4A';
 const TRAVEL_GUEST_DRAFT_KEY = 'morales_travel_intake_guest_draft';
 
 /**
- * Real curated cities for the chosen destination country, when we have
- * them (29 countries covered) — case-insensitive match since
- * destination_country comes from live admin-entered TaxiService.operating_country
- * text, not a controlled vocabulary. Uncovered countries return [], and the
- * step falls back to plain free text (unchanged).
+ * The countries we can offer travel coordination for, as a searchable list.
+ * We prefer live verified travel-partner countries; when there are none yet we
+ * fall back to the full served-country list (every country we hold city data
+ * for), so the destination step ALWAYS presents a real list to pick from —
+ * never an empty list or a free-text box. Sorted A–Z for predictable scanning.
  */
-function citiesForCountry(countryName) {
-  if (!countryName) return [];
-  const lower = countryName.toLowerCase();
-  const key = Object.keys(cityData).find((k) => k.toLowerCase() === lower);
-  if (!key) return [];
-  return cityData[key].map((city) => ({ value: city, label: city }));
-}
+const SERVED_COUNTRIES = Object.keys(cityData)
+  .sort((a, b) => a.localeCompare(b))
+  .map((c) => ({ value: c, label: c }));
 
 const PHASE_LABELS = ['Getting to know you', 'Planning your journey', 'Almost there', 'Finishing up'];
 
@@ -61,7 +57,12 @@ export default function TravelIntake() {
     nextStepResult,
     sessionId,
   } = useTravelIntakeSession();
-  const { countries: travelPartnerCountries, isLoading: countriesLoading } = useTravelPartnerCountries();
+  const { countries: travelPartnerCountries } = useTravelPartnerCountries();
+  // Real verified-partner countries when we have them; otherwise the full served
+  // list — either way the destination step gets a real, non-empty list.
+  const countryOptions = (travelPartnerCountries && travelPartnerCountries.length > 0)
+    ? travelPartnerCountries
+    : SERVED_COUNTRIES;
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -147,10 +148,9 @@ export default function TravelIntake() {
                 step={nextStepResult.step}
                 onAnswer={submitAnswer}
                 onFreeTextAnswer={submitFreeTextAnswer}
-                dynamicOptions={{ travelPartnerCountries }}
-                dynamicOptionsLoading={{ travelPartnerCountries: countriesLoading }}
+                dynamicOptions={{ travelPartnerCountries: countryOptions }}
+                dynamicOptionsLoading={{ travelPartnerCountries: false }}
                 onBack={canGoBack ? goBack : null}
-                searchFirstOptions={citiesForCountry(answers.destination_country)}
               />
             )}
             <NarrationTicker text={turnHistory[turnHistory.length - 1]?.narration_shown} />

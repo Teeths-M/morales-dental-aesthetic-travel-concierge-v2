@@ -27,7 +27,6 @@ function displayValue(value) {
 function buildReviewFields(answers) {
   const fields = [
     ['destination_country', 'Destination country', displayValue(answers.destination_country)],
-    ['destination_city', 'Destination city', displayValue(answers.destination_city)],
     ['origin_city', 'Traveling from', answers.origin_city],
     ['departure_date', 'Departure', answers.departure_date],
     ['return_date', 'Return', answers.return_date],

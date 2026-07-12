@@ -52,21 +52,23 @@ export const TRAVELERS_COUNT_OPTIONS = [
 /** @type {import('@/lib/intakeFlow/questionGraph').QuestionStep[]} */
 export const TRAVEL_QUESTION_GRAPH = [
   {
-    id: 'destination_country',
+    // Destination is a COUNTRY picked from a searchable list — never free text.
+    // TravelIntake feeds `travelPartnerCountries` real verified-partner countries
+    // when we have them, and falls back to the full served-country list otherwise,
+    // so there is always a real list to choose from. City is not asked here; the
+    // coordinator confirms the exact city with the traveler.
+    //
+    // NOTE: the id is travel-specific on purpose. translateStep localizes by
+    // `intake.steps.<id>.q`, and the MEDICAL flow already owns the id
+    // 'destination_country' with medical copy ("...doctors licensed..."). A shared
+    // id would make this travel question inherit that medical wording, so we use a
+    // distinct id and keep writing the answer to the destination_country field.
+    id: 'travel_destination_country',
     targetFields: ['destination_country'],
-    question: 'Where are you traveling to?',
-    deterministicReason: 'so we can match you with a verified local travel and transfer partner',
+    question: 'Which country are you traveling to?',
+    deterministicReason: 'so we can match you with a verified local travel and transfer partner in the right country',
     inputType: INPUT_TYPES.SELECT,
     optionsSource: 'travelPartnerCountries',
-    recommendationUnit: 'verified travel partners',
-  },
-  {
-    id: 'destination_city',
-    targetFields: ['destination_city'],
-    question: 'Which city?',
-    deterministicReason: 'so your transfer and hotel arrangements are booked in the right location',
-    inputType: INPUT_TYPES.TEXT,
-    allowUnspecified: true,
     searchFirst: true,
   },
   {
