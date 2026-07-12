@@ -80,9 +80,14 @@ export default createHandler(async ({ base44, body }) => {
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken  = Deno.env.get('TWILIO_AUTH_TOKEN');
   const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER');
-  const mockMode   = !accountSid || !authToken || !fromNumber;
+  const twilioConfigured = !!(accountSid && authToken && fromNumber);
+  // Mock delivery (returning the code to the caller) is a DEV/DEMO-only affordance
+  // and must be EXPLICITLY enabled. In production OTP_ALLOW_MOCK is unset, so if
+  // Twilio is ever misconfigured we FAIL CLOSED instead of leaking a login code —
+  // this is what prevents a "log in as anyone" bypass.
+  const allowMock = Deno.env.get('OTP_ALLOW_MOCK') === 'true';
 
-  if (!mockMode) {
+  if (twilioConfigured) {
     const smsBody = new URLSearchParams({
       From: fromNumber!,
       To:   identifier,
@@ -138,6 +143,11 @@ export default createHandler(async ({ base44, body }) => {
     return ok({ sent: true, channel: 'phone', mock: false });
   }
 
-  // Mock mode — return code so demo/judges can sign in without real SMS
+  // No Twilio configured. Only reveal a demo code when mock is EXPLICITLY allowed
+  // (dev/demo). Otherwise fail closed — never return a login code to the caller.
+  if (!allowMock) {
+    console.error('[sendOtp] SMS not configured and OTP_ALLOW_MOCK disabled — refusing to issue an SMS code (fail closed).');
+    return err('We could not send a code by SMS right now. Please use email verification instead, or contact support.', 503);
+  }
   return ok({ sent: true, channel: 'phone', mock: true, demo_code: code });
 }, { name: 'sendOtp', requireAuth: false });

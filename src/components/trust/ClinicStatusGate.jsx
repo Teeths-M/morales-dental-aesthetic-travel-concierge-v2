@@ -16,14 +16,14 @@ import LastVerified from './LastVerified';
  * Fail-safe: while loading or on error, it reports 'blocked' so nothing proceeds
  * on unconfirmed status.
  */
-export default function ClinicStatusGate({ clinicId, clinicName, country, doctorId, onDecision, style }) {
+export default function ClinicStatusGate({ clinicId = undefined, clinicName = undefined, country = undefined, doctorId = undefined, doctorEmail = undefined, onDecision = undefined, style = undefined }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['clinicStatus', clinicId || doctorId || clinicName, country],
+    queryKey: ['clinicStatus', clinicId || doctorId || doctorEmail || clinicName, country],
     staleTime: 0, // always time-of-action; never a stale cache here
     retry: 0,
     queryFn: async () => {
       const res = await base44.functions.invoke('checkClinicStatus', {
-        clinic_id: clinicId, clinic_name: clinicName, country, doctor_id: doctorId,
+        clinic_id: clinicId, clinic_name: clinicName, country, doctor_id: doctorId, doctor_email: doctorEmail,
       });
       return res?.data ?? res;
     },
@@ -36,7 +36,10 @@ export default function ClinicStatusGate({ clinicId, clinicName, country, doctor
     : confirmed ? 'confirmed'
       : enforced ? 'blocked' : 'pending';
 
-  useEffect(() => { onDecision?.(decision); }, [decision, onDecision]);
+  // Second arg tells the parent whether this is an ENFORCED hard block (only true
+  // when CLINIC_GATE_ENFORCE is on and the clinic isn't confirmed). Loading/error
+  // and soft-launch never report enforced=true, so they can't break the flow.
+  useEffect(() => { onDecision?.(decision, !!enforced && decision === 'blocked'); }, [decision, enforced, onDecision]);
 
   if (isLoading) {
     return <div style={{ fontSize: 12.5, color: CALM.textFaint, ...style }}>Confirming clinic status…</div>;

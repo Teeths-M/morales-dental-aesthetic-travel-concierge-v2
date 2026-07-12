@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { scrubPHI } from '../_shared/scrubPHI.ts';
 
 const SYSTEM_PROMPT = `You are Safe-T4life, the AI safety assistant for Morales Medical Travel Safety — a premium medical tourism platform that coordinates dental and aesthetic procedures abroad for international patients.
 
@@ -54,10 +55,11 @@ Deno.serve(async (req) => {
     }
 
     // Filter and trim conversation — skip leading assistant messages (Anthropic/LLM requirement)
-    // Sanitize all message content before it reaches the prompt (injection guard).
+    // Sanitize (injection guard) + scrub PHI (subprocessor has no BAA) before the
+    // content reaches the prompt.
     const allMsgs = messages.slice(-20).map((m) => ({
       role:    m.role === 'user' ? 'user' : 'assistant',
-      content: sanitizePromptInput(m.content, 1500).text,
+      content: scrubPHI(sanitizePromptInput(m.content, 1500).text),
     }));
     const firstUserIdx = allMsgs.findIndex((m) => m.role === 'user');
     if (firstUserIdx === -1) {
@@ -73,9 +75,11 @@ Deno.serve(async (req) => {
     const lastMsg = conversation[conversation.length - 1];
     const lastUserContent = lastMsg?.content ?? '';
 
-    // Build user context suffix
-    const userCtx = user_name
-      ? `\n\nCurrent patient: ${user_name}${user_email ? ` (${user_email})` : ''}${trip_phase ? ` — Journey phase: ${trip_phase}` : ''}`
+    // Build user context suffix — first name only, no email (PHI minimization;
+    // the LLM subprocessor has no BAA).
+    const firstName = String(user_name || '').split(' ')[0];
+    const userCtx = firstName
+      ? `\n\nCurrent patient: ${firstName}${trip_phase ? ` — Journey phase: ${trip_phase}` : ''}`
       : '';
 
     const fullPrompt = [

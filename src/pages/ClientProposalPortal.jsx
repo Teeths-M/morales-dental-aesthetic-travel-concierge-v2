@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { CheckCircle2, Shield, Sparkles, Lock, AlertCircle, Plane } from 'lucide-react';
 import PortalQRCode from '@/components/portal/PortalQRCode';
 import { Button } from '@/components/ui/button';
+import ClinicStatusGate from '@/components/trust/ClinicStatusGate';
 
 function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0); }
 
@@ -32,6 +33,9 @@ export default function ClientProposalPortal() {
   const [paying, setPaying] = useState(false);
   const [paySuccess, setPaySuccess] = useState(false);
   const [payError, setPayError] = useState(null);
+  // Time-of-action clinic gate: only an ENFORCED block prevents payment. Soft-launch
+  // (CLINIC_GATE_ENFORCE off), loading, and errors show a label but never block.
+  const [clinicHardBlock, setClinicHardBlock] = useState(false);
 
   // CLEAN TOKEN: Remove any trailing hashes/timestamps (e.g., prop_123_1234567890_abc → prop_123)
   const cleanToken = token ? token.split('_').slice(0, 2).join('_') : null;
@@ -57,6 +61,10 @@ export default function ClientProposalPortal() {
 
   const handlePayment = async () => {
     if (!depositChoice) return;
+    if (clinicHardBlock) {
+      setPayError("We couldn't confirm this clinic's current status. Payment is paused — your coordinator has been notified.");
+      return;
+    }
     setPaying(true);
     setPayError(null);
     try {
@@ -244,14 +252,24 @@ export default function ClientProposalPortal() {
               </button>
             ))}
 
+            {/* Time-of-action clinic verification before payment (fail-safe). */}
+            {(caseData.doctor_email || caseData.procedure_country) && (
+              <ClinicStatusGate
+                doctorEmail={caseData.doctor_email}
+                country={caseData.procedure_country}
+                onDecision={(_decision, enforcedBlock) => setClinicHardBlock(enforcedBlock)}
+                style={{ marginBottom: 4 }}
+              />
+            )}
+
             <Button
               onClick={handlePayment}
-              disabled={!depositChoice || paying}
+              disabled={!depositChoice || paying || clinicHardBlock}
               className="w-full py-3 font-semibold rounded-xl text-sm"
-              style={{ background: depositChoice ? 'linear-gradient(135deg, #C5A059, #a8863c)' : undefined, color: depositChoice ? '#022C22' : undefined }}
+              style={{ background: depositChoice && !clinicHardBlock ? 'linear-gradient(135deg, #C5A059, #a8863c)' : undefined, color: depositChoice && !clinicHardBlock ? '#022C22' : undefined }}
             >
               <Lock className="w-4 h-4 mr-2" />
-              {paying ? 'Processing...' : depositChoice ? `Confirm Payment — ${fmt(paymentOptions.find(o => o.key === depositChoice)?.amount)}` : 'Select a Payment Plan'}
+              {clinicHardBlock ? 'Clinic status unconfirmed — payment paused' : paying ? 'Processing...' : depositChoice ? `Confirm Payment — ${fmt(paymentOptions.find(o => o.key === depositChoice)?.amount)}` : 'Select a Payment Plan'}
             </Button>
 
             <p className="text-center text-[10px] text-white/30 flex items-center justify-center gap-1">

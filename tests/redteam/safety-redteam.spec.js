@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { computeSafeT, SAFET_ENGINE_VERSION } from '../../base44/functions/_shared/safeTEngine.ts';
 import { sanitizePromptInput, sanitizeFields } from '../../base44/functions/_shared/sanitizePromptInput.ts';
+import { scrubPHI } from '../../base44/functions/_shared/scrubPHI.ts';
 
 // ── Internal red-team: the safety DECISION layer ──────────────────────────────
 // Because the SAFE-T decision is deterministic, the strongest adversarial test
@@ -85,5 +86,22 @@ test.describe('the engine can never be talked into clearing risk', () => {
 
   test('engine version is stamped for the audit chain', () => {
     expect(computeSafeT({ procedure: 'veneers' }).engine_version).toBe(SAFET_ENGINE_VERSION);
+  });
+});
+
+test.describe('PHI is scrubbed before reaching the LLM subprocessor', () => {
+  test('redacts email, phone, and passport/id from free text', () => {
+    const out = scrubPHI('Contact me at jane.doe@example.com or +1 (868) 555-1234, passport AB1234567.');
+    expect(out).not.toContain('jane.doe@example.com');
+    expect(out).not.toMatch(/868.*555.*1234/);
+    expect(out).not.toContain('AB1234567');
+    expect(out).toContain('[email]');
+  });
+
+  test('leaves clinical wording and small numbers intact', () => {
+    const out = scrubPHI('My blood pressure was 120/80 and I take 2 tablets daily.');
+    expect(out).toContain('blood pressure');
+    expect(out).toContain('120/80');
+    expect(out).toContain('2 tablets');
   });
 });

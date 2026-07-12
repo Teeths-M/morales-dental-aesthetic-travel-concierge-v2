@@ -1,5 +1,6 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { sanitizePromptInput } from '../_shared/sanitizePromptInput.ts';
+import { scrubPHI } from '../_shared/scrubPHI.ts';
 
 // ── moralesAssist ─────────────────────────────────────────────────────────────
 // AI concierge for Morales Assist. Resolves support requests through natural
@@ -69,10 +70,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     return err('messages array is required');
   }
 
+  // PHI minimization: the LLM subprocessor has no BAA, so only first name +
+  // non-identifying context reach it — never the patient's email.
   const firstName = user?.full_name?.split(' ')[0] || '';
   const userCtx   = [
     firstName     && `Client name: ${firstName}`,
-    user?.email   && `Email: ${user.email}`,
     trip_phase    && `Journey phase: ${trip_phase}`,
     case_id       && `Case reference: ${case_id}`,
   ].filter(Boolean).join(' | ');
@@ -83,7 +85,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const raw = messages
     .slice(-16)
     .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => ({ role: m.role, content: sanitizePromptInput(m.content, 1200).text }));
+    .map(m => ({ role: m.role, content: scrubPHI(sanitizePromptInput(m.content, 1200).text) }));
 
   const firstUser = raw.findIndex(m => m.role === 'user');
   if (firstUser === -1) return ok({ reply: "I'm here whenever you're ready.", needs_handoff: false });

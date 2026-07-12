@@ -17,8 +17,8 @@ import { TTL_MS, isFresh, flagForReview } from '../_shared/freshness.ts';
  * onboarded via attestClinicStatus.
  */
 Deno.serve(createHandler(async ({ base44, body }) => {
-  const { clinic_id, clinic_name, country, city, doctor_id } = await body<{
-    clinic_id?: string; clinic_name?: string; country?: string; city?: string; doctor_id?: string;
+  const { clinic_id, clinic_name, country, city, doctor_id, doctor_email } = await body<{
+    clinic_id?: string; clinic_name?: string; country?: string; city?: string; doctor_id?: string; doctor_email?: string;
   }>();
 
   const enforced = Deno.env.get('CLINIC_GATE_ENFORCE') === 'true';
@@ -29,8 +29,10 @@ Deno.serve(createHandler(async ({ base44, body }) => {
 
   if (clinic_id) {
     clinic = await base44.asServiceRole.entities.Clinic.get(clinic_id).catch(() => null);
-  } else if (doctor_id) {
-    const doc = await base44.asServiceRole.entities.Doctor.get(doctor_id).catch(() => null);
+  } else if (doctor_id || doctor_email) {
+    const doc = doctor_id
+      ? await base44.asServiceRole.entities.Doctor.get(doctor_id).catch(() => null)
+      : (await base44.asServiceRole.entities.Doctor.filter({ email: doctor_email }, '-created_date', 1).catch(() => []))?.[0] || null;
     if (doc) {
       label = doc.clinic_name || doc.full_name || label;
       if (doc.clinic_name) {
@@ -46,7 +48,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     }, '-status_verified_at', 1).catch(() => []);
     clinic = matches?.[0] || null;
   } else {
-    return err('Provide clinic_id, doctor_id, or clinic_name + country.');
+    return err('Provide clinic_id, doctor_id, doctor_email, or clinic_name + country.');
   }
 
   const blockMessage = "We couldn't confirm this clinic's current status — please check back shortly. Your coordinator has been notified.";
