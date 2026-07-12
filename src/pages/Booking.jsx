@@ -555,15 +555,20 @@ export default function Booking() {
              form.allergies.length > 0;
     }
     if (step === 4) {
-      // Medications (was 5)
-      return form.takes_medications !== null && (form.takes_medications ? form.medication_types.length > 0 && form.medication_notes : true);
+      // Medications (was 5). The free-text notes field is labeled "Optional" in
+      // Section6 — the medication-type selection already carries the clinical
+      // signal, so do NOT gate Continue on the notes (that mismatch trapped users:
+      // an "Optional" field that silently blocked the button).
+      return form.takes_medications !== null && (form.takes_medications ? form.medication_types.length > 0 : true);
     }
     if (step === 5) {
       // Lifestyle + Emotional merged (was 6 + 7)
       const lifestyleOk = form.lifestyle_habits.length > 0 && form.exercises_regularly !== null &&
              (form.exercises_regularly ? form.activity_level : true);
+      // Emotional notes are labeled "Optional" in Section8 — don't gate on them
+      // (same trap as the medication notes above).
       const emotionalOk = form.emotional_concerns !== null &&
-             (form.emotional_concerns ? form.emotional_concern_types.length > 0 && form.emotional_notes : true);
+             (form.emotional_concerns ? form.emotional_concern_types.length > 0 : true);
       return lifestyleOk && emotionalOk;
     }
     if (step === 6) {
@@ -593,6 +598,69 @@ export default function Booking() {
       return form.data_processing_consent === true;
     }
     return true;
+  };
+
+  // Human-readable list of what's still missing on the current step, mirroring
+  // canNext(). Powers a specific "please complete X" message instead of the old
+  // generic toast — so a user who can't advance is never left hunting for the
+  // one empty field (the anxious-user "why won't it let me continue?" trap).
+  const getMissingFields = () => {
+    const m = [];
+    if (step === 0) {
+      if (!form.patient_name) m.push('Full name');
+      if (!form.email) m.push('Email');
+      if (!form.phone) m.push('Phone number');
+      if (!form.emergency_contact_name) m.push('Emergency contact name');
+      if (!form.emergency_contact_number) m.push('Emergency contact number');
+      if (form.has_cultural_preferences === null || form.has_cultural_preferences === undefined) m.push('Cultural preferences question');
+      else if (form.has_cultural_preferences && form.cultural_preferences.length === 0) m.push('At least one cultural preference');
+      if (isMinorAge(form.age)) {
+        if (!form.guardian_name?.trim()) m.push('Parent / guardian name');
+        if (!isValidGuardianContact(form.guardian_contact)) m.push('A valid guardian phone or email');
+        if (form.guardian_consent !== true) m.push('Guardian consent checkbox');
+      }
+    } else if (step === 1) {
+      if (form.has_companion === null || form.has_companion === undefined) m.push('Whether someone is accompanying you');
+      else if (form.has_companion === true && !(form.number_of_companions > 0)) m.push('Number of companions');
+    } else if (step === 2) {
+      if (!(form.medical_conditions.length > 0)) m.push('Medical conditions (tap “None” if you have none)');
+      if (form.had_surgery === null) m.push('Whether you’ve had surgery before');
+      else if (form.had_surgery) {
+        if (!form.previous_procedures) m.push('Type of previous surgery');
+        if (!form.last_surgery_date) m.push('Date of your most recent surgery');
+        if (form.had_complications === null) m.push('Whether you had complications');
+      }
+    } else if (step === 3) {
+      if (form.anesthesia_complications === null) m.push('Whether you’ve had anesthesia complications');
+      else if (form.anesthesia_complications && !(form.anesthesia_complication_types.length > 0)) m.push('Type of anesthesia reaction');
+      if (!(form.allergies.length > 0)) m.push('Allergies (tap “None” if you have none)');
+    } else if (step === 4) {
+      if (form.takes_medications === null) m.push('Whether you take medications');
+      else if (form.takes_medications && !(form.medication_types.length > 0)) m.push('Medication type');
+    } else if (step === 5) {
+      if (!(form.lifestyle_habits.length > 0)) m.push('Lifestyle habits (tap “None” if none apply)');
+      if (form.exercises_regularly === null) m.push('Whether you exercise regularly');
+      else if (form.exercises_regularly && !form.activity_level) m.push('Activity level');
+      if (form.emotional_concerns === null) m.push('Whether you have emotional concerns');
+      else if (form.emotional_concerns && !(form.emotional_concern_types.length > 0)) m.push('Type of emotional concern');
+    } else if (step === 6) {
+      if (!form.pregnancy_status) m.push('Pregnancy status');
+    } else if (step === 7) {
+      if (!(form.document_types.length > 0)) m.push('Document type (choose “None / Skip” if you have none)');
+      else if (!(form.document_types.includes('none') || form.uploaded_files.length > 0)) m.push('Upload a document, or choose “None / Skip”');
+    } else if (step === 8) {
+      if (!form.preferred_date) m.push('Preferred consultation date');
+    } else if (step === 9) {
+      if (!form.signature_data) m.push('Your signature');
+      if (form.accepted_arbitration_clause !== true) m.push('Accept the arbitration clause');
+    } else if (step === 10) {
+      const required = getRequiredAckCount(visaInfo.status);
+      if (form.acknowledged_statements.size < required) m.push(`Acknowledge all ${required} statements`);
+    } else if (step === 11) {
+      if (!form.safet_risk_level) m.push('Complete the SAFE-T scan');
+      if (form.data_processing_consent !== true) m.push('Data-processing consent');
+    }
+    return m;
   };
 
   const goToDashboard = () => {
@@ -910,6 +978,17 @@ export default function Booking() {
           {error && (
             <p className="text-sm text-red-600 px-6 pt-4">{error}</p>
           )}
+          {/* Field-level "what's still needed" — persistent (a toast vanishes),
+              lists every missing field on this step so the user is never left
+              guessing why Continue won't advance. Auto-clears as they complete. */}
+          {showValidation && !canNext() && getMissingFields().length > 0 && (
+            <div className="px-4 sm:px-6 pt-4">
+              <p className="text-sm rounded-lg px-3 py-2.5 m-0"
+                style={{ color: '#92740f', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.3)' }}>
+                To continue, please complete: <strong>{getMissingFields().join(', ')}</strong>
+              </p>
+            </div>
+          )}
           <div className="flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
             <Button
               variant="outline"
@@ -925,7 +1004,12 @@ export default function Booking() {
                 onClick={() => {
                   if (!canNext()) {
                     setShowValidation(true);
-                    toast.error('Please complete all required fields before continuing.');
+                    const missing = getMissingFields();
+                    toast.error(
+                      missing.length
+                        ? `Please complete: ${missing[0]}${missing.length > 1 ? ` (+${missing.length - 1} more shown below)` : ''}`
+                        : 'Please complete all required fields before continuing.'
+                    );
                     return;
                   }
                   // Stacking safety check — fires when leaving Procedure & Date step
