@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { computeSafeT } from '../../base44/functions/_shared/safeTEngine.ts';
 import { getViolations } from '../../base44/functions/_shared/procedureCompatibility.ts';
 import { isFresh, TTL_MS } from '../../base44/functions/_shared/freshness.ts';
+import { evaluateGuardianGate, isMinorAge as isMinorAgeGate } from '../../base44/functions/_shared/guardianGate.ts';
 
 // ── Morales-specific edge cases ───────────────────────────────────────────────
 // These go beyond the generic safety red-team: they target the exact boundary,
@@ -117,9 +118,9 @@ test.describe('#2 narration narrates, never decides', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// #3 — Age-gate boundaries 17 / 18 / invalid  (+ documented guardian-flow gap)
+// #3 — Age-gate boundaries 17 / 18 / invalid + HARD guardian gate (no soft flag)
 // ══════════════════════════════════════════════════════════════════════════════
-test.describe('#3 age boundaries', () => {
+test.describe('#3 age boundaries + hard guardian gate', () => {
   test('BEHAVIORAL: 17 is flagged as a minor, 18 is an adult, invalid age never crashes', () => {
     const at17 = computeSafeT({ procedure: 'veneers', age: 17 });
     expect(at17.factors.age).toBe(30);
@@ -136,17 +137,66 @@ test.describe('#3 age boundaries', () => {
     }
   });
 
-  test('DOCUMENTED GAP: a minor is flagged but NOT blocked, and no guardian-consent identity is captured', () => {
-    // Present behavior: a 17-year-old scores 30 => 'moderate'. There is NO hard
-    // block on minors and NO parent/guardian-consent record distinct from the
-    // minor. `SectionAgeCompanion` gates a *companion* at age >= 65 (elderly), and
-    // `GuardianSession` is the safety/solo-check-in guardian — neither is a
-    // minor-consent gate. This test PINS the current behavior so the gap is
-    // visible and any future guardian-consent feature is a deliberate change.
-    expect(computeSafeT({ procedure: 'veneers', age: 17 }).risk_level).toBe('moderate');
-    const ageSection = read('src/components/booking/SectionAgeCompanion.jsx');
-    expect(ageSection).toContain('AGE_THRESHOLD = 65');            // elderly companion, not minor
-    expect(ageSection).not.toMatch(/guardian_consent|parental_consent|minor_guardian/i);
+  test('BEHAVIORAL: booking as a stated minor WITHOUT a guardian is hard-BLOCKED', () => {
+    // The core requirement: a minor with no guardian cannot proceed. Blocked at
+    // 17, 16, "15", 1 — and even a valid contact without a name is still blocked.
+    for (const age of [17, 16, '15', 1]) {
+      const g = evaluateGuardianGate({ age });
+      expect(g.isMinor).toBe(true);
+      expect(g.blocked, `age ${age} with no guardian must block`).toBe(true);
+      expect(g.reason).toMatch(/parent or guardian/i);
+    }
+    // Name but no/!valid contact => still blocked (identity not complete).
+    expect(evaluateGuardianGate({ age: 16, guardian_name: 'Maria Mother' }).blocked).toBe(true);
+    expect(evaluateGuardianGate({ age: 16, guardian_name: 'Maria Mother', guardian_contact: 'nope' }).blocked).toBe(true);
+    // Contact but no name => still blocked.
+    expect(evaluateGuardianGate({ age: 16, guardian_contact: 'maria@example.com' }).blocked).toBe(true);
+  });
+
+  test('BEHAVIORAL: a minor WITH a captured guardian identity is allowed; an adult is never gated', () => {
+    expect(evaluateGuardianGate({ age: 16, guardian_name: 'Maria Mother', guardian_contact: 'maria@example.com' }).blocked).toBe(false);
+    expect(evaluateGuardianGate({ age: 16, guardian_name: 'Maria Mother', guardian_contact: '+1 868 555 1234' }).blocked).toBe(false);
+    // Adults / unparseable ages are never minors and never blocked.
+    for (const age of [18, 45, 'forty', '', null, undefined]) {
+      const g = evaluateGuardianGate({ age });
+      expect(isMinorAgeGate(age)).toBe(false);
+      expect(g.blocked).toBe(false);
+    }
+  });
+
+  test('SOURCE: the guardian gate is re-derived SERVER-SIDE and called before Consultation.create', () => {
+    const fn = read('base44/functions/validateGuardianRequirement/entry.ts');
+    expect(fn).toContain("from '../_shared/guardianGate.ts'");
+    expect(fn).toContain('evaluateGuardianGate');
+
+    // Both entry points must call the server validator before creating the record.
+    // Anchor on the real `entities.Consultation.create` call, not prose mentions.
+    const booking = read('src/pages/Booking.jsx');
+    const bIdx = booking.indexOf("invoke('validateGuardianRequirement'");
+    const bCreate = booking.indexOf('entities.Consultation.create');
+    expect(bIdx, 'Booking must call validateGuardianRequirement').toBeGreaterThan(-1);
+    expect(bIdx).toBeLessThan(bCreate);
+    expect(booking).toMatch(/if \(guardianVerdict\.blocked\)[\s\S]*throw new Error/);
+
+    const intake = read('src/pages/ConciergeIntake.jsx');
+    const iIdx = intake.indexOf("invoke('validateGuardianRequirement'");
+    const iCreate = intake.indexOf('entities.Consultation.create');
+    expect(iIdx, 'Intake must call validateGuardianRequirement').toBeGreaterThan(-1);
+    expect(iIdx).toBeLessThan(iCreate);
+  });
+
+  test('SOURCE: the booking wizard cannot advance past step 0 as a minor without a guardian', () => {
+    const booking = read('src/pages/Booking.jsx');
+    // canNext step 0 requires guardianOk, which requires name + valid contact + consent.
+    expect(booking).toMatch(/guardianOk\s*=\s*!isMinorAge\(form\.age\)/);
+    expect(booking).toContain('isValidGuardianContact(form.guardian_contact)');
+    expect(booking).toMatch(/form\.guardian_consent === true/);
+    expect(booking).toMatch(/return personalOk && culturalOk && guardianOk/);
+    // The personal-info section renders the blocking guardian capture for a minor.
+    const section = read('src/components/booking/Section1PersonalInfo.jsx');
+    expect(section).toMatch(/isMinorAge\(form\.age\)/);
+    expect(section).toContain('guardian_name');
+    expect(section).toContain('guardian_contact');
   });
 });
 

@@ -34,6 +34,7 @@ import { useVisaRequirement } from '@/hooks/useVisaRequirement';
 import VisaRequirementLive from '@/components/trust/VisaRequirementLive';
 import ProcedureSelectionGate from '../components/booking/ProcedureSelectionGate';
 import { analyseCompatibility, getViolations } from '@/lib/procedureCompatibility';
+import { isMinorAge, isValidGuardianContact } from '@/lib/guardianGate';
 import ProcedureStackingBlocker from '../components/safety/ProcedureStackingBlocker';
 import ProcedureRequirementNotice from '../components/booking/ProcedureRequirementNotice';
 import SafeTScan from '../components/booking/SafeTScan';
@@ -224,6 +225,7 @@ export default function Booking() {
   const [form, setForm] = useState({
     patient_name: '', email: '', phone: '', age: '', gender: '', height: '', weight: '',
     nationality: '', occupation: '', emergency_contact_name: '', emergency_contact_number: '',
+    guardian_name: '', guardian_contact: '', guardian_consent: false,
     has_companion: null, companion_relationship: '', travel_buddy_services: [],
     has_cultural_preferences: null, cultural_preferences: [], cultural_notes: '',
     medical_conditions: [], medical_conditions_other: '',
@@ -418,6 +420,21 @@ export default function Booking() {
         }
       }
 
+      // M PRINCIPLE — under-18 hard gate, re-derived SERVER-SIDE so a direct
+      // mutation cannot skip the guardian requirement (same pattern as the RED
+      // block above). Only a stated minor triggers the call; adults are untouched.
+      if (isMinorAge(data.age)) {
+        const guardianCheck = await base44.functions.invoke('validateGuardianRequirement', {
+          age: data.age,
+          guardian_name: data.guardian_name,
+          guardian_contact: data.guardian_contact,
+        });
+        const guardianVerdict = guardianCheck?.data ?? guardianCheck ?? {};
+        if (guardianVerdict.blocked) {
+          throw new Error(guardianVerdict.reason || 'A parent or guardian is required for patients under 18 before booking can proceed.');
+        }
+      }
+
       // Map cart items to valid enum values; fall back to 'other'
       const VALID_PROCEDURE_ENUMS = [
         'dental_implants','all_on_4','porcelain_veneers','smile_makeover','bone_regeneration',
@@ -452,6 +469,15 @@ export default function Booking() {
         ...data,
         ...safeTFlags,
         ...(data.high_risk_medical_review ? { status: 'Admin-Review', risk_level: 'high' } : {}),
+        // Under-18: flag the record, capture the guardian, and route straight to
+        // admin review — no minor's journey is ever auto-processed (M Principle).
+        ...(isMinorAge(data.age) ? {
+          guardian_required: true,
+          guardian_name: data.guardian_name || '',
+          guardian_contact: data.guardian_contact || '',
+          status: 'Admin-Review',
+          risk_level: 'high',
+        } : {}),
         // Data-processing consent audit trail (compliance) — stamp when the client agreed.
         ...(data.data_processing_consent ? {
           data_processing_consent: true,
@@ -503,7 +529,14 @@ export default function Booking() {
              form.emergency_contact_name && form.emergency_contact_number;
       const culturalOk = form.has_cultural_preferences !== null &&
              (form.has_cultural_preferences ? form.cultural_preferences.length > 0 : true);
-      return personalOk && culturalOk;
+      // M PRINCIPLE — a stated minor cannot advance without a captured, valid
+      // guardian identity + consent. Hard block, not a soft flag.
+      const guardianOk = !isMinorAge(form.age) || (
+        !!form.guardian_name?.trim() &&
+        isValidGuardianContact(form.guardian_contact) &&
+        form.guardian_consent === true
+      );
+      return personalOk && culturalOk && guardianOk;
     }
     if (step === 1) {
       // Travel

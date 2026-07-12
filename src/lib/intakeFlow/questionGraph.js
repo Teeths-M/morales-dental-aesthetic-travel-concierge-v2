@@ -65,16 +65,10 @@ export const PRIOR_SURGERY_OPTIONS = [
   { label: 'No prior surgeries', icon: '🚫' },
 ];
 
-/**
- * True only when age parses to a real number under 18. Unparseable ages
- * ("forty-five", blank) return false — an adult with a typo must never be
- * routed into the guardian flow; the guardian requirement re-derives
- * server-side from the stored age at review anyway.
- */
-export function isMinorAge(age) {
-  const n = Number(String(age ?? '').trim());
-  return Number.isFinite(n) && n > 0 && n < 18;
-}
+// The under-18 test lives in the shared guardian gate (client + server twins) so
+// /intake, /booking, and the server validator all agree. Re-exported here so the
+// question graph's skipIf hooks keep their existing import.
+export { isMinorAge } from '@/lib/guardianGate';
 
 export const GENDER_OPTIONS = [
   { value: 'male', label: 'Male' },

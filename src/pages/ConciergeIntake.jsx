@@ -7,6 +7,7 @@ import { useDestinationPriceEstimates } from '@/hooks/useDestinationPriceEstimat
 import { useIntakeBackgroundSearch } from '@/hooks/useIntakeBackgroundSearch';
 import { useCart } from '@/context/CartContext';
 import { UNSPECIFIED, INPUT_TYPES, QUESTION_GRAPH } from '@/lib/intakeFlow/questionGraph';
+import { isMinorAge } from '@/lib/guardianGate';
 import { getAnsweredQuestionCount, getTotalQuestionCount, getProgressLabel } from '@/lib/intakeFlow/flowEngine';
 import { toSafetyEngineName } from '@/lib/intakeFlow/procedureSafetyNameMap';
 import { buildConsultationPayload } from '@/lib/intakeFlow/fieldMap';
@@ -169,6 +170,24 @@ export default function ConciergeIntake() {
         setSubmitError('A safety review flagged this combination. Please go back and adjust your selection.');
         setSubmitting(false);
         return;
+      }
+
+      // M PRINCIPLE — under-18 hard gate, re-derived server-side. A minor cannot
+      // submit without a captured guardian identity (name + valid contact). This
+      // turns the previous soft flag (guardian_required with empty fields) into a
+      // real block that a direct submit cannot slip past.
+      if (isMinorAge(answers.age)) {
+        const guardianCheck = await base44.functions.invoke('validateGuardianRequirement', {
+          age: answers.age,
+          guardian_name: answers.guardian_name,
+          guardian_contact: answers.guardian_contact,
+        });
+        const guardianVerdict = guardianCheck?.data ?? guardianCheck ?? {};
+        if (guardianVerdict.blocked) {
+          setSubmitError(guardianVerdict.reason || 'A parent or guardian’s name and a valid phone or email are required before we can proceed for a patient under 18.');
+          setSubmitting(false);
+          return;
+        }
       }
 
       const consultation = await base44.entities.Consultation.create(buildConsultationPayload(answers, verifiedChannels));

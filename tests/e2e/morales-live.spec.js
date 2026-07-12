@@ -73,6 +73,54 @@ test.describe('#12 guide orb never overlaps hero body text (375-414px)', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
+// #3 — Booking as a stated minor is HARD-blocked at the guardian gate (not flagged)
+// ══════════════════════════════════════════════════════════════════════════════
+// Proves the gate in the real wizard: stating a minor age surfaces a blocking
+// guardian capture, and the wizard will NOT advance past step 0 without it. The
+// server also re-derives the block (validateGuardianRequirement) — asserted in the
+// deterministic suite. Runs against the deployed app once published; verified now
+// against a local build.
+test.describe('#3 minor without a guardian cannot advance the booking', () => {
+  test('stated minor surfaces the guardian gate and blocks progress; adult clears it', async ({ page }) => {
+    await page.goto('/booking', { waitUntil: 'networkidle' });
+
+    // Empty-cart guests hit a procedure picker overlay first — choose one to enter
+    // the wizard (otherwise the step-0 form sits behind a click-blocking overlay).
+    const picker = page.getByText('Select a procedure to begin', { exact: false });
+    if (await picker.isVisible().catch(() => false)) {
+      await page.getByText('Dental Implants', { exact: true }).click();
+      await expect(picker).toBeHidden({ timeout: 10000 });
+    }
+
+    // Age lives on step 0 (personal info). Target the age Select by its placeholder
+    // text so it can't collide with the other selects or header controls.
+    const ageTrigger = page.getByRole('combobox').filter({ hasText: 'Select age' });
+    await expect(ageTrigger, 'age selector on step 0').toBeVisible({ timeout: 15000 });
+
+    // State a minor age.
+    await ageTrigger.click();
+    await page.getByRole('option', { name: '16', exact: true }).click();
+
+    // The hard guardian gate must appear with its no-skip copy + capture fields.
+    const gate = page.getByText('A parent or guardian must be part of this journey');
+    await expect(gate).toBeVisible();
+    await expect(page.getByText(/cannot be skipped/i)).toBeVisible();
+    await expect(page.getByPlaceholder('Phone or email')).toBeVisible();
+    await gate.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'test-results/booking-minor-guardian-gate.png', fullPage: true });
+
+    // Attempt to advance without a guardian → the wizard must NOT leave step 0.
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(gate, 'must stay on step 0 — a minor cannot advance without a guardian').toBeVisible();
+
+    // Switching to an adult age removes the gate entirely (it is minor-specific).
+    await page.getByRole('combobox').filter({ hasText: /^16$/ }).click();
+    await page.getByRole('option', { name: '25', exact: true }).click();
+    await expect(gate).toBeHidden();
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
 // #7 — Gated endpoints reject a direct, unauthenticated API call
 // ══════════════════════════════════════════════════════════════════════════════
 // A UI gate is meaningless if the endpoint answers an anonymous POST. We confirm

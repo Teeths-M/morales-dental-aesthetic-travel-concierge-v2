@@ -8,8 +8,12 @@ import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 import PassportVaultSection from './PassportVaultSection';
 import CityOriginSelect from './CityOriginSelect';
 import { NATIONALITIES as nationalities } from '@/lib/nationalities';
+import { ShieldAlert } from 'lucide-react';
+import { isMinorAge, isValidGuardianContact } from '@/lib/guardianGate';
 
-const ages = Array.from({ length: 83 }, (_, i) => String(i + 18));
+// 1–100 so a patient under 18 can be stated truthfully — that is what triggers
+// the hard guardian gate below (a minor must never be silently treated as an adult).
+const ages = Array.from({ length: 100 }, (_, i) => String(i + 1));
 const heights = ['Under 140cm','140–150cm','151–160cm','161–170cm','171–180cm','181–190cm','191cm+'];
 const weights = ['Under 50kg','50–60kg','61–70kg','71–80kg','81–90kg','91–100kg','101–120kg','121kg+'];
 
@@ -211,6 +215,63 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
               {form.procedure_country} <span className="text-emerald-500">(auto-filled from your doctor selection)</span>
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ── Under-18 HARD guardian gate (M Principle) ──────────────────────────
+          Shown the moment a minor age is stated. Booking cannot advance past this
+          step (see canNext in Booking.jsx) and cannot submit (re-derived
+          server-side by validateGuardianRequirement) until a guardian name + a
+          valid contact are captured. This is a block, not a soft flag. */}
+      {isMinorAge(form.age) && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-800 text-sm">A parent or guardian must be part of this journey</p>
+              <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                Because the patient is under 18, we cannot plan or book any care without a parent or guardian.
+                They will be included in every confirmation and consent step. This is a safety requirement and cannot be skipped.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label>Parent / guardian full name <span className="text-destructive">*</span></Label>
+              <Input
+                value={form.guardian_name || ''}
+                onChange={e => { update('guardian_name', e.target.value); resetValidation(); }}
+                placeholder="Full name"
+                className={`mt-1.5 ${showValidation && !form.guardian_name ? 'border-red-400' : ''}`}
+              />
+            </div>
+            <div>
+              <Label>Guardian phone or email <span className="text-destructive">*</span></Label>
+              <Input
+                value={form.guardian_contact || ''}
+                onChange={e => { update('guardian_contact', e.target.value); resetValidation(); }}
+                placeholder="Phone or email"
+                className={`mt-1.5 ${showValidation && !isValidGuardianContact(form.guardian_contact) ? 'border-red-400' : ''}`}
+              />
+              {form.guardian_contact && !isValidGuardianContact(form.guardian_contact) && (
+                <p className="text-xs text-red-500 mt-1">Enter a valid phone number or email.</p>
+              )}
+            </div>
+          </div>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!form.guardian_consent}
+              onChange={e => update('guardian_consent', e.target.checked)}
+              className="mt-0.5 shrink-0"
+            />
+            <span className="text-xs text-amber-800 leading-relaxed">
+              I confirm I am, or am acting with, the patient’s parent / legal guardian, and this guardian consents to and
+              will be involved in every step of this care journey. <span className="text-destructive">*</span>
+            </span>
+          </label>
         </div>
       )}
 
