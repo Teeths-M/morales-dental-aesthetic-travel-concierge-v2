@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { reviseAndUpdate } from '../_shared/reviseAndUpdate.ts';
 
 // ── generateSafeTProfile ──────────────────────────────────────────────────────
 // Triggered on Consultation create/update events.
@@ -101,7 +102,11 @@ Deno.serve(async (req) => {
     };
 
     if (existingProfiles.length > 0) {
-      await base44.asServiceRole.entities.SafeTProfile.update(existingProfiles[0].id, profileData);
+      // Versioned: snapshot the prior medical profile values before overwrite.
+      await reviseAndUpdate(base44, 'SafeTProfile', existingProfiles[0].id, profileData, {
+        actor: patientEmail || 'system',
+        reason: 'SAFE-T profile regenerated from consultation',
+      });
     } else {
       profileData.created_at = new Date().toISOString();
       await base44.asServiceRole.entities.SafeTProfile.create(profileData);
@@ -148,17 +153,22 @@ Deno.serve(async (req) => {
       // Only mark for re-scan if the event is an update AND risk-relevant data changed
       const needsRescan = event.type === 'update' && cr.safe_t_result === 'PASSED';
 
-      await base44.asServiceRole.entities.CaseRecord.update(cr.id, {
-        ...medicalSync,
-        ...(needsRescan ? {
+      // Versioned: snapshot prior medical values before syncing new ones onto the case.
+      await reviseAndUpdate(base44, 'CaseRecord', cr.id, medicalSync, {
+        actor: patientEmail || 'system',
+        reason: 'medical data synced from consultation',
+      });
+      // Status/timeline are not patient-entered data — plain update (no snapshot bloat).
+      if (needsRescan) {
+        await base44.asServiceRole.entities.CaseRecord.update(cr.id, {
           safe_t_result: 'PENDING',
           timeline_log: [...tl, {
             timestamp: now,
             action: 'safe_t_rescan_required',
             details: 'New medical information from consultation requires SAFE-T 4LIFE™ re-scan.',
           }],
-        } : {}),
-      });
+        });
+      }
 
       // Notify patient if a re-scan is required due to updated consultation data
       if (needsRescan && patientEmail) {
