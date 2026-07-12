@@ -36,9 +36,23 @@ npm run lint         # ESLint — quiet mode (errors only)
 npm run lint:fix     # Auto-fix lint errors
 npm run typecheck    # tsc check on src/components + src/pages
 npm run preview      # Serve production build locally
+npm test             # Vitest unit tests (single run)
+npm run test:watch   # Vitest in watch mode
+npm run test:e2e     # Playwright — public/deployed-app suite
 ```
 
-No unit-test runner for app code — verify UI changes via `npm run dev` and the affected flows. Playwright drives two suites: `tests/e2e` (against the deployed app; needs a session) and `tests/redteam` (`npx playwright test --project=redteam` — the deterministic safety red-team, no browser/network/credits, must stay green).
+### Testing
+
+- **Vitest** (`tests/*.test.js`) covers pure app logic. `tests/safety.test.js` is load-bearing — it asserts the RED hard block (`getViolations`) never regresses. Run one file/test: `npx vitest run tests/safety.test.js` or `npx vitest run -t "does NOT block a single procedure"`.
+- **Playwright** (`playwright.config.js`): the `public` / `authenticated` E2E projects run against the **deployed** app (`E2E_BASE_URL`, default the live Base44 URL — local dev can't complete a Base44 session), and `redteam` is the deterministic safety red-team: `npx playwright test --project=redteam` (no browser/network/credits, must stay green). Single test: append `-g "pattern"`.
+- Both safety suites are M-Principle guardrails — if either goes red, a dangerous combination or an AI-cleared risk can slip through. Keep them green.
+
+## Deploying & Environment
+
+- **Local env:** `.env.local` needs `VITE_BASE44_APP_ID` and `VITE_BASE44_APP_BASE_URL` (see `README.md`). This checkout has no Base44 session credentials, so sign-in can't complete on `localhost` — verify authenticated flows against the deployed app.
+- **Deploy model:** pushing to the repo syncs code into the Base44 Builder; changes go live only after **Publish** in Base44. New edge functions and scheduled jobs are configured in the Base44 dashboard, not deployed from this repo — Claude cannot self-deploy.
+- **Integration credits gate the backend.** When the account's monthly integration quota is exhausted, edge-function calls return **HTTP 402** at the platform layer — before the function body runs — so even credit-free functions fail. Deterministic app logic, Vitest, and the Playwright `redteam` suite all run without credits.
+- **Scheduled work runs via GitHub Actions, not Base44 cron:** `.github/workflows/freshness-cron.yml` (data-freshness jobs) and `redteam.yml`. The freshness jobs share one `CRON_SECRET` set in both GitHub repo secrets and Base44 env; the guarded functions accept it via `_shared/cronAuth.ts` (cron secret **or** admin session).
 
 ## Architecture Overview
 
