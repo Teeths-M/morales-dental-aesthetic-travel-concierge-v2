@@ -277,7 +277,7 @@ export default function LuxuryHero() {
               className="flex flex-col gap-3 mb-8"
             >
               {/* Button row */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
                 {/* Primary: gold pill */}
                 <Link to={content.cta.path}>
                   <motion.button
@@ -322,6 +322,29 @@ export default function LuxuryHero() {
                     Live Demo
                   </motion.button>
                 </Link>
+
+                {/* Tertiary: glass pill — for patients who booked elsewhere (BYOJ) */}
+                {isMedical && (
+                  <Link to="/protect">
+                    <motion.button
+                      whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full sm:w-auto h-11 px-7 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                      style={{
+                        background:    'rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        border:        `1px solid rgba(212,175,55,0.30)`,
+                        color:         `${GOLD}cc`,
+                        letterSpacing: '0.02em',
+                        boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <Shield style={{ width: 12, height: 12, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
+                      Bring Your Own Journey
+                    </motion.button>
+                  </Link>
+                )}
               </div>
 
               {/* No-account signal — directly below buttons, not between them */}
@@ -329,17 +352,6 @@ export default function LuxuryHero() {
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontWeight: 500, letterSpacing: '0.04em' }}>
                   No account needed to start
                 </span>
-              )}
-
-              {/* Bring Your Own Journey — soft entry for patients who booked elsewhere */}
-              {isMedical && (
-                <Link
-                  to="/protect"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content', fontSize: 12.5, fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.01em', textDecoration: 'none' }}
-                >
-                  Already booked elsewhere?
-                  <span style={{ color: GOLD, fontWeight: 600 }}>Bring your journey to Morales →</span>
-                </Link>
               )}
             </motion.div>
 
