@@ -524,7 +524,7 @@ export default function NightlifeRobberyDemo({ minimal = false }) {
               style={{ background: '#0C1A1D', color: '#94a3b8', border: '1px solid #2A3F4A' }}>
               <ArrowLeft className="w-4 h-4" /> Platform Overview
             </Link>
-            <Link to="/consultation"
+            <Link to="/intake"
               className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold"
               style={{ background: GOLD, color: DARK }}>
               Travel Protected

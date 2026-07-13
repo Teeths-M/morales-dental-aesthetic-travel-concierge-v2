@@ -6,15 +6,15 @@ The complete IQ200 medical travel coordination platform is now **fully operation
 
 ## 1. Client-Facing Features
 
-### Consultation Form
-- **URL**: `/consultation`
-- **Purpose**: Clients submit medical travel requests
+### Consultation Intake
+- **URL**: `/intake` (the legacy `/consultation` form now redirects here)
+- **Purpose**: Clients submit medical travel requests via the AI concierge
 - **Collects**: Personal info, medical history, procedure details
 - **Auto-triggers**: SAFE-T4LIFE™ risk assessment
 
 ### Success Page
 - **URL**: `/consultation-success`
-- **Shows**: Confirmation message after submission
+- **Shows**: Stripe payment success landing (fee/deposit flow)
 
 ## 2. Automated Workflow Pipeline
 
@@ -107,8 +107,8 @@ All portals use secure token authentication (no login required):
 ### Test Flow:
 
 1. **Submit a Consultation**
-   - Go to `/consultation`
-   - Fill out the form
+   - Go to `/intake`
+   - Answer the concierge questions
    - Submit
 
 2. **Check SAFE-T Review**

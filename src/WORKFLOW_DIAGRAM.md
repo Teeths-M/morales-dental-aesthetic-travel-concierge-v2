@@ -10,7 +10,7 @@
                                        │
                                        ▼
                         ┌──────────────────────────┐
-                        │   /consultation Form     │
+                        │   /intake  (concierge)   │
                         │  Client submits details  │
                         └──────────────────────────┘
                                        │

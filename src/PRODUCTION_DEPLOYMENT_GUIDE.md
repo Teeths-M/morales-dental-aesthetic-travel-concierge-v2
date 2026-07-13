@@ -215,7 +215,7 @@ jobs:
         run: |
           sleep 15
           curl -f https://your-domain.com/ || exit 1
-          curl -f https://your-domain.com/consultation || exit 1
+          curl -f https://your-domain.com/intake || exit 1
 
       - name: Notify Slack — Production deployed
         uses: slackapi/slack-github-action@v1
@@ -339,7 +339,7 @@ Use one of these free/low-cost services to ping production endpoints every minut
 **Critical endpoints to monitor:**
 ```
 https://your-domain.com/                    # Homepage
-https://your-domain.com/consultation        # Core conversion page
+https://your-domain.com/intake              # Core conversion page (concierge)
 https://your-domain.com/emergency           # Safety-critical
 ```
 

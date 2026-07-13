@@ -1090,7 +1090,7 @@ export default function DemoShowcase() {
             </p>
             <div className="flex justify-center gap-3 flex-wrap">
               <Link
-                to="/consultation"
+                to="/intake"
                 className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold"
                 style={{ background: GOLD, color: DARK }}
               >

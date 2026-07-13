@@ -7,9 +7,9 @@ IQ200 is a comprehensive medical travel coordination platform that automates the
 ## System Architecture
 
 ### 1. Client Consultation Flow
-- **Entry Point**: `/consultation` - Client fills out comprehensive medical questionnaire
+- **Entry Point**: `/intake` - AI concierge conversational intake (the legacy `/consultation` form now redirects here)
 - **Auto-Processing**: SAFE-T4LIFE™ medical risk assessment runs automatically
-- **Success Page**: `/consultation-success` - Confirmation and next steps
+- **Success Page**: `/consultation-success` - Stripe payment success landing (still used by the fee/deposit flow)
 
 ### 2. SAFE-T4LIFE™ Risk Assessment (Automated)
 **Function**: `safeT4LifeScan`
@@ -139,7 +139,7 @@ All portals use secure token-based authentication:
 
 ## Getting Started
 
-1. **Client submits consultation** → `/consultation`
+1. **Client submits consultation** → `/intake`
 2. **System auto-processes** through SAFE-T4LIFE
 3. **Doctor assigned** → Provides quote via portal
 4. **Travel assigned** → Submits flight/hotel quotes
