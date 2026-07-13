@@ -4,12 +4,21 @@
  * All paths preserved exactly as in the original App.jsx.
  */
 import React, { lazy, Suspense } from 'react';
-import { Route, Navigate } from 'react-router-dom';
+import { Route, Navigate, useLocation } from 'react-router-dom';
 
 /* Requires visiting /demo first — blocks direct URL access to admin demo pages */
 function DemoProtected({ children }) {
   const ok = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('morales_demo_session') === '1';
   return ok ? children : <Navigate to="/demo" replace />;
+}
+
+/* /consultation is retired — folded into the primary /intake funnel. This
+   redirect preserves any ?doctor=&country=&procedure= params so old links,
+   bookmarks, and the doctor-directory hand-off still land correctly (and the
+   chosen doctor is now actually persisted, which /consultation never did). */
+function ConsultationRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/intake${search}`} replace />;
 }
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
@@ -29,7 +38,7 @@ const ConciergeIntake      = lazy(() => import('@/pages/ConciergeIntake'));
 const TravelIntake          = lazy(() => import('@/pages/TravelIntake'));
 const BringYourOwnJourney   = lazy(() => import('@/pages/BringYourOwnJourney'));
 const Login                = lazy(() => import('@/pages/Login'));
-const ConsultationForm = lazy(() => import('@/pages/ConsultationForm'));
+// ConsultationForm retired (folded into /intake); route below now redirects.
 const ConsultationSuccess = lazy(() => import('@/pages/ConsultationSuccess'));
 const RegisterRole  = lazy(() => import('@/pages/RegisterRole'));
 const DeepPerfection = lazy(() => import('@/pages/DeepPerfection'));
@@ -84,7 +93,7 @@ export const publicRoutes = (
     <Route path="/travel-intake"  element={<ErrorBoundary><TravelIntake /></ErrorBoundary>} />
     <Route path="/protect"        element={<ErrorBoundary><BringYourOwnJourney /></ErrorBoundary>} />
     <Route path="/login"          element={<ErrorBoundary><Login /></ErrorBoundary>} />
-    <Route path="/consultation"   element={<ErrorBoundary><ConsultationForm /></ErrorBoundary>} />
+    <Route path="/consultation"   element={<ConsultationRedirect />} />
     <Route path="/consultation-success" element={<ErrorBoundary><ConsultationSuccess /></ErrorBoundary>} />
     <Route path="/register-role"  element={<ErrorBoundary><RegisterRole /></ErrorBoundary>} />
     <Route path="/deep-perfection" element={<ErrorBoundary><DeepPerfection /></ErrorBoundary>} />

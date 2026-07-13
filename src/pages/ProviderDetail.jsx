@@ -91,7 +91,7 @@ export default function ProviderDetail() {
                 </div>
 
                 <div className="flex gap-3 mt-5">
-                  <Link to={`/booking?provider=${provider.id}`}>
+                  <Link to={`/intake?doctor_id=${encodeURIComponent(provider.id)}&doctor=${encodeURIComponent(provider.full_name || '')}${provider.clinic_country ? `&country=${encodeURIComponent(provider.clinic_country)}` : ''}`}>
                     <Button className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
                       Book Consultation
                     </Button>

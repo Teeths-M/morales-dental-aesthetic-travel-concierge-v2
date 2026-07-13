@@ -110,6 +110,34 @@ export default function ConciergeIntake() {
     });
   }, [isLoading, cartItems, answers.procedure_interest, answers.selected_procedures, seedAnswers]);
 
+  // Doctor-directory hand-off: when a patient arrives from a "Book Dr. X" link
+  // (/intake?doctor_id=&doctor=&country=), seed those answers so the doctor and
+  // destination questions auto-skip AND the chosen doctor is actually persisted
+  // on the Consultation — the old /consultation flow only showed a banner and
+  // never saved the doctor. Seeds never overwrite a real answer the user gave.
+  const urlSeededRef = useRef(false);
+  useEffect(() => {
+    if (isLoading || urlSeededRef.current) return;
+    const p = new URLSearchParams(window.location.search);
+    const docId = p.get('doctor_id');
+    const docName = p.get('doctor');
+    const country = p.get('country');
+    if (!docId && !docName && !country) return;
+    urlSeededRef.current = true;
+    const seed = {};
+    if (docName && !answers.preferred_doctor_name) {
+      seed.preferred_doctor_name = docName;
+      // Both id + name are needed for the doctor step to auto-skip. Without a real
+      // id (older links) the step is simply shown so they can pick — never a bogus id.
+      if (docId) seed.preferred_doctor_id = docId;
+    }
+    if (country && !answers.destination_country) {
+      seed.destination_country = country;
+      seed.procedure_country = country;
+    }
+    if (Object.keys(seed).length) seedAnswers(seed);
+  }, [isLoading, answers.preferred_doctor_name, answers.destination_country, seedAnswers]);
+
   // The moment procedures are answered, every one of them joins the same
   // shared cart every other part of the app uses — SafetyWatcher (mounted
   // globally in App.jsx) reacts automatically to any resulting GREEN→RED

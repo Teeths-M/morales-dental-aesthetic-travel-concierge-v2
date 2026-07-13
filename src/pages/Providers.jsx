@@ -314,7 +314,7 @@ export default function Providers() {
                         View Profile
                       </button>
                       <button
-                        onClick={() => navigate(`/consultation?doctor=${encodeURIComponent(doctor.full_name)}&country=${encodeURIComponent(doctor.clinic_country || '')}&procedure=${encodeURIComponent(doctorSpecs[0]?.procedure_name || '')}`)}
+                        onClick={() => navigate(`/intake?doctor_id=${encodeURIComponent(doctor.id)}&doctor=${encodeURIComponent(doctor.full_name)}&country=${encodeURIComponent(doctor.clinic_country || '')}`)}
                         style={{ flex: 1, padding: '9px 0', borderRadius: 99, background: GOLD, border: 'none', color: '#060B16', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
                         Book →

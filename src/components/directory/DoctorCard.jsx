@@ -113,7 +113,7 @@ export default function DoctorCard({ doctor }) {
       {/* Footer */}
       <div className="px-5 pb-5">
         <a
-          href="/consultation"
+          href={`/intake?doctor_id=${encodeURIComponent(doctor.id)}&doctor=${encodeURIComponent(doctor.full_name || '')}${doctor.clinic_country ? `&country=${encodeURIComponent(doctor.clinic_country)}` : ''}`}
           className="block w-full text-center bg-primary text-primary-foreground text-xs font-semibold py-2.5 rounded-xl hover:bg-primary/90 transition-all"
         >
           Book Consultation
