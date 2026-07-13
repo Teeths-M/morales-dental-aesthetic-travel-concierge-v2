@@ -4,6 +4,7 @@ import { isSystemPaused } from '@/lib/systemPause';
 import { motion } from 'framer-motion';
 import { Heart, CheckCircle2, Loader2, Luggage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import PhoneField from '@/components/ui-system/PhoneField';
 
 export default function LuggageFinderPortal() {
   // Token comes from path: /luggage/:token
@@ -127,9 +128,7 @@ export default function LuggageFinderPortal() {
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1 block">Your Phone (optional)</label>
-                <input value={form.finder_phone} onChange={e => setForm({ ...form, finder_phone: e.target.value })}
-                  placeholder="+1 555 0000"
-                  className="w-full border border-gray-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+                <PhoneField value={form.finder_phone} onChange={v => setForm({ ...form, finder_phone: v })} placeholder="Your phone" />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1 block">Your Email (optional)</label>

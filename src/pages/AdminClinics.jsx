@@ -5,6 +5,8 @@ import { base44 } from '@/api/base44Client';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import LastVerified from '@/components/trust/LastVerified';
+import SearchSelect from '@/components/ui-system/SearchSelect';
+import { COUNTRY_NAMES } from '@/lib/countryDialCodes';
 import {
   Building2, Plus, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, X, Download, Bot,
 } from 'lucide-react';
@@ -60,7 +62,7 @@ function AddClinicForm({ onDone, onCancel }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input className={input} placeholder="Clinic name *" value={f.name} onChange={set('name')} />
-        <input className={input} placeholder="Country *" value={f.country} onChange={set('country')} />
+        <SearchSelect boxed value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} options={COUNTRY_NAMES} placeholder="Country *" />
         <input className={input} placeholder="City" value={f.city} onChange={set('city')} />
         <input className={input} placeholder="Operating licence / registration ref" value={f.registration_ref} onChange={set('registration_ref')} />
         <select className={input} value={f.operating_status} onChange={set('operating_status')}>

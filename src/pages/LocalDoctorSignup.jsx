@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, Loader2, MapPin, Stethoscope, ShieldCheck, CreditCard } from 'lucide-react';
+import PhoneField from '@/components/ui-system/PhoneField';
+import SearchSelect from '@/components/ui-system/SearchSelect';
 
 const STEPS = ['Your Details', 'Specialties', 'Credentials', 'Subscription'];
 
@@ -192,17 +194,16 @@ export default function LocalDoctorSignup() {
                     placeholder="doctor@example.com" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
                 </div>
                 <div>
-                  <Label className="text-gray-300 text-sm">Phone (with country code)</Label>
-                  <Input value={form.phone} onChange={e => set('phone', e.target.value)}
-                    placeholder="+1 868 555 0000" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
+                  <Label className="text-gray-300 text-sm">Phone</Label>
+                  <div className="mt-1">
+                    <PhoneField dark value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.home_country} placeholder="Phone number" />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">Home Country</Label>
-                  <select value={form.home_country} onChange={e => set('home_country', e.target.value)}
-                    className="mt-1 w-full rounded-md bg-[#060B16] border border-[#2A3F4A] text-white px-3 py-2 text-sm">
-                    <option value="">Select country…</option>
-                    {COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="mt-1">
+                    <SearchSelect boxed strict dark value={form.home_country} onChange={v => set('home_country', v)} options={COUNTRY_LIST} placeholder="Select or type your country" />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">City</Label>
@@ -250,11 +251,9 @@ export default function LocalDoctorSignup() {
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">Issuing Country</Label>
-                  <select value={form.license_country} onChange={e => set('license_country', e.target.value)}
-                    className="mt-1 w-full rounded-md bg-[#060B16] border border-[#2A3F4A] text-white px-3 py-2 text-sm">
-                    <option value="">Select country…</option>
-                    {COUNTRY_LIST.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="mt-1">
+                    <SearchSelect boxed strict dark value={form.license_country} onChange={v => set('license_country', v)} options={COUNTRY_LIST} placeholder="Select or type the issuing country" />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">Years of Experience</Label>

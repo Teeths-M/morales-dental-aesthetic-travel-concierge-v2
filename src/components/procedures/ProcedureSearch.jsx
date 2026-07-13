@@ -184,7 +184,10 @@ export default function ProcedureSearch({ onSelect, onQueryChange }) {
                   </div>
                 ) : (
                   <div className="p-5 text-center">
-                    <p className="text-sm text-slate-400">No procedures found for "{query}"</p>
+                    <p className="text-sm text-slate-500">We couldn’t find “{query}”.</p>
+                    <a href="/intake" className="inline-block mt-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800 underline underline-offset-2">
+                      Tell our concierge what you need →
+                    </a>
                   </div>
                 )
               ) : (

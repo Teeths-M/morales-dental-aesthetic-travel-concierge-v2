@@ -91,6 +91,10 @@ export const COUNTRY_DIAL = [
   { iso2: 'TZ', name: 'Tanzania', dial: '255' },
 ];
 
+/** Distinct country names (sorted) for free-text country pickers that want
+ *  autocomplete suggestions without a full closed enum. */
+export const COUNTRY_NAMES = [...new Set(COUNTRY_DIAL.map((c) => c.name))].sort((a, b) => a.localeCompare(b));
+
 /** ISO-3166 alpha-2 → regional-indicator emoji flag. Falls back to a globe. */
 export function dialToFlag(iso2) {
   if (!iso2 || iso2.length !== 2) return '🌍';

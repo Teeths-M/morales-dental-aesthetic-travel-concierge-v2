@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, Eye, CheckCircle2, AlertCircle, Loader2, Phone } from 'lucide-react';
+import { MessageSquare, Send, Eye, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import PhoneField from '@/components/ui-system/PhoneField';
 
 const SMS_TYPES = [
   { value: 'booking_confirmation', label: 'Booking Confirmation', params: ['name', 'procedure', 'date'] },
@@ -106,16 +107,7 @@ export default function SmsNotificationPanel() {
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block">
                 Patient Phone (E.164 format)
               </label>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  placeholder="+18005551234"
-                  value={to}
-                  onChange={e => setTo(e.target.value)}
-                  className="flex-1 border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-                />
-              </div>
+              <PhoneField value={to} onChange={setTo} placeholder="Patient phone" />
             </div>
 
             {/* Dynamic params */}

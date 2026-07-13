@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Upload, CheckCircle, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import PhoneField from '@/components/ui-system/PhoneField';
+import SearchSelect from '@/components/ui-system/SearchSelect';
+import { COUNTRY_NAMES } from '@/lib/countryDialCodes';
 
 const BACKGROUND_TYPES = ['Ex-Military', 'Ex-Police', 'Private Security', 'Tactical Response', 'K9 Unit', 'Cyber/Intel'];
 const SERVICES = ['SOS Response', 'Close Protection', 'Airport Escort', 'Medical Escort', 'Armed Guard', 'Surveillance', 'Executive Protection'];
@@ -212,10 +215,10 @@ export default function SecurityAgencySignup() {
                     <input className={inputClass} type="email" placeholder="contact@agency.com" value={form.email} onChange={e => set('email', e.target.value)} />
                   </Field>
                   <Field label="Phone" required>
-                    <input className={inputClass} placeholder="+1 868 000 0000" value={form.phone} onChange={e => set('phone', e.target.value)} />
+                    <PhoneField value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.country} placeholder="Phone number" />
                   </Field>
                   <Field label="Country" required>
-                    <input className={inputClass} placeholder="Trinidad and Tobago" value={form.country} onChange={e => set('country', e.target.value)} />
+                    <SearchSelect boxed value={form.country} onChange={v => set('country', v)} options={COUNTRY_NAMES} placeholder="Select or type your country" />
                   </Field>
                   <Field label="City">
                     <input className={inputClass} placeholder="Port of Spain" value={form.city} onChange={e => set('city', e.target.value)} />

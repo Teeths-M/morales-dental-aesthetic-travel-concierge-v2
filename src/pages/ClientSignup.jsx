@@ -7,6 +7,9 @@ import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PhoneField from '@/components/ui-system/PhoneField';
+import SearchSelect from '@/components/ui-system/SearchSelect';
+import { COUNTRY_NAMES } from '@/lib/countryDialCodes';
 import ProcedureWelcomeModal from '@/components/welcome/ProcedureWelcomeModal';
 
 export default function ClientSignup() {
@@ -164,11 +167,15 @@ export default function ClientSignup() {
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground">Phone number</label>
-              <Input value={form.phone} onChange={(e) => update('phone', e.target.value)} className="mt-2" required />
+              <div className="mt-2">
+                <PhoneField value={form.phone} onChange={(v) => update('phone', v)} defaultCountryName={form.nationality} placeholder="Phone number" />
+              </div>
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground">Nationality</label>
-              <Input value={form.nationality} onChange={(e) => update('nationality', e.target.value)} className="mt-2" placeholder="Optional" />
+              <div className="mt-2">
+                <SearchSelect boxed value={form.nationality} onChange={(v) => update('nationality', v)} options={COUNTRY_NAMES} placeholder="Optional — select or type" />
+              </div>
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground">Preferred language</label>
@@ -200,7 +207,9 @@ export default function ClientSignup() {
               </div>
               <div>
                 <label className="text-sm font-semibold text-foreground">Contact number</label>
-                <Input value={form.emergency_contact_number} onChange={(e) => update('emergency_contact_number', e.target.value)} className="mt-2" required />
+                <div className="mt-2">
+                  <PhoneField value={form.emergency_contact_number} onChange={(v) => update('emergency_contact_number', v)} defaultCountryName={form.nationality} placeholder="Contact number" />
+                </div>
               </div>
             </div>
           </div>

@@ -18,8 +18,9 @@ const bucketKey = (lat, lng) =>
 function codeToFlag(code) {
   if (!code || code.length !== 2) return '🌍';
   try {
+    // Regional-indicator 'A' (🇦) is U+1F1E6 = 127462; 127462 − 'A'(65) = 127397.
     return String.fromCodePoint(
-      ...code.toUpperCase().split('').map(c => 0x1F1E0 + c.charCodeAt(0) - 65)
+      ...code.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0))
     );
   } catch (_) { return '🌍'; }
 }

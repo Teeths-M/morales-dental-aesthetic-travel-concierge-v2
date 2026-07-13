@@ -11,6 +11,7 @@ import {
   Pill, Activity, AlertTriangle, User, Loader2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import PhoneField from '@/components/ui-system/PhoneField';
 
 // ── Static option sets ─────────────────────────────────────────────────────
 const MEDICAL_CONDITIONS = [
@@ -135,7 +136,7 @@ function StepPersonal({ form, update }) {
         <Input value={form.emergency_contact_name} onChange={e => update('emergency_contact_name', e.target.value)} placeholder="Full name" />
       </Field>
       <Field label="Emergency Contact Number *">
-        <Input value={form.emergency_contact_number} onChange={e => update('emergency_contact_number', e.target.value)} placeholder="+1 (555) 000-0000" />
+        <PhoneField value={form.emergency_contact_number} onChange={v => update('emergency_contact_number', v)} placeholder="Contact number" />
       </Field>
     </div>
   );

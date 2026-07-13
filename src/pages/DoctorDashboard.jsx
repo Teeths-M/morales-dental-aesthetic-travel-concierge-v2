@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
 import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert } from 'lucide-react';
+import PhoneField from '@/components/ui-system/PhoneField';
 import { IdentityUpload } from '@/components/ThisIsMe';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
 import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingManager';
@@ -487,13 +488,7 @@ export default function DoctorDashboard() {
                         className="w-full px-3 py-2 border border-border rounded-lg"
                         placeholder="Email"
                       />
-                      <input
-                        type="tel"
-                        value={formData.phone || ''}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
-                        placeholder="Phone Number"
-                      />
+                      <PhoneField value={formData.phone || ''} onChange={(v) => setFormData({ ...formData, phone: v })} placeholder="Phone number" />
                       <input
                         type="text"
                         value={formData.clinic_name || ''}
