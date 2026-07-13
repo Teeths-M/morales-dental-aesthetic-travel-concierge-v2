@@ -74,6 +74,26 @@ language sql stable security definer set search_path = public as $$
   select public.user_role() in ('admin','platform_admin');
 $$;
 
+-- ── Auto-provision a profile on signup (Supabase Auth → public.profiles) ─────
+-- FlutterFlow / Supabase Auth creates the auth.users row; this fills in the
+-- matching profiles row so RLS roles work and every user has a record. New
+-- users default to 'client'. (Promote an admin with a one-off UPDATE — see the
+-- bootstrap note in supabase/README or the run-once block used at setup.)
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, role, full_name)
+  values (new.id, 'client',
+          coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', ''))
+  on conflict (id) do nothing;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
 -- NOTE: public.current_doctor_id() and public.owns_patient() are defined LATER
 -- (just before ROW LEVEL SECURITY) — a SQL function body is validated against the
 -- tables it references at CREATE time, so they must come after doctors/patients.
