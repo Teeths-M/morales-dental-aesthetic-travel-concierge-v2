@@ -88,6 +88,40 @@ language sql stable security definer set search_path = public as $$
   );
 $$;
 
+-- ── Data-freshness config (externalized TTLs; mirrors _shared/freshness.ts) ──
+-- Single source of truth for how long a stored status may be treated as current
+-- before it must be re-verified. `kind` matches freshness.ts FreshnessKind /
+-- DataFreshnessReview.subject_type. Change a TTL here — the booking gate reads it.
+create table if not exists public.freshness_config (
+  kind        text primary key,
+  ttl         interval not null,
+  description text,
+  updated_at  timestamptz not null default now()
+);
+
+insert into public.freshness_config (kind, ttl, description) values
+  ('clinic_status',   interval '24 hours', 'Clinic operating status — live-checked at booking; blocks if older'),
+  ('doctor_license',  interval '7 days',   'Doctor licence — scheduled daily (US) / weekly (scrape)'),
+  ('visa_rule',       interval '7 days',   'Visa rule — weekly + on destination×nationality selection'),
+  ('regulatory_rule', interval '30 days',  'Regulatory rule — monthly + daily change-detection')
+on conflict (kind) do update
+  set ttl = excluded.ttl, description = excluded.description, updated_at = now();
+
+-- SECURITY DEFINER so the in-trigger booking gate can read the TTL regardless of
+-- the calling user's RLS on freshness_config.
+create or replace function public.freshness_ttl(p_kind text) returns interval
+language sql stable security definer set search_path = public as $$
+  select ttl from public.freshness_config where kind = p_kind;
+$$;
+
+alter table public.freshness_config enable row level security;
+alter table public.freshness_config force row level security;
+drop policy if exists freshness_read on public.freshness_config;
+create policy freshness_read on public.freshness_config for select using (public.is_staff());
+drop policy if exists freshness_write on public.freshness_config;
+create policy freshness_write on public.freshness_config for all using (public.is_admin()) with check (public.is_admin());
+grant select, insert, update, delete on public.freshness_config to authenticated;
+
 -- ============================================================================
 -- TABLES  (created FK-order: clinics → doctors → patients → bookings →
 --          safety_reviews → documents; the bookings↔safety_reviews cycle is
@@ -247,7 +281,10 @@ end $$;
 create or replace function public.enforce_booking_gates() returns trigger
 language plpgsql as $$
 declare v_review public.safety_reviews; v_clinic public.clinics; v_pat public.patients;
-        clinic_ttl constant interval := interval '24 hours';   -- freshness.ts clinic TTL
+        -- Clinic TTL now comes from freshness_config. Fail-safe: fall back to the
+        -- known-safe 24h if the config row is missing, so a deleted/absent config
+        -- can never WIDEN the gate.
+        clinic_ttl interval := coalesce(public.freshness_ttl('clinic_status'), interval '24 hours');
 begin
   if new.status = 'confirmed' then
     -- 1) SAFE-T review must exist and be cleared (elevated/high require a human).
