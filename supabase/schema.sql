@@ -385,6 +385,32 @@ language sql stable security definer set search_path = public as $$
   );
 $$;
 
+-- Doctor read-access, MINOR-GATED, as SECURITY DEFINER so policy evaluation never
+-- re-enters patients/bookings RLS (avoids policy recursion — patients_read reads
+-- bookings and bookings_read reads patients). For a MINOR, the assigned doctor
+-- gains access only once the booking has left draft/admin_review.
+create or replace function public.doctor_sees_patient(p_patient_id uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.bookings b
+    join public.patients p on p.id = b.patient_id
+    where b.patient_id = p_patient_id
+      and b.doctor_id = public.current_doctor_id()
+      and (not p.is_minor or b.status not in ('draft','admin_review'))
+  );
+$$;
+
+create or replace function public.doctor_sees_booking(p_booking_id uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.bookings b
+    join public.patients p on p.id = b.patient_id
+    where b.id = p_booking_id
+      and b.doctor_id = public.current_doctor_id()
+      and (not p.is_minor or b.status not in ('draft','admin_review'))
+  );
+$$;
+
 -- ============================================================================
 -- ROW LEVEL SECURITY  (enabled AND forced on every table)
 -- ============================================================================
@@ -433,10 +459,7 @@ create policy patients_read on public.patients for select
     user_id = auth.uid()
     or email = (auth.jwt() ->> 'email')
     or public.is_staff()
-    or exists (select 1 from public.bookings b
-               where b.patient_id = patients.id
-                 and b.doctor_id = public.current_doctor_id()
-                 and (not patients.is_minor or b.status not in ('draft','admin_review')))
+    or public.doctor_sees_patient(patients.id)
   );
 drop policy if exists patients_insert on public.patients;
 create policy patients_insert on public.patients for insert
@@ -448,10 +471,17 @@ create policy patients_update on public.patients for update
 drop policy if exists patients_delete on public.patients;
 create policy patients_delete on public.patients for delete using (public.is_staff());
 
--- bookings: patient owner + assigned doctor + staff. (Confirm gates run in-trigger.)
+-- bookings: patient owner + staff + assigned doctor. MINOR PHI GATE: for a minor,
+-- the assigned doctor can't even see the booking row (procedure/destination/date)
+-- until it has cleared Admin-Review — same gate as patients/safety/documents.
+-- (Confirm gates run in-trigger.)
 drop policy if exists bookings_read on public.bookings;
 create policy bookings_read on public.bookings for select
-  using (public.owns_patient(patient_id) or doctor_id = public.current_doctor_id() or public.is_staff());
+  using (
+    public.owns_patient(patient_id)
+    or public.is_staff()
+    or public.doctor_sees_booking(bookings.id)
+  );
 drop policy if exists bookings_insert on public.bookings;
 create policy bookings_insert on public.bookings for insert
   with check (public.owns_patient(patient_id) or public.is_staff());
@@ -468,11 +498,7 @@ create policy bookings_delete on public.bookings for delete using (public.is_sta
 drop policy if exists safety_read on public.safety_reviews;
 create policy safety_read on public.safety_reviews for select
   using (public.owns_patient(patient_id) or public.is_staff()
-         or exists (select 1 from public.bookings b
-                    join public.patients p on p.id = b.patient_id
-                    where b.id = safety_reviews.booking_id
-                      and b.doctor_id = public.current_doctor_id()
-                      and (not p.is_minor or b.status not in ('draft','admin_review'))));
+         or public.doctor_sees_booking(safety_reviews.booking_id));
 drop policy if exists safety_insert on public.safety_reviews;
 create policy safety_insert on public.safety_reviews for insert with check (public.is_staff());
 
@@ -480,11 +506,7 @@ create policy safety_insert on public.safety_reviews for insert with check (publ
 drop policy if exists documents_read on public.documents;
 create policy documents_read on public.documents for select
   using (public.owns_patient(patient_id) or public.is_staff()
-         or exists (select 1 from public.bookings b
-                    join public.patients p on p.id = b.patient_id
-                    where b.id = documents.booking_id
-                      and b.doctor_id = public.current_doctor_id()
-                      and (not p.is_minor or b.status not in ('draft','admin_review'))));
+         or public.doctor_sees_booking(documents.booking_id));
 drop policy if exists documents_insert on public.documents;
 create policy documents_insert on public.documents for insert
   with check (public.owns_patient(patient_id) or public.is_staff());
