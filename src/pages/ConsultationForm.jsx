@@ -12,6 +12,8 @@ import { useCart } from '@/context/CartContext';
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
 import { useIpGeolocation } from '@/hooks/useIpGeolocation';
+import { isMinorAge, isValidGuardianContact } from '@/lib/guardianGate';
+import DataProcessingConsent, { DATA_CONSENT_VERSION } from '@/components/consent/DataProcessingConsent';
 
 const NATIONALITIES = ['Afghan','Albanian','Algerian','American','Andorran','Angolan','Argentine','Armenian','Australian','Austrian','Azerbaijani','Bahamian','Bahraini','Bangladeshi','Barbadian','Belarusian','Belgian','Belizean','Bolivian','Bosnian','Botswanan','Brazilian','British','Bruneian','Bulgarian','Cambodian','Cameroonian','Canadian','Cape Verdean','Chilean','Chinese','Colombian','Congolese','Costa Rican','Croatian','Cuban','Cypriot','Czech','Danish','Dominican','Dutch','Ecuadorian','Egyptian','Emirati','Estonian','Ethiopian','Fijian','Filipino','Finnish','French','German','Ghanaian','Greek','Guatemalan','Haitian','Honduran','Hungarian','Indian','Indonesian','Iranian','Iraqi','Irish','Israeli','Italian','Jamaican','Japanese','Jordanian','Kazakhstani','Kenyan','Kuwaiti','Latvian','Lebanese','Libyan','Lithuanian','Malaysian','Maldivian','Maltese','Mexican','Moldovan','Moroccan','Namibian','Nepalese','New Zealander','Nicaraguan','Nigerian','Norwegian','Omani','Pakistani','Palestinian','Panamanian','Paraguayan','Peruvian','Polish','Portuguese','Qatari','Romanian','Russian','Rwandan','Saudi','Senegalese','Serbian','Singaporean','Slovak','Slovenian','Somali','South African','South Korean','Spanish','Sri Lankan','Swedish','Swiss','Syrian','Taiwanese','Tanzanian','Thai','Trinidadian','Turkish','Ukrainian','Uruguayan','Venezuelan','Vietnamese','Zambian','Zimbabwean','Other'];
 const DESTINATIONS = ['Venezuela','Mexico','Colombia','Costa Rica','Dominican Republic','Panama','Argentina','Brazil','Thailand','Turkey','India','Spain','Portugal','Hungary','Poland','Other'];
@@ -54,6 +56,19 @@ function CheckboxGroup({ label, options, selected, onChange, noneOption = 'None 
   );
 }
 
+// Whole-years age from a YYYY-MM-DD date of birth (null when unparseable),
+// so the under-18 guardian gate can re-use the shared isMinorAge() helper.
+function ageFromDob(dob) {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age;
+}
+
 export default function ConsultationForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -88,9 +103,16 @@ export default function ConsultationForm() {
     communication_style_preference: 'gentle', companion_can_translate: false,
     companion_translation_limitations: '',
     traveling_companion_type: 'solo', traveling_solo: true, guardian_mode_opted_in: false,
+    // Under-18 guardian hard-gate + data-processing consent — parity with /booking + /intake.
+    guardian_name: '', guardian_contact: '', guardian_consent: false,
+    data_processing_consent: false,
   });
 
   const up = (f, v) => setForm(p => ({ ...p, [f]: v }));
+
+  // Under-18 status derived from DOB — drives the guardian hard-gate (M Principle).
+  const patientAge = ageFromDob(form.date_of_birth);
+  const patientIsMinor = isMinorAge(patientAge);
 
   // If the user arrived without a ?procedure= URL param, pre-fill from their cart
   useEffect(() => {
@@ -127,6 +149,13 @@ export default function ConsultationForm() {
     setShowValidation(true);
     if (!form.client_name || !form.client_email || !form.procedure_interest) { setError('Please complete all required fields.'); return; }
     if (!form.date_of_birth) { setError('Please enter your date of birth.'); return; }
+    // M PRINCIPLE — under-18 hard gate: a minor cannot submit without a captured
+    // guardian (name + valid contact + consent). Same rule as /booking and /intake.
+    if (patientIsMinor && (!form.guardian_name?.trim() || !isValidGuardianContact(form.guardian_contact) || form.guardian_consent !== true)) {
+      setError('This patient is under 18. A parent or guardian’s name, a valid phone or email, and their consent are required before we can proceed.');
+      return;
+    }
+    if (!form.data_processing_consent) { setError('Please agree to the data-processing consent to submit.'); return; }
     if (!form.clinical_boundary_acknowledged) { setError('Please acknowledge the Care Coordination Agreement.'); return; }
     if (!form.dietary_accuracy_acknowledged) { setError('Please confirm your dietary information.'); return; }
     if (form.has_food_allergies && !form.food_allergies_details) { setError('Please describe your food allergies.'); return; }
@@ -134,6 +163,20 @@ export default function ConsultationForm() {
     if (form.waiver_action === 'decline' && (!form.waiver_acknowledged || !form.declined_by)) { setError('Please complete the companion acknowledgement.'); return; }
     setLoading(true); setError(null);
     try {
+      // M PRINCIPLE — under-18 hard gate, re-derived SERVER-SIDE so a direct call
+      // can't skip it. Fail closed: if the check can't run, the minor is not created.
+      if (patientIsMinor) {
+        const gc = await base44.functions.invoke('validateGuardianRequirement', {
+          age: patientAge, guardian_name: form.guardian_name, guardian_contact: form.guardian_contact,
+        });
+        const verdict = gc?.data ?? gc ?? {};
+        if (verdict.blocked) {
+          setError(verdict.reason || 'A parent or guardian is required for patients under 18 before this can proceed.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const medConds = form.medical_conditions.filter(c => c !== 'None of the above');
       const allergs = form.allergies.filter(a => a !== 'No known allergies');
       const meds = form.medication_types.filter(m => m !== 'None / Not currently taking medication');
@@ -170,6 +213,21 @@ export default function ConsultationForm() {
         companion_can_translate: form.companion_can_translate, companion_translation_limitations: form.companion_translation_limitations,
         traveling_companion_type: form.traveling_companion_type, traveling_solo: form.traveling_solo,
         guardian_mode_opted_in: form.guardian_mode_opted_in,
+        // Data-processing consent audit trail (compliance parity with /booking + /intake).
+        ...(form.data_processing_consent ? {
+          data_processing_consent: true,
+          data_processing_consent_at: new Date().toISOString(),
+          data_processing_consent_version: DATA_CONSENT_VERSION,
+        } : {}),
+        // Under-18: capture the guardian and route straight to admin review — a
+        // minor's journey is never auto-processed (M Principle).
+        ...(patientIsMinor ? {
+          guardian_required: true,
+          guardian_name: form.guardian_name || '',
+          guardian_contact: form.guardian_contact || '',
+          status: 'Admin-Review',
+          risk_level: 'high',
+        } : {}),
       });
       try { await base44.functions.invoke('iq200Pipeline', { action: 'create', consultation_id: rec.id }); } catch {}
       navigate('/consultation-success', { state: { consultationId: rec.id, travelingSolo: form.traveling_solo, guardianModeOptedIn: form.guardian_mode_opted_in, companionType: form.traveling_companion_type, patientName: form.client_name } });
@@ -370,6 +428,37 @@ export default function ConsultationForm() {
                 <div style={secH}><span>👥</span> Date of Birth & Companion</div>
                 <SectionAgeCompanion form={form} update={up} showValidation={showValidation} />
 
+                {/* ── Under-18 HARD guardian gate (M Principle) — shown the moment a
+                    minor DOB is entered; submission is blocked (client + server)
+                    until a guardian name + valid contact + consent are captured. */}
+                {patientIsMinor && (
+                  <div style={{ borderRadius: 16, padding: 20, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.4)' }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#fbbf24', margin: '0 0 6px' }}>🛡️ A parent or guardian must be part of this journey</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '0 0 14px', lineHeight: 1.6 }}>
+                      Because the patient is under 18, we cannot plan or book any care without a parent or guardian. This is a safety requirement and cannot be skipped.
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 12 }}>
+                      <div>
+                        <label style={lbl}>Parent / guardian full name <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input style={inp} value={form.guardian_name} onChange={e => up('guardian_name', e.target.value)} placeholder="Full name" />
+                      </div>
+                      <div>
+                        <label style={lbl}>Guardian phone or email <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input style={inp} value={form.guardian_contact} onChange={e => up('guardian_contact', e.target.value)} placeholder="Phone or email" />
+                        {form.guardian_contact && !isValidGuardianContact(form.guardian_contact) && (
+                          <p style={{ fontSize: 11, color: '#fca5a5', margin: '4px 0 0' }}>Enter a valid phone number or email.</p>
+                        )}
+                      </div>
+                    </div>
+                    <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', marginTop: 12 }}>
+                      <input type="checkbox" checked={form.guardian_consent} onChange={e => up('guardian_consent', e.target.checked)} style={{ marginTop: 2, accentColor: '#f59e0b' }} />
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                        I confirm I am, or am acting with, the patient’s parent / legal guardian, and consent to and will be involved in every step of this care journey.
+                      </span>
+                    </label>
+                  </div>
+                )}
+
                 {/* Guardian Mode */}
                 <div style={{ borderRadius: 16, padding: 20, background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.2)' }}>
                   <div style={{ ...secH, borderColor: 'rgba(212,175,55,0.2)', marginBottom: 12 }}><span>🛡️</span> Travel Companion & Guardian Mode</div>
@@ -420,6 +509,9 @@ export default function ConsultationForm() {
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: '-8px 0 0', lineHeight: 1.6 }}>
                   Your $49 consultation fee is <span style={{ color: 'rgba(212,175,55,0.7)' }}>fully credited</span> when you book your procedure package.
                 </p>
+
+                {/* Data-processing consent — required before submit (compliance parity). */}
+                <DataProcessingConsent theme="dark" checked={form.data_processing_consent} onChange={v => up('data_processing_consent', v)} />
 
                 {error && (
                   <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13 }}>
