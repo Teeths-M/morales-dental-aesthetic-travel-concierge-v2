@@ -74,19 +74,9 @@ language sql stable security definer set search_path = public as $$
   select public.user_role() in ('admin','platform_admin');
 $$;
 
-create or replace function public.current_doctor_id() returns uuid
-language sql stable security definer set search_path = public as $$
-  select id from public.doctors where user_id = auth.uid() limit 1;
-$$;
-
-create or replace function public.owns_patient(p_patient_id uuid) returns boolean
-language sql stable security definer set search_path = public as $$
-  select exists (
-    select 1 from public.patients p
-    where p.id = p_patient_id
-      and (p.user_id = auth.uid() or p.email = (auth.jwt() ->> 'email'))
-  );
-$$;
+-- NOTE: public.current_doctor_id() and public.owns_patient() are defined LATER
+-- (just before ROW LEVEL SECURITY) — a SQL function body is validated against the
+-- tables it references at CREATE time, so they must come after doctors/patients.
 
 -- ── Data-freshness config (externalized TTLs; mirrors _shared/freshness.ts) ──
 -- Single source of truth for how long a stored status may be treated as current
@@ -378,6 +368,22 @@ drop trigger if exists trg_patients_updated on public.patients;
 create trigger trg_patients_updated before update on public.patients for each row execute function public.set_updated_at();
 drop trigger if exists trg_bookings_updated on public.bookings;
 create trigger trg_bookings_updated before update on public.bookings for each row execute function public.set_updated_at();
+
+-- ── RLS helper functions that reference tables (defined here, after the tables
+--    exist, because a SQL function body is validated at CREATE time). ──────────
+create or replace function public.current_doctor_id() returns uuid
+language sql stable security definer set search_path = public as $$
+  select id from public.doctors where user_id = auth.uid() limit 1;
+$$;
+
+create or replace function public.owns_patient(p_patient_id uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.patients p
+    where p.id = p_patient_id
+      and (p.user_id = auth.uid() or p.email = (auth.jwt() ->> 'email'))
+  );
+$$;
 
 -- ============================================================================
 -- ROW LEVEL SECURITY  (enabled AND forced on every table)
