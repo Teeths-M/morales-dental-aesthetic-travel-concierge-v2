@@ -9,6 +9,8 @@ import SectionLinguisticCultural from '@/components/booking/SectionLinguisticCul
 import { procedures } from '@/components/booking/SectionProcedure';
 import ProcedureSelectionGate from '@/components/booking/ProcedureSelectionGate';
 import { useCart } from '@/context/CartContext';
+import PhoneField from '@/components/ui-system/PhoneField';
+import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 
 const NATIONALITIES = ['Afghan','Albanian','Algerian','American','Andorran','Angolan','Argentine','Armenian','Australian','Austrian','Azerbaijani','Bahamian','Bahraini','Bangladeshi','Barbadian','Belarusian','Belgian','Belizean','Bolivian','Bosnian','Botswanan','Brazilian','British','Bruneian','Bulgarian','Cambodian','Cameroonian','Canadian','Cape Verdean','Chilean','Chinese','Colombian','Congolese','Costa Rican','Croatian','Cuban','Cypriot','Czech','Danish','Dominican','Dutch','Ecuadorian','Egyptian','Emirati','Estonian','Ethiopian','Fijian','Filipino','Finnish','French','German','Ghanaian','Greek','Guatemalan','Haitian','Honduran','Hungarian','Indian','Indonesian','Iranian','Iraqi','Irish','Israeli','Italian','Jamaican','Japanese','Jordanian','Kazakhstani','Kenyan','Kuwaiti','Latvian','Lebanese','Libyan','Lithuanian','Malaysian','Maldivian','Maltese','Mexican','Moldovan','Moroccan','Namibian','Nepalese','New Zealander','Nicaraguan','Nigerian','Norwegian','Omani','Pakistani','Palestinian','Panamanian','Paraguayan','Peruvian','Polish','Portuguese','Qatari','Romanian','Russian','Rwandan','Saudi','Senegalese','Serbian','Singaporean','Slovak','Slovenian','Somali','South African','South Korean','Spanish','Sri Lankan','Swedish','Swiss','Syrian','Taiwanese','Tanzanian','Thai','Trinidadian','Turkish','Ukrainian','Uruguayan','Venezuelan','Vietnamese','Zambian','Zimbabwean','Other'];
 const DESTINATIONS = ['Venezuela','Mexico','Colombia','Costa Rica','Dominican Republic','Panama','Argentina','Brazil','Thailand','Turkey','India','Spain','Portugal','Hungary','Poland','Other'];
@@ -55,6 +57,7 @@ export default function ConsultationForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { items: cartItems } = useCart();
+  const { country: ipCountry } = useIpGeolocation();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -235,7 +238,7 @@ export default function ConsultationForm() {
                   </div>
                   <div>
                     <label style={lbl}>Phone</label>
-                    <input style={inp} value={form.client_phone} onChange={e => up('client_phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                    <PhoneField dark value={form.client_phone} onChange={v => up('client_phone', v)} defaultCountryName={ipCountry} placeholder="Phone number" />
                   </div>
                   <div>
                     <label style={lbl}>Country of Origin</label>
@@ -250,7 +253,7 @@ export default function ConsultationForm() {
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={lbl}>Emergency Contact Phone</label>
-                    <input style={inp} value={form.emergency_contact_number} onChange={e => up('emergency_contact_number', e.target.value)} placeholder="+1 (555) 000-0000" />
+                    <PhoneField dark value={form.emergency_contact_number} onChange={v => up('emergency_contact_number', v)} defaultCountryName={ipCountry} placeholder="Phone number" />
                   </div>
                 </div>
               </div>

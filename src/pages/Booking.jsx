@@ -980,12 +980,15 @@ export default function Booking() {
           )}
           {/* Field-level "what's still needed" — persistent (a toast vanishes),
               lists every missing field on this step so the user is never left
-              guessing why Continue won't advance. Auto-clears as they complete. */}
-          {showValidation && !canNext() && getMissingFields().length > 0 && (
+              guessing why Continue won't advance. Auto-clears as they complete.
+              On the final step it shows unconditionally when the (disabled)
+              Review & Submit can't proceed, so a grayed button is never a mystery. */}
+          {((showValidation || step === steps.length - 1) && !canNext()) && getMissingFields().length > 0 && (
             <div className="px-4 sm:px-6 pt-4">
               <p className="text-sm rounded-lg px-3 py-2.5 m-0"
                 style={{ color: '#92740f', background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.3)' }}>
-                To continue, please complete: <strong>{getMissingFields().join(', ')}</strong>
+                {step === steps.length - 1 ? 'To submit, please complete: ' : 'To continue, please complete: '}
+                <strong>{getMissingFields().join(', ')}</strong>
               </p>
             </div>
           )}

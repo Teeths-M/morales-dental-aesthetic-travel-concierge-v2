@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Phone, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
+import { Loader2, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
+import PhoneField from '@/components/ui-system/PhoneField';
+import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 
 // Login splits: LEFT form uses the CALM decision palette (light + teal), the
 // RIGHT brand panel keeps the dark dramatic showcase (Product Principle #5:
@@ -95,6 +97,7 @@ export default function Login() {
   const [loading,       setLoading]       = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [countdown,     setCountdown]     = useState(0);
+  const { country: ipCountry } = useIpGeolocation();
 
   // Resend countdown timer
   useEffect(() => {
@@ -171,26 +174,15 @@ export default function Login() {
           <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SOFT, marginBottom: 6, letterSpacing: '0.04em' }}>
             PHONE NUMBER
           </label>
-          <div style={{ position: 'relative' }}>
-            <Phone style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 15, height: 15, color: TEXT_FAINT }} />
-            <input
-              type="tel"
-              autoFocus
-              placeholder="+1 868 000 0000"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              required
-              style={{
-                width: '100%', padding: '13px 14px 13px 42px', borderRadius: 12, boxSizing: 'border-box',
-                background: SURFACE_SOFT, border: `1px solid ${BORDER}`,
-                color: TEXT, fontSize: 15, outline: 'none',
-              }}
-              onFocus={e => e.target.style.borderColor = `${TEAL}80`}
-              onBlur={e => e.target.style.borderColor = BORDER}
-            />
-          </div>
+          <PhoneField
+            value={phone}
+            onChange={setPhone}
+            defaultCountryName={ipCountry}
+            placeholder="Phone number"
+            autoFocus
+          />
           <p style={{ margin: '6px 0 0', fontSize: 11, color: TEXT_FAINT }}>
-            Include country code · SMS or WhatsApp
+            Pick your country · SMS or WhatsApp
           </p>
         </div>
 

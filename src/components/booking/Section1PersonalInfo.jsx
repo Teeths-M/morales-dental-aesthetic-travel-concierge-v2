@@ -10,6 +10,7 @@ import CityOriginSelect from './CityOriginSelect';
 import { NATIONALITIES as nationalities } from '@/lib/nationalities';
 import { ShieldAlert } from 'lucide-react';
 import { isMinorAge, isValidGuardianContact } from '@/lib/guardianGate';
+import PhoneField from '@/components/ui-system/PhoneField';
 
 // 1–100 so a patient under 18 can be stated truthfully — that is what triggers
 // the hard guardian gate below (a minor must never be silently treated as an adult).
@@ -187,7 +188,14 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
 
         <div>
           <Label>{translations[language].emergencyContactNumber} <span className="text-destructive">*</span></Label>
-          <Input value={form.emergency_contact_number} onChange={e => { update('emergency_contact_number', e.target.value); resetValidation(); }} placeholder={translations[language].phoneNumber} className={`mt-1.5 ${showValidation && !form.emergency_contact_number ? 'border-red-400' : ''}`} />
+          <div className="mt-1.5">
+            <PhoneField
+              value={form.emergency_contact_number}
+              onChange={v => { update('emergency_contact_number', v); resetValidation(); }}
+              defaultCountryName={ipCountry}
+              placeholder={translations[language].phoneNumber}
+            />
+          </div>
           {showValidation && !form.emergency_contact_number && <p className="text-xs text-red-500 mt-1">Emergency contact number is required</p>}
         </div>
 
@@ -199,7 +207,14 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
 
         <div className="sm:col-span-2">
           <Label>{translations[language].phone} <span className="text-destructive">*</span></Label>
-          <Input value={form.phone} onChange={e => { update('phone', e.target.value); resetValidation(); }} placeholder={translations[language].phoneNumber} className={`mt-1.5 ${showValidation && !form.phone ? 'border-red-400' : ''}`} />
+          <div className="mt-1.5">
+            <PhoneField
+              value={form.phone}
+              onChange={v => { update('phone', v); resetValidation(); }}
+              defaultCountryName={ipCountry}
+              placeholder={translations[language].phoneNumber}
+            />
+          </div>
           {showValidation && !form.phone && <p className="text-xs text-red-500 mt-1">Phone number is required</p>}
         </div>
       </div>
