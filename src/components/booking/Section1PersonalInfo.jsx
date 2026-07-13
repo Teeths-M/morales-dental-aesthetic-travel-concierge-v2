@@ -11,6 +11,7 @@ import { NATIONALITIES as nationalities } from '@/lib/nationalities';
 import { ShieldAlert } from 'lucide-react';
 import { isMinorAge, isValidGuardianContact } from '@/lib/guardianGate';
 import PhoneField from '@/components/ui-system/PhoneField';
+import SearchSelect from '@/components/ui-system/SearchSelect';
 
 // 1–100 so a patient under 18 can be stated truthfully — that is what triggers
 // the hard guardian gate below (a minor must never be silently treated as an adult).
@@ -32,7 +33,6 @@ function kgToLbs(kg) {
 export default function Section1PersonalInfo({ form, update, language = 'en', showValidation = false, setShowValidation }) {
   const resetValidation = () => { if (setShowValidation) setShowValidation(false); };
   const [weightUnit, setWeightUnit] = useState('kg');
-  const [nationalitySearch, setNationalitySearch] = useState('');
   const { country: ipCountry } = useIpGeolocation();
 
   // Country name → nationality adjective map for auto-fill
@@ -153,22 +153,16 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
 
         <div>
           <Label>Country of Origin <span className="text-destructive">*</span></Label>
-          <Select value={form.nationality} onValueChange={v => { update('nationality', v); setNationalitySearch(''); }}>
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select or type country" />
-            </SelectTrigger>
-            <SelectContent>
-              <div className="p-2">
-                <Input 
-                  placeholder="Type to search..." 
-                  value={nationalitySearch}
-                  onChange={e => setNationalitySearch(e.target.value.toLowerCase())}
-                  className="h-8 mb-2"
-                />
-              </div>
-              {nationalities.filter(n => n.toLowerCase().includes(nationalitySearch)).map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="mt-1.5">
+            <SearchSelect
+              boxed
+              strict
+              value={form.nationality || ''}
+              onChange={v => update('nationality', v)}
+              options={nationalities}
+              placeholder="Select or type your country"
+            />
+          </div>
         </div>
 
         <div>

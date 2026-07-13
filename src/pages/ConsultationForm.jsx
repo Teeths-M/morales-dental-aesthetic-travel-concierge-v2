@@ -10,6 +10,7 @@ import { procedures } from '@/components/booking/SectionProcedure';
 import ProcedureSelectionGate from '@/components/booking/ProcedureSelectionGate';
 import { useCart } from '@/context/CartContext';
 import PhoneField from '@/components/ui-system/PhoneField';
+import SearchSelect from '@/components/ui-system/SearchSelect';
 import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 
 const NATIONALITIES = ['Afghan','Albanian','Algerian','American','Andorran','Angolan','Argentine','Armenian','Australian','Austrian','Azerbaijani','Bahamian','Bahraini','Bangladeshi','Barbadian','Belarusian','Belgian','Belizean','Bolivian','Bosnian','Botswanan','Brazilian','British','Bruneian','Bulgarian','Cambodian','Cameroonian','Canadian','Cape Verdean','Chilean','Chinese','Colombian','Congolese','Costa Rican','Croatian','Cuban','Cypriot','Czech','Danish','Dominican','Dutch','Ecuadorian','Egyptian','Emirati','Estonian','Ethiopian','Fijian','Filipino','Finnish','French','German','Ghanaian','Greek','Guatemalan','Haitian','Honduran','Hungarian','Indian','Indonesian','Iranian','Iraqi','Irish','Israeli','Italian','Jamaican','Japanese','Jordanian','Kazakhstani','Kenyan','Kuwaiti','Latvian','Lebanese','Libyan','Lithuanian','Malaysian','Maldivian','Maltese','Mexican','Moldovan','Moroccan','Namibian','Nepalese','New Zealander','Nicaraguan','Nigerian','Norwegian','Omani','Pakistani','Palestinian','Panamanian','Paraguayan','Peruvian','Polish','Portuguese','Qatari','Romanian','Russian','Rwandan','Saudi','Senegalese','Serbian','Singaporean','Slovak','Slovenian','Somali','South African','South Korean','Spanish','Sri Lankan','Swedish','Swiss','Syrian','Taiwanese','Tanzanian','Thai','Trinidadian','Turkish','Ukrainian','Uruguayan','Venezuelan','Vietnamese','Zambian','Zimbabwean','Other'];
@@ -242,10 +243,7 @@ export default function ConsultationForm() {
                   </div>
                   <div>
                     <label style={lbl}>Country of Origin</label>
-                    <select style={sel} value={form.client_country} onChange={e => up('client_country', e.target.value)}>
-                      <option value="">Select country…</option>
-                      {NATIONALITIES.map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
+                    <SearchSelect boxed strict dark value={form.client_country || ''} onChange={v => up('client_country', v)} options={NATIONALITIES} placeholder="Select or type your country" />
                   </div>
                   <div>
                     <label style={lbl}>Emergency Contact Name</label>
@@ -272,10 +270,7 @@ export default function ConsultationForm() {
                 </div>
                 <div>
                   <label style={lbl}>Procedure Destination</label>
-                  <select style={sel} value={form.procedure_country} onChange={e => up('procedure_country', e.target.value)}>
-                    <option value="">Where do you want treatment?</option>
-                    {DESTINATIONS.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <SearchSelect boxed strict dark value={form.procedure_country || ''} onChange={v => up('procedure_country', v)} options={DESTINATIONS} placeholder="Where do you want treatment?" />
                 </div>
                 <div style={g2}>
                   <div>
