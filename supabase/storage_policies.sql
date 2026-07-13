@@ -82,9 +82,8 @@ on storage.objects for all to authenticated
 using (bucket_id = 'documents' and public.is_staff())
 with check (bucket_id = 'documents' and public.is_staff());
 
--- NOTE — assigned doctors are intentionally NOT granted file access here, even
--- though the documents *table* lets an assigned doctor read the metadata row.
--- Withholding the actual file bytes from providers until a human decision is the
--- conservative posture (and it sidesteps the minor-data-to-provider concern).
--- To mirror the table (assigned-doctor read), add a select policy keyed on a
--- booking join — but decide the minor case first.
+-- NOTE — assigned doctors are intentionally NOT granted file access here. The
+-- documents *table* lets an assigned doctor read the metadata row (and, for a
+-- MINOR, only after Admin-Review clears the booking — see patients_read /
+-- documents_read in schema.sql). Storage is stricter still: the actual file
+-- bytes are never exposed to a provider from this bucket regardless of role.
