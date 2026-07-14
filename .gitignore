@@ -36,3 +36,4 @@ dist-ssr
 /playwright-report/
 /playwright/.cache/
 tests/e2e/.auth/
+base44/.app.jsonc
