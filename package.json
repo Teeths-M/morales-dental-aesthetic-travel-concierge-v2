@@ -20,7 +20,7 @@
     "load:ratelimit": "k6 run tests/load/public-doctor-check-ratelimit.js"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.38",
+    "@base44/sdk": "^0.8.39",
     "@base44/vite-plugin": "^1.0.30",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-checkbox": "^1.1.4",
