@@ -12,6 +12,7 @@ import FloatingCheckInAlert from '@/components/solo/FloatingCheckInAlert';
 import GlobalNotificationStack from '@/components/notifications/GlobalNotificationStack';
 import GlobalEventBroadcaster from '@/components/notifications/GlobalEventBroadcaster';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
+import { initGlobalSyncListener, registerSyncQueue } from '@/lib/offlineSyncController';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
 import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
@@ -25,6 +26,22 @@ export default function AppLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
   useGeoAutoAlign();
+
+  // Initialize the global offline sync controller once on mount.
+  // Registers the vault sync queue so pending vault actions are flushed
+  // when connectivity is restored. Existing per-queue listeners continue
+  // to work independently — this is purely additive.
+  useEffect(() => {
+    initGlobalSyncListener();
+
+    if (user?.email) {
+      const unregister = registerSyncQueue('vault', async () => {
+        const { processQueue } = await import('@/lib/services/vaultSyncService');
+        return processQueue(user.email);
+      });
+      return () => unregister();
+    }
+  }, [user?.email]);
 
   const suppressOnboarding = NO_ONBOARDING_PATHS.some(p => pathname.startsWith(p));
   const [showOnboarding, setShowOnboarding] = useState(
