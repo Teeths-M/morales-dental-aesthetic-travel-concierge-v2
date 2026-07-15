@@ -267,12 +267,12 @@ export default function Header() {
 
         {/* ── MOBILE: HAMBURGER ONLY ── */}
         <button
-          onClick={() => setIsMobileOpen(p => !p)}
-          className="lg:hidden p-2 text-white/80 hover:text-white z-50 relative"
-          style={calm ? { color: CALM.text } : undefined}
-          aria-label="Toggle Menu"
+         onClick={() => setIsMobileOpen(p => !p)}
+         className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white z-50 relative"
+         style={calm ? { color: CALM.text } : undefined}
+         aria-label="Toggle Menu"
         >
-          <div className="w-6 h-[18px] flex flex-col justify-between">
+         <div className="w-6 h-[18px] flex flex-col justify-between">
             <span className={`h-[2px] w-full bg-current origin-center transition-transform duration-300 ${isMobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`h-[2px] w-full bg-current transition-opacity duration-200 ${isMobileOpen ? 'opacity-0' : ''}`} />
             <span className={`h-[2px] w-full bg-current origin-center transition-transform duration-300 ${isMobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
@@ -300,17 +300,12 @@ export default function Header() {
             <ModeToggle />
           </div>
 
-          {/* Primary nav */}
-          <div className="flex flex-col gap-4 text-xl font-medium border-b border-white/[0.06] pb-6">
-            <Link to="/" onClick={() => setIsMobileOpen(false)} style={{ color: '#D4AF37', fontWeight: 600 }}>Home</Link>
+          {/* Primary nav — max 5 items, large tappable targets */}
+          <div className="flex flex-col gap-2 border-b border-white/[0.06] pb-6">
+            <Link to="/" onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[52px] px-2 rounded-xl text-lg font-semibold" style={{ color: '#D4AF37' }}>Home</Link>
             {navLinks.map(link => (
-              <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">{link.name}</Link>
+              <Link key={link.path} to={link.path} onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[52px] px-2 rounded-xl text-lg font-medium text-white/80 hover:text-white hover:bg-white/5">{link.name}</Link>
             ))}
-            <Link to="/signup" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">{t('nav.for_partners')}</Link>
-            <Link to="/visa-assist" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">Visa Assist</Link>
-            <Link to="/passport-vault" onClick={() => setIsMobileOpen(false)} className="text-white/80 hover:text-white">My Vault</Link>
-            <Link to="/nearby" onClick={() => setIsMobileOpen(false)} className="font-semibold" style={{ color: '#00E5FF' }}>📍 Find Nearby Help</Link>
-            <Link to="/offline-guide" onClick={() => setIsMobileOpen(false)} className="text-red-400 font-semibold">🆘 Offline &amp; SOS Guide</Link>
           </div>
 
           {/* Auth */}
@@ -319,13 +314,13 @@ export default function Header() {
               <>
                 {user.full_name && <p className="text-sm font-semibold text-white">{user.full_name}</p>}
                 <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{user.email}</p>
-                <Link to="/dashboard" onClick={() => setIsMobileOpen(false)} className="text-base font-medium text-white/80">Dashboard</Link>
+                <Link to="/dashboard" onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[48px] px-2 rounded-xl text-base font-medium text-white/80 hover:bg-white/5">Dashboard</Link>
                 {isAdmin && (
-                  <Link to="/admin" onClick={() => setIsMobileOpen(false)} className="text-base font-medium" style={{ color: '#D4AF37' }}>Admin Portal</Link>
+                  <Link to="/admin" onClick={() => setIsMobileOpen(false)} className="flex items-center min-h-[48px] px-2 rounded-xl text-base font-medium" style={{ color: '#D4AF37' }}>Admin Portal</Link>
                 )}
                 <button
                   onClick={async () => { await base44.auth.logout(); setIsMobileOpen(false); window.location.reload(); }}
-                  className="text-base font-medium text-left text-red-400/80"
+                  className="flex items-center min-h-[48px] px-2 rounded-xl text-base font-medium text-left text-red-400/80 hover:bg-red-500/5"
                 >
                   Sign Out
                 </button>
@@ -334,14 +329,14 @@ export default function Header() {
               <>
                 <Link
                   to="/intake" onClick={() => setIsMobileOpen(false)}
-                  className="w-full text-center py-3.5 rounded-full text-sm font-bold"
+                  className="w-full text-center min-h-[52px] flex items-center justify-center rounded-full text-base font-bold"
                   style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)', color: '#060B16' }}
                 >
                   {t('nav.book_now')}
                 </Link>
                 <Link
                   to="/dashboard" onClick={() => setIsMobileOpen(false)}
-                  className="w-full text-center py-3 text-sm font-medium"
+                  className="w-full text-center min-h-[48px] flex items-center justify-center rounded-full text-base font-medium"
                   style={{ color: 'rgba(255,255,255,0.45)' }}
                 >
                   {t('nav.sign_in')}

@@ -155,13 +155,13 @@ export default function LuxuryHero() {
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.48, ease: 'easeInOut' }}
                   style={{
-                    margin: 0,
-                    fontSize: 13,
-                    fontStyle: 'italic',
-                    color: 'rgba(255,255,255,0.36)',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.5,
-                  }}
+                     margin: 0,
+                     fontSize: 'clamp(1rem, 1.8vw, 1.05rem)',
+                     fontStyle: 'italic',
+                     color: 'rgba(255,255,255,0.36)',
+                     letterSpacing: '0.01em',
+                     lineHeight: 1.5,
+                   }}
                 >
                   {STORIES[storyIdx]}
                 </motion.p>
@@ -200,14 +200,14 @@ export default function LuxuryHero() {
                 transition={{ duration: 0.6, delay: 0.06 }}
                 className="mb-5"
                 style={{
-                  fontSize:      '13px',
+                  fontSize:      'clamp(1rem, 2vw, 1.1rem)',
                   fontWeight:    500,
                   color:         'rgba(255,255,255,0.50)',
                   letterSpacing: '0.01em',
                   lineHeight:    1.4,
                   margin:        '0 0 16px',
                 }}
-              >
+                >
                 The world's first Medical Travel Safety platform.
               </motion.p>
             )}
@@ -220,14 +220,14 @@ export default function LuxuryHero() {
                 transition={{ duration: 0.7, delay: 0.08 }}
                 className="mb-5"
                 style={{
-                  fontSize:    '14px',
+                  fontSize:    'clamp(1rem, 2vw, 1.1rem)',
                   fontStyle:   'italic',
                   color:       `${GOLD}90`,
                   lineHeight:  1.6,
                   fontFamily:  'Georgia, serif',
                   letterSpacing: '0.01em',
                 }}
-              >
+                >
                 Going abroad for surgery is the bravest thing you'll do for yourself.<br />
                 Morales was designed for that exact moment.
               </motion.p>
@@ -263,7 +263,7 @@ export default function LuxuryHero() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.5, delay: 0.15 }}
                 className="mb-9 max-w-[440px]"
-                style={{ fontSize: '17px', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
+                style={{ fontSize: 'clamp(1rem, 1.8vw, 1.1rem)', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
               >
                 {content.body}
               </motion.p>
@@ -276,14 +276,14 @@ export default function LuxuryHero() {
               transition={{ duration: 0.6, delay: 0.25 }}
               className="flex flex-col gap-3 mb-8"
             >
-              {/* Button row */}
+              {/* Button row — ONE primary action on mobile; secondary options on desktop only */}
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
                 {/* Primary: gold pill */}
                 <Link to={content.cta.path}>
                   <motion.button
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group relative w-full sm:w-auto h-14 px-10 rounded-full text-[15px] font-semibold overflow-hidden transition-shadow duration-300"
+                    className="group relative w-full sm:w-auto min-h-[56px] px-10 rounded-full text-base font-semibold overflow-hidden transition-shadow duration-300"
                     style={{
                       background:    `linear-gradient(135deg, ${GOLD} 0%, ${BRAND.goldLight} 100%)`,
                       color:         '#060B16',
@@ -302,12 +302,12 @@ export default function LuxuryHero() {
                   </motion.button>
                 </Link>
 
-                {/* Secondary: glass demo pill — visually subordinate */}
-                <Link to="/demo">
+                {/* Secondary: glass demo pill — desktop only, visually subordinate */}
+                <Link to="/demo" className="hidden sm:block">
                   <motion.button
                     whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full sm:w-auto h-11 px-7 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                    className="min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
                     style={{
                       background:    'rgba(255,255,255,0.05)',
                       backdropFilter: 'blur(16px)',
@@ -318,18 +318,18 @@ export default function LuxuryHero() {
                       boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
                     }}
                   >
-                    <Play style={{ width: 12, height: 12, fill: `${GOLD}cc`, flexShrink: 0 }} />
+                    <Play style={{ width: 14, height: 14, fill: `${GOLD}cc`, flexShrink: 0 }} />
                     Live Demo
                   </motion.button>
                 </Link>
 
-                {/* Tertiary: glass pill — for patients who booked elsewhere (BYOJ) */}
+                {/* Tertiary: glass pill — desktop only, for patients who booked elsewhere (BYOJ) */}
                 {isMedical && (
-                  <Link to="/protect">
+                  <Link to="/protect" className="hidden sm:block">
                     <motion.button
                       whileHover={{ scale: 1.02, y: -2, boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.5)` }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full sm:w-auto h-11 px-7 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                      className="min-h-[48px] px-7 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
                       style={{
                         background:    'rgba(255,255,255,0.05)',
                         backdropFilter: 'blur(16px)',
@@ -340,7 +340,7 @@ export default function LuxuryHero() {
                         boxShadow:     '0 4px 20px rgba(0,0,0,0.3)',
                       }}
                     >
-                      <Shield style={{ width: 12, height: 12, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
+                      <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
                       Bring Your Own Journey
                     </motion.button>
                   </Link>
@@ -367,7 +367,7 @@ export default function LuxuryHero() {
                 <div key={label} className="flex items-center gap-1.5">
                   {i > 0 && <span className="text-white/15 mr-1 hidden sm:inline">·</span>}
                   <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} strokeWidth={2} />
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: 'clamp(0.8rem, 1.5vw, 0.85rem)', fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>
                     {label}
                   </span>
                 </div>
@@ -423,7 +423,7 @@ export default function LuxuryHero() {
                 >
                   {title}
                 </p>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
+                <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1rem)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>
                   {desc}
                 </p>
               </motion.div>

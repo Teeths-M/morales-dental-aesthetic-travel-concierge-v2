@@ -17,6 +17,7 @@
 import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { resolveLocaleFromCountry } from '@/lib/geoAutoAlign';
+import { changeLanguage } from '@/i18n';
 
 // Bump version to force a fresh lookup after the ipinfo.io → ipapi.co fix.
 // Old sessions that cached a wrong Venezuela result will be ignored.
