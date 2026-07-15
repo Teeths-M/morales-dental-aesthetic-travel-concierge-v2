@@ -112,6 +112,8 @@ button:active, a:active {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   body {
     @apply bg-background text-foreground;
@@ -150,6 +152,30 @@ button:active, a:active {
   }
   .uppercase {
     letter-spacing: 0.08em;
+  }
+  /* Prevent iOS Safari auto-zoom on input focus — 16px is the threshold */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  /* Fixed-ratio image container — object-fit: cover prevents stretch/squash/overflow */
+  .img-cover-container {
+    position: relative;
+    overflow: hidden;
+  }
+  .img-cover-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* Loading skeleton placeholder — prevents layout shift while images load (CLS = 0) */
+  .img-skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }
 

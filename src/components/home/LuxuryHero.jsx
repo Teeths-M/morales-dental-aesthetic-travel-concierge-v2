@@ -92,8 +92,8 @@ export default function LuxuryHero() {
         className="relative overflow-hidden"
         style={{ background: '#0b1219', marginTop: '-72px', minHeight: '100svh' }}
       >
-        {/* Full-bleed background — slow parallax zoom */}
-        <div className="absolute inset-0">
+        {/* Full-bleed background — skeleton placeholder prevents layout shift */}
+        <div className="absolute inset-0 img-skeleton">
           <motion.img
             src={HERO_IMAGE}
             alt="Premium medical travel concierge"
@@ -101,8 +101,8 @@ export default function LuxuryHero() {
             style={{ objectPosition: '65% center' }}
             loading="eager"
             fetchPriority="high"
-            initial={prefersReducedMotion ? false : { scale: 1.08 }}
-            animate={{ scale: 1 }}
+            initial={prefersReducedMotion ? false : { scale: 1.08, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
             transition={prefersReducedMotion ? { duration: 0 } : { duration: 28, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
           />
           {/* Gradient overlays */}
