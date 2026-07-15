@@ -42,6 +42,7 @@ const AdminMissionControl       = lazy(() => import('@/pages/AdminMissionControl
 const AdminDataFreshness        = lazy(() => import('@/pages/AdminDataFreshness'));
 const AdminClinics              = lazy(() => import('@/pages/AdminClinics'));
 const SituationRoom             = lazy(() => import('@/pages/SituationRoom'));
+const AdminMonitorAction        = lazy(() => import('@/pages/AdminMonitorAction'));
 
 export const adminRoutes = (
   <Route element={<ErrorBoundary><ProtectedRoute allowedRoles={ADMIN_ROLES} /></ErrorBoundary>}>
@@ -77,6 +78,7 @@ export const adminRoutes = (
       <Route path="/admin/solo-monitor"              element={<ErrorBoundary><AdminSoloMonitor /></ErrorBoundary>} />
       <Route path="/admin/wilderness-rescue"         element={<ErrorBoundary><AdminWildernessRescue /></ErrorBoundary>} />
       <Route path="/admin/sos-sync-monitor"          element={<ErrorBoundary><AdminSosSyncMonitor /></ErrorBoundary>} />
+      <Route path="/admin/monitor-action"            element={<ErrorBoundary><AdminMonitorAction /></ErrorBoundary>} />
       {/* Dev/test tools */}
       <Route path="/test-portal-link"                element={<ErrorBoundary><TestPortalLink /></ErrorBoundary>} />
       <Route path="/portal-test-hub"                 element={<ErrorBoundary><PortalTestHub /></ErrorBoundary>} />

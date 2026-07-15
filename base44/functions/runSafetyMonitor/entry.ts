@@ -82,7 +82,15 @@ Deno.serve(async (req) => {
         '2. Severity (low/medium/high/critical)\n' +
         '3. What pattern or anomaly you detected\n' +
         '4. Recommended action for the ops team\n\n' +
-        'Only report genuinely actionable insights. If everything looks routine, return an empty insights array with a summary explaining why. Be concise. No patient data is present — this is structural analysis only.',
+        'Only report genuinely actionable insights. If everything looks routine, return an empty insights array with a summary explaining why. Be concise. No patient data is present — this is structural analysis only.\n\n' +
+        'For each insight, also recommend ONE safe remediation function from this whitelist that the ops team can execute with one click:\n' +
+        '- retryFailedDispatches (re-attempt failed partner dispatches)\n' +
+        '- autoReassignDoctorOnDecline (reassign a doctor after a decline)\n' +
+        '- checkPartnerSLABreaches (check for partner SLA breaches)\n' +
+        '- escalateSoloCheckIn (escalate a missed solo check-in)\n' +
+        '- alertStagnantCases (send alerts for stagnant cases)\n' +
+        '- checkStaleLiveLocations (flag stale GPS signals)\n' +
+        'Provide the function_name, a short button label, and a one-sentence reason why this function helps. If no function is applicable, leave function_name empty.',
       response_json_schema: {
         type: 'object',
         properties: {
@@ -95,6 +103,14 @@ Deno.serve(async (req) => {
                 severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
                 pattern: { type: 'string' },
                 recommendation: { type: 'string' },
+                recommended_action: {
+                  type: 'object',
+                  properties: {
+                    function_name: { type: 'string' },
+                    button_label: { type: 'string' },
+                    reason: { type: 'string' },
+                  },
+                },
               },
             },
           },
@@ -120,26 +136,52 @@ Deno.serve(async (req) => {
 
     const severityEmoji = { low: '🟡', medium: '🟠', high: '🔴', critical: '🚨' };
 
-    const insightBlocks = insights.flatMap((insight, i) => [
-      {
-        type: 'section',
-        fields: [
-          {
-            type: 'mrkdwn',
-            text: `${severityEmoji[insight.severity] || '⚪'} *${insight.title || `Insight ${i + 1}`}*`,
-          },
-          { type: 'mrkdwn', text: `*Severity:* ${insight.severity || 'unknown'}` },
-        ],
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*Pattern detected:*\n${insight.pattern}\n\n*Recommended action:*\n${insight.recommendation}`,
+    const insightBlocks = insights.flatMap((insight, i) => {
+      const action = insight.recommended_action;
+      const hasAction = action && action.function_name;
+      const actionUrl = hasAction
+        ? `${appUrl}/admin/monitor-action?fn=${encodeURIComponent(action.function_name)}&desc=${encodeURIComponent(insight.title || `Insight ${i + 1}`)}&reason=${encodeURIComponent(action.reason || insight.recommendation || '')}&params=${encodeURIComponent(btoa(JSON.stringify({})))}`
+        : null;
+
+      const blocksForInsight = [
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `${severityEmoji[insight.severity] || '⚪'} *${insight.title || `Insight ${i + 1}`}*`,
+            },
+            { type: 'mrkdwn', text: `*Severity:* ${insight.severity || 'unknown'}` },
+          ],
         },
-      },
-      { type: 'divider' },
-    ]);
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text:
+              `*Pattern detected:*\n${insight.pattern}\n\n*Recommended action:*\n${insight.recommendation}` +
+              (hasAction ? `\n\n🤖 *AI Suggestion:* ${action.reason || ''}` : ''),
+          },
+        },
+      ];
+
+      if (hasAction && actionUrl) {
+        blocksForInsight.push({
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: { type: 'plain_text', text: `⚡ ${action.button_label || 'Execute Action'}`, emoji: true },
+              style: 'primary',
+              url: actionUrl,
+            },
+          ],
+        });
+      }
+
+      blocksForInsight.push({ type: 'divider' });
+      return blocksForInsight;
+    });
 
     const blocks = [
       {
