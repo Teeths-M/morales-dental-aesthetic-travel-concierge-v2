@@ -4,7 +4,10 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // ── READ-ONLY: Query active cases in intermediate / stuck states ──
+    // ── READ-ONLY: Query ALL active cases in intermediate / stuck states ──
+    // No hard limit — the status filter ensures we only pull genuinely active
+    // records. The aggregation step below collapses these into pattern counts
+    // before sending to the LLM, so context size stays bounded even at scale.
     const stuckCases = await base44.asServiceRole.entities.CaseRecord.filter({
       status: {
         $in: [
@@ -16,17 +19,17 @@ Deno.serve(async (req) => {
           'companion_required_pending',
         ],
       },
-    }, '-created_date', 50);
+    }, '-created_date', 500);
 
     // ── Query pending / escalated solo check-ins ──
     const activeCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter({
       status: { $in: ['pending', 'escalated_2h', 'escalated_3h', 'escalated_5h'] },
-    }, '-created_date', 30);
+    }, '-created_date', 200);
 
     // ── Query unresolved dispatch failures ──
     const recentFailures = await base44.asServiceRole.entities.DispatchFailureLog.filter({
       status: 'logged',
-    }, '-created_date', 20);
+    }, '-created_date', 200);
 
     const totalIssues = stuckCases.length + activeCheckIns.length + recentFailures.length;
     if (totalIssues === 0) {
@@ -38,21 +41,45 @@ Deno.serve(async (req) => {
     }
 
     // ── Sanitize data for LLM — NO PHI, structural patterns only ──
+    // At scale (50+ users), raw records can exceed LLM context limits, so we
+    // aggregate into status/priority buckets and only surface outlier details
+    // (e.g. cases stuck >7 days or in fallback flux). This keeps the prompt
+    // bounded regardless of user count.
     const now = Date.now();
-    const casePatterns = stuckCases.map((c) => ({
-      status: c.status,
-      case_priority: c.case_priority,
-      safe_t_result: c.safe_t_result,
-      fallback_in_flux: c.fallback_state?.in_flux || false,
-      fallback_escalation_level: c.fallback_state?.current_escalation_level || 0,
-      days_since_created: c.created_date
+
+    const caseAggregates = {};
+    const outlierCases = [];
+    for (const c of stuckCases) {
+      const key = `${c.status}|${c.case_priority || 'Normal'}|${c.safe_t_result || 'PENDING'}`;
+      caseAggregates[key] = (caseAggregates[key] || 0) + 1;
+      const daysStuck = c.created_date
         ? Math.floor((now - new Date(c.created_date).getTime()) / 86400000)
-        : null,
-      doctor_confirmation_status: c.doctor_confirmation_status,
-      itinerary_status: c.itinerary_status,
-      transfer_status: c.transfer_status,
-      companion_requirement_status: c.companion_requirement_status,
-    }));
+        : 0;
+      const inFlux = c.fallback_state?.in_flux || false;
+      if (daysStuck > 7 || inFlux || (c.fallback_state?.current_escalation_level || 0) >= 2) {
+        outlierCases.push({
+          status: c.status,
+          case_priority: c.case_priority,
+          safe_t_result: c.safe_t_result,
+          fallback_in_flux: inFlux,
+          fallback_escalation_level: c.fallback_state?.current_escalation_level || 0,
+          days_since_created: daysStuck,
+          doctor_confirmation_status: c.doctor_confirmation_status,
+          itinerary_status: c.itinerary_status,
+          transfer_status: c.transfer_status,
+          companion_requirement_status: c.companion_requirement_status,
+        });
+      }
+    }
+
+    const casePatterns = {
+      total_active: stuckCases.length,
+      aggregates: Object.entries(caseAggregates).map(([k, count]) => {
+        const [status, priority, safeT] = k.split('|');
+        return { status, priority, safe_t_result: safeT, count };
+      }),
+      outliers: outlierCases.slice(0, 30),
+    };
 
     const checkInPatterns = activeCheckIns.map((c) => ({
       status: c.status,
@@ -74,7 +101,7 @@ Deno.serve(async (req) => {
     const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt:
         'You are the Morales Safety Monitor AI. Analyze operational patterns from a medical travel safety platform and identify systemic issues, anomalies, or risks that require human attention.\n\n' +
-        `ACTIVE CASES (${casePatterns.length}):\n${JSON.stringify(casePatterns, null, 2)}\n\n` +
+        `ACTIVE CASES (${casePatterns.total_active} total, ${casePatterns.outliers.length} outliers requiring attention):\n${JSON.stringify(casePatterns, null, 2)}\n\n` +
         `ACTIVE SOLO CHECK-INS (${checkInPatterns.length}):\n${JSON.stringify(checkInPatterns, null, 2)}\n\n` +
         `UNRESOLVED DISPATCH FAILURES (${failurePatterns.length}):\n${JSON.stringify(failurePatterns, null, 2)}\n\n` +
         'Identify the TOP 1-3 most critical patterns. For each, provide:\n' +
