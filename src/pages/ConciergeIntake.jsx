@@ -420,7 +420,7 @@ function buildChecklistItems({ answers, doctorSearch, costEstimate, partnerPrevi
 
 function LoadingShell() {
   return (
-    <div style={{ textAlign: 'center', color: TEXT_SOFT, fontSize: 14 }}>
+    <div style={{ textAlign: 'center', color: TEXT_SOFT, fontSize: 'clamp(1rem, 2vw, 1.1rem)' }}>
       <img
         src="/morales-m-mark.png"
         alt="Morales"
@@ -455,7 +455,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
       <p
         style={{
           margin: '0 0 14px',
-          fontSize: 11,
+          fontSize: 'clamp(0.875rem, 2vw, 1rem)',
           fontWeight: 700,
           letterSpacing: '2px',
           textTransform: 'uppercase',
@@ -481,7 +481,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
       <p
         style={{
           margin: '0 0 32px',
-          fontSize: 15,
+          fontSize: 'clamp(1rem, 2vw, 1.1rem)',
           lineHeight: 1.65,
           color: TEXT_SOFT,
         }}
@@ -520,7 +520,7 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
       </button>
 
       {/* Escape hatch to the classic wizard — same journey, form-style */}
-      <p style={{ margin: '18px 0 0', fontSize: 12.5, color: TEXT_SOFT }}>
+      <p style={{ margin: '18px 0 0', fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: TEXT_SOFT }}>
         Prefer a classic form?{' '}
         <a href="/booking" style={{ color: TEAL, textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Use the detailed form instead

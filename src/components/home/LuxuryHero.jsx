@@ -141,7 +141,7 @@ export default function LuxuryHero() {
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)`, cursor: 'help' }}
               >
                 <img src="/morales-m-mark.png" alt="M" style={{ width: 14, filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.8))' }} />
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>9 Checkpoints per Journey · 0 Patients Unreachable</span>
+                <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>We Check On You 9 Times · No One Is Ever Lost</span>
               </div>
             </motion.div>
 
@@ -341,7 +341,7 @@ export default function LuxuryHero() {
                       }}
                     >
                       <Shield style={{ width: 14, height: 14, color: `${GOLD}cc`, flexShrink: 0 }} strokeWidth={2} />
-                      Bring Your Own Journey
+                      Booked Elsewhere? Add Safety
                     </motion.button>
                   </Link>
                 )}
@@ -349,7 +349,7 @@ export default function LuxuryHero() {
 
               {/* No-account signal — directly below buttons, not between them */}
               {isMedical && (
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontWeight: 500, letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: 'rgba(255,255,255,0.28)', fontWeight: 500, letterSpacing: '0.04em' }}>
                   No account needed to start
                 </span>
               )}
@@ -367,7 +367,7 @@ export default function LuxuryHero() {
                 <div key={label} className="flex items-center gap-1.5">
                   {i > 0 && <span className="text-white/15 mr-1 hidden sm:inline">·</span>}
                   <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: GOLD }} strokeWidth={2} />
-                  <span style={{ fontSize: 'clamp(0.8rem, 1.5vw, 0.85rem)', fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 500, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>
                     {label}
                   </span>
                 </div>
@@ -417,7 +417,7 @@ export default function LuxuryHero() {
                 </div>
                 <p
                   style={{
-                    fontSize: '15px', fontWeight: 600, color: '#FFFFFF',
+                    fontSize: 'clamp(1rem, 1.8vw, 1.1rem)', fontWeight: 600, color: '#FFFFFF',
                     letterSpacing: '-0.01em', lineHeight: 1.2,
                   }}
                 >
@@ -446,17 +446,17 @@ export default function LuxuryHero() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
                 <div style={{ width: 24, height: 1, background: `${GOLD}50` }} />
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
+                <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: `${GOLD}65` }}>
                   After Surgery
                 </span>
               </div>
               <h2 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.8rem)', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 20 }}>
                 "What happens<br />after surgery?"
               </h2>
-              <p style={{ fontSize: '18px', fontStyle: 'italic', color: `${GOLD}90`, lineHeight: 1.6, fontFamily: 'Georgia, serif', marginBottom: 20 }}>
+              <p style={{ fontSize: 'clamp(1.125rem, 2vw, 1.25rem)', fontStyle: 'italic', color: `${GOLD}90`, lineHeight: 1.6, fontFamily: 'Georgia, serif', marginBottom: 20 }}>
                 That's where Morales<br />becomes most valuable.
               </p>
-              <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75, maxWidth: 380 }}>
+              <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.05rem)', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75, maxWidth: 380 }}>
                 Most platforms track your booking.<br />
                 Morales tracks you — until you are home safe.
               </p>
@@ -473,10 +473,10 @@ export default function LuxuryHero() {
                   transition={{ duration: 0.55, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
                   style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 800, color: `${GOLD}45`, letterSpacing: '0.1em', flexShrink: 0, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>{num}</span>
+                  <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 800, color: `${GOLD}45`, letterSpacing: '0.1em', flexShrink: 0, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>{num}</span>
                   <div>
-                    <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: 8, lineHeight: 1.3 }}>{title}</p>
-                    <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75 }}>{desc}</p>
+                    <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1.1rem)', fontWeight: 700, color: '#fff', marginBottom: 8, lineHeight: 1.3 }}>{title}</p>
+                    <p style={{ fontSize: 'clamp(1rem, 1.8vw, 1rem)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.75 }}>{desc}</p>
                   </div>
                 </motion.div>
               ))}
