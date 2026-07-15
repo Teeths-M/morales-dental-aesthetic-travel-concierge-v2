@@ -265,16 +265,15 @@ export default function FirstTimeOnboarding({ onComplete, userDisplayName = '' }
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md bg-gradient-to-br from-slate-900 to-[#060B16] border border-white/10 rounded-3xl p-7 shadow-2xl shadow-black/60 relative"
       >
-        {/* Skip link — not shown on step 1 */}
-        {step > 1 && (
-          <button
-            onClick={skip}
-            className="absolute top-5 right-5 text-slate-600 hover:text-slate-400 text-xs font-medium transition-colors flex items-center gap-1"
-            aria-label="Skip setup"
-          >
-            Skip <X className="w-3 h-3" />
-          </button>
-        )}
+        {/* Skip link — visible on every step so users (and automated
+            tests) can dismiss the wizard without completing all 4 steps */}
+        <button
+          onClick={skip}
+          className="absolute top-5 right-5 text-slate-600 hover:text-slate-400 text-xs font-medium transition-colors flex items-center gap-1 z-10"
+          aria-label="Skip setup"
+        >
+          Skip <X className="w-3 h-3" />
+        </button>
 
         {/* Progress (hidden on welcome) */}
         {step > 1 && <ProgressBar step={step} />}

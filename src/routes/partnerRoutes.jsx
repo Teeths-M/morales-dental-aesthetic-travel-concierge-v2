@@ -4,7 +4,7 @@
  * All paths preserved exactly as in the original App.jsx.
  */
 import React, { lazy } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -55,6 +55,9 @@ export const partnerRoutes = (
     <Route key="portal-local-dr"  path="/portal/local-doctor/:token"  element={<ErrorBoundary><PortalLocalDoctor /></ErrorBoundary>} />
     <Route key="portal-proposal"  path="/portal/proposal/:token"      element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
     <Route key="portal-proposal-w" path="/portal/proposal/*"          element={<ErrorBoundary><ClientProposalPortal /></ErrorBoundary>} />
+
+    {/* Common case-variant redirects — /PartnerSignup → /partner-signup */}
+    <Route key="redirect-partner-signup-pascal" path="/PartnerSignup" element={<Navigate to="/partner-signup" replace />} />
 
     {/* Partner signup + dashboards inside AppLayout */}
     <Route key="partner-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
