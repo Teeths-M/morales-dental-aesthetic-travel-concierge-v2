@@ -31,6 +31,25 @@ export default function TripOverview() {
   }, [user]);
 
   const loadTravelRequests = async () => {
+    const CACHE_KEY = `morales_trips_${user.email}`;
+    let hasCachedData = false;
+
+    // OFFLINE-FIRST: Load from cache immediately (stale-while-revalidate)
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setTravelRequests(parsed);
+        setSelectedTrip(parsed[0] || null);
+        hasCachedData = parsed.length > 0;
+      }
+    } catch (_) {}
+
+    if (!navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const requests = await base44.entities.TravelRequest.filter(
         { user_email: user.email },
@@ -43,34 +62,25 @@ export default function TripOverview() {
         requests.map(async (req) => {
           const enrichedReq = { ...req };
 
-          // Load travel agency
           if (req.travel_agency_id) {
             try {
               const agency = await base44.entities.TravelAgency.get(req.travel_agency_id);
               enrichedReq.travel_agency = agency;
-            } catch (e) {
-              console.error('Failed to load agency:', e);
-            }
+            } catch (_) {}
           }
 
-          // Load chauffeur
           if (req.chauffeur_id) {
             try {
               const taxi = await base44.entities.TaxiService.get(req.chauffeur_id);
               enrichedReq.chauffeur = taxi;
-            } catch (e) {
-              console.error('Failed to load taxi:', e);
-            }
+            } catch (_) {}
           }
 
-          // Load companion
           if (req.companion_id) {
             try {
               const companion = await base44.entities.Companion.get(req.companion_id);
               enrichedReq.companion = companion;
-            } catch (e) {
-              console.error('Failed to load companion:', e);
-            }
+            } catch (_) {}
           }
 
           return enrichedReq;
@@ -81,9 +91,16 @@ export default function TripOverview() {
       if (enriched.length > 0) {
         setSelectedTrip(enriched[0]);
       }
+
+      // Cache for offline access
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(enriched));
+      } catch (_) {}
     } catch (err) {
-      console.error('Error loading travel requests:', err);
-      setError(err);
+      // If we have cached data, keep showing it silently — no error screen
+      if (!hasCachedData) {
+        setError(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -110,7 +127,7 @@ export default function TripOverview() {
     }).format(amount);
   };
 
-  if (loading) {
+  if (loading && travelRequests.length === 0) {
     return (
       <div className="flex min-h-screen bg-slate-50">
         <DashboardSidebar />
@@ -124,7 +141,7 @@ export default function TripOverview() {
     );
   }
 
-  if (error) {
+  if (error && travelRequests.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">

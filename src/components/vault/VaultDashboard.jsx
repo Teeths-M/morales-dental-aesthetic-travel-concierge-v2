@@ -72,11 +72,10 @@ export default function VaultDashboard({ user }) {
         encryption_salt_b64: v.encryption_salt_b64,
         encrypted_file_uri: v.encrypted_file_uri,
       }));
-      try { 
+      try {
         localStorage.setItem(key, JSON.stringify(meta));
-        console.log('[VaultDashboard] Cached', meta.length, 'documents for offline access');
       } catch (e) {
-        console.error('[VaultDashboard] Cache failed:', e);
+        // Cache write failed — non-fatal, online mode still works
       }
     }
   }, [vaults, loading, user?.email]);
@@ -110,9 +109,8 @@ export default function VaultDashboard({ user }) {
             encryptedB64, encryption_iv_b64, encryption_salt_b64, file_name, mime_type,
             cached_at: new Date().toISOString()
           }));
-          console.log('[VaultDashboard] Background auto-cached for offline access:', file_name);
-        } catch (err) {
-          console.warn('[VaultDashboard] Background auto-cache failed for', vault.file_name, '(non-fatal):', err);
+        } catch (_) {
+          // Background auto-cache failed — non-fatal, manual cache still available
         }
       }
     })();
@@ -160,8 +158,7 @@ export default function VaultDashboard({ user }) {
         };
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
         successCount++;
-      } catch (err) {
-        console.error('[VaultDashboard] Failed to cache', vault.file_name, err);
+      } catch (_) {
         errorCount++;
       }
 
@@ -187,13 +184,7 @@ export default function VaultDashboard({ user }) {
     const cacheKey = `vault_encrypted_${vault.passport_token}`;
     const isCached = !!localStorage.getItem(cacheKey);
     
-    if (navigator.onLine && !isCached) {
-      console.log('[VaultDashboard] Will cache document after download:', vault.file_name);
-    } else if (!navigator.onLine && isCached) {
-      console.log('[VaultDashboard] Using cached document for offline access:', vault.file_name);
-    } else if (!navigator.onLine && !isCached) {
-      console.warn('[VaultDashboard] Offline but document not cached:', vault.file_name);
-    }
+    // Offline+cached = will use local copy; offline+uncached = will show error modal
     
     setPwModal({ open: true, vault, isLoading: false });
   }, []);
@@ -204,24 +195,20 @@ export default function VaultDashboard({ user }) {
   const handleDecryptAndDownload = useCallback(async (password) => {
     const vault = pwModal.vault;
     setPwModal(p => ({ ...p, isLoading: true }));
-    
-    let cachedData = null; // Declare at function scope for error handler access
-    
+
     try {
-      // OFFLINE CHECK: Decryption requires fetching the encrypted blob
+      // OFFLINE CHECK: Decryption requires the encrypted blob
       if (!navigator.onLine) {
         setPwModal({ open: false, vault: null, isLoading: false });
-        
-        // Check if document was primed for offline (cached in localStorage)
+
         const cacheKey = `vault_encrypted_${vault.passport_token}`;
         const cachedEncrypted = localStorage.getItem(cacheKey);
-        
+
         if (!cachedEncrypted) {
           alert('Offline Mode: This document was not cached for offline access. Please reconnect to the internet and use the "Save Offline" option when viewing this document.');
           return;
         }
-        
-        // Use cached encrypted blob
+
         try {
           const { encryption_iv_b64, encryption_salt_b64, file_name, mime_type, encryptedB64 } = JSON.parse(cachedEncrypted);
           const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
@@ -230,14 +217,14 @@ export default function VaultDashboard({ user }) {
           URL.revokeObjectURL(url);
           setPwModal({ open: false, vault: null, isLoading: false });
           return;
-        } catch (cacheErr) {
-          console.error('[VaultDashboard] offline decrypt failed:', cacheErr);
+        } catch (_) {
           alert('Offline Mode: Cached document is corrupted or incomplete. Please reconnect to download again.');
           return;
         }
       }
+
       const cachedMeta = vault.encryption_iv_b64 && vault.encryption_salt_b64 && vault.encrypted_file_uri;
-      
+
       if (!cachedMeta) {
         // Try online fetch
         const res = await vaultService.requestDownload(vault.passport_token);
@@ -254,73 +241,46 @@ export default function VaultDashboard({ user }) {
         const a = document.createElement('a'); a.href = url; a.download = file_name; a.click();
         URL.revokeObjectURL(url);
 
-        // Cache encrypted blob for offline use (up to 5MB to fit localStorage limits)
-        const MAX_CACHE_SIZE = 5 * 1024 * 1024; // 5MB
+        // Cache encrypted blob for offline use (up to 5MB)
+        const MAX_CACHE_SIZE = 5 * 1024 * 1024;
         if (vault.file_size_bytes < MAX_CACHE_SIZE) {
           try {
             const cacheKey = `vault_encrypted_${vault.passport_token}`;
-            const cacheData = {
-              encryptedB64,
-              encryption_iv_b64,
-              encryption_salt_b64,
-              file_name,
-              mime_type,
+            localStorage.setItem(cacheKey, JSON.stringify({
+              encryptedB64, encryption_iv_b64, encryption_salt_b64, file_name, mime_type,
               cached_at: new Date().toISOString()
-            };
-            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-            console.log('[VaultDashboard] Cached document for offline access:', file_name, '- Size:', vault.file_size_bytes, 'bytes');
-            
-            // Verify cache was written correctly
-            const verifyCache = localStorage.getItem(cacheKey);
-            if (verifyCache) {
-              console.log('[VaultDashboard] Cache verification successful');
-            } else {
-              console.warn('[VaultDashboard] Cache verification failed - data not persisted');
-            }
-          } catch (cacheErr) {
-            console.error('[VaultDashboard] Offline cache failed:', cacheErr);
-            alert('Document downloaded successfully, but could not be cached for offline use. You can still view it now, but will need internet next time.');
-            // Non-fatal - download still succeeded
+            }));
+          } catch (_) {
+            // Non-fatal — download succeeded, just can't cache
           }
-        } else {
-          console.warn('[VaultDashboard] Document too large for offline cache:', vault.file_size_bytes, 'bytes');
-          alert('Document downloaded successfully. This file is too large to cache for offline use (>5MB).');
         }
 
         setPwModal({ open: false, vault: null, isLoading: false });
         return;
       }
-      
+
       // OFFLINE-FIRST: Check local cache before any network request
       const cacheKey = `vault_encrypted_${vault.passport_token}`;
       const cachedData = localStorage.getItem(cacheKey);
-      
+
       let encryptedB64, encryption_iv_b64, encryption_salt_b64, file_name, mime_type;
-      
+
       if (cachedData) {
-        // Use cached encrypted blob (works offline)
-        console.log('[VaultDashboard] Using cached document:', vault.passport_token);
         const parsed = JSON.parse(cachedData);
         encryptedB64 = parsed.encryptedB64;
         encryption_iv_b64 = parsed.encryption_iv_b64;
         encryption_salt_b64 = parsed.encryption_salt_b64;
         file_name = parsed.file_name;
         mime_type = parsed.mime_type;
-        
-        console.log('[VaultDashboard] Cache parsed successfully:', { file_name, mime_type, encryptedB64Length: encryptedB64?.length });
-        
+
         if (!encryptedB64 || !encryption_iv_b64 || !encryption_salt_b64) {
           setPwModal({ open: false, vault: null, isLoading: false });
-          console.error('[VaultDashboard] Cached data is incomplete:', parsed);
           alert('This document cache is corrupted. Please reconnect to the internet and try again.');
           return;
         }
       } else if (navigator.onLine) {
-        // Not cached, but online - fetch from server
-        console.log('[VaultDashboard] Fetching from server...');
         const res = await vaultService.requestDownload(vault.passport_token);
-        console.log('[VaultDashboard] Server response:', res.data);
-        
+
         if (res.data?.error_code === 'LEGACY_ENCRYPTION_NO_SALT') {
           setPwModal({ open: false, vault: null, isLoading: false });
           alert('This document was uploaded before encryption was upgraded. Please delete it and re-upload to use the latest security format.');
@@ -331,29 +291,18 @@ export default function VaultDashboard({ user }) {
         encryption_salt_b64 = salt;
         file_name = fname;
         mime_type = mime;
-        
-        console.log('[VaultDashboard] Fetching encrypted blob from:', signed_url);
-        const blob = await fetch(signed_url).then(r => {
-          console.log('[VaultDashboard] Blob response status:', r.status, 'content-type:', r.headers.get('content-type'));
-          return r.blob();
-        });
-        console.log('[VaultDashboard] Blob size:', blob.size, 'bytes');
+
+        const blob = await fetch(signed_url).then(r => r.blob());
         encryptedB64 = arrayBufferToBase64(await blob.arrayBuffer());
-        console.log('[VaultDashboard] Encrypted base64 length:', encryptedB64.length);
       } else {
-        // Offline and not cached - cannot download
         setPwModal({ open: false, vault: null, isLoading: false });
         alert('Offline Mode: This document was not cached for offline access. Please reconnect to the internet and download it first.');
         return;
       }
-      
-      console.log('[VaultDashboard] Starting decryption...');
+
       const decryptedBlob = await decryptFileWithPassword(encryptedB64, encryption_iv_b64, encryption_salt_b64, password, mime_type);
-      console.log('[VaultDashboard] Decryption successful! Blob size:', decryptedBlob.size, 'bytes');
-      
       const url = URL.createObjectURL(decryptedBlob);
-      console.log('[VaultDashboard] Created object URL:', url);
-      
+
       const a = document.createElement('a');
       a.href = url;
       a.download = file_name;
@@ -361,19 +310,14 @@ export default function VaultDashboard({ user }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      console.log('[VaultDashboard] Download triggered successfully');
+
       setPwModal({ open: false, vault: null, isLoading: false });
     } catch (err) {
       setPwModal(p => ({ ...p, isLoading: false }));
-      console.error('[VaultDashboard] decrypt error:', err);
-      console.error('[VaultDashboard] vault:', vault);
-      console.error('[VaultDashboard] cachedData:', cachedData);
-      
-      // Provide more specific error messages
-      if (err.name === 'InvalidAccessError' || err.message.includes('InvalidAccess')) {
+
+      if (err.name === 'InvalidAccessError' || err.message?.includes('InvalidAccess')) {
         alert('Decryption failed: The password entered does not match the one used to encrypt this document. Please try again.');
-      } else if (err.name === 'OperationError' || err.message.includes('OperationError')) {
+      } else if (err.name === 'OperationError' || err.message?.includes('OperationError')) {
         alert('Decryption failed: Incorrect password or corrupted data. Please verify your password and try again.');
       } else {
         alert(`Decryption failed: ${err.message || 'Unknown error'}. Please check your password and try again.`);

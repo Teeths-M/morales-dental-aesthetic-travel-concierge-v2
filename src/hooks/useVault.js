@@ -76,8 +76,7 @@ export function useVault(user) {
         if (syncResult.synced > 0) {
           await load();
         }
-      } catch (err) {
-        console.error('[useVault] background fetch failed:', err);
+      } catch (_) {
         setError('Offline — viewing cached data');
       } finally {
         setLoading(false);

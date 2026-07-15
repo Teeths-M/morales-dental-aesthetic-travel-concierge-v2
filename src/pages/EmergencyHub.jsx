@@ -200,6 +200,7 @@ export default function EmergencyHub() {
                             patientName={user?.full_name}
                             patientPhone={activeCase?.client_phone}
                             destinationCountry={activeCase?.procedure_country}
+                            preselectedType={opt.id}
                           />
                         </div>
                       );

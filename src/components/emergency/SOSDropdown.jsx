@@ -11,7 +11,7 @@ const SOS_OPTIONS = [
   { id: 'silent_sos', label: 'Silent SOS', desc: 'Discreet — no sound/vibration', icon: EyeOff, color: 'text-violet-700 bg-violet-50 border-violet-200', pulse: 'bg-violet-600' },
 ];
 
-export default function SOSDropdown({ caseId, patientEmail, patientName, patientPhone, destinationCountry }) {
+export default function SOSDropdown({ caseId, patientEmail, patientName, patientPhone, destinationCountry, preselectedType = null }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(null);
   const [sending, setSending] = useState(false);
@@ -130,18 +130,30 @@ export default function SOSDropdown({ caseId, patientEmail, patientName, patient
     <div ref={dropdownRef} className="relative">
       {/* Trigger button */}
       <button
-        onClick={() => { if (!sending) setOpen(!open); }}
+        onClick={() => {
+          if (sending) return;
+          if (preselectedType) {
+            const opt = SOS_OPTIONS.find(o => o.id === preselectedType);
+            if (opt) startCountdown(opt);
+          } else {
+            setOpen(!open);
+          }
+        }}
         aria-label="Activate SOS emergency alert — notifies your guardian and Morales team"
         aria-expanded={open}
         aria-haspopup="listbox"
-        className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all ${
+        className={`relative flex items-center gap-2 px-3 py-2 rounded-xl font-semibold text-xs transition-all w-full justify-center ${
           sent ? 'bg-emerald-600 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
         }`}
       >
-        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-400 rounded-full animate-ping" />
-        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+        {!preselectedType && (
+          <>
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-400 rounded-full animate-ping" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+          </>
+        )}
         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : sent ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-        {sent ? 'SOS Sent' : 'SOS'}
+        {sent ? 'Dispatched' : preselectedType ? (SOS_OPTIONS.find(o => o.id === preselectedType)?.label || 'Activate') : 'SOS'}
       </button>
 
       {/* Sent confirmation banner */}
