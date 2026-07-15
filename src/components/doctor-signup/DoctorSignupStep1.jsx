@@ -232,7 +232,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
           <Input
             type="number"
             min="0"
-            placeholder="10"
+            placeholder="Enter years (e.g. 10)"
             value={formData.years_experience}
             onChange={(e) => handleChange('years_experience', e.target.value)}
             className="h-12 text-base"
