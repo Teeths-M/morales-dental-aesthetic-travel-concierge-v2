@@ -42,6 +42,7 @@ export const clientRoutes = (
     <Route element={<ProtectedRoute allowedRoles={CLIENT_PORTAL_ROLES} />}>
       <Route path="/safe-t"                     element={<ErrorBoundary><SafeT /></ErrorBoundary>} />
       <Route path="/dashboard"                  element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+      <Route path="/dashboard/features"         element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/consultations"    element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/profile"          element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
       <Route path="/dashboard/documents"        element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />

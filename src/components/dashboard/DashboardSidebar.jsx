@@ -19,14 +19,15 @@ const LUXURY_COLORS = {
 };
 
 const NAV_ITEMS = Object.freeze([
-  { icon: LayoutDashboard, label: 'All Features', path: '/dashboard' },
-  { icon: Stethoscope,     label: 'Medical',      path: '/intake' },
-  { icon: Plane,           label: 'Travel',        path: '/travel-intake' },
-  { icon: Shield,          label: 'Safety',        path: '/safe-t' },
-  { icon: FileText,        label: 'Documents',     path: '/passport-vault' },
-  { icon: MessageCircle,   label: 'Messages',      path: '/dashboard/messages', badge: 2 },
-  { icon: AlertTriangle,   label: 'Emergency',     path: '/emergency' },
-  { icon: Settings,        label: 'Settings',      path: '/dashboard/settings' },
+  { icon: LayoutDashboard, label: 'Home',         path: '/dashboard' },
+  { icon: Stethoscope,     label: 'Medical',       path: '/intake' },
+  { icon: Plane,           label: 'Travel',         path: '/travel-intake' },
+  { icon: Shield,          label: 'Safety',         path: '/safe-t' },
+  { icon: FileText,        label: 'Documents',      path: '/passport-vault' },
+  { icon: MessageCircle,   label: 'Messages',       path: '/dashboard/messages', badge: 2 },
+  { icon: AlertTriangle,   label: 'Emergency',      path: '/emergency' },
+  { icon: Settings,        label: 'Settings',       path: '/dashboard/settings' },
+  { icon: Globe,           label: 'All Features',   path: '/dashboard/features' },
 ]);
 
 // ── Profile Avatar — clickable, uploadable ────────────────────────────────────
