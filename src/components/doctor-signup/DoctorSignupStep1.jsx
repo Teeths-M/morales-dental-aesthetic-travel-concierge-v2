@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { translations, countries } from '@/lib/translations';
 import { ArrowRight, ChevronDown, Search } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
@@ -11,7 +10,10 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
   const countryList = countries[language] || countries['en'];
   const [citySearch, setCitySearch] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const cityRef = useRef(null);
+  const countryRef = useRef(null);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -25,10 +27,25 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
       if (cityRef.current && !cityRef.current.contains(e.target)) {
         setShowCityDropdown(false);
       }
+      if (countryRef.current && !countryRef.current.contains(e.target)) {
+        setShowCountryDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const filteredCountries = useCallback(() => {
+    return countryList.filter(country =>
+      country.toLowerCase().includes(countrySearch.toLowerCase())
+    );
+  }, [countryList, countrySearch]);
+
+  const handleSelectCountry = (country) => {
+    setFormData(prev => ({ ...prev, clinic_country: country, clinic_city: '' }));
+    setShowCountryDropdown(false);
+    setCountrySearch('');
+  };
 
   const filteredCities = useCallback(() => {
     if (!formData.clinic_country || !cityData[formData.clinic_country]) return [];
@@ -97,21 +114,49 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         </div>
 
         {/* Clinic Country */}
-        <div>
+        <div ref={countryRef} className="relative">
           <label className="text-sm font-medium text-foreground mb-2 block">🌍 {t.clinicCountry}</label>
-          <Select value={formData.clinic_country} onValueChange={(val) => {
-            handleChange('clinic_country', val);
-            handleChange('clinic_city', '');
-          }}>
-            <SelectTrigger className="h-12 text-base">
-              <SelectValue placeholder="Select country..." />
-            </SelectTrigger>
-            <SelectContent>
-              {countryList.map((country) => (
-                <SelectItem key={country} value={country}>{country}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <button
+            type="button"
+            onClick={() => setShowCountryDropdown(v => !v)}
+            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <span className={formData.clinic_country ? 'text-foreground' : 'text-muted-foreground'}>
+              {formData.clinic_country || 'Select country...'}
+            </span>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </button>
+          {showCountryDropdown && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
+                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <input
+                  autoFocus
+                  value={countrySearch}
+                  onChange={e => setCountrySearch(e.target.value)}
+                  placeholder="Search country..."
+                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+              <ul className="max-h-56 overflow-y-auto">
+                {filteredCountries().length === 0 ? (
+                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">
+                    No countries found
+                  </li>
+                ) : (
+                  filteredCountries().map(country => (
+                    <li
+                      key={country}
+                      onClick={() => handleSelectCountry(country)}
+                      className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                    >
+                      {country}
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Clinic City */}
