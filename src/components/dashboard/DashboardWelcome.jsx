@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Shield, ArrowRight, Lock, Heart } from 'lucide-react';
-import { BRAND } from '@/lib/brandTokens';
 
 /**
  * DashboardWelcome — the first-load experience for users with no consultations yet.

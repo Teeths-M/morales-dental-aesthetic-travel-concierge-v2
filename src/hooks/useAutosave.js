@@ -101,7 +101,6 @@ export function useAutosave({
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   const attemptBackendSync = useCallback(

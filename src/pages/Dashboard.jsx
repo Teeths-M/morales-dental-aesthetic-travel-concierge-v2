@@ -51,7 +51,6 @@ import { useLocationHistory } from '@/hooks/useLocationHistory';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import LoadingState from '@/components/ui-system/LoadingState';
 import ErrorState from '@/components/ui-system/ErrorState';
-import EmptyState from '@/components/ui-system/EmptyState';
 import { formatDate } from '@/lib/format';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
 
