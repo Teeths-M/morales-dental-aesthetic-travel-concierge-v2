@@ -94,7 +94,11 @@ function PartnerCard({ card, language }) {
   const Icon = card.icon;
   return (
     <motion.div
-      className="group relative bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.10)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.18)] transition-all duration-500"
+      role="button"
+      tabIndex={0}
+      onClick={card.onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.onClick(); } }}
+      className="group relative bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.10)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.18)] transition-all duration-500 cursor-pointer"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: card.delay, duration: 0.6 }}
