@@ -178,7 +178,7 @@ export default function LuxuryHero() {
                 transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
                 className="text-white mb-6"
                 style={{
-                  fontSize:      'clamp(2.6rem, 8.5vw, 6.2rem)',
+                  fontSize:      'clamp(2.2rem, 9vw, 6.2rem)',
                   fontWeight:    900,
                   lineHeight:    1.0,
                   letterSpacing: '-0.03em',
@@ -262,7 +262,7 @@ export default function LuxuryHero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.5, delay: 0.15 }}
-                className="mb-9 max-w-[440px]"
+                className="mb-9 max-w-full sm:max-w-[440px]"
                 style={{ fontSize: 'clamp(1rem, 1.8vw, 1.1rem)', lineHeight: 1.75, fontWeight: 300, color: 'rgba(255,255,255,0.48)', letterSpacing: '0.01em' }}
               >
                 {content.body}
@@ -361,7 +361,7 @@ export default function LuxuryHero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-10"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-10"
             >
               {TRUST_BADGES.map(({ icon: Icon, label }, i) => (
                 <div key={label} className="flex items-center gap-1.5">
@@ -386,8 +386,8 @@ export default function LuxuryHero() {
         className="w-full"
         style={{ background: '#060B16', borderTop: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-10 sm:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-10">
             {FEATURES.map(({ icon: Icon, title, desc }, i) => (
               <motion.div
                 key={title}
@@ -434,7 +434,7 @@ export default function LuxuryHero() {
 
       {/* ── AFTER SURGERY — the question every judge and investor asks ── */}
       <section style={{ background: '#060B16', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-20 lg:py-28">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-14 sm:py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
 
             {/* Left — question + answer */}

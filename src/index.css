@@ -21,13 +21,15 @@ body {
 }
 
 button, a {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.1s ease, transform 0.1s ease;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  will-change: transform;
 }
 
 button:active, a:active {
   opacity: 0.85;
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 @layer base {

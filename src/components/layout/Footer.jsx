@@ -18,7 +18,7 @@ export default function Footer() {
       {/* Trust Bar */}
       <div className="border-b border-background/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-wrap justify-center gap-6 lg:gap-12">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-12">
             {trustItems.map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-2 text-sm text-background/70">
                 <Icon className="w-4 h-4 text-accent" />
@@ -30,8 +30,8 @@ export default function Footer() {
       </div>
 
       {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img

@@ -41,6 +41,7 @@ export default function StickyBookCTA() {
         to="/intake"
         style={{
           flexShrink: 0,
+          minHeight: 48,
           padding: '13px 22px', borderRadius: 99, textDecoration: 'none',
           background: 'linear-gradient(135deg, #D4AF37 0%, #E8C85C 100%)',
           color: '#060B16', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap',

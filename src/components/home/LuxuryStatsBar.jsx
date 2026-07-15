@@ -50,14 +50,14 @@ function StatCard({ stat, index, started }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="flex flex-col items-center text-center px-4 py-6"
+      className="flex flex-col items-center text-center px-3 py-5 sm:px-4 sm:py-6"
       style={{ borderRight: index < STATS.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}
     >
       {/* Number */}
       <div
         className="font-black leading-none mb-2"
         style={{
-          fontSize:    'clamp(2.2rem, 5vw, 3.4rem)',
+          fontSize:    'clamp(1.8rem, 5vw, 3.4rem)',
           color:       stat.color,
           letterSpacing: '-0.03em',
           fontFamily:  '"SF Pro Display", system-ui, sans-serif',
