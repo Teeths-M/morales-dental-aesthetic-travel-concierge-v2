@@ -1,7 +1,8 @@
 // @ts-nocheck — pre-existing form state field type gap
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useAutosave } from '@/hooks/useAutosave';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -370,26 +371,80 @@ function canProceed(step, form) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────
+const INITIAL_FORM = {
+  patient_name: '', date_of_birth: '', gender: '', height: '', weight: '', blood_type: '',
+  emergency_contact_name: '', emergency_contact_number: '',
+  medical_conditions: [], medical_conditions_other: '',
+  allergies: [], allergy_details: '',
+  anesthesia_complications: null, anesthesia_complication_types: [],
+  had_surgery: null, previous_procedures: '', last_surgery_date: '', had_complications: null,
+  surgery_complications: [], pregnancy_status: '',
+  takes_medications: null, medication_types: [], medication_notes: '',
+  lifestyle_habits: [], exercises_regularly: null, activity_level: '',
+  emotional_concerns: null, emotional_concern_types: [], emotional_notes: '',
+  notes: '',
+};
+const STEP_KEY = 'morales_draft_intake_medical_step';
+
 export default function MedicalIntakeForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STEP_KEY);
+      return saved ? Math.min(parseInt(saved, 10) || 0, STEPS.length - 1) : 0;
+    } catch { return 0; }
+  });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [user, setUser] = useState(null);
 
-  const [form, setForm] = useState({
-    patient_name: '', date_of_birth: '', gender: '', height: '', weight: '', blood_type: '',
-    emergency_contact_name: '', emergency_contact_number: '',
-    medical_conditions: [], medical_conditions_other: '',
-    allergies: [], allergy_details: '',
-    anesthesia_complications: null, anesthesia_complication_types: [],
-    had_surgery: null, previous_procedures: '', last_surgery_date: '', had_complications: null,
-    surgery_complications: [], pregnancy_status: '',
-    takes_medications: null, medication_types: [], medication_notes: '',
-    lifestyle_habits: [], exercises_regularly: null, activity_level: '',
-    emotional_concerns: null, emotional_concern_types: [], emotional_notes: '',
-    notes: '',
+  // Persist step so resume returns to the same step
+  const stepRef = useRef(step);
+  useEffect(() => {
+    stepRef.current = step;
+    try { localStorage.setItem(STEP_KEY, String(step)); } catch {}
+  }, [step]);
+
+  // Cache draft record ID to avoid re-querying on every keystroke
+  const draftIdRef = useRef(null);
+
+  // Backend sync — upserts ConsultationDraft when online (localStorage is the
+  // source of truth; this is the secondary safety net for cross-device resume)
+  const syncFn = useMemo(() => {
+    if (!user?.email) return null;
+    return async (data) => {
+      try {
+        const stepKey = STEPS[stepRef.current]?.key || 'personal';
+        if (draftIdRef.current) {
+          await base44.entities.ConsultationDraft.update(draftIdRef.current, {
+            form_data: data, step: stepKey, last_saved_at: new Date().toISOString(),
+          });
+        } else {
+          const existing = await base44.entities.ConsultationDraft.filter({ user_email: user.email }, '-created_date', 1);
+          if (existing.length > 0) {
+            draftIdRef.current = existing[0].id;
+            await base44.entities.ConsultationDraft.update(draftIdRef.current, {
+              form_data: data, step: stepKey, last_saved_at: new Date().toISOString(),
+            });
+          } else {
+            const created = await base44.entities.ConsultationDraft.create({
+              user_email: user.email, form_data: data, step: stepKey, last_saved_at: new Date().toISOString(),
+            });
+            draftIdRef.current = created.id;
+          }
+        }
+      } catch {
+        // Backend sync failed — localStorage copy is still safe
+      }
+    };
+  }, [user?.email]);
+
+  const { draft: form, setDraft: setForm, isSaving, lastSavedAt, clearDraft } = useAutosave({
+    key: 'intake_medical_form_v1',
+    initialData: INITIAL_FORM,
+    syncFn,
+    debounceMs: 1200,
   });
   const [aiWarning, setAiWarning] = useState(null);
   const [aiWarningSeverity, setAiWarningSeverity] = useState(null);
@@ -409,7 +464,7 @@ export default function MedicalIntakeForm() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      if (u?.full_name) setForm(prev => ({ ...prev, patient_name: u.full_name }));
+      if (u?.full_name) setForm(prev => prev.patient_name ? prev : { ...prev, patient_name: u.full_name });
     }).catch(() => {});
   }, []);
 
@@ -441,6 +496,9 @@ export default function MedicalIntakeForm() {
         });
       }
 
+      clearDraft();
+      try { localStorage.removeItem(STEP_KEY); } catch {}
+      draftIdRef.current = null;
       setSubmitted(true);
     } catch (err) {
       toast({ title: 'Submission failed', description: err.message, variant: 'destructive' });
@@ -492,6 +550,15 @@ export default function MedicalIntakeForm() {
           </div>
           <h1 className="text-3xl font-semibold text-slate-900" style={{ letterSpacing: '-0.02em' }}>Medical History Form</h1>
           <p className="text-slate-500 text-sm mt-2">Completed once · Reviewed by your doctor before your procedure</p>
+          {lastSavedAt && (
+            <div className="inline-flex items-center gap-1.5 mt-3 text-xs text-slate-400">
+              {isSaving ? (
+                <><Loader2 className="w-3 h-3 animate-spin" /> Saving draft…</>
+              ) : (
+                <><Shield className="w-3 h-3 text-emerald-500" /> Draft auto-saved — safe offline</>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Step pills */}
