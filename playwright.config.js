@@ -26,6 +26,8 @@ export default defineConfig({
     { name: 'setup', testMatch: /auth\.setup\.js/ },
     // Post-auth journeys — reuse the session saved by the setup project.
     { name: 'authenticated', testMatch: /journey\.spec\.js/ },
+    // Partner signup flows — reuses the saved auth session (same as authenticated).
+    { name: 'partner-signup', testMatch: /doctor-signup\.spec\.js/ },
     // Morales-specific LIVE edge checks (mobile overlap + unauth endpoint probe).
     // Read-only against the deployed app; no login required.
     { name: 'morales-live', testMatch: /morales-live\.spec\.js/ },
