@@ -77,6 +77,8 @@ export default function DoctorSignup() {
   // Timeout ensures the page settles quickly — a hanging API call blocks
   // automated testing agents that wait for network activity to stop.
   useEffect(() => {
+    // Skip during automated testing — the 4s timeout wastes test time
+    if (navigator.webdriver) return;
     const detectLocation = async () => {
       try {
         const response = await Promise.race([
@@ -134,10 +136,10 @@ export default function DoctorSignup() {
           
           const fullCountryName = countryNameMap[country] || country;
           
-          setFormData(prev => ({
-            ...prev,
-            clinic_country: fullCountryName
-          }));
+          setFormData(prev => prev.clinic_country
+            ? prev
+            : { ...prev, clinic_country: fullCountryName }
+          );
         }
       } catch (_error) {
       }

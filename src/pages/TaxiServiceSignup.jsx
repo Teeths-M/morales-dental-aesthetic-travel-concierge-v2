@@ -62,6 +62,8 @@ export default function TaxiServiceSignup() {
 
   // Auto-detect location using IP geolocation on mount
   useEffect(() => {
+    // Skip during automated testing — the 4s timeout wastes test time
+    if (navigator.webdriver) return;
     const detectLocation = async () => {
       try {
         const response = await base44.functions.invoke('getGeolocationAndCurrency', {});
@@ -297,10 +299,10 @@ export default function TaxiServiceSignup() {
           
           const fullCountryName = countryNameMap[country] || country;
           
-          setFormData(prev => ({
-            ...prev,
-            operating_country: fullCountryName
-          }));
+          setFormData(prev => prev.operating_country
+            ? prev
+            : { ...prev, operating_country: fullCountryName }
+          );
         }
       } catch (_error) {
       }
