@@ -82,6 +82,8 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">👤 {t.fullName}</label>
           <Input
+            data-testid="doctor-full-name"
+            name="full_name"
             placeholder="Dr. Jane Smith"
             value={formData.full_name}
             onChange={(e) => handleChange('full_name', e.target.value)}
@@ -93,6 +95,8 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">📧 {t.email}</label>
           <Input
+            data-testid="doctor-email"
+            name="email"
             type="email"
             placeholder="drjane@clinic.com"
             value={formData.email}
@@ -106,6 +110,8 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">📞 {t.phone}</label>
           <Input
+            data-testid="doctor-phone"
+            name="phone"
             placeholder="+1 868 123 4567"
             value={formData.phone}
             onChange={handlePhoneChange}
@@ -118,6 +124,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
           <label className="text-sm font-medium text-foreground mb-2 block">🌍 {t.clinicCountry}</label>
           <button
             type="button"
+            data-testid="doctor-country-select"
             onClick={() => setShowCountryDropdown(v => !v)}
             className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
           >
@@ -164,6 +171,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
           <label className="text-sm font-medium text-foreground mb-2 block">📍 Clinic City</label>
           <button
             type="button"
+            data-testid="doctor-city-select"
             onClick={() => setShowCityDropdown(v => !v)}
             className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             disabled={!formData.clinic_country}
@@ -220,6 +228,8 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">🎓 Professional Background</label>
           <Input
+            data-testid="doctor-professional-background"
+            name="professional_background"
             placeholder="Education, certifications, board memberships"
             value={formData.professional_background}
             onChange={(e) => handleChange('professional_background', e.target.value)}
@@ -230,6 +240,8 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">⭐ Years of Experience</label>
           <Input
+            data-testid="doctor-years-experience"
+            name="years_experience"
             type="number"
             min="0"
             placeholder="Enter years (e.g. 10)"
@@ -255,6 +267,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
       </div>
 
       <Button
+        data-testid="doctor-step1-next"
         onClick={onNext}
         disabled={!canProceed}
         className="w-full h-12 text-base bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
