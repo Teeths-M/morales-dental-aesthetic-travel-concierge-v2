@@ -8,9 +8,8 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain } from 'lucide-react';
 
 const GOLD  = '#D4AF37';
 const GREEN = '#22c55e';

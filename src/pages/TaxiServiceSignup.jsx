@@ -299,7 +299,7 @@ export default function TaxiServiceSignup() {
             operating_country: fullCountryName
           }));
         }
-      } catch (error) {
+      } catch (_error) {
       }
     };
 

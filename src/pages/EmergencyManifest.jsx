@@ -167,7 +167,7 @@ export default function EmergencyManifest() {
             cached_version: '2.0',
           };
         }
-      } catch (caseErr) {
+      } catch (_caseErr) {
       }
 
       safeStoreManifest(manifestData);

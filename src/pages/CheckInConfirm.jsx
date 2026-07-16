@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, XCircle, Loader2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 
 // Public page — no login required. Validates one-time email token.
 // Route: /check-in/:check_in_id?token=<raw_token>

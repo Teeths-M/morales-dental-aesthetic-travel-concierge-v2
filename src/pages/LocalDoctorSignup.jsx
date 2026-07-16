@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { PLATFORM_PRICING } from '@/lib/constants';
-import { Upload } from 'lucide-react';
+import { Upload, CheckCircle2, Loader2, MapPin, Stethoscope, ShieldCheck, CreditCard } from 'lucide-react';
 import { ROLES } from '@/lib/roles';
 import { BackButton } from '@/components/nav/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, Loader2, MapPin, Stethoscope, ShieldCheck, CreditCard } from 'lucide-react';
+
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
 

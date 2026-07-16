@@ -1,10 +1,10 @@
 // @ts-nocheck — pre-existing type gaps; build passes
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useState as useLocalState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { BackButton } from '@/components/nav/BackButton';
 import { base44 } from '@/api/base44Client';
-import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert } from 'lucide-react';
+import { Star, Clock, Upload, Trash2, AlertCircle, LogOut, ShieldAlert, Heart, Stethoscope, Phone, DollarSign, CheckCircle2 } from 'lucide-react';
 import PhoneField from '@/components/ui-system/PhoneField';
 import { IdentityUpload } from '@/components/ThisIsMe';
 import DoctorPortfolio from '@/components/doctor-dashboard/DoctorPortfolio';
@@ -15,8 +15,6 @@ import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
-import { Heart, Stethoscope, Phone, DollarSign, CheckCircle2 } from 'lucide-react';
-import { useState as useLocalState } from 'react';
 
 // ── Facility Fee inline form — auto-triggers pipeline when submitted ──────────
 function FacilityFeeForm({ caseId, caseRef }) {

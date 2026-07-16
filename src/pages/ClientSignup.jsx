@@ -100,7 +100,7 @@ export default function ClientSignup() {
             nationality: fullCountryName
           }));
         }
-      } catch (error) {
+      } catch (_error) {
       }
     };
 

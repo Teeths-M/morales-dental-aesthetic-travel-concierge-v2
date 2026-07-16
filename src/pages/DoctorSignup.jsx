@@ -138,7 +138,7 @@ export default function DoctorSignup() {
             clinic_country: fullCountryName
           }));
         }
-      } catch (error) {
+      } catch (_error) {
       }
     };
 

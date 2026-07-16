@@ -116,7 +116,7 @@ export default function TravelAgencySignup() {
             headquarters_country: fullCountryName
           }));
         }
-      } catch (error) {
+      } catch (_error) {
       }
     };
 
