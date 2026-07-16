@@ -157,17 +157,28 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
           <label className="text-sm font-medium text-foreground block mb-2">
             📍 {language === 'es' ? 'Ciudad/Región de Operación' : language === 'fr' ? 'Ville/Région d\'Opération' : 'Operating City / Region'}
           </label>
-          <select
-            data-testid="taxi-city"
-            value={formData.operating_city || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
-            className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          >
-            <option value="">{language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city'}</option>
-            {availableCities.map(city => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
+          {availableCities.length > 0 ? (
+            <select
+              key={`taxi-city-${formData.operating_country}`}
+              data-testid="taxi-city"
+              value={formData.operating_city || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
+              className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            >
+              <option value="">{language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city'}</option>
+              {availableCities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              data-testid="taxi-city"
+              placeholder={language === 'es' ? 'Ingresa tu ciudad' : language === 'fr' ? 'Entrez votre ville' : 'Enter your city'}
+              value={formData.operating_city || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
+              className="h-12"
+            />
+          )}
         </div>
 
         <div>
