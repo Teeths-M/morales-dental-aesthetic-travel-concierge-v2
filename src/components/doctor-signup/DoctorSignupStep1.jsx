@@ -1,21 +1,13 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { translations, countries } from '@/lib/translations';
-import { ArrowRight, ChevronDown, Search } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
 
 export default function DoctorSignupStep1({ formData, setFormData, language = 'en', onNext }) {
   const t = translations[language] || translations['en'];
   const countryList = countries[language] || countries['en'];
-  const [citySearch, setCitySearch] = useState('');
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [countrySearch, setCountrySearch] = useState('');
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const cityRef = useRef(null);
-  const countryRef = useRef(null);
-  const firstCountryRef = useRef(null);
-  const firstCityRef = useRef(null);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -24,57 +16,14 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
     }));
   };
 
-  React.useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (cityRef.current && !cityRef.current.contains(e.target)) {
-        setShowCityDropdown(false);
-      }
-      if (countryRef.current && !countryRef.current.contains(e.target)) {
-        setShowCountryDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredCountries = useCallback(() => {
-    return countryList.filter(country =>
-      country.toLowerCase().includes(countrySearch.toLowerCase())
-    );
-  }, [countryList, countrySearch]);
-
-  const handleSelectCountry = (country) => {
+  const handleSelectCountry = (e) => {
+    const country = e.target.value;
     setFormData(prev => ({ ...prev, clinic_country: country, clinic_city: '' }));
-    setShowCountryDropdown(false);
-    setCountrySearch('');
   };
 
-  const filteredCities = useCallback(() => {
-    if (!formData.clinic_country || !cityData[formData.clinic_country]) return [];
-    return cityData[formData.clinic_country].filter(city =>
-      city.toLowerCase().includes(citySearch.toLowerCase())
-    );
-  }, [formData.clinic_country, citySearch]);
-
-  // Auto-scroll the first filtered result into view so the Testing Agent
-  // (and keyboard users) can find it without manually scrolling the list.
-  React.useEffect(() => {
-    if (showCountryDropdown && firstCountryRef.current) {
-      firstCountryRef.current.scrollIntoView({ block: 'nearest' });
-    }
-  }, [showCountryDropdown, countrySearch]);
-
-  React.useEffect(() => {
-    if (showCityDropdown && firstCityRef.current) {
-      firstCityRef.current.scrollIntoView({ block: 'nearest' });
-    }
-  }, [showCityDropdown, citySearch]);
-
-  const handleSelectCity = (city) => {
-    setFormData(prev => ({ ...prev, clinic_city: city }));
-    setShowCityDropdown(false);
-    setCitySearch('');
-  };
+  const availableCities = formData.clinic_country && cityData[formData.clinic_country]
+    ? cityData[formData.clinic_country]
+    : [];
 
   const handlePhoneChange = (e) => {
     const value = e.target.value;
@@ -136,114 +85,46 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         </div>
 
         {/* Clinic Country */}
-        <div ref={countryRef} className="relative">
+        <div>
           <label className="text-sm font-medium text-foreground mb-2 block">🌍 {t.clinicCountry}</label>
-          <button
-            type="button"
-            data-testid="doctor-country-select"
-            onClick={() => setShowCountryDropdown(v => !v)}
-            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <span className={formData.clinic_country ? 'text-foreground' : 'text-muted-foreground'}>
-              {formData.clinic_country || 'Select country...'}
-            </span>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </button>
-          {showCountryDropdown && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
-              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
-                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <input
-                  autoFocus
-                  data-testid="doctor-country-search"
-                  value={countrySearch}
-                  onChange={e => setCountrySearch(e.target.value)}
-                  placeholder="Search country..."
-                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <ul className="max-h-56 overflow-y-auto">
-                {filteredCountries().length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">
-                    No countries found
-                  </li>
-                ) : (
-                  filteredCountries().map((country, idx) => (
-                    <li key={country}>
-                      <button
-                        ref={idx === 0 ? firstCountryRef : null}
-                        type="button"
-                        data-testid={`doctor-country-option-${country.replace(/\s+/g, '-')}`}
-                        onClick={() => handleSelectCountry(country)}
-                        className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                      >
-                        {country}
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          )}
+          <Input
+            data-testid="doctor-country"
+            list="doctor-countries"
+            placeholder="Select country..."
+            value={formData.clinic_country || ''}
+            onChange={handleSelectCountry}
+            className="h-12 text-base"
+          />
+          <datalist id="doctor-countries">
+            {countryList.map(country => (
+              <option key={country} value={country} />
+            ))}
+          </datalist>
         </div>
 
         {/* Clinic City */}
-        <div ref={cityRef} className="relative">
+        <div>
           <label className="text-sm font-medium text-foreground mb-2 block">📍 Clinic City</label>
-          <button
-            type="button"
-            data-testid="doctor-city-select"
-            onClick={() => setShowCityDropdown(v => !v)}
-            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-            disabled={!formData.clinic_country}
-          >
-            <span className={formData.clinic_city ? 'text-foreground' : 'text-muted-foreground'}>
-              {formData.clinic_city || 'Select a city'}
-            </span>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </button>
-          {showCityDropdown && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
-              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
-                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <input
-                  autoFocus
-                  data-testid="doctor-city-search"
-                  value={citySearch}
-                  onChange={e => setCitySearch(e.target.value)}
-                  placeholder="Search city..."
-                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <ul className="max-h-56 overflow-y-auto">
-                {filteredCities().length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">
-                    {formData.clinic_country ? 'No cities found' : 'Select a country first'}
-                  </li>
-                ) : (
-                  filteredCities().map((city, idx) => (
-                    <li key={city}>
-                      <button
-                        ref={idx === 0 ? firstCityRef : null}
-                        type="button"
-                        data-testid={`doctor-city-option-${city.replace(/\s+/g, '-')}`}
-                        onClick={() => handleSelectCity(city)}
-                        className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                      >
-                        {city}
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          )}
+          <Input
+            data-testid="doctor-city"
+            list="doctor-cities"
+            placeholder="Select a city"
+            value={formData.clinic_city || ''}
+            onChange={(e) => handleChange('clinic_city', e.target.value)}
+            className="h-12 text-base"
+          />
+          <datalist id="doctor-cities">
+            {availableCities.map(city => (
+              <option key={city} value={city} />
+            ))}
+          </datalist>
         </div>
 
         {/* Clinic Name (Optional) */}
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">🏥 {t.clinicName}</label>
           <Input
+            data-testid="doctor-clinic-name"
             placeholder="Smile Care Clinic"
             value={formData.clinic_name}
             onChange={(e) => handleChange('clinic_name', e.target.value)}
@@ -280,6 +161,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">📝 Short Bio</label>
           <Input
+            data-testid="doctor-bio"
             placeholder="A short patient-facing introduction"
             value={formData.bio}
             onChange={(e) => handleChange('bio', e.target.value)}

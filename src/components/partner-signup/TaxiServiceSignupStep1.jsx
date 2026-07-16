@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, ChevronDown, Search } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import cityData from '@/lib/cityData.json';
 
@@ -36,45 +36,15 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
   const _t = translations[language];
   const [vehicles, setVehicles] = useState(formData.vehicle_types || []);
   const [assistance, setAssistance] = useState(formData.patient_assistance || []);
-  const [countrySearch, setCountrySearch] = useState('');
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const countryRef = useRef(null);
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const cityRef = useRef(null);
-  const [citySearch, setCitySearch] = useState('');
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (countryRef.current && !countryRef.current.contains(e.target)) {
-        setShowCountryDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const availableCities = formData.operating_country && cityData[formData.operating_country]
+    ? cityData[formData.operating_country]
+    : [];
 
-  const filteredCities = useCallback(() => {
-    if (!formData.operating_country || !cityData[formData.operating_country]) return [];
-    return cityData[formData.operating_country].filter(city =>
-      city.toLowerCase().includes(citySearch.toLowerCase())
-    );
-  }, [formData.operating_country, citySearch]);
-
-  const handleSelectCountry = (country) => {
+  const handleSelectCountry = (e) => {
+    const country = e.target.value;
     setFormData(prev => ({ ...prev, operating_country: country, operating_city: '' }));
-    setShowCountryDropdown(false);
-    setCountrySearch('');
   };
-
-  const handleSelectCity = (city) => {
-    setFormData(prev => ({ ...prev, operating_city: city }));
-    setShowCityDropdown(false);
-    setCitySearch('');
-  };
-
-  const filteredCountries = ALL_COUNTRIES.filter(c =>
-    c.toLowerCase().includes(countrySearch.toLowerCase())
-  );
 
   const toggleVehicle = (vehicle) => {
     setVehicles(prev =>
@@ -123,6 +93,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">🏢 {language === 'es' ? 'Nombre de la Agencia' : language === 'fr' ? 'Nom de l\'Agence' : 'Agency Name'} *</label>
           <Input
+            data-testid="taxi-agency-name"
             placeholder={language === 'es' ? 'Ej: Servicios de Transporte XYZ' : 'e.g., XYZ Transportation Services'}
             value={formData.agency_name || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, agency_name: e.target.value }))}
@@ -136,6 +107,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">👤 {language === 'es' ? 'Persona de Contacto' : language === 'fr' ? 'Personne de Contact' : 'Contact Person'} *</label>
           <Input
+            data-testid="taxi-driver-name"
             placeholder={language === 'es' ? 'Nombre del representante de la agencia' : 'Agency representative name'}
             value={formData.driver_name || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, driver_name: e.target.value }))}
@@ -146,6 +118,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">📧 {language === 'es' ? 'Correo Electrónico de la Agencia' : language === 'fr' ? 'Email de l\'Agence' : 'Agency Email'} *</label>
           <Input
+            data-testid="taxi-email"
             type="email"
             placeholder="dispatch@agency.com"
             value={formData.email || ''}
@@ -157,6 +130,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">📞 {language === 'es' ? 'Teléfono' : language === 'fr' ? 'Téléphone' : 'Phone'}</label>
           <Input
+            data-testid="taxi-phone"
             placeholder="+1 (555) 000-0000"
             value={formData.phone || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -164,106 +138,46 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
           />
         </div>
 
-        <div ref={countryRef} className="relative">
+        <div>
           <label className="text-sm font-medium text-foreground block mb-2">🗺️ {language === 'es' ? 'País de Operación' : language === 'fr' ? 'Pays d\'Opération' : 'Operating Country'}</label>
-          <button
-            type="button"
-            data-testid="taxi-country-select"
-            onClick={() => setShowCountryDropdown(v => !v)}
-            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <span className={formData.operating_country ? 'text-foreground' : 'text-muted-foreground'}>
-              {formData.operating_country || (language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country')}
-            </span>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </button>
-          {showCountryDropdown && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
-              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
-                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <input
-                  autoFocus
-                  value={countrySearch}
-                  onChange={e => setCountrySearch(e.target.value)}
-                  placeholder={language === 'es' ? 'Buscar país...' : language === 'fr' ? 'Rechercher un pays...' : 'Search country...'}
-                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <ul className="max-h-56 overflow-y-auto">
-                {filteredCountries.length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">No results</li>
-                ) : filteredCountries.map(country => (
-                  <li key={country}>
-                    <button
-                      type="button"
-                      data-testid={`taxi-country-option-${country.replace(/\s+/g, '-')}`}
-                      onClick={() => handleSelectCountry(country)}
-                      className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                    >
-                      {country}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <Input
+            data-testid="taxi-country"
+            list="taxi-countries"
+            placeholder={language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country'}
+            value={formData.operating_country || ''}
+            onChange={handleSelectCountry}
+            className="h-12"
+          />
+          <datalist id="taxi-countries">
+            {ALL_COUNTRIES.map(country => (
+              <option key={country} value={country} />
+            ))}
+          </datalist>
         </div>
 
-        <div ref={cityRef} className="relative">
+        <div>
           <label className="text-sm font-medium text-foreground block mb-2">
-            📍 {language === 'es' ? 'Ciudad/Regi\u00f3n de Operaci\u00f3n' : language === 'fr' ? 'Ville/R\u00e9gion d\'Op\u00e9ration' : 'Operating City / Region'}
+            📍 {language === 'es' ? 'Ciudad/Región de Operación' : language === 'fr' ? 'Ville/Région d\'Opération' : 'Operating City / Region'}
           </label>
-          <button
-            type="button"
-            data-testid="taxi-city-select"
-            onClick={() => setShowCityDropdown(v => !v)}
-            className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-            disabled={!formData.operating_country}
-          >
-            <span className={formData.operating_city ? 'text-foreground' : 'text-muted-foreground'}>
-              {formData.operating_city || (language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city')}
-            </span>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </button>
-          {showCityDropdown && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
-              <div className="p-2 border-b border-border flex items-center gap-2 bg-slate-50">
-                <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <input
-                  autoFocus
-                  value={citySearch}
-                  onChange={e => setCitySearch(e.target.value)}
-                  placeholder={language === 'es' ? 'Buscar ciudad...' : language === 'fr' ? 'Rechercher une ville...' : 'Search city...'}
-                  className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <ul className="max-h-56 overflow-y-auto">
-                {filteredCities().length === 0 ? (
-                  <li className="px-4 py-3 text-sm text-muted-foreground text-center">
-                    {formData.operating_country ? (language === 'es' ? 'No se encontraron ciudades' : language === 'fr' ? 'Aucune ville trouv\u00e9e' : 'No cities found') : (language === 'es' ? 'Primero selecciona un pa\u00eds' : language === 'fr' ? 'S\u00e9lectionnez un pays d\u0027abord' : 'Select a country first')}
-                  </li>
-                ) : (
-                  filteredCities().map(city => (
-                    <li key={city}>
-                      <button
-                        type="button"
-                        data-testid={`taxi-city-option-${city.replace(/\s+/g, '-')}`}
-                        onClick={() => handleSelectCity(city)}
-                        className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                      >
-                        {city}
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          )}
+          <Input
+            data-testid="taxi-city"
+            list="taxi-cities"
+            placeholder={language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city'}
+            value={formData.operating_city || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
+            className="h-12"
+          />
+          <datalist id="taxi-cities">
+            {availableCities.map(city => (
+              <option key={city} value={city} />
+            ))}
+          </datalist>
         </div>
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">📏 Service Radius (km)</label>
           <Input
+            data-testid="taxi-service-radius"
             type="number"
             min="1"
             placeholder="50"
@@ -279,6 +193,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
             {ASSISTANCE_OPTIONS.map(option => (
               <button
                 key={option}
+                data-testid={`taxi-assistance-${option.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => toggleAssistance(option)}
                 className={`p-3 rounded-lg border-2 transition-all text-sm font-medium text-center ${
                   assistance.includes(option)
@@ -298,6 +213,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
             {VEHICLE_TYPES.map(vehicle => (
               <button
                 key={vehicle}
+                data-testid={`taxi-vehicle-${vehicle.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => toggleVehicle(vehicle)}
                 className={`p-3 rounded-lg border-2 transition-all text-sm font-medium text-center ${
                   vehicles.includes(vehicle)

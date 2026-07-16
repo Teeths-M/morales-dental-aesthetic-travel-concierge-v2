@@ -69,6 +69,7 @@ export function AboutYouForm({ accountType, formData, onInputChange }) {
           <Label htmlFor="country">Where do you live? *</Label>
           <Input
             id="country"
+            data-testid="companion-country"
             list="companion-countries"
             value={formData.country || ''}
             onChange={(e) => onInputChange('country', e.target.value)}
@@ -99,6 +100,7 @@ function FormField({ id, label, value, onChange, placeholder, type = 'text', lar
       <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
+        data-testid={`companion-${id}`}
         type={type}
         value={value}
         onChange={(e) => onChange(id, e.target.value)}

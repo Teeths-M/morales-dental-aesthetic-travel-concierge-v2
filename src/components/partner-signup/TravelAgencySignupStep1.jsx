@@ -45,6 +45,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">🏢 {language === 'es' ? 'Nombre de la Agencia' : language === 'fr' ? 'Nom de l\'Agence' : 'Agency Name'}</label>
           <Input
+            data-testid="travel-agency-name"
             placeholder={language === 'es' ? 'Ej: Viajes Globales' : language === 'fr' ? 'Ex: Voyages Mondiaux' : 'e.g., Global Travels'}
             value={formData.agency_name || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, agency_name: e.target.value }))}
@@ -55,6 +56,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">👤 {language === 'es' ? 'Persona de Contacto' : language === 'fr' ? 'Personne de Contact' : 'Contact Person'}</label>
           <Input
+            data-testid="travel-agency-contact-person"
             placeholder={language === 'es' ? 'Nombre completo' : language === 'fr' ? 'Nom complet' : 'Full name'}
             value={formData.contact_person || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, contact_person: e.target.value }))}
@@ -65,6 +67,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">📧 {language === 'es' ? 'Correo Electrónico' : language === 'fr' ? 'Email' : 'Email'}</label>
           <Input
+            data-testid="travel-agency-email"
             type="email"
             placeholder="your@email.com"
             value={formData.email || ''}
@@ -76,6 +79,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">📞 {language === 'es' ? 'Teléfono' : language === 'fr' ? 'Téléphone' : 'Phone'}</label>
           <Input
+            data-testid="travel-agency-phone"
             placeholder="+1 (555) 000-0000"
             value={formData.phone || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -86,6 +90,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">🌍 {language === 'es' ? 'País Sede' : language === 'fr' ? 'Pays Siège' : 'Headquarters Country'}</label>
           <Input
+            data-testid="travel-agency-country"
             placeholder={language === 'es' ? 'Ej: España' : language === 'fr' ? 'Ex: France' : 'e.g., USA'}
             value={formData.headquarters_country || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, headquarters_country: e.target.value }))}
@@ -121,6 +126,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
             {REGIONS.map(region => (
               <button
                 key={region}
+                data-testid={`travel-agency-region-${region.replace(/\s+/g, '-').toLowerCase()}`}
                 onClick={() => toggleRegion(region)}
                 className={`p-3 rounded-lg border-2 transition-all text-sm font-medium text-center ${
                   agencies.includes(region)

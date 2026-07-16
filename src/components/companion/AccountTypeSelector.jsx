@@ -38,6 +38,7 @@ function AccountTypeCard({ type, isSelected, onSelect, icon: Icon, title, descri
   return (
     <button
       type="button"
+      data-testid={`companion-account-${type}`}
       onClick={() => onSelect(type)}
       className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg relative ${
         isSelected
