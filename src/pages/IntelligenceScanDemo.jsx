@@ -238,9 +238,9 @@ export default function IntelligenceScanDemo() {
       <div className="border-b border-border" style={{ background: '#0C1A1D' }}>
         <div className="max-w-5xl mx-auto px-6 py-8">
           {/* Production badge */}
-          <div className="inline-flex items-center gap-2 mb-4 px-3 py-2 rounded-xl" style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}>
-            <span style={{ fontSize: 13 }}>✅</span>
-            <span className="text-xs font-bold" style={{ color: '#22c55e' }}>Production system — not a demo mock</span>
+          <div className="inline-flex items-center gap-2 mb-4 px-3 py-2 rounded-xl" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)' }}>
+            <span style={{ fontSize: 13 }}>⚠️</span>
+            <span className="text-xs font-bold" style={{ color: '#f59e0b' }}>Representative showcase — live engine runs on real signups</span>
           </div>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>

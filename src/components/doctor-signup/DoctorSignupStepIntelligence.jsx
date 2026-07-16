@@ -106,10 +106,10 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
         phone:            doctor.phone          || '',
         city:             doctor.clinic_city    || '',
         country:          doctor.clinic_country || '',
-        website_url:      null,
-        facebook_handle:  null,
-        instagram_handle: null,
-        tiktok_handle:    null,
+        website_url:      doctor.website_url       || null,
+        facebook_handle:  doctor.social_facebook    || null,
+        instagram_handle: doctor.social_instagram   || null,
+        tiktok_handle:    doctor.social_tiktok      || null,
         device_timezone:  Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       setResult(res.data);
@@ -340,6 +340,81 @@ export default function DoctorSignupStepIntelligence({ doctor, onNext, onSkip })
               </div>
             );
           })()}
+
+          {/* Device & Network Intelligence */}
+          {result.signals && (result.signals.ua_browser || result.signals.ip_label || result.signals.phone_shared_partners != null) && (
+            <div className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>DEVICE & NETWORK INTELLIGENCE</p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Device */}
+                <div>
+                  <p className="text-[9px] mb-1" style={{ color: '#475569' }}>DEVICE</p>
+                  <p className="text-xs font-semibold" style={{ color: '#94a3b8' }}>
+                    {result.signals.ua_browser || 'Unknown'}{result.signals.ua_os ? ` on ${result.signals.ua_os}` : ''}
+                  </p>
+                  {result.signals.device_timezone && (
+                    <p className="text-[10px]" style={{ color: '#64748b' }}>{result.signals.device_timezone}</p>
+                  )}
+                  <p className="text-[9px] mt-1 font-semibold" style={{ color: result.signals.ua_flag === 'headless_browser' ? '#ef4444' : '#10b981' }}>
+                    {result.signals.ua_flag === 'headless_browser' ? '⚠ Headless bot detected' : '✓ Legitimate browser'}
+                  </p>
+                </div>
+                {/* IP Intelligence */}
+                <div>
+                  <p className="text-[9px] mb-1" style={{ color: '#475569' }}>IP INTELLIGENCE</p>
+                  <p className="text-xs font-semibold" style={{ color: '#94a3b8' }}>
+                    {result.signals.ip_city || result.signals.ip_country || 'Unknown'}
+                  </p>
+                  {result.signals.ip_isp && (
+                    <p className="text-[10px]" style={{ color: '#64748b' }}>{result.signals.ip_isp}</p>
+                  )}
+                  <p className="text-[9px] mt-1 font-semibold" style={{
+                    color: result.signals.ip_label === 'residential' ? '#10b981'
+                         : result.signals.ip_label === 'datacenter' ? '#f59e0b'
+                         : '#ef4444'
+                  }}>
+                    {result.signals.ip_label === 'residential' ? '✓ Residential ISP'
+                     : result.signals.ip_label === 'datacenter' ? '! Datacenter proxy'
+                     : result.signals.ip_country_mismatch ? '⚠ Country mismatch'
+                     : '— No IP data'}
+                  </p>
+                </div>
+              </div>
+              {/* Fraud graph metrics */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 rounded-lg text-center"
+                  style={{
+                    background: (result.signals.phone_shared_partners || 0) > 0 ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.05)',
+                    border: (result.signals.phone_shared_partners || 0) > 0 ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.1)',
+                  }}>
+                  <p className="text-[8px]" style={{ color: '#64748b' }}>Shared Phone</p>
+                  <p className="text-base font-bold" style={{ color: (result.signals.phone_shared_partners || 0) > 0 ? '#ef4444' : '#10b981' }}>
+                    {result.signals.phone_shared_partners || 0}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg text-center"
+                  style={{
+                    background: result.signals.website_live === false && result.signals.website_provided !== false ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.05)',
+                    border: result.signals.website_live === false && result.signals.website_provided !== false ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.1)',
+                  }}>
+                  <p className="text-[8px]" style={{ color: '#64748b' }}>Website Live</p>
+                  <p className="text-base font-bold" style={{ color: result.signals.website_live ? '#10b981' : result.signals.website_provided === false ? '#6b7280' : '#ef4444' }}>
+                    {result.signals.website_live ? '✓' : result.signals.website_provided === false ? '—' : '✗'}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg text-center"
+                  style={{
+                    background: result.signals.domain_age_months != null && result.signals.domain_age_months < 6 ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.05)',
+                    border: result.signals.domain_age_months != null && result.signals.domain_age_months < 6 ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.1)',
+                  }}>
+                  <p className="text-[8px]" style={{ color: '#64748b' }}>Domain Age</p>
+                  <p className="text-base font-bold" style={{ color: result.signals.domain_age_months != null && result.signals.domain_age_months < 6 ? '#ef4444' : '#10b981' }}>
+                    {result.signals.domain_age_months != null ? `${result.signals.domain_age_months}mo` : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* CTA */}
           {result.risk_level === 'high' ? (
