@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { PLATFORM_PRICING } from '@/lib/constants';
 import { Upload, CheckCircle2, Loader2, MapPin, Stethoscope, ShieldCheck, CreditCard } from 'lucide-react';
 import { ROLES } from '@/lib/roles';
 import { BackButton } from '@/components/nav/BackButton';

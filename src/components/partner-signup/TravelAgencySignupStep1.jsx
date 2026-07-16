@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight } from 'lucide-react';
-import { translations } from '@/lib/translations';
 
 const REGIONS = ['Caribbean', 'North America', 'Central America', 'South America', 'Europe', 'Middle East', 'Asia', 'Africa'];
 
 export default function TravelAgencySignupStep1({ formData, setFormData, language, onNext }) {
-  const _t = translations[language];
   const [agencies, setAgencies] = useState(formData.service_regions || []);
 
   const toggleRegion = (region) => {

@@ -18,8 +18,10 @@ export default function BringYourOwnJourney() {
   const navigate = useNavigate();
   const [step, setStep] = useState('intake'); // intake | result | enroll | done
   const [form, setForm] = useState({
-    destination_country: '', destination_city: '', doctor_name: '', clinic_name: '',
-    procedures: [], surgery_date: '', doctor_license: '',
+    journey_type: 'medical',
+    destination_country: '', destination_city: '',
+    doctor_name: '', clinic_name: '', procedures: [], surgery_date: '', doctor_license: '',
+    activity_name: '', venue_name: '', activity_type: '',
   });
   const [result, setResult] = useState(null);
   const [enrollResult, setEnrollResult] = useState(null);
