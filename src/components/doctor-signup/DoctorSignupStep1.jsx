@@ -27,7 +27,19 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
 
   const handleSelectCountry = (e) => {
     const country = e.target.value;
-    setFormData(prev => ({ ...prev, clinic_country: country, clinic_city: '' }));
+    setFormData(prev => {
+      // Only clear the city if it's no longer valid for the new country.
+      // Clearing unconditionally causes the city field to switch between
+      // <Input> and <select>, and the key change on the city select can
+      // trigger React reconciliation that disrupts the country select.
+      const newCities = country && cityData[country] ? cityData[country] : [];
+      const cityStillValid = newCities.length === 0 || newCities.includes(prev.clinic_city);
+      return {
+        ...prev,
+        clinic_country: country,
+        clinic_city: cityStillValid ? prev.clinic_city : ''
+      };
+    });
   };
 
   const availableCities = formData.clinic_country && cityData[formData.clinic_country]

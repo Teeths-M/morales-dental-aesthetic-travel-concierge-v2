@@ -31,6 +31,7 @@ export default function DoctorSignup() {
     email: '',
     phone: '',
     clinic_country: '',
+    clinic_city: '',
     clinic_name: '',
     professional_background: '',
     years_experience: '',

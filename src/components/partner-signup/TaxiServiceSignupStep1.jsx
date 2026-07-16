@@ -43,7 +43,15 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
 
   const handleSelectCountry = (e) => {
     const country = e.target.value;
-    setFormData(prev => ({ ...prev, operating_country: country, operating_city: '' }));
+    setFormData(prev => {
+      const newCities = country && cityData[country] ? cityData[country] : [];
+      const cityStillValid = newCities.length === 0 || newCities.includes(prev.operating_city);
+      return {
+        ...prev,
+        operating_country: country,
+        operating_city: cityStillValid ? prev.operating_city : ''
+      };
+    });
   };
 
   const toggleVehicle = (vehicle) => {
