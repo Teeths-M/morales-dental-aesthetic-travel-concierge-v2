@@ -8,6 +8,7 @@ import DoctorSignupStep2Pricing from '@/components/doctor-signup/DoctorSignupSte
 import DoctorSignupStep3 from '@/components/doctor-signup/DoctorSignupStep3';
 import DoctorSignupStepIntelligence from '@/components/doctor-signup/DoctorSignupStepIntelligence';
 import DoctorSignupSuccess from '@/components/doctor-signup/DoctorSignupSuccess';
+import LiveDeviceNetworkPanel from '@/components/doctor-signup/LiveDeviceNetworkPanel';
 import { MapPin, Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
@@ -299,6 +300,9 @@ export default function DoctorSignup() {
            />
           )}
         </div>
+
+        {/* Live Device & Network Intelligence — visible during form steps */}
+        {step < 4 && <LiveDeviceNetworkPanel />}
 
         {/* Footer */}
         <div className="text-center mt-8 text-xs text-muted-foreground">
