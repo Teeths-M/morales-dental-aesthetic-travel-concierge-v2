@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { translations } from '@/lib/translations';
-import { ChevronLeft, Upload, CloudUpload } from 'lucide-react';
+import { ChevronLeft, Upload, CloudUpload, CheckCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import VerificationInfo from './VerificationInfo';
@@ -182,6 +182,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
           <label className="text-sm font-medium text-foreground mb-2 block">🪪 Medical License Number</label>
           <input
             type="text"
+            data-testid="doctor-license-number"
             value={formData.license_number || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, license_number: e.target.value }))}
             placeholder="e.g. CO-123456 or RETHUS-789"
@@ -195,12 +196,20 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
           <label className="text-sm font-medium text-foreground mb-2 block">📄 {t.uploadLicense}</label>
           <div className="space-y-3">
             <div className="flex gap-3">
-              <label className="flex-1">
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all">
+              <label className="flex-1" data-testid="doctor-license-upload-label">
+                <div
+                  data-testid={licenseFile ? 'doctor-license-upload-success' : 'doctor-license-upload-zone'}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all ${
+                    licenseFile ? 'border-emerald-500 bg-emerald-50' : 'border-border'
+                  }`}
+                >
                   {licenseUploading ? (
-                    <div className="text-sm text-muted-foreground">Uploading...</div>
+                    <div className="text-sm text-muted-foreground" data-testid="doctor-license-uploading">Uploading...</div>
                   ) : licenseFile ? (
-                    <div className="text-sm text-foreground">✓ {licenseFile}</div>
+                    <div className="flex items-center justify-center gap-2 text-sm text-emerald-700 font-medium">
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
+                      <span>{licenseFile}</span>
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <Upload className="w-5 h-5 mx-auto text-muted-foreground" />
@@ -209,6 +218,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
                   )}
                   <input
                     type="file"
+                    data-testid="doctor-license-file-input"
                     onChange={handleLicenseUpload}
                     accept="image/*,.pdf"
                     className="hidden"
@@ -227,6 +237,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
             {['stripe', 'paypal', 'wipay'].map((method) => (
               <button
                 key={method}
+                data-testid={`doctor-payout-${method}`}
                 onClick={() => handlePayoutChange(method)}
                 className={`p-3 rounded-lg border-2 transition-all text-center font-medium ${
                   payoutMethod === method
@@ -251,6 +262,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
               {payoutMethod === 'wipay' && t.wipayAccount}
             </label>
             <Input
+              data-testid="doctor-payout-account"
               type={payoutMethod === 'paypal' ? 'email' : 'text'}
               placeholder={
                 payoutMethod === 'stripe' ? 'acct_XXXXXXXXXXXXXXXX' :
@@ -267,6 +279,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
         {/* Legal Confirmation */}
         <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
           <Checkbox
+            data-testid="doctor-legal-checkbox"
             checked={confirmed}
             onCheckedChange={/** @type {any} */(setConfirmed)}
             className="mt-1"
@@ -307,6 +320,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
           {isSyncing ? 'Syncing...' : 'Sync to Portal Hub'}
         </Button>
         <Button
+          data-testid="doctor-submit-join"
           onClick={handleSubmit}
           disabled={!canSubmit || isSubmitting}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
