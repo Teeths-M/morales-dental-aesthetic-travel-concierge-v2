@@ -147,7 +147,7 @@ export default function CheckYourDoctor() {
                 <input style={inputStyle} value={form.clinic} onChange={set('clinic')} placeholder="e.g. Smile Clinic Tijuana" />
               </div>
               <div>
-                <label style={labelStyle}>Website <span style={{ fontWeight: 400, color: CALM.textFaint }}>— optional</span></label>
+                <label style={labelStyle}>Website</label>
                 <input style={inputStyle} value={form.website} onChange={set('website')} placeholder="e.g. smileclinic.com" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

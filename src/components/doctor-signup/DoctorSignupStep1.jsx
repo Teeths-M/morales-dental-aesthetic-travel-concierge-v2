@@ -185,7 +185,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
 
         {/* Website (Optional) */}
         <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">🌐 Website <span className="text-muted-foreground font-normal">(optional)</span></label>
+          <label className="text-sm font-medium text-foreground mb-2 block">🌐 Website</label>
           <Input
             data-testid="doctor-website"
             name="website_url"

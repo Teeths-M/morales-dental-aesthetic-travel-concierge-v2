@@ -217,7 +217,7 @@ export default function LocalDoctorSignup() {
                     placeholder="Smith Medical Centre" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
                 </div>
                 <div>
-                  <Label className="text-gray-300 text-sm">Website <span className="text-gray-500">(optional)</span></Label>
+                  <Label className="text-gray-300 text-sm">Website</Label>
                   <Input value={form.website_url} onChange={e => set('website_url', e.target.value)}
                     placeholder="www.yourclinic.com" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
                 </div>
