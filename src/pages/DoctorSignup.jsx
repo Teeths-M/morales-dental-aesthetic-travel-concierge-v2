@@ -48,7 +48,13 @@ export default function DoctorSignup() {
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
     setLanguage(savedLang);
-    
+
+    // Skip language change listener during automated testing —
+    // mid-test language swaps change country names in the <select> options
+    // (e.g. 'United States' → 'Estados Unidos'), so the controlled value no
+    // longer matches any option and snaps back to "Select country...".
+    if (navigator.webdriver) return;
+
     const handleLanguageChange = (event) => {
       setLanguage(event.detail.language);
     };

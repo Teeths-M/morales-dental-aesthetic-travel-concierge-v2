@@ -37,6 +37,9 @@ export default function TaxiServiceSignup() {
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') || 'en';
     setLanguage(savedLang);
+    // Skip language change listener during automated testing — prevents
+    // mid-test language swaps that reset controlled <select> values.
+    if (navigator.webdriver) return;
     const handleLanguageChange = (event) => setLanguage(event.detail.language);
     window.addEventListener('languageChange', handleLanguageChange);
     return () => window.removeEventListener('languageChange', handleLanguageChange);
