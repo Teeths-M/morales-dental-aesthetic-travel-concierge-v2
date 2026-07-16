@@ -214,7 +214,7 @@ Report only publicly findable safety concerns (scams, dangerous areas, unreliabl
           checks.push({ key: 'venue_intel', label: 'Venue intelligence', status: 'verified', completed: true,
             detail: ai?.note ? String(ai.note) : 'No public safety concerns found — reassuring, not proof.' });
         }
-      } catch {
+      } catch (_) {
         checks.push({ key: 'venue_intel', label: 'Venue intelligence', status: 'unconfirmed', completed: false,
           detail: 'We couldn’t complete the live venue search right now — a coordinator can check manually.' });
       }
@@ -241,8 +241,8 @@ Report only publicly findable safety concerns (scams, dangerous areas, unreliabl
             checks.push({ key: 'license', label: 'License registry', status: 'unconfirmed', completed: false,
               detail: `${country}’s registry couldn’t be checked automatically — confirm the licence with the provider.` });
           }
-        } catch {
-          checks.push({ key: 'license', label: 'License registry', status: 'unconfirmed', completed: false,
+        } catch (_) {
+                checks.push({ key: 'license', label: 'License registry', status: 'unconfirmed', completed: false,
             detail: 'We couldn’t reach the licence registry just now.' });
         }
       } else {
@@ -267,7 +267,7 @@ Report only publicly findable safety concerns (scams, dangerous areas, unreliabl
           checks.push({ key: 'clinic', label: 'Clinic status', status: 'unconfirmed', completed: false,
             detail: 'The last confirmation of this clinic’s status is past our freshness window — re-verifying.' });
         }
-      } catch {
+      } catch (_) {
         checks.push({ key: 'clinic', label: 'Clinic status', status: 'unconfirmed', completed: false,
           detail: 'We couldn’t check the clinic’s status just now.' });
       }
@@ -296,7 +296,7 @@ Report only publicly findable safety concerns (scams, dangerous areas, unreliabl
         fraudOverlap = (hits || []).some((d: any) =>
           (last.length >= 3 && d.name && String(d.name).toLowerCase().includes(last)) ||
           (d.clinic_name && String(d.clinic_name).toLowerCase().includes(cn)));
-      } catch { /* non-fatal */ }
+      } catch (_) { /* non-fatal */ }
 
       if (fraudOverlap) {
         checks.push({ key: 'intel', label: 'Safety network', status: 'concern', completed: true,
@@ -322,7 +322,7 @@ Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"not
             checks.push({ key: 'intel', label: 'Provider intelligence', status: 'verified', completed: true,
               detail: ai?.note ? String(ai.note) : 'Public records are consistent with an established provider.' });
           }
-        } catch {
+        } catch (_) {
           checks.push({ key: 'intel', label: 'Provider intelligence', status: 'unconfirmed', completed: false,
             detail: 'We couldn’t complete the live provider search right now — a coordinator can check manually.' });
         }
@@ -348,7 +348,7 @@ Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"not
           detected_at: new Date().toISOString(),
         });
         escalation_id = rec?.id || '';
-      } catch { /* logging failure must not swallow the concern */ }
+      } catch (_) { /* logging failure must not swallow the concern */ }
 
       try {
         const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'admin@moralesmedical.com';
@@ -363,7 +363,7 @@ Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"not
 <p><strong>Findings:</strong><ul>${detailLines.map((l) => `<li>${l}</li>`).join('')}</ul></p>
 <p>Escalation record: ${escalation_id || '(record write failed — action manually)'}</p>`,
         });
-      } catch { /* outreach best-effort */ }
+      } catch (_) { /* outreach best-effort */ }
     }
 
     // ── Persist verification snapshot ───────────────────────────────────────────
@@ -403,7 +403,7 @@ Return ONLY JSON: {"credibility":"high"|"medium"|"low","red_flags":[string],"not
         const rec = await base44.asServiceRole.entities.ExternalJourney.create({ ...journeyPatch, created_at: nowISO });
         journeyId = rec?.id || '';
       }
-    } catch { /* snapshot persistence is best-effort */ }
+    } catch (_) { /* snapshot persistence is best-effort */ }
 
     // ── Guide, don't wall ────────────────────────────────────────────────────────
     const recommendations: string[] = [];
