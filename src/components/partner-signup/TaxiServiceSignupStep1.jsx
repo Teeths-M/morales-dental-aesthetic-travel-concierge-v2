@@ -168,6 +168,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
           <label className="text-sm font-medium text-foreground block mb-2">🗺️ {language === 'es' ? 'País de Operación' : language === 'fr' ? 'Pays d\'Opération' : 'Operating Country'}</label>
           <button
             type="button"
+            data-testid="taxi-country-select"
             onClick={() => setShowCountryDropdown(v => !v)}
             className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring"
           >
@@ -192,12 +193,15 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
                 {filteredCountries.length === 0 ? (
                   <li className="px-4 py-3 text-sm text-muted-foreground text-center">No results</li>
                 ) : filteredCountries.map(country => (
-                  <li
-                    key={country}
-                    onClick={() => handleSelectCountry(country)}
-                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                  >
-                    {country}
+                  <li key={country}>
+                    <button
+                      type="button"
+                      data-testid={`taxi-country-option-${country.replace(/\s+/g, '-')}`}
+                      onClick={() => handleSelectCountry(country)}
+                      className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                    >
+                      {country}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -211,6 +215,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
           </label>
           <button
             type="button"
+            data-testid="taxi-city-select"
             onClick={() => setShowCityDropdown(v => !v)}
             className="w-full h-12 flex items-center justify-between px-4 border border-input rounded-md bg-background text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             disabled={!formData.operating_country}
@@ -239,12 +244,15 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
                   </li>
                 ) : (
                   filteredCities().map(city => (
-                    <li
-                      key={city}
-                      onClick={() => handleSelectCity(city)}
-                      className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                    >
-                      {city}
+                    <li key={city}>
+                      <button
+                        type="button"
+                        data-testid={`taxi-city-option-${city.replace(/\s+/g, '-')}`}
+                        onClick={() => handleSelectCity(city)}
+                        className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.operating_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                      >
+                        {city}
+                      </button>
                     </li>
                   ))
                 )}
@@ -305,6 +313,7 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
       </div>
 
       <Button
+        data-testid="taxi-step1-next"
         onClick={handleNext}
         disabled={!canContinue}
         className="w-full h-12 bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white gap-2"

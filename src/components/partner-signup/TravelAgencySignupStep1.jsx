@@ -137,6 +137,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
 
       <div className="flex gap-3">
         <Button
+          data-testid="travel-agency-step1-next"
           onClick={onNext}
           disabled={!canContinue}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"

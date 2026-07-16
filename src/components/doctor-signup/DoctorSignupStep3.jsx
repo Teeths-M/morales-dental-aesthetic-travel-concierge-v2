@@ -54,7 +54,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
   };
 
   const handleSubmit = async () => {
-     if (!formData.license_number || !formData.license_url || !payoutMethod || !formData.payout_account || !confirmed) {
+     if (!formData.license_number || !payoutMethod || !formData.payout_account || !confirmed) {
        return;
      }
 
@@ -164,7 +164,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       }
       };
 
-  const canSubmit = formData.license_number && formData.license_url && payoutMethod && formData.payout_account && confirmed;
+  const canSubmit = formData.license_number && payoutMethod && formData.payout_account && confirmed;
 
   return (
     <div className="space-y-8">

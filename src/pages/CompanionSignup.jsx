@@ -130,13 +130,14 @@ export default function CompanionSignup() {
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 gap-4">
               {step > STEPS.ABOUT_YOU && (
-                <Button variant="outline" onClick={goToPreviousStep}>
+                <Button variant="outline" data-testid="companion-back" onClick={goToPreviousStep}>
                   ← Back
                 </Button>
               )}
               
               {step < STEPS.AVAILABILITY ? (
                 <Button 
+                  data-testid="companion-next"
                   onClick={goToNextStep} 
                   className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                   disabled={!isStepValid}
@@ -145,6 +146,7 @@ export default function CompanionSignup() {
                 </Button>
               ) : (
                 <Button 
+                  data-testid="companion-submit"
                   onClick={handleSubmit} 
                   disabled={isSubmitting || !isStepValid}
                   className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"

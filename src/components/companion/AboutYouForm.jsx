@@ -1,7 +1,6 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ACCOUNT_TYPES } from './AccountTypeSelector';
 
 const COUNTRIES = [
@@ -68,16 +67,19 @@ export function AboutYouForm({ accountType, formData, onInputChange }) {
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="country">Where do you live? *</Label>
-          <Select value={formData.country} onValueChange={(val) => onInputChange('country', val)}>
-            <SelectTrigger className="py-6">
-              <SelectValue placeholder="Select your country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map(country => (
-                <SelectItem key={country} value={country}>{country}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            id="country"
+            list="companion-countries"
+            value={formData.country || ''}
+            onChange={(e) => onInputChange('country', e.target.value)}
+            placeholder="Select your country"
+            className="py-6"
+          />
+          <datalist id="companion-countries">
+            {COUNTRIES.map(country => (
+              <option key={country} value={country} />
+            ))}
+          </datalist>
         </div>
         <FormField
           id="city"
