@@ -38,43 +38,43 @@ test.describe('Doctor Signup Flow', () => {
     await page.waitForTimeout(2000);
 
     // ── Step 1: Personal Info ──
-    await page.fill('input[placeholder="Dr. Jane Smith"]', 'Dr. Test Manual');
-    await page.fill('input[type="email"]', testEmail);
-    await page.fill('input[placeholder="+1 868 123 4567"]', '+1 555 123 4567');
+    await page.fill('[data-testid="doctor-full-name"]', 'Dr. Test Manual');
+    await page.fill('[data-testid="doctor-email"]', testEmail);
+    await page.fill('[data-testid="doctor-phone"]', '+1 555 123 4567');
 
-    // Country — Radix Select
-    await page.locator('button[role="combobox"]').click();
-    await page.locator('[role="option"]:has-text("Mexico")').click();
+    // Country — custom dropdown with data-testid
+    await page.locator('[data-testid="doctor-country-select"]').click();
+    await page.locator('[data-testid="doctor-country-option-Mexico"]').click();
 
-    // City — custom dropdown
-    await page.locator('button:has-text("Select a city")').click();
-    await page.locator('li:has-text("Cancun")').click();
+    // City — custom dropdown with data-testid
+    await page.locator('[data-testid="doctor-city-select"]').click();
+    await page.locator('[data-testid="doctor-city-option-Cancun"]').click();
 
     // Professional background + experience
-    await page.fill('input[placeholder="Education, certifications, board memberships"]', 'MD, Board Certified');
-    await page.fill('input[type="number"]', '10');
+    await page.fill('[data-testid="doctor-professional-background"]', 'MD, Board Certified');
+    await page.fill('[data-testid="doctor-years-experience"]', '10');
 
     // Click Next
-    await page.getByRole('button', { name: /Next/i }).click();
+    await page.locator('[data-testid="doctor-step1-next"]').click();
     await page.screenshot({ path: 'test-results/doctor-step1-done.png', fullPage: true });
 
     // ── Step 2: Categories & Procedures ──
     // Clicking a category auto-selects all procedures within it
-    await page.locator('button:has-text("General Dentistry")').click();
+    await page.locator('[data-testid="doctor-category-dental-general"]').click();
     await page.waitForTimeout(500);
 
-    await page.getByRole('button', { name: /Next/i }).click();
+    await page.locator('[data-testid="doctor-step2-next"]').click();
     await page.screenshot({ path: 'test-results/doctor-step2-done.png', fullPage: true });
 
     // ── Step 2b: Pricing ──
     // Fill every price input with a default value
-    const priceInputs = page.locator('input[type="number"]');
+    const priceInputs = page.locator('input[data-testid^="doctor-price-"]');
     const priceCount = await priceInputs.count();
     for (let i = 0; i < priceCount; i++) {
       await priceInputs.nth(i).fill('500');
     }
 
-    await page.getByRole('button', { name: /Continue/i }).click();
+    await page.locator('[data-testid="doctor-step2b-continue"]').click();
     await page.screenshot({ path: 'test-results/doctor-step2b-done.png', fullPage: true });
 
     // ── Step 3: License & Payout ──
