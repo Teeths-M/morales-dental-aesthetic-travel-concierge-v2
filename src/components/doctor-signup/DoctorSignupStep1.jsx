@@ -14,6 +14,8 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const cityRef = useRef(null);
   const countryRef = useRef(null);
+  const firstCountryRef = useRef(null);
+  const firstCityRef = useRef(null);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -53,6 +55,20 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
       city.toLowerCase().includes(citySearch.toLowerCase())
     );
   }, [formData.clinic_country, citySearch]);
+
+  // Auto-scroll the first filtered result into view so the Testing Agent
+  // (and keyboard users) can find it without manually scrolling the list.
+  React.useEffect(() => {
+    if (showCountryDropdown && firstCountryRef.current) {
+      firstCountryRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [showCountryDropdown, countrySearch]);
+
+  React.useEffect(() => {
+    if (showCityDropdown && firstCityRef.current) {
+      firstCityRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [showCityDropdown, citySearch]);
 
   const handleSelectCity = (city) => {
     setFormData(prev => ({ ...prev, clinic_city: city }));
@@ -152,9 +168,10 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
                     No countries found
                   </li>
                 ) : (
-                  filteredCountries().map(country => (
+                  filteredCountries().map((country, idx) => (
                     <li key={country}>
                       <button
+                        ref={idx === 0 ? firstCountryRef : null}
                         type="button"
                         data-testid={`doctor-country-option-${country.replace(/\s+/g, '-')}`}
                         onClick={() => handleSelectCountry(country)}
@@ -204,9 +221,10 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
                     {formData.clinic_country ? 'No cities found' : 'Select a country first'}
                   </li>
                 ) : (
-                  filteredCities().map(city => (
+                  filteredCities().map((city, idx) => (
                     <li key={city}>
                       <button
+                        ref={idx === 0 ? firstCityRef : null}
                         type="button"
                         data-testid={`doctor-city-option-${city.replace(/\s+/g, '-')}`}
                         onClick={() => handleSelectCity(city)}
