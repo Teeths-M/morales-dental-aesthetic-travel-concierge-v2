@@ -41,6 +41,10 @@ export default function DoctorSignup() {
     procedurePrices: {},
     license_url: '',
     license_number: '',
+    website_url: '',
+    social_facebook: '',
+    social_instagram: '',
+    social_tiktok: '',
     payout_method: '',
     payout_account: ''
   });

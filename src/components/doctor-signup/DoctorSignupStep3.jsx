@@ -72,6 +72,10 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
          bio: formData.bio,
          license_number: formData.license_number,
          license_url: formData.license_url,
+         website_url: formData.website_url || undefined,
+         social_facebook: formData.social_facebook || undefined,
+         social_instagram: formData.social_instagram || undefined,
+         social_tiktok: formData.social_tiktok || undefined,
          payout_method: formData.payout_method,
          payout_account: formData.payout_account,
          language_preference: language,
@@ -178,6 +182,62 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       <div className="space-y-6">
         {/* Verification Info */}
         <VerificationInfo language={language} />
+
+        {/* Digital Presence — used by the Internet Intelligence scan */}
+        <div className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Digital Presence</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              These are checked live during your verification scan — add what you have.
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">🌐 Website URL</label>
+            <Input
+              data-testid="doctor-website-url"
+              type="url"
+              value={formData.website_url || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
+              placeholder="https://yourclinic.com"
+              className="h-12"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Facebook</label>
+              <Input
+                data-testid="doctor-social-facebook"
+                type="text"
+                value={formData.social_facebook || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, social_facebook: e.target.value }))}
+                placeholder="yourclinic"
+                className="h-12"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Instagram</label>
+              <Input
+                data-testid="doctor-social-instagram"
+                type="text"
+                value={formData.social_instagram || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, social_instagram: e.target.value }))}
+                placeholder="yourclinic"
+                className="h-12"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">TikTok</label>
+              <Input
+                data-testid="doctor-social-tiktok"
+                type="text"
+                value={formData.social_tiktok || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, social_tiktok: e.target.value }))}
+                placeholder="yourclinic"
+                className="h-12"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* License Number */}
         <div>
