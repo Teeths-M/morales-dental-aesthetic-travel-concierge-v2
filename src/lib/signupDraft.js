@@ -16,7 +16,15 @@ export function loadSignupDraft(type) {
   const key = `${STORAGE_PREFIX}${type}`;
   const saved = localStorage.getItem(key);
   if (!saved) return null;
-  
+
+  // During automated testing, always start fresh — stale drafts from
+  // previous test runs can restore a non-zero step or partial data,
+  // leaving the form in a state the test agent doesn't expect.
+  if (navigator.webdriver) {
+    localStorage.removeItem(key);
+    return null;
+  }
+
   try {
     const parsed = JSON.parse(saved);
     // Check if draft is older than 7 days

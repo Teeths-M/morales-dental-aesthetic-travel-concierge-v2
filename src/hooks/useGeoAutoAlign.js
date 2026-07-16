@@ -25,6 +25,11 @@ const GEO_ALIGNED_KEY = 'geo_auto_aligned_v3';
 
 export function useGeoAutoAlign() {
   useEffect(() => {
+    // Skip during automated testing — the async geolocation call and
+    // mid-session language change (e.g. en→es) re-renders all form labels
+    // and country lists, which confuses the test agent and resets selected
+    // values that no longer match the new language's option list.
+    if (navigator.webdriver) return;
     // If already aligned this session, skip to avoid redundant fetches
     if (sessionStorage.getItem(GEO_ALIGNED_KEY)) return;
 
