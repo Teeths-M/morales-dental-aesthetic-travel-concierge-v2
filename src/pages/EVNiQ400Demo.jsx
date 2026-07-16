@@ -190,9 +190,9 @@ export default function EVNiQ400Demo() {
   const MSG = {
     online: {
       boot:    ['📡 Connecting to live advisory network...', '✅ Connected · 14 government advisory sources active · AI layer ready'],
-      scan:    '⏳ Querying live AI intelligence...',
-      cross:   '⚡ Cross-referencing LLM threat model · 14 live data sources...',
-      confirm: '🔴 HIGH RISK CONFIRMED via LLM · 14 live sources · AI confidence: 98%',
+      scan:    '⏳ Querying AI intelligence...',
+      cross:   '⚡ Cross-referencing LLM threat model · 14 advisory sources...',
+      confirm: '🔴 HIGH RISK CONFIRMED via LLM · 14 advisory sources · AI confidence: 98%',
     },
     offline: {
       boot:    ['📱 Network unavailable · Loading 24h intelligence cache...', '✅ Cache loaded · Last sync 6h ago · 200+ risk zones active'],
@@ -636,7 +636,7 @@ export default function EVNiQ400Demo() {
             <div style={{ padding: '8px 18px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 6 }}>
               <OfflineBadge mode={mode} />
               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>
-                {mode === 'online' ? 'AI-assessed · live data' : mode === 'offline' ? 'Local cache · 24h TTL' : 'Offline KB · zero network'}
+                {mode === 'online' ? 'AI-assessed · simulated' : mode === 'offline' ? 'Local cache · 24h TTL' : 'Offline KB · zero network'}
               </span>
             </div>
           </motion.div>

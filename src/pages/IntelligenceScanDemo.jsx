@@ -250,7 +250,7 @@ export default function IntelligenceScanDemo() {
                   <Globe className="w-5 h-5" style={{ color: '#D4AF37' }} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>SAFE-T 4LIFE™ · LIVE SYSTEM DEMO</p>
+                  <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748b' }}>SAFE-T 4LIFE™ · DEFENSE-IN-DEPTH SHOWCASE</p>
                   <h1 className="text-xl font-semibold" style={{ color: '#f1f5f9' }}>Defense-in-Depth Intelligence Engine</h1>
                 </div>
               </div>
