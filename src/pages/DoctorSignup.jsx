@@ -1,5 +1,5 @@
 // @ts-nocheck — pre-existing type gaps; build passes
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { translations } from '@/lib/translations';
 import { BackButton } from '@/components/nav/BackButton';
 import DoctorSignupStep1 from '@/components/doctor-signup/DoctorSignupStep1';
@@ -15,6 +15,16 @@ import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from 
 export default function DoctorSignup() {
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [step, setStep] = useState(0);
+  const formCardRef = useRef(null);
+
+  // Scroll the form card back into view whenever the step changes —
+  // without this, after clicking Next the page stays scrolled to the
+  // bottom (where the button was) and the new step content is off-screen.
+  useEffect(() => {
+    if (formCardRef.current) {
+      formCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [step]);
   const [successDoctor, setSuccessDoctor] = useState(null);
   const [formData, setFormData] = useState({
     full_name: '',
@@ -199,7 +209,7 @@ export default function DoctorSignup() {
         )}
 
         {/* Step Content */}
-        <div className="bg-card rounded-2xl border border-border p-8 shadow-lg">
+        <div ref={formCardRef} className="bg-card rounded-2xl border border-border p-8 shadow-lg scroll-mt-4">
           {step === 0 && (
             <DoctorSignupStep1
               formData={formData}

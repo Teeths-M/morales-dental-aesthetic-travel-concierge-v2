@@ -71,6 +71,7 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
                       <span className="text-sm font-semibold text-muted-foreground">$</span>
                       <Input
                         type="number"
+                        data-testid={`doctor-price-${procedure.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`}
                         placeholder="0"
                         min="0"
                         step="100"
@@ -106,6 +107,7 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
           <ChevronLeft className="w-4 h-4" /> Back
         </Button>
         <Button
+          data-testid="doctor-step2b-continue"
           onClick={handleNext}
           disabled={!allPricesSet}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"

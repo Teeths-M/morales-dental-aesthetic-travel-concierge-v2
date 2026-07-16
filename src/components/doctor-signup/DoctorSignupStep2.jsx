@@ -67,6 +67,7 @@ export default function DoctorSignupStep2({ formData, setFormData, language = 'e
           {Object.entries(categoryMap).map(([id, cat]) => (
             <button
               key={id}
+              data-testid={`doctor-category-${id}`}
               onClick={() => handleSelectCategory(id)}
               className={`p-4 rounded-lg border-2 transition-all text-center space-y-2 ${
                 selectedCategories.has(id)
@@ -137,6 +138,7 @@ export default function DoctorSignupStep2({ formData, setFormData, language = 'e
           <ChevronLeft className="w-4 h-4" /> {t.back}
         </Button>
         <Button
+          data-testid="doctor-step2-next"
           onClick={handleNext}
           disabled={selectedProcedures.size === 0}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
