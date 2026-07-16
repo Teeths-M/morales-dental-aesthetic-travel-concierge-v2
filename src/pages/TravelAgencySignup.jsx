@@ -117,7 +117,6 @@ export default function TravelAgencySignup() {
           }));
         }
       } catch (error) {
-        console.log('Could not auto-detect location:', error.message);
       }
     };
 

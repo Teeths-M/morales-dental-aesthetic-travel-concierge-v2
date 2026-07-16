@@ -28,7 +28,6 @@ if (SENTRY_DSN && import.meta.env.PROD) {
     replaysOnErrorSampleRate: 1.0,
     beforeSend(event, hint) {
       if (import.meta.env.DEV) {
-        console.log('[Sentry] Error captured (dev mode, not sent):', event.message);
         return null;
       }
       return event;

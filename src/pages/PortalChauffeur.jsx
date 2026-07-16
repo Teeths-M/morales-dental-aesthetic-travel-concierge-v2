@@ -29,9 +29,7 @@ export default function PortalChauffeur() {
   const [leg6, setLeg6] = useState('');
 
   useEffect(() => {
-    console.log('[PortalChauffeur] Component mounted, starting token extraction...');
     const token = getTokenFromUrl();
-    console.log('[PortalChauffeur] Raw token from URL:', token);
     if (!token) { 
       console.error('[PortalChauffeur] No token found in URL');
       setTokenError('No access token provided. Please use the link sent to you.'); 
@@ -39,28 +37,23 @@ export default function PortalChauffeur() {
       return; 
     }
     const decoded = decodePortalToken(token);
-    console.log('[PortalChauffeur] Decoded token result:', decoded);
     if (!decoded.valid) { 
       console.error('[PortalChauffeur] Token decoding failed:', decoded.error);
       setTokenError(decoded.error || 'Invalid or expired access link.'); 
       setLoading(false); 
       return; 
     }
-    console.log('[PortalChauffeur] Token valid, loading data with IDs:', { consultation_id: decoded.consultation_id, partner_id: decoded.partner_id });
     setTokenData(decoded);
     loadData(decoded.consultation_id, decoded.partner_id);
   }, []);
 
   const loadData = async (consultationId, partnerId) => {
-    console.log('[PortalChauffeur] loadData called with:', { consultationId, partnerId });
     try {
-      console.log('[PortalChauffeur] Invoking getPortalData...');
       const response = await base44.functions.invoke('getPortalData', {
         consultation_id: consultationId,
         partner_id: partnerId,
       });
 
-      console.log('[PortalChauffeur] Backend response:', response.data);
 
       const c = response.data.consultation;
       if (!c) { setError('Case not found. ID: ' + consultationId); setLoading(false); return; }

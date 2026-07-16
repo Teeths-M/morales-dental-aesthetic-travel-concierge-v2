@@ -14,9 +14,7 @@ export default function TestPortalLink() {
       return;
     }
 
-    console.log('Token from URL:', token);
     const decoded = decodePortalToken(token);
-    console.log('Decoded token:', decoded);
     
     if (!decoded.valid) {
       setError(decoded.error);

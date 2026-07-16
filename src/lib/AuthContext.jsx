@@ -236,7 +236,6 @@ export const AuthProvider = ({ children }) => {
     clearTimeout(inactivityTimerRef.current);
     inactivityTimerRef.current = setTimeout(() => {
       if (isAuthenticated) {
-        console.log('[AuthContext] Session expired due to inactivity');
         logout();
       }
     }, INACTIVITY_TIMEOUT_MS);

@@ -91,6 +91,7 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
           {Object.entries(SERVICES).map(([key, service]) => (
             <button
               key={key}
+              data-testid={`travel-agency-service-${key}`}
               onClick={() => toggleService(key)}
               className={`p-4 rounded-xl border-2 transition-all text-center font-medium ${
                 selectedServices.has(key)
@@ -115,6 +116,7 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
               {SERVICES[serviceKey].options.map(option => (
                 <button
                   key={option}
+                  data-testid={`travel-agency-option-${serviceKey}-${option.replace(/\s+/g, '-').toLowerCase()}`}
                   onClick={() => toggleOption(serviceKey, option)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     (selectedOptions[serviceKey] || []).includes(option)
@@ -131,10 +133,11 @@ export default function TravelAgencySignupStep2({ formData, setFormData, languag
       </div>
 
       <div className="flex gap-3">
-        <Button onClick={onBack} variant="outline" className="flex-1 h-12">
+        <Button data-testid="travel-agency-step2-back" onClick={onBack} variant="outline" className="flex-1 h-12">
           <ChevronLeft className="w-4 h-4" /> {language === 'es' ? 'Atrás' : language === 'fr' ? 'Retour' : 'Back'}
         </Button>
         <Button
+          data-testid="travel-agency-step2-next"
           onClick={handleNext}
           disabled={!canContinue}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"

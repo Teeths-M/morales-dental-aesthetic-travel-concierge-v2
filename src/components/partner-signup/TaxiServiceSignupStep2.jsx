@@ -75,6 +75,7 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
         </button>
         <Input
           type="number"
+          data-testid={`taxi-leg-price-${legKey}`}
           value={pricingModel[legKey] || 0}
           onChange={e => updatePrice(legKey, e.target.value)}
           className="w-20 text-center text-sm font-semibold h-8"
@@ -110,6 +111,7 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
             {days.map(day => (
               <button
                 key={day}
+                data-testid={`taxi-day-${day}`}
                 onClick={() => toggleDay(day)}
                 className={`p-2 rounded-lg border-2 transition-all text-sm font-medium ${
                   operatingDays[day]
@@ -130,6 +132,7 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
             {['24h', 'custom'].map(opt => (
               <button
                 key={opt}
+                data-testid={`taxi-hours-${opt}`}
                 onClick={() => setHours(opt)}
                 className={`flex-1 p-3 rounded-lg border-2 transition-all font-medium text-sm ${
                   hours === opt
@@ -202,10 +205,11 @@ export default function TaxiServiceSignupStep2({ formData, setFormData, language
       </div>
 
       <div className="flex gap-3">
-        <Button onClick={onBack} variant="outline" className="flex-1 h-12">
+        <Button data-testid="taxi-step2-back" onClick={onBack} variant="outline" className="flex-1 h-12">
           <ChevronLeft className="w-4 h-4" /> {language === 'es' ? 'Atrás' : language === 'fr' ? 'Retour' : 'Back'}
         </Button>
         <Button
+          data-testid="taxi-step2-next"
           onClick={handleNext}
           disabled={!canContinue}
           className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white gap-2"

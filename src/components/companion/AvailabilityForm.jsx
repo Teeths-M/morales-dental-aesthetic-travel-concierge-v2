@@ -17,6 +17,7 @@ export function AvailabilityForm({ formData, onInputChange }) {
             <button
               key={opt.value}
               type="button"
+              data-testid={`companion-availability-${opt.value}`}
               onClick={() => onInputChange('availability', opt.value)}
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 formData.availability === opt.value

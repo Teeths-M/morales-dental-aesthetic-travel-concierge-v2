@@ -57,7 +57,6 @@ export async function saveVaultPIN(email, pin) {
   localStorage.setItem(`${VAULT_PIN_PREFIX}${email.toLowerCase()}`, pinHash);
   localStorage.setItem(`${VAULT_SALT_PREFIX}${email.toLowerCase()}`, salt);
   
-  console.log('[OfflineVaultPIN] PIN saved for', email);
 }
 
 /**
@@ -74,7 +73,6 @@ export async function verifyVaultPIN(email, pin) {
   const inputHash = await hashVaultPIN(pin, salt);
   const isValid = pinHash === inputHash;
   
-  console.log('[OfflineVaultPIN] Verification result:', isValid);
   return { valid: isValid };
 }
 

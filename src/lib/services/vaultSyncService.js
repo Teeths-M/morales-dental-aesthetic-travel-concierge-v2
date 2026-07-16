@@ -31,7 +31,6 @@ export function queueSyncAction(actionType, payload, userEmail) {
   
   queue.push(newAction);
   localStorage.setItem(`${SYNC_QUEUE_KEY}_${userEmail.toLowerCase()}`, JSON.stringify(queue));
-  console.log('[VaultSync] Queued action:', actionType, newAction.id);
   
   // Trigger sync attempt if online
   if (navigator.onLine) {
@@ -75,7 +74,6 @@ function updateStatus(userEmail, status) {
  */
 export async function processQueue(userEmail) {
   if (!navigator.onLine) {
-    console.log('[VaultSync] Skipping - offline');
     return { synced: 0, reason: 'offline' };
   }
 
@@ -99,7 +97,6 @@ export async function processQueue(userEmail) {
     try {
       await executeAction(action);
       synced++;
-      console.log('[VaultSync] Synced action:', action.id);
     } catch (err) {
       console.error('[VaultSync] Action failed:', action.id, err.message);
       failed.push({ ...action, attempts: action.attempts + 1 });
@@ -110,7 +107,6 @@ export async function processQueue(userEmail) {
   saveQueue(userEmail, failed);
   updateStatus(userEmail, { syncing: false, lastSync: new Date().toISOString(), pending: failed.length });
 
-  console.log(`[VaultSync] Sync complete: ${synced}/${queue.length} actions synced, ${failed.length} pending`);
   
   return { synced, pending: failed.length };
 }
@@ -155,7 +151,6 @@ export function initBackgroundSync(userEmail) {
 
   // Listen for online events
   const handleOnline = () => {
-    console.log('[VaultSync] Connection restored, processing queue...');
     processQueue(userEmail);
   };
 
@@ -164,7 +159,6 @@ export function initBackgroundSync(userEmail) {
   // Check for pending items on init
   const queue = getQueue(userEmail);
   if (queue.length > 0 && navigator.onLine) {
-    console.log('[VaultSync] Found pending items on init:', queue.length);
     processQueue(userEmail);
   }
 

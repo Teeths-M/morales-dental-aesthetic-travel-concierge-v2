@@ -144,6 +144,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
             {['stripe', 'paypal', 'wipay'].map((method) => (
               <button
                 key={method}
+                data-testid={`travel-agency-payout-${method}`}
                 onClick={() => handlePayoutChange(method)}
                 className={`p-3 rounded-lg border-2 transition-all text-center font-medium ${
                   payoutMethod === method
@@ -168,6 +169,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
               {payoutMethod === 'wipay' && (language === 'es' ? 'Cuenta WiPay' : language === 'fr' ? 'Compte WiPay' : 'WiPay Account')}
             </label>
             <Input
+              data-testid="travel-agency-payout-account"
               type={payoutMethod === 'paypal' ? 'email' : 'text'}
               placeholder={payoutMethod === 'paypal' ? 'your@email.com' : 'Account number'}
               value={formData.payout_account}
@@ -179,7 +181,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
 
         {/* Legal Confirmation */}
         <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
-          <Checkbox checked={confirmed} onCheckedChange={/** @type {any} */(setConfirmed)} className="mt-1" />
+          <Checkbox data-testid="travel-agency-legal-checkbox" checked={confirmed} onCheckedChange={/** @type {any} */(setConfirmed)} className="mt-1" />
           <label className="text-sm text-foreground cursor-pointer">
             {language === 'es'
               ? 'Confirmo que puedo proporcionar legalmente servicios de viaje en las regiones seleccionadas.'
@@ -195,6 +197,7 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
           <ChevronLeft className="w-4 h-4" /> {language === 'es' ? 'Atrás' : language === 'fr' ? 'Retour' : 'Back'}
         </Button>
         <Button
+          data-testid="travel-agency-submit"
           onClick={handleSubmit}
           disabled={!canSubmit || isSubmitting}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"

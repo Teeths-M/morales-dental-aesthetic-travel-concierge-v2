@@ -1,7 +1,6 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const LANGUAGES = ['English', 'Spanish', 'French', 'Hindi', 'Urdu', 'Mandarin', 'Arabic'];
 const EXPERIENCE_OPTIONS = ['Just starting out', '1-2 years', '3-5 years', '5-10 years', '10+ years'];
@@ -15,6 +14,7 @@ export function ExperienceForm({ formData, onInputChange, onLanguageToggle }) {
           {LANGUAGES.map(lang => (
             <Badge
               key={lang}
+              data-testid={`companion-language-${lang.toLowerCase()}`}
               className={`cursor-pointer transition-all text-sm py-2 px-4 ${
                 formData.languages.includes(lang)
                   ? 'bg-primary text-primary-foreground'
@@ -30,17 +30,24 @@ export function ExperienceForm({ formData, onInputChange, onLanguageToggle }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="years_experience">How many years of caregiving experience?</Label>
-        <Select value={formData.years_experience} onValueChange={(val) => onInputChange('years_experience', val)}>
-          <SelectTrigger className="py-6">
-            <SelectValue placeholder="Select your experience level" />
-          </SelectTrigger>
-          <SelectContent>
-            {EXPERIENCE_OPTIONS.map(opt => (
-              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label>How many years of caregiving experience?</Label>
+        <div className="flex flex-wrap gap-2">
+          {EXPERIENCE_OPTIONS.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              data-testid={`companion-experience-${opt.replace(/\s+/g, '-').toLowerCase()}`}
+              onClick={() => onInputChange('years_experience', opt)}
+              className={`px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                formData.years_experience === opt
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -50,11 +57,13 @@ export function ExperienceForm({ formData, onInputChange, onLanguageToggle }) {
             isSelected={formData.has_medical_training === 'yes'}
             onClick={() => onInputChange('has_medical_training', 'yes')}
             label="Yes, I have training"
+            testId="companion-medical-yes"
           />
           <ToggleButton
             isSelected={formData.has_medical_training === 'no'}
             onClick={() => onInputChange('has_medical_training', 'no')}
             label="No, but I'm willing to learn"
+            testId="companion-medical-no"
           />
         </div>
       </div>
@@ -62,10 +71,11 @@ export function ExperienceForm({ formData, onInputChange, onLanguageToggle }) {
   );
 }
 
-function ToggleButton({ isSelected, onClick, label }) {
+function ToggleButton({ isSelected, onClick, label, testId }) {
   return (
     <button
       type="button"
+      data-testid={testId}
       onClick={onClick}
       className={`flex-1 py-4 rounded-lg border-2 transition-all ${
         isSelected

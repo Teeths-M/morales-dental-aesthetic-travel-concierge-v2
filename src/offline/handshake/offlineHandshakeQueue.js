@@ -128,7 +128,6 @@ export async function clearHandshakeQueue(caseId) {
     const unsynced = queue.filter(p => !p.synced && p.case_id === caseId);
 
     if (unsynced.length > 0) {
-      console.log(`[offlineHandshakeQueue] Clearing ${unsynced.length} unsynced packets for completed journey ${caseId}`);
     }
 
     // Remove all packets for this case

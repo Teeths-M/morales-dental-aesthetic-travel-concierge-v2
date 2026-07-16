@@ -65,21 +65,17 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
     if (vaultMeta.document_type === 'passport' && file.type.includes('image') && navigator.onLine) {
       setExtracting(true);
       try {
-        console.log('[VaultUploader] Starting extraction for file:', file.name, file.type);
         
         // Convert file to ArrayBuffer to ensure proper serialization through SDK
         const arrayBuffer = await file.arrayBuffer();
         const uploadRes = await base44.integrations.Core.UploadFile({ file: arrayBuffer });
-        console.log('[VaultUploader] File uploaded, URL:', uploadRes.data.file_url);
         
         const extractRes = await base44.functions.invoke('extractPassportData', { file_url: uploadRes.data.file_url });
         
-        console.log('[VaultUploader] Extraction response:', extractRes.data);
         
         // Check if extraction was successful
         if (extractRes.data?.success && extractRes.data?.extracted) {
           const data = extractRes.data.extracted;
-          console.log('[VaultUploader] Extracted data:', data);
           
           // Create extracted data object with all fields
           const extractedObj = {
@@ -101,10 +97,8 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
             full_name_redacted: extractedObj.full_name,
           };
           
-          console.log('[VaultUploader] Setting vault meta to:', newVaultMeta);
           setVaultMeta(newVaultMeta);
         } else {
-          console.log('[VaultUploader] Extraction failed - no data returned', extractRes.data);
           setExtractedData({ extracted: false, error: 'Could not read passport' });
         }
       } catch (err) {
@@ -115,7 +109,6 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
       setExtracting(false);
     } else if (!navigator.onLine) {
       // Offline - skip extraction, user fills manually
-      console.log('[VaultUploader] Offline - skipping auto-extraction');
     }
   };
 
@@ -150,31 +143,26 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
     setError(null);
 
     try {
-      console.log('[VaultUploader] Starting encryption, file size:', file.size, 'bytes');
       
       // Step 1: Encrypt with PBKDF2 key derivation
       const { encryptedB64, ivB64, saltB64, hashB64, fileSizeBytes } = await encryptFileWithPassword(file, password);
       
-      console.log('[VaultUploader] Encryption complete, encrypted size:', encryptedB64.length, 'chars');
 
       setStep('uploading');
 
       // Step 2: Upload encrypted file to private storage directly from frontend
-      console.log('[VaultUploader] Uploading encrypted file to private storage...');
       
       // Convert base64 to File for UploadPrivateFile (preserves filename for multipart/form-data)
       const encryptedBytes = Uint8Array.from(atob(encryptedB64), c => c.charCodeAt(0));
       const encryptedFile = new File([encryptedBytes], 'vault_document.enc', { type: 'application/octet-stream' });
       
       const uploadResult = await base44.integrations.Core.UploadPrivateFile({ file: encryptedFile });
-      console.log('[VaultUploader] Private file uploaded, URI:', uploadResult.file_uri);
       
       if (!uploadResult.file_uri) {
         throw new Error('UploadPrivateFile returned no file_uri');
       }
 
       // Step 3: Register vault record with the file URI
-      console.log('[VaultUploader] Registering vault record...');
       const response = await base44.functions.invoke('uploadToVault', {
         encrypted_file_uri: uploadResult.file_uri,
         encryption_iv_b64: ivB64,
@@ -188,7 +176,6 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
         is_emergency_accessible: true
       });
 
-      console.log('[VaultUploader] Upload response:', response.data);
 
       if (response.data?.error) {
         throw new Error(response.data.error);
@@ -219,7 +206,6 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
             mime_type: file.type,
             cached_at: new Date().toISOString()
           }));
-          console.log('[VaultUploader] Auto-cached for offline access:', file.name);
         } catch (cacheErr) {
           // Non-fatal â€” upload already succeeded; just won't be offline-ready
           // until the user later triggers "Save Offline" while online.

@@ -37,7 +37,6 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
       const cached = getLocalVaultCache(userEmail);
       if (cached) {
         setVaults({ vaults: cached, offline: true });
-        console.log('[EmergencyVaultViewer] Loaded from local cache (offline mode)');
       } else {
         setError('No cached documents found. Please go online and open "My Vault" at least once to cache your documents.');
       }
@@ -53,7 +52,6 @@ export default function EmergencyVaultViewer({ pinSessionToken, userEmail }) {
       if (res.data?.vaults && userEmail) {
         const key = `morales_vault_meta_${userEmail.toLowerCase()}`;
         localStorage.setItem(key, JSON.stringify(res.data.vaults));
-        console.log('[EmergencyVaultViewer] Cached vault metadata for offline use');
       }
     } catch (err) {
       // Network failed - use cache as fallback

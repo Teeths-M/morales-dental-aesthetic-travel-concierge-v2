@@ -260,7 +260,6 @@ export default function EstimateDashboard() {
 
                 <Button variant="outline" className="w-full" onClick={() => {
                   // Save for later
-                  console.log('Saved estimate');
                 }}>
                   Save & Continue Later
                 </Button>

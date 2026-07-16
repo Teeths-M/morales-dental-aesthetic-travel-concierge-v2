@@ -151,6 +151,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
             {['stripe', 'paypal', 'wipay'].map((method) => (
               <button
                 key={method}
+                data-testid={`taxi-payout-${method}`}
                 onClick={() => handlePayoutChange(method)}
                 className={`p-3 rounded-lg border-2 transition-all text-center font-medium ${
                   payoutMethod === method
@@ -175,6 +176,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
               {payoutMethod === 'wipay' && (language === 'es' ? 'Cuenta WiPay' : language === 'fr' ? 'Compte WiPay' : 'WiPay Account')}
             </label>
             <Input
+              data-testid="taxi-payout-account"
               type={payoutMethod === 'paypal' ? 'email' : 'text'}
               placeholder={payoutMethod === 'paypal' ? 'your@email.com' : 'Account number'}
               value={formData.payout_account}
@@ -188,6 +190,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">🪪 Driver License Number</label>
             <Input
+              data-testid="taxi-license-number"
               placeholder="License number"
               value={formData.driver_license_number || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, driver_license_number: e.target.value }))}
@@ -197,6 +200,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">🛡️ Insurance Provider</label>
             <Input
+              data-testid="taxi-insurance-provider"
               placeholder="Insurance company name"
               value={formData.insurance_provider || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, insurance_provider: e.target.value }))}
@@ -208,7 +212,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
         {/* Legal Confirmations */}
         <div className="space-y-3 border-t border-border pt-6">
           <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
-            <Checkbox checked={licenseConfirmed} onCheckedChange={/** @type {any} */(setLicenseConfirmed)} className="mt-1" />
+            <Checkbox data-testid="taxi-license-checkbox" checked={licenseConfirmed} onCheckedChange={/** @type {any} */(setLicenseConfirmed)} className="mt-1" />
             <label className="text-sm text-foreground cursor-pointer">
               {language === 'es'
                 ? 'Tengo una licencia de conducir válida.'
@@ -219,7 +223,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
           </div>
 
           <div className="flex items-start gap-3 bg-secondary/50 border border-secondary rounded-lg p-4">
-            <Checkbox checked={insuranceConfirmed} onCheckedChange={/** @type {any} */(setInsuranceConfirmed)} className="mt-1" />
+            <Checkbox data-testid="taxi-insurance-checkbox" checked={insuranceConfirmed} onCheckedChange={/** @type {any} */(setInsuranceConfirmed)} className="mt-1" />
             <label className="text-sm text-foreground cursor-pointer">
               {language === 'es'
                 ? 'Tengo seguro válido para transportar pacientes.'
@@ -236,6 +240,7 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
           <ChevronLeft className="w-4 h-4" /> {language === 'es' ? 'Atrás' : language === 'fr' ? 'Retour' : 'Back'}
         </Button>
         <Button
+          data-testid="taxi-submit"
           onClick={handleSubmit}
           disabled={!canSubmit || isSubmitting}
           className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-cyan-600 hover:opacity-90 text-white gap-2"

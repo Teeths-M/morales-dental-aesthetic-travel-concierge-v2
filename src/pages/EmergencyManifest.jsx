@@ -168,7 +168,6 @@ export default function EmergencyManifest() {
           };
         }
       } catch (caseErr) {
-        console.log('[EmergencyManifest] Could not fetch case data:', caseErr.message);
       }
 
       safeStoreManifest(manifestData);
