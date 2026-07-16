@@ -39,7 +39,7 @@ function StarRating({ value, onChange }) {
 }
 
 export default function PostSurgeryFeedback() {
-  const urlParams = new URLSearchParams(window.location.search);
+  const _urlParams = new URLSearchParams(window.location.search);
   // Token is in the path: /feedback/:token
   const token = window.location.pathname.split('/feedback/')[1];
 

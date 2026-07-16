@@ -39,7 +39,7 @@ import PartnerIntelligencePanel from '@/components/admin/PartnerIntelligencePane
 
 export default function PartnerVerificationHub() {
   const navigate = useNavigate();
-  const { id: preselectedId } = useParams();
+  const { id: _preselectedId } = useParams();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');

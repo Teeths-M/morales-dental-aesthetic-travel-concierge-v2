@@ -161,7 +161,7 @@ export default function DocumentsModule() {
 
       {/* Uploaded files */}
       <AnimatePresence>
-        {uploaded.map((f, i) => (
+        {uploaded.map((f, _i) => (
           <motion.div
             key={f.name}
             initial={{ opacity: 0, y: -8 }}

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CALM } from '@/lib/brandTokens';
 
-const GOLD = '#D4AF37';        // trust seal
+const _GOLD = '#D4AF37';        // trust seal
 const TEAL = CALM.action;
 const CARD = CALM.surface;
 const BORDER = CALM.border;
@@ -44,7 +44,7 @@ export default function ContactVerificationStep({ email = null, phone = null, on
   // Nothing to verify at all — complete immediately.
   useEffect(() => {
     if (stages.length === 0) onComplete({ email_verified: false, phone_verified: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const sendCode = useCallback(async () => {

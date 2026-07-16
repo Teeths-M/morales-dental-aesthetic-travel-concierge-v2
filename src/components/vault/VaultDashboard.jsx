@@ -47,7 +47,7 @@ const TABS = [
 ];
 
 export default function VaultDashboard({ user }) {
-  const { vaults, shareLinks, auditLogs, loading, error, isOfflineMode, syncStatus, reload } = useVault(user);
+  const { vaults, shareLinks, auditLogs, loading, _error, isOfflineMode, syncStatus, reload } = useVault(user);
   const [activeTab, setActiveTab] = useState('documents');
   const [cacheProgress, setCacheProgress] = useState(null); // { current, total, status: 'caching' | 'complete' | 'error' }
 
@@ -74,7 +74,7 @@ export default function VaultDashboard({ user }) {
       }));
       try {
         localStorage.setItem(key, JSON.stringify(meta));
-      } catch (e) {
+      } catch (_e) {
         // Cache write failed — non-fatal, online mode still works
       }
     }
@@ -182,7 +182,7 @@ export default function VaultDashboard({ user }) {
   // Stable callbacks — useCallback prevents new function refs on every render
   const handleDownload = useCallback((vault) => {
     const cacheKey = `vault_encrypted_${vault.passport_token}`;
-    const isCached = !!localStorage.getItem(cacheKey);
+    const _isCached = !!localStorage.getItem(cacheKey);
     
     // Offline+cached = will use local copy; offline+uncached = will show error modal
     

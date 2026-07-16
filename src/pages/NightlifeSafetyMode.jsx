@@ -47,7 +47,7 @@ export default function NightlifeSafetyMode() {
   const [activeSession, setActiveSession] = useState(null);
   const [existingSession, setExistingSession] = useState(null);
   const [hasPIN, setHasPIN] = useState(false);
-  const [hasGuardian, setHasGuardian] = useState(false);
+  const [_hasGuardian, _setHasGuardian] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const { toast } = useToast();

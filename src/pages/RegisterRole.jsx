@@ -86,7 +86,7 @@ export default function RegisterRole() {
 
       {/* Grid Layout of Translucent Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full z-10 px-4">
-        {roles.map((role, idx) => {
+        {roles.map((role, _idx) => {
           const Icon = role.icon;
           return (
             <div 

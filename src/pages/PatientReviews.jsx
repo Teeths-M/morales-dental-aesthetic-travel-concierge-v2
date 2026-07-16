@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 
 export default function PatientReviews() {
-  const [user, setUser] = useState(null);
+  const [_user, setUser] = useState(null);
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
 

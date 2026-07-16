@@ -24,7 +24,7 @@ export default function SearchSelect({
   const valueRef = useRef(value);
   useEffect(() => { valueRef.current = value; }, [value]);
 
-  useEffect(() => { if (value !== q) setQ(value || ''); }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (value !== q) setQ(value || ''); }, [value]);  
 
   useEffect(() => {
     const h = (e) => {

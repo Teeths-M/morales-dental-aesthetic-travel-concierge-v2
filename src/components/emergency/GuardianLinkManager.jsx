@@ -5,7 +5,7 @@ import { Eye, Copy, CheckCircle2, Trash2, Plus, Loader2, Clock } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
-export default function GuardianLinkManager({ caseId, patientEmail }) {
+export default function GuardianLinkManager({ caseId, _patientEmail }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

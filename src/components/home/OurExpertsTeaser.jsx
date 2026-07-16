@@ -141,7 +141,7 @@ export default function OurExpertsTeaser() {
           className="flex gap-5 overflow-x-auto pb-4"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {PROCEDURES.map((proc, i) => (
+          {PROCEDURES.map((proc, _i) => (
             <Link
               key={proc.name}
               to="/procedures"

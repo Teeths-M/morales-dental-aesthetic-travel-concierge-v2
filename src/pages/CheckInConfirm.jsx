@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 export default function CheckInConfirm() {
   const { check_in_id } = useParams();
   const [status, setStatus] = useState('loading'); // loading | success | already_done | invalid | expired
-  const [message, setMessage] = useState('');
+  const [_message, setMessage] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

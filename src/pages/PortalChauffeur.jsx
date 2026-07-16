@@ -91,7 +91,7 @@ export default function PortalChauffeur() {
       } else {
         setDriverType('unknown');
       }
-    } catch (e) {
+    } catch (_e) {
       setError('Failed to load case data.');
     }
     setLoading(false);

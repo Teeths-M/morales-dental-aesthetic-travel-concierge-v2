@@ -18,7 +18,7 @@ const GOLD = '#D4AF37';
 
 export default function ConsultationSuccess() {
   const { state }    = useLocation();
-  const navigate     = useNavigate();
+  const _navigate     = useNavigate();
   const consultationId   = state?.consultationId;
   const travelingSolo    = state?.travelingSolo ?? false;
   const alreadyOptedIn   = state?.guardianModeOptedIn ?? false;

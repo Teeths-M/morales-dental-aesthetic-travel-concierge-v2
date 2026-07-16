@@ -201,7 +201,7 @@ export default function TripOverview() {
           {/* Trip Selection Tabs */}
           <div className="mb-6 overflow-x-auto">
             <div className="flex gap-3 pb-2">
-              {travelRequests.map((trip, idx) => (
+              {travelRequests.map((trip, _idx) => (
                 <button
                   key={trip.id}
                   onClick={() => setSelectedTrip(trip)}

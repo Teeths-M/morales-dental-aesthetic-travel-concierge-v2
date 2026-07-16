@@ -56,7 +56,7 @@ export default function VaultPINGate({ onPINVerified, hasExistingPIN, user }) {
     }
   };
 
-  const handleKeyDown = (index, e, isConfirm = false) => {
+  const handleKeyDown = (index, e, _isConfirm = false) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       inputRefs[index - 1]?.current?.focus();
     }

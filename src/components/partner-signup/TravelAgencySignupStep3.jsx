@@ -7,8 +7,8 @@ import { translations } from '@/lib/translations';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
-export default function TravelAgencySignupStep3({ formData, setFormData, language, onNext, onBack, onComplete }) {
-  const t = translations[language];
+export default function TravelAgencySignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
+  const _t = translations[language];
   const [payoutMethod, setPayoutMethod] = useState(null);
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);

@@ -18,7 +18,7 @@ const OUTCOME_COLORS = {
 export default function RiskOptimizationDashboard() {
   const [records, setRecords] = useState([]);
   const [pending, setPending] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => { loadData(); }, []);

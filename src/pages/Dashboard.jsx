@@ -152,7 +152,7 @@ function DashboardHome({ user, consultations, language }) {
   });
 
   // MedGuard Pattern Intelligence — silent behavioral fingerprint tracking
-  const { nudge, dismissNudge, isLearning, resetFingerprint, profile: behavioralProfile } = useBehavioralTracking({
+  const { nudge, dismissNudge, isLearning, _resetFingerprint, profile: behavioralProfile } = useBehavioralTracking({
     caseId:     latestActive?.id,
     caseStatus: latestActive?.status,
   });

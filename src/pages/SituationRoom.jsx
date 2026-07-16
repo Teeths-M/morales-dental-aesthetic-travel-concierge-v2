@@ -195,7 +195,7 @@ export default function SituationRoom() {
         setEvnData(out);
       } catch { /* silent */ }
     })();
-  }, [activeCases.length, isDemo]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeCases.length, isDemo]);  
 
   const highRisk  = Object.values(displayEvn).filter(d => d.riskScore >= 72).length;
   const watchDest = Object.values(displayEvn).filter(d => d.riskScore >= 52 && d.riskScore < 72).length;

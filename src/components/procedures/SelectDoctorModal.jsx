@@ -11,7 +11,7 @@ export default function SelectDoctorModal({ procedure, isOpen, onClose, onSelect
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
   const [patientNote, setPatientNote] = useState('');
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isOpen || !procedure?.title) return;

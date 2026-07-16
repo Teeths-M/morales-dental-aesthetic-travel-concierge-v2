@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldOff, Phone, Mail, AlertOctagon, Lock } from 'lucide-react';
 
-export default function CriticalRiskInterceptModal({ reason, flags, patientName, onDismiss }) {
-  const [acknowledged, setAcknowledged] = useState(false);
+export default function CriticalRiskInterceptModal({ reason, flags, _patientName, onDismiss }) {
+  const [_acknowledged, setAcknowledged] = useState(false);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">

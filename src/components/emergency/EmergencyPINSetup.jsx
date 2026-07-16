@@ -52,7 +52,7 @@ function checkLockout(email) {
   try {
     const raw = localStorage.getItem(LOCKOUT_KEY(email));
     if (!raw) return false;
-    const { attempts, lockedUntil } = JSON.parse(raw);
+    const { _attempts, lockedUntil } = JSON.parse(raw);
     if (lockedUntil && Date.now() < lockedUntil) return true; // locked
     return false;
   } catch { return false; }
@@ -171,7 +171,7 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
   const [pinHint, setPinHint] = useState(null);
   const [error, setError] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState(5);
-  const [verifiedToken, setVerifiedToken] = useState(null);
+  const [_verifiedToken, setVerifiedToken] = useState(null);
   const { toast } = useToast();
   // True when the user is changing an existing PIN (reached via "Change PIN"
   // from the done state) rather than setting one up for the first time.

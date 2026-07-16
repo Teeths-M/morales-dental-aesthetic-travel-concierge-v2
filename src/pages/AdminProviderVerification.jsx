@@ -35,8 +35,8 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import ProviderVerificationOverride from '@/components/admin/ProviderVerificationOverride';
 
 export default function AdminProviderVerification() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const _navigate = useNavigate();
+  const _queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');

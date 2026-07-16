@@ -198,7 +198,7 @@ export default function IQ200EnginePanel({ caseId, userRole = null }) {
             <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
               {auditLogs.map(log => {
                 const roleCls = ROLE_COLORS[log.actor_role] || ROLE_COLORS.system;
-                const isConfirm = log.event_type === 'iq200_handshake_confirmed';
+                const _isConfirm = log.event_type === 'iq200_handshake_confirmed';
                 const isContingency = log.event_type === 'iq200_contingency_triggered';
                 return (
                   <motion.div key={log.id} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}

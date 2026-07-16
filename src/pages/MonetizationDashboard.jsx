@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AdminLayout from '@/components/layout/AdminLayout';
 
-const TIER_COLORS = {
+const _TIER_COLORS = {
   starter: 'bg-gray-100 text-gray-700',
   professional: 'bg-blue-100 text-blue-700',
   enterprise: 'bg-purple-100 text-purple-700'

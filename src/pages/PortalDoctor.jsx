@@ -238,7 +238,7 @@ export default function PortalDoctor() {
                     const token = new URLSearchParams(window.location.search).get('token') || window.location.pathname.split('/').pop();
                     await base44.functions.invoke('logProcedureComplete', { token, outcome_notes: formData.doctor_notes });
                     alert('Procedure confirmed. Guardian notified. Recovery mode activated.');
-                  } catch (e) {
+                  } catch (_e) {
                     alert('Could not confirm procedure. Please contact admin directly.');
                   }
                 }}

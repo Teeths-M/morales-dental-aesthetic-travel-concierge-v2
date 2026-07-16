@@ -56,7 +56,7 @@ export default function PortalLocalDoctor() {
         // Load case data
         const cases = await base44.entities.CaseRecord.filter({ id: ref.case_id }, '-created_date', 1);
         setCaseData(cases[0] || null);
-      } catch (e) {
+      } catch (_e) {
         setError('Could not load referral. Please try again or contact support.');
       } finally {
         setLoading(false);

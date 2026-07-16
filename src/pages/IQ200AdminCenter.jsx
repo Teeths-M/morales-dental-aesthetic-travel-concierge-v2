@@ -402,7 +402,7 @@ export default function IQ200AdminCenter() {
     revenue: cases.reduce((sum, c) => sum + (c.amount_paid || 0), 0),
   };
 
-  const statCards = [
+  const _statCards = [
     { label: 'Total Cases',  value: stats.total,           color: 'text-slate-700',   bg: 'bg-slate-50',   IconComp: BarChart2 },
     { label: 'Admin Review', value: stats.adminReview,     color: 'text-orange-700',  bg: 'bg-orange-50',  IconComp: FileText },
     { label: 'Blocked',      value: stats.blocked,         color: 'text-red-700',     bg: 'bg-red-50',     IconComp: XCircle },

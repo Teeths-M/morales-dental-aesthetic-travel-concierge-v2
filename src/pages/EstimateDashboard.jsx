@@ -13,7 +13,7 @@ import { useCurrencyConverter } from '@/hooks/useCurrencyConverter';
 export default function EstimateDashboard() {
   const { estimate_id } = useParams();
   const navigate = useNavigate();
-  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [_showConsultationModal, _setShowConsultationModal] = useState(false);
   const { selectedCode, setSelectedCode, formatLocal } = useCurrencyConverter();
 
   const { data: estimate, isLoading, error: estimateError } = useQuery({

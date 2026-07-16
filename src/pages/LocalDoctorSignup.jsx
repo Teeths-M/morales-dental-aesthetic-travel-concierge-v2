@@ -107,7 +107,7 @@ export default function LocalDoctorSignup() {
         subscription_fee_usd: PLATFORM_PRICING.LOCAL_DOCTOR_SUBSCRIPTION_USD,
       });
       setDone(true);
-    } catch (e) {
+    } catch (_e) {
       setError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);

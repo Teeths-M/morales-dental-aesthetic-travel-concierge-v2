@@ -80,7 +80,7 @@ export default function CancellationInsurancePanel({ caseId, onSelect }) {
       await base44.entities.CancellationPolicy.create(policyData);
       setSaved(true);
       if (onSelect) onSelect(selected);
-    } catch (e) {
+    } catch (_e) {
       // silent
     }
     setSaving(false);

@@ -82,7 +82,7 @@ export default function SecurityAgencySignup() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       set(key, file_url);
-    } catch (err) {
+    } catch (_err) {
       setError('File upload failed. Please try again.');
     }
   };
@@ -125,7 +125,7 @@ export default function SecurityAgencySignup() {
         partner_id: agency.id,
       }).catch(() => { /* non-fatal */ });
       setSubmitted(true);
-    } catch (err) {
+    } catch (_err) {
       setError('Submission failed. Please try again.');
     } finally {
       setLoading(false);

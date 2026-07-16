@@ -24,7 +24,7 @@ import DataProcessingConsent from '@/components/consent/DataProcessingConsent';
 
 // CALM decision-screen palette (Product Principle #5): light page + surface,
 // TEAL for the "proceed" action, GOLD reserved for trust markers only.
-const GOLD = '#D4AF37';        // trust markers only
+const _GOLD = '#D4AF37';        // trust markers only
 const TEAL = '#0E8A7D';        // the only "proceed" action color
 const PAGE = '#F1F5F4';        // calm page background
 const CARD = '#FFFFFF';        // surface

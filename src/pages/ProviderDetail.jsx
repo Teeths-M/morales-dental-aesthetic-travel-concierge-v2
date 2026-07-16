@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProviderDetail() {
   const [selectedMedia, setSelectedMedia] = useState(null);
-  const urlParams = new URLSearchParams(window.location.search);
+  const _urlParams = new URLSearchParams(window.location.search);
   const providerId = window.location.pathname.split('/providers/')[1];
 
   const { data: doctors = [], isLoading } = useQuery({

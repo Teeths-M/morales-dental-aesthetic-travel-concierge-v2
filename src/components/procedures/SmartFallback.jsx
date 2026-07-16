@@ -55,7 +55,7 @@ export default function SmartFallback({ onProcedureSelect, language = 'en', orig
     if (originalQuery && !matchedProcedures && !outreach) {
       setPatientQuery(originalQuery);
     }
-  }, [originalQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [originalQuery]);  
 
   const handleFindMatches = async () => {
     if (!patientQuery.trim()) return;

@@ -43,7 +43,7 @@ export default function TaxiServiceDashboard() {
           ? await base44.entities.TaxiService.list('-updated_date', 1)
           : await base44.entities.TaxiService.filter({ email: currentUser.email });
         setTaxi(taxis[0] || null);
-      } catch (e) {
+      } catch (_e) {
         setLoadError('Could not load your profile. Please refresh the page.');
       } finally {
         setLoading(false);

@@ -21,7 +21,7 @@ const TOM_TRAIL = [
 ];
 
 const CURRENT = TOM_TRAIL[TOM_TRAIL.length - 1];
-const START   = TOM_TRAIL[0];
+const _START   = TOM_TRAIL[0];
 
 // Custom green patient marker
 const TOM_ICON = L.divIcon({
@@ -31,7 +31,7 @@ const TOM_ICON = L.divIcon({
   iconAnchor: [14, 14],
 });
 
-const START_ICON = L.divIcon({
+const _START_ICON = L.divIcon({
   className: '',
   html: `<div style="width:16px;height:16px;border-radius:50%;background:#60a5fa;border:2px solid #fff;box-shadow:0 1px 6px rgba(96,165,250,0.5);"></div>`,
   iconSize: [16, 16],

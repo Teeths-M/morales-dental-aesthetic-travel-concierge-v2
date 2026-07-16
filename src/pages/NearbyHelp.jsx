@@ -42,7 +42,7 @@ export default function NearbyHelp() {
   const [active, setActive]       = useState(null);
   const [osmResults, setOsmResults] = useState([]);
   const [searching, setSearching]   = useState(false);
-  const [osmFailed, setOsmFailed]   = useState(false);
+  const [_osmFailed, setOsmFailed]   = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) {

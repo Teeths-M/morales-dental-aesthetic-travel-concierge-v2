@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 
-const GOLD  = '#D4AF37';
-const DARK  = '#060B16';
+const _GOLD  = '#D4AF37';
+const _DARK  = '#060B16';
 const CARD  = '#0C1A1D';
 const BORDER = '#2A3F4A';
 

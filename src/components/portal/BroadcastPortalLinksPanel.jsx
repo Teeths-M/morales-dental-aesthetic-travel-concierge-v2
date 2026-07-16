@@ -37,8 +37,8 @@ export default function BroadcastPortalLinksPanel() {
     setLoading(false);
   };
 
-  const byType = (type) => result?.details?.sent?.filter(r => r.type === type) || [];
-  const failedByType = (type) => result?.details?.failed?.filter(r => r.type === type) || [];
+  const _byType = (type) => result?.details?.sent?.filter(r => r.type === type) || [];
+  const _failedByType = (type) => result?.details?.failed?.filter(r => r.type === type) || [];
 
   return (
     <div className="space-y-6">

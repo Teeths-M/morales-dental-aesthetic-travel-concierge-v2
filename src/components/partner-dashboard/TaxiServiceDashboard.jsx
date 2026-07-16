@@ -17,7 +17,7 @@ function StatusDot({ online }) {
   );
 }
 
-export default function TaxiServiceDashboard({ taxi, language }) {
+export default function TaxiServiceDashboard({ taxi, _language }) {
   const [isOnline, setIsOnline] = useState(taxi?.is_available ?? false);
   const [toggling, setToggling] = useState(false);
   const queryClient = useQueryClient();
@@ -107,7 +107,7 @@ export default function TaxiServiceDashboard({ taxi, language }) {
             { label: 'Trips done', value: taxi.total_trips || pastCases.length || 0, icon: Car },
             { label: 'Rating', value: taxi.average_rating ? `${Number(taxi.average_rating).toFixed(1)} ★` : '—', icon: Star },
             { label: 'This month', value: `$${taxi.earnings_this_month?.toLocaleString() || 0}`, icon: DollarSign },
-          ].map(({ label, value, icon: Icon }) => (
+          ].map(({ label, value, icon: _Icon }) => (
             <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <p className="text-lg font-bold text-white">{value}</p>
               <p className="text-[11px] mt-0.5" style={{ color: '#64748b' }}>{label}</p>

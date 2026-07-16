@@ -92,7 +92,7 @@ export default function OnboardingEducation() {
   const [activeModule, setActiveModule] = useState(null);
   const [moduleStep, setModuleStep] = useState(0);
   const [nudgePrefs, setNudgePrefs] = useState({ email: true, push: true, sms: false, frequency: 'milestone_only' });
-  const [saving, setSaving] = useState(false);
+  const [_saving, setSaving] = useState(false);
 
   useEffect(() => {
     const load = async () => {

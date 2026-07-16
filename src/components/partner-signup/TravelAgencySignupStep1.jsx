@@ -7,7 +7,7 @@ import { translations } from '@/lib/translations';
 const REGIONS = ['Caribbean', 'North America', 'Central America', 'South America', 'Europe', 'Middle East', 'Asia', 'Africa'];
 
 export default function TravelAgencySignupStep1({ formData, setFormData, language, onNext }) {
-  const t = translations[language];
+  const _t = translations[language];
   const [agencies, setAgencies] = useState(formData.service_regions || []);
 
   const toggleRegion = (region) => {
@@ -16,7 +16,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
     );
   };
 
-  const handleNext = () => {
+  const _handleNext = () => {
     setFormData(prev => ({
       ...prev,
       agency_name: formData.agency_name,

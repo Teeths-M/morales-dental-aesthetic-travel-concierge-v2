@@ -117,7 +117,7 @@ export default function ClientSignup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSaving(true);
-    const profile = await saveUserOnboardingProfile({
+    const _profile = await saveUserOnboardingProfile({
       role: 'client',
       status: 'completed',
       profileData: {

@@ -177,7 +177,7 @@ export default function DoctorCasesDashboard() {
         last_update_summary: 'Doctor confirmed availability.',
       });
       setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, doctor_status: 'confirmed' } : w));
-    } catch (e) {
+    } catch (_e) {
       alert('Failed to confirm. Please try again.');
     } finally {
       setActionLoading(false);
@@ -192,7 +192,7 @@ export default function DoctorCasesDashboard() {
         last_update_summary: 'Doctor marked as unavailable.',
       });
       setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, doctor_status: 'unavailable' } : w));
-    } catch (e) {
+    } catch (_e) {
       alert('Failed to decline. Please try again.');
     } finally {
       setActionLoading(false);

@@ -32,7 +32,7 @@ const PAYMENT_LABELS = {
   'Failed':       { label: 'Payment Failed',    color: 'bg-red-100 text-red-800' },
 };
 
-export default function CaseStatusModule({ userEmail }) {
+export default function CaseStatusModule({ _userEmail }) {
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);

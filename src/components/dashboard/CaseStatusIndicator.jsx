@@ -182,7 +182,7 @@ export default function CaseStatusIndicator({ caseStatus: consultationStatus, us
           const Icon = step.icon;
           const isCompleted = i < currentStepIndex;
           const isCurrent = i === currentStepIndex;
-          const isUpcoming = i > currentStepIndex;
+          const _isUpcoming = i > currentStepIndex;
 
           return (
             <div key={step.key} className="flex items-start gap-3">

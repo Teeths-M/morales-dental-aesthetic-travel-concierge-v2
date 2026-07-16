@@ -96,7 +96,7 @@ function speak(text, lang, onEnd, muted) {
   window.speechSynthesis.speak(u);
 }
 
-function BubbleRow({ line, revealed, muted, onReveal }) {
+function BubbleRow({ line, revealed, _muted, onReveal }) {
   const isJames = line.from === 'James';
 
   return (
@@ -159,7 +159,7 @@ function BubbleRow({ line, revealed, muted, onReveal }) {
 export default function LanguageBridgeDemo() {
   const [step,     setStep]     = useState(0);  // how many lines shown
   const [revealed, setRevealed] = useState([]); // which translations shown
-  const [playing,  setPlaying]  = useState(false);
+  const [_playing,  setPlaying]  = useState(false);
   const [muted,    setMuted]    = useState(false);
   const timerRef = useRef(null);
   const mutableRef = useRef(false);

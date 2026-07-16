@@ -6,7 +6,7 @@ import { Plane, Moon, Sparkles, Plus, Minus } from 'lucide-react';
 const FLIGHT_DAYS = [0, 4];
 
 // Procedure recovery data defaults — used when ProcedurePricing DB data is unavailable
-const PROCEDURE_DEFAULTS = {
+const _PROCEDURE_DEFAULTS = {
   dental_implants:      { preparation_days: 1, min_safe_recovery_days: 5 },
   all_on_4:             { preparation_days: 2, min_safe_recovery_days: 7 },
   porcelain_veneers:    { preparation_days: 1, min_safe_recovery_days: 3 },
@@ -191,7 +191,7 @@ export default function TravelTimelineCard({ selectedDate, cartItems }) {
   );
 }
 
-function TimelineRow({ icon, label, value, sub, accent = false, highlight = false }) {
+function TimelineRow({ icon, label, value, sub, _accent = false, highlight = false }) {
   return (
     <div className="flex items-center gap-3">
       <div

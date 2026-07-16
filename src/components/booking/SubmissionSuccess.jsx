@@ -13,7 +13,7 @@ const NEXT_STEPS = [
   { step: 5, icon: '🌿', title: 'Preparation Phase', desc: 'SAFE-T 4LIFE™ activates your personalized preparation program.', time: 'Immediately', done: true },
 ];
 
-function buildChecklist(form, items) {
+function buildChecklist(form, _items) {
   const list = [
     { label: 'Upload lab work (blood tests, CBC)', done: !!form.uploaded_files?.length, priority: 'high' },
     { label: 'Upload valid passport copy', done: form.document_types?.includes('Passport'), priority: 'high' },
@@ -43,7 +43,7 @@ export default function SubmissionSuccess({ form, items }) {
   const [checklist, setChecklist] = useState(() => buildChecklist(form, items));
   const [preparationLoaded, setPreparationLoaded] = useState(false);
   const [preparation, setPreparation] = useState(null);
-  const [loadingPrep, setLoadingPrep] = useState(false);
+  const [_loadingPrep, setLoadingPrep] = useState(false);
 
   const procedureNames = items?.map(i => i.name).join(', ') || form.procedure_interest || 'your procedure';
 

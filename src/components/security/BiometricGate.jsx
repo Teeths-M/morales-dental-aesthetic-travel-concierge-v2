@@ -14,7 +14,7 @@ export default function BiometricGate({ children }) {
   // exist, but blocking the whole app on idle is removed to prevent lockouts.
   return children;
 
-  // eslint-disable-next-line no-unreachable
+   
   const location = useLocation(); // kept to avoid removing import
   const [locked, setLocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -100,7 +100,7 @@ export default function BiometricGate({ children }) {
       });
       if (assertion) { setLocked(false); setFailedAttempts(0); }
       else { handleFailure(); }
-    } catch (e) {
+    } catch (_e) {
       // Biometric not enrolled — fall back to PIN
       setMethod('pin');
     } finally {

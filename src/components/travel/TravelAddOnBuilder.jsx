@@ -25,7 +25,7 @@ const ADDON_CATALOG = [
 const CATEGORY_LABELS = { transport: '✈️ Transport', accommodation: '🏨 Accommodation', companion: '🤝 Companion', nutrition: '🥗 Nutrition', services: '🌐 Services', insurance: '🛡️ Insurance' };
 const PEACE_OF_MIND_PRICE = 100;
 
-const TRANSPORT_SCOPE_LABELS = {
+const _TRANSPORT_SCOPE_LABELS = {
   origin_only: 'Origin Only',
   destination_only: 'Destination Only',
   round_trip: 'Full Round-Trip',

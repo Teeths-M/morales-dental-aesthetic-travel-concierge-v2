@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const languages = ['English', 'Español', 'Français', 'Português'];
+const _languages = ['English', 'Español', 'Français', 'Português'];
 
 const getLabels = (lang) => ({
   settings: lang === 'es' ? 'Configuración' : lang === 'fr' ? 'Paramètres' : lang === 'pt' ? 'Configurações' : 'Settings',
@@ -118,7 +118,7 @@ export default function SettingsModule({ onResetSafetyProfile, isActiveJourney =
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [appLanguage, setAppLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
-  const [language, setLanguage] = useState('English');
+  const [_language, _setLanguage] = useState('English');
   const [notifications, setNotifications] = useState(() => {
     try {
       const s = localStorage.getItem('morales_notifications');

@@ -82,7 +82,7 @@ export default function TravelConcierge() {
         setLocalTaxis(taxis.filter(t =>
           t.operating_country?.toLowerCase().includes(origin)
         ));
-      } catch (e) {
+      } catch (_e) {
         // silent
       } finally {
         setLoadingPartners(false);
@@ -142,7 +142,7 @@ export default function TravelConcierge() {
         title: 'Visa Requirements Checked',
         description: 'AI has analyzed the visa requirements for your destination.',
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Could not fetch visa requirements. Please check manually.',

@@ -34,7 +34,7 @@ export default function AdminPartners() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState(null);
-  const [partnerType, setPartnerType] = useState('all');
+  const [_partnerType, setPartnerType] = useState('all');
   const [isApproving, setIsApproving] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -174,7 +174,7 @@ export default function AdminPartners() {
     );
   };
 
-  const selectAllOnPage = (ids) => {
+  const _selectAllOnPage = (ids) => {
     setSelectedIds(ids);
   };
 

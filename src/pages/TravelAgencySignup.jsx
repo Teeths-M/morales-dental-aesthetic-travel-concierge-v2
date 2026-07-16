@@ -11,7 +11,7 @@ import { base44 } from '@/api/base44Client';
 import { saveSignupDraft, loadSignupDraft, clearSignupDraft, getDraftAge } from '@/lib/signupDraft';
 
 export default function TravelAgencySignup() {
-  const location = useLocation();
+  const _location = useLocation();
   const [language, setLanguage] = useState(() => localStorage.getItem('appLanguage') || 'en');
   const [step, setStep] = useState(0);
   const [successAgency, setSuccessAgency] = useState(null);
@@ -124,9 +124,9 @@ export default function TravelAgencySignup() {
     detectLocation();
   }, []);
 
-  const t = translations[language];
+  const _t = translations[language];
 
-  const allLanguages = [
+  const _allLanguages = [
     { code: 'en', flag: '🇬🇧', name: 'English' },
     { code: 'es', flag: '🇪🇸', name: 'Español' },
     { code: 'fr', flag: '🇫🇷', name: 'Français' },

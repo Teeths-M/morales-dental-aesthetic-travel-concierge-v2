@@ -42,7 +42,7 @@ import HighRiskReviewNotice from '../components/booking/HighRiskReviewNotice';
 import { checkMedicalRisk } from '@/lib/medicalSafetyGate';
 import GuestAuthGate from '../components/booking/GuestAuthGate';
 
-const SLIDE_FACTS = [
+const _SLIDE_FACTS = [
   'Every great transformation starts with a single step.',
   'We coordinate every detail of your medical journey.',
   'Personalized care that honours your values and traditions.',
@@ -130,7 +130,7 @@ export default function Booking() {
   const [draftData, setDraftData] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
-  const { items, clearCart, procedureCountry, procedureCity } = useCart();
+  const { items, _clearCart, procedureCountry, procedureCity } = useCart();
 
   // Auto-save debounce timer + draft ID cache to prevent race conditions
   const saveTimerRef = useRef(null);
@@ -174,7 +174,7 @@ export default function Booking() {
             profileData: { selected_role: 'client', started_from: 'booking' }
           });
         }
-      } catch (e) {
+      } catch (_e) {
         // User not logged in — guest mode
       }
     };
@@ -730,7 +730,7 @@ export default function Booking() {
 
   if (submitted) return <SubmissionSuccess form={form} items={items} />;
 
-  const progressPct = Math.round((step / (steps.length - 1)) * 100);
+  const _progressPct = Math.round((step / (steps.length - 1)) * 100);
 
   if (showStackingBlock) {
     return (
@@ -763,7 +763,7 @@ export default function Booking() {
           <div className="px-6 pt-4 pb-0">
             <div className="flex items-center gap-1">
               {STEP_PHASES.map((ph, pi) => {
-                const phaseStep = STEP_PHASES.slice(0, pi).reduce((a, p) => a + p.steps.length, 0);
+                const _phaseStep = STEP_PHASES.slice(0, pi).reduce((a, p) => a + p.steps.length, 0);
                 const done = step > Math.max(...ph.steps);
                 const active = ph.steps.includes(step);
                 return (

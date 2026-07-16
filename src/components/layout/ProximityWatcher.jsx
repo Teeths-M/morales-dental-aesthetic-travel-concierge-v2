@@ -84,7 +84,7 @@ export default function ProximityWatcher() {
     }).catch(() => {}); // timeout or error → keep generic nudge
 
     return () => { cancelled = true; clearTimeout(timer); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [nudge?.id, user?.email]);
 
   // Auto-dismiss after 8 s

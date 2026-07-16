@@ -54,7 +54,7 @@ export default function IntelligenceScanCard({ doctor, scanSteps, runKey }) {
       setResult({ internet: doctor.result, fraud: doctor.fraud_result });
     }, doctor.delay);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [runKey, scanSteps.length, doctor.delay, doctor.result, doctor.fraud_result]);
 
   const cfg = result ? RISK_CONFIG[result.internet.risk_level] : null;

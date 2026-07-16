@@ -67,7 +67,7 @@ export default function RecoveryModePanel({ caseId }) {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 1.2);
-    } catch (e) { /* audio not available */ }
+    } catch (_e) { /* audio not available */ }
   };
 
   const handleActivate = async () => {

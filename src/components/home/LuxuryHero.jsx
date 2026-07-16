@@ -81,7 +81,7 @@ export default function LuxuryHero() {
   const isMedical   = mode === 'medical';
   const content     = isMedical ? CONTENT.medical : CONTENT.nonmedical;
   const prefersReducedMotion = useReducedMotion();
-  const openModal   = useCallback(() => setShowModal(true), []);
+  const _openModal   = useCallback(() => setShowModal(true), []);
   const closeModal  = useCallback(() => setShowModal(false), []);
 
   return (

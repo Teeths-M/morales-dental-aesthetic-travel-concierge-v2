@@ -38,7 +38,7 @@ export default function WildernessActivityStart({ user, caseId, onSessionCreated
   const [operator, setOperator]   = useState('');
   const [returnTime, setReturnTime]= useState('');
   const [prepDone, setPrepDone]   = useState({});
-  const [gpsState, setGpsState]   = useState('idle'); // idle | capturing | captured | failed
+  const [_gpsState, setGpsState]   = useState('idle'); // idle | capturing | captured | failed
   const [gpsCoords, setGpsCoords]  = useState(null);
   const [session, setSession]     = useState(null);
   const [starting, setStarting]   = useState(false);

@@ -49,8 +49,8 @@ function bool(v) {
 
 export default function PreviewSummary({ isOpen, form, onEdit, onSubmit, isSubmitting }) {
   const { items } = useCart();
-  const [scanDone, setScanDone] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
+  const [_scanDone, setScanDone] = useState(false);
+  const [_scanResult, setScanResult] = useState(null);
 
   const procedureNames = items.map(i => i.name).join(', ') || form.procedure_interest || '—';
   const bmi = form.height && form.weight

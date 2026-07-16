@@ -157,7 +157,7 @@ function VisualPanel({ stage }) {
 export default function MasterJourneyDemo() {
   const [idx,     setIdx]     = useState(-1); // -1 = intro screen
   const [muted,   setMuted]   = useState(false);
-  const [playing, setPlaying] = useState(false);
+  const [_playing, setPlaying] = useState(false);
   const [done,    setDone]    = useState(false);
   const timerRef  = useRef(null);
   const mutableRef = useRef(false);

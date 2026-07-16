@@ -224,7 +224,7 @@ export default function ConsultationFeeModal({ form, isOpen, onSuccess, onCancel
   if (!isOpen) return null;
 
   const GOLD   = '#D4AF37';
-  const DARK   = '#060B16';
+  const _DARK   = '#060B16';
   const CARD   = '#0C1A1D';
   const BORDER = '#2A3F4A';
 

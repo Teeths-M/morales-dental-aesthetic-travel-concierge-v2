@@ -61,7 +61,7 @@ function SignalDot({ color, size = 10 }) {
 }
 
 // ── Patient card ───────────────────────────────────────────────────────────
-function PatientCard({ c, medguardScore, evnScore, onContact }) {
+function PatientCard({ c, medguardScore, evnScore, _onContact }) {
   const riskLevel = medguardScore >= 81 ? 'CRITICAL' : medguardScore >= 61 ? 'ALERT' : medguardScore >= 31 ? 'WATCH' : 'SAFE';
   const risk      = RISK_CONFIG[riskLevel];
   const RiskIcon  = risk.icon;
@@ -262,7 +262,7 @@ export default function AdminMissionControl() {
         setEvnScores(out);
       }
     })();
-  }, [countries.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [countries.join(',')]);  
 
   return (
     <div className="min-h-screen" style={{ background: '#060B16' }}>

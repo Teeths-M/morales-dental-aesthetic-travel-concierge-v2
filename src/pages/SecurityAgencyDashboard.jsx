@@ -131,7 +131,7 @@ function ActiveEscortsPanel({ agencyId }) {
 
 export default function SecurityAgencyDashboard() {
   const [agency, setAgency] = useState(null);
-  const [user, setUser] = useState(null);
+  const [_user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
   const [toggleError, setToggleError] = useState(null);
@@ -162,7 +162,7 @@ export default function SecurityAgencyDashboard() {
         sos_alerts_enabled: !agency.is_available,
       });
       setAgency(updated);
-    } catch (e) {
+    } catch (_e) {
       setToggleError('Could not update availability. Please try again.');
     } finally {
       setToggling(false);

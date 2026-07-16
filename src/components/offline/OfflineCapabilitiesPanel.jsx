@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, MessageSquare, Shield, MapPin, CheckCircle2, Copy, RefreshCw, AlertTriangle, ExternalLink, Layers } from 'lucide-react';
 
 // IndexedDB helper for offline document caching
-const OFFLINE_CACHE_KEY = 'morales_offline_vault';
+const _OFFLINE_CACHE_KEY = 'morales_offline_vault';
 const MAX_VAULT_BYTES = 50 * 1024 * 1024; // 50 MB LRU cap
 
 // Prune localStorage vault entries exceeding MAX_VAULT_BYTES (LRU — oldest removed first)

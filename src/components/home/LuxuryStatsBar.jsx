@@ -17,32 +17,7 @@ const STATS = [
   { display: 'ZERO', label: 'Unsafe Plans Ever Approved', sub: 'RED-flagged combinations are blocked — no exceptions, no override', color: GOLD, isZero: true },
 ];
 
-function useCountUp(target, duration = 2000, started = false) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (!started) return;
-    if (target === 0) { setValue(0); return; }
-
-    const startTime = performance.now();
-    const isDecimal = target % 1 !== 0;
-
-    function tick(now) {
-      const elapsed  = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = target * eased;
-      setValue(isDecimal ? Math.round(current * 10) / 10 : Math.floor(current));
-      if (progress < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }, [target, duration, started]);
-
-  return value;
-}
-
-function StatCard({ stat, index, started }) {
+function StatCard({ stat, index, started: _started }) {
 
   return (
     <motion.div

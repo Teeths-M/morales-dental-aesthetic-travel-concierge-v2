@@ -18,7 +18,7 @@ const STATUS_CONFIG = {
   expired:        { icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200',  label: 'Expired' },
 };
 
-export default function DoctorVerificationPanel({ user }) {
+export default function DoctorVerificationPanel({ _user }) {
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

@@ -15,7 +15,7 @@ const EVENING_STORAGE_KEY = 'morales_evening_prompted';
 // ── EVN-iQ400 module-level constants (defined once, not per render) ─────────
 // EVN-iQ400 global offline keyword database — 200+ high-risk areas across 30+ countries
 // Sourced from public government travel advisories and OSINT risk databases
-const EVN_HIGH_RISK_KEYWORDS = new Set([
+const _EVN_HIGH_RISK_KEYWORDS = new Set([
   // Mexico City
   'tepito','doctores','la merced','guerrero','iztapalapa','ecatepec','neza','chimalhuacan',
   'doctores','peralvillo','tlatelolco',
@@ -113,7 +113,7 @@ const EVN_HIGH_RISK_KEYWORDS = new Set([
   'chechnya','dagestan risk',
 ]);
 
-function evnHaversineM(lat1, lng1, lat2, lng2) {
+function _evnHaversineM(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
@@ -124,7 +124,7 @@ function evnHaversineM(lat1, lng1, lat2, lng2) {
 }
 
 const EVN_AREA_CACHE_TTL = 24 * 60 * 60 * 1000;
-function evnReadAreaCache(key) {
+function _evnReadAreaCache(key) {
   try {
     const raw = localStorage.getItem(`evn_area_${key}`);
     if (!raw) return null;
@@ -132,7 +132,7 @@ function evnReadAreaCache(key) {
     return (Date.now() - ts < EVN_AREA_CACHE_TTL) ? risk : null;
   } catch { return null; }
 }
-function evnWriteAreaCache(key, risk) {
+function _evnWriteAreaCache(key, risk) {
   try { localStorage.setItem(`evn_area_${key}`, JSON.stringify({ risk, ts: Date.now() })); } catch {}
 }
 

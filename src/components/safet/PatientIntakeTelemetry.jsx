@@ -117,7 +117,7 @@ export default function PatientIntakeTelemetry({ onComplete, initialData = {} })
   });
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
-  const currentSection = SECTIONS[step];
+  const _currentSection = SECTIONS[step];
   const bmi = form.height_cm && form.weight_kg
     ? (form.weight_kg / ((form.height_cm / 100) ** 2)).toFixed(1) : null;
 

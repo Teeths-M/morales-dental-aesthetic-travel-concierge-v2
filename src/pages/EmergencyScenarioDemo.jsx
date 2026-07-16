@@ -271,7 +271,7 @@ export default function EmergencyScenarioDemo({ minimal = false }) {
     setPlaying(true);
     setGpsActive(true);
 
-    TIMELINE.forEach((evt, i) => {
+    TIMELINE.forEach((evt, _i) => {
       const t1 = setTimeout(() => {
         setVisible(prev => new Set([...prev, evt.id]));
         if (evt.sms) setActiveSms(evt.sms);

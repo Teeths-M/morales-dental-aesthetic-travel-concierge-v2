@@ -23,7 +23,7 @@ export default function SimpleAdminDashboard() {
   const [activeTab, setActiveTab] = useState('active');
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
-  const { toast } = useToast();
+  const { _toast } = useToast();
 
   // Fetch all cases in a single query for better performance
   const { data: allCases = [], isLoading, refetch } = useQuery({

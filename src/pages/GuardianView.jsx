@@ -113,8 +113,8 @@ const staleIcon = new L.DivIcon({
 
 const STAGE_STEPS = ['consultation', 'planning', 'booking', 'travel', 'procedure', 'recovery', 'aftercare'];
 const POLL_INTERVAL_MS = 12 * 1000; // poll every 12s
-const STALE_WARN_MS = 5 * 60 * 1000;   // 5 min
-const STALE_ALERT_MS = 15 * 60 * 1000; // 15 min
+const _STALE_WARN_MS = 5 * 60 * 1000;   // 5 min
+const _STALE_ALERT_MS = 15 * 60 * 1000; // 15 min
 
 function minutesAgo(isoTs) {
   if (!isoTs) return null;
@@ -180,7 +180,7 @@ export default function GuardianView() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [copied, setCopied] = useState(false);
   const [lastPoll, setLastPoll] = useState(null);
-  const pollRef = useRef(null);
+  const _pollRef = useRef(null);
   const [guardianPos, setGuardianPos] = useState(null);
   const [guardianGPSStatus, setGuardianGPSStatus] = useState('idle'); // idle|active|denied
   const watchIdRef = useRef(null);
@@ -248,7 +248,7 @@ export default function GuardianView() {
     return () => clearInterval(pollId); // Use local pollId, not a ref that may have changed
   }, [pageState, fetchData]);
 
-  const copyCoords = (lat, lng) => {
+  const _copyCoords = (lat, lng) => {
     navigator.clipboard.writeText(mapsViewUrl(lat, lng)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -258,7 +258,7 @@ export default function GuardianView() {
   const shareLocation = (lat, lng, patientName) => {
     const text = `🔴 ${patientName}'s live location\nClick for directions: ${mapsViewUrl(lat, lng)}`;
     const waMsg  = encodeURIComponent(text);
-    const smsBody = encodeURIComponent(text);
+    const _smsBody = encodeURIComponent(text);
     // On mobile: open WhatsApp with pre-filled message
     // On desktop: copy to clipboard
     if (/android|iphone|ipad/i.test(navigator.userAgent)) {

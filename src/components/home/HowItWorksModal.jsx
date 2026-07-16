@@ -518,7 +518,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
   };
 
   const current = scenes[scene];
-  const SceneIcon = current.icon;
+  const _SceneIcon = current.icon;
   const isFinal = scene === totalScenes - 1;
 
   return (

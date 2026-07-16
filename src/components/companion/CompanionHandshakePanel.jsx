@@ -34,7 +34,7 @@ function HandshakeCard({ handshake, onComplete }) {
     try {
       await onComplete(handshake.id, notes);
       toast.success('Handshake confirmed');
-    } catch (e) {
+    } catch (_e) {
       toast.error('Failed to confirm. Please try again.');
     } finally {
       setLoading(false);

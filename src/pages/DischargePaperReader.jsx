@@ -87,7 +87,7 @@ export default function DischargePaperReader() {
 
       setResult(parsed);
       setPhase('done');
-    } catch (e) {
+    } catch (_e) {
       setErrorMsg('M could not read this document. Please ensure the image is clear and well-lit, then try again.');
       setPhase('error');
     }

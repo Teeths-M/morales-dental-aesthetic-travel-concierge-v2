@@ -81,7 +81,7 @@ export default function VisaAIChat() {
         prompt: `${SYSTEM_PROMPT}\n\nConversation history:\n${history}\n\nPatient: ${userMsg}\n\nSAFE-T VISA ASSISTâ„¢:`,
       });
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-    } catch (e) {
+    } catch (_e) {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: "I apologize â€” I'm having a brief technical moment. ðŸ˜Š For immediate assistance with visa requirements, please contact our concierge team or check your destination's official embassy website. Is there anything else I can help you with?"

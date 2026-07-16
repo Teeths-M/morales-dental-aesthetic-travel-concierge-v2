@@ -13,8 +13,8 @@ const faqs = [
 ];
 
 export default function SupportModule() {
-  const { user } = useAuth();
-  const [activeTicket, setActiveTicket] = useState(false);
+  const { _user } = useAuth();
+  const [_activeTicket, _setActiveTicket] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [ticketMsg, setTicketMsg] = useState('');
   const [ticketCategory, setTicketCategory] = useState('General Inquiry');
@@ -31,7 +31,7 @@ export default function SupportModule() {
         submitted_at: new Date().toISOString(),
       });
       setTicketSent(true);
-    } catch (e) {
+    } catch (_e) {
       alert('Failed to send ticket. Please try WhatsApp or email directly.');
     } finally {
       setTicketLoading(false);

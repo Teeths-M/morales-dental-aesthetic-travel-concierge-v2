@@ -8,7 +8,7 @@ import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import VerificationInfo from './VerificationInfo';
 
-export default function DoctorSignupStep3({ formData, setFormData, language = 'en', onNext, onBack, onComplete }) {
+export default function DoctorSignupStep3({ formData, setFormData, language = 'en', _onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
   const [payoutMethod, setPayoutMethod] = useState(null);
   const [licenseFile, setLicenseFile] = useState(null);
@@ -143,7 +143,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       setIsSyncing(true);
       setSyncMessage(null);
       try {
-      const response = await base44.functions.invoke('syncDoctorToPortalHub', {
+      const _response = await base44.functions.invoke('syncDoctorToPortalHub', {
         event: { type: 'update', entity_name: 'Doctor' },
         data: {
           id: 'manual_sync_' + Date.now(),

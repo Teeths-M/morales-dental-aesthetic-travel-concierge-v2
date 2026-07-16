@@ -15,7 +15,7 @@ const PINK   = '#f472b6';
 
 // Real Tijuana GPS — James moving toward the clinic
 const CLINIC  = { lat: 32.5298, lng: -117.0198, name: 'ISSSTECALI Dental Clinic', address: 'Calle 6a & Constitución' };
-const DOCTOR_POS = { lat: 32.5298, lng: -117.0198 }; // doctor is at clinic
+const _DOCTOR_POS = { lat: 32.5298, lng: -117.0198 }; // doctor is at clinic
 const MARIA_POS  = { lat: 32.5310, lng: -117.0240 }; // companion nearby
 
 // James's approach path — 5 GPS positions moving toward clinic
@@ -68,7 +68,7 @@ export default function ArrivalIntelDemo() {
   const [running,  setRunning]  = useState(false);
   const [arrived,  setArrived]  = useState(false);
   const [muted,    setMuted]    = useState(false);
-  const [view,     setView]     = useState('map'); // map | doctor | james | all
+  const [_view,     _setView]     = useState('map'); // map | doctor | james | all
   const [notifications, setNotes] = useState([]);
   const timerRef = useRef(null);
   const mutableRef = useRef(false);
@@ -225,7 +225,7 @@ export default function ArrivalIntelDemo() {
 
           {/* Map legend */}
           <div style={{ padding: '8px 16px', background: '#080F1C', display: 'flex', gap: 16, justifyContent: 'center' }}>
-            {[['🧑🏾', BLUE, 'James'], ['🏥', GOLD, 'Clinic'], ['👩🏽‍⚕️', PINK, 'Maria']].map(([e, c, l]) => (
+            {[['🧑🏾', BLUE, 'James'], ['🏥', GOLD, 'Clinic'], ['👩🏽‍⚕️', PINK, 'Maria']].map(([e, _c, l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ fontSize: 11 }}>{e}</span>
                 <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{l}</span>
@@ -250,7 +250,7 @@ export default function ArrivalIntelDemo() {
         {/* Live notifications */}
         {notifications.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {notifications.map((n, i) => (
+            {notifications.map((n, _i) => (
               <div key={n.id} style={{ padding: '10px 14px', borderRadius: 12, background: CARD, border: `1px solid ${n.color}30`, animation: 'fadeUp 0.35s ease', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: n.color, flexShrink: 0, animation: 'pulse 1.5s ease infinite' }} />
                 <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{n.msg}</p>

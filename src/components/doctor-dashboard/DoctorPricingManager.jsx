@@ -72,7 +72,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
     }
   };
 
-  const getText = (key) => {
+  const getText = (_key) => {
     const texts = {
       en: {
         title: 'My Pricing',

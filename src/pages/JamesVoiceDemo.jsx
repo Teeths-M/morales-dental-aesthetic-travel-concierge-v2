@@ -135,7 +135,7 @@ export default function JamesVoiceDemo() {
   const [playing,    setPlaying]    = useState(false);
   const [done,       setDone]       = useState(false);
   const [muted,      setMuted]      = useState(false);
-  const [golden,     setGolden]     = useState(false);
+  const [_golden,     setGolden]     = useState(false);
   const [step,       setStep]       = useState(0);
   const bottomRef    = useRef(null);
   const timerRef     = useRef(null);

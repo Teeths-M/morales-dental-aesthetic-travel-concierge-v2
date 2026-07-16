@@ -117,7 +117,7 @@ function SidebarContent({ location, onClose = null }) {
     try { return localStorage.getItem(PHOTO_KEY) || null; } catch { return null; }
   });
 
-  const displayName  = user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Patient';
+  const _displayName  = user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Patient';
   const fullName     = user?.full_name || 'My Portal';
 
   const handleUpload = useCallback((dataUrl) => setPhoto(dataUrl), []);

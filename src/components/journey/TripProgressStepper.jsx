@@ -67,9 +67,9 @@ export default function TripProgressStepper({ currentStep = 0, isComplete = fals
           const isCurrent = !isComplete && stepNum === currentStep + 1;
 
           const roleColor   = isComplete ? GOLD : step.color;
-          const dotBg       = isDone ? roleColor : 'transparent';
-          const borderColor = isDone ? roleColor : isCurrent ? roleColor : '#2A3F4A';
-          const connColor   = isDone && !isComplete ? step.color : isComplete ? GOLD : '#2A3F4A';
+          const _dotBg       = isDone ? roleColor : 'transparent';
+          const _borderColor = isDone ? roleColor : isCurrent ? roleColor : '#2A3F4A';
+          const _connColor   = isDone && !isComplete ? step.color : isComplete ? GOLD : '#2A3F4A';
 
           return (
             <React.Fragment key={stepNum}>

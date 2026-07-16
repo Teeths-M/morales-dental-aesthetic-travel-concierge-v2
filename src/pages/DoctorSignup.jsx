@@ -146,9 +146,9 @@ export default function DoctorSignup() {
     detectLocation();
   }, []);
 
-  const t = translations[language];
+  const _t = translations[language];
 
-  const allLanguages = [
+  const _allLanguages = [
     { code: 'en', flag: '🇬🇧', name: 'English' },
     { code: 'es', flag: '🇪🇸', name: 'Español' },
     { code: 'fr', flag: '🇫🇷', name: 'Français' },

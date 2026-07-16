@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 
-const COLORS = ['#047857', '#1d4ed8', '#7c3aed', '#db2777', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#7c2d12', '#9d174d'];
+const _COLORS = ['#047857', '#1d4ed8', '#7c3aed', '#db2777', '#ea580c', '#ca8a04', '#16a34a', '#2563eb', '#7c2d12', '#9d174d'];
 
 export default function AdminAnalyticsDashboard() {
   const [analytics, setAnalytics] = useState(null);
@@ -87,7 +87,7 @@ export default function AdminAnalyticsDashboard() {
     );
   }
 
-  const { summary, pipeline_funnel, avg_time_per_stage, doctor_performance } = analytics;
+  const { summary, _pipeline_funnel, _avg_time_per_stage, doctor_performance } = analytics;
 
   return (
     <AdminLayout>
@@ -201,7 +201,7 @@ export default function AdminAnalyticsDashboard() {
             </div>
 
             <div className="space-y-3">
-              {bottlenecks.map((stage, i) => (
+              {bottlenecks.map((stage, _i) => (
                 <div
                   key={stage.stage}
                   className="flex items-center justify-between p-3 bg-amber-50 border border-amber-100 rounded-xl"
@@ -248,7 +248,7 @@ export default function AdminAnalyticsDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {doctor_performance.map((doc, i) => {
+                {doctor_performance.map((doc, _i) => {
                   const responseRate = doc.total_cases_assigned > 0
                     ? Math.round(((doc.confirmed_count + doc.declined_count) / doc.total_cases_assigned) * 100)
                     : 0;

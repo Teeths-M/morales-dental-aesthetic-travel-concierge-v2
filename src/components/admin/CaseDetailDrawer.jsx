@@ -113,7 +113,7 @@ export default function CaseDetailDrawer({ caseRecord, onClose, onStatusUpdated 
         consultation_id: caseRecord.consultation_id,
       });
       toast.success('Doctor assigned and portal link sent');
-    } catch (e) {
+    } catch (_e) {
       toast.error('Failed to assign doctor');
     } finally {
       setAssigningDoctor(false);

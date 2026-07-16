@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
 
-export default function TravelAgencyDashboard({ agency, language }) {
+export default function TravelAgencyDashboard({ agency, _language }) {
 
   // Pending quote requests for this agency
   const { data: pendingQuotes = [], isLoading: loadingPending } = useQuery({
@@ -74,7 +74,7 @@ export default function TravelAgencyDashboard({ agency, language }) {
             { label: 'Packages done', value: completed.length || agency.total_bookings || 0, icon: Plane },
             { label: 'Rating', value: agency.average_rating ? `${Number(agency.average_rating).toFixed(1)} ★` : '—', icon: Star },
             { label: 'This month', value: `$${agency.earnings_this_month?.toLocaleString() || 0}`, icon: DollarSign },
-          ].map(({ label, value, icon: Icon }) => (
+          ].map(({ label, value, icon: _Icon }) => (
             <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <p className="text-lg font-bold text-white">{value}</p>
               <p className="text-[11px] mt-0.5" style={{ color: '#64748b' }}>{label}</p>

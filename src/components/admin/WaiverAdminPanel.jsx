@@ -17,7 +17,7 @@ const WAIVER_STATUS_CONFIG = {
 
 export default function WaiverAdminPanel({ caseRecord }) {
   const queryClient = useQueryClient();
-  const [reissuing, setReissuing] = useState(false);
+  const [_reissuing, _setReissuing] = useState(false);
 
   const { data: waivers = [], isLoading } = useQuery({
     queryKey: ['waivers', caseRecord?.id],

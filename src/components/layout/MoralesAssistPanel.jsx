@@ -58,7 +58,7 @@ function SpecialistCard() {
 }
 
 export default function MoralesAssistPanel({ isOpen, onClose }) {
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const [messages,   setMessages]   = useState([WELCOME_MSG]);
   const [input,      setInput]      = useState('');
   const [loading,    setLoading]    = useState(false);

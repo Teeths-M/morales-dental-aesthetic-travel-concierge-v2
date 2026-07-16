@@ -31,8 +31,8 @@ export default function ClientProposalPortal() {
   const [error, setError] = useState(null);
   const [depositChoice, setDepositChoice] = useState(null);
   const [paying, setPaying] = useState(false);
-  const [paySuccess, setPaySuccess] = useState(false);
-  const [payError, setPayError] = useState(null);
+  const [paySuccess, _setPaySuccess] = useState(false);
+  const [_payError, setPayError] = useState(null);
   // Time-of-action clinic gate: only an ENFORCED block prevents payment. Soft-launch
   // (CLINIC_GATE_ENFORCE off), loading, and errors show a label but never block.
   const [clinicHardBlock, setClinicHardBlock] = useState(false);
@@ -52,7 +52,7 @@ export default function ClientProposalPortal() {
       const res = await base44.functions.invoke('iq200Pipeline', { action: 'get_case', payload: { token: cleanToken, type: 'proposal' } });
       if (res.data?.case) setCaseData(res.data.case);
       else setError('Proposal not found. Please contact your coordinator.');
-    } catch (e) {
+    } catch (_e) {
       setError('Unable to load proposal. Please try again.');
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export default function ClientProposalPortal() {
         return;
       }
       setPayError(res.data?.error || 'Unable to start payment. Please try again or contact your coordinator.');
-    } catch (e) {
+    } catch (_e) {
       setPayError('Payment system temporarily unavailable. Please try again.');
     }
     setPaying(false);

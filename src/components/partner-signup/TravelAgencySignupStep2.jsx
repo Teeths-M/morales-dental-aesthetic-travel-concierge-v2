@@ -35,7 +35,7 @@ const SERVICES = {
 };
 
 export default function TravelAgencySignupStep2({ formData, setFormData, language, onNext, onBack }) {
-  const t = translations[language];
+  const _t = translations[language];
   const [selectedServices, setSelectedServices] = useState(new Set(formData.services_offered || []));
   const [selectedOptions, setSelectedOptions] = useState(formData.service_options || {});
 

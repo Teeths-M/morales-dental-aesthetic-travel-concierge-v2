@@ -47,7 +47,7 @@ export default function SafetyWatcher() {
     }
   // openPivot is stable (defined outside render in CartContext); safetyStatus
   // is the reactive signal — intentional narrow dep array.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [safetyStatus?.level]);
 
   return null;

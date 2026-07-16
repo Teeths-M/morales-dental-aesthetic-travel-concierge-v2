@@ -55,7 +55,7 @@ const PinInput = ({ onComplete, disabled }) => {
   );
 };
 
-export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
+export default function OfflineVaultAccess({ userEmail, onVerified, _onBack }) {
   const [step, setStep] = useState('email'); // email | verify | setup | access
   const [email, setEmail] = useState(userEmail || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -92,7 +92,7 @@ export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
       await saveVaultPIN(email, pin);
       setStep('access');
       onVerified({ email, pin_session_token: 'offline_local' });
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to save PIN. Please try again.');
     } finally {
       setIsLoading(false);
@@ -111,7 +111,7 @@ export default function OfflineVaultAccess({ userEmail, onVerified, onBack }) {
       } else {
         setError('Incorrect PIN. Please try again.');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Verification failed. Please try again.');
     } finally {
       setIsLoading(false);

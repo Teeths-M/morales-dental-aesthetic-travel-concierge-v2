@@ -37,7 +37,7 @@ export default function SmsHandshakeMonitor() {
     try {
       const data = await base44.entities.OfflineHandshake.filter({ channel: 'sms' }, '-received_at', 100);
       setItems(data || []);
-    } catch (e) {
+    } catch (_e) {
       setError(true);
     } finally {
       setLoading(false);
@@ -53,7 +53,7 @@ export default function SmsHandshakeMonitor() {
       const count = res?.data?.escalated_count ?? 0;
       toast({ title: 'Escalation complete', description: `${count} missed handshake(s) escalated.` });
       await load();
-    } catch (e) {
+    } catch (_e) {
       toast({ title: 'Escalation failed', description: 'Could not run escalation. Please try again.', variant: 'destructive' });
     } finally {
       setEscalating(false);

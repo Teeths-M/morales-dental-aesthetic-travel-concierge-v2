@@ -6,7 +6,7 @@ import { translations } from '@/lib/translations';
 import { categoryMap, PROCEDURES_BY_CATEGORY } from '@/lib/doctorProcedures';
 
 export default function DoctorSignupStep2Pricing({ formData, setFormData, language, onNext, onBack }) {
-  const t = translations[language];
+  const _t = translations[language];
   const [prices, setPrices] = useState(formData.procedurePrices || {});
 
   const handlePriceChange = (procedure, value) => {

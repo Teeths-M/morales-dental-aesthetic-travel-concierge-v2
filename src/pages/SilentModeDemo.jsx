@@ -49,7 +49,7 @@ function GpsBeacon({ active }) {
 export default function SilentModeDemo() {
   const [motionGranted, setMotionGranted] = useState(null); // null | true | false
   const [log, setLog] = useState([]);
-  const [countdown, setCountdown] = useState(null);
+  const [_countdown, setCountdown] = useState(null);
   const logRef = useRef(null);
 
   const addLog = (msg) => setLog(prev => [...prev.slice(-6), { msg, ts: new Date().toLocaleTimeString() }]);

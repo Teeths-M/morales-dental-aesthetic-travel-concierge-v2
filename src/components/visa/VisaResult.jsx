@@ -66,7 +66,7 @@ const MEDICAL_DOCS = [
 ];
 
 export default function VisaResult({ result, onReset }) {
-  const { passport, destination, purpose, travelDate, stayDuration, hasCompanion, rule, aiSummary } = result;
+  const { passport, destination, _purpose, _travelDate, _stayDuration, hasCompanion, rule, aiSummary } = result;
   const cfg = STATUS_CONFIG[rule.status] || STATUS_CONFIG.visa_required;
   const [checkedDocs, setCheckedDocs] = useState({});
   const [videoPlaying, setVideoPlaying] = useState(false);

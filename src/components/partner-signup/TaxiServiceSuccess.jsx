@@ -4,7 +4,7 @@ import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { translations } from '@/lib/translations';
 
 export default function TaxiServiceSuccess({ taxi, language, onDashboard }) {
-  const t = translations[language];
+  const _t = translations[language];
 
   return (
     <div className="text-center space-y-8">

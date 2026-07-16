@@ -24,7 +24,7 @@ const ALLOWED_CONFIGS = [
   { key: 'ADMIN_EMAIL',         label: 'Admin Alert Email',     description: 'Primary admin notification email address' },
 ];
 
-function ApprovalSteps({ change, currentUser }) {
+function ApprovalSteps({ change, _currentUser }) {
   const step1Done = !!change.approved_by_1_id;
   const step2Done = !!change.approved_by_2_id;
   return (

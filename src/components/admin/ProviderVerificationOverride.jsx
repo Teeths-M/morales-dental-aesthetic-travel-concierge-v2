@@ -87,7 +87,7 @@ export default function ProviderVerificationOverride() {
 
   const overrideMutation = useMutation({
     mutationFn: async ({ verificationId, action, reason }) => {
-      const record = verificationRecords.find(v => v.id === verificationId);
+      const _record = verificationRecords.find(v => v.id === verificationId);
       
       // Update the verification record
       await base44.entities.ProviderVerification.update(verificationId, {

@@ -84,7 +84,7 @@ export default function PaymentCheckout() {
     final_cost: caseRecord.final_package_price || 0
   } : null;
 
-  const quotes = [];
+  const _quotes = [];
 
   const selectPlanMutation = useMutation({
     // @ts-ignore — TanStack Query v5 infers variables as void without generics in JSX

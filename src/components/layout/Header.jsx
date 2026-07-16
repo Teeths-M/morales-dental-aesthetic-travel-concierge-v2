@@ -11,7 +11,7 @@ import { CALM } from '@/lib/brandTokens';
 export default function Header() {
   const [isMobileOpen,   setIsMobileOpen]   = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLangOpen,     setIsLangOpen]     = useState(false);
+  const [_isLangOpen,     setIsLangOpen]     = useState(false);
   const [currentLang,    setCurrentLang]    = useState('EN');
   const [scrolled,       setScrolled]       = useState(false);
 
@@ -34,7 +34,7 @@ export default function Header() {
     ? user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
     : (user?.email?.[0]?.toUpperCase() || 'M');
 
-  const firstName = user?.full_name?.split(' ')[0] || null;
+  const _firstName = user?.full_name?.split(' ')[0] || null;
   const hour = new Date().getHours();
   const timeGreeting = hour < 12 ? t('dashboard.good_morning') : hour < 17 ? t('dashboard.good_afternoon') : t('dashboard.good_evening');
 

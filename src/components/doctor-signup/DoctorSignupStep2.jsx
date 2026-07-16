@@ -7,7 +7,7 @@ import { categoryMap, PROCEDURES_BY_CATEGORY } from '@/lib/doctorProcedures';
 
 export default function DoctorSignupStep2({ formData, setFormData, language = 'en', onNext, onBack }) {
   const t = translations[language] || translations['en'];
-  const categories = procedureCategories[language] || procedureCategories['en'];
+  const _categories = procedureCategories[language] || procedureCategories['en'];
   const [selectedCategories, setSelectedCategories] = useState(new Set(formData.selectedCategories || []));
   const [selectedProcedures, setSelectedProcedures] = useState(new Set(formData.specialties || []));
 

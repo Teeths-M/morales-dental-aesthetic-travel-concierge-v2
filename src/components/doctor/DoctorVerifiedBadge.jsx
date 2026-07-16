@@ -59,7 +59,7 @@ export default function DoctorVerifiedBadge({ doctorId, showDetail = false }) {
     doctorData.license_verified === true &&
     VERIFIED_TERMINAL.has(doctorData.verification_status);
 
-  const isPending = !isVerified && doctorData.status !== 'inactive';
+  const _isPending = !isVerified && doctorData.status !== 'inactive';
   const isRejected = doctorData.verification_status === 'rejected' ||
     doctorData.verification_status === 'failed' ||
     doctorData.status === 'inactive';

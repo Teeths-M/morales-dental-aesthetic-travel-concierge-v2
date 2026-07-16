@@ -67,7 +67,7 @@ export default function PassportVaultSection({ form, update, ipCountry }) {
       setWarnings(w || []);
       setScanState('done');
       setEditMode(false);
-    } catch (err) {
+    } catch (_err) {
       const isOffline = !navigator.onLine;
       setScanError(
         isOffline

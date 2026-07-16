@@ -10,7 +10,7 @@ import { Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const GOLD = '#D4AF37';
-const APP_URL = window.location.origin;
+const _APP_URL = window.location.origin;
 
 // ── Email HTML templates (mirrors what edge functions send) ──────────────────
 

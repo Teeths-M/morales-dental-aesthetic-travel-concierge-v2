@@ -31,8 +31,8 @@ export default function WildernessSOSPanel({
   medicalCode = '',
 }) {
   const {
-    isOnline, gpsState, gpsCoords, packet, smsPayload, smsLink,
-    sosState, errorMsg, hasTwilioNumber, triggerOfflineSOS, copyPayload,
+    isOnline, _gpsState, gpsCoords, packet, smsPayload, smsLink,
+    sosState, _errorMsg, hasTwilioNumber, triggerOfflineSOS, copyPayload,
   } = useOfflineSOS({ caseId, userId, userEmail, activitySessionId, activityType, medicalCode });
 
   const [copied, setCopied] = useState(false);

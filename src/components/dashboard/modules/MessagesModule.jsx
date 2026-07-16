@@ -128,7 +128,7 @@ export default function MessagesModule() {
         const uploaded = await base44.integrations.Core.UploadFile({ file: /** @type {any} */(blob) });
         uploadedUrls.push(uploaded.file_url);
       }
-      setAttachments(prev => [...prev, ...uploadedUrls.map(url => ({ url, name: files.find(f => true)?.name || 'File' }))]);
+      setAttachments(prev => [...prev, ...uploadedUrls.map(url => ({ url, name: files.find(_f => true)?.name || 'File' }))]);
     } catch (e) {
       console.error('Failed to upload file', e);
     } finally {

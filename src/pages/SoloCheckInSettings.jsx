@@ -131,7 +131,7 @@ export default function SoloCheckInSettings() {
   const [activeCase, setActiveCase] = useState(null);
   const [checkIns, setCheckIns] = useState([]);
   const [allCheckIns, setAllCheckIns] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
   const locRef = useRef(null);

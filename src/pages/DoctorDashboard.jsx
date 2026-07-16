@@ -112,7 +112,7 @@ export default function DoctorDashboard() {
 
   const doctor = profileData?.doctor;
   const specialties = profileData?.specialties || [];
-  const pricing = profileData?.pricing || [];
+  const _pricing = profileData?.pricing || [];
   const user = userData;
   const loading = loadingUser || loadingProfile;
 

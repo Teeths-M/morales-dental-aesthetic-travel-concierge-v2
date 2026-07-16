@@ -85,7 +85,7 @@ const WAYPOINTS = [
 // t=14000  → scan 4 (MODERATE alert fires)
 // t=15500  → move to WP5
 // t=18500  → HIGH RISK DETECTED — dramatic sequence
-const TIMELINE = [
+const _TIMELINE = [
   { t: 0,     action: 'arrive',  wp: 0 },
   { t: 2000,  action: 'scan',    wp: 0 },
   { t: 3500,  action: 'move',    wp: 1 },
@@ -106,7 +106,7 @@ const RISK = {
 };
 
 // SVG path string from waypoints
-const svgPath = WAYPOINTS.map((w, i) => `${i === 0 ? 'M' : 'L'} ${w.svg.x} ${w.svg.y}`).join(' ');
+const _svgPath = WAYPOINTS.map((w, i) => `${i === 0 ? 'M' : 'L'} ${w.svg.x} ${w.svg.y}`).join(' ');
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
@@ -261,7 +261,7 @@ export default function EVNiQ400Demo() {
     }, 17800);
     schedule(() => setDone(true), 21000);
 
-  }, [running, mode, addLog, schedule, reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [running, mode, addLog, schedule, reset]);  
 
   const curWPData = WAYPOINTS[currentWP];
 

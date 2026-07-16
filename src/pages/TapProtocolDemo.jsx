@@ -150,7 +150,7 @@ function EmergencyModal({ onClose, muted }) {
 export default function TapProtocolDemo() {
   const [mode,  setMode]  = useState(null); // null | 'check' | 'emergency'
   const [muted, setMuted] = useState(false);
-  const [flash, setFlash] = useState(0);
+  const [_flash, setFlash] = useState(0);
 
   const triggerFlash = () => setFlash(f => f + 1);
 

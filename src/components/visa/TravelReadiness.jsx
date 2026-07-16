@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const getReadinessItems = (language) => [
+const getReadinessItems = (_language) => [
   { id: 'passport', label: 'Passport Valid (6+ months)', icon: 'ðŸ›‚', category: 'documents', points: 20 },
   { id: 'visa', label: 'Visa / Travel Authorization', icon: 'âœ…', category: 'documents', points: 20 },
   { id: 'ticket', label: 'Return Flight Booked', icon: 'âœˆï¸', category: 'travel', points: 15 },
@@ -67,7 +67,7 @@ export default function TravelReadiness() {
     return 'text-red-600';
   };
 
-  const getScoreBg = (score) => {
+  const _getScoreBg = (score) => {
     if (score >= 80) return 'from-emerald-400 to-teal-500';
     if (score >= 50) return 'from-amber-400 to-orange-500';
     return 'from-red-400 to-rose-500';

@@ -33,7 +33,7 @@ const ALL_COUNTRIES = [
 ];
 
 export default function TaxiServiceSignupStep1({ formData, setFormData, language, onNext }) {
-  const t = translations[language];
+  const _t = translations[language];
   const [vehicles, setVehicles] = useState(formData.vehicle_types || []);
   const [assistance, setAssistance] = useState(formData.patient_assistance || []);
   const [countrySearch, setCountrySearch] = useState('');

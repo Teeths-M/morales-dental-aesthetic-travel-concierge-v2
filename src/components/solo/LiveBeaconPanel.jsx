@@ -14,7 +14,7 @@ import {
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
 import { base44 } from '@/api/base44Client';
 
-const GOLD = '#D4AF37';
+const _GOLD = '#D4AF37';
 const GREEN = '#22c55e';
 
 const STATUS_CONFIG = {

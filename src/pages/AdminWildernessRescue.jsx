@@ -41,7 +41,7 @@ export default function AdminWildernessRescue() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [wilderness, all] = await Promise.allSettled([
+    const [wilderness, _all] = await Promise.allSettled([
       // Wilderness-specific: look for wilderness_injury trigger type
       base44.entities.SOSEvent.filter({}, '-triggered_at', 100),
       base44.entities.ActivitySession.filter({ status: 'sos_triggered' }, '-created_date', 50),

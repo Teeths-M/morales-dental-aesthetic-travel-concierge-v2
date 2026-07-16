@@ -143,7 +143,7 @@ function PartnerCard({ card, language }) {
   );
 }
 
-const ALL_LANGUAGES = [
+const _ALL_LANGUAGES = [
   { code: 'en', flag: '🇬🇧', name: 'English' },
   { code: 'es', flag: '🇪🇸', name: 'Español' },
   { code: 'fr', flag: '🇫🇷', name: 'Français' },

@@ -54,7 +54,7 @@ export default function RecoveryCheckIn() {
       base44.functions.invoke('interpretRecoveryCheckIn', { rating, pain_level: pain, concerns, note })
         .then(r => { const msg = (r?.data ?? r)?.patient_message; if (msg) setAiMessage(msg); })
         .catch(() => {});
-    } catch (e) {
+    } catch (_e) {
       setError('Could not submit. Please try again or contact your Morales coordinator.');
     } finally {
       setSubmitting(false);

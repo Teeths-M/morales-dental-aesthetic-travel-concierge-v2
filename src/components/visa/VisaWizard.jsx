@@ -97,7 +97,7 @@ export default function VisaWizard({ onResult }) {
       }
       if (result.nationality && result.destination) setStep(3);
       else if (result.nationality) setStep(2);
-    } catch (e) {
+    } catch (_e) {
       const lower = text.toLowerCase();
       PASSPORT_COUNTRIES.forEach(c => { if (lower.includes(c.name.toLowerCase())) { setPassport(c); setPassportSearch(c.name); } });
       DESTINATIONS.forEach(d => { if (lower.includes(d.name.toLowerCase())) setDestination(d); });
@@ -121,7 +121,7 @@ export default function VisaWizard({ onResult }) {
         Keep it simple â€” like explaining to a nervous traveler. No bullet points, just flowing friendly text.`
       });
       aiSummary = resp;
-    } catch (e) {
+    } catch (_e) {
       aiSummary = `Based on your ${passport?.name} passport, your travel to ${destination?.name} for ${purpose?.label} requires the following steps. Please review the document checklist carefully and reach out to our concierge team if you need assistance.`;
     }
     setIsEvaluating(false);

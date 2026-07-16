@@ -44,7 +44,7 @@ export default function ShareLinkViewer() {
       a.download = file_name;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (_err) {
       setDownloadError('Decryption failed — please check your password and try again.');
     }
     setDownloading(false);

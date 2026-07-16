@@ -22,7 +22,7 @@ export default function TravelAgencyDashboard() {
           ? await base44.entities.TravelAgency.list('-updated_date', 1)
           : await base44.entities.TravelAgency.filter({ email: currentUser.email });
         setAgency(agencies[0] || null);
-      } catch (e) {
+      } catch (_e) {
         setLoadError('Could not load your profile. Please refresh the page.');
       } finally {
         setLoading(false);

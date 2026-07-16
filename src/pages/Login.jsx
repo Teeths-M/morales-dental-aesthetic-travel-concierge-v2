@@ -11,7 +11,7 @@ import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 const GOLD  = '#D4AF37';        // trust markers only
 const TEAL  = '#0E8A7D';        // the only "proceed" action color
 const DARK  = '#060B16';        // right brand panel + page container
-const CARD  = '#0C1A1D';
+const _CARD  = '#0C1A1D';
 const PAGE  = '#F1F5F4';        // left form surface
 const SURFACE_SOFT = '#EEF3F1';
 const BORDER = '#E2E9E6';       // left form borders (light)

@@ -27,7 +27,7 @@ const DOC_ICONS = {
   other: FileText,
 };
 
-const EMBASSY_NUMBERS = {
+const _EMBASSY_NUMBERS = {
   VE: { name: 'Venezuela', numbers: ['0800-EMERGENCY', '+58 212 400 4444'] },
   MX: { name: 'Mexico', numbers: ['911'] },
   CR: { name: 'Costa Rica', numbers: ['911'] },
