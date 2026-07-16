@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, ChevronLeft } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Zap } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { categoryMap, PROCEDURES_BY_CATEGORY } from '@/lib/doctorProcedures';
 
@@ -35,6 +35,12 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
 
   const allPricesSet = allSelectedProcedures.length === 0 || allSelectedProcedures.every(proc => prices[proc] && prices[proc] > 0);
 
+  const fillAllPrices = (defaultPrice) => {
+    const newPrices = {};
+    allSelectedProcedures.forEach(proc => { newPrices[proc] = defaultPrice; });
+    setPrices(newPrices);
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -43,6 +49,17 @@ export default function DoctorSignupStep2Pricing({ formData, setFormData, langua
           Enter base prices for each of your selected procedures. These will be used to estimate costs for patients.
         </p>
       </div>
+
+      {/* Quick fill */}
+      {allSelectedProcedures.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 p-4 bg-secondary/50 border border-border rounded-lg">
+          <Zap className="w-4 h-4 text-accent flex-shrink-0" />
+          <span className="text-sm text-muted-foreground mr-1">Quick fill all prices:</span>
+          <Button data-testid="doctor-price-quick-500" type="button" variant="outline" size="sm" onClick={() => fillAllPrices(500)}>$500</Button>
+          <Button data-testid="doctor-price-quick-1000" type="button" variant="outline" size="sm" onClick={() => fillAllPrices(1000)}>$1,000</Button>
+          <Button data-testid="doctor-price-quick-2000" type="button" variant="outline" size="sm" onClick={() => fillAllPrices(2000)}>$2,000</Button>
+        </div>
+      )}
 
       {/* Procedures Grid */}
       <div className="space-y-6">
