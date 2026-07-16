@@ -16,17 +16,15 @@ export function useCompanionSignup() {
   const [error, setError] = useState(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
 
-  // Load saved draft on mount — restores step, accountType, and form data
+  // Load saved draft on mount — synchronous so it runs before user interaction
   useEffect(() => {
-    (async () => {
-      const saved = await loadSignupDraft('companion');
-      if (saved) {
-        if (saved.data) setFormData(saved.data);
-        if (saved.meta?.step != null) setStep(saved.meta.step);
-        if (saved.meta?.accountType) setAccountType(saved.meta.accountType);
-      }
-      setDraftLoaded(true);
-    })();
+    const saved = loadSignupDraft('companion');
+    if (saved) {
+      if (saved.data) setFormData(saved.data);
+      if (saved.meta?.step != null) setStep(saved.meta.step);
+      if (saved.meta?.accountType) setAccountType(saved.meta.accountType);
+    }
+    setDraftLoaded(true);
   }, []);
 
   // Auto-save draft on every change (form data, step, account type)

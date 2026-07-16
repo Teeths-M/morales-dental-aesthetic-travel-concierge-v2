@@ -55,23 +55,25 @@ export default function DoctorSignup() {
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
-  // Load saved draft on mount
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // Load saved draft on mount — synchronous so it runs before user interaction
   useEffect(() => {
-    (async () => {
-      const savedDraft = await loadSignupDraft('doctor');
-      if (savedDraft) {
-        setFormData(savedDraft.data);
-        if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
-      }
-    })();
+    const savedDraft = loadSignupDraft('doctor');
+    if (savedDraft) {
+      setFormData(savedDraft.data);
+      if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
+    }
+    setDraftLoaded(true);
   }, []);
 
   // Auto-save draft on every change (form data + current step)
   useEffect(() => {
+    if (!draftLoaded) return; // Don't save until draft is loaded — prevents overwriting saved draft with empty initial state
     if (step < 3) { // Don't save after signup form is submitted
       saveSignupDraft('doctor', formData, { step });
     }
-  }, [formData, step]);
+  }, [formData, step, draftLoaded]);
 
   // Auto-detect location using IP geolocation on mount
   // Timeout ensures the page settles quickly — a hanging API call blocks

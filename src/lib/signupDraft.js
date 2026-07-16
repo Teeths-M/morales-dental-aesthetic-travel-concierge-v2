@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 
 const STORAGE_PREFIX = 'signup_draft_';
 
-export async function saveSignupDraft(type, data, meta = {}) {
+export function saveSignupDraft(type, data, meta = {}) {
   const key = `${STORAGE_PREFIX}${type}`;
   localStorage.setItem(key, JSON.stringify({
     data,
@@ -12,7 +12,7 @@ export async function saveSignupDraft(type, data, meta = {}) {
   }));
 }
 
-export async function loadSignupDraft(type) {
+export function loadSignupDraft(type) {
   const key = `${STORAGE_PREFIX}${type}`;
   const saved = localStorage.getItem(key);
   if (!saved) return null;

@@ -40,23 +40,25 @@ export default function TravelAgencySignup() {
     return () => window.removeEventListener('languageChange', handleLanguageChange);
   }, []);
 
-  // Load saved draft — must be its own effect so it runs after the cleanup-returning language effect
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // Load saved draft — synchronous so it runs before user interaction
   useEffect(() => {
-    (async () => {
-      const savedDraft = await loadSignupDraft('travel_agency');
-      if (savedDraft) {
-        setFormData(savedDraft.data);
-        if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
-      }
-    })();
+    const savedDraft = loadSignupDraft('travel_agency');
+    if (savedDraft) {
+      setFormData(savedDraft.data);
+      if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
+    }
+    setDraftLoaded(true);
   }, []);
 
   // Auto-save draft (form data + current step)
   useEffect(() => {
+    if (!draftLoaded) return; // Don't save until draft is loaded
     if (step < 3) {
       saveSignupDraft('travel_agency', formData, { step });
     }
-  }, [formData, step]);
+  }, [formData, step, draftLoaded]);
 
   // Auto-detect location using IP geolocation on mount
   useEffect(() => {
