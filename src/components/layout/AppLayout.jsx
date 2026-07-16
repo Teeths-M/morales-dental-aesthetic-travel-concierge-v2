@@ -20,7 +20,7 @@ import CursorSpotlight from '@/components/ui-system/CursorSpotlight';
 import ProximityWatcher from './ProximityWatcher';
 
 // Paths where the onboarding wizard should never appear
-const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
+const NO_ONBOARDING_PATHS = ['/admin', '/partner-signup', '/doctor-signup', '/companion-signup', '/security-signup', '/local-doctor-signup', '/offline', '/emergency', '/guardian', '/vault/share'];
 
 export default function AppLayout() {
   const { user } = useAuth();
@@ -58,7 +58,7 @@ export default function AppLayout() {
   // - Admin pages: FABs overlap the sidebar (z-50 beats the sidebar's z-20)
   // - Partner signup pages: patient SOS/Vault/WhatsApp are irrelevant to
   //   business partners and create visual noise (causes the stray red icon)
-  const isAdmin   = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup') || pathname.startsWith('/demo');
+  const isAdmin   = pathname.startsWith('/admin') || pathname.startsWith('/partner-signup') || pathname.startsWith('/doctor-signup') || pathname.startsWith('/companion-signup') || pathname.startsWith('/security-signup') || pathname.startsWith('/local-doctor-signup') || pathname.startsWith('/demo');
   const isDemo    = pathname.startsWith('/demo');
   const isActualAdmin = pathname.startsWith('/admin');
 
