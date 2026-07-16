@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { translations, countries } from '@/lib/translations';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, AlertCircle } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
 
 export default function DoctorSignupStep1({ formData, setFormData, language = 'en', onNext }) {
@@ -42,7 +42,30 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
     }
   };
 
-  const canProceed = formData.full_name && formData.email && formData.phone && formData.clinic_country && formData.clinic_city && formData.professional_background && formData.years_experience;
+  const [showErrors, setShowErrors] = useState(false);
+
+  const requiredFields = [
+    { key: 'full_name', label: 'Full Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'clinic_country', label: 'Clinic Country' },
+    { key: 'clinic_city', label: 'Clinic City' },
+    { key: 'professional_background', label: 'Professional Background' },
+    { key: 'years_experience', label: 'Years of Experience' },
+  ];
+
+  const missingFields = requiredFields.filter(f => !formData[f.key]);
+  const canProceed = missingFields.length === 0;
+
+  const handleNext = () => {
+    if (canProceed) {
+      onNext();
+    } else {
+      setShowErrors(true);
+    }
+  };
+
+  const fieldError = (key) => showErrors && !formData[key] ? 'border-red-500 focus-visible:ring-red-500' : '';
 
   return (
     <div className="space-y-8">
@@ -61,7 +84,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             placeholder="Dr. Jane Smith"
             value={formData.full_name}
             onChange={(e) => handleChange('full_name', e.target.value)}
-            className="h-12 text-base"
+            className={`h-12 text-base ${fieldError('full_name')}`}
           />
         </div>
 
@@ -75,7 +98,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             placeholder="drjane@clinic.com"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
-            className="h-12 text-base"
+            className={`h-12 text-base ${fieldError('email')}`}
           />
           <p className="text-xs text-muted-foreground mt-1">{t.emailHint}</p>
         </div>
@@ -89,7 +112,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             placeholder="+1 868 123 4567"
             value={formData.phone}
             onChange={handlePhoneChange}
-            className="h-12 text-base"
+            className={`h-12 text-base ${fieldError('phone')}`}
           />
         </div>
 
@@ -100,7 +123,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             data-testid="doctor-country"
             value={formData.clinic_country || ''}
             onChange={handleSelectCountry}
-            className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            className={`flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${fieldError('clinic_country')}`}
           >
             <option value="">Select country...</option>
             {countryList.map(country => (
@@ -118,7 +141,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
               data-testid="doctor-city"
               value={formData.clinic_city || ''}
               onChange={(e) => handleChange('clinic_city', e.target.value)}
-              className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+              className={`flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${fieldError('clinic_city')}`}
             >
               <option value="">Select a city</option>
               {availableCities.map(city => (
@@ -131,7 +154,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
               placeholder="Enter your city"
               value={formData.clinic_city || ''}
               onChange={(e) => handleChange('clinic_city', e.target.value)}
-              className="h-12 text-base"
+              className={`h-12 text-base ${fieldError('clinic_city')}`}
             />
           )}
         </div>
@@ -156,7 +179,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             placeholder="Education, certifications, board memberships"
             value={formData.professional_background}
             onChange={(e) => handleChange('professional_background', e.target.value)}
-            className="h-12 text-base"
+            className={`h-12 text-base ${fieldError('professional_background')}`}
           />
         </div>
 
@@ -170,7 +193,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
             placeholder="Enter years (e.g. 10)"
             value={formData.years_experience}
             onChange={(e) => handleChange('years_experience', e.target.value)}
-            className="h-12 text-base"
+            className={`h-12 text-base ${fieldError('years_experience')}`}
           />
         </div>
 
@@ -190,10 +213,18 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         <p className="text-sm text-foreground">{t.agreeTerms}</p>
       </div>
 
+      {showErrors && !canProceed && (
+        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700 font-medium">
+            Please complete these required fields: {missingFields.map(f => f.label).join(', ')}
+          </p>
+        </div>
+      )}
+
       <Button
         data-testid="doctor-step1-next"
-        onClick={onNext}
-        disabled={!canProceed}
+        onClick={handleNext}
         className="w-full h-12 text-base bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
       >
         {t.next} <ArrowRight className="w-4 h-4" />
