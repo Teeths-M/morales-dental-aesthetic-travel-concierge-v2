@@ -63,10 +63,15 @@ export default function DoctorSignup() {
   }, [formData, step]);
 
   // Auto-detect location using IP geolocation on mount
+  // Timeout ensures the page settles quickly — a hanging API call blocks
+  // automated testing agents that wait for network activity to stop.
   useEffect(() => {
     const detectLocation = async () => {
       try {
-        const response = await base44.functions.invoke('getGeolocationAndCurrency', {});
+        const response = await Promise.race([
+          base44.functions.invoke('getGeolocationAndCurrency', {}),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+        ]);
         const { country } = response.data;
         
         if (country) {
