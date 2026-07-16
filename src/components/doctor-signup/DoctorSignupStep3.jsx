@@ -10,7 +10,7 @@ import VerificationInfo from './VerificationInfo';
 
 export default function DoctorSignupStep3({ formData, setFormData, language = 'en', _onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
-  const [payoutMethod, setPayoutMethod] = useState(null);
+  const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -80,15 +80,16 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
        };
 
        const doctor = await base44.entities.Doctor.create(doctorData);
-       await saveUserOnboardingProfile({
+       try { await saveUserOnboardingProfile({
          role: 'doctor',
          status: 'completed',
          linkedEntityName: 'Doctor',
          linkedEntityId: doctor.id,
          profileData: { ...formData, ...doctorData }
-       });
+       }); } catch (_) { /* non-fatal — Doctor entity is created */ }
 
-       // Auto-assign specialties
+       // Auto-assign specialties (non-fatal)
+       try {
        if (formData.specialties && formData.specialties.length > 0) {
          const masterProcs = await base44.entities.MasterProcedure.list('-created_date', 500);
 
@@ -123,9 +124,10 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
              await base44.entities.DoctorPricing.bulkCreate(pricingData);
            }
          }
-       }
+         }
+         } catch (_) { /* non-fatal — pricing/specialty creation */ }
 
-       onComplete(doctor);
+         onComplete(doctor);
      } catch (error) {
        console.error('Submit failed:', error);
        setSyncMessage({ type: 'error', text: 'Submission failed: ' + error.message });

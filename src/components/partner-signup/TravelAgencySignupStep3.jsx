@@ -9,7 +9,7 @@ import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
 export default function TravelAgencySignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
   const _t = translations[language];
-  const [payoutMethod, setPayoutMethod] = useState(null);
+  const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [licenseFile, setLicenseFile] = useState(null);
   const [licenseUploading, setLicenseUploading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -79,13 +79,13 @@ export default function TravelAgencySignupStep3({ formData, setFormData, languag
       };
 
       const agency = await base44.entities.TravelAgency.create(agencyData);
-      await saveUserOnboardingProfile({
+      try { await saveUserOnboardingProfile({
         role: 'travel_agency',
         status: 'completed',
         linkedEntityName: 'TravelAgency',
         linkedEntityId: agency.id,
         profileData: { ...formData, ...agencyData }
-      });
+      }); } catch (_) { /* non-fatal — entity is created */ }
       try {
         await base44.functions.invoke('initiatePartnerVerification', {
           partner_id: agency.id,

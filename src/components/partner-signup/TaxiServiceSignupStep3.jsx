@@ -9,7 +9,7 @@ import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 
 export default function TaxiServiceSignupStep3({ formData, setFormData, language, _onNext, onBack, onComplete }) {
   const _t = translations[language];
-  const [payoutMethod, setPayoutMethod] = useState(null);
+  const [payoutMethod, setPayoutMethod] = useState(formData.payout_method || null);
   const [vehiclePhotoFile, setVehiclePhotoFile] = useState(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [licenseConfirmed, setLicenseConfirmed] = useState(false);
@@ -86,13 +86,13 @@ export default function TaxiServiceSignupStep3({ formData, setFormData, language
       };
 
       const taxi = await base44.entities.TaxiService.create(taxiData);
-      await saveUserOnboardingProfile({
+      try { await saveUserOnboardingProfile({
         role: 'taxi_service',
         status: 'completed',
         linkedEntityName: 'TaxiService',
         linkedEntityId: taxi.id,
         profileData: { ...formData, ...taxiData }
-      });
+      }); } catch (_) { /* non-fatal — entity is created */ }
       try {
         await base44.functions.invoke('initiatePartnerVerification', {
           partner_id: taxi.id,

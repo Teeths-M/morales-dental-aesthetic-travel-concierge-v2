@@ -10,6 +10,7 @@ import { ACCOUNT_TYPES } from './constants';
  */
 export async function createCompanionProfile(formData, accountType) {
   const companionData = {
+    agency_name: formData.agency_name || formData.full_name || 'Individual Companion',
     full_name: accountType === ACCOUNT_TYPES.INDIVIDUAL ? formData.full_name : formData.agency_name,
     contact_person: accountType === ACCOUNT_TYPES.INDIVIDUAL ? formData.full_name : formData.contact_person,
     email: formData.email,

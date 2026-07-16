@@ -54,7 +54,7 @@ export const INITIAL_FORM_DATA = {
 };
 
 export const VALIDATION_RULES = {
-  required: ['email', 'phone', 'country', 'languages'],
+  required: ['email', 'phone', 'country'],
   individual: ['full_name'],
   agency: ['agency_name', 'contact_person'],
 };
