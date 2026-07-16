@@ -16,13 +16,16 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
     );
   };
 
-  const _handleNext = () => {
+  const handleNext = () => {
     setFormData(prev => ({
       ...prev,
       agency_name: formData.agency_name,
+      contact_person: formData.contact_person,
       email: formData.email,
       phone: formData.phone,
       headquarters_country: formData.headquarters_country,
+      website_url: formData.website_url,
+      medical_travel_experience_years: formData.medical_travel_experience_years,
       service_regions: agencies
     }));
     onNext();
@@ -144,7 +147,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
       <div className="flex gap-3">
         <Button
           data-testid="travel-agency-step1-next"
-          onClick={onNext}
+          onClick={handleNext}
           disabled={!canContinue}
           className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white gap-2"
         >

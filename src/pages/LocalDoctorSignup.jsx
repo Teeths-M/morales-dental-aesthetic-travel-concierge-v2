@@ -43,14 +43,14 @@ export default function LocalDoctorSignup() {
     full_name: '',
     email: '',
     phone: '',
-    home_country: '',
-    city: '',
+    clinic_country: '',
+    clinic_city: '',
     clinic_name: '',
     website_url: '',
     bio: '',
     specialties: [],
     license_number: '',
-    license_country: '',
+    country: '',
     years_experience: '',
     license_url: '',
     payout_method: '',
@@ -85,9 +85,9 @@ export default function LocalDoctorSignup() {
     }));
 
   const canProceed = () => {
-    if (step === 0) return form.full_name && form.email && form.phone && form.home_country && form.city;
+    if (step === 0) return form.full_name && form.email && form.phone && form.clinic_country && form.clinic_city;
     if (step === 1) return form.specialties.length > 0;
-    if (step === 2) return form.license_number && form.license_country && form.years_experience;
+    if (step === 2) return form.license_number && form.country && form.years_experience;
     return true;
   };
 
@@ -97,15 +97,10 @@ export default function LocalDoctorSignup() {
     try {
       await base44.entities.Doctor.create({
         ...form,
-        doctor_type: 'local',
+        specialty: form.specialties.join(', '),
         role: ROLES.LOCAL_DOCTOR,
-        verification_status: 'pending',
-        is_active: false,
-        accepting_referrals: false,
-        trust_score: 0,
-        created_date: new Date().toISOString(),
-        subscription_plan: 'local_doctor',
-        subscription_fee_usd: PLATFORM_PRICING.LOCAL_DOCTOR_SUBSCRIPTION_USD,
+        verification_status: 'pending_verification',
+        sign_up_completed_at: new Date().toISOString(),
       });
       setDone(true);
     } catch (_e) {
@@ -197,18 +192,18 @@ export default function LocalDoctorSignup() {
                 <div>
                   <Label className="text-gray-300 text-sm">Phone</Label>
                   <div className="mt-1">
-                    <PhoneField dark value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.home_country} placeholder="Phone number" />
+                    <PhoneField dark value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.clinic_country} placeholder="Phone number" />
                   </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">Home Country</Label>
                   <div className="mt-1">
-                    <SearchSelect boxed strict dark value={form.home_country} onChange={v => set('home_country', v)} options={COUNTRY_LIST} placeholder="Select or type your country" />
+                    <SearchSelect boxed strict dark value={form.clinic_country} onChange={v => set('clinic_country', v)} options={COUNTRY_LIST} placeholder="Select or type your country" />
                   </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">City</Label>
-                  <Input value={form.city} onChange={e => set('city', e.target.value)}
+                  <Input value={form.clinic_city} onChange={e => set('clinic_city', e.target.value)}
                     placeholder="Port of Spain" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
                 </div>
                 <div>
@@ -258,7 +253,7 @@ export default function LocalDoctorSignup() {
                 <div>
                   <Label className="text-gray-300 text-sm">Issuing Country</Label>
                   <div className="mt-1">
-                    <SearchSelect boxed strict dark value={form.license_country} onChange={v => set('license_country', v)} options={COUNTRY_LIST} placeholder="Select or type the issuing country" />
+                    <SearchSelect boxed strict dark value={form.country} onChange={v => set('country', v)} options={COUNTRY_LIST} placeholder="Select or type the issuing country" />
                   </div>
                 </div>
                 <div>
