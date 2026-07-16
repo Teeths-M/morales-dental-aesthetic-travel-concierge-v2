@@ -58,6 +58,9 @@ export const partnerRoutes = (
 
     {/* Common case-variant redirects — /PartnerSignup → /partner-signup */}
     <Route key="redirect-partner-signup-pascal" path="/PartnerSignup" element={<Navigate to="/partner-signup" replace />} />
+    <Route key="redirect-test-portal-pascal" path="/TestPortalLink" element={<Navigate to="/test-portal-link" replace />} />
+    <Route key="redirect-local-dr-pascal" path="/LocalDoctorDashboard" element={<Navigate to="/local-doctor-dashboard" replace />} />
+    <Route key="redirect-doc-verify-pascal" path="/DoctorVerificationAdmin" element={<Navigate to="/admin/doctor-verification-queue" replace />} />
 
     {/* Partner signup + dashboards inside AppLayout */}
     <Route key="partner-layout" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
