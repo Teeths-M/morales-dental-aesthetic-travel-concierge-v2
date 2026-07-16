@@ -139,6 +139,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
                 <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <input
                   autoFocus
+                  data-testid="doctor-country-search"
                   value={countrySearch}
                   onChange={e => setCountrySearch(e.target.value)}
                   placeholder="Search country..."
@@ -152,12 +153,15 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
                   </li>
                 ) : (
                   filteredCountries().map(country => (
-                    <li
-                      key={country}
-                      onClick={() => handleSelectCountry(country)}
-                      className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                    >
-                      {country}
+                    <li key={country}>
+                      <button
+                        type="button"
+                        data-testid={`doctor-country-option-${country.replace(/\s+/g, '-')}`}
+                        onClick={() => handleSelectCountry(country)}
+                        className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_country === country ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                      >
+                        {country}
+                      </button>
                     </li>
                   ))
                 )}
@@ -187,6 +191,7 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
                 <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <input
                   autoFocus
+                  data-testid="doctor-city-search"
                   value={citySearch}
                   onChange={e => setCitySearch(e.target.value)}
                   placeholder="Search city..."
@@ -200,12 +205,15 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
                   </li>
                 ) : (
                   filteredCities().map(city => (
-                    <li
-                      key={city}
-                      onClick={() => handleSelectCity(city)}
-                      className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
-                    >
-                      {city}
+                    <li key={city}>
+                      <button
+                        type="button"
+                        data-testid={`doctor-city-option-${city.replace(/\s+/g, '-')}`}
+                        onClick={() => handleSelectCity(city)}
+                        className={`w-full text-left px-4 py-2.5 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors ${formData.clinic_city === city ? 'bg-blue-50 text-blue-700 font-medium' : 'text-foreground'}`}
+                      >
+                        {city}
+                      </button>
                     </li>
                   ))
                 )}
