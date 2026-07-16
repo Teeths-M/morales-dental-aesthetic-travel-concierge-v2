@@ -46,14 +46,17 @@ export default function TaxiServiceSignup() {
   useEffect(() => {
     (async () => {
       const savedDraft = await loadSignupDraft('taxi_service');
-      if (savedDraft) setFormData(savedDraft);
+      if (savedDraft) {
+        setFormData(savedDraft.data);
+        if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
+      }
     })();
   }, []);
 
-  // Auto-save draft
+  // Auto-save draft (form data + current step)
   useEffect(() => {
     if (step < 3) {
-      saveSignupDraft('taxi_service', formData);
+      saveSignupDraft('taxi_service', formData, { step });
     }
   }, [formData, step]);
 

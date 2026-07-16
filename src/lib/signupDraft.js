@@ -3,10 +3,11 @@ import { base44 } from '@/api/base44Client';
 
 const STORAGE_PREFIX = 'signup_draft_';
 
-export async function saveSignupDraft(type, data) {
+export async function saveSignupDraft(type, data, meta = {}) {
   const key = `${STORAGE_PREFIX}${type}`;
   localStorage.setItem(key, JSON.stringify({
     data,
+    meta,
     savedAt: new Date().toISOString()
   }));
 }
@@ -27,7 +28,8 @@ export async function loadSignupDraft(type) {
       return null;
     }
     
-    return parsed.data;
+    // Backward-compatible: old drafts stored data at top level without meta
+    return { data: parsed.data, meta: parsed.meta || {} };
   } catch {
     return null;
   }

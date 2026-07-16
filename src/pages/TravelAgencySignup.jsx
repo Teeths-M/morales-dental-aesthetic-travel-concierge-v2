@@ -44,14 +44,17 @@ export default function TravelAgencySignup() {
   useEffect(() => {
     (async () => {
       const savedDraft = await loadSignupDraft('travel_agency');
-      if (savedDraft) setFormData(savedDraft);
+      if (savedDraft) {
+        setFormData(savedDraft.data);
+        if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
+      }
     })();
   }, []);
 
-  // Auto-save draft
+  // Auto-save draft (form data + current step)
   useEffect(() => {
     if (step < 3) {
-      saveSignupDraft('travel_agency', formData);
+      saveSignupDraft('travel_agency', formData, { step });
     }
   }, [formData, step]);
 

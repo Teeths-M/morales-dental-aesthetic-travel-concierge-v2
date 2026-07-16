@@ -6,8 +6,9 @@ import { useCompanionSignup } from '@/hooks/useCompanionSignup';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, User } from 'lucide-react';
+import { CheckCircle, User, Save } from 'lucide-react';
 import { ACCOUNT_TYPES, STEPS } from '@/lib/companion/constants';
+import { getDraftAge } from '@/lib/signupDraft';
 import { AccountTypeSelector } from '@/components/companion/AccountTypeSelector';
 import { AboutYouForm } from '@/components/companion/AboutYouForm';
 import { ExperienceForm } from '@/components/companion/ExperienceForm';
@@ -117,6 +118,14 @@ export default function CompanionSignup() {
               ? 'Mothers and caregivers 40+ — turn your caring heart into meaningful work' 
               : 'Agencies & tour guides — provide exceptional companion services'}
           </p>
+        </div>
+
+        {/* Draft Saved Indicator */}
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center gap-2">
+          <Save className="w-3 h-3 text-blue-600" />
+          <span className="text-xs text-blue-700 font-medium">
+            Progress saved {getDraftAge('companion') || 'just now'} — you can continue later
+          </span>
         </div>
 
         {/* Progress Steps */}

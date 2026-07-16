@@ -60,15 +60,16 @@ export default function DoctorSignup() {
     (async () => {
       const savedDraft = await loadSignupDraft('doctor');
       if (savedDraft) {
-        setFormData(savedDraft);
+        setFormData(savedDraft.data);
+        if (savedDraft.meta?.step != null) setStep(savedDraft.meta.step);
       }
     })();
   }, []);
 
-  // Auto-save draft on every change
+  // Auto-save draft on every change (form data + current step)
   useEffect(() => {
     if (step < 3) { // Don't save after signup form is submitted
-      saveSignupDraft('doctor', formData);
+      saveSignupDraft('doctor', formData, { step });
     }
   }, [formData, step]);
 

@@ -1,7 +1,8 @@
 // hooks/useCompanionSignup.js
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ACCOUNT_TYPES, STEPS, VALIDATION_RULES, INITIAL_FORM_DATA } from '@/lib/companion/constants';
 import { createCompanionProfile } from '@/lib/companion/companionService';
+import { saveSignupDraft, loadSignupDraft, clearSignupDraft } from '@/lib/signupDraft';
 
 /**
  * Custom hook for companion signup form logic
@@ -13,6 +14,27 @@ export function useCompanionSignup() {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // Load saved draft on mount — restores step, accountType, and form data
+  useEffect(() => {
+    (async () => {
+      const saved = await loadSignupDraft('companion');
+      if (saved) {
+        if (saved.data) setFormData(saved.data);
+        if (saved.meta?.step != null) setStep(saved.meta.step);
+        if (saved.meta?.accountType) setAccountType(saved.meta.accountType);
+      }
+      setDraftLoaded(true);
+    })();
+  }, []);
+
+  // Auto-save draft on every change (form data, step, account type)
+  useEffect(() => {
+    if (draftLoaded) {
+      saveSignupDraft('companion', formData, { step, accountType });
+    }
+  }, [formData, step, accountType, draftLoaded]);
 
   /**
    * Handle input field changes
@@ -93,6 +115,7 @@ export function useCompanionSignup() {
 
     try {
       await createCompanionProfile(formData, accountType);
+      clearSignupDraft('companion');
       return { success: true };
     } catch (err) {
       console.error('Companion signup error:', err);
@@ -112,6 +135,7 @@ export function useCompanionSignup() {
     setFormData(INITIAL_FORM_DATA);
     setIsSubmitting(false);
     setError(null);
+    clearSignupDraft('companion');
   }, []);
 
   return {
