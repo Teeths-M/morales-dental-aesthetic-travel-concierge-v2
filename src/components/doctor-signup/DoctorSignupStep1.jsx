@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { translations, countries } from '@/lib/translations';
@@ -7,7 +7,16 @@ import cityData from '@/lib/cityData.json';
 
 export default function DoctorSignupStep1({ formData, setFormData, language = 'en', onNext }) {
   const t = translations[language] || translations['en'];
-  const countryList = countries[language] || countries['en'];
+  // Lock the country list on first render. useGeoAutoAlign (in AppLayout) can
+  // change the app language mid-session after geolocation resolves, which swaps
+  // the country names (e.g. 'United States' → 'Estados Unidos'). If the list
+  // swaps, the controlled <select> can't find a matching <option> and snaps back
+  // to 'Select country...'. Locking prevents that.
+  const countryListRef = useRef(null);
+  if (!countryListRef.current) {
+    countryListRef.current = countries[language] || countries['en'];
+  }
+  const countryList = countryListRef.current;
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
