@@ -140,38 +140,34 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">🗺️ {language === 'es' ? 'País de Operación' : language === 'fr' ? 'Pays d\'Opération' : 'Operating Country'}</label>
-          <Input
+          <select
             data-testid="taxi-country"
-            list="taxi-countries"
-            placeholder={language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country'}
             value={formData.operating_country || ''}
             onChange={handleSelectCountry}
-            className="h-12"
-          />
-          <datalist id="taxi-countries">
+            className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">{language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country'}</option>
             {ALL_COUNTRIES.map(country => (
-              <option key={country} value={country} />
+              <option key={country} value={country}>{country}</option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">
             📍 {language === 'es' ? 'Ciudad/Región de Operación' : language === 'fr' ? 'Ville/Région d\'Opération' : 'Operating City / Region'}
           </label>
-          <Input
+          <select
             data-testid="taxi-city"
-            list="taxi-cities"
-            placeholder={language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city'}
             value={formData.operating_city || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, operating_city: e.target.value }))}
-            className="h-12"
-          />
-          <datalist id="taxi-cities">
+            className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">{language === 'es' ? 'Selecciona una ciudad' : language === 'fr' ? 'Sélectionnez une ville' : 'Select a city'}</option>
             {availableCities.map(city => (
-              <option key={city} value={city} />
+              <option key={city} value={city}>{city}</option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         <div>

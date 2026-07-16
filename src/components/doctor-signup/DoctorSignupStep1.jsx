@@ -87,37 +87,33 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
         {/* Clinic Country */}
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">🌍 {t.clinicCountry}</label>
-          <Input
+          <select
             data-testid="doctor-country"
-            list="doctor-countries"
-            placeholder="Select country..."
             value={formData.clinic_country || ''}
             onChange={handleSelectCountry}
-            className="h-12 text-base"
-          />
-          <datalist id="doctor-countries">
+            className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">Select country...</option>
             {countryList.map(country => (
-              <option key={country} value={country} />
+              <option key={country} value={country}>{country}</option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         {/* Clinic City */}
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">📍 Clinic City</label>
-          <Input
+          <select
             data-testid="doctor-city"
-            list="doctor-cities"
-            placeholder="Select a city"
             value={formData.clinic_city || ''}
             onChange={(e) => handleChange('clinic_city', e.target.value)}
-            className="h-12 text-base"
-          />
-          <datalist id="doctor-cities">
+            className="flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">Select a city</option>
             {availableCities.map(city => (
-              <option key={city} value={city} />
+              <option key={city} value={city}>{city}</option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         {/* Clinic Name (Optional) */}

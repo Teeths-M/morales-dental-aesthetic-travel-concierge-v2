@@ -67,20 +67,18 @@ export function AboutYouForm({ accountType, formData, onInputChange }) {
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="country">Where do you live? *</Label>
-          <Input
+          <select
             id="country"
             data-testid="companion-country"
-            list="companion-countries"
             value={formData.country || ''}
             onChange={(e) => onInputChange('country', e.target.value)}
-            placeholder="Select your country"
-            className="py-6"
-          />
-          <datalist id="companion-countries">
+            className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">Select your country</option>
             {COUNTRIES.map(country => (
-              <option key={country} value={country} />
+              <option key={country} value={country}>{country}</option>
             ))}
-          </datalist>
+          </select>
         </div>
         <FormField
           id="city"
