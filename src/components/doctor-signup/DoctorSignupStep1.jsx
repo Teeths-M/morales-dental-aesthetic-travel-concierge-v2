@@ -183,6 +183,19 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
           />
         </div>
 
+        {/* Website (Optional) */}
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">🌐 Website <span className="text-muted-foreground font-normal">(optional)</span></label>
+          <Input
+            data-testid="doctor-website"
+            name="website_url"
+            placeholder="www.yourclinic.com"
+            value={formData.website_url || ''}
+            onChange={(e) => handleChange('website_url', e.target.value)}
+            className="h-12 text-base"
+          />
+        </div>
+
         <div>
           <label className="text-sm font-medium text-foreground mb-2 block">🎓 Professional Background</label>
           <Input

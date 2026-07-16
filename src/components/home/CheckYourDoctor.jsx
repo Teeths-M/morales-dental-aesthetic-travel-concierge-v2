@@ -82,7 +82,7 @@ const inputStyle = {
 const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: CALM.textSoft, marginBottom: 6 };
 
 export default function CheckYourDoctor() {
-  const [form, setForm] = useState({ doctorName: '', clinic: '', country: '', city: '', license: '', photoName: '' });
+  const [form, setForm] = useState({ doctorName: '', clinic: '', website: '', country: '', city: '', license: '', photoName: '' });
   const [status, setStatus] = useState('idle'); // idle | checking | done
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -109,6 +109,7 @@ export default function CheckYourDoctor() {
         doctor_name: form.doctorName.trim(),
         clinic: form.clinic.trim(),
         location,
+        website_url: form.website.trim() || undefined,
         license: form.license.trim() || undefined,
       });
       const data = res?.data ?? res;
@@ -144,6 +145,10 @@ export default function CheckYourDoctor() {
               <div>
                 <label style={labelStyle}>Clinic or practice name</label>
                 <input style={inputStyle} value={form.clinic} onChange={set('clinic')} placeholder="e.g. Smile Clinic Tijuana" />
+              </div>
+              <div>
+                <label style={labelStyle}>Website <span style={{ fontWeight: 400, color: CALM.textFaint }}>— optional</span></label>
+                <input style={inputStyle} value={form.website} onChange={set('website')} placeholder="e.g. smileclinic.com" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>

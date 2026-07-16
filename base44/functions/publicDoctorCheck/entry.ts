@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { doctor_name, clinic, location, license } = body;
+    const { doctor_name, clinic, location, license, website_url } = body;
 
     if (!doctor_name?.trim() || !clinic?.trim() || !location?.trim()) {
       return Response.json({ error: 'Please add the doctor’s name, their clinic, and a country or city.' }, { status: 400 });
@@ -211,8 +211,7 @@ Deno.serve(async (req) => {
 Doctor: ${namePrompt}
 Clinic / practice: ${clinicPrompt}
 Location: ${locationPrompt}
-
-Search the public web and report two things:
+${website_url ? `Website to check: ${sanitizePromptInput(website_url, 200).text}\n` : ''}Search the public web and report two things:
 1. web_presence: Is there an established public profile (Google Business listing, Facebook, Instagram, TikTok, clinic website) that plausibly matches this doctor + clinic + location? Answer "found" or "not_found". If found, give ONE short neutral detail (e.g. "Google Business listing with reviews", "active clinic Instagram").
 2. news: Are there any public news, litigation, malpractice, or complaint mentions naming this doctor or clinic? Answer "found" or "none". If found, give ONE neutral one-line description of what the mention is — describe it, do not judge it.
 
