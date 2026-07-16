@@ -309,9 +309,9 @@ export default function MedGuardDemo() {
         </div>
 
         {/* Production badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)', marginBottom: 24 }}>
-          <span style={{ fontSize: 13 }}>✅</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e' }}>Production system — not a demo mock</span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 24 }}>
+          <span style={{ fontSize: 13 }}>⚠️</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b' }}>Representative simulation — live engine runs on real patient data</span>
         </div>
 
         {/* Header */}

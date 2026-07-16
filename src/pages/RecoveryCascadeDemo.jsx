@@ -58,11 +58,11 @@ function InfoPanel() {
       {/* Real system badge */}
       <div
         className="rounded-xl px-4 py-3 flex items-center gap-2"
-        style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}
+        style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)' }}
       >
-        <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: GREEN }} />
-        <p className="text-xs font-bold" style={{ color: GREEN }}>
-          Production system — not a demo mock
+        <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#f59e0b' }} />
+        <p className="text-xs font-bold" style={{ color: '#f59e0b' }}>
+          Representative showcase — live engine runs on real patient data
         </p>
       </div>
 

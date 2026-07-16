@@ -103,9 +103,9 @@ export default function SiobhanDemo() {
         </div>
 
         {/* Production badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}>
-          <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22c55e' }} />
-          <span className="text-xs font-bold" style={{ color: '#22c55e' }}>Production system — not a demo mock</span>
+        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.3)' }}>
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+          <span className="text-xs font-bold" style={{ color: '#f59e0b' }}>Representative showcase — live engine runs on real patient data</span>
         </div>
 
         {/* Title */}
