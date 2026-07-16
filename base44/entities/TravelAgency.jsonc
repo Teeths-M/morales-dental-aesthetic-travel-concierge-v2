@@ -40,14 +40,13 @@
       "items": {
         "type": "string"
       },
-      "description": "Geographic regions served (Caribbean, North America, Europe, Asia, etc.)"
+      "description": "Geographic regions served"
     },
     "services_offered": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Services: Flights, Hotels, Airport Transfers, Clinic Coordination"
+      }
     },
     "service_options": {
       "type": "object",
@@ -86,7 +85,9 @@
         "verifying",
         "verified",
         "failed",
-        "manually_approved"
+        "manually_approved",
+        "pending_manual",
+        "rejected"
       ],
       "default": "pending_verification",
       "description": "Overall verification state (blocks 'active' status)"

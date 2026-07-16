@@ -1,0 +1,100 @@
+{
+  "name": "FraudBlacklist",
+  "type": "object",
+  "properties": {
+    "entity_name": {
+      "type": "string",
+      "description": "Name of the blacklisted partner"
+    },
+    "entity_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "entity_phone": {
+      "type": "string"
+    },
+    "clinic_name": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "partner_type": {
+      "type": "string",
+      "enum": [
+        "doctor",
+        "travel_agency",
+        "taxi",
+        "security"
+      ]
+    },
+    "source_partner_id": {
+      "type": "string"
+    },
+    "risk_score": {
+      "type": "number"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "blacklist_reason": {
+      "type": "string"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "internet_signals_summary": {
+      "type": "string"
+    },
+    "blacklisted_by": {
+      "type": "string"
+    },
+    "blacklisted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "appealed",
+        "removed"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "entity_name",
+    "partner_type"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

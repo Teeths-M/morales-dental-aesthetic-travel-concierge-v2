@@ -47,8 +47,7 @@
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "e.g. SOS Response, Close Protection, Airport Escort, Medical Escort, Surveillance"
+      }
     },
     "operational_regions": {
       "type": "array",
@@ -76,7 +75,8 @@
         "under_review",
         "verified",
         "rejected",
-        "suspended"
+        "suspended",
+        "pending_manual"
       ],
       "default": "pending_review"
     },

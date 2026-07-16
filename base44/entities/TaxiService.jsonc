@@ -4,7 +4,7 @@
   "properties": {
     "agency_name": {
       "type": "string",
-      "description": "Name of the transportation agency (required for agency signup)"
+      "description": "Name of the transportation agency"
     },
     "company_name": {
       "type": "string",
@@ -12,7 +12,7 @@
     },
     "contact_person": {
       "type": "string",
-      "description": "Primary contact person for the agency"
+      "description": "Primary contact person"
     },
     "driver_name": {
       "type": "string",
@@ -41,15 +41,13 @@
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Patient assistance offered, such as luggage help, mobility help, wheelchair support"
+      }
     },
     "vehicle_types": {
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "description": "Sedan, SUV, Van, Wheelchair van"
+      }
     },
     "fleet_size": {
       "type": "number",
@@ -110,7 +108,9 @@
         "verifying",
         "verified",
         "failed",
-        "manually_approved"
+        "manually_approved",
+        "pending_manual",
+        "rejected"
       ],
       "default": "pending_verification",
       "description": "Overall verification state (blocks 'active' status)"
@@ -147,7 +147,6 @@
     },
     "verification_can_be_activated": {
       "type": "boolean",
-      "description": "Computed: true only if all three checks are passed OR manually overridden",
       "default": false
     },
     "status": {
@@ -184,7 +183,7 @@
     "is_agency": {
       "type": "boolean",
       "default": false,
-      "description": "True if this is an agency, false if individual driver"
+      "description": "True if this is an agency"
     },
     "sign_up_completed_at": {
       "type": "string"
