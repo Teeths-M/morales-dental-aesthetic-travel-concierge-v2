@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Smartphone, Globe, Wifi, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const DATACENTER_KW = ['amazon', 'google', 'microsoft', 'digitalocean', 'vultr',
@@ -46,7 +46,6 @@ export default function LiveDeviceNetworkPanel() {
       ip_city: null,
       ip_country: null,
       ip_isp: null,
-      ip_country_mismatch: false,
     };
 
     // Fire IP lookup immediately; update state as soon as it resolves
@@ -61,7 +60,6 @@ export default function LiveDeviceNetworkPanel() {
             collected.ip_city = d.city || null;
             collected.ip_country = d.country_name || null;
             collected.ip_isp = d.org || null;
-            collected.ip_country_code = d.country_code || null;
           }
         }
       } catch (_) { /* non-fatal — IP lookup is best-effort */ }
