@@ -831,3 +831,28 @@ test('CLAIMS: the front door does not invent stories, guarantees or savings', ()
   expect(gateCode, 'no hardcoded savings claim').not.toMatch(/Save up to \$/);
   expect(gateCode, 'no hardcoded price claim').not.toMatch(/\$\d+K\b/);
 });
+
+test('BOOKING: age stays visible — a collapsed field cannot disable the guardian gate', () => {
+  // Booking step 1 collapses optional details behind a disclosure to cut the
+  // screen from 26 fields to 6. Age must NOT go in there.
+  //
+  // isMinorAge() returns false for a blank value (guardianGate.js: the Number()
+  // must be finite and > 0), so a minor who never opened a collapsed age field
+  // would walk straight past the guardian requirement. A convenience feature
+  // must not be able to switch off a safety block.
+  const src = read('src/components/booking/Section1PersonalInfo.jsx');
+
+  const ageIdx = src.indexOf("update('age'");
+  const disclosureIdx = src.indexOf('setShowOptional(o => !o)');
+  expect(ageIdx, 'the age field must exist').toBeGreaterThan(-1);
+  expect(disclosureIdx, 'the optional disclosure must exist').toBeGreaterThan(-1);
+  expect(ageIdx, 'age must render ABOVE the optional disclosure').toBeLessThan(disclosureIdx);
+
+  // And it must not be wrapped in the collapse condition.
+  const ageBlock = src.slice(Math.max(0, ageIdx - 400), ageIdx);
+  expect(ageBlock, 'age must never be gated on showOptional').not.toContain('showOptional &&');
+
+  // The guardian gate itself must still be a hard block in canNext().
+  const booking = read('src/pages/Booking.jsx');
+  expect(booking, 'minors must still require a guardian').toMatch(/isMinorAge\(form\.age\)/);
+});

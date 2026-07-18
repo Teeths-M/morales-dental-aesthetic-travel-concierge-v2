@@ -8,7 +8,7 @@ import { useIpGeolocation } from '@/hooks/useIpGeolocation';
 import PassportVaultSection from './PassportVaultSection';
 import CityOriginSelect from './CityOriginSelect';
 import { NATIONALITIES as nationalities } from '@/lib/nationalities';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, ChevronDown } from 'lucide-react';
 import { isMinorAge, isValidGuardianContact } from '@/lib/guardianGate';
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
@@ -33,6 +33,18 @@ function kgToLbs(kg) {
 export default function Section1PersonalInfo({ form, update, language = 'en', showValidation = false, setShowValidation }) {
   const resetValidation = () => { if (setShowValidation) setShowValidation(false); };
   const [weightUnit, setWeightUnit] = useState('kg');
+  // Optional details start collapsed — unless the patient already filled some.
+  // Drafts restore asynchronously, so this is also re-checked in an effect
+  // below: coming back to a saved form and finding your own answers hidden
+  // would be worse than the density this collapse exists to fix. It only ever
+  // opens, never closes on you mid-edit.
+  const hasOptional = () => !!(form.gender || form.height || form.weight || form.nationality || form.client_city);
+  const [showOptional, setShowOptional] = useState(hasOptional);
+
+  useEffect(() => {
+    if (hasOptional()) setShowOptional(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.gender, form.height, form.weight, form.nationality, form.client_city]);
   const { country: ipCountry } = useIpGeolocation();
 
   // Country name → nationality adjective map for auto-fill
@@ -95,6 +107,32 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
           </Select>
         </div>
 
+        {/* ── Everything below is optional and collapsed by default ──────────
+            This screen showed 26 fields while only five actually block
+            progress: name, email, phone and the two emergency-contact fields.
+            A patient deciding whether to trust us with surgery abroad met a
+            wall of inputs before seeing any value, and had no way to tell
+            which ones mattered.
+
+            Age stays ABOVE this fold on purpose. isMinorAge() returns false
+            for a blank value, so a minor who skipped a collapsed age field
+            would walk straight past the guardian gate. Convenience must not be
+            able to switch off a safety block.
+
+            Nothing is removed — a patient who wants to give us more still can,
+            and the doctor still receives it. */}
+        <div className="sm:col-span-2">
+          <button
+            type="button"
+            onClick={() => setShowOptional(o => !o)}
+            className="w-full flex items-center justify-between text-left py-2.5 px-3 rounded-lg border border-dashed border-muted-foreground/25 text-sm text-muted-foreground hover:text-foreground hover:border-muted-foreground/40 transition-colors"
+          >
+            <span>Add height, weight and other details — optional, helps your doctor prepare</span>
+            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${showOptional ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {showOptional && (
         <div>
           <Label>{translations[language].gender}</Label>
           <Select value={form.gender} onValueChange={v => update('gender', v)}>
@@ -106,7 +144,9 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
             </SelectContent>
           </Select>
         </div>
+        )}
 
+        {showOptional && (
         <div>
           <Label>{translations[language].height}</Label>
           <Select value={form.height} onValueChange={v => update('height', v)}>
@@ -114,7 +154,9 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
             <SelectContent>{heights.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
           </Select>
         </div>
+        )}
 
+        {showOptional && (
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <Label>{translations[language].weight}</Label>
@@ -150,9 +192,15 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
             </SelectContent>
           </Select>
         </div>
+        )}
 
+        {/* These carried a red asterisk but were never in canNext() — the form
+            told patients they were mandatory and then let them past without
+            either. Marking something required that isn't is a small lie, and
+            this screen is where trust is being decided. */}
+        {showOptional && (
         <div>
-          <Label>Country of Origin <span className="text-destructive">*</span></Label>
+          <Label>Country of Origin</Label>
           <div className="mt-1.5">
             <SearchSelect
               boxed
@@ -164,15 +212,18 @@ export default function Section1PersonalInfo({ form, update, language = 'en', sh
             />
           </div>
         </div>
+        )}
 
+        {showOptional && (
         <div>
-          <Label>City of Origin <span className="text-destructive">*</span></Label>
+          <Label>City of Origin</Label>
           <CityOriginSelect
             value={form.client_city || ''}
             onChange={v => update('client_city', v)}
             selectedCountry={form.nationality}
           />
         </div>
+        )}
 
         <div>
           <Label>{translations[language].emergencyContactName} <span className="text-destructive">*</span></Label>
