@@ -10,6 +10,23 @@ anyone looks at 6am on launch day.
 
 ---
 
+## 0. Do this before anything else
+
+**Set `PORTAL_TOKEN_SECRET`** in the Base44 environment to a long random value.
+
+Until it is set, every partner portal link returns 500. That is deliberate: the
+old code fell back to `change-me-in-production` — published in this repository —
+so the signature on a portal token proved nothing. Generate one with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Changing it later invalidates existing partner links, which is fine before
+launch and disruptive after. Set it once, now.
+
+---
+
 ## 1. Publish — required, in this order
 
 Entities first: a function that writes a field the entity does not have will
@@ -43,7 +60,7 @@ switches off rather than running insecurely.
 | --- | --- | --- |
 | `ADMIN_EMAIL` | blocker admin alerts, SOS escalation, SLA alerts | Admin notifications silently do not send. **Set this** — a blocked action nobody is told about defeats the point. |
 | `APP_URL` | every portal link in every notification | Falls back to `moralesdentalandaesthetics.com`. Wrong value = every CTA in every email points at the wrong place. |
-| `PORTAL_TOKEN_SECRET` | partner portal tokens | Falls back to `change-me-in-production` — **a published default is a forgeable token**. Set it before any partner email goes out. |
+| `PORTAL_TOKEN_SECRET` | partner portal tokens (18 functions) | **BLOCKING — set this first.** It no longer has a default. Unset, every partner portal link fails loudly (500) and no token can be signed or verified. It previously fell back to `change-me-in-production`, a value published in this repo: anyone who could read the repo could mint a token for any case and open a partner portal onto a patient's record. Refusing to sign is a support ticket; a forgeable token is a breach. |
 | `CRON_SECRET` | `_shared/cronAuth.ts` | Guarded functions accept an admin session only. Scheduled jobs driven from the Base44 dashboard must send `X-Cron-Secret` or they will 403. |
 | `SATELLITE_WEBHOOK_SECRET` | `receiveSatelliteWebhook` | Nothing is treated as verified. SOS still escalates; stand-down and position writes are ignored. Safe, but satellite is effectively read-only until set. |
 | `PIN_RESET_SECRET` | `requestPINReset` | Reset returns 503. Fails closed on purpose — the previous hardcoded fallback was a forgeable HMAC key. |

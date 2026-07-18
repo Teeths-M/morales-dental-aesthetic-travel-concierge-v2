@@ -731,3 +731,40 @@ test('EMERGENCY: the comms exemption is explicit at the call site', () => {
   expect(covert, 'the patient confirmation must not name them')
     .not.toMatch(/Body:[^`]*`[^`]*\$\{patientName\}[^`]*Help is on the way/);
 });
+
+test('PORTAL TOKENS: no published default signing key, anywhere', () => {
+  // A portal token is a bearer credential: it grants an unauthenticated visitor
+  // read access to a patient's case. Eighteen functions used to inline
+  // `Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production'` — and
+  // this repository is the source of that fallback, so anyone who could read it
+  // could mint a token for any case. The fallback did not weaken the signature,
+  // it removed it while leaving code that looks signed.
+  const dir = join(ROOT, 'base44/functions');
+  const offenders = [];
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name, 'entry.ts');
+    if (!existsSync(p)) continue;
+    const src = readFileSync(p, 'utf8');
+    // The only permitted mentions are the fail-closed rejection and comments.
+    for (const line of src.split('\n')) {
+      if (!line.includes('change-me-in-production')) continue;
+      const isRejection = /s\s*===\s*'change-me-in-production'/.test(line);
+      const isComment = /^\s*(\/\/|\*)/.test(line);
+      if (!isRejection && !isComment) offenders.push(`${name}: ${line.trim().slice(0, 80)}`);
+    }
+  }
+  expect(offenders, `functions accepting a published default key:\n${offenders.join('\n')}`).toEqual([]);
+
+  // The verifier must refuse, never accept, when no secret is configured.
+  const shared = read('base44/functions/_shared/portalToken.ts');
+  expect(shared, 'signing must fail closed').toContain('PortalTokenNotConfigured');
+  const verify = shared.slice(shared.indexOf('export async function verifyPortalToken'));
+  expect(verify, 'an unverifiable token must be rejected, not trusted').toContain('return null');
+  // Signature comparison must not exit early on the first differing character.
+  expect(verify, 'signature compare must be constant-width').toMatch(/diff \|=/);
+
+  // getPortalData must not turn a thrown verifier into granted access.
+  const gpd = read('base44/functions/getPortalData/entry.ts');
+  const gate = gpd.slice(gpd.indexOf('const verified = await verifyPortalToken'), gpd.indexOf('Extract identity'));
+  expect(gate, 'a falsy verification must refuse').toMatch(/if \(!verified\)[\s\S]{0,120}403/);
+});

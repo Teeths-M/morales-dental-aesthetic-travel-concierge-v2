@@ -23,7 +23,10 @@
  *   // HMAC-signed portal token (used by generateDoctorPortalLink etc.)
  *   async function encodePortalToken({ consultation_id, partner_id, portal_type }) {
  *     const payload = { consultation_id, partner_id, portal_type, expires_at: Date.now() + 7*24*60*60*1000 };
- *     const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+ *     // Do NOT add a fallback here. See _shared/portalToken.ts — a published
+ *     // default is a forgeable signing key. New code should import
+ *     // signPortalToken/verifyPortalToken from there rather than inlining.
+ *     const secret = Deno.env.get('PORTAL_TOKEN_SECRET');
  *     const data = JSON.stringify(payload);
  *     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret),
  *       { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);

@@ -5,7 +5,17 @@ async function verifyPortalToken(token) {
   const [b64, sigHex] = token.split('.');
   if (!b64 || !sigHex) return null;
   const data = atob(b64);
-  const secret = Deno.env.get('PORTAL_TOKEN_SECRET') || 'change-me-in-production';
+  const secret = (() => {
+    // FAIL CLOSED. This used to fall back to 'change-me-in-production', a value
+    // published in this repository — so anyone who could read the repo could
+    // mint a portal token for any case and read a patient's record. Refusing to
+    // sign is a support ticket; a forgeable token is a breach.
+    const s = Deno.env.get('PORTAL_TOKEN_SECRET');
+    if (!s || s === 'change-me-in-production') {
+      throw new Error('PORTAL_TOKEN_SECRET is not set — refusing to sign or verify a portal token.');
+    }
+    return s;
+  })();
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
   const sigBytes = Uint8Array.from(sigHex.match(/.{2}/g).map(h => parseInt(h, 16)));
   const valid = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(data));
