@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ChevronRight, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -93,12 +94,21 @@ export default function OnboardingEducation() {
   const [moduleStep, setModuleStep] = useState(0);
   const [nudgePrefs, setNudgePrefs] = useState({ email: true, push: true, sms: false, frequency: 'milestone_only' });
   const [_saving, setSaving] = useState(false);
+  const { navigateToLogin } = useAuth();
 
   useEffect(() => {
+    // /onboarding is a PUBLIC route, so a visitor with no session is expected
+    // here. base44.auth.me() throws for them ("Authentication required to view
+    // users"); unguarded, that surfaced as an uncaught rejection and left user
+    // null while the page still rendered — so completing a module then hit
+    // user.id on null and crashed the page.
     const load = async () => {
-      const u = await base44.auth.me();
+      const u = await base44.auth.me().catch(() => null);
+      if (!u) return; // browse the modules signed-out; saving prompts for login
       setUser(u);
-      const records = await base44.entities.OnboardingProgress.filter({ user_id: u.id });
+      const records = await base44.entities.OnboardingProgress
+        .filter({ user_id: u.id })
+        .catch(() => []);
       if (records[0]) setProgress(records[0]);
     };
     load();
@@ -107,6 +117,13 @@ export default function OnboardingEducation() {
   const completed = progress?.modules_completed || [];
 
   const saveModuleComplete = async (moduleId, extra = {}) => {
+    // Signed-out visitors can read every module, but progress belongs to an
+    // account. Send them to log in and back here, rather than throwing on
+    // user.id — losing their place is friction; a crashed page is worse.
+    if (!user) {
+      navigateToLogin(window.location.href);
+      return;
+    }
     setSaving(true);
     const newCompleted = [...new Set([...completed, moduleId])];
     const allDone = MODULES.every(m => newCompleted.includes(m.id));
