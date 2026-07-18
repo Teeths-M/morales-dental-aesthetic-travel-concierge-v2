@@ -46,8 +46,13 @@ function Heart({ size = 14, color = '#fff', filled = true }) {
  *   isComplete   — boolean; all hearts turn gold on completion
  */
 export default function TripProgressStepper({ currentStep = 0, isComplete = false }) {
+  // min-w-0 on the root: the dot row scrolls horizontally, but a grid/flex
+  // track defaults to min-width:auto and grows to fit its content — so without
+  // it the stepper widens its container instead of scrolling, pushing the whole
+  // page sideways on a phone. This renders on the patient Dashboard and
+  // GuardianView too, not only the demo pages.
   return (
-    <div className="rounded-2xl p-4" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
+    <div className="rounded-2xl p-4 min-w-0" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">

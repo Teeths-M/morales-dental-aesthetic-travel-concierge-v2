@@ -226,12 +226,14 @@ function UserCard({ user, result, scenarioId }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${user.color}30`, borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}
+      style={{ flex: '1 1 260px', minWidth: 260, background: 'rgba(255,255,255,0.04)', border: `1px solid ${user.color}30`, borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}
     >
       {/* User header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <img src={user.avatar} alt={user.name} style={{ width: 52, height: 52, borderRadius: '50%', border: `2px solid ${user.color}50`, background: '#0f172a', flexShrink: 0 }} />
-        <div>
+        {/* minWidth 0 so the name/tag block can shrink — a flex item defaults
+            to min-width:auto and otherwise refuses to go below its text. */}
+        <div style={{ minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff' }}>{user.name}</p>
           <p style={{ margin: 0, fontSize: 11, color: user.color, fontWeight: 600 }}>{user.tag}</p>
         </div>
@@ -351,8 +353,9 @@ export default function MedGuardDemo() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Side-by-side user cards */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 28 }}>
+        {/* Side-by-side user cards — wrap to a single column on phones, where
+            two 260px cards cannot fit and were spilling past the screen edge. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
           <AnimatePresence mode="wait">
             <UserCard key={`theon-${scenario.id}`} user={THEON} result={scenario.theon} scenarioId={scenario.id} />
           </AnimatePresence>

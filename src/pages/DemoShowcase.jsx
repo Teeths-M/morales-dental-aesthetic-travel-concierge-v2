@@ -953,7 +953,7 @@ export default function DemoShowcase() {
           <SectionTitle sub="Tap through the full 9-checkpoint patient journey. Watch it turn gold at the end.">
             The 9-Handshake Journey — Live Demo
           </SectionTitle>
-          <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <HandshakeDemo />
             <div className="space-y-4">
               {JOURNEY_STEPS.map(({ n, icon, label, phase }) => (
@@ -979,7 +979,7 @@ export default function DemoShowcase() {
           <SectionTitle sub="No other medical travel platform automates this chain. Zero human intervention needed.">
             5-Tier Safety Escalation — Fully Automated
           </SectionTitle>
-          <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <EscalationTimeline />
             <div className="space-y-4">
               <div className="rounded-2xl p-5" style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>

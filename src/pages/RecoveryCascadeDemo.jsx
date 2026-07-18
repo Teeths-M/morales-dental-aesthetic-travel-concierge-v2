@@ -192,8 +192,11 @@ export default function RecoveryCascadeDemo() {
           </button>
         </div>
 
-        {/* Two-column layout */}
-        <div className="grid gap-8" style={{ gridTemplateColumns: '1fr 320px', alignItems: 'start' }}>
+        {/* Two-column from lg up; single column on phones. The fixed 320px
+            sidebar was previously hard-coded via an inline gridTemplateColumns
+            with no breakpoint, so on a 390px screen the tracks resolved to
+            118px + 320px + gap and the page scrolled sideways. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
 
           {/* LEFT — demo */}
           <div className="space-y-5">
