@@ -2,6 +2,8 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ACCOUNT_TYPES } from './AccountTypeSelector';
+import SearchSelect from '@/components/ui-system/SearchSelect';
+import { getCitiesForCountry, hasCityList, cityAfterCountryChange, CITY_PLACEHOLDER } from '@/lib/countryCity';
 
 const COUNTRIES = [
   'Trinidad and Tobago', 'Jamaica', 'Barbados', 'Bahamas', 'Guyana', 'Dominican Republic', 'Puerto Rico', 'Cuba', 'Haiti', 'Saint Lucia', 'Grenada', 'Antigua and Barbuda', 'Dominica', 'Saint Vincent and the Grenadines', 'Saint Kitts and Nevis', 'Aruba', 'Curacao', 'Cayman Islands', 'Turks and Caicos', 'British Virgin Islands', 'US Virgin Islands',
@@ -71,7 +73,12 @@ export function AboutYouForm({ accountType, formData, onInputChange }) {
             id="country"
             data-testid="companion-country"
             value={formData.country || ''}
-            onChange={(e) => onInputChange('country', e.target.value)}
+            onChange={(e) => {
+              const country = e.target.value;
+              onInputChange('country', country);
+              // Drop a city belonging to the previous country.
+              onInputChange('city', cityAfterCountryChange(country, formData.city));
+            }}
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           >
             <option value="">Select your country</option>
@@ -80,13 +87,27 @@ export function AboutYouForm({ accountType, formData, onInputChange }) {
             ))}
           </select>
         </div>
-        <FormField
-          id="city"
-          label="City"
-          value={formData.city}
-          onChange={onInputChange}
-          placeholder="Port of Spain"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="city">City</Label>
+          {/* Filtered to the country chosen on the left. Not strict — a
+              companion in a town we don't list must still be able to type it,
+              so the list accelerates entry rather than gating it. */}
+          <SearchSelect
+            boxed
+            value={formData.city || ''}
+            onChange={(v) => onInputChange('city', v)}
+            options={getCitiesForCountry(formData.country)}
+            disabled={!formData.country}
+            testId="companion-city"
+            placeholder={
+              !formData.country
+                ? CITY_PLACEHOLDER.noCountry
+                : hasCityList(formData.country)
+                  ? CITY_PLACEHOLDER.picker
+                  : CITY_PLACEHOLDER.freeText
+            }
+          />
+        </div>
       </div>
     </div>
   );

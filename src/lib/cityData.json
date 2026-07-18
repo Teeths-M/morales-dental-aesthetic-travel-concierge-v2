@@ -89,6 +89,15 @@
     "Hrazdan",
     "Armavir"
   ],
+  "Aruba": [
+    "Oranjestad",
+    "San Nicolas",
+    "Noord",
+    "Santa Cruz",
+    "Paradera",
+    "Savaneta",
+    "Palm Beach"
+  ],
   "Australia": [
     "Sydney",
     "Melbourne",
@@ -271,6 +280,13 @@
     "Natal",
     "Campo Grande"
   ],
+  "British Virgin Islands": [
+    "Road Town",
+    "Spanish Town",
+    "The Settlement",
+    "East End",
+    "Cane Garden Bay"
+  ],
   "Brunei": [
     "Bandar Seri Begawan",
     "Kuala Belait",
@@ -361,6 +377,14 @@
     "St. John's",
     "Kelowna",
     "Barrie"
+  ],
+  "Cayman Islands": [
+    "George Town",
+    "West Bay",
+    "Bodden Town",
+    "East End",
+    "North Side",
+    "Seven Mile Beach"
   ],
   "Central African Republic": [
     "Bangui",
@@ -508,6 +532,14 @@
     "Guantánamo",
     "Bayamo",
     "Cienfuegos"
+  ],
+  "Curacao": [
+    "Willemstad",
+    "Sint Michiel",
+    "Barber",
+    "Soto",
+    "Westpunt",
+    "Jan Thiel"
   ],
   "Cyprus": [
     "Nicosia",
@@ -858,6 +890,15 @@
     "Comayagua",
     "Puerto Cortés",
     "Roatán"
+  ],
+  "Hong Kong": [
+    "Hong Kong",
+    "Kowloon",
+    "Tsuen Wan",
+    "Sha Tin",
+    "Tuen Mun",
+    "Yuen Long",
+    "Tai Po"
   ],
   "Hungary": [
     "Budapest",
@@ -1625,6 +1666,16 @@
     "Aveiro",
     "Setúbal"
   ],
+  "Puerto Rico": [
+    "San Juan",
+    "Bayamón",
+    "Carolina",
+    "Ponce",
+    "Caguas",
+    "Mayagüez",
+    "Arecibo",
+    "Aguadilla"
+  ],
   "Qatar": [
     "Doha",
     "Al Rayyan",
@@ -1951,6 +2002,16 @@
     "Tartus",
     "Raqqa"
   ],
+  "Taiwan": [
+    "Taipei",
+    "Kaohsiung",
+    "Taichung",
+    "Tainan",
+    "Hsinchu",
+    "Keelung",
+    "Chiayi",
+    "Taoyuan"
+  ],
   "Tajikistan": [
     "Dushanbe",
     "Khujand",
@@ -2085,6 +2146,14 @@
     "Tejen",
     "Serdar"
   ],
+  "Turks and Caicos": [
+    "Cockburn Town",
+    "Providenciales",
+    "Grand Turk",
+    "Blue Hills",
+    "Five Cays",
+    "Bottle Creek"
+  ],
   "Tuvalu": [
     "Funafuti",
     "Vaiaku",
@@ -2217,6 +2286,13 @@
     "Maldonado",
     "Tacuarembó",
     "Punta del Este"
+  ],
+  "US Virgin Islands": [
+    "Charlotte Amalie",
+    "Christiansted",
+    "Frederiksted",
+    "Cruz Bay",
+    "Red Hook"
   ],
   "Uzbekistan": [
     "Tashkent",
