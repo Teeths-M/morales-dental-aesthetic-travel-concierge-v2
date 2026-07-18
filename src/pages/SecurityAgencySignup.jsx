@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
+import { getCitiesForCountry, hasCityList, cityAfterCountryChange, CITY_PLACEHOLDER } from '@/lib/countryCity';
 import { COUNTRY_NAMES } from '@/lib/countryDialCodes';
 
 const BACKGROUND_TYPES = ['Ex-Military', 'Ex-Police', 'Private Security', 'Tactical Response', 'K9 Unit', 'Cyber/Intel'];
@@ -218,10 +219,36 @@ export default function SecurityAgencySignup() {
                     <PhoneField value={form.phone} onChange={v => set('phone', v)} defaultCountryName={form.country} placeholder="Phone number" />
                   </Field>
                   <Field label="Country" required>
-                    <SearchSelect boxed value={form.country} onChange={v => set('country', v)} options={COUNTRY_NAMES} placeholder="Select or type your country" />
+                    <SearchSelect
+                      boxed strict
+                      value={form.country}
+                      onChange={v => setForm(prev => ({
+                        ...prev,
+                        country: v,
+                        // Drop a city belonging to the previous country.
+                        city: cityAfterCountryChange(v, prev.city),
+                      }))}
+                      options={COUNTRY_NAMES}
+                      placeholder="Select or type your country"
+                    />
                   </Field>
                   <Field label="City">
-                    <input className={inputClass} placeholder="Port of Spain" value={form.city} onChange={e => set('city', e.target.value)} />
+                    {/* Filtered by the country above. Was a plain input with a
+                        hardcoded "Port of Spain" placeholder that never changed. */}
+                    <SearchSelect
+                      boxed
+                      value={form.city}
+                      onChange={v => set('city', v)}
+                      options={getCitiesForCountry(form.country)}
+                      disabled={!form.country}
+                      placeholder={
+                        !form.country
+                          ? CITY_PLACEHOLDER.noCountry
+                          : hasCityList(form.country)
+                            ? CITY_PLACEHOLDER.picker
+                            : CITY_PLACEHOLDER.freeText
+                      }
+                    />
                   </Field>
                   <Field label="License / Registration No.">
                     <input className={inputClass} placeholder="SEC-2024-XXXX" value={form.license_number} onChange={e => set('license_number', e.target.value)} />

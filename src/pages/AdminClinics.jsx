@@ -6,6 +6,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import LastVerified from '@/components/trust/LastVerified';
 import SearchSelect from '@/components/ui-system/SearchSelect';
+import { getCitiesForCountry, hasCityList, cityAfterCountryChange, CITY_PLACEHOLDER } from '@/lib/countryCity';
 import { COUNTRY_NAMES } from '@/lib/countryDialCodes';
 import {
   Building2, Plus, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, X, Download, Bot,
@@ -62,8 +63,26 @@ function AddClinicForm({ onDone, onCancel }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input className={input} placeholder="Clinic name *" value={f.name} onChange={set('name')} />
-        <SearchSelect boxed value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} options={COUNTRY_NAMES} placeholder="Country *" />
-        <input className={input} placeholder="City" value={f.city} onChange={set('city')} />
+        <SearchSelect
+          boxed strict
+          value={f.country}
+          onChange={(v) => setF((p) => ({ ...p, country: v, city: cityAfterCountryChange(v, p.city) }))}
+          options={COUNTRY_NAMES}
+          placeholder="Country *"
+        />
+        {/* City filtered to the country above; was a plain text input. */}
+        <SearchSelect
+          boxed
+          value={f.city}
+          onChange={(v) => setF((p) => ({ ...p, city: v }))}
+          options={getCitiesForCountry(f.country)}
+          disabled={!f.country}
+          placeholder={
+            !f.country
+              ? CITY_PLACEHOLDER.noCountry
+              : hasCityList(f.country) ? CITY_PLACEHOLDER.picker : CITY_PLACEHOLDER.freeText
+          }
+        />
         <input className={input} placeholder="Operating licence / registration ref" value={f.registration_ref} onChange={set('registration_ref')} />
         <select className={input} value={f.operating_status} onChange={set('operating_status')}>
           <option value="operating">Operating</option>

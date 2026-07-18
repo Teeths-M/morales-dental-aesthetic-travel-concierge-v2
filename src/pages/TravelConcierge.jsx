@@ -5,6 +5,7 @@ import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, Ar
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import CountryCitySelect from '@/components/ui-system/CountryCitySelect';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -278,47 +279,37 @@ export default function TravelConcierge() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Route */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-white/90 text-sm">Origin City</Label>
-                    <Input
-                      value={formData.origin_city}
-                      onChange={e => handleInputChange('origin_city', e.target.value)}
-                      placeholder="e.g. New York"
-                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white/90 text-sm">Origin Country</Label>
-                    <Input
-                      value={formData.origin_country}
-                      onChange={e => handleInputChange('origin_country', e.target.value)}
-                      placeholder="e.g. United States"
-                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    />
-                  </div>
-                </div>
+                {/* Country first, then a city list filtered to it. All four
+                    fields here used to be free text, so "USA"/"U.S."/"united
+                    states" and any city spelling all landed in the record. */}
+                <CountryCitySelect
+                  dark
+                  country={formData.origin_country}
+                  city={formData.origin_city}
+                  onChange={({ country, city }) => {
+                    handleInputChange('origin_country', country);
+                    handleInputChange('origin_city', city);
+                  }}
+                  countryLabel="Origin Country"
+                  cityLabel="Origin City"
+                  countryPlaceholder="Where are you travelling from?"
+                />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-white/90 text-sm">Destination City</Label>
-                    <Input
-                      value={formData.destination_city}
-                      onChange={e => handleInputChange('destination_city', e.target.value)}
-                      placeholder="e.g. Paris"
-                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white/90 text-sm">Destination Country</Label>
-                    <Input
-                      value={formData.destination_country}
-                      onChange={e => handleInputChange('destination_country', e.target.value)}
-                      placeholder="e.g. France"
-                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    />
-                  </div>
-                </div>
+                {/* servedOnly: a traveller can come FROM anywhere, but we can
+                    only coordinate INTO the markets M operates in. */}
+                <CountryCitySelect
+                  dark
+                  servedOnly
+                  country={formData.destination_country}
+                  city={formData.destination_city}
+                  onChange={({ country, city }) => {
+                    handleInputChange('destination_country', country);
+                    handleInputChange('destination_city', city);
+                  }}
+                  countryLabel="Destination Country"
+                  cityLabel="Destination City"
+                  countryPlaceholder="Where are you travelling to?"
+                />
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-4">

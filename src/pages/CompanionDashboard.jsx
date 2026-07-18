@@ -235,6 +235,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import SearchSelect from '@/components/ui-system/SearchSelect';
+import { getCitiesForCountry, hasCityList, CITY_PLACEHOLDER } from '@/lib/countryCity';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -741,10 +743,18 @@ export default function CompanionDashboard() {
                   <div>
                     <Label>Location</Label>
                     {isEditing ? (
-                      <Input
+                      /* Filtered to the companion's country. The country isn't
+                         editable here, so it comes from the saved record. */
+                      <SearchSelect
+                        boxed
                         value={displayData.city || ''}
-                        onChange={(e) => setEditedData({ ...displayData, city: e.target.value })}
-                        placeholder="City"
+                        onChange={(v) => setEditedData({ ...displayData, city: v })}
+                        options={getCitiesForCountry(displayData.country || companion.country)}
+                        placeholder={
+                          hasCityList(displayData.country || companion.country)
+                            ? CITY_PLACEHOLDER.picker
+                            : CITY_PLACEHOLDER.freeText
+                        }
                       />
                     ) : (
                       <p className="text-foreground">{companion.city}, {companion.country}</p>
