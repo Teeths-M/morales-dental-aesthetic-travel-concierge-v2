@@ -43,7 +43,7 @@ export default function ItineraryIntakeBar({ form, update, onVerify, loading, ne
 
   const q = procSearch.trim();
   const matchTitle = (t) => !q || t.toLowerCase().includes(q.toLowerCase()) || fuzzyMatches(q, t, 72);
-  // Canonical procedure names from a controlled list — no free text, no OCR.
+  // Canonical procedure names from a controlled list — no free text, no document scanning.
   const groupedProcedures = procedureCategories
     .map((cat) => [cat.label, cat.procedures.map((p) => p.title).filter(matchTitle)])
     .filter(([, items]) => items.length > 0);
