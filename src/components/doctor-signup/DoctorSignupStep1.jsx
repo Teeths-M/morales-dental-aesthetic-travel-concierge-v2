@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { translations, countries } from '@/lib/translations';
 import { ArrowRight, AlertCircle } from 'lucide-react';
-import cityData from '@/lib/cityData.json';
+import { getCitiesForCountry, cityAfterCountryChange } from '@/lib/countryCity';
 
 export default function DoctorSignupStep1({ formData, setFormData, language = 'en', onNext }) {
   const t = translations[language] || translations['en'];
@@ -32,19 +32,20 @@ export default function DoctorSignupStep1({ formData, setFormData, language = 'e
       // Clearing unconditionally causes the city field to switch between
       // <Input> and <select>, and the key change on the city select can
       // trigger React reconciliation that disrupts the country select.
-      const newCities = country && cityData[country] ? cityData[country] : [];
-      const cityStillValid = newCities.length === 0 || newCities.includes(prev.clinic_city);
       return {
         ...prev,
         clinic_country: country,
-        clinic_city: cityStillValid ? prev.clinic_city : ''
+        clinic_city: cityAfterCountryChange(country, prev.clinic_city),
       };
     });
   };
 
-  const availableCities = formData.clinic_country && cityData[formData.clinic_country]
-    ? cityData[formData.clinic_country]
-    : [];
+  // Goes through the shared resolver rather than indexing cityData directly.
+  // The country shown here is localised (translations.js) while cityData.json
+  // is keyed in English, so a direct lookup returned nothing for a Spanish,
+  // French, Portuguese or German doctor on almost every country — and nothing
+  // for "Trinidad & Tobago" in any language, because cityData spells it "and".
+  const availableCities = getCitiesForCountry(formData.clinic_country);
 
   const handlePhoneChange = (e) => {
     const value = e.target.value;

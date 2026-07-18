@@ -1,59 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { MapPin, ChevronDown, X } from 'lucide-react';
-import cityData from '@/lib/cityData.json';
+import { normalizeCountry, getCitiesForCountry } from '@/lib/countryCity';
 
-// Maps nationality adjectives (stored in form.nationality) → cityData country keys
-const NATIONALITY_TO_COUNTRY = {
-  'american':        'United States',
-  'canadian':        'Canada',
-  'mexican':         'Mexico',
-  'venezuelan':      'Venezuela',
-  'colombian':       'Colombia',
-  'brazilian':       'Brazil',
-  'argentine':       'Argentina',
-  'spanish':         'Spain',
-  'british':         'United Kingdom',
-  'french':          'France',
-  'german':          'Germany',
-  'australian':      'Australia',
-  'indian':          'India',
-  'turkish':         'Turkey',
-  'thai':            'Thailand',
-  'costa rican':     'Costa Rica',
-  'panamanian':      'Panama',
-  'dominican':       'Dominican Republic',
-  'jamaican':        'Jamaica',
-  'south african':   'South Africa',
-  'emirati':         'United Arab Emirates',
-  'singaporean':     'Singapore',
-  'malaysian':       'Malaysia',
-  'filipino':        'Philippines',
-  'indonesian':      'Indonesia',
-  'polish':          'Poland',
-  'hungarian':       'Hungary',
-  'czech':           'Czech Republic',
-};
-
-function resolveCountryKey(selectedCountry) {
-  if (!selectedCountry) return null;
-  const lower = selectedCountry.toLowerCase();
-  // Direct match (e.g. "Trinidad and Tobago", "United States")
-  const direct = Object.keys(cityData).find(k => k.toLowerCase() === lower);
-  if (direct) return direct;
-  // Adjective match (e.g. "Venezuelan" → "Venezuela")
-  return NATIONALITY_TO_COUNTRY[lower] || null;
-}
+// The nationality-adjective map that used to live here ("Venezuelan" →
+// "Venezuela") now lives in @/lib/countryCity so every country/city pair on
+// the platform resolves names the same way.
 
 export default function CityOriginSelect({ value, onChange, selectedCountry }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState(value || '');
   const containerRef = useRef(null);
 
-  const countryKey = resolveCountryKey(selectedCountry);
-  const citiesForCountry = countryKey
-    ? cityData[countryKey]
-    : Object.values(cityData).flat();
+  const countryKey = normalizeCountry(selectedCountry);
+  // When the country doesn't resolve, offer NO list rather than every city on
+  // the platform. The previous fallback flattened all 29 countries together, so
+  // a user whose nationality didn't map saw Cancun, London and Bangkok in one
+  // list — the opposite of filtering by country. An empty list here still lets
+  // them type their city freely, which is the honest behaviour.
+  const citiesForCountry = countryKey ? getCitiesForCountry(countryKey) : [];
 
   const filtered = search.length > 0
     ? citiesForCountry.filter(c => c.toLowerCase().includes(search.toLowerCase()))

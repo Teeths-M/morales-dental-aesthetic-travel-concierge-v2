@@ -97,7 +97,20 @@ test.describe('Partner signup — full journeys', () => {
     await page.locator('[data-testid="travel-agency-contact-person"]').fill('E2E Test Contact');
     await page.locator('[data-testid="travel-agency-email"]').fill(email);
     await page.locator('[data-testid="travel-agency-phone"]').fill('+1 555 010 0100');
-    await page.locator('[data-testid="travel-agency-country"]').fill('USA');
+
+    // Country is a strict picker — typing only filters, so the option must be
+    // clicked. Picking it then filters the city list to that country.
+    const country = page.locator('[data-testid="travel-agency-country"]');
+    await country.click();
+    await country.fill('United States');
+    await page.locator('li', { hasText: 'United States' }).first().click();
+
+    const city = page.locator('[data-testid="travel-agency-city"]');
+    await expect(city, 'city unlocks once a country is chosen').toBeEnabled();
+    await city.click();
+    await page.locator('li', { hasText: 'New York' }).first().click();
+    await expect(city).toHaveValue('New York');
+
     await page.locator('[data-testid="travel-agency-step1-next"]').click();
 
     // ── Step 2: services offered ──

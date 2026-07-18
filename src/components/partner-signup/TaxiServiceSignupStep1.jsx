@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight } from 'lucide-react';
 import { translations } from '@/lib/translations';
-import cityData from '@/lib/cityData.json';
+import { getCitiesForCountry, cityAfterCountryChange } from '@/lib/countryCity';
 
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Van', 'Wheelchair van'];
 const ASSISTANCE_OPTIONS = ['Luggage help', 'Mobility assistance', 'Wheelchair support', 'Clinic escort', 'Post-procedure careful driving'];
@@ -37,21 +37,18 @@ export default function TaxiServiceSignupStep1({ formData, setFormData, language
   const [vehicles, setVehicles] = useState(formData.vehicle_types || []);
   const [assistance, setAssistance] = useState(formData.patient_assistance || []);
 
-  const availableCities = formData.operating_country && cityData[formData.operating_country]
-    ? cityData[formData.operating_country]
-    : [];
+  // Shared resolver, not a direct cityData index — the country shown here can
+  // be localised or spelled differently ("Trinidad & Tobago" vs "and"), and a
+  // raw lookup silently returned no cities for those.
+  const availableCities = getCitiesForCountry(formData.operating_country);
 
   const handleSelectCountry = (e) => {
     const country = e.target.value;
-    setFormData(prev => {
-      const newCities = country && cityData[country] ? cityData[country] : [];
-      const cityStillValid = newCities.length === 0 || newCities.includes(prev.operating_city);
-      return {
-        ...prev,
-        operating_country: country,
-        operating_city: cityStillValid ? prev.operating_city : ''
-      };
-    });
+    setFormData(prev => ({
+      ...prev,
+      operating_country: country,
+      operating_city: cityAfterCountryChange(country, prev.operating_city),
+    }));
   };
 
   const toggleVehicle = (vehicle) => {

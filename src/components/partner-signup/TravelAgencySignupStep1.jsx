@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight } from 'lucide-react';
+import CountryCitySelect from '@/components/ui-system/CountryCitySelect';
 
 const REGIONS = ['Caribbean', 'North America', 'Central America', 'South America', 'Europe', 'Middle East', 'Asia', 'Africa'];
 
@@ -22,6 +23,7 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
       email: formData.email,
       phone: formData.phone,
       headquarters_country: formData.headquarters_country,
+      headquarters_city: formData.headquarters_city,
       website_url: formData.website_url,
       medical_travel_experience_years: formData.medical_travel_experience_years,
       service_regions: agencies
@@ -88,16 +90,20 @@ export default function TravelAgencySignupStep1({ formData, setFormData, languag
           />
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-foreground block mb-2">🌍 {language === 'es' ? 'País Sede' : language === 'fr' ? 'Pays Siège' : 'Headquarters Country'}</label>
-          <Input
-            data-testid="travel-agency-country"
-            placeholder={language === 'es' ? 'Ej: España' : language === 'fr' ? 'Ex: France' : 'e.g., USA'}
-            value={formData.headquarters_country || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, headquarters_country: e.target.value }))}
-            className="h-12"
-          />
-        </div>
+        {/* Country was a free-text box, so "USA"/"U.S."/"united states" all
+            landed in the same field and no city was collected at all. Now a
+            picked country filters the city list to that country. */}
+        <CountryCitySelect
+          country={formData.headquarters_country || ''}
+          city={formData.headquarters_city || ''}
+          onChange={({ country, city }) =>
+            setFormData(prev => ({ ...prev, headquarters_country: country, headquarters_city: city }))
+          }
+          countryLabel={`🌍 ${language === 'es' ? 'País Sede' : language === 'fr' ? 'Pays Siège' : 'Headquarters Country'}`}
+          cityLabel={`🏙️ ${language === 'es' ? 'Ciudad Sede' : language === 'fr' ? 'Ville Siège' : 'Headquarters City'}`}
+          countryPlaceholder={language === 'es' ? 'Selecciona un país' : language === 'fr' ? 'Sélectionnez un pays' : 'Select a country'}
+          testIdPrefix="travel-agency"
+        />
 
         <div>
           <label className="text-sm font-medium text-foreground block mb-2">🌐 Website (Optional)</label>

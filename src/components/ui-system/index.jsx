@@ -31,6 +31,10 @@ export { default as FormSection }     from './FormSection';
 export { default as ResponsiveTabs }  from './ResponsiveTabs';
 export { default as MobileSheet }     from './MobileSheet';
 
+// ── Country / city pickers ──
+export { default as SearchSelect }       from './SearchSelect';
+export { default as CountryCitySelect }  from './CountryCitySelect';
+
 // ── Data display standards (formatting helpers) ──
 export {
   formatCurrency,

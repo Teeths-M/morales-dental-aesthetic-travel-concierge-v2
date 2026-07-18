@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import PhoneField from '@/components/ui-system/PhoneField';
 import SearchSelect from '@/components/ui-system/SearchSelect';
+import { getCitiesForCountry, hasCityList, cityAfterCountryChange, CITY_PLACEHOLDER } from '@/lib/countryCity';
 
 const STEPS = ['Your Details', 'Specialties', 'Credentials', 'Subscription'];
 
@@ -197,13 +198,42 @@ export default function LocalDoctorSignup() {
                 <div>
                   <Label className="text-gray-300 text-sm">Home Country</Label>
                   <div className="mt-1">
-                    <SearchSelect boxed strict dark value={form.clinic_country} onChange={v => set('clinic_country', v)} options={COUNTRY_LIST} placeholder="Select or type your country" />
+                    <SearchSelect
+                      boxed strict dark
+                      value={form.clinic_country}
+                      onChange={v => setForm(prev => ({
+                        ...prev,
+                        clinic_country: v,
+                        // Drop a city that belongs to the previous country.
+                        clinic_city: cityAfterCountryChange(v, prev.clinic_city),
+                      }))}
+                      options={COUNTRY_LIST}
+                      placeholder="Select or type your country"
+                    />
                   </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">City</Label>
-                  <Input value={form.clinic_city} onChange={e => set('clinic_city', e.target.value)}
-                    placeholder="Port of Spain" className="mt-1 bg-[#060B16] border-[#2A3F4A] text-white" />
+                  <div className="mt-1">
+                    {/* Filtered to the country chosen above. Not strict — we
+                        only hold city lists for the markets M operates in, so a
+                        doctor in an uncovered country must still be able to
+                        type their city rather than hit a dead end. */}
+                    <SearchSelect
+                      boxed dark
+                      value={form.clinic_city}
+                      onChange={v => set('clinic_city', v)}
+                      options={getCitiesForCountry(form.clinic_country)}
+                      disabled={!form.clinic_country}
+                      placeholder={
+                        !form.clinic_country
+                          ? CITY_PLACEHOLDER.noCountry
+                          : hasCityList(form.clinic_country)
+                            ? CITY_PLACEHOLDER.picker
+                            : CITY_PLACEHOLDER.freeText
+                      }
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-gray-300 text-sm">Clinic or Practice Name <span className="text-gray-500">(optional)</span></Label>

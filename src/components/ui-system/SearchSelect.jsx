@@ -17,6 +17,7 @@ import { fuzzyFilterOptions } from '@/lib/fuzzyMatch';
  */
 export default function SearchSelect({
   value, onChange, options = [], placeholder, disabled = false, boxed = false, strict = false, dark = false,
+  testId,
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState(value || '');
@@ -71,6 +72,7 @@ export default function SearchSelect({
     <div ref={ref} className="relative">
       <div className={wrapCls}>
         <input
+          data-testid={testId}
           disabled={disabled}
           value={q}
           onChange={handleInput}

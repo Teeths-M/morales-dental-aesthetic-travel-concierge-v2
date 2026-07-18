@@ -27,6 +27,10 @@
     "headquarters_country": {
       "type": "string"
     },
+    "headquarters_city": {
+      "type": "string",
+      "description": "City of the agency's headquarters. Filtered to the selected headquarters_country in the signup UI."
+    },
     "medical_travel_experience_years": {
       "type": "number",
       "default": 0
