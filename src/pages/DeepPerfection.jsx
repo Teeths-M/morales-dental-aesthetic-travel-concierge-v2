@@ -167,27 +167,34 @@ export default function DeepPerfection() {
         {/* Search Card */}
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
           {/* Search Input */}
-          <div className="bg-amber-50/50 border border-emerald-100 rounded-full p-2 pl-6 flex gap-3 mb-6">
+          {/* Stacks on phones; single pill row from sm up. The input needs
+              min-w-0 because a flex item defaults to min-width:auto, so it
+              refuses to shrink below its (long) placeholder — with two
+              nowrap buttons beside it that pushed the page to 547px on a
+              390px screen and made the whole page scroll sideways. */}
+          <div className="bg-amber-50/50 border border-emerald-100 rounded-3xl sm:rounded-full p-3 sm:p-2 sm:pl-6 flex flex-col sm:flex-row gap-3 mb-6">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && performSearch()}
               placeholder="Describe what you want... e.g., 'hair transplant and smile makeover'"
-              className="flex-1 bg-transparent border-none outline-none text-lg font-mono"
+              className="flex-1 min-w-0 bg-transparent border-none outline-none text-base sm:text-lg font-mono px-3 sm:px-0"
             />
-            <Button
-              onClick={handleVoiceInput}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-full px-6"
-            >
-              <Mic className="w-4 h-4 mr-2" /> Voice
-            </Button>
-            <Button
-              onClick={performSearch}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6"
-            >
-              <Search className="w-4 h-4 mr-2" /> Match
-            </Button>
+            <div className="flex gap-3 shrink-0">
+              <Button
+                onClick={handleVoiceInput}
+                className="flex-1 sm:flex-none bg-emerald-700 hover:bg-emerald-800 text-white rounded-full px-6"
+              >
+                <Mic className="w-4 h-4 mr-2" /> Voice
+              </Button>
+              <Button
+                onClick={performSearch}
+                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6"
+              >
+                <Search className="w-4 h-4 mr-2" /> Match
+              </Button>
+            </div>
           </div>
 
           {/* Recent Searches */}
