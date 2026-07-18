@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import GoldenMCertificate from './GoldenMCertificate';
+import { toast } from 'sonner';
 
 const GOLD = '#D4AF37';
 
@@ -173,7 +174,12 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
               if (navigator.share) {
                 try { await navigator.share({ title: 'My Golden M — Morales Medical', text }); } catch (_) {}
               } else {
-                try { await navigator.clipboard.writeText(text); alert('Journey story copied — paste it anywhere!'); } catch (_) {}
+                try {
+                    await navigator.clipboard.writeText(text);
+                    toast.success('Your story is copied', { description: 'Paste it wherever you like.' });
+                  } catch (_) {
+                    toast.error('Could not copy', { description: 'Select the text above and copy it manually.' });
+                  }
               }
             }}
             className="rounded-xl px-8 py-3 font-bold text-sm transition-all duration-200 hover:opacity-90 active:scale-95"

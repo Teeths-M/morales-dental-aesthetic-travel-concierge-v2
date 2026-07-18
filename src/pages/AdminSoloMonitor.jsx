@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AdminLayout from '@/components/layout/AdminLayout';
 import SatelliteDevicePanel from '@/components/admin/SatelliteDevicePanel';
+import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
   pending:       { label: 'Awaiting',    color: 'bg-amber-100 text-amber-800', priority: 3 },
@@ -181,11 +182,16 @@ export default function AdminSoloMonitor() {
       // reasonably concluded the escalation had fired when it may not have.
       // On this path, silence is the dangerous outcome.
       console.error('[AdminSoloMonitor] escalation failed:', err);
-      alert(
-        'ESCALATION DID NOT RUN.\n\n' +
-        'The silent safety escalation failed to start, so no alerts were sent. ' +
-        'Escalate manually now and notify the on-call coordinator.'
-      );
+      /* duration: Infinity is load-bearing, not styling. This replaced a blocking
+         alert(), and an operator who steps away from the desk must still find
+         this on screen when they return. A toast that quietly expires would put
+         us back where the bare .catch(() => {}) had us: the escalation looks
+         like it ran. It dismisses only by explicit click. */
+      toast.error('ESCALATION DID NOT RUN', {
+        description: 'No alerts were sent. Escalate manually now and notify the on-call coordinator.',
+        duration: Infinity,
+        closeButton: true,
+      });
     }
     await load();
     setRunningEscalation(false);

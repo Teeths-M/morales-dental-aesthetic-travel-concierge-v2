@@ -5,16 +5,27 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeOff, X } from 'lucide-react';
+import { Lock, Eye, EyeOff, X, AlertCircle } from 'lucide-react';
 
-export default function VaultPasswordModal({ isOpen, onClose, onConfirm, title = 'Enter Decryption Password', isLoading }) {
+export default function VaultPasswordModal({ isOpen, onClose, onConfirm, title = 'Enter Decryption Password', isLoading, error }) {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
+  const [dismissedError, setDismissedError] = useState(false);
   const inputRef = useRef(null);
 
+  /* A wrong password used to surface as a browser alert() stacked on top of this
+     still-open modal. The failure belongs next to the field that caused it, so
+     the patient can correct it without dismissing anything. Hidden as soon as
+     they start editing — a stale error under a field they're already fixing
+     reads as a second, unrelated failure. */
+  const showError = error && !dismissedError;
+
   useEffect(() => {
-    if (isOpen) { setPassword(''); setTimeout(() => inputRef.current?.focus(), 60); }
+    if (isOpen) { setPassword(''); setDismissedError(false); setTimeout(() => inputRef.current?.focus(), 60); }
   }, [isOpen]);
+
+  // A new failure re-shows the message even if the previous one was typed away.
+  useEffect(() => { if (error) setDismissedError(false); }, [error]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -93,10 +104,16 @@ export default function VaultPasswordModal({ isOpen, onClose, onConfirm, title =
               ref={inputRef}
               type={show ? 'text' : 'password'}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => { setPassword(e.target.value); setDismissedError(true); }}
               placeholder="Your decryption password"
-              className="w-full bg-white/[0.04] border border-white/[0.10] rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder:text-white/20 outline-none focus:border-white/25 focus:ring-1 focus:ring-white/10 transition-all"
+              className={`w-full bg-white/[0.04] border rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder:text-white/20 outline-none focus:ring-1 transition-all ${
+                showError
+                  ? 'border-red-500/50 focus:border-red-400/70 focus:ring-red-400/20'
+                  : 'border-white/[0.10] focus:border-white/25 focus:ring-white/10'
+              }`}
               aria-label="Decryption password"
+              aria-invalid={showError ? 'true' : undefined}
+              aria-describedby={showError ? 'vault-password-error' : undefined}
             />
             <motion.button
               type="button"
@@ -108,6 +125,19 @@ export default function VaultPasswordModal({ isOpen, onClose, onConfirm, title =
               {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </motion.button>
           </div>
+          {showError && (
+            <motion.p
+              id="vault-password-error"
+              role="alert"
+              className="flex items-start gap-2 text-xs text-red-300/90 leading-relaxed"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" strokeWidth={2} />
+              <span>{error}</span>
+            </motion.p>
+          )}
           <div className="flex gap-3">
             <motion.button
               type="button"

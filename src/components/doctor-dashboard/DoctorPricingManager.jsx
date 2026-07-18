@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ConfirmDialog } from '@/components/ui-system';
 
 export default function DoctorPricingManager({ doctorId, language = 'en' }) {
   const [editingId, setEditingId] = useState(null);
   const [editPrice, setEditPrice] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: pricing, isLoading } = useQuery({
@@ -66,10 +68,10 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
     });
   };
 
-  const handleDelete = (id) => {
-    if (confirm('Are you sure you want to remove this pricing?')) {
-      deletePricingMutation.mutate(id);
-    }
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    deletePricingMutation.mutate(deleteTarget);
+    setDeleteTarget(null);
   };
 
   const getText = (_key) => {
@@ -189,7 +191,7 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleDelete(p.id)}
+                          onClick={() => setDeleteTarget(p.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -235,6 +237,16 @@ export default function DoctorPricingManager({ doctorId, language = 'en' }) {
             ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Remove this price?"
+        message="Patients will no longer see a price from you for this procedure. You can add it back at any time."
+        confirmLabel="Remove price"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { BRAND } from '@/lib/brandTokens';
 import { useVault } from '@/hooks/useVault';
 import { vaultService } from '@/lib/services';
 import { queueSyncAction, SYNC_ACTIONS } from '@/lib/services/vaultSyncService';
+import { toast } from 'sonner';
 
 // Safe base64 conversion for large files - avoids "Maximum call stack size exceeded"
 const arrayBufferToBase64 = (buffer) => {
@@ -121,7 +122,9 @@ export default function VaultDashboard({ user }) {
   // Prepare all documents for offline use
   const prepareAllForOffline = useCallback(async () => {
     if (!navigator.onLine) {
-      alert('You need an internet connection to prepare documents for offline use.');
+      toast.error('You are offline', {
+        description: 'Reconnect to prepare your documents for offline use.',
+      });
       return;
     }
 
@@ -170,7 +173,9 @@ export default function VaultDashboard({ user }) {
     setTimeout(() => setCacheProgress(null), 5000);
     
     if (errorCount > 0) {
-      alert(`Successfully cached ${successCount} documents. ${errorCount} documents failed to cache (may be too large).`);
+      toast.warning(`${successCount} of ${vaults.length} documents saved offline`, {
+        description: `${errorCount} could not be saved — they may be too large. The rest are ready.`,
+      });
     }
   }, [vaults, user?.email]);
 
@@ -194,7 +199,7 @@ export default function VaultDashboard({ user }) {
 
   const handleDecryptAndDownload = useCallback(async (password) => {
     const vault = pwModal.vault;
-    setPwModal(p => ({ ...p, isLoading: true }));
+    setPwModal(p => ({ ...p, isLoading: true, error: null }));
 
     try {
       // OFFLINE CHECK: Decryption requires the encrypted blob
@@ -205,7 +210,9 @@ export default function VaultDashboard({ user }) {
         const cachedEncrypted = localStorage.getItem(cacheKey);
 
         if (!cachedEncrypted) {
-          alert('Offline Mode: This document was not cached for offline access. Please reconnect to the internet and use the "Save Offline" option when viewing this document.');
+          toast.error('Not available offline', {
+            description: 'This document was never saved to this device. Reconnect, then use "Save Offline" to keep a copy.',
+          });
           return;
         }
 
@@ -218,7 +225,9 @@ export default function VaultDashboard({ user }) {
           setPwModal({ open: false, vault: null, isLoading: false });
           return;
         } catch (_) {
-          alert('Offline Mode: Cached document is corrupted or incomplete. Please reconnect to download again.');
+          toast.error('Offline copy is damaged', {
+            description: 'Reconnect to download this document again.',
+          });
           return;
         }
       }
@@ -230,7 +239,10 @@ export default function VaultDashboard({ user }) {
         const res = await vaultService.requestDownload(vault.passport_token);
         if (res.data?.error_code === 'LEGACY_ENCRYPTION_NO_SALT') {
           setPwModal({ open: false, vault: null, isLoading: false });
-          alert('This document was uploaded before encryption was upgraded. Please delete it and re-upload to use the latest security format.');
+          toast.error('This document needs re-uploading', {
+            description: 'It was stored before we upgraded encryption. Delete it and upload again to move it to the current format.',
+            duration: 8000,
+          });
           return;
         }
         const { signed_url, encryption_iv_b64, encryption_salt_b64, file_name, mime_type } = res.data;
@@ -275,7 +287,9 @@ export default function VaultDashboard({ user }) {
 
         if (!encryptedB64 || !encryption_iv_b64 || !encryption_salt_b64) {
           setPwModal({ open: false, vault: null, isLoading: false });
-          alert('This document cache is corrupted. Please reconnect to the internet and try again.');
+          toast.error('Offline copy is damaged', {
+            description: 'Reconnect to the internet and try again.',
+          });
           return;
         }
       } else if (navigator.onLine) {
@@ -283,7 +297,10 @@ export default function VaultDashboard({ user }) {
 
         if (res.data?.error_code === 'LEGACY_ENCRYPTION_NO_SALT') {
           setPwModal({ open: false, vault: null, isLoading: false });
-          alert('This document was uploaded before encryption was upgraded. Please delete it and re-upload to use the latest security format.');
+          toast.error('This document needs re-uploading', {
+            description: 'It was stored before we upgraded encryption. Delete it and upload again to move it to the current format.',
+            duration: 8000,
+          });
           return;
         }
         const { signed_url, encryption_iv_b64: iv, encryption_salt_b64: salt, file_name: fname, mime_type: mime } = res.data;
@@ -296,7 +313,9 @@ export default function VaultDashboard({ user }) {
         encryptedB64 = arrayBufferToBase64(await blob.arrayBuffer());
       } else {
         setPwModal({ open: false, vault: null, isLoading: false });
-        alert('Offline Mode: This document was not cached for offline access. Please reconnect to the internet and download it first.');
+        toast.error('Not available offline', {
+          description: 'This document was never saved to this device. Reconnect to download it.',
+        });
         return;
       }
 
@@ -313,16 +332,24 @@ export default function VaultDashboard({ user }) {
 
       setPwModal({ open: false, vault: null, isLoading: false });
     } catch (err) {
-      setPwModal(p => ({ ...p, isLoading: false }));
+      /* WebCrypto reports a wrong password and a corrupted file as the same two
+         error names, so we cannot honestly tell the patient which it was. Both
+         messages therefore lead with the likely cause and name the other, rather
+         than asserting a certainty we don't have. The raw error goes to the
+         console, never to the screen. */
+      const isCryptoFailure =
+        err.name === 'InvalidAccessError' || err.message?.includes('InvalidAccess') ||
+        err.name === 'OperationError'     || err.message?.includes('OperationError');
 
-      if (err.name === 'InvalidAccessError' || err.message?.includes('InvalidAccess')) {
-        alert('Decryption failed: The password entered does not match the one used to encrypt this document. Please try again.');
-      } else if (err.name === 'OperationError' || err.message?.includes('OperationError')) {
-        alert('Decryption failed: Incorrect password or corrupted data. Please verify your password and try again.');
-      } else {
-        console.error("[VaultDashboard] decryption failed:", err);
-        alert("Decryption failed. Please check your password and try again. If it keeps failing, the file may be corrupted.");
-      }
+      if (!isCryptoFailure) console.error('[VaultDashboard] decryption failed:', err);
+
+      setPwModal(p => ({
+        ...p,
+        isLoading: false,
+        error: isCryptoFailure
+          ? "That password didn't unlock this document. Check it and try again — if it keeps failing, the file itself may be damaged."
+          : "We couldn't open this document. Check your password and try again.",
+      }));
     }
   }, [pwModal.vault]);
 
@@ -660,6 +687,7 @@ export default function VaultDashboard({ user }) {
       <VaultPasswordModal
         isOpen={pwModal.open}
         isLoading={pwModal.isLoading}
+        error={pwModal.error}
         onClose={closePwModal}
         onConfirm={handleDecryptAndDownload}
       />

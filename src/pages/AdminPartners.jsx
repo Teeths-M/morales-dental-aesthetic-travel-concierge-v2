@@ -28,6 +28,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import LoadingState from '@/components/ui-system/LoadingState';
 import ErrorState from '@/components/ui-system/ErrorState';
 import EmptyState from '@/components/ui-system/EmptyState';
+import ConfirmDialog from '@/components/ui-system/ConfirmDialog';
 import { formatDate, formatCurrency } from '@/lib/format';
 
 export default function AdminPartners() {
@@ -38,6 +39,7 @@ export default function AdminPartners() {
   const [isApproving, setIsApproving] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   // PERFORMANCE: Bounded queries with cache — prevents OOM at scale
   const { data: doctors = [], isLoading: loadingDoctors, isError: errorDoctors, refetch: refetchDoctors } = useQuery({
@@ -184,10 +186,7 @@ export default function AdminPartners() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    
-    const confirmDelete = window.confirm(`Are you sure you want to permanently delete ${selectedIds.length} partners? This action cannot be undone.`);
-    if (!confirmDelete) return;
-
+    setConfirmBulkDelete(false);
     setIsDeleting(true);
     try {
       // Determine type of each selected ID and delete using appropriate function
@@ -355,7 +354,7 @@ export default function AdminPartners() {
                 Cancel
               </Button>
               <Button
-                onClick={handleBulkDelete}
+                onClick={() => setConfirmBulkDelete(true)}
                 disabled={isDeleting}
                 className="bg-red-600 hover:bg-red-700 text-white gap-2"
               >
@@ -451,6 +450,16 @@ export default function AdminPartners() {
           isApproving={isApproving}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        onClose={() => setConfirmBulkDelete(false)}
+        onConfirm={handleBulkDelete}
+        title={`Permanently delete ${selectedIds.length} partner${selectedIds.length === 1 ? '' : 's'}?`}
+        message="Their profiles and records are removed for good. This cannot be undone."
+        confirmLabel={`Delete ${selectedIds.length}`}
+        variant="danger"
+      />
     </AdminLayout>
   );
 }

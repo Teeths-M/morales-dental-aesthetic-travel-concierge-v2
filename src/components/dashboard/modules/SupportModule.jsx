@@ -3,6 +3,7 @@ import { Phone, MessageCircle, HelpCircle, Send, CheckCircle2, AlertTriangle } f
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
+import { toast } from 'sonner';
 
 const faqs = [
   { q: 'How do I reschedule my consultation?', a: 'Contact your assigned coordinator via the Messages section or call our concierge line. Rescheduling is free up to 48 hours before your appointment.' },
@@ -32,7 +33,9 @@ export default function SupportModule() {
       });
       setTicketSent(true);
     } catch (_e) {
-      alert('Failed to send ticket. Please try WhatsApp or email directly.');
+      toast.error("Your message didn't send", {
+        description: 'Nothing was lost — reach us on WhatsApp or email and we will pick it up.',
+      });
     } finally {
       setTicketLoading(false);
     }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { toast } from 'sonner';
 
 const RISK_STYLES = {
   low: 'bg-green-100 text-green-700',
@@ -178,7 +179,7 @@ export default function DoctorCasesDashboard() {
       });
       setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, doctor_status: 'confirmed' } : w));
     } catch (_e) {
-      alert('Failed to confirm. Please try again.');
+      toast.error('Not confirmed', { description: 'Nothing changed. Please try again.' });
     } finally {
       setActionLoading(false);
     }
@@ -193,7 +194,7 @@ export default function DoctorCasesDashboard() {
       });
       setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, doctor_status: 'unavailable' } : w));
     } catch (_e) {
-      alert('Failed to decline. Please try again.');
+      toast.error('Not declined', { description: 'Nothing changed. Please try again.' });
     } finally {
       setActionLoading(false);
     }

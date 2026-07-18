@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { toast } from 'sonner';
 
 const RESCUE_STATUSES = {
   triggered:   { label: 'SOS Received',           color: 'bg-red-100 text-red-800',    dot: 'bg-red-500 animate-pulse' },
@@ -79,7 +80,10 @@ export default function AdminWildernessRescue() {
       await base44.entities.SOSEvent.update(incident.id, update);
     } catch (err) {
       console.error('[AdminWildernessRescue] incident update failed:', err);
-      alert('Could not update this incident. It is UNCHANGED — please retry before standing down.');
+      toast.error('Incident NOT updated', {
+        description: 'It is unchanged. Retry before standing down.',
+        duration: 12000,
+      });
       return;
     }
 
@@ -109,10 +113,10 @@ export default function AdminWildernessRescue() {
       if (res?.data?.report_url) {
         window.open(res.data.report_url, '_blank', 'noopener,noreferrer');
       } else {
-        alert('Report generated. Check admin audit log for details.');
+        toast.success('Report generated', { description: 'Details are in the admin audit log.' });
       }
     } catch (_) {
-      alert('Report generation unavailable.');
+      toast.error('Report generation unavailable');
     }
     setActionLoading(l => ({ ...l, [`report_${incident.id}`]: false }));
   };

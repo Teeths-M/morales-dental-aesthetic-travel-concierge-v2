@@ -12,6 +12,7 @@ import { base44 } from '@/api/base44Client';
 import SurgicalExecutionControls from '@/components/portal/SurgicalExecutionControls';
 import ClinicalExtractionModal from '@/components/doctor/ClinicalExtractionModal';
 import PlatformGuideOrb from '@/components/guide/PlatformGuideOrb';
+import { toast } from 'sonner';
 
 export default function PortalDoctor() {
   const { token } = useParams();
@@ -237,9 +238,12 @@ export default function PortalDoctor() {
                   try {
                     const token = new URLSearchParams(window.location.search).get('token') || window.location.pathname.split('/').pop();
                     await base44.functions.invoke('logProcedureComplete', { token, outcome_notes: formData.doctor_notes });
-                    alert('Procedure confirmed. Guardian notified. Recovery mode activated.');
+                    toast.success('Procedure confirmed', { description: 'Guardian notified. Recovery mode is active.' });
                   } catch (_e) {
-                    alert('Could not confirm procedure. Please contact admin directly.');
+                    toast.error('Not confirmed', {
+                      description: 'The procedure is unchanged. Contact admin directly.',
+                      duration: 12000,
+                    });
                   }
                 }}
                 style={{

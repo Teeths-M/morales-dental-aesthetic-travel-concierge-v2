@@ -14,6 +14,7 @@
  *   onClose        fn
  */
 import React from 'react';
+import { toast } from 'sonner';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -60,7 +61,7 @@ export default function GoldenMCertificate({ patientName, procedure, destination
       navigator.share({ text }).catch(() => {});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
-      alert('Caption copied — paste it on your social media!');
+      toast.success('Caption copied', { description: 'Paste it wherever you like.' });
     }
   }
 

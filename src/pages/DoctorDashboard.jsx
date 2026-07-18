@@ -16,6 +16,8 @@ import DoctorQuoteInbox from '@/components/quotes/DoctorQuoteInbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
+import { ConfirmDialog } from '@/components/ui-system';
+import { toast } from 'sonner';
 
 // ── Facility Fee inline form — auto-triggers pipeline when submitted ──────────
 function FacilityFeeForm({ caseId, caseRef }) {
@@ -107,6 +109,7 @@ export default function DoctorDashboard() {
   const [formData, setFormData] = useState({});
   const [activeTab, setActiveTab] = useState('profile');
   const [fetchError, setFetchError] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { user: authUser } = useAuth();
 
   // PERFORMANCE: React Query with caching — automatic deduplication, no manual useEffect
@@ -207,21 +210,27 @@ export default function DoctorDashboard() {
       await base44.entities.Doctor.update(doctor.id, updateData);
       await refetch(); // Refresh data from server
       setEditing(false);
+      toast.success('Profile updated');
     } catch (error) {
       console.error('Failed to save profile:', error);
-      alert('Failed to save changes. Please try again.');
+      toast.error('Changes not saved', {
+        description: 'Your edits are still on screen — try saving again.',
+      });
     }
   };
 
   const handleDelete = async () => {
-    if (confirm('Are you sure you want to remove your profile? This action cannot be undone.')) {
-      try {
-        await base44.entities.Doctor.delete(doctor.id);
-        await refetch(); // Refresh data from server
-      } catch (error) {
-        console.error('Failed to delete profile:', error);
-        alert('Failed to delete profile. Please try again.');
-      }
+    try {
+      await base44.entities.Doctor.delete(doctor.id);
+      await refetch(); // Refresh data from server
+      setConfirmDelete(false);
+      toast.success('Profile removed');
+    } catch (error) {
+      console.error('Failed to delete profile:', error);
+      setConfirmDelete(false);
+      toast.error('Profile not removed', {
+        description: 'Nothing was deleted. Please try again.',
+      });
     }
   };
 
@@ -631,7 +640,7 @@ export default function DoctorDashboard() {
                               Edit Profile
                             </button>
                             <button
-                              onClick={handleDelete}
+                              onClick={() => setConfirmDelete(true)}
                               className="px-3 py-2 border border-destructive/50 text-destructive rounded-lg hover:bg-destructive/10"
                               title="Delete profile"
                             >
@@ -789,6 +798,16 @@ export default function DoctorDashboard() {
           </Tabs>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Remove your profile?"
+        message="Patients will no longer be able to find or book you. Your existing cases are not deleted. This cannot be undone."
+        confirmLabel="Remove profile"
+        variant="danger"
+      />
     </div>
   );
 }

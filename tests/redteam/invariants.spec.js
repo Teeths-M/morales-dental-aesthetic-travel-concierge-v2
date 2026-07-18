@@ -856,3 +856,43 @@ test('BOOKING: age stays visible — a collapsed field cannot disable the guardi
   const booking = read('src/pages/Booking.jsx');
   expect(booking, 'minors must still require a guardian').toMatch(/isMinorAge\(form\.age\)/);
 });
+
+test('UX: no raw browser alert()/confirm() anywhere in src', () => {
+  // 35 raw alert()/confirm() calls were replaced with toasts and ConfirmDialog.
+  // A browser dialog is unstyled, unbranded, blocks the whole tab, and on iOS
+  // reads as "this site says…" — it breaks the premium illusion instantly and
+  // tells the patient the software is unfinished. There is a component for
+  // every case these covered, so a new one is always a mistake.
+  //
+  // Comments are stripped first: several of the files that were fixed explain
+  // in a comment WHY the alert() was removed, and a naive scan would flag its
+  // own fix. (This bit me before.)
+  const walk = (dir, out = []) => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel, out);
+      else if (/\.(js|jsx)$/.test(e.name)) out.push(rel);
+    }
+    return out;
+  };
+
+  const offenders = [];
+  for (const rel of walk('src')) {
+    const code = read(rel)
+      .replace(/\/\*[\s\S]*?\*\//g, '')     // block comments
+      .replace(/^\s*\/\/.*$/gm, '')          // line comments
+      .replace(/^\s*\*.*$/gm, '');           // jsdoc continuation lines
+
+    // Matches alert(/confirm( as a CALL: not .alert(, not a property, and not
+    // `function confirm()`. window.alert( and window.confirm( are caught too.
+    const re = /(?:^|[^.\w$])(?:window\.)?(alert|confirm)\s*\(/g;
+    let m;
+    while ((m = re.exec(code)) !== null) {
+      const before = code.slice(Math.max(0, m.index - 30), m.index);
+      if (/\b(function|const|let|var)\s*$/.test(before)) continue; // local declaration
+      offenders.push(`${rel} → ${m[1]}()`);
+    }
+  }
+
+  expect(offenders, `use toast()/ConfirmDialog instead:\n${offenders.join('\n')}`).toEqual([]);
+});

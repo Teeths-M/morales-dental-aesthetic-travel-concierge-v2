@@ -6,6 +6,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { ShieldAlert, ShieldCheck, Lock, Unlock, HeartPulse, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 /**
  * AdminFlags — the human review queue for the Malicious Action Blocker.
@@ -54,7 +55,7 @@ export default function AdminFlags() {
     } catch (e) {
       // Surface it — a silently failed moderation decision leaves someone
       // restricted with no record of why.
-      alert('Could not save that decision. Please try again.');
+      toast.error('Decision not saved', { description: 'The flag is unchanged. Please try again.' });
       console.error('[AdminFlags]', e?.message);
     }
     setBusyId(null);

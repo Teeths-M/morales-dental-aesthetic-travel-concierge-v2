@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, Search, Plus, X, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 // Procedure ontology for agentic matching
 const PROCEDURES = [
@@ -126,7 +127,7 @@ export default function DeepPerfection() {
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Voice not supported in this browser');
+      toast.error('Voice is not available in this browser', { description: 'You can type instead.' });
       return;
     }
     
@@ -144,7 +145,7 @@ export default function DeepPerfection() {
       setTimeout(() => performSearch(), 100);
     };
     recognition.onerror = () => {
-      alert('Voice error, please type.');
+      toast.error('Voice input failed', { description: 'Please type instead.' });
     };
   };
 

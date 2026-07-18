@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mic, MicOff, Loader2, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 const SUGGESTED = [
   "What is an e-visa and how do I apply?",
@@ -92,7 +93,9 @@ export default function VisaAIChat() {
 
   const handleVoice = () => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert('Voice input is not supported in this browser.');
+      toast.error('Voice input is not available in this browser', {
+        description: 'You can type your question instead.',
+      });
       return;
     }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;

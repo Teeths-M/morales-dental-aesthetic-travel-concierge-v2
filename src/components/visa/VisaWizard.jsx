@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Search, Mic, MicOff, Loader2, Check } from 'lucide-react';
 import { PASSPORT_COUNTRIES, DESTINATIONS, TRAVEL_PURPOSES, getVisaRule } from './visaData';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 const getSteps = (language) => [
   { id: 1, title: language === 'es' ? 'Pasaporte' : language === 'fr' ? 'Passeport' : 'Passport', label: language === 'es' ? 'Tu Pasaporte' : language === 'fr' ? 'Votre Passeport' : 'Your Passport' },
@@ -47,7 +48,9 @@ export default function VisaWizard({ onResult }) {
 
   const handleVoice = () => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert('Voice input not supported in this browser. Please type your details.');
+      toast.error('Voice input is not available in this browser', {
+        description: 'You can type your details instead.',
+      });
       return;
     }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;

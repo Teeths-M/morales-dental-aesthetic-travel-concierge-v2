@@ -55,6 +55,7 @@ import LoadingState from '@/components/ui-system/LoadingState';
 import ErrorState from '@/components/ui-system/ErrorState';
 import { formatDate } from '@/lib/format';
 import { ACTIVE_TRAVEL_PHASES } from '@/lib/constants';
+import { toast } from 'sonner';
 
 function WhatsAppMini() {
   return (
@@ -346,7 +347,12 @@ function DashboardHome({ user, consultations, language }) {
           <button
             onClick={async () => {
               const result = await safetyCx.activity.requestMotionAccess();
-              if (result === 'denied') alert('Motion access denied. Fall detection will be unavailable, but all other Guardian features remain active.');
+              if (result === 'denied') {
+                toast.warning('Fall detection is off', {
+                  description: 'Motion access was denied. Every other Guardian feature is still active.',
+                  duration: 10000,
+                });
+              }
             }}
             style={{ padding: '8px 18px', borderRadius: 99, background: '#6366f1', color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0 }}
           >
