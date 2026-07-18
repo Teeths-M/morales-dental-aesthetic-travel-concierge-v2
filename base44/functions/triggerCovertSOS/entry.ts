@@ -12,6 +12,7 @@
  * Reason: if someone used the covert trigger, the situation is already critical.
  */
 import { createHandler, ok } from '../_shared/createHandler.ts';
+import { emergencyDispatch } from '../_shared/notify.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 async function sendSms(to: string, message: string) {
@@ -96,10 +97,19 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   }).catch(() => {});
 
   // ── 3. SMS — guardian / emergency contact ─────────────────────────────────
+  // AUTHORISED EXEMPTION from the link-only comms policy (Portia, 2026-07-18).
+  // Identity and last known location ARE the payload here: this person is being
+  // asked to go find someone who may be in danger and cannot call for help.
+  // Sending them a portal link instead would put a login between a responder
+  // and a missing patient.
   if (guardianPhone) {
     await sendSms(
       guardianPhone,
-      `🚨 URGENT — ${patientName} has silently activated an emergency alert. They may be in danger and unable to call for help. Last location: ${gpsStr}. Contact them immediately. If you cannot reach them, call police. — Morales Concierge`
+      emergencyDispatch({
+        reason: 'sos_triggered',
+        from: 'triggerCovertSOS/guardian',
+        body: `🚨 URGENT — ${patientName} has silently activated an emergency alert. They may be in danger and unable to call for help. Last location: ${gpsStr}. Contact them immediately. If you cannot reach them, call police. — Morales Concierge`,
+      }),
     );
   }
 

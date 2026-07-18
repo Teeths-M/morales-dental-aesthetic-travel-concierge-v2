@@ -40,6 +40,7 @@ const AdminWildernessRescue     = lazy(() => import('@/pages/AdminWildernessResc
 const AdminSosSyncMonitor       = lazy(() => import('@/pages/AdminSosSyncMonitor'));
 const AdminMissionControl       = lazy(() => import('@/pages/AdminMissionControl'));
 const AdminDataFreshness        = lazy(() => import('@/pages/AdminDataFreshness'));
+const AdminFlags                = lazy(() => import('@/pages/AdminFlags'));
 const AdminClinics              = lazy(() => import('@/pages/AdminClinics'));
 const SituationRoom             = lazy(() => import('@/pages/SituationRoom'));
 const AdminMonitorAction        = lazy(() => import('@/pages/AdminMonitorAction'));
@@ -69,6 +70,7 @@ export const adminRoutes = (
       <Route path="/admin/partner-verification/:id"  element={<ErrorBoundary><PartnerVerificationHub /></ErrorBoundary>} />
       <Route path="/admin/audit-log"                 element={<ErrorBoundary><AdminAuditLog /></ErrorBoundary>} />
       <Route path="/admin/data-freshness"            element={<ErrorBoundary><AdminDataFreshness /></ErrorBoundary>} />
+      <Route path="/admin/flags"                     element={<ErrorBoundary><AdminFlags /></ErrorBoundary>} />
       <Route path="/admin/clinics"                   element={<ErrorBoundary><AdminClinics /></ErrorBoundary>} />
       <Route path="/admin/mission-control"          element={<ErrorBoundary><AdminMissionControl /></ErrorBoundary>} />
       <Route path="/admin/situation-room"           element={<ErrorBoundary><SituationRoom /></ErrorBoundary>} />

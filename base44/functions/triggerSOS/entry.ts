@@ -183,6 +183,9 @@ Deno.serve(createHandler(async ({ req }) => {
 
     if (adminNotifyEmail) {
       try {
+        // AUTHORISED EXEMPTION from the link-only comms policy (Portia,
+        // 2026-07-18). This is an active-emergency dispatch: the responder
+        // needs to know who and where without a login in the way.
         const subject = isWilderness
           ? `🏔️ WILDERNESS SOS — SEARCH & RESCUE REQUIRED — ${patient_name || patient_email}`
           : `🚨 SOS — ${route.label} — ${patient_name || patient_email}`;

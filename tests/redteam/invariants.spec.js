@@ -682,3 +682,38 @@ test('BLOCKER: the message path is guarded, and the safety SMS line keeps its li
   expect(sms, 'the safe confirmation must not carry the name')
     .not.toContain('Thank you, ${checkIn.user_name');
 });
+
+test('BLOCKER: there is a human route back, and it cannot close a safety path', () => {
+  // The blocker's notification email points at /admin/flags, and "only a human
+  // can clear it" is hollow without somewhere for the human to do it.
+  const routes = read('src/routes/adminRoutes.jsx');
+  expect(routes, 'the review console must be routed').toContain('/admin/flags');
+
+  const fn = read('base44/functions/reviewAccountFlag/entry.ts');
+  expect(fn, 'clearing must be admin-only').toContain("allowedRoles: ['admin', 'platform_admin']");
+  // A human overriding the blocker is exactly what must be reconstructable.
+  expect(fn, 'the decision must join the hash chain').toContain('prev_hash');
+  // Locking must not become a way to close someone's route to emergency help.
+  const lockBranch = fn.slice(fn.indexOf("tier: 'locked'"));
+  expect(lockBranch, 'locking must restate the safety guarantee').toContain('safety_paths_open: true');
+
+  // Whoever works the queue must be told, before deciding, that a locked
+  // account can still call for help — so nobody "locks harder" believing they
+  // are closing a safety hole.
+  const page = read('src/pages/AdminFlags.jsx');
+  expect(page, 'the console must state the safety guarantee').toMatch(/never affects safety/i);
+  expect(page, 'the guarantee must name the paths').toMatch(/SOS/);
+});
+
+test('EMERGENCY: the comms exemption is explicit at the call site', () => {
+  // The carve-out must be greppable per dispatch, not implied by a function
+  // name — otherwise it quietly widens.
+  const covert = read('base44/functions/triggerCovertSOS/entry.ts');
+  expect(covert, 'the guardian alert must be a marked exemption').toContain('emergencyDispatch(');
+  expect(covert, 'it must carry an enumerated reason').toMatch(/reason: '(sos_triggered|patient_missing|medical_emergency|authority_dispatch)'/);
+
+  // The patient-facing confirmation stays generic: it is not a responder
+  // dispatch, so it gets no exemption.
+  expect(covert, 'the patient confirmation must not name them')
+    .not.toMatch(/Body:[^`]*`[^`]*\$\{patientName\}[^`]*Help is on the way/);
+});
