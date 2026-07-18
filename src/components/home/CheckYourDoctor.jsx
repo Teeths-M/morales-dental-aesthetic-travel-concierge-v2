@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { CALM } from '@/lib/brandTokens';
 import cityData from '@/lib/cityData.json';
+import { SERVED_COUNTRIES } from '@/lib/countryCity';
 import SearchSelect from '@/components/ui-system/SearchSelect';
 
-const COUNTRIES = Object.keys(cityData).sort((a, b) => a.localeCompare(b));
+const COUNTRIES = [...SERVED_COUNTRIES].sort((a, b) => a.localeCompare(b));
 function citiesFor(country) {
   if (!country) return [];
   const key = COUNTRIES.find((k) => k.toLowerCase() === country.toLowerCase());

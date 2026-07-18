@@ -2,6 +2,7 @@ import React from "react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import cityData from "@/lib/cityData.json";
+import { SERVED_COUNTRIES } from "@/lib/countryCity";
 
 // id = keyword matched against DoctorSpecialty.procedure_name (case-insensitive includes)
 const PROCEDURES = [
@@ -21,7 +22,7 @@ const PROCEDURES = [
   { id: "Spinal", name: "Spine Surgery", category: "Orthopedics" },
 ];
 
-const COUNTRIES = Object.keys(cityData).sort();
+const COUNTRIES = [...SERVED_COUNTRIES].sort();
 
 export default function DoctorFilterPanel({ filters, updateFilter, clearAllFilters, onClose }) {
   const getCityOptions = () => {

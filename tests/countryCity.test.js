@@ -42,10 +42,18 @@ describe('country → city filtering', () => {
     expect(getCitiesForCountry('USA')).toContain('New York');
   });
 
-  it('returns [] for a country we hold no city data for', () => {
-    expect(getCitiesForCountry('Iceland')).toEqual([]);
-    expect(hasCityList('Iceland')).toBe(false);
-    expect(normalizeCountry('Iceland')).toBe('');
+  it('covers every one of the 195 countries after the data expansion', () => {
+    // cityData started at 29 countries; travellers come from anywhere, so it
+    // now carries major cities for all 195.
+    for (const opt of ALL_COUNTRY_OPTIONS) {
+      expect(getCitiesForCountry(opt.value).length, `${opt.value} has no cities`).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns [] for a string that is not a country at all', () => {
+    expect(getCitiesForCountry('Atlantis')).toEqual([]);
+    expect(hasCityList('Atlantis')).toBe(false);
+    expect(normalizeCountry('Atlantis')).toBe('');
   });
 });
 
@@ -60,9 +68,9 @@ describe('city survives or resets on country change', () => {
   });
 
   it('keeps a typed city when the new country has no list', () => {
-    // Data loss guard: for the 166 countries with no curated list the user
+    // Data loss guard: when a country has no curated list the user
     // typed the city themselves — resetting it would delete their input.
-    expect(cityAfterCountryChange('Iceland', 'Reykjavik')).toBe('Reykjavik');
+    expect(cityAfterCountryChange('Atlantis', 'Somewhere')).toBe('Somewhere');
   });
 
   it('treats an empty city as always valid', () => {
@@ -118,6 +126,21 @@ describe('option lists', () => {
     expect(SERVED_COUNTRY_OPTIONS.length).toBeGreaterThan(0);
     expect(SERVED_COUNTRY_OPTIONS.length).toBeLessThan(ALL_COUNTRY_OPTIONS.length);
     expect(ALL_COUNTRY_OPTIONS.every((o) => o.value && o.label)).toBe(true);
+  });
+
+  it('served markets stay a business list, not "everywhere we have cities"', () => {
+    // SERVED_COUNTRY_OPTIONS used to be Object.keys(cityData). That was fine
+    // while both were the same 29 countries, but once cityData was expanded to
+    // all 195 it would have advertised M as operating in every country on
+    // earth. Destination/market pickers read this list, so it must stay small
+    // and explicit.
+    expect(SERVED_COUNTRY_OPTIONS.length).toBeLessThan(60);
+    const served = SERVED_COUNTRY_OPTIONS.map((o) => o.value);
+    expect(served).toContain('Trinidad and Tobago');
+    expect(served).toContain('Mexico');
+    // We hold cities for these, but M does not operate there.
+    expect(served).not.toContain('North Korea');
+    expect(served).not.toContain('Afghanistan');
   });
 
   it('every served country actually resolves to cities', () => {

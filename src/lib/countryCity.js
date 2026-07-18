@@ -218,8 +218,29 @@ export function cityAfterCountryChange(nextCountry, currentCity) {
 /** All 195 countries, for the country side of the pair. */
 export const ALL_COUNTRY_OPTIONS = COUNTRY_NAMES.map((n) => ({ value: n, label: n }));
 
-/** Only the countries we hold city data for — for destination/market pickers. */
-export const SERVED_COUNTRY_OPTIONS = Object.keys(cityData)
+/**
+ * The markets M actually coordinates in — an explicit list, deliberately NOT
+ * derived from cityData's keys.
+ *
+ * It used to be `Object.keys(cityData)`, which worked only while city data and
+ * served markets happened to be the same 29 countries. Once cityData was
+ * expanded to all 195 for the city pickers, deriving from it would have
+ * silently advertised M as operating in every country on earth. City data is
+ * geography; served markets is a business fact. They are separate now.
+ *
+ * Add a country here when M genuinely onboards partners in it.
+ */
+export const SERVED_COUNTRIES = [
+  'Argentina', 'Australia', 'Brazil', 'Canada', 'Colombia', 'Costa Rica',
+  'Czech Republic', 'Dominican Republic', 'France', 'Germany', 'Hungary',
+  'India', 'Indonesia', 'Jamaica', 'Malaysia', 'Mexico', 'Panama',
+  'Philippines', 'Poland', 'Singapore', 'South Africa', 'Spain', 'Thailand',
+  'Trinidad and Tobago', 'Turkey', 'United Arab Emirates', 'United Kingdom',
+  'United States', 'Venezuela',
+];
+
+/** Served markets as {value,label} options — for destination/market pickers. */
+export const SERVED_COUNTRY_OPTIONS = [...SERVED_COUNTRIES]
   .sort((a, b) => a.localeCompare(b))
   .map((n) => ({ value: n, label: n }));
 

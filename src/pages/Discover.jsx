@@ -29,6 +29,7 @@ import DoctorSearchCard from "@/components/discover/DoctorSearchCard";
 import DoctorFilterPanel from "@/components/discover/DoctorFilterPanel";
 import PageHeroBand from "@/components/layout/PageHeroBand";
 import cityData from "@/lib/cityData.json";
+import { SERVED_COUNTRIES } from "@/lib/countryCity";
 
 // id = keyword matched against DoctorSpecialty.procedure_name (case-insensitive includes)
 // Must align with en_name values in MasterProcedure entity (see seedMasterProcedures)
@@ -49,7 +50,7 @@ const PROCEDURES = [
   { id: "Spinal", name: "Spine Surgery", category: "Orthopedics" },
 ];
 
-const COUNTRIES = Object.keys(cityData).sort();
+const COUNTRIES = [...SERVED_COUNTRIES].sort();
 
 export default function Discover() {
   const [searchParams, setSearchParams] = useSearchParams();

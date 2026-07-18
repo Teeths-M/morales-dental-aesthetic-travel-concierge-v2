@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MapPin, Stethoscope, Building2, Sparkles, Calendar, Loader2, ChevronDown, Search } from 'lucide-react';
 import cityData from '@/lib/cityData.json';
+import { SERVED_COUNTRIES } from '@/lib/countryCity';
 import { procedureCategories } from '@/components/procedures/ProcedureData';
 import { fuzzyMatches } from '@/lib/fuzzyMatch';
 import SearchSelect from '@/components/ui-system/SearchSelect';
 
-const COUNTRIES = Object.keys(cityData).sort((a, b) => a.localeCompare(b));
+const COUNTRIES = [...SERVED_COUNTRIES].sort((a, b) => a.localeCompare(b));
 function citiesFor(country) {
   if (!country) return [];
   const key = COUNTRIES.find((k) => k.toLowerCase() === country.toLowerCase());

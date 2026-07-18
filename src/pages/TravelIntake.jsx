@@ -8,6 +8,7 @@ import { getAnsweredQuestionCount, getTotalQuestionCount, getProgressLabel } fro
 import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
 import { buildTravelRequestPayload } from '@/lib/travelIntakeFlow/fieldMap';
 import { ALL_COUNTRIES } from '@/lib/countries';
+import { SERVED_COUNTRY_OPTIONS } from '@/lib/countryCity';
 import { ROUTES } from '@/lib/constants';
 import QuestionCard from '@/components/intake/QuestionCard';
 import AuthGateStep from '@/components/intake/AuthGateStep';
@@ -15,7 +16,6 @@ import TravelReviewStep from '@/components/intake/TravelReviewStep';
 import IntakeProgressChecklist from '@/components/intake/IntakeProgressChecklist';
 import NarrationTicker from '@/components/intake/NarrationTicker';
 import NeedHumanButton from '@/components/intake/NeedHumanButton';
-import cityData from '@/lib/cityData.json';
 
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
@@ -27,13 +27,16 @@ const TRAVEL_GUEST_DRAFT_KEY = 'morales_travel_intake_guest_draft';
 /**
  * The countries we can offer travel coordination for, as a searchable list.
  * We prefer live verified travel-partner countries; when there are none yet we
- * fall back to the full served-country list (every country we hold city data
- * for), so the destination step ALWAYS presents a real list to pick from —
- * never an empty list or a free-text box. Sorted A–Z for predictable scanning.
+ * fall back to the markets M coordinates in, so the destination step ALWAYS
+ * presents a real list to pick from — never an empty list or a free-text box.
+ * Sorted A–Z for predictable scanning.
+ *
+ * Comes from the explicit SERVED_COUNTRIES list, not from cityData's keys:
+ * cityData now holds cities for all 195 countries so travellers can name any
+ * origin, and deriving the DESTINATION list from it would offer M's services
+ * in every country on earth.
  */
-const SERVED_COUNTRIES = Object.keys(cityData)
-  .sort((a, b) => a.localeCompare(b))
-  .map((c) => ({ value: c, label: c }));
+const SERVED_COUNTRY_LIST = SERVED_COUNTRY_OPTIONS;
 
 const PHASE_LABELS = ['Getting to know you', 'Planning your journey', 'Almost there', 'Finishing up'];
 
@@ -63,7 +66,7 @@ export default function TravelIntake() {
   // list — either way the destination step gets a real, non-empty list.
   const countryOptions = (travelPartnerCountries && travelPartnerCountries.length > 0)
     ? travelPartnerCountries
-    : SERVED_COUNTRIES;
+    : SERVED_COUNTRY_LIST;
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
