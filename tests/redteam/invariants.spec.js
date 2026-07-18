@@ -565,7 +565,23 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
     'generateItineraryCalendar',
   ];
 
-  const LEAKY = /\$\{[^}]*\b(patientName|clientName|client_name|patient_name|procedures|procedureDate|procedure_date|client_phone|patient_phone|amount|total|balance)\w*\}/;
+  // The identifier may sit anywhere inside the interpolation, not just at its
+  // end. `${(caseRecord.procedures || ['x']).join(' + ')}` is a leak, and an
+  // earlier `procedures\w*\}` anchor let exactly that through twice.
+  const LEAKY = /\$\{[^}]*\b(patientName|clientName|client_name|patient_name|procedures|procedureDate|procedure_date|client_phone|patient_phone)\b[^}]*\}/;
+
+  // Scan EVERY line, not only lines that look like `body:` / `title:`.
+  //
+  // The first version of this ratchet keyed on those field names and therefore
+  // missed iq200Pipeline, which interpolated the patient's procedure list into
+  // an HTML <div> inside a multi-line template literal — a real leak sitting in
+  // a file this test was reporting as clean. A ratchet that only checks the
+  // obvious shape gives false assurance, which is worse than no ratchet.
+  //
+  // In-platform writes are the only exemption: AuditLog rows, entity fields and
+  // calendar/PDF artefacts the patient downloads are not outbound notifications
+  // and legitimately carry full detail.
+  const IN_PLATFORM = /AuditLog|entities\.|\bdetails\s*:|prev_hash|resource_|actor_/;
 
   const offenders = [];
   for (const name of MIGRATED) {
@@ -574,11 +590,8 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
     const src = readFileSync(p, 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '');
-    // Only inspect what becomes an outbound body or subject.
     for (const line of src.split('\n')) {
-      if (!/\b(subject|body|line|title)\s*:/.test(line)) continue;
-      // AuditLog / entity writes stay in-platform and keep full detail.
-      if (/AuditLog|entities\.|details\s*:/.test(line)) continue;
+      if (IN_PLATFORM.test(line)) continue;
       if (LEAKY.test(line)) offenders.push(`${name}: ${line.trim().slice(0, 90)}`);
     }
   }

@@ -346,33 +346,11 @@ Deno.serve(createHandler(async ({ req }) => {
       const emailPromises = [];
 
       // 1. PATIENT - Luxury itinerary welcome package
-      const itineraryItems = [
-        ['✈️', 'Premium Flights', caseRecord.flight_details || 'Round-trip international flights'],
-        ['🏨', 'Luxury Accommodation', `${caseRecord.hotel_name || 'Premium hotel'} - ${caseRecord.hotel_address || 'Near treatment facility'}`],
-        ['🚗', 'Private Transfers', 'Airport transfers and clinic transportation'],
-      ];
-      const patientBodyHtml = `
-        <div style="padding:20px 22px;background:rgba(212,175,55,0.08);border-left:3px solid #D4AF37;border-radius:8px;margin:8px 0 28px;">
-          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(238,242,247,0.5);font-weight:700;">Your Procedure</div>
-          <div style="font-size:19px;font-weight:700;color:#D4AF37;margin:8px 0 4px;">${(caseRecord.procedures || ['Your Procedure']).join(' + ')}</div>
-          <div style="font-size:14px;color:rgba(238,242,247,0.7);">${caseRecord.procedure_country}</div>
-        </div>
-        <p style="margin:0 0 14px;font-size:12px;font-weight:700;color:#D4AF37;text-transform:uppercase;letter-spacing:1.5px;">Your Complete Itinerary</p>
-        <div style="margin-bottom:24px;">
-          ${itineraryItems.map(([icon, label, detail]) => `
-            <div style="padding:16px 18px;background:rgba(255,255,255,0.03);border:1px solid #2A3F4A;border-radius:8px;margin-bottom:10px;">
-              <div style="font-weight:700;color:#EEF2F7;font-size:14px;">${icon} ${label}</div>
-              <div style="font-size:13px;color:rgba(238,242,247,0.55);margin-top:4px;">${detail}</div>
-            </div>`).join('')}
-        </div>
-        <div style="padding:26px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:12px;text-align:center;">
-          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(238,242,247,0.5);font-weight:700;">Total Investment</div>
-          <div style="font-size:32px;font-weight:900;color:#D4AF37;margin:10px 0;">$${caseRecord.final_package_price?.toLocaleString() || '0'}</div>
-          <div style="display:inline-block;padding:7px 16px;background:#1a5c3a;color:#EEF2F7;border-radius:20px;font-size:12px;font-weight:700;">✓ PAID IN FULL</div>
-          ${caseRecord.consultation_fee_paid ? `<p style="margin-top:12px;font-size:12px;color:#D4AF37;font-weight:600;">Your $${caseRecord.consultation_fee_amount || 49}.00 consultation fee has been credited</p>` : ''}
-        </div>`;
-
-      // BUG-R9-01 FIX: asServiceRole for all email dispatches in process_payment (admin-triggered)
+      // The patient itinerary block that used to be built here (procedure list,
+      // hotel name and address, flight details) was dead code — assigned to
+      // patientBodyHtml and never sent. Removed rather than left in place: an
+      // unused HTML body full of PHI sitting next to a live SendEmail is an
+      // accident waiting for the next person who needs "a bit more detail".
       emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,

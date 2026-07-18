@@ -26,46 +26,6 @@ const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.
 const usd = (n: number) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const e   = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function paymentReleasedEmail({ partnerName, partnerType, patientName, amount, caseRef, handshake, dashboardUrl }: {
-  partnerName: string; partnerType: string; patientName: string; amount: number; caseRef: string; handshake: string; dashboardUrl: string;
-}) {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#29483d;padding:28px 32px;color:#fff;">
-  <div style="font-family:Georgia,serif;font-size:22px;">${BRAND}</div>
-  <div style="width:120px;height:1px;background:linear-gradient(to right,transparent,${GOLD},transparent);margin:10px 0;"></div>
-  <div style="font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:${GOLD};">Payment Released — ${e(partnerType)}</div>
-</td></tr>
-<tr><td style="padding:32px;">
-  <div style="font-size:28px;text-align:center;margin-bottom:16px;">💰</div>
-  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#13221d;text-align:center;">Payment confirmed, ${e(partnerName)}.</h1>
-  <p style="margin:0 0 24px;font-size:15px;color:#40514a;line-height:1.7;text-align:center;">
-    The patient has successfully completed their checkpoint. Your payment has been released from escrow.
-  </p>
-
-  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:20px;margin-bottom:24px;text-align:center;">
-    <div style="font-size:32px;font-weight:700;color:#166534;">${usd(amount)}</div>
-    <div style="font-size:13px;color:#166534;margin-top:4px;">Released to your account</div>
-  </div>
-
-  <table width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin-bottom:24px;">
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;width:40%;">Patient</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:700;">${e(patientName)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Case Reference</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${e(caseRef)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Release Trigger</td><td style="padding:10px 0;color:#13221d;font-size:14px;">${e(handshake)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Cleared</td><td style="padding:10px 0;color:#166534;font-size:14px;font-weight:700;">✓ 24 hours after checkpoint</td></tr>
-  </table>
-
-  <p style="margin:0 0 20px;font-size:13px;color:#40514a;line-height:1.6;">
-    Funds are being processed and will appear in your account within 3–5 business days depending on your bank. If you have any questions, please contact us and reference your case number above.
-  </p>
-  <a href="${e(dashboardUrl)}" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;">View My Dashboard →</a>
-  <p style="margin:24px 0 0;font-size:13px;color:#64746d;">Thank you for your exceptional service. It is partners like you who make the Morales standard possible.</p>
-  <p style="margin:10px 0 0;font-size:14px;color:#13221d;font-weight:700;">The Morales Concierge Team</p>
-</td></tr>
-</table></td></tr></table></body></html>`;
-}
-
 const HS_LABELS: Record<number, string> = {
   1: 'HS1 — Driver Pickup confirmed',
   5: 'HS5 — Clinic Arrival confirmed',
@@ -133,7 +93,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
             amount:      String(Math.round(hold.amount_held_usd * 100)),
             currency:    'usd',
             destination: hold.stripe_connected_account,
-            description: `Morales escrow release — ${patientName} — ${hsLabel} — Case ${caseRef}`,
+            // Stripe is a third party. A transfer description is visible in
+            // their dashboard, in exports, in webhook payloads and in their
+            // logs — so it must not carry the patient's name. The case
+            // reference is enough to reconcile, and it resolves to a person
+            // only inside M.
+            description: `Morales escrow release — ${hsLabel} — Case ${caseRef}`,
           }).toString(),
         });
         if (transferResp.ok) {

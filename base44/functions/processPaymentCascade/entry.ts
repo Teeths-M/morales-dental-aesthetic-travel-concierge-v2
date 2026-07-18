@@ -90,9 +90,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: c.doctor_email,
         subject: `Patient Confirmed & Paid | ${BRAND}`,
-        body: activationEmail({ partnerName: 'Doctor', role: 'Doctor', patientName, procedureDate, caseRef,
-          message: `${patientName} has paid in full and is confirmed for their procedure. Please prepare your consultation and procedure notes. All logistics are now being finalised.`,
-          ctaUrl: `${APP_URL}/doctor-dashboard`, ctaLabel: 'Open My Dashboard →' }),
+        body: activationEmail({ partnerName: 'Doctor', role: 'Doctor',           ctaUrl: `${APP_URL}/doctor-dashboard`, ctaLabel: 'Open My Dashboard →' }),
       }));
       cascaded.push('doctor');
     }
@@ -102,9 +100,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: driver.email,
         subject: `Transfer Confirmed | ${BRAND}`,
-        body: activationEmail({ partnerName: driver.driver_name || driver.company_name || 'Driver', role: 'Chauffeur', patientName, procedureDate, caseRef,
-          message: `${patientName}'s payment is confirmed. Your transfer services are now active. Please review the pickup schedule and confirm your availability for all transfer legs.`,
-          ctaUrl: `${APP_URL}/portal/transfer?case=${case_id}`, ctaLabel: 'View Transfer Details →' }),
+        body: activationEmail({ partnerName: driver.driver_name || driver.company_name || 'Driver', role: 'Chauffeur',           ctaUrl: `${APP_URL}/portal/transfer?case=${case_id}`, ctaLabel: 'View Transfer Details →' }),
       }));
       cascaded.push('driver');
     }
@@ -114,9 +110,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: companion.email,
         subject: `Companion Assignment Confirmed | ${BRAND}`,
-        body: activationEmail({ partnerName: companion.full_name || companion.email, role: 'Companion', patientName, procedureDate, caseRef,
-          message: `${patientName}'s journey is confirmed. You are assigned as their recovery companion. Please review the patient's dietary brief and be available from the procedure date onwards.`,
-          ctaUrl: `${APP_URL}/companion-dashboard`, ctaLabel: 'Open Companion Dashboard →' }),
+        body: activationEmail({ partnerName: companion.full_name || companion.email, role: 'Companion',           ctaUrl: `${APP_URL}/companion-dashboard`, ctaLabel: 'Open Companion Dashboard →' }),
       }));
       // Also send companion meal brief
       dispatches.push(base44.asServiceRole.functions?.invoke?.('sendCompanionMealBrief', { case_id, companion_email: companion.email }).catch(() => {}));
@@ -131,9 +125,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: agency.email,
         subject: `Travel Booking Confirmed | ${BRAND}`,
-        body: activationEmail({ partnerName: agency.agency_name || agency.email, role: 'Travel Agency', patientName, procedureDate, caseRef,
-          message: `${patientName} has made a 50% deposit. Please proceed with booking their flights and hotel. Full payment will be made before the departure date.`,
-          ctaUrl: `${APP_URL}/portal/travel?case=${case_id}`, ctaLabel: 'Start Travel Booking →' }),
+        body: activationEmail({ partnerName: agency.agency_name || agency.email, role: 'Travel Agency',           ctaUrl: `${APP_URL}/portal/travel?case=${case_id}`, ctaLabel: 'Start Travel Booking →' }),
       }));
       cascaded.push('travel_agency');
     }
@@ -143,9 +135,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: c.doctor_email,
         subject: `Patient Deposit Received (Balance Pending) | ${BRAND}`,
-        body: activationEmail({ partnerName: 'Doctor', role: 'Doctor', patientName, procedureDate, caseRef,
-          message: `${patientName} has paid a 50% deposit and confirmed their intent to proceed. Travel is being arranged. You will receive full activation once the balance is paid (typically 7+ days before the procedure).`,
-          ctaUrl: `${APP_URL}/doctor-dashboard`, ctaLabel: 'View Case →' }),
+        body: activationEmail({ partnerName: 'Doctor', role: 'Doctor',           ctaUrl: `${APP_URL}/doctor-dashboard`, ctaLabel: 'View Case →' }),
       }));
       // Doctor marked as sent even for info email — they get full activation on balance
       cascaded.push('doctor_info');
@@ -158,9 +148,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: agency.email,
         subject: `Travel Booking Confirmed | ${BRAND}`,
-        body: activationEmail({ partnerName: agency.agency_name || agency.email, role: 'Travel Agency', patientName, procedureDate, caseRef,
-          message: `${patientName}'s payment is confirmed. Please finalise and book their flights and hotel package. All details are in your portal.`,
-          ctaUrl: `${APP_URL}/portal/travel?case=${case_id}`, ctaLabel: 'Start Booking →' }),
+        body: activationEmail({ partnerName: agency.agency_name || agency.email, role: 'Travel Agency',           ctaUrl: `${APP_URL}/portal/travel?case=${case_id}`, ctaLabel: 'Start Booking →' }),
       }));
       cascaded.push('travel_agency');
     }

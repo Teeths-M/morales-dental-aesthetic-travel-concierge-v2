@@ -55,7 +55,7 @@ function buildICS(patientName: string, events: ICSEvent[]): string {
     `PRODID:-//${BRAND}//Morales Journey Itinerary//EN`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:Morales Journey — ${patientName}`,
+    'X-WR-CALNAME:Morales Journey',
     'X-WR-TIMEZONE:UTC',
     ...events.flatMap(ev => [
       'BEGIN:VEVENT',
@@ -156,8 +156,13 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       uid: uid('clinic'),
       start:    icsDate(procIso, '10:00'),
       end:      icsDate(procIso, '14:00'),
-      summary:  `🏥 Clinic Appointment — ${procedures}`,
-      description: `Your procedure with your Morales-assigned doctor.\n\nProcedure: ${procedures}\nDoctor: See your dashboard\n\nCase Ref: ${caseRef}\n\nIMPORTANT: Arrive 30 minutes early. Do not eat 6 hours before if anaesthesia is involved.`,
+      summary:  '🏥 Clinic Appointment',
+      // A .ics is imported into Google or Apple Calendar — a third party by
+      // definition — and then renders on a lock screen and in any shared
+      // calendar view. "Clinic Appointment — Tummy Tuck" tells a colleague
+      // glancing at a phone what someone is having done. The event stays; the
+      // procedure name moves into the dashboard.
+      description: `Your appointment with your Morales-assigned doctor. Full details are in your Morales dashboard.\n\nCase Ref: ${caseRef}\n\nIMPORTANT: Arrive 30 minutes early. Do not eat 6 hours before if anaesthesia is involved.`,
       location: c.clinic_selected || dest,
     });
 
