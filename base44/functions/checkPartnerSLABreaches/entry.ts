@@ -1,5 +1,6 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { cronAuthorized } from '../_shared/cronAuth.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 /**
  * checkPartnerSLABreaches — Uber Auto-Rerouting Model
@@ -17,7 +18,7 @@ import { cronAuthorized } from '../_shared/cronAuth.ts';
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
-const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — was previously
 // unsigned and would fail that verification (portal link non-functional).
@@ -29,37 +30,6 @@ async function makeToken(caseId: string, partnerId: string, portalType: string) 
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
   const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
   return btoa(data) + '.' + sigHex;
-}
-
-function escalationEmail({ partnerType, patientName, caseRef, reason, portalUrl }: {
-  partnerType: string; patientName: string; caseRef: string; reason: string; portalUrl: string;
-}) {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#29483d;padding:24px 32px;color:#fff;">
-  <div style="font-family:Georgia,serif;font-size:20px;">${BRAND}</div>
-  <div style="margin-top:8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#d9c19b;">Backup Partner Request — SLA Escalation</div>
-</td></tr>
-<tr><td style="padding:28px 32px;">
-  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#13221d;">Urgent: Quote needed for ${e(patientName)}</h1>
-  <div style="background:#fff8ed;border-left:4px solid #e8a020;padding:12px 16px;border-radius:0 10px 10px 0;margin-bottom:20px;">
-    <p style="margin:0;font-size:13px;color:#92400e;">${e(reason)}</p>
-  </div>
-  <p style="margin:0 0 20px;font-size:14px;color:#40514a;line-height:1.7;">
-    We are reaching out to you as a backup ${e(partnerType)} partner. A previous partner did not respond within our service window, and we need your support to ensure this patient's journey stays on track.
-    Please submit your availability and pricing as soon as possible.
-  </p>
-  <table width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin-bottom:20px;">
-    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;width:40%;">Patient</td><td style="padding:8px 0;color:#13221d;font-size:14px;font-weight:700;">${e(patientName)}</td></tr>
-    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Case Reference</td><td style="padding:8px 0;color:#13221d;font-size:14px;font-weight:600;">${e(caseRef)}</td></tr>
-    <tr><td style="padding:8px 0;color:#64746d;font-size:13px;">Priority</td><td style="padding:8px 0;color:#dc2626;font-size:14px;font-weight:700;">⚡ URGENT — Response needed within 12 hours</td></tr>
-  </table>
-  <a href="${e(portalUrl)}" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-size:14px;font-weight:700;">Submit Quote Now →</a>
-  <p style="margin:20px 0 0;font-size:12px;color:#64746d;">If you are unable to fulfil this request, please reply to this email immediately so we can reassign.</p>
-  <p style="margin:10px 0 0;font-size:13px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
-</td></tr>
-</table></td></tr></table></body></html>`;
 }
 
 Deno.serve(async (req) => {
@@ -99,17 +69,28 @@ Deno.serve(async (req) => {
         if (backup?.email) {
           const token  = await makeToken(c.id, backup.id, 'travel');
           const url    = `${APP_URL}/portal/travel?token=${token}`;
-          const reason = `The previously contacted travel agency did not respond to their quote request within 24 hours for patient ${patientName}.`;
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: backup.email,
-            subject: `⚡ Urgent quote request (backup) — ${patientName} | ${BRAND}`,
-            body: escalationEmail({ partnerType: 'travel agency', patientName, caseRef, reason, portalUrl: url }),
+            subject: `Urgent: a quote request needs a response | ${BRAND}`,
+            body: linkOnlyEmail({
+              from: 'checkPartnerSLABreaches/travel-backup',
+              title: 'Urgent: a quote request needs a response.',
+              line: 'A travel booking needs pricing urgently — the partner first contacted did not respond in time. Open your portal to review it and submit your quote.',
+              ctaLabel: 'Submit My Quote',
+              ctaUrl: url,
+            }),
           }));
           if (adminEmail) {
             tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
               from_name: BRAND, to: adminEmail,
-              subject: `SLA Alert: Travel agency unresponsive — ${patientName} (${caseRef})`,
-              body: `<p>The travel agency for case <strong>${caseRef}</strong> (${patientName}) has not responded within 24 hours. A backup partner (${backup.agency_name || backup.email}) has been automatically dispatched.</p>`,
+              subject: `SLA alert: a partner is unresponsive | ${BRAND}`,
+              body: linkOnlyEmail({
+                from: 'checkPartnerSLABreaches/admin',
+                title: 'A travel partner missed their 24-hour SLA.',
+                line: 'A backup partner has been dispatched automatically. Open the admin console to review the case.',
+                ctaLabel: 'Review In Console',
+                ctaUrl: `${APP_URL}/admin/cases`,
+              }),
             }));
           }
           tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, {
@@ -127,11 +108,16 @@ Deno.serve(async (req) => {
         if (backup?.email) {
           const token  = await makeToken(c.id, backup.id, 'transfer');
           const url    = `${APP_URL}/portal/transfer?token=${token}`;
-          const reason = `The previously contacted chauffeur service did not respond to their transfer quote request within 24 hours for patient ${patientName}.`;
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: backup.email,
-            subject: `⚡ Urgent transfer quote (backup) — ${patientName} | ${BRAND}`,
-            body: escalationEmail({ partnerType: 'chauffeur', patientName, caseRef, reason, portalUrl: url }),
+            subject: `Urgent: a transfer quote needs a response | ${BRAND}`,
+            body: linkOnlyEmail({
+              from: 'checkPartnerSLABreaches/driver-backup',
+              title: 'Urgent: a quote request needs a response.',
+              line: 'A ground transfer needs pricing urgently — the partner first contacted did not respond in time. Open your portal to price the legs required.',
+              ctaLabel: 'Submit My Quote',
+              ctaUrl: url,
+            }),
           }));
           tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, { sla_breached_driver: true, backup_driver_id: backup.id }));
           escalations.push({ case_id: c.id, partner: 'driver', action: 'backup_dispatched' });
@@ -145,8 +131,14 @@ Deno.serve(async (req) => {
         if (backup?.email) {
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: backup.email,
-            subject: `⚡ Urgent companion request (backup) — ${patientName} | ${BRAND}`,
-            body: escalationEmail({ partnerType: 'companion', patientName, caseRef, reason: `A previous companion did not respond within 24 hours for patient ${patientName}.`, portalUrl: `${APP_URL}/companion-dashboard` }),
+            subject: `Urgent: a care assignment needs a response | ${BRAND}`,
+            body: linkOnlyEmail({
+              from: 'checkPartnerSLABreaches/companion-backup',
+              title: 'Urgent: a care assignment needs an answer.',
+              line: 'A recovery support assignment needs an answer urgently — the companion first contacted did not respond in time. Open your dashboard to review it.',
+              ctaLabel: 'Open Companion Dashboard',
+              ctaUrl: `${APP_URL}/companion-dashboard`,
+            }),
           }));
           tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, { sla_breached_companion: true }));
           escalations.push({ case_id: c.id, partner: 'companion', action: 'backup_dispatched' });
@@ -159,10 +151,14 @@ Deno.serve(async (req) => {
         if (anyStillPending && adminEmail) {
           tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
             from_name: BRAND, to: adminEmail,
-            subject: `🚨 HUMAN INTERVENTION REQUIRED — ${patientName} (${caseRef})`,
-            body: `<p>48 hours have passed since partner quotas were requested for case <strong>${caseRef}</strong> (${patientName}). Some partners remain unconfirmed despite backup dispatch. Manual intervention is required.</p>
-            <p>Pending: Travel=${c.itinerary_status}, Driver=${c.transfer_status}, Companion=${c.companion_quote_status}, Clinic=${c.clinic_quote_status}</p>
-            <p><a href="${APP_URL}/admin/cases/${c.id}">View Case in Admin →</a></p>`,
+            subject: `Human intervention required on a case | ${BRAND}`,
+            body: linkOnlyEmail({
+              from: 'checkPartnerSLABreaches/admin-48h',
+              title: 'A case has gone 48 hours without full partner confirmation.',
+              line: 'Backup dispatch has not resolved it and some partners remain unconfirmed. Open the admin console to intervene.',
+              ctaLabel: 'Open Admin Console',
+              ctaUrl: `${APP_URL}/admin/cases`,
+            }),
           }));
           tasks.push(base44.asServiceRole.entities.CaseRecord.update(c.id, {
             fallback_state: { ...(c.fallback_state || {}), human_intervention_required: true, human_intervention_triggered_at: new Date().toISOString() },

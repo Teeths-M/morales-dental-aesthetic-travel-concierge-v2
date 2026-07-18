@@ -557,6 +557,7 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
   const MIGRATED = [
     'sendTravelCountdownReminders',
     'requestPartnerQuotas',
+    'checkPartnerSLABreaches',
     'sendQuoteReminders',
     'iq200Pipeline',
     'processPaymentCascade',
