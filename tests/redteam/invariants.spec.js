@@ -583,3 +583,80 @@ test('COMMS: migrated senders do not re-leak identity into a body', () => {
   }
   expect(offenders, `outbound bodies carrying private data:\n${offenders.join('\n')}`).toEqual([]);
 });
+
+test('COVERT SOS: the documented trigger works on every page, and outranks the blocker', () => {
+  // SoloCheckInSettings promises "type MORALESHELP in any search/text field".
+  // The detector existed but was mounted only in Dashboard, so on the emergency
+  // hub, the booking flow or the nearby-help map it did nothing — those being
+  // the screens someone in trouble is most likely to be looking at.
+  const layout = read('src/components/layout/AppLayout.jsx');
+  expect(layout, 'the detector must be mounted at the layout, not one page')
+    .toContain('useCovertSOS');
+
+  const hook = read('src/hooks/useCovertSOS.js');
+  // Two live instances both listen on `document`; a ref-local cooldown would
+  // let one gesture dispatch two SOS calls.
+  expect(hook, 'the cooldown must be shared across instances').toContain('recentlyFired');
+  // ...but it must fail toward firing. A duplicate SOS is an annoyance; a
+  // suppressed one is a person nobody comes for.
+  const fallback = hook.slice(hook.indexOf('function recentlyFired'), hook.indexOf('function markFired'));
+  expect(fallback, 'a storage failure must not suppress the dispatch').toContain('return false');
+
+  // The blocker must never swallow the duress keyword: it is checked before
+  // every other rule, and a message containing it is returned untouched even
+  // when it also trips contact-sharing.
+  const engine = read('base44/functions/_shared/violationEngine.ts');
+  const covertIdx = engine.indexOf('COVERT_SOS.test');
+  const offPlatformIdx = engine.indexOf('OFF_PLATFORM)');
+  expect(covertIdx, 'covert SOS check must exist').toBeGreaterThan(-1);
+  expect(covertIdx, 'covert SOS must be evaluated before any blocking rule')
+    .toBeLessThan(offPlatformIdx);
+
+  // Safety scopes are never blocked — losing a check-in is a safety event.
+  expect(engine, 'safety scope must short-circuit to allow').toMatch(/scope === 'safety'/);
+});
+
+test('BLOCKER: a flag never closes a safety path', () => {
+  // Decision (Portia, 2026-07-18): lockout covers commercial features only.
+  // Handshakes are the 9-point safety spine and checkStaleLiveLocations
+  // escalates on silence — restricting a flagged patient's check-ins would
+  // manufacture a "patient in trouble" signal from someone who is fine, and
+  // leave someone who IS in trouble unable to confirm anything.
+  const src = read('base44/functions/_shared/blocker.ts');
+
+  for (const feature of ['checkin', 'handshake', 'sos', 'covert_sos', 'emergency_contacts', 'location_sharing']) {
+    expect(src, `${feature} must be permanently open`).toContain(`'${feature}'`);
+  }
+
+  // No safety feature may appear in the restrictable list.
+  const restrictable = src.slice(
+    src.indexOf('RESTRICTABLE_FEATURES'),
+    src.indexOf('export type Feature'),
+  );
+  for (const safety of ['checkin', 'handshake', 'sos', 'emergency', 'location_sharing', 'guardian', 'vault']) {
+    expect(restrictable, `${safety} must never be restrictable`).not.toContain(safety);
+  }
+
+  // The safety check must short-circuit BEFORE the flag is read, so a failing
+  // lookup or a network error can never close a safety path.
+  const fn = src.slice(src.indexOf('export async function featureAllowed'), src.indexOf('async function getFlag'));
+  expect(fn.indexOf('ALWAYS_OPEN.has'), 'safety check must exist').toBeGreaterThan(-1);
+  expect(
+    fn.indexOf('ALWAYS_OPEN.has'),
+    'safety features must be cleared before any flag lookup',
+  ).toBeLessThan(fn.indexOf('getFlag(base44'));
+
+  // The guarantee is recorded as data, not just enforced in code.
+  expect(src, 'every flag write must record safety_paths_open').toContain('safety_paths_open: true');
+  const entity = read('base44/entities/AccountFlag.jsonc');
+  expect(entity, 'the entity must carry the invariant').toContain('safety_paths_open');
+
+  // Covert SOS must never be blocked or escalated by the middleware.
+  const guard = src.slice(src.indexOf('export async function guardText'));
+  const covertIdx = guard.indexOf('result.covertSos');
+  const blockIdx = guard.indexOf("result.severity === 'allow'");
+  expect(covertIdx, 'covert SOS must be handled first').toBeLessThan(blockIdx);
+
+  // A block must not throw — a throw on a safety-adjacent path loses a check-in.
+  expect(guard, 'guardText must return a decision, not throw').not.toMatch(/throw new/);
+});

@@ -12,6 +12,7 @@ import FloatingCheckInAlert from '@/components/solo/FloatingCheckInAlert';
 import GlobalNotificationStack from '@/components/notifications/GlobalNotificationStack';
 import GlobalEventBroadcaster from '@/components/notifications/GlobalEventBroadcaster';
 import { useGeoAutoAlign } from '@/hooks/useGeoAutoAlign';
+import { useCovertSOS } from '@/hooks/useCovertSOS';
 import { initGlobalSyncListener, registerSyncQueue } from '@/lib/offlineSyncController';
 import FirstTimeOnboarding, { isOnboardingComplete } from '@/components/onboarding/FirstTimeOnboarding';
 import { SystemPauseBanner } from '@/components/admin/SystemPauseToggle';
@@ -26,6 +27,19 @@ export default function AppLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
   useGeoAutoAlign();
+
+  // Covert SOS — mounted at the LAYOUT so the 5-tap gesture and the
+  // MORALESHELP keyword work on every page. SoloCheckInSettings tells patients
+  // they can "type MORALESHELP in any search/text field", but the detector was
+  // only mounted in Dashboard.jsx — so on the emergency hub, the booking flow,
+  // the trip overview or the nearby-help map it did nothing at all. Those are
+  // the screens someone in trouble is most likely to be looking at.
+  //
+  // Dashboard still mounts its own instance because it can pass a cached GPS
+  // fix; the cooldown inside the hook is shared through localStorage so the two
+  // instances cannot dispatch twice for one gesture. Both respect the
+  // patient's arming switch — an unarmed account is unaffected.
+  useCovertSOS({ caseId: null, currentLocation: null, enabled: !!user });
 
   // Initialize the global offline sync controller once on mount.
   // Registers the vault sync queue so pending vault actions are flushed

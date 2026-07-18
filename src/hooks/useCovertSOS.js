@@ -18,10 +18,33 @@ import { useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 
 const STORAGE_KEY   = 'morales_covert_sos_enabled';
+const FIRE_KEY      = 'morales_covert_last_fire';
 const TAP_THRESHOLD = 5;       // taps required
 const TAP_WINDOW_MS = 2000;    // window in ms
 const COOLDOWN_MS   = 30_000;  // prevent double-fire (30s cooldown)
 const KEYWORD       = 'moraleshelp';
+
+/**
+ * The cooldown is shared across hook instances and tabs, not just held in a
+ * ref. The detector is mounted globally in AppLayout (so the documented "type
+ * MORALESHELP in any text field" works on every page) AND on the Dashboard,
+ * which passes a cached GPS fix. Two live instances both listen on `document`,
+ * so a ref-local cooldown would let one gesture fire two SOS dispatches.
+ *
+ * Fails toward FIRING: if localStorage is unavailable we fall back to the ref
+ * alone and risk a duplicate. A duplicate SOS is an annoyance; a suppressed one
+ * is a person nobody comes for.
+ */
+function recentlyFired() {
+  try {
+    const last = Number(localStorage.getItem(FIRE_KEY) || 0);
+    return Number.isFinite(last) && Date.now() - last < COOLDOWN_MS;
+  } catch { return false; }
+}
+
+function markFired() {
+  try { localStorage.setItem(FIRE_KEY, String(Date.now())); } catch { /* ref-only fallback */ }
+}
 
 export function isCovertSOSEnabled() {
   try { return localStorage.getItem(STORAGE_KEY) === 'true'; } catch { return false; }
@@ -44,9 +67,11 @@ export function useCovertSOS({ caseId, currentLocation, enabled = true }) {
     if (!enabled)              return;
     if (firingRef.current)     return;
     if (now - lastFireRef.current < COOLDOWN_MS) return;
+    if (recentlyFired())       return;   // another instance/tab already dispatched
 
     firingRef.current  = true;
     lastFireRef.current = now;
+    markFired();
 
     // Silently grab GPS if available
     let lat = currentLocation?.lat ?? null;
