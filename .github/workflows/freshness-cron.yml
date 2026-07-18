@@ -74,6 +74,8 @@ jobs:
             call verifyClinicStatus
             call reVerifyDoctorCredentials
             call detectRegulatoryChanges
+            # Marketplace: chase doctors who were invited to quote but haven't yet (link-only).
+            call remindPendingQuotes
             # On manual runs, also refresh visa so a full pass is one click.
             if [ "$MANUAL" = "true" ]; then call recheckVisaRequirements; fi
           fi

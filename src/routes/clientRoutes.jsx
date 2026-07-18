@@ -30,6 +30,7 @@ const WildernessSafetyMode   = lazy(() => import('@/pages/WildernessSafetyMode')
 const MedicalIntakeForm      = lazy(() => import('@/pages/MedicalIntakeForm'));
 const EmergencyMedCard       = lazy(() => import('@/pages/EmergencyMedCard'));
 const DischargePaperReader   = lazy(() => import('@/pages/DischargePaperReader'));
+const MyQuotes               = lazy(() => import('@/pages/MyQuotes'));
 
 const CHECKOUT_ROLES = [
   ROLES.CLIENT, ROLES.USER, ROLES.PLATFORM_ADMIN, ROLES.ADMIN,
@@ -66,6 +67,7 @@ export const clientRoutes = (
       <Route path="/wilderness-safety"           element={<ErrorBoundary><WildernessSafetyMode /></ErrorBoundary>} />
       <Route path="/medical-intake"              element={<ErrorBoundary><MedicalIntakeForm /></ErrorBoundary>} />
       <Route path="/discharge-reader"            element={<ErrorBoundary><DischargePaperReader /></ErrorBoundary>} />
+      <Route path="/my-quotes"                   element={<ErrorBoundary><MyQuotes /></ErrorBoundary>} />
     </Route>
     {/* Payment / estimate — shared with some partner roles */}
     <Route element={<ProtectedRoute allowedRoles={CHECKOUT_ROLES} />}>

@@ -178,176 +178,53 @@ Deno.serve(createHandler(async ({ req }) => {
         }).catch(e => console.error('[iq200Pipeline] Slack notify failed (non-fatal):', e.message));
       }
 
-      // ── SMART DOCTOR ROUTING: Country + Procedure Load Balancer ──────────────
-      // Skip if case is already held for high-risk review
-      let doctorAutoAssigned = false;
-      if (!consultation.high_risk_medical_review) {
-        const procedureInterest = consultation.procedure_interest || '';
-        const destinationCountry = (consultation.destination_country || consultation.procedure_country || '').toLowerCase().trim();
-
-        // Step 1: Find all active, verified doctors in the destination country
-        const allDoctors = await base44.asServiceRole.entities.Doctor.filter({ status: 'active' }, '-created_date', 100);
-        const countryDoctors = allDoctors.filter(d =>
-          (d.clinic_country || '').toLowerCase().trim() === destinationCountry
-        );
-
-        // Step 2: Filter further by procedure specialty (if specialty data exists)
-        let specialtyDoctors = [];
-        if (countryDoctors.length > 0) {
-          const specialties = await base44.asServiceRole.entities.DoctorSpecialty.filter({}, '-created_date', 500);
-          const procedureSpecialists = specialties
-            .filter(s => s.procedure_name && procedureInterest &&
-              (s.procedure_name.toLowerCase().replace(/_/g, ' ').includes(procedureInterest.replace(/_/g, ' ')) ||
-               procedureInterest.includes(s.procedure_name.toLowerCase().replace(/ /g, '_'))))
-            .map(s => s.doctor_id);
-
-          specialtyDoctors = countryDoctors.filter(d => procedureSpecialists.includes(d.id));
-        }
-
-        // Step 3: Pick the best pool — specialty match preferred, country fallback
-        const candidatePool = specialtyDoctors.length > 0 ? specialtyDoctors : countryDoctors;
-
-        if (candidatePool.length > 0) {
-          // Step 4: Load balance — pick doctor with fewest active cases
-          const activeCases = await base44.asServiceRole.entities.CaseRecord.filter(
-            { status: 'Doctor-Pending' }, '-created_date', 200
-          );
-          const caseCountByDoctor = {};
-          for (const c of activeCases) {
-            if (c.doctor_email) {
-              caseCountByDoctor[c.doctor_email] = (caseCountByDoctor[c.doctor_email] || 0) + 1;
-            }
-          }
-
-          // Sort by current load (ascending), then by rating (descending)
-          const sorted = [...candidatePool].sort((a, b) => {
-            const loadA = caseCountByDoctor[a.email] || 0;
-            const loadB = caseCountByDoctor[b.email] || 0;
-            if (loadA !== loadB) return loadA - loadB;
-            return (b.rating || 0) - (a.rating || 0);
-          });
-
-          const assignedDoctor = sorted[0];
-          doctorAutoAssigned = true;
-
-          await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-            doctor_selected: assignedDoctor.full_name,
-            doctor_email: assignedDoctor.email,
-            clinic_selected: assignedDoctor.clinic_name || '',
-            procedure_country: assignedDoctor.clinic_country || caseRecord.procedure_country,
-            status: 'Doctor-Pending',
-            doctor_confirmation_status: 'PENDING',
-            doctor_notified_at: new Date().toISOString(),
-            timeline_log: [
-              ...(caseRecord.timeline_log || []),
-              {
-                timestamp: new Date().toISOString(),
-                action: 'auto_assigned',
-                details: `${assignedDoctor.full_name} auto-assigned via load balancer — ${assignedDoctor.clinic_country}, active cases: ${caseCountByDoctor[assignedDoctor.email] || 0}, pool size: ${candidatePool.length}`
-              }
-            ]
-          });
-
-          // Fire-and-forget Slack alert — never blocks the pipeline
-          base44.functions.invoke('notifySlackAssignment', {
-            doctor_name: assignedDoctor.full_name,
-            doctor_email: assignedDoctor.email,
-            patient_name: consultation.patient_name,
-            procedure: consultation.procedure_interest,
-            country: assignedDoctor.clinic_country || destinationCountry,
-            case_id: caseRecord.id,
-            pool_size: candidatePool.length,
-            active_cases: caseCountByDoctor[assignedDoctor.email] || 0,
-          }).catch(e => console.error('[iq200Pipeline] Slack assignment notify failed (non-fatal):', e.message));
-        } else {
-          // No doctor found for this country/procedure — fallback to DefaultDoctorConfig
-          const defaultDoctorConfigs = await base44.asServiceRole.entities.DefaultDoctorConfig.filter({ is_active: true });
-          const defaultDoctor = defaultDoctorConfigs.find(d =>
-            !d.procedure_country || (d.procedure_country || '').toLowerCase().includes(destinationCountry)
-          ) || defaultDoctorConfigs[0];
-
-          if (defaultDoctor) {
-            doctorAutoAssigned = true;
-            await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-              doctor_selected: defaultDoctor.doctor_name,
-              doctor_email: defaultDoctor.doctor_email,
-              clinic_selected: defaultDoctor.clinic_name || '',
-              procedure_country: defaultDoctor.procedure_country || caseRecord.procedure_country,
-              treatment_cost: defaultDoctor.treatment_cost || 60,
-              status: 'Doctor-Pending',
-              doctor_confirmation_status: 'PENDING',
-              doctor_notified_at: new Date().toISOString(),
-              timeline_log: [
-                ...(caseRecord.timeline_log || []),
-                {
-                  timestamp: new Date().toISOString(),
-                  action: 'auto_assigned_fallback',
-                  details: `${defaultDoctor.doctor_name} assigned via fallback config — no active doctors found for ${destinationCountry}`
-                }
-              ]
-            });
-
-            // Fire-and-forget Slack alert for fallback assignment
-            base44.functions.invoke('notifySlackAssignment', {
-              doctor_name: defaultDoctor.doctor_name,
-              doctor_email: defaultDoctor.doctor_email,
-              patient_name: consultation.patient_name,
-              procedure: consultation.procedure_interest,
-              country: destinationCountry,
-              case_id: caseRecord.id,
-              pool_size: 0,
-              active_cases: 0,
-            }).catch(e => console.error('[iq200Pipeline] Slack fallback notify failed (non-fatal):', e.message));
-          } else {
-            // No doctor anywhere — alert admin
-            console.error(`[iQ200] No doctor found for country="${destinationCountry}" procedure="${procedureInterest}" on case ${caseRecord.id}`);
-            const adminEmail = Deno.env.get('ADMIN_EMAIL');
-            if (adminEmail) {
-              base44.asServiceRole.integrations.Core.SendEmail({
-                from_name: 'iQ200 Routing Alert',
-                to: adminEmail,
-                subject: `⚠️ No Doctor Found — ${destinationCountry} / ${procedureInterest}`,
-                body: `<p>Case <strong>${caseRecord.id}</strong> for <strong>${caseRecord.client_name}</strong> could not be auto-assigned.</p><p><strong>Country:</strong> ${destinationCountry}<br><strong>Procedure:</strong> ${procedureInterest}</p><p>No active verified doctor exists for this region. Please assign manually in the Admin Portal.</p>`,
-              }).catch(() => {});
-            }
-          }
-        }
-      }
-
-      // Trigger SAFE-T4LIFE scan
+      // ── SAFETY-FIRST: deterministic Safe-T scan BEFORE any doctor is contacted ─
+      // MARKETPLACE MODEL: the old single-doctor auto-assignment / load-balancer was
+      // removed. After Safe-T clears, matched specialist doctors are INVITED to quote
+      // and the PATIENT chooses (requestDoctorQuotes → selectDoctorQuote). No doctor is
+      // contacted, and no proposal is sent, until Safe-T has genuinely cleared.
       try {
         await base44.functions.invoke('safeT4LifeScan', { caseId: caseRecord.id });
       } catch (scanError) {
         console.error('SAFE-T scan failed:', scanError);
       }
 
-      // AUTO-GENERATE PROPOSAL TOKEN (clean alphanumeric only - no timestamps or random hashes)
-      // SAFETY FIX: this used to run unconditionally, silently overwriting the
-      // 'Admin-Review' hold set above for high-risk cases back to 'Proposal-Sent' a few
-      // lines later — a flagged high-risk case would incorrectly proceed to "proposal
-      // sent" before any admin ever cleared it. The token itself is harmless to generate
-      // early (useful once the admin does clear it), but the status/proposal_sent_at
-      // fields must never override an active high-risk hold.
-      const proposalToken = `prop_${caseRecord.id}`;
-      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, {
-        proposal_token: proposalToken,
-        ...(consultation.high_risk_medical_review === true
-          ? {}
-          : { proposal_sent_at: new Date().toISOString(), status: 'Proposal-Sent' }),
-      });
+      // Re-read the authoritative safe_t_result the scan wrote to the case.
+      const scanned = await base44.asServiceRole.entities.CaseRecord.get(caseRecord.id).catch(() => caseRecord);
+      const safeTCleared = scanned?.safe_t_result === 'PASSED';
 
-      const appUrl = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
-      const proposalUrl = `${appUrl}/portal/proposal/${proposalToken}`;
+      // A harmless proposal token for later. The proposal is now sent only AFTER the
+      // patient picks a doctor and the package is assembled — NEVER here. Status is no
+      // longer advanced to 'Proposal-Sent' at case creation.
+      const proposalToken = `prop_${caseRecord.id}`;
+      await base44.asServiceRole.entities.CaseRecord.update(caseRecord.id, { proposal_token: proposalToken }).catch(() => {});
+
+      // ── MARKETPLACE FAN-OUT — FAIL-CLOSED ────────────────────────────────────
+      // Invite matched specialists to quote ONLY when Safe-T cleared AND the case is
+      // not held for high-risk review. Otherwise no doctor is contacted; the case waits
+      // for a human (Admin-Review) or a signed waiver. requestDoctorQuotes re-checks the
+      // same gate defensively.
+      let doctorsInvited = false;
+      if (safeTCleared && consultation.high_risk_medical_review !== true) {
+        try {
+          const r = await base44.functions.invoke('requestDoctorQuotes', { case_id: caseRecord.id });
+          doctorsInvited = !!(r?.data?.fanned_out ?? r?.fanned_out);
+        } catch (e) {
+          console.error('[iq200Pipeline] requestDoctorQuotes failed (non-fatal):', e.message);
+        }
+      }
 
       return Response.json({
         status: 'CREATED',
         case_id: caseRecord.id,
         proposal_token: proposalToken,
-        proposal_url: proposalUrl,
-        doctor_auto_assigned: doctorAutoAssigned,
-        message: doctorAutoAssigned
-          ? 'Case created, doctor auto-assigned, SAFE-T review initiated, proposal generated'
-          : 'Case created, SAFE-T review initiated, proposal generated'
+        safe_t_result: scanned?.safe_t_result || 'PENDING',
+        doctors_invited: doctorsInvited,
+        message: doctorsInvited
+          ? 'Case created. Safe-T cleared — matched specialist doctors invited to quote; the patient will choose.'
+          : (consultation.high_risk_medical_review === true
+            ? 'Case created and held for Senior Medical Review — no doctor contacted.'
+            : 'Case created. Safe-T review initiated — no doctor contacted until it clears.'),
       });
     }
 

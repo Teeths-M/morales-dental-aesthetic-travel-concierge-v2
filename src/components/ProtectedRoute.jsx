@@ -69,6 +69,13 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
     }
   }, [authChecked, isLoadingAuth, checkUserAuth]);
 
+  // Preserve the return URL through login. The <LoginRequired> button used to pass
+  // onClick straight to navigateToLogin, handing it a click event instead of a URL —
+  // navigateToLogin's string guard then fell back to /dashboard, so a partner or
+  // patient who clicked an emailed deep-link while logged out lost the page they were
+  // sent to. Capture the full current URL so they land exactly where they were headed.
+  const handleLogin = () => navigateToLogin(window.location.href);
+
   if (isLoadingAuth || !authChecked) {
     return fallback;
   }
@@ -77,11 +84,11 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     }
-    return unauthenticatedElement || <LoginRequired onLogin={navigateToLogin} />;
+    return unauthenticatedElement || <LoginRequired onLogin={handleLogin} />;
   }
 
   if (!isAuthenticated) {
-    return unauthenticatedElement || <LoginRequired onLogin={navigateToLogin} />;
+    return unauthenticatedElement || <LoginRequired onLogin={handleLogin} />;
   }
 
   if (allowedRoles?.length && !user?.isPreviewAdmin && !hasAnyRole(user?.role, allowedRoles)) {

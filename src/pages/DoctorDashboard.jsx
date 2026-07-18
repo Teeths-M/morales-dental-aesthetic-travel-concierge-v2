@@ -12,6 +12,7 @@ import DoctorPricingManager from '@/components/doctor-dashboard/DoctorPricingMan
 import DoctorAvailabilityCalendar from '@/components/doctor-dashboard/DoctorAvailabilityCalendar';
 import ProcedureRequestForm from '@/components/doctor-dashboard/ProcedureRequestForm';
 import DoctorVerificationPanel from '@/components/doctor/DoctorVerificationPanel';
+import DoctorQuoteInbox from '@/components/quotes/DoctorQuoteInbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { motion } from 'framer-motion';
@@ -267,6 +268,7 @@ export default function DoctorDashboard() {
                     </span>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="quote-requests">Pricing Requests</TabsTrigger>
                 <TabsTrigger value="profile">My Profile</TabsTrigger>
                 <TabsTrigger value="availability">Availability Calendar</TabsTrigger>
                 <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
@@ -283,6 +285,15 @@ export default function DoctorDashboard() {
                 </TabsTrigger>
               </TabsList>
             </div>
+
+            {/* ── Pricing Requests Tab (competitive-quote marketplace) ────────── */}
+            <TabsContent value="quote-requests" className="p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <Stethoscope className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Pricing Requests</h2>
+              </div>
+              <DoctorQuoteInbox doctor={doctor} />
+            </TabsContent>
 
             {/* ── Active Patients Tab ─────────────────────────────────────────── */}
             <TabsContent value="patients" className="p-6">

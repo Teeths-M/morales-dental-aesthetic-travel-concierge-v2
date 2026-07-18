@@ -29,6 +29,10 @@ export const ALL_ROLES = Object.values(ROLES);
 export const CASE_STATUS = {
   SUBMITTED: 'Submitted',
   SAFE_T_REVIEWED: 'Safe-T-Reviewed',
+  // Competitive-quote marketplace: after Safe-T clears, the request is fanned out to
+  // matched specialist doctors and collects firm quotes until the patient chooses.
+  AWAITING_QUOTES: 'Awaiting-Quotes',
+  QUOTES_IN: 'Quotes-In',
   DOCTOR_PENDING: 'Doctor-Pending',
   VENDOR_PENDING: 'Vendor-Pending',
   ADMIN_REVIEW: 'Admin-Review',

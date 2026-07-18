@@ -79,3 +79,99 @@ test('VERSIONING: medical overwrites route through reviseAndUpdate', () => {
     expect(src, `${fn} must version its overwrite`).toContain('reviseAndUpdate');
   }
 });
+
+// ── Marketplace (competitive doctor quotes) invariants ────────────────────────
+
+test('MARKETPLACE: requestDoctorQuotes fails CLOSED — no doctor contacted unless Safe-T PASSED', () => {
+  const src = read('base44/functions/requestDoctorQuotes/entry.ts');
+  const gateIdx = src.indexOf("safe_t_result !== 'PASSED'");
+  const createIdx = src.indexOf('DoctorQuote.create');
+  const emailIdx = src.indexOf('SendEmail');
+  expect(gateIdx, 'the PASSED gate must exist').toBeGreaterThan(-1);
+  expect(createIdx, 'quote creation must exist').toBeGreaterThan(-1);
+  expect(emailIdx, 'an outbound invite must exist').toBeGreaterThan(-1);
+  // The gate must precede any quote creation AND any outbound email.
+  expect(gateIdx, 'gate must precede quote creation').toBeLessThan(createIdx);
+  expect(gateIdx, 'gate must precede outreach').toBeLessThan(emailIdx);
+});
+
+test('MARKETPLACE: the doctor invite is LINK-ONLY — no patient identity/procedure/price in the email', () => {
+  const src = read('base44/functions/requestDoctorQuotes/entry.ts');
+  // The outbound body must be the generic template, keyed only on the portal URL.
+  expect(src).toContain('body: inviteEmail(portalUrl)');
+  // The template must not interpolate any patient/case data.
+  const start = src.indexOf('function inviteEmail');
+  const body = src.slice(start, src.indexOf('Deno.serve'));
+  for (const leak of ['client_name', 'patient_first_name', 'deidentified_summary', 'procedures', 'total_usd', 'caseRecord']) {
+    expect(body, `invite template must not leak ${leak}`).not.toContain(leak);
+  }
+});
+
+test('MARKETPLACE: submitDoctorQuote requires ownership AND a reviewed-consultation attestation', () => {
+  const src = read('base44/functions/submitDoctorQuote/entry.ts');
+  expect(src, 'must gate on reviewed_consultation').toContain('reviewed_consultation !== true');
+  expect(src, 'must check the caller owns the quote').toContain('quote.doctor_email');
+});
+
+test('MARKETPLACE: selectDoctorQuote declines the others and notifies LINK-ONLY', () => {
+  const src = read('base44/functions/selectDoctorQuote/entry.ts');
+  expect(src).toContain("status: 'chosen'");
+  expect(src).toContain("status: 'not_chosen'");
+  // Full identity is granted only by assigning the chosen doctor to the case.
+  expect(src).toContain('doctor_email: chosen.doctor_email');
+  // Notifications use the link-only template.
+  expect(src).toContain('linkEmail(');
+});
+
+test('MARKETPLACE: remindPendingQuotes is cron/admin guarded and LINK-ONLY', () => {
+  const src = read('base44/functions/remindPendingQuotes/entry.ts');
+  expect(src, 'the outreach endpoint must be guarded').toContain('cronAuthorized');
+  const start = src.indexOf('function reminderEmail');
+  const body = src.slice(start, src.indexOf('Deno.serve'));
+  for (const leak of ['client_name', 'patient_first_name', 'procedures', 'total_usd', 'deidentified']) {
+    expect(body, `reminder must not leak ${leak}`).not.toContain(leak);
+  }
+});
+
+test('MESSAGING: quote-stage messages are contact-scrubbed; info-requests pause the SLA; Safe-T re-gates', () => {
+  const src = read('base44/functions/postCaseMessage/entry.ts');
+  expect(src, 'must scrub contact pre-selection').toContain('scrubContact');
+  expect(src, 'info_request must pause the SLA').toContain("status: 'needs_more_info'");
+  // A patient answer flagged with new medical info re-runs the deterministic Safe-T scan.
+  expect(src, 'must re-gate on new medical info').toContain("base44.functions.invoke('safeT4LifeScan'");
+  // Outbound is link-only (nudge keyed on the portal URL).
+  expect(src, 'outbound must be link-only').toContain('nudgeEmail(portalUrl)');
+});
+
+test('PRE-OP: the checklist is conservative — never instructs stopping a medication, always defers', () => {
+  const src = read('base44/functions/_shared/preOpChecklist.ts');
+  expect(src.toLowerCase(), 'must not instruct discontinuation').not.toMatch(/stop taking|discontinue your/);
+  expect(src, 'must explicitly warn against stopping meds unprompted').toContain('Do not stop any medication on your own');
+  expect(src, 'medication/fasting items must defer to the doctor').toContain('confirm_with_doctor: true');
+});
+
+test('PRE-OP: sendPreOpInstructions is deterministic and LINK-ONLY (clinical content stays in-portal)', () => {
+  const src = read('base44/functions/sendPreOpInstructions/entry.ts');
+  expect(src, 'must use the deterministic builder').toContain('buildPreOpChecklist');
+  expect(src, 'outbound must be link-only').toContain('nudgeEmail(portalUrl)');
+  expect(src, 'the checklist is stored in-portal').toContain('pre_op_checklist');
+});
+
+test('CANCELLATION: cancelBooking refunds only HELD escrow, never claws back released funds; owner/admin gated', () => {
+  const src = read('base44/functions/cancelBooking/entry.ts');
+  expect(src, 'refunds held escrow').toContain("h.status === 'held'");
+  expect(src, 'marks held as refunded').toContain("status: 'refunded'");
+  expect(src, 'released funds are treated as non-refundable, not reversed').toContain("h.status === 'released'");
+  // Owner-or-admin gate + guarded cancel transition.
+  expect(src, 'owner check').toContain('c.client_email');
+  expect(src, 'guarded transition').toContain('guardedStatusUpdate');
+  expect(src).toContain('BOOKING.CANCELLED');
+});
+
+test('STATE MACHINE: a safety hold can never be routine-transitioned out', () => {
+  const src = read('base44/functions/_shared/bookingState.ts');
+  // Routine path refuses to leave the hold...
+  expect(src).toContain('if (from === HOLD_STATE) return false;');
+  // ...and ADMIN_REVIEW has no routine outgoing edges (only clearHold may move it).
+  expect(src).toMatch(/\[BOOKING\.ADMIN_REVIEW\]:\s*\[\]/);
+});
