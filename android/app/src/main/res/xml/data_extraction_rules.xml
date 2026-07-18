@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ backup/transfer rules. Paired with android:allowBackup="false"
+  and android:fullBackupContent="false" on <application>.
+
+  Nothing this app stores may leave the device through a platform backup. The
+  WebView's localStorage holds the encrypted vault, the Emergency PIN material,
+  passport data and location-sharing consent. Android auto-backup would copy
+  all of it to the user's Google Drive, where it is outside our threat model,
+  outside the hash chain, and outside the patient's control.
+
+  Both blocks are required: cloud-backup covers Google Drive, device-transfer
+  covers phone-to-phone migration.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

@@ -176,8 +176,12 @@ export default function AdminLayout({ children }) {
         </aside>
 
         {/* Mobile sidebar overlay */}
+        {/* `display` comes from the class for the same reason marginLeft does
+            below: an inline style outranks `lg:hidden`, so an inline
+            `display: 'flex'` here kept this full-screen drawer overlaying the
+            desktop admin instead of hiding at lg. */}
         {sidebarOpen && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }} className="lg:hidden">
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50 }} className="flex lg:hidden">
             <div style={{ width: 224, background: BG, boxShadow: '4px 0 24px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
               <button
                 onClick={close}
@@ -203,9 +207,9 @@ export default function AdminLayout({ children }) {
               background: 'rgba(6,11,22,0.97)', backdropFilter: 'blur(12px)',
               borderBottom: `1px solid ${BORDER}`,
               position: 'sticky', top: 0, zIndex: 10,
-              padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 16px', alignItems: 'center', gap: 10,
             }}
-            className="lg:hidden"
+            className="flex lg:hidden"
           >
             <button
               onClick={() => setSidebarOpen(true)}

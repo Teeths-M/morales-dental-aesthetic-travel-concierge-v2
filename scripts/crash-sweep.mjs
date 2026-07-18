@@ -1,4 +1,4 @@
-import { chromium, devices } from '@playwright/test';
+import { chromium, webkit, devices } from '@playwright/test';
 
 const BASE = process.env.E2E_BASE_URL || 'https://sentinel-dental-care.base44.app';
 
@@ -17,10 +17,16 @@ const ROUTES = [
 ];
 
 const mobile = process.argv.includes('--mobile');
+// `--webkit` runs the real Safari engine rather than Chromium wearing an iPhone
+// user-agent. Device emulation catches layout; only WebKit catches the engine
+// differences that actually break iOS — dvh/vh sizing, `env(safe-area-inset-*)`
+// resolution, date parsing, and Web Crypto/secure-context behaviour.
+const useWebkit = process.argv.includes('--webkit');
 
 const results = [];
 
-const browser = await chromium.launch();
+const engine = useWebkit ? webkit : chromium;
+const browser = await engine.launch();
 const ctx = await browser.newContext(
   mobile ? { ...devices['iPhone 13'] } : { viewport: { width: 1440, height: 900 } },
 );

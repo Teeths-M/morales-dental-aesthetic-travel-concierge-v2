@@ -13,6 +13,23 @@
         "client"
       ],
       "default": "client"
+    },
+    // Answered on first sign-in. Morales protects people who travel for
+    // treatment AND people who do not — the safety layer (SOS, emergency
+    // contacts, PIN vault) is not journey-dependent. This branches onboarding
+    // and lets the rest of the platform stop assuming a trip exists.
+    // localStorage mirrors it for instant/offline gating; this is the durable copy.
+    "protection_type": {
+      "type": "string",
+      "enum": [
+        "medical_traveler",
+        "non_traveler"
+      ],
+      "description": "Whether this person is travelling for treatment or wants protection only"
+    },
+    "protection_type_set_at": {
+      "type": "string",
+      "format": "date-time"
     }
   }
 }

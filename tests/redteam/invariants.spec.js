@@ -442,3 +442,81 @@ test('SITUATION ROOM: live dots are real positions, and never carry identity', (
     expect(feedStyle, `wall display must not render ${leak}`).not.toContain(leak);
   }
 });
+
+test('ONBOARDING: the first question is who we protect, and both answers are real', () => {
+  const src = read('src/components/onboarding/FirstTimeOnboarding.jsx');
+
+  // Every flow used to assume a trip existed — the wizard asked which surgery
+  // you wanted before establishing that surgery was involved at all.
+  expect(src, 'the protection-type step must exist').toContain('StepProtectionType');
+  expect(src, 'the shield is the promise shown above both choices').toContain('<Shield');
+  // Order matters: protection type is asked before anything journey-specific.
+  expect(
+    src.indexOf("'protection'"),
+    'protection type must be asked before the procedure question',
+  ).toBeLessThan(src.indexOf("'procedure'"));
+  expect(src, 'a non-traveler must not be asked which procedure they want')
+    .toMatch(/protectionType\s*!==\s*PROTECTION_TYPES\.NON_TRAVELER.*steps\.push\('procedure'\)/s);
+
+  // The onboarding PIN step used to collect 4 digits, throw them away, and set
+  // a flag — while telling the patient the PIN "unlocks emergency features
+  // when you're offline or in a crisis". The real PIN is 6 digits at 600k
+  // PBKDF2 and lives in EmergencyPINSetup.
+  // Anchor on code, not raw text: the comment above the step names the removed
+  // key on purpose, and a raw substring match would trip on the explanation.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  expect(code, 'onboarding must not fake a PIN it never stores')
+    .not.toContain('morales_onboarding_pin_set');
+  expect(src, 'the PIN step must hand off to the flow that really sets one')
+    .toContain("navigate('/emergency')");
+
+  // Neither answer may promise a capability that is journey-gated in code.
+  const lib = read('src/lib/protectionType.js');
+  const nonTraveler = lib.slice(lib.indexOf('NON_TRAVELER,\n    title'));
+  for (const journeyOnly of ['handshake', 'Handshake', 'itinerary', 'Live location']) {
+    expect(nonTraveler, `non-traveler copy must not promise ${journeyOnly}`)
+      .not.toContain(journeyOnly);
+  }
+});
+
+test('MOBILE: iOS and Android ship the same safety guarantees as the web', () => {
+  // A fixed element is laid out against the viewport, so it ignores the
+  // safe-area padding on <body>. The nav sat under the iPhone status bar.
+  const header = read('src/components/layout/Header.jsx');
+  expect(header, 'the fixed nav must inset itself past the notch')
+    .toContain('env(safe-area-inset-top');
+
+  const css = read('src/index.css');
+  // iOS sizes vh against the large viewport, hiding the bottom of full-height
+  // screens behind the URL bar — including primary buttons.
+  expect(css, 'full-height screens must use dvh where supported').toContain('100dvh');
+  // 16px floor is what prevents iOS zoom-on-focus, which is what lets us keep
+  // pinch-zoom enabled rather than locking scale.
+  expect(css, 'touch inputs need a 16px floor').toMatch(/pointer:\s*coarse/);
+  // Read the tag's own content attribute — the surrounding comment explains why
+  // maximum-scale was dropped, so a whole-file substring match is not the test.
+  const html = read('index.html');
+  const viewport = html.match(/<meta\s+name="viewport"\s+content="([^"]*)"/)?.[1];
+  expect(viewport, 'index.html must declare a viewport').toBeTruthy();
+  expect(viewport, 'locking zoom fails WCAG 1.4.4 and disables pinch in the packaged apps')
+    .not.toContain('maximum-scale');
+  expect(viewport, 'safe-area insets require viewport-fit=cover').toContain('viewport-fit=cover');
+
+  // Web Crypto is unavailable outside a secure context, and the vault + PIN
+  // hashing both depend on crypto.subtle.
+  const cap = read('capacitor.config.ts');
+  expect(cap, 'both platforms must serve over https, not file://').toContain('iosScheme');
+  expect(cap, 'both platforms must serve over https, not file://').toContain("androidScheme: 'https'");
+
+  const manifest = read('android/app/src/main/AndroidManifest.xml');
+  // navigator.geolocation inside a WebView reports "denied" without these —
+  // silently, so live tracking and SOS coordinates would just never arrive.
+  expect(manifest, 'geolocation needs the native permission').toContain('ACCESS_FINE_LOCATION');
+  expect(manifest, 'Android 12+ may grant approximate only').toContain('ACCESS_COARSE_LOCATION');
+  // localStorage holds the encrypted vault, PIN material and passport data.
+  // Auto-backup would copy all of it to the user's Google Drive.
+  expect(manifest, 'app data must never leave the device via platform backup')
+    .toContain('android:allowBackup="false"');
+  expect(manifest, 'the referenced extraction rules must exist')
+    .toContain('@xml/data_extraction_rules');
+});

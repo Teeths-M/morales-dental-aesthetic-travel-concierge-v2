@@ -99,7 +99,12 @@ export default function Header() {
         className="w-full fixed top-0 left-0 z-50 px-4 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300"
         style={{
           minHeight: scrolled ? '56px' : '72px',
-          paddingTop:    scrolled ? '10px' : '14px',
+          // `position: fixed` is laid out against the viewport, so it ignores the
+          // safe-area padding on <body>. Without adding the inset here the nav
+          // renders UNDER the iPhone status bar / notch in the installed PWA and
+          // in the Capacitor WebView (we ship `apple-mobile-web-app-status-bar-style:
+          // black-translucent`, which makes the status bar overlay the page).
+          paddingTop:    `calc(${scrolled ? '10px' : '14px'} + env(safe-area-inset-top, 0px))`,
           paddingBottom: scrolled ? '10px' : '14px',
           background:    calm ? 'rgba(255,255,255,0.94)' : isTransparent ? 'transparent' : 'rgba(10, 20, 25, 0.92)',
           borderBottom:  calm ? `1px solid ${CALM.border}` : isTransparent ? '1px solid transparent' : '1px solid rgba(255,255,255,0.06)',
@@ -283,12 +288,19 @@ export default function Header() {
       {/* ── MOBILE TRAY ── */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-[9999] pt-24 px-8 flex flex-col gap-6 lg:hidden overflow-y-auto"
-          style={{ background: '#030A0C' }}
+          className="fixed inset-0 z-[9999] px-8 flex flex-col gap-6 lg:hidden overflow-y-auto"
+          style={{
+            background: '#030A0C',
+            // Fixed overlay: same reason as the nav above — it must inset itself.
+            // The bottom inset keeps the last link clear of the iPhone home bar.
+            paddingTop: 'calc(6rem + env(safe-area-inset-top, 0px))',
+            paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+          }}
         >
           <button
             onClick={() => setIsMobileOpen(false)}
-            className="absolute top-6 right-6 p-2 text-white/50 hover:text-white"
+            className="absolute right-6 p-2 text-white/50 hover:text-white"
+            style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

@@ -16,6 +16,32 @@ body {
   padding-bottom: env(safe-area-inset-bottom); /* respect home bar */
 }
 
+/* iOS Safari sizes `vh` against the LARGE viewport — the one with the URL bar
+   hidden — so a `100vh` container is taller than the screen while the bar is
+   showing, and its last row sits under the chrome. That is how a "Continue"
+   button ends up unreachable on an iPhone in the browser (it is fine in the
+   installed PWA and in the Capacitor WebView, which is why it survives desktop
+   testing). `dvh` tracks the visible viewport instead.
+
+   Overriding the utilities rather than editing ~150 call sites: these sit after
+   `@tailwind utilities` and are unlayered, so they win on the cascade without
+   raising specificity. The @supports guard leaves older browsers on `vh`. */
+@supports (height: 100dvh) {
+  .min-h-screen { min-height: 100dvh; }
+  .h-screen     { height: 100dvh; }
+  .max-h-screen { max-height: 100dvh; }
+}
+
+/* iOS zooms the page when focus lands on a field smaller than 16px, and it does
+   not zoom back out — the patient is left scrolled sideways mid-form. About a
+   dozen fields across intake, signup and the emergency contacts panel are
+   text-sm/text-xs. This enforces the 16px floor on touch devices only, so
+   desktop density is untouched. It is also what lets us drop `maximum-scale=1`
+   from the viewport tag and give pinch-zoom back. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: max(16px, 1em); }
+}
+
 * {
   -webkit-backface-visibility: hidden;
 }

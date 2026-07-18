@@ -6,6 +6,12 @@ import pluginUnusedImports from "eslint-plugin-unused-imports";
 
 export default [
   {
+    // Capacitor generates JS into the native build folders (native-bridge.js and
+    // friends). Linting vendor output we do not author fails the build on rules
+    // its own tooling never opted into.
+    ignores: ["android/**/*", "ios/**/*", "dist/**/*"],
+  },
+  {
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",

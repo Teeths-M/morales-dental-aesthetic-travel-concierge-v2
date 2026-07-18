@@ -340,7 +340,12 @@ export default function Login() {
           width: 480, flexShrink: 0,
           background: 'linear-gradient(135deg, #080F1C 0%, #0A1424 100%)',
           borderLeft: `1px solid rgba(255,255,255,0.06)`,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          // No `display` here: an inline style beats any class, so declaring
+          // `display: 'flex'` alongside `className="hidden lg:flex"` cancelled
+          // the `hidden` and rendered this 480px desktop panel on every phone —
+          // pushing /login, the first screen a real user sees, 480px wide with
+          // a horizontal scrollbar. Let the classes own display.
+          flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: 48, position: 'relative', overflow: 'hidden',
         }}
         className="hidden lg:flex"
