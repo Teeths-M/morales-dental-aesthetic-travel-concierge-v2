@@ -72,11 +72,16 @@ export const TRAVEL_QUESTION_GRAPH = [
     searchFirst: true,
   },
   {
-    id: 'origin_city',
-    targetFields: ['origin_city'],
+    // Origin can be ANY country (a traveler comes from anywhere), so this uses the
+    // full 195-country list — not the served/partner destination list. Searchable,
+    // and the coordinator confirms the exact origin city, same as the destination step.
+    id: 'origin_country',
+    targetFields: ['origin_country'],
     question: "And where are you traveling from?",
     deterministicReason: 'so we can plan your outbound flight and pickup',
-    inputType: INPUT_TYPES.TEXT,
+    inputType: INPUT_TYPES.SELECT,
+    optionsSource: 'allCountries',
+    searchFirst: true,
   },
   {
     id: 'departure_date',

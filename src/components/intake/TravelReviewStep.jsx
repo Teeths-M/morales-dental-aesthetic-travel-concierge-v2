@@ -27,7 +27,7 @@ function displayValue(value) {
 function buildReviewFields(answers) {
   const fields = [
     ['destination_country', 'Destination country', displayValue(answers.destination_country)],
-    ['origin_city', 'Traveling from', answers.origin_city],
+    ['origin_country', 'Traveling from', displayValue(answers.origin_country)],
     ['departure_date', 'Departure', answers.departure_date],
     ['return_date', 'Return', answers.return_date],
     ['travelers_count', 'Travelers', labelFor(TRAVELERS_COUNT_OPTIONS, answers.travelers_count)],

@@ -30,7 +30,11 @@ export function buildTravelRequestPayload(answers) {
   const companionDays = parseInt(answers.companion_days, 10);
 
   return {
-    origin_city: answers.origin_city || '',
+    // Origin is now a COUNTRY (searchable, full 195). origin_city is a required field
+    // on TravelRequest, so it resolves to the coordinator-confirms placeholder (same
+    // pattern as destination_city) rather than an empty string that fails validation.
+    origin_country: resolved(answers.origin_country),
+    origin_city: resolvedCity(answers.origin_city),
     destination_city: resolvedCity(answers.destination_city),
     destination_country: resolved(answers.destination_country),
     departure_date: answers.departure_date || '',

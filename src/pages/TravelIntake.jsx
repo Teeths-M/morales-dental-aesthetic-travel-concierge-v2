@@ -7,6 +7,7 @@ import { INPUT_TYPES } from '@/lib/intakeFlow/questionGraph';
 import { getAnsweredQuestionCount, getTotalQuestionCount, getProgressLabel } from '@/lib/intakeFlow/flowEngine';
 import { TRAVEL_QUESTION_GRAPH } from '@/lib/travelIntakeFlow/questionGraph';
 import { buildTravelRequestPayload } from '@/lib/travelIntakeFlow/fieldMap';
+import { ALL_COUNTRIES } from '@/lib/countries';
 import { ROUTES } from '@/lib/constants';
 import QuestionCard from '@/components/intake/QuestionCard';
 import AuthGateStep from '@/components/intake/AuthGateStep';
@@ -148,8 +149,8 @@ export default function TravelIntake() {
                 step={nextStepResult.step}
                 onAnswer={submitAnswer}
                 onFreeTextAnswer={submitFreeTextAnswer}
-                dynamicOptions={{ travelPartnerCountries: countryOptions }}
-                dynamicOptionsLoading={{ travelPartnerCountries: false }}
+                dynamicOptions={{ travelPartnerCountries: countryOptions, allCountries: ALL_COUNTRIES }}
+                dynamicOptionsLoading={{ travelPartnerCountries: false, allCountries: false }}
                 onBack={canGoBack ? goBack : null}
               />
             )}
