@@ -1,11 +1,25 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
+
+/**
+ * requestPartnerQuotas — fan a case out to travel, transfer, companion and
+ * clinic partners for pricing.
+ *
+ * ── Link-only (policy, 2026-07-18) ──────────────────────────────────────────
+ * Each of the four emails used to carry a table headed "Patient / Procedure(s) /
+ * Procedure Date / Case Reference", and the subject line was "Pricing Quote
+ * Request — <patient name>". That disclosed a named person's surgery and travel
+ * date to four separate commercial third parties, before any of them had been
+ * selected — and to anyone who later read those inboxes.
+ *
+ * Partners now receive: you have a quote request, here is your portal link.
+ * The case detail they need to price the work is behind the portal token,
+ * which is what the token was for.
+ */
 
 const BRAND   = 'Morales Medical Travel Safety';
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
-
-const e = (v: unknown) => String(v ?? '')
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // HMAC-signed to match verifyPortalToken() in getPortalData — was previously
 // unsigned and would fail that verification (portal link non-functional).
@@ -17,40 +31,6 @@ async function makeToken(caseId: string, partnerId: string, portalType: string) 
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
   const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
   return btoa(data) + '.' + sigHex;
-}
-
-function quotaEmail({ partnerName, partnerType, patientName, procedures, procedureDate, caseRef, portalUrl, services }: {
-  partnerName: string; partnerType: string; patientName: string; procedures: string;
-  procedureDate: string; caseRef: string; portalUrl: string; services: string[];
-}) {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#29483d;padding:28px 32px;color:#fff;">
-  <div style="font-family:Georgia,serif;font-size:22px;">${BRAND}</div>
-  <div style="margin-top:8px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">Pricing Quote Request — ${e(partnerType)}</div>
-</td></tr>
-<tr><td style="padding:32px;">
-  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#13221d;">Hello ${e(partnerName)},</h1>
-  <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#40514a;">
-    We have a new patient arriving through the Morales platform and would appreciate your pricing quote for the services below.
-    Please submit your quote within <strong>48 hours</strong> so we can finalise the patient's care package.
-  </p>
-  <table width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin-bottom:20px;">
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;width:40%;">Patient</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:700;">${e(patientName)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Procedure(s)</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${e(procedures)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Procedure Date</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${e(procedureDate)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Case Reference</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${e(caseRef)}</td></tr>
-  </table>
-  <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#13221d;">Services required from you:</p>
-  <ul style="margin:0 0 24px;padding-left:20px;">
-    ${services.map(s => `<li style="font-size:14px;color:#40514a;line-height:1.8;">${e(s)}</li>`).join('')}
-  </ul>
-  <a href="${e(portalUrl)}" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">Submit My Quote →</a>
-  <p style="margin:24px 0 0;font-size:13px;color:#64746d;line-height:1.6;">This link is valid for 14 days. Questions? Reply to this email or reach us on WhatsApp.</p>
-  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
-</td></tr>
-</table></td></tr></table></body></html>`;
 }
 
 Deno.serve(createHandler(async ({ base44, body }) => {
@@ -79,15 +59,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     const url   = `${APP_URL}/portal/travel?token=${token}`;
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: agency.email,
-      subject: `Pricing Quote Request — ${patientName} | ${BRAND}`,
-      body: quotaEmail({ partnerName: agency.agency_name || agency.email, partnerType: 'Travel Agency', patientName, procedures, procedureDate, caseRef, portalUrl: url,
-        services: ['Round-trip flights from patient origin to procedure country', 'Hotel accommodation (procedure + recovery nights)'] }),
+      subject: `A new pricing request is waiting | ${BRAND}`,
+      body: linkOnlyEmail({
+        from: 'requestPartnerQuotas/travel-agency',
+        title: 'You have a new travel quote request.',
+        line: 'A patient booking needs flights and accommodation priced. Open your portal to see the requirements and submit your quote.',
+        ctaLabel: 'Submit My Quote',
+        ctaUrl: url,
+      }),
     }));
     // Push — travel agency phone buzzes with new booking request
     dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
       user_email: agency.email,
       title:      '🗺️ New Quote Request',
-      body:       `${patientName} needs a travel package to ${caseRecord.procedure_country || 'destination'} · ${procedureDate}. Tap to submit your quote.`,
+      body:       'A patient booking needs flights and accommodation priced. Tap to submit your quote.',
       url:        url,
       type:       'booking',
       tag:        `quota-travel-${case_id}`,
@@ -103,15 +88,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     const url   = `${APP_URL}/portal/transfer?token=${token}`;
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: driver.email,
-      subject: `Transfer Pricing Quote — ${patientName} | ${BRAND}`,
-      body: quotaEmail({ partnerName: driver.driver_name || driver.company_name || driver.email, partnerType: 'Chauffeur', patientName, procedures, procedureDate, caseRef, portalUrl: url,
-        services: ['Origin: Home → Airport (departure)', 'Destination: Airport → Hotel, Hotel → Clinic, Clinic → Hotel, Hotel → Airport', 'Origin: Airport → Home (return)'] }),
+      subject: `A new transfer quote is requested | ${BRAND}`,
+      body: linkOnlyEmail({
+        from: 'requestPartnerQuotas/driver',
+        title: 'You have a new transfer quote request.',
+        line: 'A patient booking needs ground transfers priced. Open your portal to see the legs required and submit your quote.',
+        ctaLabel: 'Submit My Quote',
+        ctaUrl: url,
+      }),
     }));
     // Push — driver phone buzzes with new transfer job
     dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
       user_email: driver.email,
       title:      '🚗 New Transfer Request',
-      body:       `${patientName} needs medical transport. Procedure on ${procedureDate}. Tap to price your legs.`,
+      body:       'A patient booking needs ground transfers priced. Tap to price your legs.',
       url:        url,
       type:       'booking',
       tag:        `quota-driver-${case_id}`,
@@ -127,15 +117,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     const url   = `${APP_URL}/companion-dashboard`;
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: companion.email,
-      subject: `Companion Service Quote — ${patientName} | ${BRAND}`,
-      body: quotaEmail({ partnerName: companion.full_name || companion.email, partnerType: 'Companion', patientName, procedures, procedureDate, caseRef, portalUrl: url,
-        services: [`Recovery support for ${caseRecord.recovery_days || 3} days post-procedure`, 'Meal delivery and dietary care', 'Emotional support and language assistance'] }),
+      subject: `A new care assignment is waiting | ${BRAND}`,
+      body: linkOnlyEmail({
+        from: 'requestPartnerQuotas/companion',
+        title: 'You have a new care assignment request.',
+        line: 'A recovery support assignment is waiting for your availability and pricing. Open your dashboard to review it.',
+        ctaLabel: 'Open Companion Dashboard',
+        ctaUrl: url,
+      }),
     }));
     // Push — companion phone buzzes with new care assignment request
     dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
       user_email: companion.email,
       title:      '🤱 New Companion Request',
-      body:       `${patientName} needs recovery support for ${caseRecord.recovery_days || 3} days in ${caseRecord.procedure_country || 'destination'}. Tap to confirm availability.`,
+      body:       'A recovery support assignment is waiting for your availability. Tap to confirm.',
       url:        url,
       type:       'companion',
       tag:        `quota-companion-${case_id}`,
@@ -147,15 +142,20 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   if (caseRecord.doctor_email) {
     dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND, to: caseRecord.doctor_email,
-      subject: `Clinic Facility Quote — ${patientName} | ${BRAND}`,
-      body: quotaEmail({ partnerName: caseRecord.clinic_selected || 'Doctor', partnerType: 'Clinic', patientName, procedures, procedureDate, caseRef, portalUrl: `${APP_URL}/doctor-dashboard`,
-        services: ['Clinic facility fee', 'Anaesthesia fee (if applicable)', 'Post-operative follow-up consultation'] }),
+      subject: `A facility fee quote is needed | ${BRAND}`,
+      body: linkOnlyEmail({
+        from: 'requestPartnerQuotas/clinic',
+        title: 'A facility fee quote is needed.',
+        line: 'A confirmed case needs your clinic facility, anaesthesia and post-operative fees. Open your dashboard to submit them.',
+        ctaLabel: 'Open Doctor Dashboard',
+        ctaUrl: `/doctor-dashboard`,
+      }),
     }));
     // Push — doctor gets clinic fee reminder
     dispatches.push(base44.asServiceRole.functions?.invoke?.('sendPushNotification', {
       user_email: caseRecord.doctor_email,
       title:      '🏥 Facility Fee Quote Needed',
-      body:       `${patientName} · ${procedures}. Please submit clinic fee, anaesthesia, and post-op cost.`,
+      body:       'A confirmed case needs your clinic facility and post-op fees. Tap to submit them.',
       url:        `${APP_URL}/doctor-dashboard`,
       type:       'success',
       tag:        `quota-clinic-${case_id}`,

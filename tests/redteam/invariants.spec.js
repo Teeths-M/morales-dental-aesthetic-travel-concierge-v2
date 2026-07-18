@@ -520,3 +520,66 @@ test('MOBILE: iOS and Android ship the same safety guarantees as the web', () =>
   expect(manifest, 'the referenced extraction rules must exist')
     .toContain('@xml/data_extraction_rules');
 });
+
+test('COMMS: email/SMS/WhatsApp are notification-only — nothing private leaves M', () => {
+  // Policy (Portia, 2026-07-18): these channels may say that something needs
+  // attention and link to it. They may not carry PHI, identity, procedure
+  // detail or money, and they may never invite a reply.
+  const notify = read('base44/functions/_shared/notify.ts');
+  expect(notify, 'the guard must exist').toContain('assertLinkOnly');
+  expect(notify, 'SMS/WhatsApp need the same chokepoint as email').toContain('linkOnlySms');
+  // Fail closed: a leaking body must not silently send with the leak stripped.
+  expect(notify, 'the guard must throw, not sanitise').toContain('throw new LinkOnlyViolation');
+  // The guard has to actually run inside the renderers, not merely be exported.
+  const emailFn = notify.slice(notify.indexOf('export function linkOnlyEmail'));
+  expect(emailFn.slice(0, 400), 'linkOnlyEmail must call the guard').toContain('assertLinkOnly');
+  const smsFn = notify.slice(notify.indexOf('export function linkOnlySms'));
+  expect(smsFn.slice(0, 300), 'linkOnlySms must call the guard').toContain('assertLinkOnly');
+
+  // The emergency carve-out is narrow and enumerated. It exists because a
+  // responder who must log in to learn who they are looking for arrives late.
+  // It must not grow a catch-all reason.
+  expect(notify, 'the carve-out must be an explicit reason list').toContain('EMERGENCY_REASONS');
+  for (const forbidden of ['routine', 'general', 'any', 'other', 'safety_checkin']) {
+    expect(
+      notify.slice(notify.indexOf('EMERGENCY_REASONS'), notify.indexOf('EmergencyReason')),
+      `'${forbidden}' would widen the emergency exemption into routine messaging`,
+    ).not.toContain(`'${forbidden}'`);
+  }
+});
+
+test('COMMS: migrated senders do not re-leak identity into a body', () => {
+  const dir = join(ROOT, 'base44/functions');
+
+  // Senders already migrated to link-only. Each must stay clean: this is the
+  // ratchet that stops a future edit reintroducing a name or a procedure into
+  // an outbound body. Add to this list as each remaining sender is migrated.
+  const MIGRATED = [
+    'sendTravelCountdownReminders',
+    'requestPartnerQuotas',
+    'sendQuoteReminders',
+    'iq200Pipeline',
+    'processPaymentCascade',
+    'releaseEscrowPayment',
+    'generateItineraryCalendar',
+  ];
+
+  const LEAKY = /\$\{[^}]*\b(patientName|clientName|client_name|patient_name|procedures|procedureDate|procedure_date|client_phone|patient_phone|amount|total|balance)\w*\}/;
+
+  const offenders = [];
+  for (const name of MIGRATED) {
+    const p = join(dir, name, 'entry.ts');
+    if (!existsSync(p)) continue;
+    const src = readFileSync(p, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+    // Only inspect what becomes an outbound body or subject.
+    for (const line of src.split('\n')) {
+      if (!/\b(subject|body|line|title)\s*:/.test(line)) continue;
+      // AuditLog / entity writes stay in-platform and keep full detail.
+      if (/AuditLog|entities\.|details\s*:/.test(line)) continue;
+      if (LEAKY.test(line)) offenders.push(`${name}: ${line.trim().slice(0, 90)}`);
+    }
+  }
+  expect(offenders, `outbound bodies carrying private data:\n${offenders.join('\n')}`).toEqual([]);
+});
