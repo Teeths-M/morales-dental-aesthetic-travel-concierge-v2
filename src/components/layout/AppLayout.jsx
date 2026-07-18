@@ -41,6 +41,19 @@ export default function AppLayout() {
   // patient's arming switch — an unarmed account is unaffected.
   useCovertSOS({ caseId: null, currentLocation: null, enabled: !!user });
 
+  // Cache the offline-SOS SMS number while we still have connectivity. The only
+  // moment this can be fetched is before it is needed: once the patient is out
+  // of data, the `sms:` deep link has to already know where to send.
+  // Fire-and-forget — a failure leaves any previously cached number in place.
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    (async () => {
+      const { refreshSafetyNumber } = await import('@/offline/sos/offlineSosPacket');
+      const { base44 } = await import('@/api/base44Client');
+      refreshSafetyNumber(base44);
+    })();
+  }, []);
+
   // Initialize the global offline sync controller once on mount.
   // Registers the vault sync queue so pending vault actions are flushed
   // when connectivity is restored. Existing per-queue listeners continue

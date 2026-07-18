@@ -37,7 +37,11 @@ export function useOfflineSOS({
   const [smsLink, setSmsLink] = useState('');
   const [sosState, setSosState] = useState('idle'); // idle | capturing_gps | ready | syncing | synced | error
   const [errorMsg, setErrorMsg] = useState('');
-  const [hasTwilioNumber] = useState(!!getTwilioNumber());
+  // Re-read on every render rather than snapshotting at mount: AppLayout fetches
+  // and caches the number asynchronously, so a mount-time snapshot would leave
+  // the panel showing "no emergency number configured" on the very screen where
+  // that message costs the most, even after the number had arrived.
+  const hasTwilioNumber = !!getTwilioNumber();
   const syncingRef = useRef(false);
 
   // Track online/offline

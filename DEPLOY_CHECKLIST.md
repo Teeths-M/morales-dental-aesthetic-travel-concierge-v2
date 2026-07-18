@@ -45,6 +45,7 @@ silently drop it.
 | Function | Purpose | If you skip it |
 | --- | --- | --- |
 | `reviewAccountFlag` | The only route back from a block | A restricted account has **no way to be cleared**. The blocker's notification email links to `/admin/flags`, and the buttons there will fail. |
+| `getSafetyContact` | Serves the offline-SOS SMS number | The `sms:` deep link opens a composer with **no recipient**. A patient with no data is expected to already know the number. |
 
 `_shared/blocker.ts` and `_shared/violationEngine.ts` are shared modules, not
 endpoints — they deploy with the functions that import them.
@@ -65,7 +66,7 @@ switches off rather than running insecurely.
 | `SATELLITE_WEBHOOK_SECRET` | `receiveSatelliteWebhook` | Nothing is treated as verified. SOS still escalates; stand-down and position writes are ignored. Safe, but satellite is effectively read-only until set. |
 | `PIN_RESET_SECRET` | `requestPINReset` | Reset returns 503. Fails closed on purpose — the previous hardcoded fallback was a forgeable HMAC key. |
 | `OTP_ALLOW_MOCK` | `sendOtp` | **Must stay unset in production.** Setting it returns the OTP in the API response. |
-| `VITE_TWILIO_PHONE_NUMBER` | offline SOS SMS deeplink | The SMS SOS channel opens a composer with no recipient. Set it or the channel stays honestly labelled as unavailable. |
+| ~~`VITE_TWILIO_PHONE_NUMBER`~~ | offline SOS SMS deeplink | **No longer needed.** This was a BUILD-time variable — setting `TWILIO_PHONE_NUMBER` in the Base44 function environment never reached it, so the channel was silently dead even with Twilio fully configured. The number is now served by `getSafetyContact` from `TWILIO_PHONE_NUMBER` and cached on the device while online. Publish `getSafetyContact` (below) and it works. |
 
 ---
 

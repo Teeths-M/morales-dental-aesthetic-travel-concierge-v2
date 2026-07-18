@@ -768,3 +768,37 @@ test('PORTAL TOKENS: no published default signing key, anywhere', () => {
   const gate = gpd.slice(gpd.indexOf('const verified = await verifyPortalToken'), gpd.indexOf('Extract identity'));
   expect(gate, 'a falsy verification must refuse').toMatch(/if \(!verified\)[\s\S]{0,120}403/);
 });
+
+test('OFFLINE SOS: the SMS channel does not depend on a build-time flag', () => {
+  // buildSmsDeepLink used to read only import.meta.env.VITE_TWILIO_PHONE_NUMBER
+  // — a variable Vite inlines at BUILD time. Setting TWILIO_PHONE_NUMBER in the
+  // Base44 function environment does nothing for it. Unset, the link fell back
+  // to `sms:?body=...`: the composer opens with the emergency text ready and NO
+  // RECIPIENT, expecting someone in a wilderness emergency to already know the
+  // number.
+  const pkt = read('src/offline/sos/offlineSosPacket.js');
+  expect(pkt, 'the number must be cacheable on the device').toContain('morales_safety_sms_number');
+  expect(pkt, 'there must be a way to fetch it while online').toContain('refreshSafetyNumber');
+
+  // Cache first, build-time flag second — never the other way round.
+  const getter = pkt.slice(pkt.indexOf('export function getTwilioNumber'), pkt.indexOf('export async function refreshSafetyNumber'));
+  expect(
+    getter.indexOf('localStorage.getItem'),
+    'the cached value must be preferred over the build-time flag',
+  ).toBeLessThan(getter.indexOf('import.meta.env'));
+
+  // A failed refresh must keep whatever is already cached — a stale number is
+  // worth far more than none.
+  const refresh = pkt.slice(pkt.indexOf('export async function refreshSafetyNumber'));
+  expect(refresh, 'a failed refresh must not clear the cache').toContain('return getTwilioNumber()');
+
+  // It has to actually be fetched somewhere, while online.
+  const layout = read('src/components/layout/AppLayout.jsx');
+  expect(layout, 'the number must be cached before it is needed').toContain('refreshSafetyNumber');
+
+  // The panel must not snapshot availability at mount, or it will show
+  // "no emergency number configured" after the number has arrived.
+  const hook = read('src/offline/sos/useOfflineSOS.js');
+  expect(hook, 'availability must be read live, not snapshotted')
+    .not.toMatch(/useState\(!!getTwilioNumber\(\)\)/);
+});

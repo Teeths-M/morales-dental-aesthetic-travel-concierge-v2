@@ -124,10 +124,48 @@ export function clearSynced() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(unsynced)); } catch (_) {}
 }
 
-/** Get Twilio number from env for SMS link */
+const SAFETY_NUMBER_KEY = 'morales_safety_sms_number';
+
+/**
+ * The number a patient texts when they have no data.
+ *
+ * Read order is deliberate:
+ *   1. the cached value fetched from the backend while online
+ *   2. the build-time VITE_ variable, if someone set it
+ *
+ * It used to be (2) only. That is a variable Vite inlines into the bundle at
+ * BUILD time — setting TWILIO_PHONE_NUMBER in the Base44 function environment
+ * does nothing for it. With it unset, buildSmsDeepLink fell back to
+ * `sms:?body=...`: the composer opens with the emergency text ready and NO
+ * RECIPIENT, expecting someone in a wilderness emergency to already know the
+ * number. A safety channel must not depend on a build flag being remembered.
+ */
 export function getTwilioNumber() {
-  // VITE_ prefix required for Vite to expose env vars to browser
+  try {
+    const cached = localStorage.getItem(SAFETY_NUMBER_KEY);
+    if (cached) return cached;
+  } catch { /* private mode — fall through to the build-time value */ }
   return import.meta.env?.VITE_TWILIO_PHONE_NUMBER || '';
+}
+
+/**
+ * Cache the safety number on the device. Called while ONLINE, because the only
+ * moment this can be fetched is before it is needed.
+ * @returns {string} the number now cached, or '' if unavailable
+ */
+export async function refreshSafetyNumber(base44) {
+  try {
+    const res = await base44.functions.invoke('getSafetyContact', {});
+    const num = res?.data?.sms_number || '';
+    if (num) {
+      try { localStorage.setItem(SAFETY_NUMBER_KEY, num); } catch { /* nothing to do */ }
+    }
+    return num;
+  } catch {
+    // Offline, unpublished, or out of credits. Keep whatever is already
+    // cached — a stale number is worth far more than none.
+    return getTwilioNumber();
+  }
 }
 
 /** Build sms: deep link with pre-filled body */
