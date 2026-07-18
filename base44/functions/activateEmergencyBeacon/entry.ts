@@ -91,7 +91,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   </table>
   <div style="padding:16px;border-radius:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);">
     <p style="margin:0;color:#ef4444;font-weight:700;font-size:14px;">DISPATCH EMERGENCY SERVICES TO ABOVE COORDINATES IMMEDIATELY.</p>
-    <p style="margin:6px 0 0;color:rgba(255,255,255,0.5);font-size:12px;">Fire Dept · Police · Local Embassy notified in parallel by the system.</p>
+    <p style="margin:6px 0 0;color:rgba(255,255,255,0.5);font-size:12px;">This alert went to the concierge inbox ONLY. Fire, police and embassy are NOT contacted automatically — a human must escalate now.</p>
   </div>
 </div></body></html>`;
 

@@ -26,15 +26,19 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// SEC-04: PBKDF2 PIN hashing — 200k iterations, matches lib/vaultEncryption.js pattern.
+// SEC-04: PBKDF2 PIN hashing — 600k iterations (OWASP 2023), matching
+// verifyVaultPIN and the client. This was 200k while the client, the docs and
+// the security copy all stated 600k; the Emergency PIN is the credential
+// guarding the emergency vault, so it gets the documented strength.
 // Salt is derived from email so it's consistent per-user without storing it separately.
+// NOTE: must stay identical to confirmPINReset's emergency-PIN hash.
 async function pbkdf2Hash(pin, email) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
   // Use SHA-256 of email as salt — deterministic, non-secret, avoids extra DB field
   const saltBuf = await crypto.subtle.digest('SHA-256', enc.encode('morales-pin-salt:' + email.toLowerCase()));
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuf, iterations: 200000 },
+    { name: 'PBKDF2', hash: 'SHA-256', salt: saltBuf, iterations: 600000 },
     keyMaterial, 256
   );
   return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');

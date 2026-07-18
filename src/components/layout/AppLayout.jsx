@@ -34,13 +34,26 @@ export default function AppLayout() {
   useEffect(() => {
     initGlobalSyncListener();
 
+    // The handshake queue is registered for EVERY session, signed in or not —
+    // it is the 9-point safety spine, and a confirmation captured in airplane
+    // mode must reach the server the moment connectivity returns. Until this
+    // was registered, the only flush was inside HandshakeButton's tap handler,
+    // so a patient who confirmed a step offline and never tapped again had
+    // that step silently lost.
+    const unregisterHandshake = registerSyncQueue('handshake', async () => {
+      const { flushHandshakeQueue } = await import('@/offline/handshake/offlineHandshakeQueue');
+      const { base44 } = await import('@/api/base44Client');
+      return flushHandshakeQueue(base44);
+    });
+
     if (user?.email) {
-      const unregister = registerSyncQueue('vault', async () => {
+      const unregisterVault = registerSyncQueue('vault', async () => {
         const { processQueue } = await import('@/lib/services/vaultSyncService');
         return processQueue(user.email);
       });
-      return () => unregister();
+      return () => { unregisterVault(); unregisterHandshake(); };
     }
+    return () => unregisterHandshake();
   }, [user?.email]);
 
   const suppressOnboarding = NO_ONBOARDING_PATHS.some(p => pathname.startsWith(p));

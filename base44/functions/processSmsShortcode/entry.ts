@@ -57,12 +57,17 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Parse incoming Twilio webhook (form-encoded or JSON)
+    // Parse incoming Twilio webhook (form-encoded or JSON).
+    // Keep EVERY form field: the Twilio signature is computed over all of them,
+    // so the signature check below needs the full parameter map, not just
+    // Body/From. (This is why the previous check could never pass — see there.)
     let rawBody, rawFrom;
+    const signatureParams: Record<string, string> = {};
     const contentType = req.headers.get('content-type') || '';
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const text = await req.text();
       const params = new URLSearchParams(text);
+      params.forEach((v, k) => { signatureParams[k] = v; });
       rawBody = params.get('Body') || '';
       rawFrom = params.get('From') || '';
     } else {
@@ -92,12 +97,13 @@ Deno.serve(async (req) => {
     const twilioSig = req.headers.get('x-twilio-signature') || '';
     const appUrl = Deno.env.get('APP_URL') || '';
     const webhookUrl = `${appUrl}/api/functions/processSmsShortcode`;
-    const paramObj = {};
-    if (contentType.includes('application/x-www-form-urlencoded')) {
-      const rawText = body ? body : '';
-      new URLSearchParams(rawText).forEach((v, k) => { paramObj[k] = v; });
-    }
-    if (!validateTwilioSignature(webhookUrl, paramObj, twilioSig, authToken)) {
+    // Validate against the full form parameter map captured above.
+    // This previously rebuilt the params by running URLSearchParams over
+    // `body` — the sanitized MESSAGE TEXT, not the form payload — so the HMAC
+    // could never match and EVERY inbound command was rejected with 403:
+    // all HS1-9 SMS handshakes, CHECKIN, SOS and AGENCY. SMS is the fallback
+    // for a patient abroad with no data, so this path was silently dead.
+    if (!validateTwilioSignature(webhookUrl, signatureParams, twilioSig, authToken)) {
       console.error('[SMS] Rejected: invalid Twilio signature');
       return new Response('<?xml version="1.0"?><Response></Response>', { status: 403, headers: { 'Content-Type': 'text/xml' } });
     }

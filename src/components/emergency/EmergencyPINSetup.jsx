@@ -4,6 +4,7 @@ import { Smartphone, CheckCircle2, AlertTriangle, Loader2, RefreshCw, WifiOff } 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { saveVaultPIN, verifyVaultPIN, hasVaultPIN } from '@/lib/vault/offlineVaultPIN';
+import { generatePINHash } from '@/lib/vaultPINHashing';
 
 // ---------- Manifest cache primer ----------
 // Called automatically after PIN setup so the offline manifest is ready without
@@ -75,24 +76,34 @@ function clearAttempts(email) {
 // -----------------------------------------------
 
 // ---------- Local offline PIN helpers ----------
+//
+// The offline hash is PBKDF2-SHA256 @ 600k (src/lib/vault/offlineVaultPIN.js),
+// the same parameters the server now uses.
+//
+// It used to be an UNSALTED single-round SHA-256 of `pin:email`, written on
+// every setup ("ALWAYS save legacy hash regardless of PBKDF2 outcome") and
+// accepted as a verification fallback. Against a 6-digit PIN — a 10^6 keyspace
+// — that is trivially reversible, and because the fallback was always
+// available it made the 600k PBKDF2 beside it purely decorative. Removed
+// outright: the weakest accepted credential is the real strength of the lock.
 const LOCAL_PIN_KEY = 'morales_emergency_pin_hash';
 
-async function hashPIN(pin, email) {
-  const data = new TextEncoder().encode(pin + ':' + email.toLowerCase());
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 async function saveLocalPIN(pin, email, hint) {
-  const hash = await hashPIN(pin, email);
-  localStorage.setItem(LOCAL_PIN_KEY, JSON.stringify({ hash, email: email.toLowerCase(), hint: hint || '', savedAt: new Date().toISOString() }));
+  const { hash } = await generatePINHash(pin, email);
+  localStorage.setItem(LOCAL_PIN_KEY, JSON.stringify({
+    hash, email: email.toLowerCase(), hint: hint || '',
+    alg: 'PBKDF2-SHA256-600k', savedAt: new Date().toISOString(),
+  }));
 }
 
 async function verifyLocalPIN(pin, email) {
   try {
     const stored = JSON.parse(localStorage.getItem(LOCAL_PIN_KEY) || 'null');
     if (!stored || stored.email !== email.toLowerCase()) return false;
-    const hash = await hashPIN(pin, email);
+    // Anything without the PBKDF2 marker is a legacy unsalted-SHA record.
+    // Refuse it rather than fall back — the user re-sets their PIN instead.
+    if (stored.alg !== 'PBKDF2-SHA256-600k') return false;
+    const { hash } = await generatePINHash(pin, email);
     return hash === stored.hash;
   } catch { return false; }
 }
@@ -228,10 +239,12 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     } catch (err) {
       console.error('[EmergencyPINSetup] PBKDF2 save failed:', err);
     }
-    // Step 1b: ALWAYS save legacy SHA-256 hash regardless of PBKDF2 outcome.
-    // EmergencyManifest offline verification and OfflineCapabilitiesPanel
-    // status display both read morales_emergency_pin_hash — they would
-    // falsely show "Not Set" if only the PBKDF2 key was written.
+    // Step 1b: write the second local record that EmergencyManifest offline
+    // verification and OfflineCapabilitiesPanel read (morales_emergency_pin_hash)
+    // — without it they would falsely show "Not Set".
+    // This is now PBKDF2-SHA256 @600k like everything else. It was previously
+    // an unsalted single-round SHA-256, written unconditionally and accepted as
+    // a fallback, which reduced the whole scheme to that weakest link.
     await saveLocalPIN(pin, userEmail, hint);
 
     // Step 2: Save to server (if online and not already handled above)
@@ -243,16 +256,29 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       }
     }
     
-    // Step 3: Prime emergency manifest cache in the background (best-effort, non-blocking)
+    // Step 3: Prime emergency manifest cache. The user is about to be told
+    // their details are available offline — if the cache did not populate they
+    // would only discover it during an actual emergency with no signal, so the
+    // failure is surfaced rather than swallowed.
+    let manifestCached = true;
     if (navigator.onLine) {
-      cacheManifestLocally(userEmail).catch(() => {});
+      try {
+        await cacheManifestLocally(userEmail);
+      } catch (err) {
+        console.error('[EmergencyPINSetup] manifest cache failed:', err);
+        manifestCached = false;
+      }
+    } else {
+      manifestCached = false;
     }
 
     // Step 4: Clear inputs and show success
     toast({
       title: '✅ Emergency PIN Saved!',
-      description: 'Stored securely on-device for offline access',
-      variant: 'default'
+      description: manifestCached
+        ? 'Stored securely on-device for offline access'
+        : 'PIN saved. Your emergency details are NOT cached offline yet — open this page again while connected.',
+      variant: manifestCached ? 'default' : 'destructive'
     });
     
     setHasPIN(true);
@@ -275,7 +301,47 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
     setLoading(true);
     setError('');
 
-    // Try PBKDF2 verification first (most secure, works offline)
+    // ── ONLINE: the server decides. ─────────────────────────────────────────
+    // Order matters. This used to check the LOCAL hash first and only fall
+    // back to the server, which meant an attacker holding the device could
+    // brute-force a 6-digit PIN entirely offline — deleting one localStorage
+    // key resets the client "lockout", and not one attempt ever reaches the
+    // server's real limiter or the audit log. Holding the device IS the threat
+    // model for an emergency PIN, so whenever we can reach the server, we do.
+    // verifyEmergencyPIN enforces 5 attempts / 30 min plus a persistent
+    // locked_until on the record.
+    if (navigator.onLine) {
+      try {
+        const res = await base44.functions.invoke('verifyEmergencyPIN', { action: 'verify', user_email: userEmail, pin });
+        if (res.data?.verified) {
+          clearAttempts(userEmail);
+          // Cache for genuine offline use later.
+          try { await saveVaultPIN(userEmail, pin); } catch (_) {}
+          try { await saveLocalPIN(pin, userEmail, null); } catch (_) {}
+          setVerifiedToken(res.data.pin_session_token);
+          setCurrentMode('verified');
+          if (onVerified) onVerified({ verified: true, pin_session_token: res.data.pin_session_token, expires_at: res.data.expires_at });
+          setLoading(false);
+          return;
+        }
+        // Server reachable and said no — do NOT fall through to the local
+        // check, or the offline oracle is back.
+        const serverLocked = res.data?.locked_until || res.status === 429;
+        setError(serverLocked
+          ? 'Too many failed attempts. Please try again later.'
+          : 'Incorrect PIN.');
+        recordFailedAttempt(userEmail);
+        setPin('');
+        setLoading(false);
+        return;
+      } catch (_) {
+        // Network failed mid-request — fall through to the offline path below.
+      }
+    }
+
+    // ── OFFLINE ONLY: local PBKDF2 check. ───────────────────────────────────
+    // Reached when there is no connectivity at all, which is exactly the
+    // emergency case this vault exists for.
     try {
       const result = await verifyVaultPIN(userEmail, pin);
       if (result.valid) {
@@ -289,33 +355,13 @@ export default function EmergencyPINSetup({ userEmail, mode = 'setup', onVerifie
       console.error('[EmergencyPINSetup] PBKDF2 verify failed:', err);
     }
 
-    // Fallback to legacy local verification
-    const legacyOk = await verifyLocalPIN(pin, userEmail);
-    if (legacyOk) {
+    const localOk = await verifyLocalPIN(pin, userEmail);
+    if (localOk) {
       clearAttempts(userEmail);
       setCurrentMode('verified');
       if (onVerified) onVerified({ verified: true, pin_session_token: 'offline_local', expires_at: null });
       setLoading(false);
       return;
-    }
-
-    // If online, try server as last resort
-    if (navigator.onLine) {
-      try {
-        const res = await base44.functions.invoke('verifyEmergencyPIN', { action: 'verify', user_email: userEmail, pin });
-        if (res.data?.verified) {
-          clearAttempts(userEmail);
-          // Save locally for next offline use
-          try {
-            await saveVaultPIN(userEmail, pin);
-          } catch (_) {}
-          setVerifiedToken(res.data.pin_session_token);
-          setCurrentMode('verified');
-          if (onVerified) onVerified({ verified: true, pin_session_token: res.data.pin_session_token, expires_at: res.data.expires_at });
-          setLoading(false);
-          return;
-        }
-      } catch (_) {}
     }
 
     // All methods failed — record the attempt

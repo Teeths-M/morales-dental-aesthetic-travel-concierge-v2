@@ -117,17 +117,79 @@ export function clearSyncedHandshakes() {
 }
 
 /**
+ * Ordered list of handshake types, index === handshake number (1-9).
+ * Index 0 is unused so `HANDSHAKE_TYPES[n]` reads naturally.
+ * Mirrors HANDSHAKE_MAP in base44/functions/completeHandshake/entry.ts.
+ */
+export const HANDSHAKE_TYPES = [
+  null,
+  'driver_pickup', 'airport_dropoff', 'airport_checkin', 'hotel_checkin',
+  'clinic_arrival', 'recovery_handoff', 'hotel_checkout', 'airport_boarding',
+  'home_dropoff',
+];
+
+/**
+ * Send every queued handshake to the server.
+ *
+ * This is the single flush implementation, used both by HandshakeButton after
+ * a tap and by the global offline sync controller on reconnect. It previously
+ * lived privately inside HandshakeButton and was only ever called from inside
+ * a tap handler, so a handshake confirmed in airplane mode was never sent
+ * unless the patient happened to open the app and tap again while online —
+ * despite the toast promising "we'll confirm this step when you reconnect."
+ *
+ * @param {object} base44 SDK client (injected to keep this module dependency-free)
+ * @returns {Promise<{synced:number, failed:number}>}
+ */
+export async function flushHandshakeQueue(base44) {
+  const unsynced = getUnsyncedHandshakes();
+  let synced = 0;
+  let failed = 0;
+
+  for (const packet of unsynced) {
+    const handshakeNumber = HANDSHAKE_TYPES.indexOf(packet.handshake_type);
+    if (handshakeNumber < 1) {
+      // Unknown type would be rejected as "must be 1-9" forever, wedging the
+      // queue. Drop it rather than retry indefinitely.
+      console.error('[offlineHandshakeQueue] dropping packet with unknown type:', packet.handshake_type);
+      markHandshakeSynced(packet.offline_packet_id);
+      failed++;
+      continue;
+    }
+    try {
+      await base44.functions.invoke('completeHandshake', {
+        trip_id: packet.trip_id,
+        handshake_number: handshakeNumber,
+        gps_location: packet.gps_lat
+          ? { lat: packet.gps_lat, lng: packet.gps_lng, accuracy_m: packet.gps_accuracy_m }
+          : null,
+        trigger_method: 'app',
+        offline_packet_id: packet.offline_packet_id,
+      });
+      markHandshakeSynced(packet.offline_packet_id);
+      synced++;
+    } catch (_) {
+      // Leave queued for the next flush.
+      failed++;
+    }
+  }
+  return { synced, failed };
+}
+
+/**
  * Called when a journey completes (HS9 confirmed or case marked Completed).
  * Syncs any remaining unsynced packets then clears the queue.
  */
-export async function clearHandshakeQueue(caseId) {
+export async function clearHandshakeQueue(caseId, base44) {
   if (!caseId) return;
   try {
-    // Attempt to sync any remaining unsynced packets first
+    // Flush before deleting — this block used to be empty, so unsynced
+    // confirmations for the case were silently discarded here.
     const queue = getHandshakeQueue();
     const unsynced = queue.filter(p => !p.synced && p.case_id === caseId);
 
-    if (unsynced.length > 0) {
+    if (unsynced.length > 0 && base44 && navigator.onLine) {
+      await flushHandshakeQueue(base44).catch(() => {});
     }
 
     // Remove all packets for this case

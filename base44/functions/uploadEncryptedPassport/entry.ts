@@ -66,7 +66,10 @@ Deno.serve(async (req) => {
       file_size_bytes: file_size_bytes || 0,
       integrity_hash: file_hash_sha256 || '',
       status: 'active',
-      virus_scan_status: 'passed',
+      // No AV scanner is wired. 'passed' was hardcoded here, which asserts a
+      // scan that never ran — uploadToVault already gets this right. Never
+      // claim 'passed' without a real scan.
+      virus_scan_status: 'not_scanned',
       expires_at,
       access_count: 0,
       is_emergency_accessible: true,

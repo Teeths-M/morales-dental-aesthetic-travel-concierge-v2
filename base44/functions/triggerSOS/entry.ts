@@ -214,15 +214,46 @@ Deno.serve(createHandler(async ({ req }) => {
       } catch (_) { notificationsSent.push('admin_email_failed'); }
     }
 
-    // SMS via Twilio if phone available
+    // SMS via Twilio if phone available.
+    //
+    // This used to invoke sendSmsNotification, which is an ADMIN COMPOSER tool:
+    // it requires a {to, type} payload (this sent {to, message} → 400) and an
+    // admin session (an SOS has neither). Both failures were swallowed by the
+    // bare catch, so the patient never received "help is coming" and nothing
+    // was logged. Sends directly instead, the same way triggerCovertSOS does.
     if (patient_phone) {
-      try {
-        await base44.asServiceRole.functions.invoke('sendSmsNotification', {
-          to: patient_phone,
-          message: `Morales Safe-T: Your ${route.label} SOS has been received. Emergency team alerted. Stay calm and stay where you are. If safe to call, dial your local emergency number.`
-        });
-        notificationsSent.push('patient_sms');
-      } catch (_) {}
+      const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');
+      const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+      const from  = Deno.env.get('TWILIO_PHONE_NUMBER');
+      if (!sid || !token || !from) {
+        console.error('[triggerSOS] Twilio not configured — patient confirmation SMS NOT sent.');
+        notificationsSent.push('patient_sms_not_configured');
+      } else {
+        try {
+          const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${btoa(`${sid}:${token}`)}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              To: patient_phone,
+              From: from,
+              Body: `Morales Safe-T: Your ${route.label} SOS has been received. Emergency team alerted. Stay calm and stay where you are. If safe to call, dial your local emergency number.`,
+            }).toString(),
+          });
+          if (resp.ok) {
+            notificationsSent.push('patient_sms');
+          } else {
+            // Never silent on a life-safety path.
+            console.error('[triggerSOS] patient confirmation SMS failed:', resp.status);
+            notificationsSent.push('patient_sms_failed');
+          }
+        } catch (e) {
+          console.error('[triggerSOS] patient confirmation SMS threw:', e);
+          notificationsSent.push('patient_sms_failed');
+        }
+      }
     }
 
     // Get case emergency contact and notify

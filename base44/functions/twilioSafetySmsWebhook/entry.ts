@@ -209,12 +209,24 @@ Deno.serve(async (req) => {
 
     // Parse command
     const isSafe = body.startsWith('SAFE') || body.startsWith('CHECKIN');
-    const isSOS = body === 'SOS' || body === 'HELP' || body.startsWith('SOS ') || body.startsWith('HELP ');
+    // MORALESHELP is the covert keyword we document to users in
+    // SoloCheckInSettings ("text MORALESHELP if you cannot speak freely").
+    // It had NO inbound handler anywhere — the only three references in the
+    // repo were the client-side keystroke trigger, so a patient who texted it
+    // in a coercive situation got silence. Treated as an SOS here.
+    const isCovertKeyword = body.replace(/\s+/g, '') === 'MORALESHELP';
+    const isSOS = body === 'SOS' || body === 'HELP'
+      || body.startsWith('SOS ') || body.startsWith('HELP ')
+      || isCovertKeyword;
 
     // ── SOS / HELP ────────────────────────────────────────────────────────────
     if (isSOS) {
       const caseId = checkIn?.case_id || '';
-      await logEntry('received_sos', 'SOS received via SMS', caseId);
+      await logEntry(
+        'received_sos',
+        isCovertKeyword ? 'COVERT SOS received via SMS (MORALESHELP)' : 'SOS received via SMS',
+        caseId,
+      );
 
       // Create SOSEvent immediately
       try {
@@ -256,7 +268,13 @@ Deno.serve(async (req) => {
         }).catch(() => {});
       }
 
-      return twimlReply('SOS received. Morales emergency team has been alerted. Stay where you are. Help is being dispatched.');
+      // The covert keyword gets a deliberately innocuous reply: the whole point
+      // is that the patient may be under observation, so an explicit "SOS
+      // received / help dispatched" on their lock screen could put them in
+      // more danger. Escalation above is identical either way.
+      return twimlReply(isCovertKeyword
+        ? 'Thanks for your message. Your Morales account is up to date.'
+        : 'SOS received. Morales emergency team has been alerted. Stay where you are. Help is being dispatched.');
     }
 
     // ── SAFE / CHECKIN ────────────────────────────────────────────────────────

@@ -3,8 +3,8 @@ import { base44 } from '@/api/base44Client';
 import {
   enqueueHandshake,
   buildHandshakePacket,
-  getUnsyncedHandshakes,
-  markHandshakeSynced,
+  flushHandshakeQueue,
+  HANDSHAKE_TYPES,
 } from '@/offline/handshake/offlineHandshakeQueue';
 
 const GOLD = '#D4AF37';
@@ -36,11 +36,9 @@ const NEXT_STEP_HINTS = [
   null,                                             // HS9 = complete
 ];
 
-const HANDSHAKE_TYPES = [
-  null,
-  'driver_pickup', 'airport_dropoff', 'airport_checkin', 'hotel_checkin',
-  'clinic_arrival', 'recovery_handoff', 'hotel_checkout', 'airport_boarding', 'home_dropoff',
-];
+// HANDSHAKE_TYPES now comes from offlineHandshakeQueue so the queue writer and
+// the queue flusher can never drift apart — a mismatch there produced packets
+// the server rejects as "must be 1-9", stuck in the queue forever.
 
 /**
  * HandshakeButton
@@ -80,22 +78,9 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
     });
   }
 
-  // Sync any queued offline handshakes when called (runs on mount from Dashboard)
-  async function syncOfflineQueue() {
-    const unsynced = getUnsyncedHandshakes();
-    for (const packet of unsynced) {
-      try {
-        await base44.functions.invoke('completeHandshake', {
-          trip_id:          packet.trip_id,
-          handshake_number: HANDSHAKE_TYPES.indexOf(packet.handshake_type),
-          gps_location:     packet.gps_lat ? { lat: packet.gps_lat, lng: packet.gps_lng, accuracy_m: packet.gps_accuracy_m } : null,
-          trigger_method:   'app',
-          offline_packet_id: packet.offline_packet_id,
-        });
-        markHandshakeSynced(packet.offline_packet_id);
-      } catch (_) { /* will retry next time */ }
-    }
-  }
+  // Flushing now lives in offlineHandshakeQueue.flushHandshakeQueue, shared
+  // with the global reconnect listener registered in AppLayout. The private
+  // copy that used to live here was only ever reachable from inside handleTap.
 
   async function handleTap() {
     if (isDone || loading) return;
@@ -121,7 +106,7 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
         showToast(`Saved! We'll confirm this step when you reconnect. ${NEXT_STEP_HINTS[nextStep] || ''}`, 'queued');
       } else {
         // Sync any previously queued handshakes first
-        await syncOfflineQueue().catch(() => {});
+        await flushHandshakeQueue(base44).catch(() => {});
 
         const result = await base44.functions.invoke('completeHandshake', {
           trip_id:          tripId,

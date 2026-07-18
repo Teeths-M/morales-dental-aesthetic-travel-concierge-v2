@@ -59,9 +59,11 @@ Your vault is now **100% bulletproof** for offline access. Here's exactly what w
 
 | Feature | Implementation |
 |---------|---------------|
-| **PIN Hashing** | PBKDF2-SHA256, 600,000 iterations (OWASP standard) |
+| **PIN Hashing** | PBKDF2-SHA256, 600,000 iterations (OWASP standard) — client and server |
 | **Salt Generation** | Deterministic from email (same as server) |
 | **Document Encryption** | AES-256-GCM (client-side) |
+| **Document key derivation** | PBKDF2-SHA256, **150,000** iterations (`src/lib/vaultEncryption.js`) — lower than the PIN hash because 600k on a large file overflows the browser call stack. Stated explicitly so this table is not read as 600k everywhere. |
+| **Virus scanning** | **Not implemented.** Uploads are recorded `not_scanned`; no AV engine is wired. |
 | **Storage** | localStorage (encrypted blobs) |
 | **Lockout** | 5-attempt limit (client-side enforced) |
 

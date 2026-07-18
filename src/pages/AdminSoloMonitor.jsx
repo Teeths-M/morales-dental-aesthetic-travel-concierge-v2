@@ -172,7 +172,21 @@ export default function AdminSoloMonitor() {
 
   const runEscalation = async () => {
     setRunningEscalation(true);
-    await base44.functions.invoke('runSilentSafetyEscalation', {}).catch(() => {});
+    try {
+      const res = await base44.functions.invoke('runSilentSafetyEscalation', {});
+      if (res?.data?.error) throw new Error(res.data.error);
+    } catch (err) {
+      // This is a SAFETY ESCALATION. The failure used to be swallowed by a
+      // bare .catch(() => {}), so the operator watched the button finish and
+      // reasonably concluded the escalation had fired when it may not have.
+      // On this path, silence is the dangerous outcome.
+      console.error('[AdminSoloMonitor] escalation failed:', err);
+      alert(
+        'ESCALATION DID NOT RUN.\n\n' +
+        'The silent safety escalation failed to start, so no alerts were sent. ' +
+        'Escalate manually now and notify the on-call coordinator.'
+      );
+    }
     await load();
     setRunningEscalation(false);
   };

@@ -20,6 +20,21 @@ import th from './locales/th/translation.json';
 import zh from './locales/zh/translation.json';
 import ar from './locales/ar/translation.json';
 
+/**
+ * Languages offered in the picker.
+ *
+ * Arabic is deliberately NOT here. The locale file exists and `applyDir()`
+ * flips `document.documentElement.dir` — but that is the entire RTL
+ * implementation. The UI uses ~578 physical-direction utilities (ml-*, pl-*,
+ * left-*, text-left) and zero logical properties, so selecting العربية sets
+ * the document RTL while every offset stays LTR: mirrored arrows, drawers
+ * sliding the wrong way, a misplaced floating SOS button. Offering a language
+ * that visibly breaks the page is worse than not offering it.
+ *
+ * To restore: migrate those utilities to logical equivalents (ms-/me-/ps-/pe-,
+ * start-/end-, text-start/end), verify on a real RTL device, then re-add here
+ * with dir: 'rtl'. See ARABIC_RTL in the launch notes.
+ */
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English',   flag: '🇺🇸', dir: 'ltr' },
   { code: 'es', label: 'Español',   flag: '🇻🇪', dir: 'ltr' },
@@ -30,20 +45,30 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'tr', label: 'Türkçe',    flag: '🇹🇷', dir: 'ltr' },
   { code: 'th', label: 'ภาษาไทย',  flag: '🇹🇭', dir: 'ltr' },
   { code: 'zh', label: '中文',      flag: '🇨🇳', dir: 'ltr' },
-  { code: 'ar', label: 'العربية',   flag: '🇸🇦', dir: 'rtl' },
 ];
 
 export const LANG_KEY = 'morales_lang';
 
 const RESOURCES = { en, es, pt, fr, de, it, tr, th, zh, ar };
 
+/**
+ * A language is usable only if we actually OFFER it. Checking RESOURCES alone
+ * was not enough: ar/translation.json still ships, so a browser that had
+ * previously stored `morales_lang=ar` (or whose OS locale is Arabic) would
+ * resolve to Arabic text inside an LTR layout even after Arabic was pulled
+ * from the picker. Gate on the offered list instead.
+ */
+function isOffered(code) {
+  return !!code && !!RESOURCES[code] && SUPPORTED_LANGUAGES.some(l => l.code === code);
+}
+
 function detectLanguage() {
   try {
     const stored = localStorage.getItem(LANG_KEY);
-    if (stored && RESOURCES[stored]) return stored;
+    if (isOffered(stored)) return stored;
     const nav = (navigator.languages?.[0] || navigator.language || 'en');
     const code = nav.split('-')[0].toLowerCase();
-    return RESOURCES[code] ? code : 'en';
+    return isOffered(code) ? code : 'en';
   } catch {
     return 'en';
   }
@@ -63,7 +88,7 @@ function applyDir(lng) {
 applyDir(currentLang);
 
 export function changeLanguage(code) {
-  if (!RESOURCES[code]) return;
+  if (!isOffered(code)) return;
   currentLang = code;
   try { localStorage.setItem(LANG_KEY, code); } catch {}
   // Bridge to the legacy wizard dictionary (lib/translations.js): the

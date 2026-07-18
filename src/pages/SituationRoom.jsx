@@ -221,7 +221,11 @@ export default function SituationRoom() {
             style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
           <div>
             <p style={{ margin: 0, fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em', color: '#fff' }}>SITUATION ROOM</p>
-            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>MORALES GLOBAL INTELLIGENCE · LIVE</p>
+            {/* Not "· LIVE". Cases refresh on a 5-minute poll and map pins are
+                destination-country centroids, not tracked positions. */}
+            <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>
+              {isDemo ? 'MORALES GLOBAL INTELLIGENCE · SAMPLE DATA' : 'MORALES GLOBAL INTELLIGENCE · REFRESHES EVERY 5 MIN'}
+            </p>
           </div>
         </div>
 
@@ -381,7 +385,14 @@ export default function SituationRoom() {
                       {isHR && <div style={{ color: '#22c55e', fontSize: 11, marginTop: 2 }}>✅ Doctor &amp; Clinic: Morales-Verified</div>}
                       {count > 0 ? (
                         <div style={{ color: isHR ? '#ef4444' : '#1a8f3a', marginTop: 4 }}>
-                          {count} active patient{count > 1 ? 's' : ''}{isDemo ? ' (demo)' : ''}
+                          {count} active patient{count > 1 ? 's' : ''}{isDemo ? ' (sample data)' : ''}
+                          {/* The pin is this country's centroid — it is where
+                              the patient is TRAVELLING TO, not where they are.
+                              Live position lives on LiveLocation/Guardian View
+                              and is not plotted here. */}
+                          <div style={{ color: '#888', fontSize: 10, marginTop: 2, fontWeight: 400 }}>
+                            Destination country — not a tracked position
+                          </div>
                         </div>
                       ) : (
                         <div style={{ color: '#888', marginTop: 4 }}>Monitored destination</div>
@@ -497,8 +508,12 @@ export default function SituationRoom() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }}
                   style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
+                {/* This feed is a hardcoded sample array (see FEED_EVENTS) in
+                    every mode, not a read of AuditLog. It must not be labelled
+                    "LIVE" — an operator could believe they are watching real
+                    events and stand down. */}
                 <p style={{ margin: 0, fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>
-                  LIVE INTELLIGENCE FEED
+                  SAMPLE INTELLIGENCE FEED · NOT LIVE
                 </p>
               </div>
             </div>

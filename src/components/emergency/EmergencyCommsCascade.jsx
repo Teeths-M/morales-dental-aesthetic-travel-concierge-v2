@@ -9,12 +9,18 @@ import { useEmergencyComms } from '@/offline/sos/useEmergencyComms';
 const GOLD = '#D4AF37';
 
 const CHANNEL_CONFIG = {
-  internet:  { icon: Wifi,          label: 'Internet API',       sub: 'triggerSOS → Morales backend', color: '#22c55e' },
-  share:     { icon: Share2,        label: 'Web Share',           sub: 'SMS · WhatsApp · Signal · Email', color: '#60a5fa' },
-  sms:       { icon: MessageSquare, label: 'SMS Deeplink',        sub: 'Opens native SMS app', color: '#f59e0b' },
-  bluetooth: { icon: Bluetooth,     label: 'Bluetooth BLE',       sub: 'goTenna · inReach · Zoleo', color: '#a855f7' },
-  satellite: { icon: Satellite,     label: 'Satellite SOS',       sub: 'iOS 16+ · Android 14+', color: '#06b6d4' },
-  qr:        { icon: QrCode,        label: 'QR Emergency Code',   sub: 'Scan to relay your location', color: '#ec4899' },
+// Each `sub` states what the channel ACTUALLY does. Two of these do not reach
+// Morales at all (satellite is on-screen instructions for the phone's own
+// emergency feature; Web Share hands off to whatever app the user picks), and
+// BLE depends on hardware we have not certified. Saying so on the card matters
+// more than the count — a patient must not believe a channel is carrying their
+// SOS to us when it is not.
+  internet:  { icon: Wifi,          label: 'Internet API',       sub: 'Reaches Morales directly — primary channel', color: '#22c55e' },
+  share:     { icon: Share2,        label: 'Web Share',           sub: 'Hands off to an app you choose — does not reach Morales', color: '#60a5fa' },
+  sms:       { icon: MessageSquare, label: 'SMS Deeplink',        sub: 'Opens your SMS app — you must press send', color: '#f59e0b' },
+  bluetooth: { icon: Bluetooth,     label: 'Bluetooth BLE',       sub: 'Experimental · Chrome/Edge on Android · untested hardware', color: '#a855f7' },
+  satellite: { icon: Satellite,     label: 'Satellite SOS',       sub: 'Instructions only — use your phone\'s own satellite SOS', color: '#06b6d4' },
+  qr:        { icon: QrCode,        label: 'QR Emergency Code',   sub: 'Show to a bystander — needs internet to generate', color: '#ec4899' },
 };
 
 const STATUS_BADGE = {
@@ -108,7 +114,11 @@ export default function EmergencyCommsCascade({ caseId, userId, userEmail, activ
         <div>
           <p className="text-sm font-bold text-white">Emergency Comms Cascade</p>
           <p className="text-[11px] mt-0.5" style={{ color: '#64748b' }}>
-            6 channels · fires simultaneously · no internet required for most
+            {/* Was "6 channels · fires simultaneously · no internet required
+                for most". Only Internet and QR actually fire on trigger; SMS,
+                Bluetooth and Satellite are manual actions you take, and QR
+                needs a connection to generate. */}
+            Internet alert sends automatically. The rest are backups you trigger yourself.
           </p>
         </div>
         {gpsState === 'capturing' && (

@@ -320,7 +320,8 @@ export default function VaultDashboard({ user }) {
       } else if (err.name === 'OperationError' || err.message?.includes('OperationError')) {
         alert('Decryption failed: Incorrect password or corrupted data. Please verify your password and try again.');
       } else {
-        alert(`Decryption failed: ${err.message || 'Unknown error'}. Please check your password and try again.`);
+        console.error("[VaultDashboard] decryption failed:", err);
+        alert("Decryption failed. Please check your password and try again. If it keeps failing, the file may be corrupted.");
       }
     }
   }, [pwModal.vault]);

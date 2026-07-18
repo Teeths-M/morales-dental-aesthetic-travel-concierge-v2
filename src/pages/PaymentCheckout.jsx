@@ -120,7 +120,10 @@ export default function PaymentCheckout() {
         setDeclinedAmount(attemptedAmount);
         setShowDeclineDialog(true);
       } else {
-        toast.error(error.message || 'Payment failed. Please try again or contact support.');
+        // Never surface a raw gateway/SDK message at the payment step — it can
+        // leak backend internals into a screenshot. Logged above, mapped here.
+        console.error("[PaymentCheckout] payment failed:", error);
+        toast.error("We could not complete your payment. No money has been taken — please check your card details and try again, or contact support.");
       }
     },
     onSuccess: (res) => {

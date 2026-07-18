@@ -24,8 +24,12 @@ function shortId() {
 }
 
 Deno.serve(createHandler(async ({ base44, user, body }) => {
-    const body = await body();
-    const { action } = body;
+    // `const body = await body()` shadowed the destructured `body` parameter
+    // and referenced it in its own initializer — a temporal dead zone
+    // ReferenceError on every single invocation, so this function could never
+    // succeed. Renamed the local.
+    const payload = await body();
+    const { action } = payload;
 
     // ── CREATE ──────────────────────────────────────────────────────────────
     if (action === 'create') {
@@ -33,7 +37,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
         case_id, trip_id, handshake_type, primary_driver_id,
         primary_driver_phone, backup_driver_id, backup_driver_phone,
         patient_email, patient_name,
-      } = body;
+      } = payload;
 
       if (!handshake_type) {
         return Response.json({ error: 'handshake_type required' }, { status: 400 });
@@ -89,7 +93,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     // ── TAP_CONFIRM ──────────────────────────────────────────────────────────
     if (action === 'tap_confirm') {
-      const { checkpoint_id, gps_lat, gps_lng, gps_accuracy_m, offline_packet_id } = body;
+      const { checkpoint_id, gps_lat, gps_lng, gps_accuracy_m, offline_packet_id } = payload;
       if (!checkpoint_id) return Response.json({ error: 'checkpoint_id required' }, { status: 400 });
 
       const records = await base44.asServiceRole.entities.OfflineHandshake.filter({
@@ -150,7 +154,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     // ── SMS_CONFIRM — called internally by processTwilioHandshake ────────────
     if (action === 'sms_confirm') {
-      const { checkpoint_id, from_phone, message_sid } = body;
+      const { checkpoint_id, from_phone, message_sid } = payload;
       if (!checkpoint_id) return Response.json({ error: 'checkpoint_id required' }, { status: 400 });
 
       // Idempotency: if same Twilio MessageSid arrives twice, skip
@@ -199,7 +203,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     // ── GET ──────────────────────────────────────────────────────────────────
     if (action === 'get') {
-      const { checkpoint_id } = body;
+      const { checkpoint_id } = payload;
       if (!checkpoint_id) return Response.json({ error: 'checkpoint_id required' }, { status: 400 });
       const records = await base44.asServiceRole.entities.OfflineHandshake.filter({ checkpoint_id });
       if (!records.length) return Response.json({ error: 'Not found' }, { status: 404 });
@@ -208,7 +212,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
     // ── LIST ─────────────────────────────────────────────────────────────────
     if (action === 'list') {
-      const { case_id, trip_id } = body;
+      const { case_id, trip_id } = payload;
       const filter = case_id ? { case_id } : trip_id ? { trip_id } : null;
       if (!filter) return Response.json({ error: 'case_id or trip_id required' }, { status: 400 });
       const records = await base44.asServiceRole.entities.OfflineHandshake.filter(filter);

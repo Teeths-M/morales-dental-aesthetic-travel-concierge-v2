@@ -93,12 +93,26 @@ export default function SurveyPage() {
     if (step < questions.length) { setStep(step + 1); } else { handleSubmit(newAnswers); }
   };
 
+  const [submitError, setSubmitError] = useState(null);
+
   const handleSubmit = async (finalAnswers) => {
     setSubmitting(true);
-    const res = await base44.functions.invoke('submitReputationSurvey', { token, answers: finalAnswers });
-    setResult(res.data);
-    setStep(questions.length + 1);
-    setSubmitting(false);
+    setSubmitError(null);
+    try {
+      const res = await base44.functions.invoke('submitReputationSurvey', { token, answers: finalAnswers });
+      if (res?.data?.error) throw new Error(res.data.error);
+      setResult(res.data);
+      setStep(questions.length + 1);
+    } catch (err) {
+      // Without this, a rejected await skipped setSubmitting(false) entirely:
+      // the button span permanently on a spinner, and because ErrorBoundary
+      // does not catch async rejections the only way out was a reload — which
+      // discarded every answer the patient had just given.
+      console.error('[SurveyPage] submit failed:', err);
+      setSubmitError('We could not send your answers just now. Your responses are still here — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return (
@@ -166,6 +180,9 @@ export default function SurveyPage() {
               >
                 {step === questions.length ? (submitting ? 'Submitting...' : 'Submit Review') : 'Next →'}
               </Button>
+              {submitError && (
+                <p className="mt-3 text-sm text-center text-red-600">{submitError}</p>
+              )}
             </div>
           )}
 

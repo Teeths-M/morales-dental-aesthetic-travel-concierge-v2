@@ -512,7 +512,7 @@ export default function Booking() {
     },
     onError: (error) => {
       console.error('Consultation creation failed:', error.message);
-      toast.error(`Failed to create consultation: ${error.message}`);
+      toast.error("We could not create your consultation just now. Nothing was lost — please try again in a moment.");
     },
   });
 

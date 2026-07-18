@@ -58,14 +58,23 @@ export default function PostSurgeryFeedback() {
     if (rating === 0) return;
 
     setStatus('submitting');
-    const res = await base44.functions.invoke('submitPostSurgeryFeedback', { token, rating, comment });
+    // The invoke was previously unguarded: a rejected promise (any network
+    // blip) left status stuck on 'submitting' forever, with the patient's
+    // rating and comment lost on reload.
+    try {
+      const res = await base44.functions.invoke('submitPostSurgeryFeedback', { token, rating, comment });
 
-    if (res.data?.success) {
-      setStatus('success');
-    } else if (res.data?.error === 'Feedback already submitted') {
-      setStatus('already_submitted');
-    } else {
-      setErrorMsg(res.data?.error || 'Something went wrong. Please try again.');
+      if (res.data?.success) {
+        setStatus('success');
+      } else if (res.data?.error === 'Feedback already submitted') {
+        setStatus('already_submitted');
+      } else {
+        setErrorMsg(res.data?.error || 'Something went wrong. Please try again.');
+        setStatus('error');
+      }
+    } catch (err) {
+      console.error('[PostSurgeryFeedback] submit failed:', err);
+      setErrorMsg('We could not send your feedback just now. What you wrote is still here — please try again.');
       setStatus('error');
     }
   };

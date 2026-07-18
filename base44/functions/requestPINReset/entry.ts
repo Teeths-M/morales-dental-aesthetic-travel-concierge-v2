@@ -5,8 +5,22 @@ import { createHandler } from '../_shared/createHandler.ts';
 // No new entity needed — token is self-contained with email + expiry.
 // Token expires in 15 minutes.
 
-const RESET_SECRET = Deno.env.get('PIN_RESET_SECRET') || 'morales-pin-reset-hmac-v1-2026';
+// No fallback. This previously read
+//   Deno.env.get('PIN_RESET_SECRET') || 'morales-pin-reset-hmac-v1-2026'
+// which is an HMAC key committed to a public repo: anyone could forge a valid
+// reset token for ANY email and take over that account's Emergency PIN, and
+// with it the emergency vault and SOS console. The literal is now burned —
+// never reuse it. If the env var is unset we refuse to mint tokens rather than
+// sign with a known key. (confirmPINReset already fails closed the same way,
+// which also meant that with the var unset, every emailed link 500'd and the
+// user was told their valid link was invalid.)
+const RESET_SECRET = Deno.env.get('PIN_RESET_SECRET');
 const RESET_WINDOW_MS = 15 * 60 * 1000;
+// Reset requests are unauthenticated by design (you ask precisely because you
+// are locked out), so they need their own limiter: without one this is an
+// email bomb and an account-existence oracle.
+const RESET_MAX_PER_WINDOW = 3;
+const RESET_LIMIT_WINDOW_S = 3600;
 
 async function signToken(data: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -30,7 +44,40 @@ Deno.serve(createHandler(async ({ req }) => {
       return Response.json({ error: 'Valid email required' }, { status: 400 });
     }
 
+    // Fail closed rather than sign with a guessable key.
+    if (!RESET_SECRET) {
+      console.error('[requestPINReset] PIN_RESET_SECRET is not configured — refusing to mint a reset token.');
+      return Response.json({ error: 'Password reset is temporarily unavailable. Please contact support.' }, { status: 503 });
+    }
+
     const email = String(user_email).toLowerCase().trim();
+
+    // Rate limit per email, then per IP — 3/hour each.
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    for (const key of [`pin-reset-req:email:${email}`, `pin-reset-req:ip:${ip}`]) {
+      const now = new Date();
+      const windowStart = new Date(now.getTime() - RESET_LIMIT_WINDOW_S * 1000);
+      const buckets = await base44.asServiceRole.entities.RateLimitBucket
+        .filter({ bucket_key: key }).catch(() => []);
+      const bucket = buckets[0];
+      if (!bucket) {
+        await base44.asServiceRole.entities.RateLimitBucket.create({
+          bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString(),
+        }).catch(() => {});
+      } else if (new Date(bucket.window_start) < windowStart) {
+        await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, {
+          window_start: now.toISOString(), count: 1, updated_at: now.toISOString(),
+        }).catch(() => {});
+      } else if (bucket.count >= RESET_MAX_PER_WINDOW) {
+        // Same generic reply as the success path — never reveal whether the
+        // address exists or has been rate-limited.
+        return Response.json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+      } else {
+        await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, {
+          count: bucket.count + 1, updated_at: now.toISOString(),
+        }).catch(() => {});
+      }
+    }
     const expiresAt = Date.now() + RESET_WINDOW_MS;
     const payload = `${email}|${expiresAt}`;
     const sig = await signToken(payload);

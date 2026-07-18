@@ -501,7 +501,8 @@ export default function MedicalIntakeForm() {
       draftIdRef.current = null;
       setSubmitted(true);
     } catch (err) {
-      toast({ title: 'Submission failed', description: err.message, variant: 'destructive' });
+      console.error("[MedicalIntakeForm] submit failed:", err);
+      toast({ title: "Submission failed", description: "We could not send your intake form. Your answers are still on screen — please try again.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }

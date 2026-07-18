@@ -1,6 +1,6 @@
 ﻿// @ts-nocheck — pre-existing type gaps
 import React, { useState, useRef } from 'react';
-import { Shield, Upload, CheckCircle2, AlertTriangle, Lock, Eye, Loader2 } from 'lucide-react';
+import { Shield, Upload, CheckCircle2, AlertTriangle, Lock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,8 +41,6 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
   const [error, setError] = useState(null);
   const [issuedToken, setIssuedToken] = useState(null);
   const [fileName, setFileName] = useState(null);
-  const [extracting, setExtracting] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileRef = useRef(null);
 
@@ -61,55 +59,25 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
     setFileName(file.name);
     setSelectedFile(file);
     
-    // Skip auto-extraction if offline or if document type is not passport
-    if (vaultMeta.document_type === 'passport' && file.type.includes('image') && navigator.onLine) {
-      setExtracting(true);
-      try {
-        
-        // Convert file to ArrayBuffer to ensure proper serialization through SDK
-        const arrayBuffer = await file.arrayBuffer();
-        const uploadRes = await base44.integrations.Core.UploadFile({ file: arrayBuffer });
-        
-        const extractRes = await base44.functions.invoke('extractPassportData', { file_url: uploadRes.data.file_url });
-        
-        
-        // Check if extraction was successful
-        if (extractRes.data?.success && extractRes.data?.extracted) {
-          const data = extractRes.data.extracted;
-          
-          // Create extracted data object with all fields
-          const extractedObj = {
-            full_name: data.full_name || '',
-            nationality: data.nationality || '',
-            expiry_date: data.expiry_date || '',
-            last_4: data.last_4 || (data.passport_number ? data.passport_number.slice(-4) : '') || '',
-            warnings: extractRes.data.warnings || []
-          };
-          
-          setExtractedData(extractedObj);
-          
-          // Auto-populate fields with extracted data - force update
-          const newVaultMeta = {
-            ...vaultMeta,
-            last_4_digits: extractedObj.last_4,
-            expiry_date: extractedObj.expiry_date,
-            nationality: extractedObj.nationality,
-            full_name_redacted: extractedObj.full_name,
-          };
-          
-          setVaultMeta(newVaultMeta);
-        } else {
-          setExtractedData({ extracted: false, error: 'Could not read passport' });
-        }
-      } catch (err) {
-        console.error('[VaultUploader] Auto-extract error:', err);
-        setExtractedData({ extracted: false, error: 'Extraction failed - please fill manually' });
-        // Continue without extraction - not critical, user can fill manually
-      }
-      setExtracting(false);
-    } else if (!navigator.onLine) {
-      // Offline - skip extraction, user fills manually
-    }
+    // ── Auto-extract (OCR) is DISABLED. Do not re-enable as it was. ──────────
+    // This block used to send the passport image to the server with
+    // Core.UploadFile (general storage, NOT UploadPrivateFile) and hand the
+    // resulting URL to extractPassportData — all of it BEFORE any encryption,
+    // and with nothing deleting the plaintext copy afterwards.
+    //
+    // The panel below this form tells the user "Your document is encrypted on
+    // your device… Only you can decrypt." That promise was false for every
+    // passport image uploaded: an unencrypted scan reached the server, at a
+    // URL, every time.
+    //
+    // The feature was only an autofill convenience — the user can type the
+    // four fields it filled in. It is removed rather than patched so the
+    // zero-knowledge claim is true as written.
+    //
+    // To restore it later, all three of these are required:
+    //   1. explicit opt-in consent naming what leaves the device,
+    //   2. Core.UploadPrivateFile (see the encrypted path below), and
+    //   3. deletion of the uploaded original once extraction returns.
   };
 
   const handleUpload = async () => {
@@ -292,7 +260,6 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
                     // Clear file state when changing document type to prevent cross-contamination
                     setFileName(null);
                     setSelectedFile(null);
-                    setExtractedData(null);
                     if (fileRef.current) fileRef.current.value = '';
                   }}
                   className={`p-4 rounded-xl border text-[13px] font-semibold transition-all ${
@@ -308,51 +275,10 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
             </div>
           </div>
 
-          {/* Auto-Extraction Status */}
-          {extracting && (
-            <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-              <div>
-                <p className="text-sm font-semibold text-blue-900">Reading passport...</p>
-                <p className="text-xs text-blue-700">Auto-filling your details</p>
-              </div>
-            </div>
-          )}
-          
-          {extractedData && extractedData.extracted === false ? (
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-amber-900">Could not auto-fill passport</p>
-                <p className="text-xs text-amber-700 mt-1">
-                  {extractedData.error || 'AI extraction failed. Please enter details manually.'}
-                </p>
-              </div>
-            </div>
-          ) : extractedData && (
-            <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-green-900">âœ“ Passport details auto-filled!</p>
-                <p className="text-xs text-green-700 mt-1">
-                  Extracted: <span className="font-semibold">{extractedData.full_name || 'Name'}</span> â€¢ 
-                  <span className="font-semibold"> {extractedData.nationality || 'Nationality'}</span>
-                  {extractedData.expiry_date && <span> â€¢ Expires: {extractedData.expiry_date}</span>}
-                </p>
-                {extractedData.warnings && extractedData.warnings.length > 0 && (
-                  <div className="mt-2 text-xs text-amber-700 font-semibold">
-                    âš  {extractedData.warnings[0]}
-                  </div>
-                )}
-                <button 
-                  onClick={() => { setExtractedData(null); setVaultMeta(p => ({ ...p, last_4_digits: '', expiry_date: '', nationality: '', full_name_redacted: '' })); }}
-                  className="text-xs text-green-700 underline mt-2 hover:text-green-900"
-                >
-                  Clear and enter manually
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Auto-extraction UI removed together with the OCR upload — see
+              handleFileSelect. Nothing may report "auto-filled" while the
+              document never leaves the device. The fields below are entered
+              by the user. */}
 
           {/* Dynamic Metadata Fields */}
           <div className="space-y-4">

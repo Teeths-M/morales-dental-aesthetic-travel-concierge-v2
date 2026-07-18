@@ -81,16 +81,25 @@ export function useCovertSOS({ caseId, currentLocation, enabled = true }) {
     if (!enabled) return;
 
     // ── Primary: 5-tap gesture ─────────────────────────────────────────────
+    // The window is FIXED from the first tap. It used to be re-armed on every
+    // tap (clearTimeout + fresh 2s), which meant the real condition was "5 taps
+    // with under 2s between each" — unbounded in total duration, and something
+    // ordinary fast scrolling or a child playing with the phone can satisfy.
+    // A false positive here dispatches real security to a real address, so the
+    // gesture has to be deliberate: five taps inside one 2-second window.
     function onTouchStart() {
       if (!isCovertSOSEnabled()) return;
 
+      // First tap of a burst: start the window and let it run to completion.
+      if (tapCountRef.current === 0) {
+        tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; }, TAP_WINDOW_MS);
+      }
       tapCountRef.current++;
-      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-      tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; }, TAP_WINDOW_MS);
 
       if (tapCountRef.current >= TAP_THRESHOLD) {
         tapCountRef.current = 0;
         clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
         fire('gesture');
       }
     }

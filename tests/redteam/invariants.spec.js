@@ -249,3 +249,123 @@ test('CRON AUTH: scheduled sweeps are never callable by an anonymous request', (
     expect(code, `${fn} has no fail-open role check`).not.toMatch(/if \((?:user|callerUser) && \1?\w*\.role !==/);
   }
 });
+
+// ─── Go-live P0 guards (2026-07-18 launch audit) ────────────────────────────
+// Each of these encodes a defect that was live in the product. They are not
+// style rules: every one of them was a claim the UI made that the code did not
+// keep, or a safety path that failed silently.
+
+test('VAULT: no plaintext document ever leaves the device', () => {
+  const src = read('src/components/vault/VaultUploader.jsx');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');
+  // The OCR path uploaded the raw passport image with Core.UploadFile (public
+  // storage) BEFORE encryption, directly under a "never leaves your browser"
+  // banner. Only the encrypted UploadPrivateFile path may remain.
+  expect(code, 'public UploadFile in the vault uploader').not.toMatch(/Core\.UploadFile\s*\(/);
+  expect(code, 'passport OCR extraction re-introduced').not.toContain('extractPassportData');
+  expect(code, 'encrypted upload path still present').toContain('UploadPrivateFile');
+});
+
+test('VAULT: virus scan status is never asserted without a scanner', () => {
+  for (const fn of ['uploadEncryptedPassport', 'uploadToVault']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} claims a scan that never ran`).not.toMatch(/virus_scan_status:\s*'passed'/);
+  }
+});
+
+test('PIN: no unsalted single-round hash is written or accepted', () => {
+  const src = read('src/components/emergency/EmergencyPINSetup.jsx');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // A bare SHA-256 of `pin + ':' + email` over a 6-digit keyspace, always
+  // written and accepted as a fallback, made the 600k PBKDF2 decorative.
+  expect(code, 'legacy unsalted PIN hash').not.toMatch(/digest\(\s*'SHA-256'\s*,\s*data\s*\)/);
+  expect(code, 'PIN hashing goes through the PBKDF2 helper').toContain('generatePINHash');
+  // Server must be consulted first whenever we can reach it, or the local
+  // hash is an unthrottled offline brute-force oracle on a stolen device.
+  // Anchored on the call expressions rather than a comment, so the comment
+  // filter above cannot hide the thing being asserted.
+  const serverCall = code.indexOf("invoke('verifyEmergencyPIN'");
+  const localCall = code.indexOf('await verifyVaultPIN(');
+  expect(serverCall, 'server verification call must exist').toBeGreaterThan(-1);
+  expect(localCall, 'offline fallback call must exist').toBeGreaterThan(-1);
+  expect(serverCall, 'server check must precede the local check').toBeLessThan(localCall);
+});
+
+test('PIN: emergency PIN hashing is 600k on the server, both sides', () => {
+  for (const fn of ['verifyEmergencyPIN', 'confirmPINReset']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} still hashes at 200k`).not.toContain('iterations: 200000');
+    expect(src, `${fn} missing 600k`).toContain('iterations: 600000');
+  }
+});
+
+test('PIN RESET: the HMAC key is never hardcoded', () => {
+  const src = read('base44/functions/requestPINReset/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // A committed fallback key lets anyone forge a reset for any email and take
+  // over the emergency vault + SOS console.
+  expect(code, 'hardcoded reset secret').not.toMatch(/PIN_RESET_SECRET'\)\s*\|\|/);
+  expect(code, 'must fail closed when unset').toContain('if (!RESET_SECRET)');
+  expect(code, 'unauthenticated endpoint needs a rate limit').toContain('RateLimitBucket');
+});
+
+test('SMS: inbound Twilio signature is built from the form payload', () => {
+  const src = read('base44/functions/processSmsShortcode/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // Rebuilding params from the message BODY made the HMAC unmatchable, so
+  // every inbound command (HS1-9, CHECKIN, SOS) was rejected 403.
+  expect(code, 'signature rebuilt from message text').not.toMatch(/new URLSearchParams\(rawText\)/);
+  expect(code, 'signature uses the captured form params').toContain('signatureParams');
+});
+
+test('SMS: the documented covert keyword has an inbound handler', () => {
+  const src = read('base44/functions/twilioSafetySmsWebhook/entry.ts');
+  expect(src, 'MORALESHELP has no server-side handler').toContain('MORALESHELP');
+  // Reply must not announce the SOS — the sender may be under observation.
+  expect(src).toContain('isCovertKeyword');
+});
+
+test('HANDSHAKE: offline confirmations flush on reconnect', () => {
+  const layout = read('src/components/layout/AppLayout.jsx');
+  expect(layout, 'handshake queue not registered with the sync controller')
+    .toMatch(/registerSyncQueue\(\s*'handshake'/);
+  const queue = read('src/offline/handshake/offlineHandshakeQueue.js');
+  expect(queue, 'no shared flush implementation').toContain('export async function flushHandshakeQueue');
+});
+
+test('ESCROW: release is never scheduled with an in-request timer', () => {
+  const src = read('base44/functions/completeHandshake/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // A Deno edge isolate does not survive 24h, so setTimeout meant partners
+  // were silently never paid.
+  expect(code, 'setTimeout used to schedule escrow release').not.toMatch(/setTimeout\([^)]*\n?[^)]*24 \* 60 \* 60/);
+  expect(code, 'release still dispatched').toContain('releaseEscrowPayment');
+});
+
+test('SOS: the patient confirmation SMS does not go through the admin composer', () => {
+  const src = read('base44/functions/triggerSOS/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // sendSmsNotification requires {to,type} AND an admin session; an SOS has
+  // neither, so the send 400'd into a bare catch and the patient heard nothing.
+  expect(code, 'SOS routed through the admin-only composer').not.toContain("invoke('sendSmsNotification'");
+  expect(code, 'failures must be recorded, never silent').toContain('patient_sms_failed');
+});
+
+test('CLAIMS: Arabic is not offered until RTL exists', () => {
+  const src = read('src/i18n.js');
+  const listStart = src.indexOf('SUPPORTED_LANGUAGES = [');
+  const list = src.slice(listStart, src.indexOf('];', listStart));
+  // ~578 physical-direction utilities and zero logical properties: selecting
+  // Arabic sets dir=rtl while every offset stays LTR.
+  expect(list, 'Arabic offered without an RTL implementation').not.toContain("code: 'ar'");
+  expect(src, 'language selection must be gated on what we offer').toContain('isOffered');
+});
+
+test('CLAIMS: the Situation Room does not present sample data as live', () => {
+  const src = read('src/pages/SituationRoom.jsx');
+  // The feed is a hardcoded array in every mode and map pins are country
+  // centroids, not tracked positions.
+  expect(src, 'sample feed still labelled LIVE').not.toContain('LIVE INTELLIGENCE FEED');
+  expect(src).toContain('SAMPLE INTELLIGENCE FEED');
+  expect(src, 'pins must not read as a tracked position').toContain('not a tracked position');
+});

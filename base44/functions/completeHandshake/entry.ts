@@ -285,17 +285,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     }).catch(() => {}); // non-blocking
   }
 
-  // ── Escrow release — 24 hours after handshake completion (Airbnb model) ────
-  // HS1, HS5, HS6, HS7, HS9 each trigger the release of specific partner holds.
-  if ([1, 5, 6, 7, 9].includes(n)) {
-    setTimeout(() => {
-      base44.asServiceRole.functions?.invoke?.('releaseEscrowPayment', {
-        case_id: trip_id, handshake_number: n,
-      }).catch(() => {});
-    }, 24 * 60 * 60 * 1000); // 24 hours — non-blocking
-    // For immediate demo purposes, also fire non-delayed (comment out in production)
-    // base44.asServiceRole.functions?.invoke?.('releaseEscrowPayment', { case_id: trip_id, handshake_number: n }).catch(() => {});
-  }
+  // (Escrow release is dispatched with the async cluster below — see there.)
 
   // ── Guardian / Safety Circle SMS — key safety checkpoints ──────────────────
   // Family gets a calm message at airport, hotel, clinic, and home arrival.
@@ -321,6 +311,26 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   // Matches the Enterprise Asynchronous Infrastructure diagram:
   // every handshake fans out to Patient App Portal + Master Admin Log + Partner notifications.
   const downstream: Promise<unknown>[] = [];
+
+  // ── Escrow release ────────────────────────────────────────────────────────
+  // HS1, HS5, HS6, HS7, HS9 each release specific partner holds.
+  //
+  // This used to be scheduled with setTimeout(..., 24h) inside the request.
+  // A Deno edge invocation does not survive 24 hours — the isolate is torn down
+  // once the response is returned, so that timer never fired and the release
+  // was silently dropped. Partners simply never got paid, with no error
+  // anywhere.
+  //
+  // Dispatched with the cluster instead. releaseEscrowPayment independently
+  // re-verifies trip.handshake_status[n] === true before moving any money, so
+  // this cannot release against an unconfirmed checkpoint.
+  if ([1, 5, 6, 7, 9].includes(n)) {
+    downstream.push(
+      base44.asServiceRole.functions?.invoke?.('releaseEscrowPayment', {
+        case_id: trip_id, handshake_number: n,
+      }).catch(() => {}) ?? Promise.resolve()
+    );
+  }
 
   // Patient App Portal: Golden M SMS on HS9
   if (isComplete && trip.user_phone) {

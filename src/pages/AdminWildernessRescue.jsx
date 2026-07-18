@@ -72,7 +72,16 @@ export default function AdminWildernessRescue() {
         resolution_notes: notes || 'Resolved by admin',
       }),
     };
-    await base44.entities.SOSEvent.update(incident.id, update).catch(() => {});
+    // A rescue-incident state change must not fail silently — the operator
+    // would believe the incident was updated (e.g. marked resolved) when the
+    // record still says otherwise.
+    try {
+      await base44.entities.SOSEvent.update(incident.id, update);
+    } catch (err) {
+      console.error('[AdminWildernessRescue] incident update failed:', err);
+      alert('Could not update this incident. It is UNCHANGED — please retry before standing down.');
+      return;
+    }
 
     // Log handshake for resolution (actor derived from session server-side)
     if (status === 'resolved') {
