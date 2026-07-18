@@ -24,7 +24,8 @@
 //    and are scrubbed from outbound copies, not refused.
 
 export type ViolationScope =
-  | 'message'          // patient ↔ partner threads: strictest, this is where disintermediation happens
+  | 'message'          // patient ↔ partner threads pre-selection: strictest, this is where disintermediation happens
+  | 'message_selected' // same thread AFTER the patient chose this doctor — see note below
   | 'profile_field'    // structured profile input the patient owns
   | 'intake_medical'   // free-text clinical history — must stay permissive
   | 'search'           // search boxes and command inputs
@@ -145,9 +146,13 @@ export function detectViolations(input: unknown, scope: ViolationScope): Violati
     detections.push({ code, label, severity, sample: sample(m) });
   };
 
-  // Intent-stating phrases. These are the real signal and are blocked in any
-  // scope where a human counterparty could read them.
-  const blockable = scope === 'message';
+  // Intent-stating phrases. These are the real signal — a stated intent to
+  // leave the platform, take payment outside escrow, or book around us. They
+  // are blocked in BOTH message scopes, selected or not: "pay me directly,
+  // cash only" from a chosen surgeon is the more dangerous version, not the
+  // less, because it evades the escrow and the safety guarantees that the
+  // selection was supposed to buy the patient.
+  const blockable = scope === 'message' || scope === 'message_selected';
 
   for (const m of text.match(OFF_PLATFORM) || []) {
     add('off_platform_redirect', 'Attempt to move the conversation off-platform',
@@ -159,13 +164,31 @@ export function detectViolations(input: unknown, scope: ViolationScope): Violati
     add('safety_gate_bypass', 'Attempt to bypass a safety gate', 'block', m);
   }
 
-  // Raw contact details. In a clinical free-text field these are usually the
-  // patient's own doctor or pharmacy and are legitimate context, so they are
-  // scrubbed from outbound copies rather than refused on entry.
+  // Raw contact details.
+  //
+  // Pre-selection this is a block: the patient has not chosen anyone, so a
+  // number in the thread is an attempt to be chosen off-platform.
+  //
+  // AFTER selection it is allowed. The parties now have a real operational
+  // relationship — a patient landing in an unfamiliar city needs to be able to
+  // call the clinic, and refusing them the number to enforce a privacy rule
+  // would be the policy hurting the person it exists to protect. Escrow and the
+  // safety guarantees are already attached to this booking; what still matters
+  // post-selection is the INTENT to leave the platform, and that stays blocked
+  // above regardless of stage.
+  //
+  // In a clinical free-text field a number is usually the patient's own doctor
+  // or pharmacy — legitimate context, scrubbed from outbound copies rather than
+  // refused on entry.
   const contactSeverity: Severity =
     scope === 'message' ? 'block'
-      : scope === 'intake_medical' ? 'scrub'
+      : scope === 'message_selected' ? 'allow'
         : 'scrub';
+
+  if (contactSeverity === 'allow') {
+    const severityNow: Severity = detections.some((d) => d.severity === 'block') ? 'block' : 'allow';
+    return { covertSos: false, severity: severityNow, detections, cleanText: text };
+  }
 
   clean = clean.replace(EMAIL, (m) => { add('contact_email', 'Email address shared', contactSeverity, m); return REDACTED; });
   clean = clean.replace(URL, (m) => { add('contact_url', 'External link shared', contactSeverity, m); return REDACTED; });

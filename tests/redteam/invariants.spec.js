@@ -660,3 +660,25 @@ test('BLOCKER: a flag never closes a safety path', () => {
   // A block must not throw — a throw on a safety-adjacent path loses a check-in.
   expect(guard, 'guardText must return a decision, not throw').not.toMatch(/throw new/);
 });
+
+test('BLOCKER: the message path is guarded, and the safety SMS line keeps its lifeline', () => {
+  const msg = read('base44/functions/postCaseMessage/entry.ts');
+  expect(msg, 'partner threads must run through the blocker').toContain('guardText');
+  // A blocked message must be refused, not quietly stored.
+  expect(msg, 'a block must refuse the action').toMatch(/guard\.blocked[\s\S]{0,160}return err/);
+  // The stage distinction must survive: pre-selection strict, post-selection
+  // operational contact allowed but evasion still blocked.
+  expect(msg, 'stage must be passed to the engine').toContain("'message_selected'");
+  // Only the guarded text may be persisted.
+  expect(msg, 'the persisted body must come from the guard').toContain('guard.cleanText');
+
+  const sms = read('base44/functions/twilioSafetySmsWebhook/entry.ts');
+  // The safety number is the documented fallback for a patient with no data
+  // plan. Replying "log in to the app" to someone who cannot reach the app is
+  // not a privacy win, it is an abandoned patient.
+  expect(sms, 'SAFE must stay available by reply').toMatch(/Reply SAFE/);
+  expect(sms, 'SOS must stay available by reply').toMatch(/SOS for emergency help/);
+  // ...but a check-in confirmation must not name the patient on a lock screen.
+  expect(sms, 'the safe confirmation must not carry the name')
+    .not.toContain('Thank you, ${checkIn.user_name');
+});

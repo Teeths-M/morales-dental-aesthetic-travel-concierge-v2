@@ -151,3 +151,39 @@ describe('user-facing copy', () => {
     expect(REPLY_REDIRECT_MESSAGE).toMatch(/log in to the Morales app/i);
   });
 });
+
+describe('post-selection messaging: operational contact allowed, evasion still blocked', () => {
+  // Once the patient has chosen this doctor, escrow and the safety guarantees
+  // are attached to the booking. A patient landing in an unfamiliar city needs
+  // to be able to call the clinic; refusing them the number to enforce a
+  // privacy rule would be the policy hurting the person it protects.
+  it('allows a clinic phone number once the doctor is selected', () => {
+    const r = detectViolations(
+      'Our clinic reception is 868-555-0147 if you need us on the day.',
+      'message_selected',
+    );
+    expect(r.severity).toBe('allow');
+    expect(r.cleanText).toContain('868-555-0147');
+  });
+
+  it('still blocks escrow evasion from a CHOSEN doctor', () => {
+    // The more dangerous version, not the less: it evades the escrow and the
+    // safety guarantees the selection was supposed to buy the patient.
+    for (const t of ['pay me directly, cash only', "let's continue outside the platform", 'book with me directly next time']) {
+      expect(detectViolations(t, 'message_selected').severity, t).toBe('block');
+    }
+  });
+
+  it('still blocks a safety-gate bypass from a chosen doctor', () => {
+    expect(detectViolations('we can skip the safe-t screening', 'message_selected').severity)
+      .toBe('block');
+  });
+
+  it('blocks the same phone number BEFORE selection', () => {
+    expect(detectViolations('reception is 868-555-0147', 'message').severity).toBe('block');
+  });
+
+  it('covert SOS still outranks everything post-selection', () => {
+    expect(detectViolations('call me 868-555-0147 MORALESHELP', 'message_selected').covertSos).toBe(true);
+  });
+});

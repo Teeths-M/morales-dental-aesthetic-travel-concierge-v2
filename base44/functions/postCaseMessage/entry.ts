@@ -1,6 +1,7 @@
 import { createHandler, ok, err } from '../_shared/createHandler.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 import { scrubContact } from '../_shared/contactScrub.ts';
+import { guardText } from '../_shared/blocker.ts';
 
 /**
  * postCaseMessage — the two-way clarification thread (doctor/partner ↔ patient).
@@ -58,11 +59,40 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
     : ['travel_agency', 'taxi_service', 'companion', 'security_agency'].includes(role) ? role
     : (role === 'admin' || role === 'platform_admin') ? 'admin' : 'patient';
 
-  // ON-PLATFORM: scrub contact channels while the request is still at the quote stage
-  // (i.e., before the patient has chosen a doctor). Once selected, the chosen parties
-  // may exchange details freely.
+  // ── Malicious Action Blocker ──────────────────────────────────────────────
+  // Partner threads are where disintermediation actually happens, so this is
+  // the first call site. The engine handles the stage distinction that this
+  // function already made: pre-selection a phone number is an attempt to be
+  // chosen off-platform and is refused; post-selection the parties have a real
+  // operational relationship and may exchange details, because a patient
+  // landing in an unfamiliar city needs to be able to call the clinic.
+  //
+  // What is blocked at BOTH stages is stated intent to leave — "pay me
+  // directly", "let's continue outside the platform", "skip the screening".
+  // From a chosen surgeon that is the more dangerous version, not the less: it
+  // evades the escrow and the safety guarantees the selection bought.
+  //
+  // guardText flags, writes the audit row and notifies admins. It never
+  // throws, and it lets a covert-SOS message through untouched.
   const preSelection = !request || request.status !== 'selected';
-  const scrub = preSelection ? scrubContact(text) : { clean: String(text), redactedCount: 0 };
+  const guard = await guardText(base44, text, {
+    scope: preSelection ? 'message' : 'message_selected',
+    userEmail: user?.email || '',
+    caseId,
+    source: 'postCaseMessage',
+  });
+
+  if (guard.blocked) {
+    // 403, not 400: this is a refusal, not a malformed request. The message is
+    // final by design — an appeal button is a loophole.
+    return err(guard.message || 'This action has been blocked.', 403);
+  }
+
+  // scrubContact still runs pre-selection as the belt-and-braces redaction of
+  // anything the blocker allowed through but that should not be persisted.
+  const scrub = preSelection
+    ? scrubContact(guard.cleanText)
+    : { clean: String(guard.cleanText), redactedCount: 0 };
   const now = new Date().toISOString();
 
   const message = await base44.asServiceRole.entities.QuoteMessage.create({

@@ -335,12 +335,30 @@ Deno.serve(async (req) => {
         }
       }
 
-      return twimlReply(`Thank you, ${checkIn.user_name || 'traveler'}! You are marked safe. Your next check-in is in 12 hours.`);
+      // No name: an SMS confirmation lands on a lock screen, and "Thank you,
+      // <full name>! You are marked safe" told anyone holding the handset who
+      // this person is and that they are a Morales patient. The confirmation
+      // is just as clear without it.
+      return twimlReply('You are marked safe. Thank you. Your next check-in is in 12 hours.');
     }
 
     // ── Unrecognized command ─────────────────────────────────────────────────
+    //
+    // The comms policy makes email/SMS/WhatsApp notification-only and says an
+    // inbound reply is never processed as part of a workflow. This line is the
+    // deliberate exception, for the same reason emergency dispatch is: it is
+    // the SAFETY number, documented to patients as what to text when they have
+    // no data. Answering "please log in to the app" to someone who cannot reach
+    // the app is not a privacy win, it is an abandoned patient.
+    //
+    // So the safety commands stay live here, and the redirect is appended for
+    // everything else — a reply to a notification gets pointed back to the app
+    // without losing the SAFE/SOS lifeline.
     await logEntry('unrecognized_command', `Body: ${body}`, checkIn?.case_id || '');
-    return twimlReply('Morales Safety: Reply SAFE to confirm you are okay, or SOS for emergency help.');
+    return twimlReply(
+      'Morales Safety: Reply SAFE to confirm you are okay, or SOS for emergency help. '
+      + 'For anything else, please log in to the Morales app — we do not handle requests by reply.',
+    );
 
   } catch (err) {
     return new Response(
