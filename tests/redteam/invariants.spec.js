@@ -802,3 +802,32 @@ test('OFFLINE SOS: the SMS channel does not depend on a build-time flag', () => 
   expect(hook, 'availability must be read live, not snapshotted')
     .not.toMatch(/useState\(!!getTwilioNumber\(\)\)/);
 });
+
+test('CLAIMS: the front door does not invent stories, guarantees or savings', () => {
+  // The homepage rotated three named customer stories presented as fact —
+  // "Rosa flew to Cancún alone…", "James had 12 hours to save his sight…",
+  // "Elena's family slept peacefully…". None happened; James is a demo persona
+  // with a /demo/james route. A fabricated testimonial on the first screen a
+  // patient reads is the one failure that makes everything else worthless.
+  const hero = read('src/components/home/LuxuryHero.jsx');
+  const heroCode = hero.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  for (const invented of ['Rosa flew', 'James had 12', "Elena's family"]) {
+    expect(heroCode, `"${invented}" is not a real customer story`).not.toContain(invented);
+  }
+
+  // No absolute guarantee. One bad outcome turns it from a tagline into a
+  // liability, and no platform can promise it.
+  for (const absolute of ['No One Is Ever Lost', 'Never Lost', '100% Safe', 'Guaranteed Safe']) {
+    expect(heroCode, `"${absolute}" is a promise we cannot keep`).not.toContain(absolute);
+  }
+
+  // Savings figures on the procedure picker were string literals — not derived
+  // from pricing data, not true of any patient, and they framed Morales as a
+  // discount marketplace on the screen where someone decides whether to trust
+  // us with surgery abroad. Real prices come from doctor quotes, later.
+  const gate = read('src/components/booking/ProcedureSelectionGate.jsx');
+  const gateCode = gate.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  expect(gateCode, 'no hardcoded savings claim').not.toMatch(/Save up to \$/);
+  expect(gateCode, 'no hardcoded price claim').not.toMatch(/\$\d+K\b/);
+});

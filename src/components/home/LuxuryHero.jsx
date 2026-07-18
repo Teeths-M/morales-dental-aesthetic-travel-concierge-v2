@@ -60,11 +60,25 @@ const AFTER_SURGERY_STEPS = [
   },
 ];
 
-/* ── Rotating human stories ───────────────────────────────────────────────── */
+/* ── Rotating lines ────────────────────────────────────────────────────────
+ * These used to be three named customer stories — "Rosa flew to Cancún
+ * alone…", "James had 12 hours to save his sight…", "Elena's family slept
+ * peacefully…" — presented as fact, with no label. None of them happened;
+ * James is a demo persona with a /demo/james route. A fabricated testimonial
+ * on the first screen a patient reads is the one failure that would make
+ * everything else on this platform worthless.
+ *
+ * Replaced with things M actually does. Each line maps to shipped code:
+ *   - the 9-point handshake spine (HS1 Driver Pickup … HS9 Journey Complete)
+ *   - guardian access, which is opt-in and revocable (locationConsent.js)
+ *   - doctor verification against real registries (runDoctorVerification)
+ *
+ * If a line here stops being true, delete it. Do not soften it.
+ */
 const STORIES = [
-  'Rosa flew to Cancún alone. Her daughter watched every step.',
-  'James had 12 hours to save his sight. M had a doctor in 4.',
-  "Elena's family slept peacefully. We didn't.",
+  'Nine checkpoints between your front door and home again.',
+  'Your family can follow every step — only if you say so.',
+  'Every doctor verified against their medical board, not their website.',
 ];
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
@@ -141,7 +155,12 @@ export default function LuxuryHero() {
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: `rgba(212,175,55,0.12)`, border: `1px solid rgba(212,175,55,0.35)`, cursor: 'help' }}
               >
                 <img src="/morales-m-mark.png" alt="M" style={{ width: 14, filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.8))' }} />
-                <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>We Check On You 9 Times · No One Is Ever Lost</span>
+                {/* Was "· No One Is Ever Lost" — an absolute guarantee no
+                    platform can keep, and one bad outcome away from being a
+                    liability rather than a tagline. The count is real (9
+                    handshakes, HS1–HS9) and each one requires a confirmation,
+                    so the claim is now the mechanism instead of the promise. */}
+                <span style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', fontWeight: 800, color: '#D4AF37', letterSpacing: '0.12em', textTransform: 'uppercase' }}>We Check On You 9 Times · Every Step Confirmed</span>
               </div>
             </motion.div>
 

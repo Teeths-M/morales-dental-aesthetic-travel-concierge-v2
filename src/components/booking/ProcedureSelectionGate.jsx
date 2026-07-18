@@ -7,15 +7,30 @@ const _DARK  = '#060B16';
 const CARD  = '#0C1A1D';
 const BORDER = '#2A3F4A';
 
+/* Each card used to carry a hardcoded "Save up to $12K / $20K / $8K" in its own
+ * accent colour. Those figures were string literals — not derived from any
+ * pricing data, not true of any particular patient, and impossible to stand
+ * behind if someone asked how we got them.
+ *
+ * They also framed the wrong product. Eight coloured savings badges is what a
+ * discount marketplace looks like; Morales coordinates and protects a medical
+ * journey. Opening on price sets up the whole relationship as a bargain hunt,
+ * on the one screen where a patient is deciding whether to trust us with
+ * surgery abroad.
+ *
+ * Real prices come from the doctor quotes the patient receives later, where
+ * they are specific, sourced, and honest. Nothing is shown here that we cannot
+ * back. Do not reintroduce an estimate without a computed source.
+ */
 const QUICK_PROCEDURES = [
-  { emoji: '🦷', name: 'Dental Implants',    procedure_enum: 'dental_implants',  save: 'Save up to $12K', color: '#22c55e' },
-  { emoji: '✨', name: 'Porcelain Veneers',   procedure_enum: 'porcelain_veneers', save: 'Save up to $8K',  color: GOLD },
-  { emoji: '👃', name: 'Rhinoplasty',         procedure_enum: 'rhinoplasty',       save: 'Save up to $6K',  color: '#a855f7' },
-  { emoji: '💫', name: 'All-on-4 Implants',   procedure_enum: 'all_on_4',          save: 'Save up to $20K', color: '#60a5fa' },
-  { emoji: '🎯', name: 'Liposuction',         procedure_enum: 'liposuction',       save: 'Save up to $8K',  color: '#f97316' },
-  { emoji: '🌟', name: 'Tummy Tuck',          procedure_enum: 'tummy_tuck',        save: 'Save up to $10K', color: '#ec4899' },
-  { emoji: '😊', name: 'Smile Makeover',      procedure_enum: 'smile_makeover',    save: 'Save up to $18K', color: GOLD },
-  { emoji: '🔍', name: 'Other / Not sure yet', procedure_enum: 'other',            save: 'We will help you choose', color: 'rgba(255,255,255,0.5)' },
+  { emoji: '🦷', name: 'Dental Implants',     procedure_enum: 'dental_implants' },
+  { emoji: '✨', name: 'Porcelain Veneers',    procedure_enum: 'porcelain_veneers' },
+  { emoji: '👃', name: 'Rhinoplasty',          procedure_enum: 'rhinoplasty' },
+  { emoji: '💫', name: 'All-on-4 Implants',    procedure_enum: 'all_on_4' },
+  { emoji: '🎯', name: 'Liposuction',          procedure_enum: 'liposuction' },
+  { emoji: '🌟', name: 'Tummy Tuck',           procedure_enum: 'tummy_tuck' },
+  { emoji: '😊', name: 'Smile Makeover',       procedure_enum: 'smile_makeover' },
+  { emoji: '🔍', name: 'Other / Not sure yet', procedure_enum: 'other', hint: "We'll help you choose" },
 ];
 
 export default function ProcedureSelectionGate({ children }) {
@@ -64,7 +79,7 @@ export default function ProcedureSelectionGate({ children }) {
                   <motion.button
                     key={proc.procedure_enum}
                     onClick={() => handleSelect(proc)}
-                    whileHover={{ scale: 1.02, y: -2, borderColor: proc.color + '60' }}
+                    whileHover={{ scale: 1.02, y: -2, borderColor: `${GOLD}60` }}
                     whileTap={{ scale: 0.98 }}
                     style={{
                       padding: '16px 16px', borderRadius: 16, cursor: 'pointer', textAlign: 'left',
@@ -72,8 +87,13 @@ export default function ProcedureSelectionGate({ children }) {
                     }}
                   >
                     <div style={{ fontSize: 22, marginBottom: 6 }}>{proc.emoji}</div>
-                    <p style={{ margin: '0 0 3px', fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{proc.name}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: proc.color, fontWeight: 600 }}>{proc.save}</p>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{proc.name}</p>
+                    {/* Only the "not sure" card carries a second line now. The
+                        rest need no subtitle — a procedure name is the whole
+                        decision at this point. */}
+                    {proc.hint && (
+                      <p style={{ margin: '3px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>{proc.hint}</p>
+                    )}
                   </motion.button>
                 ))}
               </div>
