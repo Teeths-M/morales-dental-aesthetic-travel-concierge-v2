@@ -51,7 +51,12 @@ export default function ProcedureSelectionGate({ children }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,11,22,0.92)', backdropFilter: 'blur(8px)', padding: 20, overflowY: 'auto' }}
+            /* zIndex above the floating guide orb (9000/9001), below the
+               first-time onboarding overlay (9999). This gate blocks the whole
+               screen until a procedure is chosen, but sat at zIndex 50 — so the
+               orb floated on top of it and covered the "Smile Makeover" card on
+               a phone. Nothing should overlap a decision the user cannot skip. */
+            style={{ position: 'fixed', inset: 0, zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,11,22,0.92)', backdropFilter: 'blur(8px)', padding: 20, overflowY: 'auto' }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}

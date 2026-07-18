@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Star, MapPin, Calendar, Shield, Check, Award, Loader2, Stethoscope, HelpCircle } from 'lucide-react';
+import { Star, MapPin, Calendar, Shield, Check, Award, Loader2, Stethoscope, HelpCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import CaseThread from '@/components/quotes/CaseThread';
 
@@ -201,7 +201,11 @@ export default function MyQuotes() {
 
         {!quotesLoading && sorted.length === 0 && (
           <div style={{ ...cardStyle, textAlign: 'center' }}>
-            <Loader2 className="animate-spin" color={GOLD} style={{ margin: '0 auto 12px' }} />
+            {/* Not a spinner. This is a waiting state, not a loading one — the
+                copy below tells the patient to leave and we will message them.
+                A spinner says "stay here", which contradicts it, and a spinner
+                that never resolves reads as a stall. */}
+            <Clock color={GOLD} size={22} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.8 }} />
             <p style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>We're gathering quotes from specialists.</p>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 6 }}>
               You don't need to wait here — we'll message you the moment quotes arrive.

@@ -789,12 +789,21 @@ export default function Booking() {
               {steps[step].emoji}
             </div>
             <div className="flex-1 min-w-0">
+              {/* Phase name only. This used to read "ABOUT YOU · 1 OF 2" while
+                  the bar directly below read "1 / 12" — two counters on one
+                  screen disagreeing about how much is left. The 12-step count
+                  is the honest one and it stays; this is now just the label. */}
               <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: getPhaseInfo(step).color }}>
-                {getPhaseInfo(step).phase} · {getPhaseInfo(step).stepInPhase} of {getPhaseInfo(step).stepsInPhase}
+                {getPhaseInfo(step).phase}
               </p>
               <h2 className="font-semibold text-slate-800 text-base">{steps[step].label}</h2>
             </div>
-            {/* Demo fill — pre-loads sample data so judges can experience the full flow */}
+            {/* Demo fill — pre-loads sample data so judges can experience the
+                full flow. Hidden in production builds: a "🎬 Demo" button in a
+                real patient's booking flow reads as unfinished software, and
+                one mis-tap overwrites everything they have typed with someone
+                else's medical history. */}
+            {!import.meta.env.PROD && (
             <button
               type="button"
               onClick={() => {
@@ -837,6 +846,7 @@ export default function Booking() {
             >
               🎬 Demo
             </button>
+            )}
           </div>
 
           {/* Mobile step progress bar */}

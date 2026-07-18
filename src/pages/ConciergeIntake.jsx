@@ -519,10 +519,13 @@ function WelcomeCard({ onBegin, resuming, requireConsent, consented, onConsentCh
         {resuming ? 'Continue' : 'Begin'}
       </button>
 
-      {/* Escape hatch to the classic wizard — same journey, form-style */}
-      <p style={{ margin: '18px 0 0', fontSize: 'clamp(0.875rem, 1.5vw, 1rem)', color: TEXT_SOFT }}>
-        Prefer a classic form?{' '}
-        <a href="/booking" style={{ color: TEAL, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+      {/* Escape hatch to the classic wizard — same journey, form-style.
+          Deliberately quiet. Offering "conversation or form?" as a headline
+          choice makes someone decide HOW to tell us before they decide WHAT to
+          tell us, at the moment they are most anxious. M should lead; the
+          alternative stays available for anyone who wants it. */}
+      <p style={{ margin: '22px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+        <a href="/booking" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Use the detailed form instead
         </a>
       </p>
