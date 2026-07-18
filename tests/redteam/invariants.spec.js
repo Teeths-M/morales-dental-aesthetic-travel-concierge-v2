@@ -182,7 +182,7 @@ test('ITINERARY: the clinic event uses the doctor-confirmed procedure_date when 
 });
 
 test('COMMS: migrated legacy senders are link-only — nothing private leaves M', () => {
-  for (const fn of ['releaseEscrowPayment', 'generateItineraryCalendar', 'processPaymentCascade']) {
+  for (const fn of ['releaseEscrowPayment', 'generateItineraryCalendar', 'processPaymentCascade', 'sendQuoteReminders', 'iq200Pipeline']) {
     const src = read(`base44/functions/${fn}/entry.ts`);
     expect(src, `${fn} imports the link-only helper`).toContain("from '../_shared/notify.ts'");
     expect(src, `${fn} uses linkOnlyEmail`).toContain('linkOnlyEmail(');
@@ -192,6 +192,9 @@ test('COMMS: migrated legacy senders are link-only — nothing private leaves M'
   const helper = cascade.slice(cascade.indexOf('function activationEmail'), cascade.indexOf('Deno.serve'));
   expect(helper, 'activation email is link-only').toContain('linkOnlyEmail(');
   expect(helper, 'activation email renders no patient name').not.toContain('e(patientName)');
+  // iq200Pipeline's paid-journey emails no longer render the package price or a name.
+  const iq = read('base44/functions/iq200Pipeline/entry.ts');
+  expect(iq, 'no renderEmail body in iq200Pipeline').not.toContain('body: renderEmail');
 });
 
 test('COMMS: the link-only helper enforces the on-platform promise', () => {

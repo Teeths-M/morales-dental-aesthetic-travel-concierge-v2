@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
-import { renderEmail } from '../_shared/emailTemplate.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 import { createHandler } from '../_shared/createHandler.ts';
 
 Deno.serve(createHandler(async ({ req }) => {
@@ -291,15 +291,11 @@ Deno.serve(createHandler(async ({ req }) => {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Personalized Medical Travel Package — MORALES Concierge`,
-        body: renderEmail({
-          appUrl,
-          eyebrow: 'Your Proposal',
-          title: `Your journey is ready, ${caseRecord.client_name}`,
-          intro: 'Your complete medical travel package is ready for review. This personalized itinerary includes everything you need for a seamless, luxury medical tourism experience.',
-          bodyHtml: proposalHeroHtml,
-          note: 'Please review and confirm your package within 7 days to secure your dates. Upon acceptance, our concierge team will coordinate all logistics including doctor confirmations, travel itineraries, and pre-procedure requirements.',
-          ctaText: 'Review & Accept Proposal',
+        body: linkOnlyEmail({
+          title: 'Your personalized package is ready.',
+          line: 'Your complete medical travel package is ready to review. Open it in your Morales portal to see everything included and your total, then accept to secure your dates.',
           ctaUrl: paymentUrl,
+          ctaLabel: 'Review & Accept Proposal',
         }),
       });
 
@@ -380,13 +376,11 @@ Deno.serve(createHandler(async ({ req }) => {
       emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
         to: caseRecord.client_email,
         subject: `Your Confirmed Medical Travel Itinerary – Morales Concierge`,
-        body: renderEmail({
-          appUrl,
-          eyebrow: 'Payment Confirmed',
-          title: `Your journey is secured, ${caseRecord.client_name}`,
-          intro: 'Your payment has been successfully processed. Your luxury medical travel experience is now secured.',
-          bodyHtml: patientBodyHtml,
-          footer: 'Dedicated to your beautiful smile and wellness journey — The Morales Medical Travel Team',
+        body: linkOnlyEmail({
+          title: 'Your journey is secured.',
+          line: 'Your payment is confirmed and your medical travel experience is secured. Open your Morales portal to view your full itinerary and total.',
+          ctaUrl: `${appUrl}/dashboard/bookings`,
+          ctaLabel: 'View My Booking',
         }),
       }));
 
@@ -396,21 +390,11 @@ Deno.serve(createHandler(async ({ req }) => {
       const adminLogsHtml = (caseRecord.timeline_log || []).length
         ? `<div style="margin:22px 0;font-size:13px;color:rgba(238,242,247,0.6);line-height:1.8;">${(caseRecord.timeline_log || []).map(log => `${log.timestamp}: ${log.action} — ${log.details}`).join('<br/>')}</div>`
         : '';
-      const adminEmailBody = renderEmail({
-        appUrl,
-        eyebrow: 'Master Portal Notification',
-        title: `Payment confirmed — Case #${caseRecord.id}`,
-        intro: `Payment confirmed for ${caseRecord.client_name}.`,
-        rows: [
-          ['Total Package', `$${caseRecord.final_package_price?.toLocaleString()}`],
-          ['Deposit', deposit_option],
-          ['Status', caseRecord.payment_status],
-          ['Travel Agency', travelAgency ? travelAgency.agency_name : 'Not assigned'],
-          ['Doctor', caseRecord.doctor_selected || 'Not assigned'],
-        ],
-        bodyHtml: adminLogsHtml,
-        ctaText: 'View Case',
+      const adminEmailBody = linkOnlyEmail({
+        title: 'A payment has been confirmed.',
+        line: 'A patient payment has cleared. Open the admin portal to view the case, package total, and assigned partners.',
         ctaUrl: adminPortalUrl,
+        ctaLabel: 'View Case',
       });
       const adminEmail = Deno.env.get('ADMIN_EMAIL');
       if (adminEmail) {
@@ -427,22 +411,16 @@ Deno.serve(createHandler(async ({ req }) => {
       const doctorPortalUrl = `${appUrl}/portal/doctor/${caseRecord.doctor_portal_token || caseRecord.proposal_token}`;
       const doctorName = caseRecord.doctor_selected || 'Doctor';
       const procedureList = (caseRecord.procedures || ['Procedure']).join(', ');
-      const doctorEmailBody = renderEmail({
-        appUrl,
-        eyebrow: 'Case Confirmation',
-        title: `New case confirmed: ${caseRecord.client_name}`,
-        intro: `Dear ${doctorName}, a new ${procedureList} procedure has been confirmed for ${caseRecord.client_name}. Please confirm the procedure date via your portal.`,
-        rows: [
-          ['Procedure', procedureList],
-          ['Treatment Cost', `$${caseRecord.treatment_cost}`],
-        ],
-        ctaText: 'Access Doctor Portal',
+      const doctorEmailBody = linkOnlyEmail({
+        title: 'A new case has been confirmed for you.',
+        line: 'A patient has been confirmed and paid. Open your Morales portal to review the case and confirm the procedure date.',
         ctaUrl: doctorPortalUrl,
+        ctaLabel: 'Access Doctor Portal',
       });
       if (caseRecord.doctor_email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: caseRecord.doctor_email,
-          subject: `Case Confirmation: ${(caseRecord.procedures || ['Procedure']).join(', ')} - ${caseRecord.client_name}`,
+          subject: `A new case has been confirmed for you — Morales Concierge`,
           body: doctorEmailBody
         }));
       }
@@ -450,22 +428,16 @@ Deno.serve(createHandler(async ({ req }) => {
       // 4. DRIVER - ORIGIN - Local pickup ticket
       const originDriver = caseRecord.origin_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.origin_driver_id) : null;
       const originDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
-      const originDriverEmailBody = renderEmail({
-        appUrl,
-        eyebrow: 'Local Pickup Ticket',
-        title: `Pickup confirmed: ${caseRecord.client_name}`,
-        intro: `Dear ${originDriver ? originDriver.company_name || originDriver.driver_name : 'Origin Driver'}, a pickup has been confirmed for ${caseRecord.client_name}.`,
-        rows: [
-          ['Pickup', caseRecord.client_pickup_address || 'Client Home'],
-          ['Destination', 'Local Airport'],
-        ],
-        ctaText: 'Access Portal',
+      const originDriverEmailBody = linkOnlyEmail({
+        title: 'A pickup has been confirmed.',
+        line: 'A new local pickup is assigned to you. Open your Morales portal for the pickup address, schedule, and details.',
         ctaUrl: originDriverPortalUrl,
+        ctaLabel: 'Access Portal',
       });
       if (originDriver?.email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: originDriver.email,
-          subject: `Pickup Request: ${caseRecord.client_name}`,
+          subject: `A pickup has been confirmed — Morales Concierge`,
           body: originDriverEmailBody
         }));
       }
@@ -473,21 +445,16 @@ Deno.serve(createHandler(async ({ req }) => {
       // 5. DRIVER - DESTINATION - Airport arrival ticket
       const destDriver = caseRecord.destination_driver_id ? await base44.asServiceRole.entities.TaxiService.get(caseRecord.destination_driver_id) : null;
       const destDriverPortalUrl = `${appUrl}/portal/transfer?token=${caseRecord.proposal_token}&case_id=${caseRecord.id}`;
-      const destDriverEmailBody = renderEmail({
-        appUrl,
-        eyebrow: 'International Arrival Transfer',
-        title: `Arrival transfer confirmed: ${caseRecord.client_name}`,
-        intro: `Dear ${destDriver ? destDriver.company_name || destDriver.driver_name : 'Destination Driver'}, an arrival transfer has been confirmed for ${caseRecord.client_name}.`,
-        rows: [
-          ['Destination', `${caseRecord.hotel_name || 'Hotel'} - ${caseRecord.hotel_address || 'TBD'}`],
-        ],
-        ctaText: 'Access Portal',
+      const destDriverEmailBody = linkOnlyEmail({
+        title: 'An arrival transfer has been confirmed.',
+        line: 'A new airport arrival transfer is assigned to you. Open your Morales portal for the destination, schedule, and details.',
         ctaUrl: destDriverPortalUrl,
+        ctaLabel: 'Access Portal',
       });
       if (destDriver?.email) {
         emailPromises.push(base44.asServiceRole.integrations.Core.SendEmail({
           to: destDriver.email,
-          subject: `Arrival Transfer: ${caseRecord.client_name}`,
+          subject: `An arrival transfer has been confirmed — Morales Concierge`,
           body: destDriverEmailBody
         }));
       }
