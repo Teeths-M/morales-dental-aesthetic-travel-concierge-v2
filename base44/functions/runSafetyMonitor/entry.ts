@@ -1,8 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Cron secret OR admin session. This endpoint had NO guard at all: it is
+    // reachable over HTTP like every deployed function, so anyone with the URL
+    // could drive it — triggering real notifications, spend and state changes.
+    // NOTE: a Base44-dashboard schedule driving this must send X-Cron-Secret.
+    if (!(await cronAuthorized(req, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // ── READ-ONLY: Query ALL active cases in intermediate / stuck states ──
     // No hard limit — the status filter ensures we only pull genuinely active

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -368,4 +368,45 @@ test('CLAIMS: the Situation Room does not present sample data as live', () => {
   expect(src, 'sample feed still labelled LIVE').not.toContain('LIVE INTELLIGENCE FEED');
   expect(src).toContain('SAMPLE INTELLIGENCE FEED');
   expect(src, 'pins must not read as a tracked position').toContain('not a tracked position');
+});
+
+test('AUTH: no edge function is reachable without SOME guard', () => {
+  // Every deployed function is world-reachable over HTTP. A function with no
+  // auth gate, no cron secret and no webhook signature can be driven by anyone
+  // — which for the reminder senders meant real emails/SMS to real patients
+  // and uncapped Twilio/Anthropic spend.
+  //
+  // Deliberate exceptions, both public by design AND IP rate-limited:
+  //   publicDoctorCheck — the homepage "check your doctor" tool
+  //   safeTAssist       — the assistant a patient may reach before signing in
+  const EXEMPT = new Set(['publicDoctorCheck', 'safeTAssist']);
+  const GUARDS = /auth\.me|cronAuthorized|CRON_SECRET|validateTwilioSignature|constructEvent|stripe-signature|x-twilio-signature|SATELLITE_WEBHOOK_SECRET|createHandler/;
+
+  const dir = join(ROOT, 'base44/functions');
+  const unguarded = [];
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith('_')) continue;
+    const p = join(dir, name, 'entry.ts');
+    if (!existsSync(p)) continue;
+    const src = readFileSync(p, 'utf8');
+    if (!GUARDS.test(src) && !EXEMPT.has(name)) unguarded.push(name);
+  }
+  expect(unguarded, `unguarded edge functions: ${unguarded.join(', ')}`).toEqual([]);
+
+  // The two exemptions must keep their rate limiters.
+  for (const fn of EXEMPT) {
+    const src = readFileSync(join(dir, fn, 'entry.ts'), 'utf8');
+    expect(src, `${fn} is public and must stay rate-limited`).toContain('RateLimitBucket');
+  }
+});
+
+test('GOLDEN M: the certificate number is stable, not random per render', () => {
+  const src = read('src/components/journey/GoldenMCertificate.jsx');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');
+  // Math.random() meant two prints of the same journey produced two different
+  // certificate numbers, and nothing was ever persisted.
+  expect(code, 'certificate number must not be random').not.toContain('Math.random()');
+  expect(code, 'must derive from the journey').toContain('deriveCertNumber');
+  const cel = read('src/components/journey/GoldenMCelebration.jsx');
+  expect(cel, 'a stable journey id must be passed in').toContain('journeyId=');
 });

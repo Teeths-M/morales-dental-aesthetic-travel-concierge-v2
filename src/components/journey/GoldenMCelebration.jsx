@@ -220,6 +220,9 @@ export default function GoldenMCelebration({ visible, trip, patientName, onClose
         destination={trip?.destination_country || ''}
         completedDate={trip?.handshake_timestamps?.['9'] || new Date().toISOString()}
         duration={durationLabel}
+        // Stable seed for the certificate number — without it the number was
+        // regenerated on every render.
+        journeyId={trip?.id || trip?.case_id || ''}
         onClose={() => setShowCert(false)}
       />
     )}

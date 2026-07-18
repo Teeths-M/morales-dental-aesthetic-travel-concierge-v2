@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.com').replace(/\/$/, '');
 
@@ -222,6 +223,14 @@ function securityAgencyEmailBody(agency) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Cron secret OR admin session. This endpoint had NO guard at all: it is
+    // reachable over HTTP like every deployed function, so anyone with the URL
+    // could drive it — triggering real notifications, spend and state changes.
+    // NOTE: a Base44-dashboard schedule driving this must send X-Cron-Secret.
+    if (!(await cronAuthorized(req, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const { partner_type, entity_id } = await req.json();
 
     if (!partner_type || !entity_id) {

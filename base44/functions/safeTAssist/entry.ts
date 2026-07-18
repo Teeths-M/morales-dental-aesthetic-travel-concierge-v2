@@ -43,9 +43,50 @@ Critical Rules:
 3. For medical emergencies: provide first-aid guidance AND advise calling local emergency services
 4. You are NOT a substitute for emergency services in life-threatening situations`;
 
+/** Sliding-window limiter, same shape as publicDoctorCheck's. */
+async function checkRateLimit(base44: any, key: string, windowSeconds: number, maxRequests: number) {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowSeconds * 1000);
+  const buckets = await base44.asServiceRole.entities.RateLimitBucket
+    .filter({ bucket_key: key }, '-created_date', 1).catch(() => []);
+  const bucket = buckets[0];
+  if (!bucket) {
+    await base44.asServiceRole.entities.RateLimitBucket.create({
+      bucket_key: key, window_start: now.toISOString(), count: 1, updated_at: now.toISOString(),
+    }).catch(() => {});
+    return true;
+  }
+  if (new Date(bucket.window_start) < windowStart) {
+    await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, {
+      window_start: now.toISOString(), count: 1, updated_at: now.toISOString(),
+    }).catch(() => {});
+    return true;
+  }
+  if (bucket.count >= maxRequests) return false;
+  await base44.asServiceRole.entities.RateLimitBucket.update(bucket.id, {
+    count: bucket.count + 1, updated_at: now.toISOString(),
+  }).catch(() => {});
+  return true;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // This endpoint stays unauthenticated on purpose — a frightened patient may
+    // reach the assistant before signing in — but it forwards to a paid LLM, so
+    // without a limiter anyone with the URL can drain the Anthropic budget and
+    // take the assistant down for real patients. Limited by IP, not identity.
+    const ip = (req.headers.get('CF-Connecting-IP')
+      || req.headers.get('X-Forwarded-For')?.split(',')[0]?.trim()
+      || 'unknown').trim();
+    const minuteOk = await checkRateLimit(base44, `sta_ip_min_${ip}`, 60, 10);
+    const hourOk = await checkRateLimit(base44, `sta_ip_hour_${ip}`, 3600, 120);
+    if (!minuteOk || !hourOk) {
+      return Response.json({
+        error: 'You have sent a lot of messages very quickly. Please wait a moment and try again — if this is an emergency, use the SOS button or call your local emergency number.',
+      }, { status: 429 });
+    }
 
     const body = await req.json().catch(() => ({}));
     const { messages, user_email, user_name, trip_phase } = body;

@@ -1,4 +1,5 @@
 ﻿import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 /**
  * checkPartnerSLABreaches — Uber Auto-Rerouting Model
@@ -64,6 +65,14 @@ function escalationEmail({ partnerType, patientName, caseRef, reason, portalUrl 
 Deno.serve(async (req) => {
   try {
     const base44  = createClientFromRequest(req);
+
+    // Cron secret OR admin session. This endpoint had NO guard at all: it is
+    // reachable over HTTP like every deployed function, so anyone with the URL
+    // could drive it — triggering real notifications, spend and state changes.
+    // NOTE: a Base44-dashboard schedule driving this must send X-Cron-Secret.
+    if (!(await cronAuthorized(req, base44))) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const now     = Date.now();
     const HR_24   = 24 * 60 * 60 * 1000;
     const HR_48   = 48 * 60 * 60 * 1000;

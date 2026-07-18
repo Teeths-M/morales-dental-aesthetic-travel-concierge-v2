@@ -18,15 +18,34 @@ import React from 'react';
 const GOLD = '#D4AF37';
 const DARK = '#060B16';
 
-function generateCertNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `MRC-${year}-${rand}`;
+/**
+ * Certificate number, derived deterministically from the journey.
+ *
+ * This used to be `Math.random()`, with `certNumber` defaulting to null and no
+ * caller ever passing it — so the number was regenerated on EVERY render. The
+ * same patient printing the same journey twice got two different certificate
+ * numbers, and nothing was ever persisted, which made the number meaningless
+ * as a reference. Deriving it from the journey id makes it stable and
+ * reproducible: the same journey always yields the same certificate.
+ *
+ * Honest limit: this is an identifier, not a proof. There is no server-side
+ * registry to verify a certificate against yet, so the UI must not imply one.
+ */
+function deriveCertNumber(journeyId, completedDate) {
+  const year = (completedDate ? new Date(completedDate) : new Date()).getFullYear();
+  const seed = String(journeyId || '').trim();
+  if (!seed) return `MRC-${year}-PENDING`;
+  // FNV-1a — small, dependency-free, stable across reloads and devices.
+  let h = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `MRC-${year}-${h.toString(36).toUpperCase().padStart(6, '0').slice(0, 6)}`;
 }
 
-export default function GoldenMCertificate({ patientName, procedure, destination, completedDate, duration, certNumber = null, onClose }) {
-  const num = certNumber || generateCertNumber();
+export default function GoldenMCertificate({ patientName, procedure, destination, completedDate, duration, certNumber = null, journeyId = null, onClose }) {
+  const num = certNumber || deriveCertNumber(journeyId, completedDate);
   const dateLabel = completedDate
     ? new Date(completedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

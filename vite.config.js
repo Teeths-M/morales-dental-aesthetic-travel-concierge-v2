@@ -12,6 +12,27 @@ export default defineConfig(({ command }) => {
     // Rollup's bundle-size and circular-dependency warnings to be visible —
     // hiding them meant nobody ever saw the chunk-size report.
     logLevel: isDev ? 'error' : 'warn',
+    build: {
+      // Without a chunking strategy Rollup emitted one large vendor chunk, so
+      // a patient on hotel wifi downloaded charting, mapping and animation code
+      // before the first screen painted. Splitting the heavy, rarely-changing
+      // libraries lets them cache independently of app code.
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-query': ['@tanstack/react-query'],
+            'vendor-motion': ['framer-motion'],
+            'vendor-maps': ['leaflet', 'react-leaflet'],
+            'vendor-charts': ['recharts'],
+          },
+        },
+      },
+      // The default 500 kB warning fired constantly and was ignored; 900 kB
+      // reflects what we actually consider acceptable for a split vendor chunk,
+      // so a NEW warning means something genuinely regressed.
+      chunkSizeWarningLimit: 900,
+    },
     server: {
       headers: {
         'X-Frame-Options': 'DENY',
