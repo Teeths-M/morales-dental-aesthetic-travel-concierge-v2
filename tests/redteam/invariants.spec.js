@@ -365,8 +365,9 @@ test('CLAIMS: the Situation Room does not present sample data as live', () => {
   const src = read('src/pages/SituationRoom.jsx');
   // The feed is a hardcoded array in every mode and map pins are country
   // centroids, not tracked positions.
-  expect(src, 'sample feed still labelled LIVE').not.toContain('LIVE INTELLIGENCE FEED');
-  expect(src).toContain('SAMPLE INTELLIGENCE FEED');
+  expect(src, 'must still be able to say SAMPLE when it is sample').toContain('SAMPLE INTELLIGENCE FEED');
+  expect(src, 'LIVE may only be claimed for the audit-chain read').toContain('LIVE INTELLIGENCE FEED · AUDIT CHAIN');
+  expect(src, 'the feed must read the audit chain').toContain('AuditLog');
   expect(src, 'pins must not read as a tracked position').toContain('not a tracked position');
 });
 
@@ -409,4 +410,35 @@ test('GOLDEN M: the certificate number is stable, not random per render', () => 
   expect(code, 'must derive from the journey').toContain('deriveCertNumber');
   const cel = read('src/components/journey/GoldenMCelebration.jsx');
   expect(cel, 'a stable journey id must be passed in').toContain('journeyId=');
+});
+
+test('LOCATION: the beacon runs on consent, never on trip shape', () => {
+  const hook = read('src/hooks/useLiveLocationBeacon.js');
+  // Tracking used to be derived from `isSolo` in Dashboard, so an accompanied
+  // patient got none and a solo one got it without being asked.
+  expect(hook, 'consent must be a precondition inside the hook').toContain('hasLocationConsent');
+  expect(hook, 'shouldRun must require consent').toMatch(/shouldRun\s*=\s*enabled\s*&&\s*consented/);
+
+  const dash = read('src/pages/Dashboard.jsx');
+  const code = dash.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  expect(code, 'trip shape must no longer gate tracking').not.toContain('isSolo');
+  expect(code, 'the patient needs a visible on/off control').toContain('LocationSharingCard');
+
+  // Revocation must be obeyed even if a stale local yes exists.
+  const consent = read('src/lib/locationConsent.js');
+  expect(consent, 'server revocation must win').toContain('location_tracking_revoked_at');
+  expect(consent, 'revoking must work offline').toContain('revokeLocationConsentLocally');
+});
+
+test('SITUATION ROOM: live dots are real positions, and never carry identity', () => {
+  const src = read('src/pages/SituationRoom.jsx');
+  expect(src, 'must read real positions').toContain('LiveLocation');
+  // Stale positions must not be presented as current — checkStaleLiveLocations
+  // escalates at 15 minutes.
+  expect(src, 'must filter stale fixes').toContain('LIVE_FRESH_MS');
+  // This board goes on a wall: the feed renders event types, not patient names.
+  const feedStyle = src.slice(src.indexOf('FEED_EVENT_STYLE'), src.indexOf('const FEED_ITEMS'));
+  for (const leak of ['client_name', 'patient_name', 'user_email', 'actor_name']) {
+    expect(feedStyle, `wall display must not render ${leak}`).not.toContain(leak);
+  }
 });

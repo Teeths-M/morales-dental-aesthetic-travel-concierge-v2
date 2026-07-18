@@ -46,6 +46,8 @@ import WelcomeCountryModal from '@/components/journey/WelcomeCountryModal';
 import ArrivalActivityPrompt from '@/components/activity/ArrivalActivityPrompt';
 import SoloCheckInBanner from '@/components/solo/SoloCheckInBanner';
 import { useLiveLocationBeacon } from '@/hooks/useLiveLocationBeacon';
+import { hasLocationConsent } from '@/lib/locationConsent';
+import LocationSharingCard from '@/components/journey/LocationSharingCard';
 import { useCovertSOS } from '@/hooks/useCovertSOS';
 import { useLocationHistory } from '@/hooks/useLocationHistory';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
@@ -133,16 +135,25 @@ function DashboardHome({ user, consultations, language }) {
     enabled:   !!latestActive?.id,
   });
 
-  const isSolo = latestActive && (!latestActive.requires_companion || latestActive.companion_requirement_status === 'companion_required_pending');
-  // Auto-start live beacon for solo travelers with an active journey
+  // Live beacon runs for ANY active journey the patient has consented to —
+  // not just "solo" ones. Tracking used to be derived from trip shape
+  // (requires_companion), which meant an accompanied patient got no tracking
+  // at all while a solo patient got it without ever being asked. The hook now
+  // gates on explicit, revocable consent recorded on the CaseRecord.
+  const locationSharingOn = hasLocationConsent(latestActive?.id, latestActive);
+
   const { status: locationStatus, currentLocation } = useLiveLocationBeacon({
     caseId: latestActive?.id,
     caseStatus: latestActive?.status,
-    enabled: !!isSolo,
+    caseRecord: latestActive,
   });
 
-  // GPS breadcrumb trail — captures every 30s or 50m; syncs to Base44 when online
-  useLocationHistory({ caseId: latestActive?.id, enabled: !!isSolo });
+  // GPS breadcrumb trail — captures every 30s or 50m; syncs to Base44 when online.
+  // Same consent gate: it is the same data at a coarser cadence.
+  useLocationHistory({
+    caseId: latestActive?.id,
+    enabled: locationSharingOn,
+  });
 
   // Covert SOS — 5-tap or keyword trigger, silent, no visual feedback
   useCovertSOS({
@@ -172,7 +183,7 @@ function DashboardHome({ user, consultations, language }) {
   const { country, flag, isNewCountry, acknowledgeCountry } = useCountryDetection({
     lat: currentLocation?.lat,
     lng: currentLocation?.lng,
-    enabled: !!isSolo,
+    enabled: locationSharingOn,
   });
 
   // Show welcome modal whenever the patient lands in a new country
@@ -399,8 +410,18 @@ function DashboardHome({ user, consultations, language }) {
         </div>
       )}
 
-      {/* GPS permission banners — only shown during active solo journeys */}
-      {isSolo && locationStatus === 'denied' && (
+      {/* Location sharing — opt-in, always visible, one tap to stop. Shown for
+          any active journey; tracking used to be silently derived from whether
+          the trip looked "solo". */}
+      {latestActive && (
+        <LocationSharingCard
+          caseRecord={latestActive}
+          onChange={() => queryClient.invalidateQueries({ queryKey: ['consultations'] })}
+        />
+      )}
+
+      {/* GPS permission banners — only while sharing is switched on */}
+      {locationSharingOn && locationStatus === 'denied' && (
         <div className="rounded-2xl border border-amber-600/50 bg-amber-900/20 px-5 py-4 flex items-start gap-3">
           <Shield className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -417,7 +438,7 @@ function DashboardHome({ user, consultations, language }) {
           </div>
         </div>
       )}
-      {isSolo && locationStatus === 'unavailable' && (
+      {locationSharingOn && locationStatus === 'unavailable' && (
         <div className="rounded-2xl border border-slate-600/50 bg-slate-800/40 px-5 py-3 flex items-center gap-3">
           <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
           <p className="text-xs text-slate-400">

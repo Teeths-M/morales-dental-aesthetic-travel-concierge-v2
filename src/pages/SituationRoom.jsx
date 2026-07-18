@@ -71,7 +71,25 @@ const DEMO_EVN = {
   IN: { riskScore: 28, name: 'India'    },
 };
 
-// Simulated live feed (production: reads from AuditLog)
+/**
+ * Presentation for real AuditLog rows. Deliberately event-type only — this
+ * board goes on a wall, so it must never render patient identity.
+ */
+const FEED_EVENT_STYLE = {
+  handshake_completed:        { icon: '✅', color: '#22c55e', label: 'Checkpoint confirmed' },
+  handshake_tap_confirmed:    { icon: '✅', color: '#22c55e', label: 'Checkpoint confirmed (app)' },
+  handshake_sms_confirmed:    { icon: '📩', color: '#22c55e', label: 'Checkpoint confirmed (SMS)' },
+  handshake_created:          { icon: '🕓', color: '#60a5fa', label: 'Checkpoint opened' },
+  sos_triggered:              { icon: '🚨', color: '#ef4444', label: 'SOS TRIGGERED' },
+  covert_sos_triggered:       { icon: '🚨', color: '#ef4444', label: 'COVERT SOS TRIGGERED' },
+  satellite_sos_received:     { icon: '🛰️', color: '#ef4444', label: 'Satellite SOS received' },
+  satellite_message_received: { icon: '🛰️', color: '#06b6d4', label: 'Satellite message received' },
+  escrow_payment_released:    { icon: '💳', color: GOLD,      label: 'Escrow milestone released' },
+  received_sos:               { icon: '🚨', color: '#ef4444', label: 'SOS received via SMS' },
+  _default:                   { icon: '•',  color: '#94a3b8', label: 'Event recorded' },
+};
+
+// Sample feed — shown ONLY in demo mode, where the header says SAMPLE DATA.
 const FEED_ITEMS = [
   { icon: '📡', text: 'MESH BEACON ACTIVATED — Elena G. · Taipei · GPS 25.0517°N 121.5645°E · Mesh relay: 2 nodes · Fire dept + Police auto-dispatched', color: '#ef4444', time: '0:00', tag: 'Beacon · CR-55' },
   { icon: '🚨', text: 'COUNTRY SAFETY ALERT — Carlos M. · Turkey zone risk 78/100 · Doctor & Clinic VERIFIED SAFE ✅ · Morales Concierge Team activated', color: '#ef4444', time: '0:02', tag: 'Country Advisory · Turkey' },
@@ -155,6 +173,76 @@ export default function SituationRoom() {
     refetchInterval: 300_000,
   });
 
+  // ── Real live positions ───────────────────────────────────────────────────
+  // The map used to plot destination-country centroids only: a dot meant "this
+  // patient's procedure_country is Mexico", not where they were. The beacon has
+  // been writing real GPS to LiveLocation all along (useLiveLocationBeacon →
+  // updateLiveLocation) and getGuardianViewData already reads it — the admin
+  // map simply never consumed it. Same read, same GPS-over-IP preference.
+  const { data: livePositions = [] } = useQuery({
+    queryKey: ['situation-room-live-positions', tick],
+    queryFn: async () => {
+      const rows = await (base44.asServiceRole?.entities?.LiveLocation
+        ?.filter({ is_active: true }, '-updated_date', 200) ?? Promise.resolve([]))
+        .catch(() => []);
+      // IP geo resolves to the ISP's registered city (wrong country under a
+      // VPN), so a GPS fix always wins for the same case.
+      const bestByCase = new Map();
+      for (const r of rows) {
+        if (r?.latitude == null || r?.longitude == null || !r.case_id) continue;
+        const existing = bestByCase.get(r.case_id);
+        const isGps = (r.source || 'gps') === 'gps';
+        if (!existing || (isGps && (existing.source || 'gps') !== 'gps')) {
+          bestByCase.set(r.case_id, r);
+        }
+      }
+      return [...bestByCase.values()];
+    },
+    staleTime: 20_000,
+    refetchInterval: 30_000, // positions move; cases don't
+  });
+
+  // A position is only meaningful while it is fresh. checkStaleLiveLocations
+  // escalates at 15 minutes, so anything older is shown as last-known rather
+  // than presented as current.
+  const LIVE_FRESH_MS = 15 * 60 * 1000;
+  const freshPositions = livePositions.filter(p => {
+    const ts = p.updated_date || p.last_update_at || p.created_date;
+    return ts && (Date.now() - new Date(ts).getTime()) < LIVE_FRESH_MS;
+  });
+
+  // ── Real intelligence feed ────────────────────────────────────────────────
+  // Reads the audit hash chain instead of the hardcoded FEED_ITEMS array. The
+  // sample array stayed on screen in every mode — including a fabricated
+  // "MESH BEACON ACTIVATED" line — so an operator could believe they were
+  // watching real events. Falls back to the sample only in demo mode, where it
+  // is labelled as such.
+  const { data: auditFeed = [] } = useQuery({
+    queryKey: ['situation-room-feed', tick],
+    queryFn: async () => {
+      const rows = await (base44.asServiceRole?.entities?.AuditLog
+        ?.list('-timestamp', 40) ?? Promise.resolve([]))
+        .catch(() => []);
+      return rows.map((r) => {
+        const style = FEED_EVENT_STYLE[r.event_type] || FEED_EVENT_STYLE._default;
+        const when = r.timestamp || r.created_date;
+        return {
+          icon: style.icon,
+          color: style.color,
+          // Never render patient identity here — this board is often on a wall.
+          text: `${style.label}${r.case_id ? ` · case ${String(r.case_id).slice(-6)}` : ''}`,
+          time: when ? new Date(when).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+          tag: r.event_type,
+        };
+      });
+    },
+    staleTime: 20_000,
+    refetchInterval: 30_000,
+  });
+
+  // Real audit events when we have them; the labelled sample only in demo mode.
+  const feedItems = auditFeed.length > 0 ? auditFeed : FEED_ITEMS;
+
   // Fall back to demo seed when no real patients exist
   const isDemo       = activeCases.length === 0;
   const displayCases = isDemo ? DEMO_CASES : activeCases;
@@ -221,10 +309,15 @@ export default function SituationRoom() {
             style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} />
           <div>
             <p style={{ margin: 0, fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em', color: '#fff' }}>SITUATION ROOM</p>
-            {/* Not "· LIVE". Cases refresh on a 5-minute poll and map pins are
-                destination-country centroids, not tracked positions. */}
+            {/* Only claims LIVE when real positions are actually on the map.
+                Country markers are destination centroids; the green dots are
+                consented GPS refreshed every 30s. */}
             <p style={{ margin: 0, fontSize: 9, color: GOLD, letterSpacing: '0.2em', fontWeight: 700 }}>
-              {isDemo ? 'MORALES GLOBAL INTELLIGENCE · SAMPLE DATA' : 'MORALES GLOBAL INTELLIGENCE · REFRESHES EVERY 5 MIN'}
+              {isDemo
+                ? 'MORALES GLOBAL INTELLIGENCE · SAMPLE DATA'
+                : freshPositions.length > 0
+                  ? `MORALES GLOBAL INTELLIGENCE · ${freshPositions.length} LIVE`
+                  : 'MORALES GLOBAL INTELLIGENCE · NO LIVE POSITIONS'}
             </p>
           </div>
         </div>
@@ -426,13 +519,52 @@ export default function SituationRoom() {
                   </CircleMarker>
                 );
               })}
+
+              {/* Real patient positions — actual GPS, not a country centroid.
+                  Rendered on top of the destination markers so an operator can
+                  tell "someone is travelling to Mexico" from "this person is
+                  HERE, two minutes ago". */}
+              {freshPositions.map((p) => {
+                const ts = p.updated_date || p.last_update_at || p.created_date;
+                const ageMin = ts ? Math.round((Date.now() - new Date(ts).getTime()) / 60000) : null;
+                return (
+                  <CircleMarker
+                    key={`live-${p.case_id}`}
+                    center={[p.latitude, p.longitude]}
+                    radius={7}
+                    pathOptions={{
+                      color: '#22c55e',
+                      fillColor: '#22c55e',
+                      fillOpacity: 0.9,
+                      weight: 2,
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ fontSize: 12, minWidth: 180 }}>
+                        <strong>Live position</strong>
+                        <div style={{ color: '#1a8f3a', marginTop: 4 }}>
+                          {ageMin === 0 ? 'Updated just now' : `Updated ${ageMin} min ago`}
+                        </div>
+                        <div style={{ color: '#888', marginTop: 2 }}>
+                          {p.latitude.toFixed(4)}, {p.longitude.toFixed(4)}
+                          {p.accuracy_meters ? ` · ±${Math.round(p.accuracy_meters)}m` : ''}
+                        </div>
+                        <div style={{ color: '#888', fontSize: 11, marginTop: 4 }}>
+                          Shared with consent · {p.source === 'gps' ? 'GPS' : p.source || 'GPS'}
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                );
+              })}
             </MapContainer>
           </div>
 
           {/* Legend */}
           <div style={{ flexShrink: 0, padding: '7px 16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 18, background: '#04080F' }}>
             {[
-              [GOLD,      'Active patient'],
+              [GOLD,      'Destination (not a position)'],
+              ['#22c55e', 'Live position (consented)'],
               ['#22c55e', 'Low risk'],
               ['#f59e0b', 'Watch'],
               ['#ef4444', 'High risk'],
@@ -508,18 +640,16 @@ export default function SituationRoom() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }}
                   style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
-                {/* This feed is a hardcoded sample array (see FEED_EVENTS) in
-                    every mode, not a read of AuditLog. It must not be labelled
-                    "LIVE" — an operator could believe they are watching real
-                    events and stand down. */}
+                {/* Reads the audit chain now. Only says LIVE when it really is
+                    — an operator must never stand down on sample data. */}
                 <p style={{ margin: 0, fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.35)' }}>
-                  SAMPLE INTELLIGENCE FEED · NOT LIVE
+                  {feedItems === FEED_ITEMS ? 'SAMPLE INTELLIGENCE FEED · NOT LIVE' : 'LIVE INTELLIGENCE FEED · AUDIT CHAIN'}
                 </p>
               </div>
             </div>
             <div ref={feedRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 14px' }}>
               <AnimatePresence initial={false}>
-                {FEED_ITEMS.map((item, i) => (
+                {feedItems.map((item, i) => (
                   <motion.div key={i}
                     initial={{ opacity: 0, x: 8 }}
                     animate={{ opacity: 1, x: 0 }}

@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { hasLocationConsent } from '@/lib/locationConsent';
 
 const MOVE_THRESHOLD_M = 25;
 const MAX_INTERVAL_MS = 60 * 1000; // send at least every 60s if position held
@@ -25,7 +26,7 @@ function distanceM(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
+export function useLiveLocationBeacon({ caseId, caseStatus, caseRecord = null, enabled = true }) {
   const [status, setStatus] = useState('idle'); // 'idle'|'requesting'|'active'|'denied'|'unavailable'|'ip_fallback'|'paused'
   const [lastUpdate, setLastUpdate] = useState(null); // ISO string
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -127,7 +128,13 @@ export function useLiveLocationBeacon({ caseId, caseStatus, enabled = true }) {
     return () => window.removeEventListener('online', onOnline);
   }, [caseId, sendUpdate]);
 
-  const shouldRun = enabled && caseId && !COMPLETED_STATUSES.has(caseStatus) && !isPaused;
+  // Consent is a hard precondition, checked here rather than trusted from the
+  // caller. Dashboard previously passed `enabled: !!isSolo` — deriving tracking
+  // from trip shape — so an accompanied patient got no tracking and a solo one
+  // got it without ever being asked. Neither is consent.
+  const consented = hasLocationConsent(caseId, caseRecord);
+  const shouldRun = enabled && consented && caseId
+    && !COMPLETED_STATUSES.has(caseStatus) && !isPaused;
 
   const stopWatch = useCallback(() => {
     if (watchIdRef.current != null) {

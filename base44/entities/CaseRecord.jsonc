@@ -2,6 +2,25 @@
   "name": "CaseRecord",
   "type": "object",
   "properties": {
+    "location_tracking_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Patient gave explicit, affirmative consent to continuous location sharing for this journey. The live beacon does not run without this — trip shape (solo vs accompanied) must never be treated as consent."
+    },
+    "location_tracking_consent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When consent was given. Auditable alongside data_processing_consent on Consultation."
+    },
+    "location_tracking_consent_version": {
+      "type": "string",
+      "description": "Version of the location-sharing notice the patient agreed to (LOCATION_CONSENT_VERSION)."
+    },
+    "location_tracking_revoked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Set when the patient turns sharing off. Consent is revocable at any time and revocation stops the beacon immediately."
+    },
     "status": {
       "type": "string",
       "enum": [
