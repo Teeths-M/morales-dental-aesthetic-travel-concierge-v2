@@ -65,6 +65,43 @@ function FacilityFeeForm({ caseId, caseRef }) {
   );
 }
 
+// ── Date-confirm inline form — locks the doctor's slot + fires the patient's prep ──
+function DateConfirmForm({ caseId }) {
+  const [date, setDate]       = useLocalState('');
+  const [loading, setLoading] = useLocalState(false);
+  const [done, setDone]       = useLocalState(false);
+
+  const submit = async () => {
+    if (!date) return;
+    setLoading(true);
+    try {
+      await base44.functions.invoke('confirmProcedureDate', { case_id: caseId, date });
+      setDone(true);
+    } catch (_) { setLoading(false); }
+  };
+
+  if (done) return (
+    <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+      <p className="text-xs font-semibold text-emerald-700">Date confirmed — the patient's preparation is on its way</p>
+    </div>
+  );
+
+  return (
+    <div className="mt-3 p-3 rounded-xl bg-sky-50 border border-sky-200">
+      <p className="text-xs font-semibold text-sky-800 mb-2">📅 Confirm the procedure date to lock this appointment</p>
+      <div className="flex gap-2">
+        <input type="date" value={date} onChange={e => setDate(e.target.value)}
+          className="flex-1 px-3 py-2 text-sm border border-sky-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+        <button onClick={submit} disabled={loading || !date}
+          className="px-4 py-2 rounded-lg text-xs font-bold bg-sky-600 text-white disabled:opacity-50 whitespace-nowrap">
+          {loading ? '…' : 'Confirm Date'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DoctorDashboard() {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({});
@@ -366,6 +403,10 @@ export default function DoctorDashboard() {
                         {/* Facility fee gate — shows when clinic quote is still pending */}
                         {c.status === 'Vendor-Pending' && c.clinic_quote_status !== 'CONFIRMED' && (
                           <FacilityFeeForm caseId={c.id} caseRef={c.id.slice(-8).toUpperCase()} />
+                        )}
+                        {/* Date-confirm gate — shows after the patient picks this doctor */}
+                        {c.doctor_confirmation_status === 'PENDING' && (
+                          <DateConfirmForm caseId={c.id} />
                         )}
                       </motion.div>
                     );

@@ -168,6 +168,19 @@ test('CANCELLATION: cancelBooking refunds only HELD escrow, never claws back rel
   expect(src).toContain('BOOKING.CANCELLED');
 });
 
+test('SLOT LOCK: confirmProcedureDate locks the slot, rejects a taken date, owner-gated', () => {
+  const src = read('base44/functions/confirmProcedureDate/entry.ts');
+  expect(src, 'owner-or-admin gate').toContain('c.doctor_email');
+  expect(src, 'rejects a slot locked to another case').toContain('locked_case_id !== case_id');
+  expect(src).toMatch(/no longer available|just taken/);
+  expect(src, 'locks the slot to this case').toContain('locked_case_id: case_id');
+});
+
+test('ITINERARY: the clinic event uses the doctor-confirmed procedure_date when set', () => {
+  const src = read('base44/functions/generateItineraryCalendar/entry.ts');
+  expect(src).toContain('c.procedure_date');
+});
+
 test('STATE MACHINE: a safety hold can never be routine-transitioned out', () => {
   const src = read('base44/functions/_shared/bookingState.ts');
   // Routine path refuses to leave the hold...

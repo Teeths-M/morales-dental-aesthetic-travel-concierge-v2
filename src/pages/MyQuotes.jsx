@@ -3,8 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Star, MapPin, Calendar, Shield, Check, Award, Loader2, Stethoscope } from 'lucide-react';
+import { Star, MapPin, Calendar, Shield, Check, Award, Loader2, Stethoscope, HelpCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import CaseThread from '@/components/quotes/CaseThread';
 
 // Design tokens (project standard).
 const PAGE = '#060B16', CARD = '#0C1A1D', BORDER = '#2A3F4A', GOLD = '#D4AF37';
@@ -73,8 +74,9 @@ export default function MyQuotes() {
     queryKey: ['quotes-for-request', request?.id],
     enabled: !!request?.id,
     queryFn: async () => {
-      const dq = await base44.entities.DoctorQuote
-        .filter({ request_id: request.id, status: 'submitted' }, '-submitted_at', 50).catch(() => []);
+      const all = await base44.entities.DoctorQuote
+        .filter({ request_id: request.id }, '-created_date', 60).catch(() => []);
+      const dq = all.filter((q) => q.status === 'submitted' || q.status === 'needs_more_info');
       const today = new Date().toISOString().slice(0, 10);
       return Promise.all(dq.map(async (q) => {
         const doc = q.doctor_id ? await base44.entities.Doctor.get(q.doctor_id).catch(() => null) : null;
@@ -100,13 +102,18 @@ export default function MyQuotes() {
     },
   });
 
+  // Priced quotes are compared and chosen; "needs_more_info" quotes are doctors
+  // waiting on an answer — surfaced as questions, not prices.
+  const priced = useMemo(() => quotes.filter((q) => q.status === 'submitted'), [quotes]);
+  const questions = useMemo(() => quotes.filter((q) => q.status === 'needs_more_info'), [quotes]);
+
   const minPrice = useMemo(
-    () => quotes.reduce((m, q) => Math.min(m, Number(q.total_usd) || Infinity), Infinity),
-    [quotes],
+    () => priced.reduce((m, q) => Math.min(m, Number(q.total_usd) || Infinity), Infinity),
+    [priced],
   );
 
   const sorted = useMemo(() => {
-    const withScore = quotes.map((q) => {
+    const withScore = priced.map((q) => {
       const price = Number(q.total_usd) || 0;
       const rating = Number(q.doctor?.rating) || 0;
       const years = Number(q.doctor?.years_experience) || 0;
@@ -122,7 +129,7 @@ export default function MyQuotes() {
       soonest: (a, b) => String(a.soonest || '9999').localeCompare(String(b.soonest || '9999')),
     };
     return withScore.sort(by[sort] || by.value);
-  }, [quotes, sort, minPrice]);
+  }, [priced, sort, minPrice]);
 
   const wrap = { minHeight: '100vh', background: PAGE, padding: '24px 16px',
     fontFamily: '"SF Pro Display", system-ui, sans-serif' };
@@ -159,6 +166,23 @@ export default function MyQuotes() {
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 18 }}>
           Compare verified specialists for <strong style={{ color: GOLD }}>{procedures}</strong> and choose the one that's right for you. You have the final say.
         </p>
+
+        {/* Doctors waiting on your answer — surfaced as questions, not prices */}
+        {questions.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            {questions.map((q) => (
+              <div key={q.id} style={{ ...cardStyle, borderColor: GOLD, marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: GOLD, fontWeight: 700, fontSize: 14 }}>
+                  <HelpCircle size={16} /> {q.doctor?.full_name || 'A doctor'} has a question for you
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: '6px 0 0' }}>
+                  Answer to receive your quote from {[q.doctor?.clinic_city, q.doctor?.clinic_country].filter(Boolean).join(', ') || 'this specialist'}.
+                </p>
+                <CaseThread caseId={request.case_id} quoteId={q.id} viewer="patient" theme="dark" />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Sort toggles */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>

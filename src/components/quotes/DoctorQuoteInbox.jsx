@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FileText, Loader2, Send, Inbox, CheckCircle2 } from 'lucide-react';
+import CaseThread from '@/components/quotes/CaseThread';
 
 /**
  * DoctorQuoteInbox — pending pricing requests for the logged-in doctor.
@@ -144,6 +145,9 @@ function RequestCard({ quote, highlight, onDone }) {
         Submit fair, transparent quote
       </Button>
       {submit.isError && <p className="text-xs text-red-600 mt-2 text-center">Couldn't submit — please check the total and try again.</p>}
+
+      {/* Need more detail before quoting? Ask the patient in-portal. */}
+      <CaseThread caseId={quote.case_id} quoteId={quote.id} viewer="doctor" theme="light" />
     </div>
   );
 }

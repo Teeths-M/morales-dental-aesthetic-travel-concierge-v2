@@ -139,11 +139,18 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     location: c.hotel_address || c.hotel_name || dest,
   });
 
-  // ── Event 4: Clinic appointment (procedure day = departure + 1) ──────────
+  // ── Event 4: Clinic appointment ──────────────────────────────────────────
+  // Prefer the doctor-confirmed procedure_date (confirmProcedureDate); fall back to
+  // the old departure + 1 estimate only when no real date has been set yet.
   if (c.booking_type !== 'travel_only') {
-    const procDate = new Date(depDate);
-    procDate.setUTCDate(procDate.getUTCDate() + 1);
-    const procIso = procDate.toISOString().split('T')[0];
+    let procIso;
+    if (c.procedure_date) {
+      procIso = new Date(c.procedure_date).toISOString().split('T')[0];
+    } else {
+      const procDate = new Date(depDate);
+      procDate.setUTCDate(procDate.getUTCDate() + 1);
+      procIso = procDate.toISOString().split('T')[0];
+    }
     events.push({
       uid: uid('clinic'),
       start:    icsDate(procIso, '10:00'),
