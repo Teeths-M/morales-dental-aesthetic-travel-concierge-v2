@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 // ── Scheduled: every 5 minutes ── */5 * * * *
 // Checks all active LiveLocation records and escalates stale ones:
@@ -8,9 +9,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    // Admin or scheduler only
-    const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
+    // Admin or scheduler only — cron secret OR admin session. The previous
+    // guard passed an unauthenticated caller (null user), which on this
+    // function meant anyone could drive the stale-location safety sweep.
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

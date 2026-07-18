@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -39,8 +40,12 @@ Deno.serve(async (req) => {
     // Now: require either admin/platform_admin role OR accept calls with no user token
     // only when triggered from an internal automation context (no Authorization header = system).
     // The check below rejects any request that has a user token but is NOT admin.
-    const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
+    // The comment above described the intent correctly but the check did not
+    // implement it: `if (user && ...)` rejected a non-admin token yet allowed a
+    // request carrying NO token at all — leaving the 500-case scan + mass-update
+    // DoS vector it was written to close wide open. cronAuthorized requires a
+    // cron secret or an admin session, and defaults closed when neither exists.
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 

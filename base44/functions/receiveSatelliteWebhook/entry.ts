@@ -34,6 +34,29 @@ import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const BRAND = 'Morales Concierge';
 
+/**
+ * Is this POST provably from Rock Seven, or could anyone have sent it?
+ *
+ * Rock Seven does not sign its callbacks, so the shared secret travels in the
+ * delivery-group URL (…/receiveSatelliteWebhook?s=<SATELLITE_WEBHOOK_SECRET>);
+ * an X-Satellite-Secret header is also accepted for manual testing.
+ *
+ * This is NOT a gate that rejects the request — see the asymmetric trust rule
+ * at the call site. An IMEI is not a secret (it is printed on the device and
+ * its packaging), so without this check anyone able to guess one could speak
+ * for a patient's device.
+ */
+function satelliteVerified(req: Request): boolean {
+  const secret = Deno.env.get('SATELLITE_WEBHOOK_SECRET');
+  if (!secret) return false; // unset ⇒ nothing is verified, never "everything is"
+  const provided =
+    new URL(req.url).searchParams.get('s') ||
+    req.headers.get('x-satellite-secret') ||
+    req.headers.get('X-Satellite-Secret') ||
+    '';
+  return provided.length === secret.length && provided === secret;
+}
+
 function hexToString(hex: string): string {
   if (!hex) return '';
   const bytes = [];
@@ -89,6 +112,14 @@ Deno.serve(async (req) => {
     const isSafe     = decoded.includes('SAFE') || decoded === 'S' || decoded === 'OK';
     const isSOS      = decoded.includes('SOS')  || decoded === 'HELP' || decoded === 'EMERGENCY';
 
+    // ── Asymmetric trust: an unverified message may RAISE alarm, never CLEAR it ─
+    // The same rule the safety engine applies to the LLM ("AI may raise caution,
+    // never clear it"). The two failure modes are not symmetric:
+    //   • dropping a real SOS because a secret was misconfigured could cost a life
+    //   • honouring a forged SAFE calls off help for someone still in danger
+    // So SOS dispatch runs unconditionally, and de-escalation requires proof.
+    const verified = satelliteVerified(req);
+
     // Look up device by IMEI
     const devices = await base44.asServiceRole.entities.SatelliteDevice.filter({ rock7_imei: imei }).catch(() => []);
     const device  = devices?.[0];
@@ -110,8 +141,12 @@ Deno.serve(async (req) => {
       messages_received: (device.messages_received || 0) + 1,
     });
 
-    // Update CaseRecord with satellite GPS fix
-    if (caseId && iridium_latitude && iridium_longitude) {
+    // Update CaseRecord with satellite GPS fix.
+    // Verified only: this position is what a security team would be sent to, so a
+    // spoofed fix would actively misdirect a rescue. Unverified coordinates are
+    // still recorded on the device row above for forensics, but never promoted to
+    // the case's authoritative last-known location.
+    if (verified && caseId && iridium_latitude && iridium_longitude) {
       await base44.asServiceRole.entities.CaseRecord.update(caseId, {
         last_known_lat:       iridium_latitude,
         last_known_lng:       iridium_longitude,
@@ -124,24 +159,51 @@ Deno.serve(async (req) => {
 
     // ── SAFE reply ────────────────────────────────────────────────────────────
     if (isSafe) {
-      // Mark any open solo check-in as satellite-confirmed → halt escalation
-      if (caseId) {
+      // Only a VERIFIED device may stand down an escalation (asymmetric trust,
+      // above). An unverified SAFE is routed to a human instead — it is treated
+      // as an unconfirmed claim, never as a resolution.
+      if (verified && caseId) {
+        // An escalation in progress is any check-in that is neither acknowledged
+        // nor resolved. The previous filter looked for status 'escalating' and
+        // wrote 'safe_confirmed' — neither value exists in SoloCheckIn's enum
+        // (pending | acknowledged | escalated_2h/3h/5h/9h | resolved), so this
+        // matched nothing and a real patient's SAFE never actually halted their
+        // escalation. Vocabulary now matches acknowledgeSoloCheckIn.
         const openCheckIns = await base44.asServiceRole.entities.SoloCheckIn.filter({
           case_id: caseId,
-          status:  'escalating',
         }).catch(() => []);
 
-        for (const ci of openCheckIns as any[]) {
+        const active = (openCheckIns as any[]).filter(
+          (ci) => !['acknowledged', 'resolved'].includes(ci.status),
+        );
+
+        for (const ci of active) {
           tasks.push(base44.asServiceRole.entities.SoloCheckIn.update(ci.id, {
-            status:              'safe_confirmed',
-            confirmed_via:       'satellite',
-            satellite_confirmed_at: now,
+            status:          'acknowledged',
+            responded_time:  now,
+            acknowledged_at: now,
+            response_method: 'satellite',
           }));
+        }
+      } else if (!verified) {
+        // Unverified stand-down request — escalation deliberately continues.
+        const reviewEmail = Deno.env.get('ADMIN_EMAIL');
+        if (reviewEmail) {
+          tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: BRAND,
+            to:        reviewEmail,
+            subject:   `⚠️ Unverified satellite SAFE — needs human review | ${BRAND}`,
+            body:      `<p>A SAFE message was received for a registered device, but the request was <strong>not verified</strong> (missing or wrong satellite webhook secret).</p>
+                       <p><strong>The escalation has NOT been halted.</strong> This may be a misconfigured SATELLITE_WEBHOOK_SECRET, or an attempt to call off help for a patient still in danger.</p>
+                       <p>Open the case in the admin console to confirm the patient's status directly.</p>`,
+          }).catch(() => {}));
         }
       }
 
-      // Reply to patient via satellite (Rock Seven supports MT reply)
-      tasks.push(
+      // Reply to patient via satellite (Rock Seven supports MT reply).
+      // Verified only — an unverified sender must not receive a confirmation
+      // telling them the stand-down was accepted.
+      if (verified) tasks.push(
         base44.asServiceRole.functions?.invoke?.('sendSatelliteMessage', {
           case_id: caseId,
           message: `MORALES: Got it. Glad you're safe. Check in again in 12 hours. — ${BRAND}`,
@@ -149,8 +211,10 @@ Deno.serve(async (req) => {
         }).catch(() => {}) ?? Promise.resolve()
       );
 
-      // Notify admin: satellite safe confirmation received
-      const adminEmail = Deno.env.get('ADMIN_EMAIL');
+      // Notify admin: satellite safe confirmation received.
+      // Verified only — the unverified case sends its own "needs review" notice
+      // above, and this copy asserts "escalation halted", which would be false.
+      const adminEmail = verified ? Deno.env.get('ADMIN_EMAIL') : null;
       if (adminEmail) {
         tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
           from_name: BRAND,
@@ -215,6 +279,8 @@ Deno.serve(async (req) => {
         imei, momsn, decoded,
         gps_lat: iridium_latitude, gps_lng: iridium_longitude,
         is_safe: isSafe, is_sos: isSOS,
+        // On the hash chain so a forged stand-down attempt is provable after the fact.
+        verified,
       },
       prev_hash:    satelliteMsgPrevHash,
     }).catch(() => {}));

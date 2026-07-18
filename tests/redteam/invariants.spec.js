@@ -208,3 +208,44 @@ test('STATE MACHINE: a safety hold can never be routine-transitioned out', () =>
   // ...and ADMIN_REVIEW has no routine outgoing edges (only clearHold may move it).
   expect(src).toMatch(/\[BOOKING\.ADMIN_REVIEW\]:\s*\[\]/);
 });
+
+test('SATELLITE: an unverified message may raise alarm but never clear one', () => {
+  const src = read('base44/functions/receiveSatelliteWebhook/entry.ts');
+  // The webhook must be able to tell a real Rock Seven callback from anyone else.
+  expect(src, 'verifies a shared secret').toContain('SATELLITE_WEBHOOK_SECRET');
+  expect(src, 'unset secret verifies nothing — never everything').toContain('if (!secret) return false;');
+  // De-escalation requires proof; SOS dispatch must NOT be gated on it, because
+  // dropping a real SOS is the worse failure.
+  expect(src, 'stand-down is gated on verification').toContain('if (verified && caseId)');
+  const sosBlock = src.slice(src.indexOf('if (isSOS)'));
+  expect(sosBlock, 'SOS dispatch is never gated on verification').not.toContain('if (verified)');
+  // A spoofed fix must not become the location a rescue is sent to.
+  expect(src, 'authoritative position write is verified-only').toContain('if (verified && caseId && iridium_latitude');
+  // Forged stand-down attempts stay provable on the hash chain.
+  expect(src, 'verification state is audited').toMatch(/verified,/);
+});
+
+test('SATELLITE: check-in status vocabulary matches the SoloCheckIn enum', () => {
+  const src = read('base44/functions/receiveSatelliteWebhook/entry.ts');
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  // 'escalating' / 'safe_confirmed' are not in the enum — using them silently
+  // matched nothing, so a real patient's SAFE never halted their escalation.
+  // Scoped to `status:` writes — `reason: 'safe_confirmed'` on the satellite
+  // MT reply is a different namespace and is fine.
+  expect(code, 'no invented filter status').not.toMatch(/status:\s*'escalating'/);
+  expect(code, 'no invented write status').not.toMatch(/status:\s*'safe_confirmed'/);
+  expect(code, 'writes the canonical acknowledged status').toContain("status:          'acknowledged'");
+  const schema = read('base44/entities/SoloCheckIn.jsonc');
+  expect(schema, 'satellite is a valid response_method').toContain('"satellite"');
+});
+
+test('CRON AUTH: scheduled sweeps are never callable by an anonymous request', () => {
+  for (const fn of ['alertStagnantCases', 'autoCompletePatientJourney', 'checkStaleLiveLocations',
+                    'detectFallbackCrisis', 'removeDoctorFromProcedures']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+    expect(code, `${fn} requires cron secret or admin session`).toContain('cronAuthorized(req, base44)');
+    // The fail-open shape: a null user skips the check entirely.
+    expect(code, `${fn} has no fail-open role check`).not.toMatch(/if \((?:user|callerUser) && \1?\w*\.role !==/);
+  }
+});

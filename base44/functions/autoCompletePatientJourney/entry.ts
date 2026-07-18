@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const HAIKU = 'claude-haiku-4-5-20251001';
@@ -25,10 +26,10 @@ async function aiJourneySummary(cr: Record<string, unknown>): Promise<string | n
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    // Allow both admin and scheduled execution (no user for scheduled)
-    if (user && user.role !== 'admin' && user.role !== 'platform_admin') {
+    // Cron secret OR admin session. The previous guard allowed both admin and
+    // scheduled execution by letting a null user pass — which also let any
+    // unauthenticated caller drive a bulk journey-completion sweep.
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 

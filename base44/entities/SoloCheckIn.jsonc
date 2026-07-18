@@ -40,7 +40,8 @@
         "app",
         "sms",
         "voice",
-        "emergency_pin"
+        "emergency_pin",
+        "satellite"
       ],
       "default": "app"
     },

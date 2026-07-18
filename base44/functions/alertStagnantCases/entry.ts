@@ -1,12 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Admin-only guard for direct HTTP calls (automation has no user)
-    const callerUser = await base44.auth.me().catch(() => null);
-    if (callerUser && callerUser.role !== 'admin' && callerUser.role !== 'platform_admin') {
+    // Cron secret OR admin session. The previous guard read
+    // `if (callerUser && callerUser.role !== 'admin')`, which let an
+    // UNAUTHENTICATED caller (callerUser === null) straight through — the
+    // no-session case it meant to allow for the scheduler also allowed anyone.
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
