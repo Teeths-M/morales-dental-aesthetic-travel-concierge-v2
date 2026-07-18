@@ -62,8 +62,8 @@ export default function MyQuotes() {
     queryKey: ['my-quote-request', user?.email, requestId],
     enabled: !!user?.email,
     queryFn: async () => {
-      if (requestId) return base44.entities.QuoteRequest.get(requestId).catch(() => null);
-      const rows = await base44.entities.QuoteRequest
+      if (requestId) return base44.entities.DoctorQuoteRequest.get(requestId).catch(() => null);
+      const rows = await base44.entities.DoctorQuoteRequest
         .filter({ patient_email: user.email }, '-created_date', 1).catch(() => []);
       return rows[0] || null;
     },

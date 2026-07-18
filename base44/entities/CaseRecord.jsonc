@@ -836,7 +836,20 @@
     "logistics_flight_number": {
       "type": "string",
       "description": "Patient's confirmed inbound flight number — entered by travel agency, e.g. AA123"
-    }
+    },
+    "quote_request_id": {
+      "type": "string",
+      "description": "Link to the DoctorQuoteRequest (competitive-quote marketplace)"
+    },
+    "pre_op_checklist": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Deterministic pre-op preparation items (sendPreOpInstructions); read in-portal"
+    },
+    "pre_op_sent_at": { "type": "string", "format": "date-time" },
+    "cancellation_reason": { "type": "string" },
+    "cancelled_at": { "type": "string", "format": "date-time" },
+    "cancelled_by": { "type": "string", "enum": ["patient", "admin"] }
   },
   "required": [
     "client_name",

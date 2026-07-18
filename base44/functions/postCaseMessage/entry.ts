@@ -15,7 +15,7 @@ import { scrubContact } from '../_shared/contactScrub.ts';
  *   • A patient's answer that flags new medical info re-runs the deterministic Safe-T
  *     scan (fail-closed — a clarification can raise a flag, never clear one).
  *
- * Requires: entity CaseMessage (+ DoctorQuote / QuoteRequest for context).
+ * Requires: entity QuoteMessage (+ DoctorQuote / DoctorQuoteRequest for context).
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
@@ -49,7 +49,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const caseId = case_id || quote?.case_id;
   if (!caseId) return err('Could not resolve the case for this message', 404);
   const request = quote?.request_id
-    ? await base44.asServiceRole.entities.QuoteRequest.get(quote.request_id).catch(() => null)
+    ? await base44.asServiceRole.entities.DoctorQuoteRequest.get(quote.request_id).catch(() => null)
     : null;
 
   // From/to. Doctors and partners have their own roles; everyone else is the patient.
@@ -65,9 +65,11 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const scrub = preSelection ? scrubContact(text) : { clean: String(text), redactedCount: 0 };
   const now = new Date().toISOString();
 
-  const message = await base44.asServiceRole.entities.CaseMessage.create({
+  const message = await base44.asServiceRole.entities.QuoteMessage.create({
     case_id: caseId,
     quote_id: quote_id || '',
+    patient_email: request?.patient_email || '',   // denormalised so RLS scopes the thread to its participants
+    doctor_email: quote?.doctor_email || '',
     from_party: fromParty,
     from_id: user?.id || '',
     to_party: to_party || (fromParty === 'patient' ? 'doctor' : 'patient'),
@@ -107,7 +109,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   await base44.asServiceRole.entities.AuditLog.create({
     event_type: 'case_message_posted',
     actor_id: user?.id || fromParty, actor_role: fromParty, actor_name: user?.email || fromParty,
-    resource_type: 'CaseMessage', resource_id: message.id, case_id: caseId,
+    resource_type: 'QuoteMessage', resource_id: message.id, case_id: caseId,
     sensitive: true, timestamp: now,
     details: { message_type, from_party: fromParty, contact_scrubbed: scrub.redactedCount > 0 },
     prev_hash: await computePrevHash(base44),

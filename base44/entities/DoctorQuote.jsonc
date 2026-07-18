@@ -1,0 +1,56 @@
+{
+  "name": "DoctorQuote",
+  "type": "object",
+  "description": "One doctor's response to a DoctorQuoteRequest — a firm per-patient invoice once submitted.",
+  "properties": {
+    "request_id": { "type": "string" },
+    "case_id": { "type": "string" },
+    "patient_email": { "type": "string", "format": "email", "description": "Denormalised for RLS + the patient board" },
+    "doctor_id": { "type": "string" },
+    "doctor_email": { "type": "string", "format": "email" },
+    "doctor_country": { "type": "string" },
+    "procedures": { "type": "array", "items": { "type": "string" } },
+    "deidentified_summary": { "type": "string", "description": "Read in-portal by the invited doctor; never emailed." },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "needs_more_info", "submitted", "declined", "chosen", "not_chosen"],
+      "default": "pending"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "procedure": { "type": "string" },
+          "qty": { "type": "number" },
+          "unit_price_usd": { "type": "number" }
+        }
+      }
+    },
+    "total_usd": { "type": "number" },
+    "currency": { "type": "string", "default": "USD" },
+    "doctor_notes": { "type": "string" },
+    "reviewed_consultation": { "type": "boolean", "default": false },
+    "patient_facing_summary": { "type": "string", "description": "Advisory summary/translation; the total_usd is authoritative." },
+    "viewed_at": { "type": "string", "format": "date-time" },
+    "reminder_stage": { "type": "number", "default": 0 },
+    "submitted_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["request_id", "doctor_email"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.doctor_email": "{{user.email}}" },
+        { "data.patient_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "data.doctor_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "create": { "user_condition": { "role": "admin" } }
+  }
+}

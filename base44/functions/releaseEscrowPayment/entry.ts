@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 /**
  * releaseEscrowPayment — Airbnb Escrow Release Model
@@ -151,18 +152,17 @@ Deno.serve(createHandler(async ({ base44, body }) => {
       release_notes: `Released 24hrs after ${hsLabel}`,
     }));
 
-    // Send premium payment released email to partner
+    // Link-only payment-released notice — no amount, no patient name in the email.
     if (hold.partner_email) {
       tasks.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND,
         to: hold.partner_email,
-        subject: `Payment released — ${usd(hold.amount_held_usd)} for ${patientName} | ${BRAND}`,
-        body: paymentReleasedEmail({
-          partnerName:  hold.partner_name || hold.partner_email,
-          partnerType:  hold.partner_type?.replace('_', ' '),
-          patientName, amount: hold.amount_held_usd, caseRef,
-          handshake:    hsLabel,
-          dashboardUrl: PARTNER_DASHBOARDS[hold.partner_type] || `${APP_URL}/partner-portal`,
+        subject: `A payment has been released to you | ${BRAND}`,
+        body: linkOnlyEmail({
+          title: 'A payment has been released to you.',
+          line: 'Your payment has cleared from escrow. Open your Morales portal to view the amount and case details.',
+          ctaUrl: PARTNER_DASHBOARDS[hold.partner_type] || `${APP_URL}/partner-portal`,
+          ctaLabel: 'View in My Portal',
         }),
       }));
     }

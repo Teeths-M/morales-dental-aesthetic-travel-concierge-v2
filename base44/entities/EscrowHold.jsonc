@@ -12,7 +12,7 @@
     "release_trigger_hs": { "type": "number", "description": "Handshake number that triggers the 24-hour release countdown (e.g. 5 for Doctor)" },
     "status": {
       "type": "string",
-      "enum": ["held", "releasing", "released", "disputed", "cancelled"],
+      "enum": ["held", "releasing", "released", "disputed", "cancelled", "refunded"],
       "default": "held"
     },
     "payment_confirmed_at":   { "type": "string", "format": "date-time", "description": "When patient payment was captured" },
@@ -21,7 +21,9 @@
     "released_at":            { "type": "string", "format": "date-time" },
     "stripe_transfer_id":     { "type": "string", "description": "Stripe Transfer ID once payout is issued" },
     "stripe_connected_account": { "type": "string", "description": "Partner's Stripe Connect account ID" },
-    "release_notes":          { "type": "string" }
+    "release_notes":          { "type": "string" },
+    "refunded_at":            { "type": "string", "format": "date-time", "description": "Set by cancelBooking when a held (un-released) amount is refunded to the patient" },
+    "refund_reason":          { "type": "string" }
   },
   "required": ["case_id", "partner_type", "amount_held_usd", "release_trigger_hs"],
   "rls": {

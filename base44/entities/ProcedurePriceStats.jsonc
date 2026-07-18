@@ -1,0 +1,24 @@
+{
+  "name": "ProcedurePriceStats",
+  "type": "object",
+  "description": "Auto-learning per-procedure × country price estimate, recomputed from every firm DoctorQuote. Aggregate only — never exposes an individual quote.",
+  "properties": {
+    "procedure_id": { "type": "string" },
+    "procedure_name": { "type": "string" },
+    "country": { "type": "string" },
+    "samples": { "type": "array", "items": { "type": "number" }, "description": "Recent firm-quote prices (capped at 200)" },
+    "sample_count": { "type": "number", "default": 0 },
+    "median_usd": { "type": "number" },
+    "p25_usd": { "type": "number" },
+    "p75_usd": { "type": "number" },
+    "min_usd": { "type": "number" },
+    "max_usd": { "type": "number" },
+    "last_quote_at": { "type": "string", "format": "date-time" },
+    "last_recomputed_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["procedure_name"],
+  "rls": {
+    "read": { "user_condition": { "isAuthenticated": true } },
+    "create": { "user_condition": { "role": "admin" } }
+  }
+}

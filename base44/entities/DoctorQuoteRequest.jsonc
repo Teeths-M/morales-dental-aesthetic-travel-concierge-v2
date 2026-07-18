@@ -1,0 +1,36 @@
+{
+  "name": "DoctorQuoteRequest",
+  "type": "object",
+  "description": "A patient's competitive-quote request fanned out to specialist doctors after Safe-T clears. Distinct from the partner-quote 'QuoteRequest' entity.",
+  "properties": {
+    "case_id": { "type": "string" },
+    "consultation_id": { "type": "string" },
+    "patient_email": { "type": "string", "format": "email" },
+    "patient_first_name": { "type": "string" },
+    "patient_country": { "type": "string" },
+    "procedures": { "type": "array", "items": { "type": "string" } },
+    "deidentified_summary": {
+      "type": "string",
+      "description": "First name + country + clinical facts needed to quote. Read in-portal only; never emailed. Empty for minors until Admin-Review."
+    },
+    "is_minor": { "type": "boolean", "default": false },
+    "safety_status": { "type": "string", "enum": ["cleared", "review", "blocked"], "default": "cleared" },
+    "status": {
+      "type": "string",
+      "enum": ["awaiting_quotes", "quotes_in", "selected", "expired", "held"],
+      "default": "awaiting_quotes"
+    },
+    "chosen_quote_id": { "type": "string" },
+    "expires_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["case_id", "patient_email"],
+  "rls": {
+    "read": {
+      "$or": [
+        { "data.patient_email": "{{user.email}}" },
+        { "user_condition": { "role": "admin" } }
+      ]
+    },
+    "create": { "user_condition": { "role": "admin" } }
+  }
+}

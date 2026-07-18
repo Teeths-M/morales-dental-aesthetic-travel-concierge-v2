@@ -19,7 +19,7 @@ export default function CaseThread({ caseId, quoteId, viewer = 'patient', theme 
     queryKey: ['case-messages', caseId, quoteId],
     enabled: !!(caseId || quoteId),
     refetchInterval: 20000,
-    queryFn: () => base44.entities.CaseMessage
+    queryFn: () => base44.entities.QuoteMessage
       .filter(quoteId ? { quote_id: quoteId } : { case_id: caseId }, 'created_at', 50)
       .catch(() => []),
   });

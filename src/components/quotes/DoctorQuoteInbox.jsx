@@ -23,11 +23,9 @@ export default function DoctorQuoteInbox({ doctor }) {
     queryFn: async () => {
       const dq = await base44.entities.DoctorQuote
         .filter({ doctor_email: doctor.email }, '-created_date', 50).catch(() => []);
-      const open = dq.filter((q) => q.status === 'pending' || q.status === 'needs_more_info');
-      return Promise.all(open.map(async (q) => {
-        const req = q.request_id ? await base44.entities.QuoteRequest.get(q.request_id).catch(() => null) : null;
-        return { ...q, request: req };
-      }));
+      // The summary + procedures are denormalised onto the quote (the doctor owns it),
+      // so no read of the de-identified DoctorQuoteRequest is needed here.
+      return dq.filter((q) => q.status === 'pending' || q.status === 'needs_more_info');
     },
   });
 
@@ -56,8 +54,7 @@ export default function DoctorQuoteInbox({ doctor }) {
 }
 
 function RequestCard({ quote, highlight, onDone }) {
-  const req = quote.request || {};
-  const procedures = (req.procedures && req.procedures.length ? req.procedures : ['Procedure']);
+  const procedures = (quote.procedures && quote.procedures.length ? quote.procedures : ['Procedure']);
   const [reviewed, setReviewed] = useState(false);
   const [prices, setPrices] = useState({});
   const [notes, setNotes] = useState('');
@@ -106,7 +103,7 @@ function RequestCard({ quote, highlight, onDone }) {
       {/* De-identified summary (in-portal only) */}
       <div className="bg-secondary/40 border border-border rounded-lg p-3 mb-4">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Patient request</p>
-        <p className="text-sm text-foreground">{req.deidentified_summary || procedures.join(', ')}</p>
+        <p className="text-sm text-foreground">{quote.deidentified_summary || procedures.join(', ')}</p>
         <p className="text-[11px] text-muted-foreground/70 mt-2">
           The patient's full identity and contact details are shared only if they select you.
         </p>

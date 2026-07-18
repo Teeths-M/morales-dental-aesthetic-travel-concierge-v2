@@ -181,6 +181,23 @@ test('ITINERARY: the clinic event uses the doctor-confirmed procedure_date when 
   expect(src).toContain('c.procedure_date');
 });
 
+test('COMMS: migrated legacy senders are link-only — nothing private leaves M', () => {
+  for (const fn of ['releaseEscrowPayment', 'generateItineraryCalendar', 'processPaymentCascade']) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} imports the link-only helper`).toContain("from '../_shared/notify.ts'");
+    expect(src, `${fn} uses linkOnlyEmail`).toContain('linkOnlyEmail(');
+  }
+  // The partner-cascade activation email is now link-only (renders no patient name).
+  const cascade = read('base44/functions/processPaymentCascade/entry.ts');
+  const helper = cascade.slice(cascade.indexOf('function activationEmail'), cascade.indexOf('Deno.serve'));
+  expect(helper, 'activation email is link-only').toContain('linkOnlyEmail(');
+  expect(helper, 'activation email renders no patient name').not.toContain('e(patientName)');
+});
+
+test('COMMS: the link-only helper enforces the on-platform promise', () => {
+  expect(read('base44/functions/_shared/notify.ts')).toContain('nothing private is sent by email');
+});
+
 test('STATE MACHINE: a safety hold can never be routine-transitioned out', () => {
   const src = read('base44/functions/_shared/bookingState.ts');
   // Routine path refuses to leave the hold...

@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 /**
  * generateItineraryCalendar — Booking.com Calendar Sync Model
@@ -222,27 +223,19 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     ? googleCalUrl(clinicEvent.summary, clinicEvent.start, clinicEvent.end, clinicEvent.description, clinicEvent.location)
     : null;
 
-  // Email calendar to patient
+  // Link-only notice — the calendar (which contains addresses) is saved to the
+  // vault; the patient adds/downloads it from their portal. No itinerary in the email.
   if (c.client_email) {
     await base44.asServiceRole.integrations.Core.SendEmail({
       from_name: BRAND,
       to: c.client_email,
-      subject: `Your Morales journey calendar is ready — add to Apple/Google Calendar | ${BRAND}`,
-      body: `<!doctype html><html><body style="margin:0;background:#060B16;font-family:Arial,Helvetica,sans-serif;padding:28px;">
-<table width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#0C1A1D;border:1px solid #2A3F4A;border-radius:22px;overflow:hidden;">
-<tr><td style="padding:28px 32px;text-align:center;border-bottom:1px solid #2A3F4A;">
-  <div style="font-family:Georgia,serif;font-size:20px;color:#fff;">${BRAND}</div>
-  <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:8px;">Your Journey Itinerary</div>
-</td></tr>
-<tr><td style="padding:28px 32px;">
-  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:24px;font-weight:400;color:#fff;">All your journey events in one place.</h1>
-  <p style="margin:0 0 20px;font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;">Your complete Morales itinerary — flights, hotel, clinic, companion meals, and return — is now in a single calendar file. Add it to Apple Calendar or Google Calendar in one tap.</p>
-  ${googleCalLink ? `<a href="${googleCalLink}" style="display:block;text-align:center;background:#4285F4;color:#fff;text-decoration:none;padding:13px;border-radius:999px;font-size:14px;font-weight:700;margin-bottom:10px;">Add to Google Calendar →</a>` : ''}
-  <a href="data:text/calendar;base64,${b64}" download="Morales_Journey_${caseRef}.ics" style="display:block;text-align:center;background:#29483d;color:#fff;text-decoration:none;padding:13px;border-radius:999px;font-size:14px;font-weight:700;margin-bottom:20px;">Download for Apple Calendar (.ics) →</a>
-  <p style="font-size:12px;color:#475569;text-align:center;">The file has also been saved to your secure Morales Vault.</p>
-</td></tr>
-</table></td></tr></table></body></html>`,
+      subject: `Your journey calendar is ready | ${BRAND}`,
+      body: linkOnlyEmail({
+        title: 'Your journey calendar is ready.',
+        line: 'Your complete itinerary — flights, hotel, clinic, and return — is saved to your Morales portal. Open it to add everything to your calendar in one tap.',
+        ctaUrl: `${APP_URL}/dashboard/journey`,
+        ctaLabel: 'Open My Journey',
+      }),
     }).catch(() => {});
   }
 

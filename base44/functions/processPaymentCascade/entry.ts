@@ -1,4 +1,5 @@
 ﻿import { createHandler, ok, err } from '../_shared/createHandler.ts';
+import { linkOnlyEmail } from '../_shared/notify.ts';
 
 /**
  * processPaymentCascade
@@ -16,30 +17,19 @@ const APP_URL = (Deno.env.get('APP_URL') || 'https://moralesdentalandaesthetics.
 
 const e = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function activationEmail({ partnerName, role, patientName, procedureDate, caseRef, message, ctaUrl, ctaLabel }: {
-  partnerName: string; role: string; patientName: string; procedureDate: string;
-  caseRef: string; message: string; ctaUrl: string; ctaLabel: string;
+// LINK-ONLY: the partner opens their portal for the patient + case details. The email
+// carries no name, date, amount, or message — nothing private leaves M. Extra params
+// are accepted (call sites pass them) but ignored.
+function activationEmail({ role, ctaUrl, ctaLabel }: {
+  partnerName?: string; role: string; patientName?: string; procedureDate?: string;
+  caseRef?: string; message?: string; ctaUrl: string; ctaLabel: string;
 }) {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7f4;font-family:Arial,Helvetica,sans-serif;">
-<table width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7f4;padding:28px 14px;"><tr><td align="center">
-<table width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border:1px solid #dde5df;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#29483d;padding:28px 32px;color:#fff;">
-  <div style="font-family:Georgia,serif;font-size:22px;">${BRAND}</div>
-  <div style="margin-top:8px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:#d9c19b;">Patient Confirmed — ${e(role)} Activation</div>
-</td></tr>
-<tr><td style="padding:32px;">
-  <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#13221d;">Great news, ${e(partnerName)}!</h1>
-  <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#40514a;">${e(message)}</p>
-  <table width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #e7ede9;border-bottom:1px solid #e7ede9;margin-bottom:24px;">
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;width:40%;">Patient</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:700;">${e(patientName)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Procedure Date</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${e(procedureDate)}</td></tr>
-    <tr><td style="padding:10px 0;color:#64746d;font-size:13px;">Case Reference</td><td style="padding:10px 0;color:#13221d;font-size:14px;font-weight:600;">${e(caseRef)}</td></tr>
-  </table>
-  <a href="${e(ctaUrl)}" style="display:inline-block;background:#29483d;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-size:14px;font-weight:700;">${e(ctaLabel)}</a>
-  <p style="margin:24px 0 0;font-size:13px;color:#64746d;">Questions? Contact us via WhatsApp. Thank you for your partnership.</p>
-  <p style="margin:12px 0 0;font-size:14px;color:#13221d;font-weight:700;">Morales Concierge Team</p>
-</td></tr>
-</table></td></tr></table></body></html>`;
+  return linkOnlyEmail({
+    title: 'A patient is confirmed — your assignment is ready.',
+    line: `Your ${role} assignment has been activated. Open your Morales portal to see the patient, dates, and next steps.`,
+    ctaUrl,
+    ctaLabel,
+  });
 }
 
 async function sendSms(to: string, message: string) {
@@ -99,7 +89,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (c.doctor_email && !c.doctor_cascade_sent) {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: c.doctor_email,
-        subject: `Patient Confirmed & Paid — ${patientName} | ${BRAND}`,
+        subject: `Patient Confirmed & Paid | ${BRAND}`,
         body: activationEmail({ partnerName: 'Doctor', role: 'Doctor', patientName, procedureDate, caseRef,
           message: `${patientName} has paid in full and is confirmed for their procedure. Please prepare your consultation and procedure notes. All logistics are now being finalised.`,
           ctaUrl: `${APP_URL}/doctor-dashboard`, ctaLabel: 'Open My Dashboard →' }),
@@ -111,7 +101,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (driver?.email && !c.driver_cascade_sent) {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: driver.email,
-        subject: `Transfer Confirmed — ${patientName} | ${BRAND}`,
+        subject: `Transfer Confirmed | ${BRAND}`,
         body: activationEmail({ partnerName: driver.driver_name || driver.company_name || 'Driver', role: 'Chauffeur', patientName, procedureDate, caseRef,
           message: `${patientName}'s payment is confirmed. Your transfer services are now active. Please review the pickup schedule and confirm your availability for all transfer legs.`,
           ctaUrl: `${APP_URL}/portal/transfer?case=${case_id}`, ctaLabel: 'View Transfer Details →' }),
@@ -123,7 +113,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (companion?.email && !c.companion_cascade_sent) {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: companion.email,
-        subject: `Companion Assignment Confirmed — ${patientName} | ${BRAND}`,
+        subject: `Companion Assignment Confirmed | ${BRAND}`,
         body: activationEmail({ partnerName: companion.full_name || companion.email, role: 'Companion', patientName, procedureDate, caseRef,
           message: `${patientName}'s journey is confirmed. You are assigned as their recovery companion. Please review the patient's dietary brief and be available from the procedure date onwards.`,
           ctaUrl: `${APP_URL}/companion-dashboard`, ctaLabel: 'Open Companion Dashboard →' }),
@@ -140,7 +130,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (agency?.email && !c.travel_cascade_sent) {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: agency.email,
-        subject: `Travel Booking Confirmed — ${patientName} | ${BRAND}`,
+        subject: `Travel Booking Confirmed | ${BRAND}`,
         body: activationEmail({ partnerName: agency.agency_name || agency.email, role: 'Travel Agency', patientName, procedureDate, caseRef,
           message: `${patientName} has made a 50% deposit. Please proceed with booking their flights and hotel. Full payment will be made before the departure date.`,
           ctaUrl: `${APP_URL}/portal/travel?case=${case_id}`, ctaLabel: 'Start Travel Booking →' }),
@@ -152,7 +142,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (c.doctor_email && !c.doctor_cascade_sent) {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: c.doctor_email,
-        subject: `Patient Deposit Received — ${patientName} (Balance Pending) | ${BRAND}`,
+        subject: `Patient Deposit Received (Balance Pending) | ${BRAND}`,
         body: activationEmail({ partnerName: 'Doctor', role: 'Doctor', patientName, procedureDate, caseRef,
           message: `${patientName} has paid a 50% deposit and confirmed their intent to proceed. Travel is being arranged. You will receive full activation once the balance is paid (typically 7+ days before the procedure).`,
           ctaUrl: `${APP_URL}/doctor-dashboard`, ctaLabel: 'View Case →' }),
@@ -167,7 +157,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     if (!cascaded.includes('travel_agency')) {
       dispatches.push(base44.asServiceRole.integrations.Core.SendEmail({
         from_name: BRAND, to: agency.email,
-        subject: `Travel Booking Confirmed — ${patientName} | ${BRAND}`,
+        subject: `Travel Booking Confirmed | ${BRAND}`,
         body: activationEmail({ partnerName: agency.agency_name || agency.email, role: 'Travel Agency', patientName, procedureDate, caseRef,
           message: `${patientName}'s payment is confirmed. Please finalise and book their flights and hotel package. All details are in your portal.`,
           ctaUrl: `${APP_URL}/portal/travel?case=${case_id}`, ctaLabel: 'Start Booking →' }),

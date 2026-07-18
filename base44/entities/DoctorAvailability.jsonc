@@ -31,6 +31,14 @@
     "notes": {
       "type": "string",
       "description": "Optional notes about availability"
+    },
+    "locked_case_id": {
+      "type": "string",
+      "description": "Set by confirmProcedureDate when a case books this date (double-booking slot lock)"
+    },
+    "locked_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

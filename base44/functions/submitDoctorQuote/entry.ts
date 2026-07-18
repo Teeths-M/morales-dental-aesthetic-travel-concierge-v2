@@ -14,7 +14,7 @@ import { appendSample, computeStats } from '../_shared/priceStats.ts';
  *   • Every firm quote feeds the auto-learning per-procedure×country estimate
  *     (aggregate median/range only — never exposes an individual quote).
  *
- * Requires: entities DoctorQuote + QuoteRequest + ProcedurePriceStats.
+ * Requires: entities DoctorQuote + DoctorQuoteRequest + ProcedurePriceStats.
  */
 
 interface LineItem { procedure: string; qty?: number; unit_price_usd: number }
@@ -55,7 +55,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const doctor = quote.doctor_id
     ? await base44.asServiceRole.entities.Doctor.get(quote.doctor_id).catch(() => null)
     : null;
-  const request = await base44.asServiceRole.entities.QuoteRequest.get(quote.request_id).catch(() => null);
+  const request = await base44.asServiceRole.entities.DoctorQuoteRequest.get(quote.request_id).catch(() => null);
   const procedures: string[] = request?.procedures || items.map((i) => i.procedure).filter(Boolean);
 
   // Advisory only — never alters the authoritative total. (AI translation layers on later.)
@@ -77,7 +77,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
 
   // ── Move the request + case into "quotes in" (first firm quote) ─────────────
   if (request && request.status === 'awaiting_quotes') {
-    await base44.asServiceRole.entities.QuoteRequest.update(request.id, { status: 'quotes_in' }).catch(() => {});
+    await base44.asServiceRole.entities.DoctorQuoteRequest.update(request.id, { status: 'quotes_in' }).catch(() => {});
   }
   if (quote.case_id) {
     await guardedStatusUpdate(base44, quote.case_id, BOOKING.QUOTES_IN).catch(() => { /* already past this state */ });

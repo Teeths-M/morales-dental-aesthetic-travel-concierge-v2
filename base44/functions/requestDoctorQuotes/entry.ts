@@ -18,7 +18,7 @@ import { guardedStatusUpdate, BOOKING } from '../_shared/bookingState.ts';
  *     procedure, or price — only a teaser + a secure deep-link into the doctor portal.
  *   • Only verified, active doctors are invited.
  *
- * Requires: entities QuoteRequest + DoctorQuote (created in the Base44 dashboard).
+ * Requires: entities DoctorQuoteRequest + DoctorQuote (defined in base44/entities).
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
@@ -108,7 +108,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   }
 
   // ── Idempotency: one open request per case ─────────────────────────────────
-  const existing = await base44.asServiceRole.entities.QuoteRequest.filter(
+  const existing = await base44.asServiceRole.entities.DoctorQuoteRequest.filter(
     { case_id: caseId }, '-created_date', 1,
   ).catch(() => []);
   if (existing && existing.length > 0) {
@@ -141,7 +141,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   const isMinor = caseRecord.guardian_required === true || caseRecord.risk_level === 'high';
 
   // ── Create the QuoteRequest (de-identified summary lives here, read in-portal) ─
-  const quoteRequest = await base44.asServiceRole.entities.QuoteRequest.create({
+  const quoteRequest = await base44.asServiceRole.entities.DoctorQuoteRequest.create({
     case_id: caseId,
     consultation_id: caseRecord.consultation_id || consultation_id || '',
     patient_email: caseRecord.client_email || '',
@@ -163,9 +163,12 @@ Deno.serve(createHandler(async ({ base44, body }) => {
     await base44.asServiceRole.entities.DoctorQuote.create({
       request_id: quoteRequest.id,
       case_id: caseId,
+      patient_email: caseRecord.client_email || '',          // denormalised for RLS + the patient board
       doctor_id: d.id,
       doctor_email: d.email,
       doctor_country: d.clinic_country || '',
+      procedures,                                             // denormalised so the doctor reads it from their own quote
+      deidentified_summary: quoteRequest.deidentified_summary,
       status: 'pending',
       reviewed_consultation: false,
       reminder_stage: 0,
@@ -194,7 +197,7 @@ Deno.serve(createHandler(async ({ base44, body }) => {
   await base44.asServiceRole.entities.AuditLog.create({
     event_type: 'doctor_quotes_requested',
     actor_id: 'system', actor_role: 'system', actor_name: 'Morales Marketplace',
-    resource_type: 'QuoteRequest', resource_id: quoteRequest.id, case_id: caseId,
+    resource_type: 'DoctorQuoteRequest', resource_id: quoteRequest.id, case_id: caseId,
     sensitive: false, timestamp: now.toISOString(),
     details: { procedures, doctors_invited: invited, expires_at: expiresAt, is_minor: isMinor },
     prev_hash: await computePrevHash(base44),

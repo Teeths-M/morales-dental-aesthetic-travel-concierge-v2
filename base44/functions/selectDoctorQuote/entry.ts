@@ -14,7 +14,7 @@ import { guardedStatusUpdate, BOOKING } from '../_shared/bookingState.ts';
  *     / escrow chain runs unchanged; the patient proceeds straight to booking.
  *   • ON-PLATFORM / LINK-ONLY OUT: notifications carry no PHI — only a teaser + link.
  *
- * Requires: entities DoctorQuote + QuoteRequest.
+ * Requires: entities DoctorQuote + DoctorQuoteRequest.
  */
 
 const APP_URL = (Deno.env.get('APP_URL') || 'https://sentinel-dental-care.base44.app').replace(/\/$/, '');
@@ -40,7 +40,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
   const chosen = await base44.asServiceRole.entities.DoctorQuote.get(quote_id).catch(() => null);
   if (!chosen) return err('Quote not found', 404);
 
-  const request = await base44.asServiceRole.entities.QuoteRequest.get(chosen.request_id).catch(() => null);
+  const request = await base44.asServiceRole.entities.DoctorQuoteRequest.get(chosen.request_id).catch(() => null);
   if (!request) return err('Quote request not found', 404);
 
   // ── Ownership: only the patient who made the request may choose (admins exempt) ─
@@ -108,7 +108,7 @@ Deno.serve(createHandler(async ({ base44, user, body }) => {
       .catch((e) => console.error('[selectDoctorQuote] status advance failed:', e.message));
   }
 
-  await base44.asServiceRole.entities.QuoteRequest.update(request.id, {
+  await base44.asServiceRole.entities.DoctorQuoteRequest.update(request.id, {
     status: 'selected', chosen_quote_id: quote_id,
   }).catch(() => {});
 
