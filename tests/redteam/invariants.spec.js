@@ -978,3 +978,25 @@ test('PROVIDERS: the directory cannot list a doctor it calls verified', () => {
   expect(code, 'must not hand-roll its own verified-state list')
     .not.toMatch(/new Set\(\[['"]verified['"]/);
 });
+
+test('CLAIMS: the booking gate cannot advertise a free consultation while one is charged', () => {
+  // The entry gate read "No commitment required · Change anytime · Free
+  // consultation" while ConsultationFeeModal charges $49. It is fully credited
+  // against the package — a genuinely good deal — but it is not free, and this
+  // was the first screen a patient read before deciding to trust us with
+  // surgery abroad. Meeting an unexpected $49 three steps later is how trust
+  // gets spent.
+  const gate = read('src/components/booking/ProcedureSelectionGate.jsx');
+  const code = gate.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  expect(code, 'the gate must not claim a free consultation').not.toMatch(/free consultation/i);
+
+  // Only meaningful while a fee is actually charged — if the product ever goes
+  // genuinely free, this test should be deleted along with the fee, not muted.
+  const feeModal = read('src/components/booking/ConsultationFeeModal.jsx');
+  const feeCharged = /\$49/.test(feeModal);
+  expect(feeCharged, 'consultation fee still exists — keep this invariant honest').toBe(true);
+
+  // And the real number should be stated up front rather than hidden.
+  expect(code, 'the gate should state the actual fee').toMatch(/\$49/);
+});

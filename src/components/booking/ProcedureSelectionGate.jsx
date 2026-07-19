@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smile, Scan, Activity, HelpCircle, Stethoscope, Lock } from 'lucide-react';
+import { Smile, Scan, Activity, HelpCircle, Stethoscope, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const GOLD  = '#D4AF37';
@@ -83,8 +83,20 @@ export default function ProcedureSelectionGate({ children }) {
                 <h2 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
                   What would you like to explore?
                 </h2>
+                {/* Framing. This screen used to sell: coloured savings badges,
+                    "Free consultation", "No commitment". The savings went
+                    earlier; the rest goes now.
+
+                    A patient choosing surgery abroad is not shopping, and the
+                    thing that makes M worth choosing over a search engine isn't
+                    price — it's that we check the combination before anyone
+                    books it and we only list doctors whose licence we've
+                    confirmed. Both are true (getViolations runs on every cart
+                    and hard-blocks RED; the directories now gate on
+                    isDoctorVerified), so we can lead with them. */}
                 <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-                  Select a procedure to begin your consultation. You can always change it later.
+                  Pick what you&rsquo;re considering — you can change it at any time.
+                  We check every combination for safety before anything is booked.
                 </p>
               </div>
 
@@ -114,9 +126,19 @@ export default function ProcedureSelectionGate({ children }) {
               </div>
 
               {/* Trust footnote */}
-              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0 }}>
-                <Lock size={12} strokeWidth={2} />
-                No commitment required · Change anytime · Free consultation
+              {/* This read "No commitment required · Change anytime · Free
+                  consultation". The consultation is NOT free — it is $49,
+                  charged in ConsultationFeeModal. It is fully credited against
+                  the package, which is a genuinely good deal, but "free" is not
+                  what it is, and this was the first screen a patient read
+                  before deciding to trust us with surgery abroad.
+
+                  State the real number. A patient who learns the price here and
+                  is told plainly that it comes back is in a better position
+                  than one who meets an unexpected $49 three steps later. */}
+              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0, flexWrap: 'wrap' }}>
+                <ShieldCheck size={12} strokeWidth={2} />
+                $49 to start, credited to your package · Change anytime
               </p>
             </motion.div>
           </motion.div>
