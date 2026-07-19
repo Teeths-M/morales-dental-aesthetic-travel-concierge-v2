@@ -108,7 +108,17 @@ const SUBTITLES = [
   "Flights, hotels, transfers — one seamless itinerary, zero stress.",
   "Personal companion. 24/7 coordination. You are never alone.",
   "Recovery check-ins. Follow-up care. Safe return home.",
-  "Over 1,200 journeys completed. Yours is next.",
+  // Was: "Over 1,200 journeys completed. Yours is next."
+  //
+  // Same defect as the fabricated hero stories, in a place the audit didn't
+  // look: a usage figure presented as fact, derived from nothing. There is no
+  // counter behind it and the platform has not run 1,200 journeys. Every other
+  // line in this list describes what M DOES, which is verifiable; this one
+  // claimed a track record.
+  //
+  // A real completed-journey count would be a genuinely strong closer. Compute
+  // it from CaseRecord when there is one worth showing.
+  "Every step confirmed, from your front door to home again.",
 ];
 
 function ProblemVisual() {

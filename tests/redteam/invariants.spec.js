@@ -1076,3 +1076,52 @@ test('PERF: images are lazy, except above-the-fold and emergency-critical ones',
   expect(wrongfullyLazy, `these must load eagerly:\n${wrongfullyLazy.join('\n')}`).toEqual([]);
   expect(lazied, 'the lazy-loading pass must not be silently reverted').toBeGreaterThanOrEqual(30);
 });
+
+test('CLAIMS: no invented usage numbers, and the checkpoint count matches the engine', () => {
+  // The audit caught three fabrications in LuxuryHero. The same defect existed
+  // in two places it did not look, which is the lesson worth encoding: fix the
+  // class, not the instances.
+  //
+  //   HowItWorksModal  "Over 1,200 journeys completed. Yours is next."
+  //   LuxuryStatsBar   "8 Confirmed Checkpoints" (the journey is NINE)
+  //   LuxuryStatsBar   "missed check-ins escalate automatically" (not running)
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  // ── No usage/track-record counts anywhere on the public front door ──
+  // Protocol facts ("9 checkpoints", "AES-256") are fine — those are things
+  // the product DOES. A count of journeys/patients/families served is a claim
+  // about history, and we have no counter behind one.
+  const publicFiles = [
+    'src/components/home/LuxuryHero.jsx',
+    'src/components/home/LuxuryStatsBar.jsx',
+    'src/components/home/HowItWorksModal.jsx',
+  ];
+  const USAGE_CLAIM = /\b[0-9][0-9,]{2,}\+?\s*(journeys|patients|clients|families|lives|procedures)\b/i;
+  for (const f of publicFiles) {
+    const code = strip(read(f));
+    const hit = code.match(USAGE_CLAIM);
+    expect(hit && hit[0], `${f} states a usage count with no data behind it: ${hit && hit[0]}`).toBeFalsy();
+  }
+
+  // ── The advertised checkpoint count must equal the real one ──
+  // Source of truth is HandshakeButton: the labels array and the completion
+  // threshold. If a checkpoint is ever added or removed, the marketing number
+  // must move with it rather than drifting silently.
+  const hs = read('src/components/journey/HandshakeButton.jsx');
+  const threshold = hs.match(/currentStep >= (\d+)/);
+  expect(threshold, 'handshake completion threshold must exist').not.toBeNull();
+  const realCount = Number(threshold[1]);
+
+  const stats = strip(read('src/components/home/LuxuryStatsBar.jsx'));
+  const checkpointStat = stats.match(/display:\s*'(\d+)'\s*,\s*label:\s*'Confirmed Checkpoints/);
+  expect(checkpointStat, 'the checkpoint stat must exist').not.toBeNull();
+  expect(Number(checkpointStat[1]),
+    `stats bar advertises ${checkpointStat[1]} checkpoints but the engine completes at ${realCount}`)
+    .toBe(realCount);
+
+  // ── No "automatic escalation" claim while the schedulers are unproven ──
+  // Kept deliberately narrow: this guards the specific wording that outran the
+  // deployment, not the word "escalation" generally.
+  expect(stats, 'do not claim automatic escalation until the safety jobs are deployed and scheduled')
+    .not.toMatch(/escalate[s]? automatically/i);
+});

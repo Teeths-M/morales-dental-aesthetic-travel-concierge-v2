@@ -11,9 +11,28 @@ const GOLD = '#D4AF37';
 // Protocol facts, not usage counts — every claim here is verifiable in the
 // product today. No invented numbers on patient-facing surfaces, ever.
 const STATS = [
-  { display: '100%', label: 'Doctors Credential-Checked', sub: 'licenses, registries, history — verified before they ever see you', color: GOLD },
-  { display: '8',    label: 'Confirmed Checkpoints Per Journey', sub: 'driver · clinic · surgeon · hotel — every handoff verified', color: GOLD },
-  { display: '24/7', label: 'Emergency Escalation', sub: 'missed check-ins escalate automatically — SMS, call, dispatch', color: GOLD },
+  { display: '100%', label: 'Doctors Credential-Checked', sub: 'licences checked against the issuing medical board before they are listed', color: GOLD },
+  // Was '8'. The journey is NINE handshakes — HANDSHAKE_LABELS has nine entries
+  // and completion is `currentStep >= 9`. The hero on this same page already
+  // said "Nine checkpoints", so the bar was both wrong and contradicting the
+  // headline two scrolls above it.
+  { display: '9',    label: 'Confirmed Checkpoints Per Journey', sub: 'driver · airport · hotel · clinic · companion · home — every handoff confirmed', color: GOLD },
+  /* This slot used to read: 24/7 · Emergency Escalation · "missed check-ins
+     escalate automatically — SMS, call, dispatch".
+
+     The escalation ladder is built and correct, but it is not running: the
+     functions that drive it are not deployed, and nothing schedules them. A
+     missed check-in today is escalated when a human opens /admin and presses a
+     button. "Automatically" is therefore not true yet, and this is the front
+     door.
+
+     Replaced with a claim that IS true today and verified
+     (tests/contrast.test.js aside, see VaultUploader + vaultEncryption.js):
+     documents are encrypted in the browser with a password we never receive.
+
+     PUT THE ESCALATION STAT BACK the day the safety functions deploy and the
+     scheduler is green — it is the stronger claim, and it will be honest then. */
+  { display: 'AES-256', label: 'Documents Encrypted On Your Device', sub: 'your password never reaches our servers — only you can open them', color: GOLD },
   { display: 'ZERO', label: 'Unsafe Plans Ever Approved', sub: 'RED-flagged combinations are blocked — no exceptions, no override', color: GOLD, isZero: true },
 ];
 
