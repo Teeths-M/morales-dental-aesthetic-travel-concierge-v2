@@ -34,12 +34,12 @@
     },
     "create": {
       "user_condition": {
-        "isAuthenticated": true
+        "id": "{{user.id}}"
       }
     },
     "update": {
       "user_condition": {
-        "isAuthenticated": true
+        "id": "{{user.id}}"
       }
     },
     "delete": {

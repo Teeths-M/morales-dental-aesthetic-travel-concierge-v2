@@ -31,8 +31,8 @@
   },
   "required": ["case_id", "patient_email", "device_type"],
   "rls": {
-    "read":   { "user_condition": { "$or": [{ "role": "admin" }, { "role": "platform_admin" }] } },
-    "create": { "user_condition": { "$or": [{ "role": "admin" }, { "role": "platform_admin" }] } },
-    "update": { "user_condition": { "$or": [{ "role": "admin" }, { "role": "platform_admin" }] } }
+    "read":   { "$or": [{ "user_condition": { "role": "admin" } }, { "user_condition": { "role": "platform_admin" } }] },
+    "create": { "$or": [{ "user_condition": { "role": "admin" } }, { "user_condition": { "role": "platform_admin" } }] },
+    "update": { "$or": [{ "user_condition": { "role": "admin" } }, { "user_condition": { "role": "platform_admin" } }] }
   }
 }

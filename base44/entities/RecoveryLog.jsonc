@@ -84,7 +84,7 @@
       ]
     },
     "create": {
-      "user_condition": { "isAuthenticated": true }
+      "user_condition": { "id": "{{user.id}}" }
     },
     "update": {
       "$or": [

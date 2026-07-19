@@ -898,7 +898,7 @@
     },
     "create": {
       "user_condition": {
-        "isAuthenticated": true
+        "id": "{{user.id}}"
       }
     },
     "update": {

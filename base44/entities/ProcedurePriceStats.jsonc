@@ -18,7 +18,7 @@
   },
   "required": ["procedure_name"],
   "rls": {
-    "read": { "user_condition": { "isAuthenticated": true } },
+    "read": { "user_condition": { "id": "{{user.id}}" } },
     "create": { "user_condition": { "role": "admin" } }
   }
 }
