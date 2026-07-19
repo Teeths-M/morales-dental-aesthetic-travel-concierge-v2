@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle, Clock, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { friendlyError } from '@/lib/friendlyError';
 
 const COUNTRY_OPTIONS = [
   'United Kingdom', 'Australia', 'Canada (Ontario)', 'Italy', 'Spain', 'France',
@@ -57,7 +58,7 @@ export default function DoctorVerificationPanel({ _user }) {
       await loadStatus();
       setShowForm(false);
     } catch (err) {
-      setSubmitResult({ error: err.message });
+      setSubmitResult({ error: friendlyError(err, 'We could not submit your verification. Nothing was saved — please try again.', 'DoctorVerificationPanel') });
     }
     setSubmitting(false);
   };

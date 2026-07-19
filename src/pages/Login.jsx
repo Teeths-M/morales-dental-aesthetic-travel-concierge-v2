@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, ArrowRight, Globe, ChevronLeft } from 'lucide-react';
 import PhoneField from '@/components/ui-system/PhoneField';
 import { useIpGeolocation } from '@/hooks/useIpGeolocation';
+import { friendlyError } from '@/lib/friendlyError';
 
 // Login splits: LEFT form uses the CALM decision palette (light + teal), the
 // RIGHT brand panel keeps the dark dramatic showcase (Product Principle #5:
@@ -117,7 +118,7 @@ export default function Login() {
       setStep('otp');
       setCountdown(30);
     } catch (err) {
-      setError(err.message || 'Could not send code. Please try again.');
+      setError(friendlyError(err, 'We could not send your code. Check the number and try again.', 'Login/sendOtp'));
     } finally {
       setLoading(false);
     }
@@ -134,7 +135,7 @@ export default function Login() {
         base44.auth.loginWithProvider('google', redirectTo);
       }
     } catch (err) {
-      setError(err.message || 'Incorrect code. Please try again.');
+      setError(friendlyError(err, 'That code was not correct. Check it and try again.', 'Login/verifyOtp'));
       setLoading(false);
     }
   };

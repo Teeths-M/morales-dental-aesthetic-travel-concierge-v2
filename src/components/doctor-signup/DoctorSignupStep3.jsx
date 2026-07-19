@@ -7,6 +7,7 @@ import { ChevronLeft, Upload, CloudUpload, CheckCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import VerificationInfo from './VerificationInfo';
+import { friendlyError } from '@/lib/friendlyError';
 
 export default function DoctorSignupStep3({ formData, setFormData, language = 'en', _onNext, onBack, onComplete }) {
   const t = translations[language] || translations['en'];
@@ -133,8 +134,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
 
          onComplete(doctor);
      } catch (error) {
-       console.error('Submit failed:', error);
-       setSyncMessage({ type: 'error', text: 'Submission failed: ' + error.message });
+       setSyncMessage({ type: 'error', text: friendlyError(error, 'We could not complete your registration. Your details are still on screen — please try again.', 'DoctorSignupStep3/submit') });
      } finally {
        setIsSubmitting(false);
      }
@@ -163,8 +163,7 @@ export default function DoctorSignupStep3({ formData, setFormData, language = 'e
       });
       setSyncMessage({ type: 'success', text: 'Synced to Portal Hub!' });
       } catch (error) {
-      console.error('Sync failed:', error);
-      setSyncMessage({ type: 'error', text: 'Sync failed: ' + error.message });
+      setSyncMessage({ type: 'error', text: friendlyError(error, 'We could not sync your profile to the Portal Hub. Your profile is saved — try syncing again.', 'DoctorSignupStep3/sync') });
       } finally {
       setIsSyncing(false);
       }

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
 import { encryptFileWithPassword, storeVaultKey } from '@/lib/vaultEncryption';
+import { friendlyError } from '@/lib/friendlyError';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_SIZE_MB = 10;
@@ -190,9 +191,7 @@ export default function VaultUploader({ onTokenIssued, _consultationId }) {
         onTokenIssued({ vault_token, redacted_for_display: vaultMeta, expires_at });
       }
     } catch (err) {
-      console.error('[VaultUploader] Upload error:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Upload failed. Please try again.';
-      setError(errorMessage);
+      setError(friendlyError(err, 'We could not upload that document. Your file was not stored — please try again.', 'VaultUploader'));
       setStep('error');
     }
   };

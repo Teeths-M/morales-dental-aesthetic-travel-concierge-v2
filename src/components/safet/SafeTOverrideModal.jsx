@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, X, PenLine, RotateCcw } from 'lucide-react';
+import { friendlyError } from '@/lib/friendlyError';
 
 const LIABILITY_TEXT = `By signing below, I — the undersigned patient — hereby acknowledge and agree to ALL of the following:
 
@@ -80,7 +81,7 @@ export default function SafeTOverrideModal({ isOpen, onClose, onSuccess, workflo
       setDone(true);
       setTimeout(() => { onSuccess(); onClose(); }, 3000);
     } catch (err) {
-      setError('Submission failed: ' + err.message);
+      setError(friendlyError(err, 'That was not submitted. Nothing changed — please try again.', 'SafeTOverrideModal'));
     } finally {
       setSubmitting(false);
     }

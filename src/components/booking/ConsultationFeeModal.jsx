@@ -4,6 +4,7 @@ import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useCart } from '@/context/CartContext';
+import { friendlyError } from '@/lib/friendlyError';
 
 async function fireConsentEmail(form, responseData) {
   try {
@@ -62,7 +63,7 @@ function StripePaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
 
       throw new Error('No checkout URL returned from payment service.');
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err, 'We could not open the payment page. No money has been taken — please try again.', 'ConsultationFeeModal'));
       setIsProcessing(false);
     }
   };
@@ -113,7 +114,7 @@ function PayPalPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProce
         }
       }
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err, 'We could not complete your payment. No money has been taken — check your card details and try again.', 'ConsultationFeeModal'));
     } finally {
       setIsProcessing(false);
     }
@@ -165,7 +166,7 @@ function WipayPaymentForm({ form, onSuccess, onCancel, isProcessing, setIsProces
         }
       }
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err, 'We could not complete your payment. No money has been taken — check your card details and try again.', 'ConsultationFeeModal'));
     } finally {
       setIsProcessing(false);
     }

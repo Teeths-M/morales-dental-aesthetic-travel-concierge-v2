@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, CreditCard, X, Loader2, ShieldCheck, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { friendlyError, safeError } from '@/lib/friendlyError';
 
 export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, originalAmount }) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,12 +21,12 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
       });
 
       if (!res.data?.success || !res.data?.payment_url) {
-        throw new Error(res.data?.error || 'Could not create deposit session.');
+        throw safeError(res.data?.error || 'Could not start the deposit.');
       }
 
       window.location.href = res.data.payment_url;
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(friendlyError(err, 'We could not start your deposit. No money has been taken — please try again.', 'DeclineDepositDialog'));
       setIsProcessing(false);
     }
   };

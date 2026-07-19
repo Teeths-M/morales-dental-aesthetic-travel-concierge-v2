@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ACCOUNT_TYPES, STEPS, VALIDATION_RULES, INITIAL_FORM_DATA } from '@/lib/companion/constants';
 import { createCompanionProfile } from '@/lib/companion/companionService';
 import { saveSignupDraft, loadSignupDraft, clearSignupDraft } from '@/lib/signupDraft';
+import { friendlyError } from '@/lib/friendlyError';
 
 /**
  * Custom hook for companion signup form logic
@@ -116,9 +117,9 @@ export function useCompanionSignup() {
       clearSignupDraft('companion');
       return { success: true };
     } catch (err) {
-      console.error('Companion signup error:', err);
-      setError(err.message || 'Failed to create profile');
-      return { success: false, error: err.message };
+      const message = friendlyError(err, 'We could not create your profile. Your details are still on screen — please try again.', 'useCompanionSignup');
+      setError(message);
+      return { success: false, error: message };
     } finally {
       setIsSubmitting(false);
     }

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
+import { friendlyError, safeError } from '@/lib/friendlyError';
 
 const SURGICAL_STAGES = ['Procedure-In-Progress', 'SURGICAL_EXECUTION_WINDOW', 'Ready-For-Travel'];
 
@@ -41,11 +42,11 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
         case_id: caseData.id,
         token: token || undefined
       });
-      if (!res.data?.success) throw new Error(res.data?.error || 'Failed to log handshake');
+      if (!res.data?.success) throw safeError(res.data?.error || 'Could not record that handshake.');
       setResult({ type: 'handshake', data: res.data });
       onStatusChange?.('SURGICAL_EXECUTION_WINDOW');
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err, 'That handshake was not recorded. Nothing changed — please try again.', 'SurgicalExecutionControls'));
     } finally {
       setLoadingHandshake(false);
     }
@@ -60,11 +61,11 @@ export default function SurgicalExecutionControls({ caseData, token, onStatusCha
         token: token || undefined,
         outcome_notes: outcomeNotes
       });
-      if (!res.data?.success) throw new Error(res.data?.error || 'Failed to log completion');
+      if (!res.data?.success) throw safeError(res.data?.error || 'Could not record the procedure as complete.');
       setResult({ type: 'complete', data: res.data });
       onStatusChange?.('RECOVERY_PHASE_7_DAY');
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err, 'That was not recorded. Nothing changed — please try again.', 'SurgicalExecutionControls'));
     } finally {
       setLoadingComplete(false);
       setShowCompleteForm(false);

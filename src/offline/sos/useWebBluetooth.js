@@ -68,7 +68,8 @@ export function useWebBluetooth() {
         setError('No device selected.');
       } else {
         setStatus('error');
-        setError(e.message || 'Bluetooth connection failed.');
+        console.error('[useWebBluetooth] connect failed:', e);
+        setError('Could not connect to that device. Try again, or use another way to send.');
       }
       return false;
     }

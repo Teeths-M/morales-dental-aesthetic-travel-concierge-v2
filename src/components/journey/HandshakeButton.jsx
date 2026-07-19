@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { friendlyError } from '@/lib/friendlyError';
 import {
   enqueueHandshake,
   buildHandshakePacket,
@@ -126,7 +127,10 @@ export default function HandshakeButton({ tripId, caseId, currentStep = 0, user,
         onComplete?.({ current_step: data.current_step, is_complete: data.is_complete });
       }
     } catch (e) {
-      showToast(e.message || 'Could not confirm handshake. Please try again.', 'error');
+      /* A check-in is a safety signal, so the message must say plainly that the
+         confirmation did NOT land. A patient who reads a vague failure and
+         assumes it went through is the exact person we then fail to look for. */
+      showToast(friendlyError(e, 'Your check-in was not confirmed. Please tap again.', 'HandshakeButton'), 'error');
     } finally {
       setLoading(false);
     }
