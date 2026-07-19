@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Search, MapPin, Phone, Globe, Clock, ExternalLink } from 'lucide-react';
 import { EMBASSY_DATA, DESTINATIONS } from './visaData';
 
@@ -158,19 +159,23 @@ export default function EmbassyDirectory() {
 
       {/* Countries not in database note */}
       <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-5 text-center">
-        <p className="text-2xl mb-2">🌍</p>
+        <p className="text-2xl mb-2" aria-hidden="true">🌍</p>
         <p className="text-sm font-semibold text-slate-700 mb-1">
           {language === 'es' ? '¿No ves tu destino?' : language === 'fr' ? 'Vous ne voyez pas votre destination?' : 'Don\'t see your destination?'}
         </p>
         <p className="text-xs text-slate-400 leading-relaxed mb-3">
           {language === 'es' ? 'Nuestra base de datos de embajadas se expande continuamente. Para países no listados, nuestro equipo de conserje puede ayudarte con la investigación de contactos de embajadas.' : language === 'fr' ? 'Notre base de données d\'ambassade s\'étend continuellement. Pour les pays non énumérés, notre équipe de concierge peut vous aider dans la recherche de contacts d\'ambassade.' : 'Our embassy database is continuously expanding. For countries not listed, our concierge team can assist with embassy contact research.'}
         </p>
-        <a
-          href="/booking"
+        {/* Was a raw <a href="/booking">: it full-page-reloaded out of the SPA
+            (losing visa state) and dropped the patient into the 12-step classic
+            form. /intake IS the concierge team this copy is offering, and it is
+            the front door every other CTA uses. */}
+        <Link
+          to="/intake"
           className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
         >
           {language === 'es' ? 'Contactar a nuestro equipo de conserje →' : language === 'fr' ? 'Contacter notre équipe de concierge →' : 'Contact our concierge team →'}
-        </a>
+        </Link>
       </div>
     </div>
   );

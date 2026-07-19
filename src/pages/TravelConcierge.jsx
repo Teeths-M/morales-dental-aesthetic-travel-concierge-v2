@@ -12,24 +12,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { base44 } from '@/api/base44Client';
 
+// No emoji in the option labels. Every label here already says exactly what it
+// is ("Business Class", "VIP Chauffeur", "Care Companion") so the glyph carried
+// no information — it only rendered as a different picture on every OS and, in
+// a <SelectItem>, got read aloud by screen readers ("briefcase Business Class").
+// Same call already made on the procedure cards.
 const TRAVEL_CLASSES = [
-  { value: 'economy', label: 'Economy', icon: '💺' },
-  { value: 'premium_economy', label: 'Premium Economy', icon: '💺✨' },
-  { value: 'business', label: 'Business Class', icon: '💼' },
-  { value: 'first', label: 'First Class', icon: '👑' },
+  { value: 'economy', label: 'Economy' },
+  { value: 'premium_economy', label: 'Premium Economy' },
+  { value: 'business', label: 'Business Class' },
+  { value: 'first', label: 'First Class' },
 ];
 
 const HOTEL_STARS = [3, 4, 5];
 const ROOM_TYPES = ['standard', 'deluxe', 'suite', 'penthouse'];
 const TRANSFER_TYPES = [
-  { value: 'standard', label: 'Standard Sedan', icon: '🚗' },
-  { value: 'luxury', label: 'Luxury Vehicle', icon: '🚙' },
-  { value: 'vip', label: 'VIP Chauffeur', icon: '🏎️' },
+  { value: 'standard', label: 'Standard Sedan' },
+  { value: 'luxury', label: 'Luxury Vehicle' },
+  { value: 'vip', label: 'VIP Chauffeur' },
 ];
 const COMPANION_TYPES = [
-  { value: 'tour_guide', label: 'Tour Guide', icon: '🗺️' },
-  { value: 'care_companion', label: 'Care Companion', icon: '💕' },
-  { value: 'luxury_concierge', label: 'Luxury Concierge', icon: '🥂' },
+  { value: 'tour_guide', label: 'Tour Guide' },
+  { value: 'care_companion', label: 'Care Companion' },
+  { value: 'luxury_concierge', label: 'Luxury Concierge' },
 ];
 
 export default function TravelConcierge() {
@@ -397,7 +402,7 @@ export default function TravelConcierge() {
                       <SelectContent>
                         {TRAVEL_CLASSES.map(cls => (
                           <SelectItem key={cls.value} value={cls.value}>
-                            {cls.icon} {cls.label}
+                            {cls.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -441,7 +446,7 @@ export default function TravelConcierge() {
                         <SelectContent>
                           {userVaults.map(passport => (
                             <SelectItem key={passport.id} value={passport.id}>
-                              🛂 {passport.redacted_for_display?.nationality || 'Passport'} 
+                              {passport.redacted_for_display?.nationality || 'Passport'}
                               {passport.redacted_for_display?.expiry_date && ` (Exp: ${passport.redacted_for_display.expiry_date})`}
                             </SelectItem>
                           ))}
@@ -481,9 +486,20 @@ export default function TravelConcierge() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            {/* The stars carry the rating, so unlike the other
+                                option lists they stay — as Lucide glyphs that
+                                render identically everywhere. aria-hidden
+                                because the "(N-Star)" text already says it. */}
                             {HOTEL_STARS.map(stars => (
                               <SelectItem key={stars} value={stars.toString()}>
-                                {'⭐'.repeat(stars)} ({stars}-Star)
+                                <span className="inline-flex items-center gap-1">
+                                  <span className="inline-flex" aria-hidden="true">
+                                    {Array.from({ length: stars }, (_, i) => (
+                                      <Star key={i} className="w-3 h-3 fill-current" />
+                                    ))}
+                                  </span>
+                                  ({stars}-Star)
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -522,7 +538,7 @@ export default function TravelConcierge() {
                       <SelectContent>
                         {TRANSFER_TYPES.map(t => (
                           <SelectItem key={t.value} value={t.value}>
-                            {t.icon} {t.label}
+                            {t.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -553,7 +569,7 @@ export default function TravelConcierge() {
                         <SelectContent>
                           {COMPANION_TYPES.map(c => (
                             <SelectItem key={c.value} value={c.value}>
-                              {c.icon} {c.label}
+                              {c.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
