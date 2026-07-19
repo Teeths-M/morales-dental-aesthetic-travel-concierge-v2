@@ -6,7 +6,11 @@ import { base44 } from '@/api/base44Client';
 import { saveUserOnboardingProfile } from '@/lib/onboardingProfile';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, FileText, X, Loader2, CheckCircle2 } from 'lucide-react';
+import {
+  ArrowLeft, ArrowRight, CheckCircle, FileText, X, Loader2, CheckCircle2,
+  User, Plane, Stethoscope, Syringe, Pill, Cigarette, Baby, Paperclip,
+  Building2, Scale, ClipboardList, ShieldCheck,
+} from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { MedicalSlideshowBackground } from '@/components/booking/MedicalSlideshow';
 import { useCart } from '@/context/CartContext';
@@ -58,18 +62,23 @@ const _SLIDE_FACTS = [
 ];
 
 const steps = [
-  { label: 'Personal Info',       emoji: '👤', short: 'Personal'   },  // 0: personal + cultural merged
-  { label: 'Travel',              emoji: '✈️', short: 'Travel'     },  // 1
-  { label: 'Medical History',     emoji: '🩺', short: 'Medical'    },  // 2
-  { label: 'Anesthesia',          emoji: '💉', short: 'Anesthesia' },  // 3
-  { label: 'Medications',         emoji: '💊', short: 'Meds'       },  // 4
-  { label: 'Lifestyle & Wellness',emoji: '🚬', short: 'Lifestyle'  },  // 5: lifestyle + emotional merged
-  { label: "Women's Health",      emoji: '👩‍⚕️', short: 'Health'     },  // 6
-  { label: 'Documents',           emoji: '📎', short: 'Docs'       },  // 7
-  { label: 'Procedure & Date',    emoji: '🏥', short: 'Procedure'  },  // 8
-  { label: 'Consent & Signature', emoji: '⚖️', short: 'Consent'    },  // 9
-  { label: 'Acknowledgement',     emoji: '📋', short: 'Acknowledge' }, // 10
-  { label: 'SAFE-T Scan',         emoji: '🛡️', short: 'SAFE-T'     },  // 11
+  // Icons, not emoji. Emoji render as a different picture on every OS (🩺 is a
+  // flat glyph on Android and a glossy 3D object on iOS), they sit on their own
+  // baseline so they never align with adjacent text, and at this size they read
+  // consumer-casual on a form where someone is disclosing their surgical
+  // history. Lucide strokes match the rest of the interface and inherit color.
+  { label: 'Personal Info',       Icon: User,          short: 'Personal'   },  // 0: personal + cultural merged
+  { label: 'Travel',              Icon: Plane,         short: 'Travel'     },  // 1
+  { label: 'Medical History',     Icon: Stethoscope,   short: 'Medical'    },  // 2
+  { label: 'Anesthesia',          Icon: Syringe,       short: 'Anesthesia' },  // 3
+  { label: 'Medications',         Icon: Pill,          short: 'Meds'       },  // 4
+  { label: 'Lifestyle & Wellness',Icon: Cigarette,     short: 'Lifestyle'  },  // 5: lifestyle + emotional merged
+  { label: "Women's Health",      Icon: Baby,          short: 'Health'     },  // 6
+  { label: 'Documents',           Icon: Paperclip,     short: 'Docs'       },  // 7
+  { label: 'Procedure & Date',    Icon: Building2,     short: 'Procedure'  },  // 8
+  { label: 'Consent & Signature', Icon: Scale,         short: 'Consent'    },  // 9
+  { label: 'Acknowledgement',     Icon: ClipboardList, short: 'Acknowledge' }, // 10
+  { label: 'Safety Check',        Icon: ShieldCheck,   short: 'Safety'     },  // 11
 ];
 
 // Phase grouping — 4 phases across 12 steps
@@ -786,7 +795,7 @@ export default function Booking() {
           <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-200 bg-slate-50 mt-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg shadow-lg"
               style={{ background: `linear-gradient(135deg, ${getPhaseInfo(step).color}cc, ${getPhaseInfo(step).color})` }}>
-              {steps[step].emoji}
+              {React.createElement(steps[step].Icon, { className: "w-5 h-5", strokeWidth: 1.75 })}
             </div>
             <div className="flex-1 min-w-0">
               {/* Phase name only. This used to read "ABOUT YOU · 1 OF 2" while
@@ -849,10 +858,13 @@ export default function Booking() {
             )}
           </div>
 
-          {/* Mobile step progress bar */}
+          {/* Mobile step progress bar.
+
+              The phase name used to be repeated here, directly under the header
+              that already shows it — the same two words twice within 40px. Only
+              the count remains, which is the one thing the header doesn't say. */}
           <div className="lg:hidden px-4 pt-2 pb-1">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[10px] font-semibold" style={{ color: getPhaseInfo(step).color }}>{getPhaseInfo(step).phase}</span>
+            <div className="flex justify-end items-center mb-1.5">
               <span className="text-[10px] text-slate-400">{step + 1} / {steps.length}</span>
             </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -1065,7 +1077,7 @@ export default function Booking() {
           <div className="bg-white/5 backdrop-blur-xl border border-white/15 rounded-2xl p-3 sticky top-16">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-lg bg-[#0E8A7D] flex items-center justify-center flex-shrink-0 text-sm shadow-lg">
-              {steps[step].emoji}
+              {React.createElement(steps[step].Icon, { className: "w-5 h-5", strokeWidth: 1.75 })}
             </div>
             <div>
               <p className="text-[9px] font-semibold text-emerald-300 uppercase tracking-widest">Step {step + 1}</p>
@@ -1073,7 +1085,13 @@ export default function Booking() {
             </div>
           </div>
 
-          {/* Progress */}
+          {/* Progress.
+
+              This sidebar carried a percentage AND a bar AND phase dots — three
+              renderings of one fact, stacked. The percentage went: nobody
+              filling in a medical form thinks "I'm 58% done", and it was the
+              only one of the three that added no information the others lacked.
+              The bar gives the glance, the dots give the structure. */}
           <div className="space-y-2">
             <div>
               <p className="text-[9px] font-semibold text-emerald-300 uppercase tracking-widest mb-1">Progress</p>
@@ -1085,7 +1103,6 @@ export default function Booking() {
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                 />
               </div>
-              <p className="text-emerald-300 text-[8px] mt-1 font-medium">{Math.round(((step + 1) / steps.length) * 100)}%</p>
             </div>
 
             {/* Phase progress dots */}

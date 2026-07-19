@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, Phone, Mail, Bell, CheckCircle2, Loader2, Paperclip, X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import LoadingState from '@/components/ui-system/LoadingState';
 
 const getMessagesLabels = (lang) => ({
   title: lang === 'es' ? 'Mensajes' : lang === 'fr' ? 'Messages' : lang === 'pt' ? 'Mensagens' : 'Messages',
@@ -190,9 +191,7 @@ export default function MessagesModule() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
-        </div>
+        <LoadingState rows={4} variant="list" dark={false} label="Loading your conversations" />
       ) : contacts.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-12 text-center">
           <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />

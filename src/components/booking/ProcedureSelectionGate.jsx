@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Smile, Scan, Activity, HelpCircle, Stethoscope, Lock } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const GOLD  = '#D4AF37';
@@ -22,15 +23,24 @@ const BORDER = '#2A3F4A';
  * they are specific, sourced, and honest. Nothing is shown here that we cannot
  * back. Do not reintroduce an estimate without a computed source.
  */
+/* These cards used to be labelled with emoji: 🎯 for liposuction, 🌟 for a
+ * tummy tuck, 💫 for All-on-4. Beyond rendering as a different picture on every
+ * operating system, they carried no meaning — a target and two sparkles tell a
+ * patient nothing about which surgery is which, so the icon was pure decoration
+ * on a screen where someone is choosing an operation. Where a mark can't be
+ * meaningful, a consistent one is more honest than a decorative one: these are
+ * neutral strokes that group the two families (dental vs body) and let the
+ * procedure name do the work.
+ */
 const QUICK_PROCEDURES = [
-  { emoji: '🦷', name: 'Dental Implants',     procedure_enum: 'dental_implants' },
-  { emoji: '✨', name: 'Porcelain Veneers',    procedure_enum: 'porcelain_veneers' },
-  { emoji: '👃', name: 'Rhinoplasty',          procedure_enum: 'rhinoplasty' },
-  { emoji: '💫', name: 'All-on-4 Implants',    procedure_enum: 'all_on_4' },
-  { emoji: '🎯', name: 'Liposuction',          procedure_enum: 'liposuction' },
-  { emoji: '🌟', name: 'Tummy Tuck',           procedure_enum: 'tummy_tuck' },
-  { emoji: '😊', name: 'Smile Makeover',       procedure_enum: 'smile_makeover' },
-  { emoji: '🔍', name: 'Other / Not sure yet', procedure_enum: 'other', hint: "We'll help you choose" },
+  { Icon: Smile,     name: 'Dental Implants',     procedure_enum: 'dental_implants' },
+  { Icon: Smile,     name: 'Porcelain Veneers',   procedure_enum: 'porcelain_veneers' },
+  { Icon: Scan,      name: 'Rhinoplasty',         procedure_enum: 'rhinoplasty' },
+  { Icon: Smile,     name: 'All-on-4 Implants',   procedure_enum: 'all_on_4' },
+  { Icon: Activity,  name: 'Liposuction',         procedure_enum: 'liposuction' },
+  { Icon: Activity,  name: 'Tummy Tuck',          procedure_enum: 'tummy_tuck' },
+  { Icon: Smile,     name: 'Smile Makeover',      procedure_enum: 'smile_makeover' },
+  { Icon: HelpCircle,name: 'Other / Not sure yet',procedure_enum: 'other', hint: "We'll help you choose" },
 ];
 
 export default function ProcedureSelectionGate({ children }) {
@@ -67,8 +77,8 @@ export default function ProcedureSelectionGate({ children }) {
             >
               {/* Header */}
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06))', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 26 }}>
-                  🏥
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06))', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Stethoscope size={24} strokeWidth={1.5} style={{ color: GOLD }} />
                 </div>
                 <h2 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
                   What would you like to explore?
@@ -91,7 +101,7 @@ export default function ProcedureSelectionGate({ children }) {
                       background: CARD, border: `1px solid ${BORDER}`,
                     }}
                   >
-                    <div style={{ fontSize: 22, marginBottom: 6 }}>{proc.emoji}</div>
+                    <proc.Icon size={20} strokeWidth={1.75} style={{ color: GOLD, marginBottom: 8, display: 'block' }} />
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{proc.name}</p>
                     {/* Only the "not sure" card carries a second line now. The
                         rest need no subtitle — a procedure name is the whole
@@ -104,8 +114,9 @@ export default function ProcedureSelectionGate({ children }) {
               </div>
 
               {/* Trust footnote */}
-              <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)', margin: 0 }}>
-                🔒 No commitment required · Change anytime · Free consultation
+              <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.28)', margin: 0 }}>
+                <Lock size={12} strokeWidth={2} />
+                No commitment required · Change anytime · Free consultation
               </p>
             </motion.div>
           </motion.div>

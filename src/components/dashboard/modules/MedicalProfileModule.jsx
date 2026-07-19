@@ -5,6 +5,7 @@ import { User, Shield, AlertTriangle, CheckCircle2, Heart, Activity, Brain, Load
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import LoadingState from '@/components/ui-system/LoadingState';
 
 const riskScores = [
   { label: 'Safety Score',            value: 82, color: '#047857' },
@@ -160,10 +161,7 @@ export default function MedicalProfileModule() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 text-emerald-600 animate-spin" />
-        <span className="ml-3 text-sm text-slate-500">Loading your profile…</span>
-      </div>
+      <LoadingState rows={4} variant="list" dark={false} label="Loading your medical profile" />
     );
   }
 

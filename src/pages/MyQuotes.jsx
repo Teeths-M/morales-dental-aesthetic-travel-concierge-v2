@@ -3,9 +3,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Star, MapPin, Calendar, Shield, Check, Award, Loader2, Stethoscope, HelpCircle, Clock } from 'lucide-react';
+import { Star, MapPin, Calendar, Shield, Check, Award, Stethoscope, HelpCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import CaseThread from '@/components/quotes/CaseThread';
+import LoadingState from '@/components/ui-system/LoadingState';
 
 // Design tokens (project standard).
 const PAGE = '#060B16', CARD = '#0C1A1D', BORDER = '#2A3F4A', GOLD = '#D4AF37';
@@ -136,7 +137,15 @@ export default function MyQuotes() {
   const inner = { maxWidth: 720, margin: '0 auto' };
 
   if (reqLoading) {
-    return <div style={wrap}><div style={inner}><Center><Loader2 className="animate-spin" color={GOLD} /></Center></div></div>;
+    // Waiting on doctor quotes is the most anxious wait in the product. A lone
+    // spinner in the middle of an empty page reads as "nothing is here"; cards
+    // in the shape of the quotes that are coming read as "they're on their way".
+    return (
+      <div style={wrap}><div style={inner}>
+        <ProtectionShield />
+        <LoadingState rows={3} variant="card" label="Loading your quotes" />
+      </div></div>
+    );
   }
 
   if (!request) {
@@ -197,7 +206,7 @@ export default function MyQuotes() {
         </div>
 
         {/* Gathering state — never blank */}
-        {quotesLoading && <Center><Loader2 className="animate-spin" color={GOLD} /></Center>}
+        {quotesLoading && <LoadingState rows={3} variant="card" label="Gathering doctor quotes" />}
 
         {!quotesLoading && sorted.length === 0 && (
           <div style={{ ...cardStyle, textAlign: 'center' }}>

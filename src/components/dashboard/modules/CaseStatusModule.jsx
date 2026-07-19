@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, AlertCircle, Sparkles, Shield, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import LoadingState from '@/components/ui-system/LoadingState';
 
 function fmt(n) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0); }
 
@@ -67,11 +68,10 @@ export default function CaseStatusModule({ _userEmail }) {
     </div>
   );
 
-  if (loading) return (
-    <div className="flex justify-center py-12">
-      <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  // A bare spinner tells you only that something is happening; a skeleton in
+  // the shape of the answer tells you what is coming and stops the layout
+  // jumping when it lands.
+  if (loading) return <LoadingState rows={3} variant="card" dark={false} label="Loading your case" />;
 
   if (!caseData) return (
     <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center shadow-sm">
