@@ -129,6 +129,16 @@ interface Violation { pairLabel: string; reason: string; code: string }
 /**
  * Re-derives the RED violation verdict server-side from raw procedure names.
  * Never trust a client-supplied violations list — this must be recomputed here.
+ *
+ * Deliberate divergence from src/lib/procedureCompatibility.js: that copy also
+ * computes a `recommended` first stage ("start with X this trip, Y follows in
+ * 6–8 weeks"), because M never blocks a combination without saying what to do
+ * instead. That is presentation, consumed only by ProcedureStackingBlocker.
+ * This file exists to answer one question — is it blocked — and no server
+ * caller reads a recommendation, so it isn't computed here. If a server
+ * surface ever needs to show the patient an alternative (an email, a partner
+ * portal), port suggestFirstStage() across rather than re-deriving it, so the
+ * two can't disagree about what M advises.
  */
 export function getViolations(items: CartItem[]): { violations: Violation[]; isBlocked: boolean } {
   if (!items || items.length < 2) return { violations: [], isBlocked: false };

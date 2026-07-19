@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   analyseCompatibility,
   getViolations,
+  PROCEDURE_PROFILES,
+  suggestFirstStage,
 } from '@/lib/procedureCompatibility';
 import { fuzzyScore, fuzzyMatches } from '@/lib/fuzzyMatch';
 import { isMinorAge } from '@/lib/intakeFlow/questionGraph';
@@ -154,5 +156,77 @@ describe('fuzzyMatch — typo tolerance', () => {
 
   it('rejects an unrelated term', () => {
     expect(fuzzyMatches('xylophone', 'Rhinoplasty')).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// M does not merely block. It recommends.
+//
+// "M dont just block, we help and recommend based on the user consultation
+// medical conditions." — that is the product, not a nicety, and it is enforced
+// here because it is easy to lose: ProcedureStackingBlocker gates its entire
+// "What M recommends instead" panel — including the line "M is not here to take
+// your dream away. We are here to make sure you are alive to enjoy it." — on
+// `violations.some(v => v.recommended)`. A violation shipped without a
+// recommendation silently turns M into a wall.
+//
+// All 16 named RED pairs carry hand-written recommendations. The two catch-all
+// violations (3+ major surgeries, >8hrs anesthesia) did not, which left 2,748
+// three-procedure combinations blocked with no alternative offered.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('M recommends whenever it blocks', () => {
+  it('every named RED pair offers an alternative', () => {
+    const missing = [];
+    const names = Object.keys(PROCEDURE_PROFILES);
+    for (let i = 0; i < names.length; i++) {
+      for (let j = i + 1; j < names.length; j++) {
+        const { violations } = getViolations(asItems(names[i], names[j]));
+        for (const v of violations) {
+          if (!v.recommended) missing.push(`${names[i]} + ${names[j]} (${v.code})`);
+        }
+      }
+    }
+    expect(missing, `blocked with no alternative:\n${missing.join('\n')}`).toEqual([]);
+  });
+
+  it('the catch-all violations offer an alternative too', () => {
+    // A cart that trips the combined-anesthesia ceiling rather than a named pair.
+    const { violations, isBlocked } = getViolations(
+      asItems('Dental Cleaning', 'Root Canal Treatment', 'Full Mouth Implants'),
+    );
+    expect(isBlocked).toBe(true);
+    const catchAll = violations.find(v => /Combined Anesthesia|Major Surgeries/.test(v.pairLabel));
+    expect(catchAll, 'this cart must hit a catch-all violation').toBeTruthy();
+    expect(catchAll.recommended, 'a catch-all block must still recommend').toBeTruthy();
+    expect(catchAll.recommendedReason).toMatch(/follow/i);
+  });
+
+  it('keeps the procedure the patient travelled for, and defers the minor work', () => {
+    // Regression guard. The first implementation walked the cart in selection
+    // order and told this patient to have the cleaning and the root canal and
+    // to defer the implants — safe, and useless. The heaviest procedure is
+    // almost always the reason the trip exists.
+    const stage = suggestFirstStage(['Dental Cleaning', 'Root Canal Treatment', 'Full Mouth Implants']);
+    expect(stage).toContain('Full Mouth Implants');
+    expect(stage).not.toContain('Root Canal Treatment');
+  });
+
+  it('never proposes a first stage its own rules would block', () => {
+    // The recommendation must be verifiable by the engine that produced it —
+    // M cannot suggest a combination it would itself refuse.
+    const names = Object.keys(PROCEDURE_PROFILES);
+    const unsafe = [];
+    for (let i = 0; i < names.length; i += 3) {
+      for (let j = i + 1; j < names.length; j += 5) {
+        for (let k = j + 1; k < names.length; k += 7) {
+          const cart = [names[i], names[j], names[k]];
+          const stage = suggestFirstStage(cart);
+          if (stage.length < 2) continue;
+          const { isBlocked } = getViolations(asItems(...stage));
+          if (isBlocked) unsafe.push(`${cart.join(' + ')} → suggested ${stage.join(' + ')}`);
+        }
+      }
+    }
+    expect(unsafe, `M suggested a stage it would block:\n${unsafe.join('\n')}`).toEqual([]);
   });
 });

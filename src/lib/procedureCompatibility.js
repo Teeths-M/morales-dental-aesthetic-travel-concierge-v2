@@ -380,6 +380,106 @@ export const DISCLAIMER = 'Procedure compatibility guidance is informational onl
  * @param {Array} items  Cart items with .title or .name
  * @returns {{ violations: Array<{pairLabel: string, reason: string, code: string}>, isBlocked: boolean }}
  */
+/**
+ * suggestFirstStage — what M recommends the patient do THIS trip.
+ *
+ * Every one of the 16 named RED pairs carries a hand-written recommendation,
+ * because M does not simply refuse a combination: it says what to do instead.
+ * The two catch-all violations below (3+ major surgeries, >8hrs anesthesia)
+ * had no recommendation attached, so a patient who hit one of those — and
+ * selecting three big procedures is exactly the behaviour this engine exists
+ * to catch — saw a red block, a list of conflicts, and a "Go Back" button.
+ * The entire "What M recommends instead" panel is gated on
+ * `violations.some(v => v.recommended)`, so they never even reached the line
+ * that matters most: "M is not here to take your dream away. We are here to
+ * make sure you are alive to enjoy it."
+ *
+ * That is M behaving like a blocker, which is the one thing it must never be.
+ *
+ * This builds the first stage by taking the MOST significant procedure first
+ * and adding others only while the running set still passes this engine's own
+ * thresholds.
+ *
+ * Significance order matters, and getting it wrong produces advice that is
+ * clinically safe and practically useless. The first version of this walked
+ * the cart in selection order, on the reasoning that ranking a patient's goals
+ * wasn't ours to do. For a cart of [Dental Cleaning, Root Canal, Full Mouth
+ * Implants] that recommended keeping the cleaning and the root canal, and
+ * deferring the implants — telling someone who flew abroad for a new smile to
+ * have a scale-and-polish instead. Cart order is not priority; it is just the
+ * order things were added.
+ *
+ * So the heaviest procedure leads. It is almost always the reason the trip
+ * exists, and the minor work around it is what can be done later, closer to
+ * home, or anywhere. Ties keep their original order.
+ *
+ * It still invents no clinical opinion: a set is only ever proposed if the
+ * existing RED rules already clear it. If our own engine wouldn't pass it, we
+ * don't suggest it.
+ *
+ * Returns [] when nothing safe can be assembled — the caller must then fall
+ * back to routing them to a doctor rather than inventing a plan.
+ */
+export function suggestFirstStage(titles) {
+  const profileOf = (t) => PROCEDURE_PROFILES[t] || { stress: 3, anesthesiaHrs: 0 };
+
+  const isSafeSet = (set) => {
+    if (set.length === 0) return true;
+    for (const rule of RED_VIOLATION_RULES) {
+      const [a, b] = rule.pair;
+      if (set.includes(a) && set.includes(b)) return false;
+    }
+    const profiles = set.map(profileOf);
+    if (profiles.filter(p => p.stress >= 6).length >= 3) return false;
+    if (profiles.reduce((s, p) => s + (p.anesthesiaHrs || 0), 0) > 8) return false;
+    return true;
+  };
+
+  // Heaviest first (stress, then anesthesia hours), stable on ties.
+  const bySignificance = titles
+    .map((t, i) => ({ t, i, p: profileOf(t) }))
+    .sort((a, b) =>
+      (b.p.stress || 0) - (a.p.stress || 0) ||
+      (b.p.anesthesiaHrs || 0) - (a.p.anesthesiaHrs || 0) ||
+      a.i - b.i)
+    .map(x => x.t);
+
+  const stage = [];
+  for (const t of bySignificance) {
+    if (isSafeSet([...stage, t])) stage.push(t);
+  }
+
+  // Present the stage in the patient's own cart order — they recognise their
+  // list, not our internal ranking.
+  return titles.filter(t => stage.includes(t));
+}
+
+/**
+ * Turns a computed first stage into the same shape the 16 hand-written rules
+ * use, in the same voice: name what to do now, promise the rest, and never
+ * imply the goal itself is being refused.
+ *
+ * If no safe stage can be assembled we return nulls rather than a hollow
+ * suggestion. The blocker then shows the conflicts and the doctor-review
+ * path, which is the honest outcome — better than M inventing a plan it
+ * cannot stand behind.
+ */
+function stageRecommendation(stage, later) {
+  if (!stage.length || !later.length) return { recommended: null, recommendedReason: null };
+
+  const list = (arr) =>
+    arr.length === 1 ? arr[0]
+      : `${arr.slice(0, -1).join(', ')} and ${arr[arr.length - 1]}`;
+
+  return {
+    recommended: list(stage),
+    recommendedReason:
+      `Start with ${list(stage)} on this trip — that combination sits safely inside anesthesia limits. ` +
+      `${list(later)} can follow 6–8 weeks later, once you have fully healed. ` +
+      `You are not giving anything up; you are giving each result the recovery it needs to be what you imagined.`,
+  };
+}
+
 export function getViolations(items) {
   if (!items || items.length < 2) return { violations: [], isBlocked: false };
 
@@ -403,20 +503,26 @@ export function getViolations(items) {
   const profiles = titles.map(t => PROCEDURE_PROFILES[t] || { stress: 3 });
   const majorSurgeries = profiles.filter(p => p.stress >= 6).length;
   if (majorSurgeries >= 3 && violations.length === 0) {
+    const stage = suggestFirstStage(titles);
+    const later = titles.filter(t => !stage.includes(t));
     violations.push({
       pairLabel: `${majorSurgeries} Major Surgeries Simultaneously`,
       reason: `${majorSurgeries} high-complexity procedures scheduled in a single session. Safe anesthesia limits are typically exceeded beyond 2 concurrent major surgeries. A staged treatment plan (6–8 weeks between sessions) is the clinical standard.`,
       code: 'ANESTHESIA_OVERLOAD',
+      ...stageRecommendation(stage, later),
     });
   }
 
   // Extreme anesthesia as a catch-all violation
   const totalAnesthesiaHrs = profiles.reduce((s, p) => s + (p.anesthesiaHrs || 0), 0);
   if (totalAnesthesiaHrs > 8 && violations.length === 0) {
+    const stage = suggestFirstStage(titles);
+    const later = titles.filter(t => !stage.includes(t));
     violations.push({
       pairLabel: `Combined Anesthesia > ${totalAnesthesiaHrs.toFixed(1)} Hours`,
       reason: `Total estimated anesthesia time (~${totalAnesthesiaHrs.toFixed(1)} hrs) exceeds the safe ceiling for elective procedures. Beyond 8 hours, the risk of anesthesia awareness, hypothermia, and post-operative cognitive dysfunction increases significantly.`,
       code: 'ANESTHESIA_OVERLOAD',
+      ...stageRecommendation(stage, later),
     });
   }
 
