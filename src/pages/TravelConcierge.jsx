@@ -1,7 +1,7 @@
 // @ts-nocheck — shadcn Card forwardRef types and arithmetic type gaps; pre-existing
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, AlertTriangle, Star } from 'lucide-react';
+import { Plane, Hotel, Car, Users, Calendar, MapPin, DollarSign, CheckCircle, ArrowRight, ArrowLeft, Shield, AlertTriangle, Star, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,6 +65,43 @@ export default function TravelConcierge() {
     companion_days: 0,
     special_requests: ''
   });
+
+  /* This screen put 35 controls on one page: route, dates, passport/visa,
+     travellers, class, hotel star rating, room type, transfer type, companion
+     type and companion days, all expanded at once.
+
+     Only four of them gate the primary action — the "Calculate Package Price"
+     button needs origin city, destination city and a departure date, nothing
+     more. Everything else has a sensible default already set above (4-star,
+     deluxe, standard transfer) and is a refinement, not a question. Asking all
+     of it up front, before the traveller has seen a single number, is the
+     highest-density screen in the product for no gain.
+
+     So: essentials stay visible, refinements collapse. The collapse only ever
+     OPENS — if a returning traveller already changed any of these, finding
+     their own answers hidden would be worse than the density we're fixing. */
+  const REFINEMENT_DEFAULTS = {
+    hotel_star_rating: 4, hotel_room_type: 'deluxe',
+    transfer_type: 'standard', companion_required: false, companion_days: 0,
+  };
+  const hasRefinements = () =>
+    Object.entries(REFINEMENT_DEFAULTS).some(([k, v]) => formData[k] !== v) || !!selectedPassportId;
+
+  const [showRefinements, setShowRefinements] = useState(hasRefinements);
+  useEffect(() => {
+    if (hasRefinements()) setShowRefinements(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.hotel_star_rating, formData.hotel_room_type, formData.transfer_type,
+      formData.companion_required, formData.companion_days, selectedPassportId]);
+
+  // A disabled button that never says why is the trap we removed elsewhere.
+  const missingForPricing = [
+    !formData.origin_city && 'where you are travelling from',
+    !formData.destination_city && 'where you are travelling to',
+    !formData.departure_date && 'your departure date',
+  ].filter(Boolean);
+  const [showPricingHint, setShowPricingHint] = useState(false);
+  useEffect(() => { if (!missingForPricing.length) setShowPricingHint(false); }, [missingForPricing.length]);
 
   useEffect(() => {
     if (!formData.origin_country) return;
@@ -337,6 +374,57 @@ export default function TravelConcierge() {
                   </div>
                 </div>
 
+                {/* Travelers & Class */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-white/90 text-sm flex items-center gap-1">
+                      <Users className="w-3 h-3" /> Travelers
+                    </Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.travelers_count}
+                      onChange={e => handleInputChange('travelers_count', parseInt(e.target.value))}
+                      className="mt-1 bg-white/10 border-white/20 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white/90 text-sm">Travel Class</Label>
+                    <Select value={formData.travel_class} onValueChange={v => handleInputChange('travel_class', v)}>
+                      <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TRAVEL_CLASSES.map(cls => (
+                          <SelectItem key={cls.value} value={cls.value}>
+                            {cls.icon} {cls.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Everything below is optional refinement — see the note on
+                    REFINEMENT_DEFAULTS. Sensible defaults are already set, so
+                    a traveller can get a price without answering any of it. */}
+                <button
+                  type="button"
+                  onClick={() => setShowRefinements(o => !o)}
+                  className="w-full flex items-center justify-between gap-3 pt-4 border-t border-white/20 text-left text-white/70 hover:text-white transition-colors"
+                >
+                  <span className="text-sm">
+                    Passport check, hotel, transfers and companion
+                    <span className="block text-xs text-white/40 mt-0.5 font-normal">
+                      Optional — we&rsquo;ve chosen sensible defaults you can change
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 flex-shrink-0 transition-transform ${showRefinements ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {showRefinements && (<>
                 {/* Passport Selection */}
                 <div className="space-y-3 pt-4 border-t border-white/20">
                   <div className="flex items-center gap-2 text-white">
@@ -376,37 +464,6 @@ export default function TravelConcierge() {
                       </div>
                     </div>
                   )}
-                </div>
-
-                {/* Travelers & Class */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-white/90 text-sm flex items-center gap-1">
-                      <Users className="w-3 h-3" /> Travelers
-                    </Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.travelers_count}
-                      onChange={e => handleInputChange('travelers_count', parseInt(e.target.value))}
-                      className="mt-1 bg-white/10 border-white/20 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white/90 text-sm">Travel Class</Label>
-                    <Select value={formData.travel_class} onValueChange={v => handleInputChange('travel_class', v)}>
-                      <SelectTrigger className="mt-1 bg-white/10 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TRAVEL_CLASSES.map(cls => (
-                          <SelectItem key={cls.value} value={cls.value}>
-                            {cls.icon} {cls.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 {/* Hotel */}
@@ -515,6 +572,8 @@ export default function TravelConcierge() {
                   )}
                 </div>
 
+                </>)}
+
                 {/* Visa Check Button */}
                 <div className="flex flex-col gap-3">
                   <Button
@@ -535,10 +594,23 @@ export default function TravelConcierge() {
                     )}
                   </Button>
                   
+                  {/* This button used to render disabled with nothing on screen
+                      explaining which of the three fields was missing. Now it
+                      stays tappable and names what it still needs. */}
+                  {showPricingHint && missingForPricing.length > 0 && (
+                    <p role="alert" className="text-sm rounded-lg px-3 py-2.5 m-0 bg-amber-500/15 border border-amber-400/30 text-amber-100">
+                      To price your trip we still need <strong>{missingForPricing.join(', ')}</strong>.
+                    </p>
+                  )}
                   <Button
-                    onClick={step === 'pricing' ? handleSubmitRequest : handleCalculatePricing}
-                    disabled={loading || !formData.origin_city || !formData.destination_city || !formData.departure_date}
+                    onClick={() => {
+                      if (missingForPricing.length) { setShowPricingHint(true); return; }
+                      return step === 'pricing' ? handleSubmitRequest() : handleCalculatePricing();
+                    }}
+                    disabled={loading}
+                    aria-disabled={missingForPricing.length > 0}
                     className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
+                    style={{ opacity: missingForPricing.length && !loading ? 0.6 : 1 }}
                   >
                     {loading ? 'Processing...' : step === 'pricing' ? 'Submit Request' : 'Calculate Package Price'}
                     {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
