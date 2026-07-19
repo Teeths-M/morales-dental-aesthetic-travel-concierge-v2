@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -60,8 +61,24 @@ async function getLatestLocation(base44, caseId) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || (user.role !== 'admin' && user.role !== 'platform_admin')) {
+
+    /* This is THE escalation for a missed safety check-in: 2h nudge, 3h
+       guardian alert, 5h security dispatch, 9h emergency. It required an admin
+       SESSION, which meant no scheduler could ever call it — a scheduled run
+       got 403. In practice it fired only when a human opened /admin and
+       pressed a button, while the app told patients "24/7 support watching".
+       A person overdue at 3am was found when someone next looked.
+
+       cronAuthorized accepts a cron secret OR an admin session, so the admin
+       button keeps working exactly as before and a scheduler can now drive it
+       too. Same guard the other scheduled jobs already use; it fails closed
+       when CRON_SECRET is unset (admin-only), so this never becomes open.
+
+       Safe to run repeatedly: the loop below is a state machine gated on the
+       current status (pending → escalated_2h → …), so a second pass in the
+       same window re-reads the new status and does nothing. Overlapping
+       schedulers cannot double-alert a guardian. */
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

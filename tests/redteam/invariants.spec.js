@@ -921,3 +921,60 @@ test('UX: the guide orb never nags — no unbounded tip carousel, quiet on data-
   expect(code, 'the quiet-route check must gate the auto-open effect')
     .toMatch(/if \(!pastHero \|\| isQuietRoute\) return;/);
 });
+
+test('SAFETY MONITORING: the escalation engine is schedulable and guarded', () => {
+  // The app promises "24/7 support watching". The escalation cascade (2h nudge
+  // → 3h guardian → 5h security → 9h emergency) existed and worked, but nothing
+  // scheduled it, and escalateSoloCheckIn required an ADMIN SESSION — so a
+  // scheduled call got 403 and it only ever ran when a human pressed a button.
+  //
+  // Two properties must hold together, or the promise is hollow again:
+  //   1. every safety job accepts cron auth (a scheduler can drive it)
+  //   2. a scheduler actually exists and calls them
+  const SAFETY_JOBS = [
+    'escalateSoloCheckIn',
+    'predictiveEscalation',
+    'checkStaleLiveLocations',
+    'escalateMissedDriverHandshake',
+    'checkMissedRecoveryCheckins',
+    'runSafetyMonitor',
+  ];
+
+  for (const fn of SAFETY_JOBS) {
+    const src = read(`base44/functions/${fn}/entry.ts`);
+    expect(src, `${fn} must accept cron auth or no scheduler can run it`)
+      .toMatch(/cronAuthorized\(req, base44\)/);
+
+    // The fail-OPEN pattern that was here: `if (user && !isAdmin) return 403`
+    // lets an unauthenticated caller straight through, because `user` is null.
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    expect(code, `${fn} must not treat "no session" as "must be the scheduler"`)
+      .not.toMatch(/if \(user && !\[?['"]admin['"]/);
+  }
+
+  const wf = read('.github/workflows/safety-cron.yml');
+  expect(wf, 'the safety scheduler must run on a schedule').toMatch(/^\s*schedule:/m);
+  for (const fn of ['escalateSoloCheckIn', 'predictiveEscalation', 'checkStaleLiveLocations']) {
+    expect(wf, `${fn} must be called by the safety scheduler`).toContain(`call ${fn}`);
+  }
+});
+
+test('PROVIDERS: the directory cannot list a doctor it calls verified', () => {
+  // The page is titled "Our Verified Specialists" and states "Every provider is
+  // rigorously vetted". It listed Doctor.filter({}) — every row, verified or
+  // not. The headline said "every"; the list didn't.
+  const src = read('src/pages/Providers.jsx');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  expect(code, 'the listing must be gated on verification')
+    .toMatch(/doctors\.filter\(isDoctorVerified\)/);
+  expect(code, 'the search must run over the VERIFIED set, not the raw one')
+    .toMatch(/verifiedDoctors\.filter\(/);
+
+  // And the gate must be the shared one — a hand-copied state list already
+  // drifted once (guessed 'manually_verified', wrongly included 'auto_verified').
+  expect(code, 'must import the shared gate, not re-implement it')
+    .toMatch(/import \{ isDoctorVerified \} from '@\/components\/doctor\/DoctorVerifiedBadge'/);
+  expect(code, 'must not hand-roll its own verified-state list')
+    .not.toMatch(/new Set\(\[['"]verified['"]/);
+});

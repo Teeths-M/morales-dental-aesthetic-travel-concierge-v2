@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createHandler } from '../_shared/createHandler.ts';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 
 // ── escalateMissedDriverHandshake — cron/scheduled function ──────────────────
 // Runs every minute via Base44 scheduler.
@@ -35,10 +36,16 @@ Deno.serve(createHandler(async ({ req }) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Allow scheduler (no user session) or admins
-    let user = null;
-    try { user = await base44.auth.me(); } catch (_) { /* scheduler context */ }
-    if (user && !['admin', 'platform_admin'].includes(user.role)) {
+    /* Same fail-open pattern that was in checkMissedRecoveryCheckins: with no
+       session `user` is null, the `user &&` short-circuits, and the request is
+       let through on the assumption that anonymous means "the scheduler".
+       Combined with requireAuth:false on the handler, this endpoint was open
+       to anyone with the URL — and it sends Twilio SMS, so driving it costs
+       real money and messages real drivers and patients.
+
+       cronAuthorized proves the caller: cron secret, or admin session. Fails
+       closed when CRON_SECRET is unset. */
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

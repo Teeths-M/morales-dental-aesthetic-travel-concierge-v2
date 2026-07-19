@@ -21,7 +21,18 @@ import { CheckCircle, Clock, ShieldOff } from 'lucide-react';
 // Terminal states that indicate a completed, human-approved verification.
 // 'auto_verified' is excluded — the only auto-verified non-doctors (e.g.
 // travel agencies) should not appear in doctor badge contexts.
-const VERIFIED_TERMINAL = new Set(['verified', 'manually_approved']);
+// Exported so the provider directory gates its listing on the SAME states this
+// badge does. They were separate judgements once and drifted immediately: a
+// hand-copied set guessed 'manually_verified' (not a real state) and included
+// 'auto_verified' (excluded here on purpose, see above), which would have
+// listed doctors as vetted that this badge refuses to mark verified. One
+// definition, imported, cannot disagree with itself.
+export const VERIFIED_TERMINAL = new Set(['verified', 'manually_approved']);
+
+/** True only for a doctor M can honestly present as verified. */
+export function isDoctorVerified(doctor) {
+  return doctor?.license_verified === true && VERIFIED_TERMINAL.has(doctor?.verification_status);
+}
 
 // Per-component cache to avoid redundant API calls on re-render
 const doctorCache = {};

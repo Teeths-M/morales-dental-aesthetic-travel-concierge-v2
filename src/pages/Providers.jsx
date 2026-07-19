@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, X } from 'lucide-react';
 import { fuzzyScore, fuzzyMatches } from '@/lib/fuzzyMatch';
+import { isDoctorVerified } from '@/components/doctor/DoctorVerifiedBadge';
 
 const PROCEDURE_FILTERS = ['All', 'Dental', 'Aesthetic', 'Rhinoplasty', 'Liposuction', 'Veneers', 'Implants'];
 const GOLD = '#D4AF37';
@@ -92,7 +93,27 @@ export default function Providers() {
   }, [searchQuery, suggestionPool]);
 
   const q = searchQuery.toLowerCase().trim();
-  const filteredDoctors = doctors.filter(doc => {
+  /* This page is titled "Our Verified Specialists" and tells visitors "Every
+     provider is rigorously vetted". It was listing Doctor.filter({}) — every
+     row in the table, verified or not. The per-doctor badge was honest, so a
+     patient COULD tell them apart, but the headline said "every", and the list
+     wasn't.
+
+     "Verified" is the whole reason someone chooses M over a search engine, so
+     the claim stays and the list is brought up to meet it. Same gate the badge
+     uses (DoctorVerifiedBadge): license_verified true AND a terminal verified
+     status — not "submitted", not "pending", not "re-verifying".
+
+     Unverified doctors are not deleted; they simply aren't presented to
+     patients as vetted. They surface again the moment verification completes.
+
+     isDoctorVerified is imported from DoctorVerifiedBadge rather than
+     re-implemented here — the first draft of this hand-copied the state list
+     and got it wrong, which would have listed doctors the badge itself refuses
+     to call verified. */
+  const verifiedDoctors = doctors.filter(isDoctorVerified);
+
+  const filteredDoctors = verifiedDoctors.filter(doc => {
     const specs = specialtyMap[doc.id] || [];
     const matchesSearch = !q
       || fuzzyMatches(q, doc.full_name)
@@ -237,15 +258,40 @@ export default function Providers() {
             {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-72 rounded-2xl" />)}
           </div>
         ) : filteredDoctors.length === 0 ? (
+          /* Two different emptinesses, and telling them apart matters.
+             Now that the list is gated on verification, it can be empty because
+             nothing has finished verification yet — not because the search was
+             too narrow. Saying "try a different search" then sends someone to
+             clear filters and land on the same empty page, which reads as
+             broken software. Name the real reason instead. */
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">🔍</p>
-            <p className="text-white font-semibold mb-1">No specialists found</p>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Try a different search or{' '}
-              <button onClick={() => { setSearchQuery(''); setActiveFilter('All'); }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                clear filters
-              </button>
-            </p>
+            <Search className="w-8 h-8 mx-auto mb-4" style={{ color: 'rgba(255,255,255,0.25)' }} strokeWidth={1.5} />
+            {verifiedDoctors.length === 0 ? (
+              <>
+                <p className="text-white font-semibold mb-1">We&rsquo;re still verifying specialists here</p>
+                <p className="text-sm max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  We only list doctors once their licence has been confirmed with the issuing
+                  medical board. Start a consultation and your care team will match you personally
+                  while verification completes.
+                </p>
+                <button
+                  onClick={() => navigate('/intake')}
+                  style={{ marginTop: 18, padding: '11px 22px', borderRadius: 999, background: GOLD, color: '#060B16', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+                >
+                  Start a consultation
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-white font-semibold mb-1">No specialists match that search</p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Try a different search or{' '}
+                  <button onClick={() => { setSearchQuery(''); setActiveFilter('All'); }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                    clear filters
+                  </button>
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

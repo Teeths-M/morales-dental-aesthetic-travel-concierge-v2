@@ -1,0 +1,117 @@
+name: Safety monitor scheduler
+
+# Drives the safety escalation jobs on a schedule.
+#
+# WHY THIS EXISTS
+# ---------------
+# Every patient-facing surface promises continuous watching ("24/7 support
+# watching" on the quotes page, "Never Alone" throughout). The escalation
+# engine that makes that true — 2h nudge, 3h guardian alert, 5h security
+# dispatch, 9h emergency — existed and worked, but nothing scheduled it.
+# escalateSoloCheckIn additionally required an ADMIN SESSION, so it could only
+# ever run when a human opened /admin and pressed a button. A patient overdue
+# at 3am was escalated whenever someone next looked.
+#
+# This closes the gap between the promise and the machinery.
+#
+# ONE-TIME SETUP — identical to freshness-cron.yml, same secret:
+#   1. GitHub → Settings → Secrets and variables → Actions → CRON_SECRET
+#   2. Base44 → project env vars → CRON_SECRET (the SAME value)
+# Until the GitHub secret is set, runs SKIP harmlessly (green + warning) rather
+# than failing, so a missing secret never shows a red X.
+#
+# HONEST LIMITATION — READ THIS
+# -----------------------------
+# GitHub Actions scheduled runs are BEST EFFORT. They are frequently delayed
+# 5-15 minutes under load and can occasionally be dropped entirely. That is
+# acceptable for the thresholds here, which are measured in HOURS (2/3/5/9), so
+# a late run still escalates within the right window. It is NOT a hard
+# real-time guarantee, and it should not be described to patients as one.
+#
+# If Base44's native scheduler is available, running these there as well is
+# strictly better — every job below is idempotent (see the concurrency note),
+# so belt-and-braces cannot double-alert anyone.
+#
+# IDEMPOTENCY
+# -----------
+# Each job is a state machine gated on current status (pending → escalated_2h →
+# escalated_3h → …). A second pass inside the same window re-reads the new
+# status and does nothing. Overlapping runs — from this workflow, a Base44
+# schedule, or an admin pressing the button — cannot double-notify a guardian.
+#
+# Optional overrides (repo Variables, only if the app URL/id change):
+#   FUNCTIONS_BASE_URL (default https://sentinel-dental-care.base44.app)
+#   BASE44_APP_ID      (default 6a01c1305c540b75f24dd373)
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 min — check-in + location + handshake escalation
+    - cron: '0 * * * *'      # hourly — recovery check-ins
+    - cron: '0 */6 * * *'    # every 6h — anomaly analysis (LLM, costs credits)
+  workflow_dispatch:
+
+concurrency:
+  group: safety-cron
+  cancel-in-progress: false
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    env:
+      BASE: ${{ vars.FUNCTIONS_BASE_URL || 'https://sentinel-dental-care.base44.app' }}
+      APP: ${{ vars.BASE44_APP_ID || '6a01c1305c540b75f24dd373' }}
+      SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Guard — secret configured
+        id: guard
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "::warning::CRON_SECRET is not set as a GitHub repository secret — SAFETY MONITORING IS NOT RUNNING. Add it under Settings → Secrets and variables → Actions with the SAME value as the Base44 env var. See this workflow's header."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run safety jobs
+        if: steps.guard.outputs.configured == 'true'
+        run: |
+          set +e
+          FAILED=""
+          call () {
+            local fn="$1"
+            local code
+            code=$(curl -sS -o /tmp/out.json -w '%{http_code}' -X POST \
+              "$BASE/api/apps/$APP/functions/$fn" \
+              -H 'Content-Type: application/json' \
+              -H "X-Cron-Secret: $SECRET" \
+              -d '{}')
+            echo "=== $fn -> HTTP $code ==="
+            head -c 600 /tmp/out.json; echo
+            if [ "$code" -ge 400 ]; then FAILED="$FAILED $fn"; fi
+          }
+
+          HOURLY="${{ github.event.schedule == '0 * * * *' }}"
+          SIX_HOURLY="${{ github.event.schedule == '0 */6 * * *' }}"
+          MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
+
+          if [ "$SIX_HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+            # Anomaly analysis calls an LLM, so it runs on the slowest cadence.
+            call runSafetyMonitor
+          elif [ "$HOURLY" = "true" ] && [ "$MANUAL" != "true" ]; then
+            call checkMissedRecoveryCheckins
+          else
+            # Every 15 min — the life-safety path.
+            call escalateSoloCheckIn            # 2h → 3h → 5h → 9h cascade
+            call predictiveEscalation           # fires BEFORE a check-in is missed
+            call checkStaleLiveLocations        # GPS gone quiet
+            call escalateMissedDriverHandshake  # driver no-show → reroute
+            if [ "$MANUAL" = "true" ]; then
+              call checkMissedRecoveryCheckins
+              call runSafetyMonitor
+            fi
+          fi
+
+          if [ -n "$FAILED" ]; then
+            echo "::warning::Safety jobs returned an error:$FAILED — investigate. A 402 usually means exhausted Base44 integration credits; a 403 means CRON_SECRET does not match between GitHub and Base44."
+          fi
+          echo "Done."

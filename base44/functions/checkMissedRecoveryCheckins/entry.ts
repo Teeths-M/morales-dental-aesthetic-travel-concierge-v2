@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { cronAuthorized } from '../_shared/cronAuth.ts';
 import { computePrevHash } from '../_shared/auditHashChain.ts';
 
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -60,9 +61,25 @@ async function sendSms(to, body) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user = null;
-    try { user = await base44.auth.me(); } catch (_) { /* scheduler */ }
-    if (user && !['admin', 'platform_admin'].includes(user.role)) {
+
+    /* This guard failed OPEN. It read:
+     *
+     *     let user = null;
+     *     try { user = await base44.auth.me(); } catch (_) {}
+     *     if (user && !['admin','platform_admin'].includes(user.role)) → 403
+     *
+     * With no session, `user` stays null, `user &&` short-circuits false, and
+     * the request sails through. The intent was "anonymous means it's the
+     * scheduler" — but every deployed function is reachable over HTTP, so that
+     * treats the entire internet as the scheduler. This one drives AI calls,
+     * emails and doctor notifications for patients who missed a recovery
+     * check-in: it costs money and it messages real people.
+     *
+     * cronAuthorized proves the caller instead of assuming it: a matching
+     * X-Cron-Secret, or an admin session. It fails CLOSED when CRON_SECRET is
+     * unset (admin-only), which is the direction a safety endpoint must fail.
+     */
+    if (!(await cronAuthorized(req, base44))) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
