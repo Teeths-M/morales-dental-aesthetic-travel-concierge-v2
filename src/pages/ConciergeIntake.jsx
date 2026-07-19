@@ -81,6 +81,9 @@ export default function ConciergeIntake() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  // Non-medical fields M worked out on the review screen, as the patient
+  // last saw them (M's value, or their correction of it).
+  const [derivedAnswers, setDerivedAnswers] = useState({});
   // Contact verification (OTP at submit — guest-first): null = not yet run,
   // 'active' = the email/phone code steps are on screen, object = finished
   // (with per-channel verified flags carried onto the Consultation).
@@ -218,7 +221,17 @@ export default function ConciergeIntake() {
         }
       }
 
-      const consultation = await base44.entities.Consultation.create(buildConsultationPayload(answers, verifiedChannels));
+      // Derived answers are layered UNDER the patient's own, never over them:
+      // deriveIntake only produces a field the patient left blank, but if a
+      // later question ever backfills one, what they actually said wins.
+      // Nothing here can touch a medical field — see SAFETY_INPUT_FIELDS in
+      // lib/intakeFlow/derivedFields.js.
+      const mergedAnswers = { ...derivedAnswers, ...answers };
+      for (const [field, value] of Object.entries(derivedAnswers)) {
+        if (!answers[field] || answers[field] === UNSPECIFIED) mergedAnswers[field] = value;
+      }
+
+      const consultation = await base44.entities.Consultation.create(buildConsultationPayload(mergedAnswers, verifiedChannels));
 
       const { saveUserOnboardingProfile } = await import('@/lib/onboardingProfile');
       await saveUserOnboardingProfile({
@@ -318,6 +331,8 @@ export default function ConciergeIntake() {
                 safetyStatus={safetyStatus}
                 doctorSearch={doctorSearch}
                 partnerPreview={partnerPreview}
+                costEstimate={costEstimate}
+                onDerivedChange={setDerivedAnswers}
               />
             )}
             {nextStepResult.type === 'question' && !atReviewStep && (

@@ -1125,3 +1125,39 @@ test('CLAIMS: no invented usage numbers, and the checkpoint count matches the en
   expect(stats, 'do not claim automatic escalation until the safety jobs are deployed and scheduled')
     .not.toMatch(/escalate[s]? automatically/i);
 });
+
+test('INTAKE: M never derives a medical fact about a patient', () => {
+  // The review screen prefills fields the patient didn't answer. That is a
+  // real convenience and a real hazard: a derived value is submitted as the
+  // patient's own answer, and anything the SAFE-T engine reads must come from
+  // the patient, not from a computation wearing their voice.
+  //
+  // tests/derivedFields.test.js proves the behaviour. This guards the two
+  // structural properties that behaviour depends on, because a future edit
+  // could satisfy every unit test simply by shrinking the forbidden list.
+  //
+  // Comments are stripped first — this file's own header discusses the field
+  // names it forbids, so an unstripped scan would pass on the prose alone
+  // even if the Set were emptied.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read('src/lib/intakeFlow/derivedFields.js'));
+
+  // 1. The forbidden set still names every category computeSafeT reads.
+  //    Deliberately checked as literals: this list is allowed to grow, never
+  //    to quietly lose a member to make some new deriver pass.
+  for (const field of [
+    'procedure_interest', 'age', 'gender', 'medical_conditions', 'allergies',
+    'takes_medications', 'medication_types', 'anesthesia_complications',
+    'had_surgery', 'previous_procedures', 'pregnancy_status', 'bmi',
+    'lifestyle', 'emotional_concerns',
+  ]) {
+    expect(src, `SAFETY_INPUT_FIELDS must still forbid deriving "${field}"`)
+      .toContain(`'${field}'`);
+  }
+
+  // 2. The runtime filter is still the last thing that happens to `prefilled`,
+  //    so a deriver added above it cannot leak a safety field even if someone
+  //    forgets to call assertNotSafetyField.
+  expect(src, 'deriveIntake must filter SAFETY_INPUT_FIELDS out of its return')
+    .toMatch(/prefilled:\s*prefilled\.filter\(\s*\(\w+\)\s*=>\s*!SAFETY_INPUT_FIELDS\.has\(/);
+});
