@@ -131,6 +131,12 @@ function ProcedureCard({ proc, isSelected, onAdd, onRemove, onLearnMore, languag
 }
 
 export default function Procedures() {
+  // True when the patient stepped out of an in-progress consultation to look
+  // around. They are not a new visitor and must not be greeted as one — the
+  // fear being answered here is "have I lost everything I just typed?"
+  const [midConsultation] = useState(() => {
+    try { return localStorage.getItem('morales_intake_browsing') === '1'; } catch { return false; }
+  });
   const [activeParent, setActiveParent] = useState('all');
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [selectedModal, setSelectedModal] = useState(null);
@@ -357,18 +363,31 @@ export default function Procedures() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
+              {/* Someone who stepped out of a half-finished consultation to look
+                  around is not a new visitor. Greeting them with "Not sure where
+                  to start?" implies they haven't started — which reads, to a
+                  person who just typed their medical history, as though it is
+                  gone. Their real question is only ever "did I lose it?" */}
               <p className="text-[11px] font-semibold text-[#D4AF37] uppercase tracking-[0.32em] mb-3">
-                {language === 'es' ? '¿No Estás Seguro Por Dónde Empezar?' : language === 'fr' ? 'Vous Ne Savez Pas Où Commencer?' : 'Not Sure Where to Start?'}
+                {midConsultation
+                  ? (language === 'es' ? 'Tu Consulta Te Está Esperando' : language === 'fr' ? 'Votre Consultation Vous Attend' : 'Your Consultation Is Waiting')
+                  : (language === 'es' ? '¿No Estás Seguro Por Dónde Empezar?' : language === 'fr' ? 'Vous Ne Savez Pas Où Commencer?' : 'Not Sure Where to Start?')}
               </p>
               <h2 className="font-display text-3xl lg:text-4xl text-white mb-4" style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}>
-                {language === 'es' ? 'Habla Con Nuestro Equipo de Conserjería' : language === 'fr' ? 'Parlez à Notre Équipe de Conciergerie' : 'Talk to Our Concierge Team'}
+                {midConsultation
+                  ? (language === 'es' ? 'Nada Se Ha Perdido' : language === 'fr' ? 'Rien N\'a Été Perdu' : 'Nothing Has Been Lost')
+                  : (language === 'es' ? 'Habla Con Nuestro Equipo de Conserjería' : language === 'fr' ? 'Parlez à Notre Équipe de Conciergerie' : 'Talk to Our Concierge Team')}
               </h2>
               <p className="text-[15px] text-white/55 mb-6 max-w-md mx-auto leading-[1.75]" style={{ fontWeight: 300 }}>
-                {language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.'}
+                {midConsultation
+                  ? (language === 'es' ? 'Todo lo que nos contaste sigue guardado. Toma el tiempo que necesites aquí — cuando vuelvas, continuarás exactamente donde lo dejaste.' : language === 'fr' ? 'Tout ce que vous nous avez dit est conservé. Prenez le temps qu\'il vous faut ici — à votre retour, vous reprendrez exactement où vous en étiez.' : 'Everything you told us is still saved. Take as long as you like here — when you go back, you\'ll pick up exactly where you left off.')
+                  : (language === 'es' ? 'Nuestros especialistas te guiarán al tratamiento correcto basado en tus objetivos, perfil de salud y presupuesto.' : language === 'fr' ? 'Nos spécialistes vous guideront vers le bon traitement en fonction de vos objectifs, de votre profil de santé et de votre budget.' : 'Our specialists will guide you to the right treatment based on your goals, health profile, and budget.')}
               </p>
               <Link to="/intake">
                 <Button size="lg" className={`font-semibold px-10 ${items.length > 0 ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C85C] text-[#060B16] hover:opacity-90' : 'bg-white/[0.06] text-white/30 cursor-not-allowed'}`} disabled={items.length === 0}>
-                {language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation'} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
+                {midConsultation
+                  ? (language === 'es' ? 'Volver a Mi Consulta' : language === 'fr' ? 'Reprendre Ma Consultation' : 'Back to My Consultation')
+                  : (language === 'es' ? 'Reservar una Consulta' : language === 'fr' ? 'Réserver une Consultation' : 'Book a Consultation')} {items.length > 0 && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </Link>
               {items.length === 0 && (

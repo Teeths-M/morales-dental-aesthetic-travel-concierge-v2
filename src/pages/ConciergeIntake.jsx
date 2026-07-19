@@ -266,6 +266,15 @@ export default function ConciergeIntake() {
       }
 
       clearCart();
+      // The consultation is submitted, so the "you're mid-consultation, nothing
+      // is lost" state on /procedures is no longer true. Cleared here rather
+      // than in MultiProcedureStep because a patient who picked their
+      // procedures on /procedures never re-mounts that step — the question
+      // auto-skips — and would have left the flag set behind them.
+      try {
+        localStorage.removeItem('morales_intake_browsing');
+        localStorage.removeItem('morales_intake_pending_procedures');
+      } catch { /* non-essential */ }
       setSubmitted(true);
     } catch (_) {
       setSubmitError('Something went wrong sending your consultation. Please try again, or contact us directly.');
