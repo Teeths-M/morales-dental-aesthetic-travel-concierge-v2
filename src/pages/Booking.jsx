@@ -858,20 +858,52 @@ export default function Booking() {
             )}
           </div>
 
-          {/* Mobile step progress bar.
+          {/* Mobile step progress.
 
-              The phase name used to be repeated here, directly under the header
-              that already shows it — the same two words twice within 40px. Only
-              the count remains, which is the one thing the header doesn't say. */}
-          <div className="lg:hidden px-4 pt-2 pb-1">
-            <div className="flex justify-end items-center mb-1.5">
-              <span className="text-[10px] text-slate-400">{step + 1} / {steps.length}</span>
+              Two changes here. The phase name used to be repeated directly
+              under the header that already shows it — the same two words twice
+              within 40px; that's gone.
+
+              The bigger one: this used to read "3 / 12". A twelve-step counter
+              is the single largest source of decision fatigue in this flow —
+              seeing "12" on screen two is what makes a nervous patient close
+              the tab, and it undersells the fact that most of those steps are
+              short. The work is already grouped into four named phases
+              (STEP_PHASES) and getPhaseInfo already computed stepInPhase /
+              stepsInPhase — nothing had ever rendered them.
+
+              So the headline is now the phase you're in and your position
+              inside it ("Your Health · 2 of 5"), over four segments that show
+              how much of the whole remains. Nothing is hidden and no step was
+              merged: the same twelve steps, described honestly as four short
+              stages rather than one long climb. Merging them for real would
+              mean resequencing the guardian gate and the safety scan, which is
+              not a change to make for visual tidiness. */}
+          <div className="lg:hidden px-4 pt-2 pb-1.5">
+            <div className="flex justify-between items-baseline mb-1.5">
+              <span className="text-[10px] font-semibold" style={{ color: getPhaseInfo(step).color }}>
+                {getPhaseInfo(step).phase}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                {getPhaseInfo(step).stepInPhase} of {getPhaseInfo(step).stepsInPhase}
+              </span>
             </div>
-            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.round(((step + 1) / steps.length) * 100)}%`, background: getPhaseInfo(step).color }}
-              />
+            <div className="flex gap-1" role="progressbar"
+              aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={steps.length}
+              aria-label={`${getPhaseInfo(step).phase}, step ${step + 1} of ${steps.length}`}>
+              {STEP_PHASES.map((ph) => {
+                const done = step > Math.max(...ph.steps);
+                const active = ph.steps.includes(step);
+                const fill = done ? 1 : active ? (ph.steps.indexOf(step) + 1) / ph.steps.length : 0;
+                return (
+                  <div key={ph.name} className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${fill * 100}%`, background: ph.color }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 

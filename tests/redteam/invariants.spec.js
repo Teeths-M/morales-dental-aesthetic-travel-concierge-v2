@@ -896,3 +896,28 @@ test('UX: no raw browser alert()/confirm() anywhere in src', () => {
 
   expect(offenders, `use toast()/ConfirmDialog instead:\n${offenders.join('\n')}`).toEqual([]);
 });
+
+test('UX: the guide orb never nags — no unbounded tip carousel, quiet on data-entry routes', () => {
+  // The orb used to setInterval a new tip every 6 seconds, forever, on every
+  // route, until the user found the dismiss control. On /booking that means
+  // animated motion in the corner of the eye while someone types their surgical
+  // history. Our own interface must not compete for attention with the form.
+  const src = read('src/components/guide/PlatformGuideOrb.jsx');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  // No setInterval driving the tip bubble — rotation must be bounded.
+  expect(code, 'tip rotation must not be an unbounded setInterval')
+    .not.toMatch(/setInterval\([\s\S]{0,200}setShowBubble/);
+
+  // A hard cap must exist and be small.
+  const cap = code.match(/MAX_TIP_ROTATIONS\s*=\s*(\d+)/);
+  expect(cap, 'a MAX_TIP_ROTATIONS cap must exist').not.toBeNull();
+  expect(Number(cap[1]), 'the cap must stay small').toBeLessThanOrEqual(5);
+
+  // And the data-entry routes must be excluded from the unprompted bubble.
+  for (const route of ['/booking', '/intake', '/checkout', '/emergency']) {
+    expect(code, `${route} must be a quiet route for the orb`).toContain(`'${route}'`);
+  }
+  expect(code, 'the quiet-route check must gate the auto-open effect')
+    .toMatch(/if \(!pastHero \|\| isQuietRoute\) return;/);
+});

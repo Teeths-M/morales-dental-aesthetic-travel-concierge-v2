@@ -159,11 +159,24 @@ export default function PlatformGuideOrb() {
     return () => window.removeEventListener('scroll', check);
   }, [isHomepage]);
 
+  /* Routes where an unprompted bubble is an interruption, not help.
+     These are the screens where someone is concentrating on entering
+     information — medical history, passport details, payment, a safety
+     check-in. Popping a tip over that is the difference between a guide and a
+     nag, and the orb is meant to be the former. It stays fully available on
+     these pages; it just waits to be asked. */
+  const QUIET_ROUTES = [
+    '/booking', '/intake', '/travel-intake', '/medical-intake',
+    '/checkout', '/payment', '/passport-vault', '/vault',
+    '/emergency', '/sos', '/safe-t',
+  ];
+  const isQuietRoute = QUIET_ROUTES.some(p => pathname.startsWith(p));
+
   useEffect(() => {
-    if (!pastHero) return;
+    if (!pastHero || isQuietRoute) return;
     const t = setTimeout(() => setShowBubble(true), 8000);
     return () => clearTimeout(t);
-  }, [pastHero]);
+  }, [pastHero, isQuietRoute]);
 
   // Online/offline detection
   useEffect(() => {
@@ -174,15 +187,27 @@ export default function PlatformGuideOrb() {
     return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
   }, []);
 
-  // Rotate tips
+  /* Rotate tips — but a FINITE number of times.
+
+     This used to be an unbounded setInterval: a new tip animated in every six
+     seconds, forever, on every page, until the user found the dismiss control.
+     A carousel that never stops isn't guidance, it's motion in the corner of
+     the eye that a person then has to actively ignore — and the one thing we
+     cannot afford on a medical platform is our own interface competing for
+     attention with the form someone is filling in.
+
+     Three tips is enough to convey the orb has things to say. Then it goes
+     quiet and waits to be tapped. */
+  const MAX_TIP_ROTATIONS = 3;
   useEffect(() => {
-    if (open || dismissed) return;
-    const id = setInterval(() => {
+    if (open || dismissed || isQuietRoute) return;
+    if (tipIdx >= MAX_TIP_ROTATIONS - 1 || tipIdx >= tips.length - 1) return;
+    const id = setTimeout(() => {
       setShowBubble(false);
-      setTimeout(() => { setTipIdx(i => (i + 1) % tips.length); setShowBubble(true); }, 300);
+      setTimeout(() => { setTipIdx(i => i + 1); setShowBubble(true); }, 300);
     }, 6000);
-    return () => clearInterval(id);
-  }, [open, dismissed, tips.length]);
+    return () => clearTimeout(id);
+  }, [open, dismissed, isQuietRoute, tipIdx, tips.length]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
