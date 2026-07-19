@@ -222,3 +222,46 @@ button:active, a:active {
 .m-cta-breathe {
   animation: m-cta-breathe 3.5s ease-in-out infinite;
 }
+/* ── Keyboard focus visibility ────────────────────────────────────────────────
+ *
+ * 190 places in this app suppress the browser's focus outline — 160 via
+ * Tailwind's `outline-none`, 30 via an inline `outline: 'none'` — and nothing
+ * replaced it. For anyone navigating by keyboard that means the focus ring is
+ * simply gone: you press Tab and cannot see where you are. It affects every
+ * custom button, every card, and every modal in the product.
+ *
+ * One rule fixes all 190, because the problem is uniform.
+ *
+ * :focus-visible (not :focus) is the important part — the browser only matches
+ * it for keyboard/assistive navigation, never for a mouse click. So this adds
+ * nothing visible for pointer users and everything for keyboard users, which
+ * is exactly why `outline: none` was reached for in the first place.
+ *
+ * !important is load-bearing here, not laziness: an inline style="outline:none"
+ * beats any selector, and suppressing focus indication for keyboard users is
+ * never the correct outcome. If a component needs a different ring, it should
+ * style :focus-visible itself rather than removing it.
+ *
+ * Two rings so it stays visible on both grounds: a gold outline for the dark
+ * surfaces, plus a dark offset shadow so it still reads on the white/slate
+ * screens (booking, admin, partner portals).
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #D4AF37 !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px rgba(6, 11, 22, 0.55) !important;
+}
+
+/* Never show the ring for pointer interaction — preserves the original intent
+ * of every `outline-none` in the codebase. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(a, button, [tabindex]):focus-visible {
+    transition: outline-offset 0.12s ease;
+  }
+}

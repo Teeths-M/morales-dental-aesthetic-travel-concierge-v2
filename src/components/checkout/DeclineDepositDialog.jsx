@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, CreditCard, X, Loader2, ShieldCheck, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { useModalA11y } from '@/hooks/useModalA11y';
 import { friendlyError, safeError } from '@/lib/friendlyError';
 
 export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, originalAmount }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
+  const dialogRef = useModalA11y({ isOpen, onClose });
 
   const handleAuthorizeDeposit = async () => {
     setIsProcessing(true);
@@ -34,7 +36,14 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="decline-deposit-title"
+          tabIndex={-1}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -49,7 +58,7 @@ export default function DeclineDepositDialog({ isOpen, onClose, caseRecord, orig
                   <AlertTriangle className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-amber-900 text-base leading-tight">
+                  <h2 id="decline-deposit-title" className="font-semibold text-amber-900 text-base leading-tight">
                     Your bank declined this transaction
                   </h2>
                   <p className="text-amber-700 text-sm mt-0.5">

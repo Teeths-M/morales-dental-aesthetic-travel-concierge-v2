@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smile, Scan, Activity, HelpCircle, Stethoscope, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useModalA11y } from '@/hooks/useModalA11y';
 
 const GOLD  = '#D4AF37';
 const _DARK  = '#060B16';
@@ -47,6 +48,13 @@ export default function ProcedureSelectionGate({ children }) {
   const { items, addItem } = useCart();
   const hasSelectedProcedure = items && items.length > 0;
 
+  /* closeOnEscape is FALSE here on purpose. This is a gate, not a dialog: the
+     booking flow cannot proceed without a procedure, and letting Escape
+     dismiss it would drop the user onto a form that has no idea what they are
+     booking. The focus trap still applies — a keyboard user must be able to
+     reach the eight options and nothing behind them. */
+  const gateRef = useModalA11y({ isOpen: !hasSelectedProcedure, closeOnEscape: false });
+
   const handleSelect = (proc) => {
     addItem({ name: proc.name, procedure_enum: proc.procedure_enum, quantity: 1 });
   };
@@ -66,6 +74,11 @@ export default function ProcedureSelectionGate({ children }) {
                screen until a procedure is chosen, but sat at zIndex 50 — so the
                orb floated on top of it and covered the "Smile Makeover" card on
                a phone. Nothing should overlap a decision the user cannot skip. */
+            ref={gateRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="procedure-gate-title"
+            tabIndex={-1}
             style={{ position: 'fixed', inset: 0, zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,11,22,0.92)', backdropFilter: 'blur(8px)', padding: 20, overflowY: 'auto' }}
           >
             <motion.div
@@ -80,7 +93,7 @@ export default function ProcedureSelectionGate({ children }) {
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06))', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <Stethoscope size={24} strokeWidth={1.5} style={{ color: GOLD }} />
                 </div>
-                <h2 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                <h2 id="procedure-gate-title" style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
                   What would you like to explore?
                 </h2>
                 {/* Framing. This screen used to sell: coloured savings badges,

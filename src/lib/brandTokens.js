@@ -26,6 +26,28 @@ export const BRAND = {
   // Extended palette (for gradients, states)
   goldLight: '#E8C85C',
   goldDark: '#B8941F',
+
+  /* Gold for TEXT on a LIGHT surface.
+   *
+   * BRAND.gold (#D4AF37) is a trust marker designed for the dark palette, where
+   * it is excellent: 9.36:1 on #060B16, 8.46:1 on the card. On white it is
+   * 2.10:1 — well under the 4.5:1 WCAG AA needs for normal text, and legitimately
+   * hard to read for anyone with reduced contrast sensitivity, which includes a
+   * large share of the older patients this product serves.
+   *
+   * This is the same hue, darkened until it clears AA on BOTH white (4.78:1)
+   * and slate-50 (4.57:1). Checking only against pure white is not enough —
+   * the light screens here use slate-50, and a value tuned to white alone
+   * lands at 4.33:1 there. tests/contrast.test.js asserts both.
+   *
+   * Use for gold TEXT on light surfaces: the light booking screens, the light
+   * modals, the partner portals.
+   *
+   * Backgrounds, borders, icons and large display type can keep BRAND.gold —
+   * the contrast rule is about text legibility, and a gold CTA with dark text
+   * on it is already fine.
+   */
+  goldOnLight: '#887023',
   emeraldDark: '#1a3a2f',
   slate: '#64746d',
   slateLight: '#889985',
