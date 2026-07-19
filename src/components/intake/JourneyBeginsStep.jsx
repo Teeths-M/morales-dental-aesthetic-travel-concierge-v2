@@ -13,7 +13,14 @@ const BORDER = CALM.border;
  * fabricated checkmark. Where a flow doesn't have real backing data for
  * something, it should leave that item out rather than claim it.
  */
-export default function JourneyBeginsStep({ firstName = '', title = '', intro = '', items = [] }) {
+export default function JourneyBeginsStep({
+  firstName = '',
+  title = '',
+  intro = '',
+  items = [],
+  onContinue,
+  continueLabel = 'Go to my dashboard',
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -65,6 +72,58 @@ export default function JourneyBeginsStep({ firstName = '', title = '', intro = 
             </span>
           </div>
         ))}
+      </div>
+
+      {/* The completion screen used to end here — a card with no exit and no
+          statement of when anything happens. That is precisely where a patient's
+          anxiety peaks ("did that work? do I need to do something? who has my
+          medical history now?"), so it is the worst place in the product to
+          leave them without an answer.
+
+          We deliberately do NOT promise a turnaround time. No SLA is enforced in
+          code, and a made-up "within 24 hours" is exactly the kind of claim the
+          M Principle rules out. What we CAN say truthfully is: nothing is
+          required of you, and you will be told here. That is reassurance without
+          a fabricated number.
+
+          "In the app, not by email" is also the comms policy: email and SMS only
+          ever point back here, so this sets the right expectation on day one. */}
+      <div
+        style={{
+          marginTop: 28,
+          paddingTop: 20,
+          borderTop: `1px solid ${BORDER}`,
+          textAlign: 'left',
+        }}
+      >
+        <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: CALM.text }}>
+          There is nothing you need to do next.
+        </p>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: CALM.textSoft }}>
+          Your care team takes it from here. We&rsquo;ll let you know right here in the app as
+          each step is confirmed — you don&rsquo;t need to watch your inbox.
+        </p>
+
+        {onContinue && (
+          <button
+            onClick={onContinue}
+            style={{
+              marginTop: 20,
+              width: '100%',
+              padding: '14px 20px',
+              borderRadius: 999,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 700,
+              background: CALM.action,
+              color: '#fff',
+              boxShadow: '0 8px 32px rgba(14,138,125,0.28)',
+            }}
+          >
+            {continueLabel}
+          </button>
+        )}
       </div>
     </motion.div>
   );

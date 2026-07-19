@@ -515,8 +515,23 @@ export default function MedicalIntakeForm() {
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-5">
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-semibold text-slate-800 mb-2">Intake Submitted</h2>
-          <p className="text-slate-500 text-sm mb-6">Your medical history has been securely delivered to your care team. Your doctor will review it before your procedure.</p>
+          <h2 className="text-2xl font-semibold text-slate-800 mb-2">Your medical history is with your care team</h2>
+          <p className="text-slate-500 text-sm mb-5">It was delivered securely. Your doctor reviews it before your procedure — you won&rsquo;t be asked for any of it again.</p>
+
+          {/* This screen used to end on the sentence above. A patient who has
+              just handed over their conditions, medications and surgical history
+              is at their most exposed, and "Intake Submitted" answers none of
+              what they're actually asking: is it safe, do I need to chase it,
+              what now. No turnaround time is promised — none is enforced in
+              code — but "nothing is required of you" is true and is the thing
+              that actually lowers the anxiety. */}
+          <div className="text-left rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 mb-6">
+            <p className="text-sm font-semibold text-slate-700 mb-1">There&rsquo;s nothing you need to do next.</p>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              We&rsquo;ll let you know here in the app once your doctor has reviewed it. You don&rsquo;t need to watch your inbox.
+            </p>
+          </div>
+
           <div className="flex gap-3">
             <Button onClick={() => navigate('/dashboard')} className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white">Go to Dashboard</Button>
             <Button onClick={() => navigate('/booking')} variant="outline" className="flex-1">Continue Booking</Button>

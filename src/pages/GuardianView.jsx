@@ -504,10 +504,21 @@ export default function GuardianView() {
           <p className="text-slate-400 text-sm mt-1">
             Status: <span className="font-semibold text-white">{caseData?.status || 'Active Journey'}</span>
           </p>
+          {/* This read "Safe-T: PASSED" — our internal engine name and its raw
+              enum value — on the one screen a frightened family member opens to
+              find out whether someone they love is alright. They have no way to
+              know whether PASSED is good news or a pending state. Say it in
+              words a person can act on. */}
           {caseData?.safe_t_result && (
             <span className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${
               caseData.safe_t_result === 'PASSED' ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-700 text-slate-300'
-            }`}>Safe-T: {caseData.safe_t_result}</span>
+            }`}>
+              {caseData.safe_t_result === 'PASSED'
+                ? 'Medical safety check cleared'
+                : caseData.safe_t_result === 'BLOCKED'
+                  ? 'Medical safety check stopped this plan'
+                  : 'Medical safety check in progress'}
+            </span>
           )}
         </div>
 

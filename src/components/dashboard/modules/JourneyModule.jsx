@@ -59,7 +59,7 @@ export default function JourneyModule({ _userRole = null }) {
       <div className="flex gap-2">
         {[
           { id: 'journey', label: 'Roadmap', icon: MapPin },
-          { id: 'iq200', label: 'iQ200 Engine', icon: Radio },
+          { id: 'iq200', label: 'Live Updates', icon: Radio },
           { id: 'baggage', label: 'Baggage', icon: Luggage },
           { id: 'recovery', label: 'Recovery', icon: Moon },
           { id: 'activities', label: 'Adventures', icon: MapPin },

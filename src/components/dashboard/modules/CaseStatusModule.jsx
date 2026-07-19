@@ -77,7 +77,7 @@ export default function CaseStatusModule({ _userEmail }) {
     <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center shadow-sm">
       <Shield className="w-10 h-10 text-slate-300 mx-auto mb-3" />
       <p className="text-sm font-semibold text-slate-700 mb-1">No Active Case Found</p>
-      <p className="text-xs text-slate-500">Once you submit a consultation and pay the retainer, your IQ200 case pipeline will appear here.</p>
+      <p className="text-xs text-slate-500">Once you submit a consultation and pay the retainer, your journey status will appear here.</p>
     </div>
   );
 
@@ -93,7 +93,7 @@ export default function CaseStatusModule({ _userEmail }) {
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">IQ200 Case Pipeline</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-0.5">YOUR CASE</p>
           <h2 className="font-semibold text-slate-900 text-lg">Your Journey Status</h2>
         </div>
         <button onClick={() => { fetchCase(); setLastRefresh(new Date()); }} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors">

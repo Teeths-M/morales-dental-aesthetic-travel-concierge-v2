@@ -9,6 +9,7 @@ import {
   TRAVELERS_COUNT_OPTIONS,
 } from '@/lib/travelIntakeFlow/questionGraph';
 import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
+import { useNavigate } from 'react-router-dom';
 import JourneyBeginsStep from './JourneyBeginsStep';
 
 const GOLD = '#D4AF37';
@@ -54,6 +55,8 @@ function buildReviewFields(answers) {
  * has no procedure-compatibility concern.
  */
 export default function TravelReviewStep({ answers, onSubmit, submitting, submitted, submitError, submitResult }) {
+  const navigate = useNavigate();
+
   if (submitted) {
     const items = [
       { label: 'Travel Request Confirmed', state: 'done' },
@@ -70,6 +73,7 @@ export default function TravelReviewStep({ answers, onSubmit, submitting, submit
       <JourneyBeginsStep
         intro="From this moment forward, you're never alone. We're matching you with a verified local travel partner now, and your coordinator will reach out with your complete itinerary — you won't need to repeat anything."
         items={items}
+        onContinue={() => navigate('/dashboard')}
       />
     );
   }

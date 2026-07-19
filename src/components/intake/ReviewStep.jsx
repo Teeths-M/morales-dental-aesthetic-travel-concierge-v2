@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { UNSPECIFIED } from '@/lib/intakeFlow/questionGraph';
+import { useNavigate } from 'react-router-dom';
 import JourneyBeginsStep from './JourneyBeginsStep';
 import { CALM } from '@/lib/brandTokens';
 
@@ -40,6 +41,8 @@ function formatValue(value) {
  * clear "what happens next" message rather than pretending payment ran.
  */
 export default function ReviewStep({ answers, onSubmit, submitting, submitted, submitError, safetyStatus, doctorSearch, partnerPreview }) {
+  const navigate = useNavigate();
+
   if (submitted) {
     const doctorCount = doctorSearch?.data?.matched_doctors?.length ?? 0;
     const recoveryDays = safetyStatus?.totalRecoveryDays ?? 0;
@@ -62,6 +65,7 @@ export default function ReviewStep({ answers, onSubmit, submitting, submitted, s
         firstName={answers.patient_name?.split(' ')[0]}
         intro="From this moment forward, you're never alone. A specialist is already being matched to your case, and your coordinator will reach out personally — you won't need to repeat anything."
         items={items}
+        onContinue={() => navigate('/dashboard')}
       />
     );
   }
