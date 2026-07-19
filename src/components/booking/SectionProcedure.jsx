@@ -179,6 +179,11 @@ export default function SectionProcedure({ form, update }) {
     form.preferred_date ? new Date(form.preferred_date + 'T12:00:00') : new Date()
   );
   const [doctorUnavailableDates, setDoctorUnavailableDates] = useState(new Set());
+  // 'loading' | 'loaded' | 'failed' — a failed load used to be swallowed
+  // (`.catch(() => {})`), which left the blocked-dates set empty and rendered
+  // every doctor-unavailable date as bookable with no hint anything was wrong.
+  // The patient must know when the calendar is NOT reflecting real availability.
+  const [availabilityStatus, setAvailabilityStatus] = useState('loading');
   const { items } = useCart();
 
   // Fetch all doctor unavailability records and build a blocked-dates set
@@ -191,7 +196,11 @@ export default function SectionProcedure({ form, update }) {
         }
       });
       setDoctorUnavailableDates(blocked);
-    }).catch(() => {});
+      setAvailabilityStatus('loaded');
+    }).catch((err) => {
+      console.error('[SectionProcedure] DoctorAvailability load failed — calendar cannot show unavailable dates:', err?.message);
+      setAvailabilityStatus('failed');
+    });
   }, []);
 
   const isDoctorUnavailable = (date) => {
@@ -357,6 +366,11 @@ export default function SectionProcedure({ form, update }) {
             {doctorUnavailableDates.size > 0 && (
               <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-xs text-orange-800">
                 🩺 <strong>Strikethrough dates</strong> are marked unavailable by our doctors and cannot be selected.
+              </div>
+            )}
+            {availabilityStatus === 'failed' && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-800">
+                ⚠️ <strong>We couldn't load doctor availability</strong>, so this calendar may show dates a doctor can't actually do. Pick your preferred date and your coordinator will confirm it — or refresh the page to try again.
               </div>
             )}
           </div>

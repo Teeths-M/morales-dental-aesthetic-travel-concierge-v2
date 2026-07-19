@@ -205,6 +205,10 @@ export default function AdminMissionControl() {
     medguardScores[c.id] = Math.min(score, 100);
   });
 
+  // Demo fallback is fine for a walkthrough, but it must SAY so — an admin (or
+  // an investor looking over their shoulder) must never mistake sample patients
+  // for live ones. Same honesty pattern as SituationRoom's isDemo badges.
+  const isDemo        = !isLoading && activeCases.length === 0;
   const displayCases  = activeCases.length > 0 ? activeCases : DEMO_CASES;
   const displayScores = activeCases.length > 0 ? medguardScores : DEMO_MEDGUARD;
 
@@ -220,7 +224,10 @@ export default function AdminMissionControl() {
     setTimeout(() => setRefreshing(false), 800);
   };
 
-  const feed = [
+  // Sample events for the walkthrough ONLY. Real activity lives in the audit
+  // log — fabricating "live" events next to real patients would be exactly the
+  // kind of claim-outrunning-code this platform must never make.
+  const SAMPLE_FEED = [
     { icon: '✅', text: 'Maria C. — HS5 Clinic Arrival confirmed. Caracas, Venezuela.', time: '2 min ago', color: '#22c55e' },
     { icon: '🛡️', text: 'MedGuard SAFE — James T. score 18/100. Bangkok, Thailand.', time: '5 min ago', color: '#22c55e' },
     { icon: '⚠️', text: 'MedGuard WATCH — Luisa R. score 44/100. Bogotá, Colombia.', time: '12 min ago', color: '#d97706' },
@@ -229,6 +236,7 @@ export default function AdminMissionControl() {
     { icon: '🚗', text: 'HS1 Driver Pickup — Carlos M. confirmed. Heading to JFK.', time: '1h ago', color: '#22c55e' },
     { icon: '📩', text: 'Quote reminder sent (Stage 1) — Prestige Travel Agency.', time: '2h ago', color: '#94a3b8' },
   ];
+  const feed = isDemo ? SAMPLE_FEED : [];
 
   const inTransit = displayCases.filter((c) => ACTIVE_TRAVEL_PHASES.has(c.trip_phase));
   const countries  = [...new Set(displayCases.map((c) => c.procedure_country).filter(Boolean))];
@@ -276,9 +284,17 @@ export default function AdminMissionControl() {
             <div className="flex items-center gap-2">
               <img src="/morales-m-mark.png" alt="M" className="w-5" style={{ filter: `drop-shadow(0 0 4px ${GOLD})` }} />
               <span className="text-base font-bold text-white">Mission Control</span>
+              {isDemo && (
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-widest"
+                  style={{ background: 'rgba(212,175,55,0.15)', border: `1px solid ${GOLD}50`, color: GOLD }}>
+                  DEMO MODE
+                </span>
+              )}
             </div>
             <p className="text-[10px]" style={{ color: '#475569' }}>
-              Last updated {lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · Auto-refreshes every 90s
+              {isDemo
+                ? 'Sample patients — no live cases on the platform right now'
+                : `Last updated ${lastRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · Auto-refreshes every 90s`}
             </p>
           </div>
         </div>
@@ -347,6 +363,12 @@ export default function AdminMissionControl() {
               <div className="flex items-center gap-2">
                 <SignalDot color={GOLD} size={8} />
                 <span className="text-sm font-semibold text-white">Active Patients</span>
+                {isDemo && (
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-bold tracking-widest"
+                    style={{ background: 'rgba(212,175,55,0.12)', color: GOLD }}>
+                    SAMPLE
+                  </span>
+                )}
               </div>
               {criticalCount > 0 && (
                 <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}
@@ -386,13 +408,22 @@ export default function AdminMissionControl() {
               style={{ background: '#0C1A1D', border: '1px solid #2A3F4A' }}>
               <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid #2A3F4A' }}>
                 <Radio className="w-4 h-4" style={{ color: GOLD }} />
-                <span className="text-sm font-semibold text-white">Live Activity</span>
-                <SignalDot color='#22c55e' size={6} />
+                <span className="text-sm font-semibold text-white">{isDemo ? 'Sample Activity' : 'Activity'}</span>
+                {isDemo ? (
+                  <span className="text-[9px] font-bold tracking-widest" style={{ color: GOLD }}>NOT LIVE</span>
+                ) : (
+                  <SignalDot color='#22c55e' size={6} />
+                )}
               </div>
               <div className="px-4 overflow-y-auto" style={{ maxHeight: 480 }}>
                 {feed.map((item, i) => (
                   <FeedItem key={i} {...item} />
                 ))}
+                {!isDemo && (
+                  <p className="text-xs py-4" style={{ color: '#64748b' }}>
+                    Real activity is recorded in the audit log — open it below for the verified, hash-chained history.
+                  </p>
+                )}
               </div>
               <div className="px-4 py-3" style={{ borderTop: '1px solid #2A3F4A' }}>
                 <Link to="/admin/audit-log"

@@ -1219,6 +1219,44 @@ test('INTAKE: answers survive navigating away mid-conversation', () => {
     .not.toMatch(/removeItem\(GUEST_DRAFT_KEY/);
 });
 
+test('INTAKE: an unreachable safety validator BLOCKS submission — and says so honestly', () => {
+  // The SDK throws on 4xx/5xx, so if validateProcedureSafety is undeployed or
+  // down, control lands in a catch. Two properties must hold forever:
+  //
+  //   1. FAIL CLOSED — no code path reaches Consultation.create when the
+  //      safety check did not resolve. The check is asked before the create,
+  //      and its failure handler returns out of the submit.
+  //   2. HONEST — the failure message tells the patient nothing was submitted
+  //      and the safety check is never skipped, instead of a generic "try
+  //      again" that implies retrying might work while the service is down.
+  //
+  // Weakening #1 (e.g. proceeding with a default "not blocked" verdict when
+  // the validator is unreachable) is the exact regression the M Principle
+  // forbids: a dangerous combination submitted because the checker was off.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const code = strip(read('src/pages/ConciergeIntake.jsx'));
+
+  // The safety check must still be asked, and asked BEFORE the create.
+  const safetyIdx = code.indexOf("invoke('validateProcedureSafety'");
+  const createIdx = code.indexOf('Consultation.create');
+  expect(safetyIdx, 'the server-side safety re-check must exist').toBeGreaterThan(-1);
+  expect(createIdx, 'the consultation create must exist').toBeGreaterThan(-1);
+  expect(safetyIdx, 'the safety check must run before anything is created').toBeLessThan(createIdx);
+
+  // Its failure handler must return (block), never fall through to the create.
+  const failHandler = code.slice(code.indexOf('catch (safetyErr)'), code.indexOf('catch (safetyErr)') + 600);
+  expect(failHandler, 'the safety-failure handler must exist').toContain('setSubmitError');
+  expect(failHandler, 'the safety-failure handler must stop the submission').toContain('return;');
+  expect(failHandler, 'the safety-failure handler must never create the consultation')
+    .not.toContain('Consultation.create');
+
+  // And the message must be the honest one — nothing submitted, check never skipped.
+  expect(code, 'the failure copy must say the check is never skipped').toContain('we never skip it');
+
+  // A blocked verdict must never be defaulted away: the isBlocked branch survives.
+  expect(code, 'the isBlocked hard stop must survive').toMatch(/if\s*\(safetyPayload\.isBlocked\)/);
+});
+
 test('PARTNERS: nothing automated may mark a background check passed', () => {
   // A background check is about a person's criminal record. The only automated
   // signal this platform has is an AI scan of uploaded documents for tampering

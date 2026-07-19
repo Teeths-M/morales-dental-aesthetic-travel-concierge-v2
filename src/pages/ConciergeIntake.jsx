@@ -201,9 +201,26 @@ export default function ConciergeIntake() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const safetyCheck = await base44.functions.invoke('validateProcedureSafety', {
-        items: cartItems.map((i) => ({ name: i.name, title: i.name })),
-      });
+      // The server-side safety re-check is UNBYPASSABLE (M Principle). The SDK
+      // throws on 4xx/5xx, so an unreachable/undeployed validator lands in this
+      // catch — and the submission stays blocked. That behaviour is correct and
+      // must never be softened; what earned its own catch is the MESSAGE. The
+      // generic "something went wrong, try again" was a lie by omission: trying
+      // again cannot help while the safety service is down, and the patient
+      // deserves to know nothing was submitted and nothing was lost (the draft
+      // survives locally until the consultation actually exists — see
+      // INTAKE_DRAFT_KEY below).
+      let safetyCheck;
+      try {
+        safetyCheck = await base44.functions.invoke('validateProcedureSafety', {
+          items: cartItems.map((i) => ({ name: i.name, title: i.name })),
+        });
+      } catch (safetyErr) {
+        console.error('[intake] validateProcedureSafety unreachable — submission blocked (fail closed):', safetyErr?.status, safetyErr?.message);
+        setSubmitError("We couldn't run the final safety check just now, so nothing was submitted — we never skip it. Your answers are saved on this device; please try again shortly, or contact us directly.");
+        setSubmitting(false);
+        return;
+      }
       const safetyPayload = safetyCheck?.data ?? safetyCheck ?? {};
       if (safetyPayload.isBlocked) {
         setSubmitError('A safety review flagged this combination. Please go back and adjust your selection.');
@@ -216,11 +233,22 @@ export default function ConciergeIntake() {
       // turns the previous soft flag (guardian_required with empty fields) into a
       // real block that a direct submit cannot slip past.
       if (isMinorAge(answers.age)) {
-        const guardianCheck = await base44.functions.invoke('validateGuardianRequirement', {
-          age: answers.age,
-          guardian_name: answers.guardian_name,
-          guardian_contact: answers.guardian_contact,
-        });
+        // Same fail-closed honesty as the safety check above: if the guardian
+        // validator is unreachable, a minor's submission stays blocked and the
+        // message says so — it does not pretend a retry might work right now.
+        let guardianCheck;
+        try {
+          guardianCheck = await base44.functions.invoke('validateGuardianRequirement', {
+            age: answers.age,
+            guardian_name: answers.guardian_name,
+            guardian_contact: answers.guardian_contact,
+          });
+        } catch (guardianErr) {
+          console.error('[intake] validateGuardianRequirement unreachable — minor submission blocked (fail closed):', guardianErr?.status, guardianErr?.message);
+          setSubmitError("We couldn't verify the guardian details just now, so nothing was submitted — for anyone under 18 that check is never skipped. Your answers are saved on this device; please try again shortly.");
+          setSubmitting(false);
+          return;
+        }
         const guardianVerdict = guardianCheck?.data ?? guardianCheck ?? {};
         if (guardianVerdict.blocked) {
           setSubmitError(guardianVerdict.reason || 'A parent or guardian’s name and a valid phone or email are required before we can proceed for a patient under 18.');
