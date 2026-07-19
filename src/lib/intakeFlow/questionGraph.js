@@ -95,6 +95,26 @@ export const PROCEDURE_OPTIONS = [
   { value: 'other', label: 'Something else' },
 ];
 
+// Dietary needs — a PREFERENCE, deliberately not a medical-history field. The
+// values mirror Consultation.dietary_restrictions exactly so the answer maps
+// 1:1, and this drives the recovery-meal brief the companion + hotel already
+// receive (sendCompanionMealBrief). It must never be treated as a clinical
+// input: "diabetic / low sugar" here is how someone eats, not a declared
+// diagnosis — the medical_conditions step is where a condition is actually
+// captured. See derivedFields.SAFETY_INPUT_FIELDS: this field is not in it,
+// and must not be added to it.
+export const DIETARY_OPTIONS = [
+  { value: 'none', label: 'No dietary restrictions' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'vegan', label: 'Vegan' },
+  { value: 'gluten_free', label: 'Gluten-free' },
+  { value: 'halal', label: 'Halal' },
+  { value: 'kosher', label: 'Kosher' },
+  { value: 'diabetic_low_sugar', label: 'Diabetic / low sugar' },
+  { value: 'low_sodium', label: 'Low sodium' },
+  { value: 'other', label: 'Something else' },
+];
+
 /**
  * @typedef {Object} QuestionStep
  * @property {string} id
@@ -334,6 +354,23 @@ export const QUESTION_GRAPH = [
     question: 'How long can you stay for recovery?',
     deterministicReason: 'so your recovery plan and accommodation match your schedule',
     inputType: INPUT_TYPES.TEXT,
+    requiresAuth: true,
+  },
+  {
+    // A preference, asked here in the recovery-planning section on purpose: it
+    // feeds the meal brief the companion and hotel receive, so it belongs with
+    // "how long can you stay" and "who's travelling with you", not among the
+    // medical-history questions. It is NOT clinical advice and never overrides
+    // the doctor — the copy says so. Single enum → SELECT renders a plain tap
+    // list (no ranking, no search). Food ALLERGIES are captured separately and
+    // earlier (allergy_details), because an allergy is a safety fact, not a
+    // dietary choice.
+    id: 'dietary_restrictions',
+    targetFields: ['dietary_restrictions'],
+    question: 'Any dietary needs we should plan your recovery meals around?',
+    deterministicReason: "so the meals prepared for you during recovery fit how you eat — your companion and hotel get this ahead of time. This never replaces your doctor's guidance.",
+    inputType: INPUT_TYPES.SELECT,
+    options: DIETARY_OPTIONS,
     requiresAuth: true,
   },
   {

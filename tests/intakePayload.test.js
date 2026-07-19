@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildConsultationPayload } from '@/lib/intakeFlow/fieldMap';
+import { SAFETY_INPUT_FIELDS } from '@/lib/intakeFlow/derivedFields';
 
 /**
  * The intake asks "You can choose more than one", the safety engine scores the
@@ -45,5 +46,30 @@ describe('every procedure the patient chose reaches the record', () => {
     const payload = buildConsultationPayload({});
     expect(payload.selected_procedures).toEqual([]);
     expect(payload.procedure_interest).toBe('other');
+  });
+});
+
+/**
+ * Dietary preference — a recovery-meal convenience that feeds the companion/
+ * hotel brief. It is deliberately NOT a clinical input: the M Principle keeps
+ * the platform out of diagnosing/prescribing, and the safety engine must never
+ * read a meal choice as a medical fact.
+ */
+describe('dietary preference is captured without becoming clinical', () => {
+  it('defaults to a valid enum value when the patient never answered', () => {
+    const payload = buildConsultationPayload({});
+    expect(payload.dietary_restrictions).toBe('none');
+  });
+
+  it('carries the chosen restriction through to the record', () => {
+    const payload = buildConsultationPayload({ dietary_restrictions: 'halal' });
+    expect(payload.dietary_restrictions).toBe('halal');
+  });
+
+  it('is NOT a SAFE-T input — a meal preference must never reach the safety engine', () => {
+    // If this ever fails, someone wired dietary choice into the safety path,
+    // which would let "diabetic / low sugar" be read as a diagnosis. The
+    // condition is captured by the medical_conditions step, never here.
+    expect(SAFETY_INPUT_FIELDS.has('dietary_restrictions')).toBe(false);
   });
 });

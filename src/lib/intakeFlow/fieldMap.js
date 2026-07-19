@@ -63,6 +63,10 @@ export function buildConsultationPayload(answers, verification = {}) {
     previous_procedures: answers.previous_procedures || '',
     previous_procedures_notes: answers.previous_procedures_notes || '',
     has_companion: !!answers.has_companion,
+    // Recovery-meal preference (not clinical, not a safety input) — flows into
+    // the companion/hotel meal brief. Defaults to 'none' so an untouched intake
+    // still writes a valid enum value, matching the entity default.
+    dietary_restrictions: answers.dietary_restrictions || 'none',
     preferred_date: answers.preferred_date || '',
     // Drives the 6-month sentinel and the visa lead-time warning. Typed by the
     // patient — deliberately never OCR'd from an uploaded passport image, see
