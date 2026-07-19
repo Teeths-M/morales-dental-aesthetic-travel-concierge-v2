@@ -1191,3 +1191,30 @@ test('VAULT: no passport image is uploaded before it is encrypted', () => {
       .not.toMatch(/extractPassportData/);
   }
 });
+
+test('INTAKE: answers survive navigating away mid-conversation', () => {
+  // The reset bug. Signed-in patients used to persist ONLY through a 1-second
+  // debounced server save. That timer is cleared by the next answer and by
+  // unmount, so anyone answering faster than once per second banked nothing,
+  // and navigating away (e.g. "Browse all procedures") threw it all out. They
+  // returned to "First, what's your name?" having already answered it.
+  //
+  // localStorage.setItem is synchronous and survives navigation; the server
+  // save cannot be relied on alone.
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const code = strip(read('src/hooks/useIntakeSession.js'));
+
+  // 1. The draft write must not sit behind a guests-only guard. Assert the
+  //    write happens BEFORE the isAuthenticated early return.
+  const writeIdx = code.indexOf('localStorage.setItem(GUEST_DRAFT_KEY');
+  const authReturnIdx = code.indexOf('if (!isAuthenticated) return;');
+  expect(writeIdx, 'the local draft must still be written').toBeGreaterThan(-1);
+  expect(authReturnIdx, 'the authenticated-only early return must still exist').toBeGreaterThan(-1);
+  expect(writeIdx, 'the draft must be written for signed-in patients too, not only guests')
+    .toBeLessThan(authReturnIdx);
+
+  // 2. The draft must NOT be retired inside the save path. It is cleared once,
+  //    on successful submission, in ConciergeIntake.
+  expect(code, 'the draft must not be removed on a server save — later answers would be left unprotected')
+    .not.toMatch(/removeItem\(GUEST_DRAFT_KEY/);
+});

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { useIntakeSession } from '@/hooks/useIntakeSession';
+import { useIntakeSession, INTAKE_DRAFT_KEY } from '@/hooks/useIntakeSession';
 import { useDestinationCountries } from '@/hooks/useDestinationCountries';
 import { useDestinationPriceEstimates } from '@/hooks/useDestinationPriceEstimates';
 import { useIntakeBackgroundSearch } from '@/hooks/useIntakeBackgroundSearch';
@@ -274,6 +274,11 @@ export default function ConciergeIntake() {
       try {
         localStorage.removeItem('morales_intake_browsing');
         localStorage.removeItem('morales_intake_pending_procedures');
+        // The consultation exists on the server now, so the local mirror is
+        // finally safe to drop. This is the ONLY place it is cleared — it was
+        // previously retired after the first session save, which left every
+        // later answer unprotected against a cancelled save.
+        localStorage.removeItem(INTAKE_DRAFT_KEY);
       } catch { /* non-essential */ }
       setSubmitted(true);
     } catch (_) {

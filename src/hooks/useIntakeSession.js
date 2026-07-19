@@ -4,7 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { getNextStep, getPreviousStepId, isConfidenceAcceptable, shouldEscalateToHuman } from '@/lib/intakeFlow/flowEngine';
 import { QUESTION_GRAPH, getStepById } from '@/lib/intakeFlow/questionGraph';
 
-const GUEST_DRAFT_KEY = 'morales_intake_guest_draft';
+/** Local mirror of the in-progress answers, for guests AND signed-in patients.
+ *  Named "guest" for historical reasons — the key is kept so drafts already
+ *  sitting in someone's browser still restore. Cleared only on submission. */
+export const INTAKE_DRAFT_KEY = 'morales_intake_guest_draft';
+const GUEST_DRAFT_KEY = INTAKE_DRAFT_KEY;
 
 function reducer(state, action) {
   switch (action.type) {
@@ -180,13 +184,23 @@ export function useIntakeSession() {
   useEffect(() => {
     if (isLoading) return;
 
-    if (!isAuthenticated) {
-      // Guest: local-only, matches ConsultationDraft's own guest-inaccessible pattern.
-      try {
-        localStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify(answers));
-      } catch (_) {}
-      return;
-    }
+    // ALWAYS write the local draft — signed in or not.
+    //
+    // This used to be the guest-only branch, and signed-in patients relied
+    // solely on the debounced server save below. That save is cancelled by the
+    // next answer (line ~191) AND by unmount (the cleanup at the end of this
+    // effect), so a patient answering faster than one second per question
+    // banked nothing, and any navigation threw all of it away. They came back
+    // to "First, what's your name?" having already answered it — the reset.
+    //
+    // localStorage.setItem is synchronous and cannot be cancelled by a
+    // navigation, so it is the only store that survives the trip. The server
+    // save remains the durable record; this is the copy that gets there.
+    try {
+      localStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify(answers));
+    } catch (_) {}
+
+    if (!isAuthenticated) return;
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
@@ -222,13 +236,12 @@ export function useIntakeSession() {
           }
           saved = true;
         }
-        // The answers are now durably on the server — the guest draft has
-        // served its purpose and can be safely retired. Only after a save
-        // that actually happened in THIS callback ('pending' overlap skips
-        // both branches and must not retire the draft).
-        if (saved) {
-          try { localStorage.removeItem(GUEST_DRAFT_KEY); } catch (_) {}
-        }
+        // The draft is NO LONGER retired here. It used to be dropped as soon
+        // as one save succeeded, which left every answer given after that
+        // moment protected only by a debounced timer that unmount cancels.
+        // The draft is now the local mirror for the whole session and is
+        // cleared once, on successful submission (see ConciergeIntake).
+        void saved;
       } catch (_) {
         sessionIdRef.current = null; // allow retry on next change
       }
