@@ -49,6 +49,11 @@ on:
     - cron: '0 * * * *'      # hourly — recovery check-ins
     - cron: '0 */6 * * *'    # every 6h — anomaly analysis (LLM, costs credits)
   workflow_dispatch:
+    inputs:
+      run_ai_analysis:
+        description: 'Also run runSafetyMonitor (calls an LLM — costs integration credits)'
+        type: boolean
+        default: false
 
 concurrency:
   group: safety-cron
@@ -107,7 +112,17 @@ jobs:
             call escalateMissedDriverHandshake  # driver no-show → reroute
             if [ "$MANUAL" = "true" ]; then
               call checkMissedRecoveryCheckins
-              call runSafetyMonitor
+              # runSafetyMonitor is the ONLY job here that calls an LLM, so it
+              # is the only one that costs integration credits per invocation.
+              # It used to run on every manual dispatch, which meant testing the
+              # scheduler quietly spent money each click. It is analysis, not
+              # life-safety — nobody is unmonitored if it is skipped — so it is
+              # now opt-in via the run_ai_analysis input.
+              if [ "${{ inputs.run_ai_analysis }}" = "true" ]; then
+                call runSafetyMonitor
+              else
+                echo "=== runSafetyMonitor -> SKIPPED (costs LLM credits; tick 'run_ai_analysis' to include) ==="
+              fi
             fi
           fi
 
